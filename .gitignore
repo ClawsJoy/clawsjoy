@@ -26,3 +26,38 @@ backups/
 # Secrets
 config/.env
 config/webhook.json
+
+# 备份文件
+backups/
+*.tar.gz
+*.bak
+
+# 数据库
+*.db
+*.db-journal
+
+# 用户数据
+tenants/*/data/
+data/*.db
+
+# 敏感配置
+config/.env
+config/*.conf
+!config/templates/*.template
+config/templates/*.env
+
+# 图片视频素材
+web/images/
+web/videos/
+
+# 日志
+logs/
+*.log
+
+# Python 缓存
+__pycache__/
+*.pyc
+
+# 本地环境
+.env
+.venv/
