@@ -23,7 +23,7 @@ jobs:
       uses: docker/build-push-action@v5
       with:
         context: .
-        push: ${{ github.event_name != 'pull_request' }}
+        push: true
         tags: |
-          clawsjoy/clawsjoy:latest
-          clawsjoy/clawsjoy:${{ github.ref_name }}
+          ${{ secrets.DOCKER_USERNAME }}/clawsjoy:latest
+          ${{ secrets.DOCKER_USERNAME }}/clawsjoy:${{ github.ref_name }}
