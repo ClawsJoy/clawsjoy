@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>ClawsJoy 设计案例</title>
+<style>
+body{background:linear-gradient(135deg,#1a1a2e,#16213e);color:#fff;font-family:Arial;padding:20px}
+.case-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;max-width:1200px;margin:0 auto}
+.case-card{background:rgba(255,255,255,0.1);border-radius:16px;padding:20px;backdrop-filter:blur(10px)}
+.case-title{font-size:18px;font-weight:bold;color:#667eea}
+.case-date{font-size:12px;color:#aaa}
+.case-content{margin-top:10px}
+</style>
+</head>
+<body>
+<h1 style="text-align:center">🎨 ClawsJoy 设计案例</h1>
+<div id="caseList" class="case-grid">加载中...</div>
+<script>
+fetch('/published/designs.json')
+  .then(r => r.json())
+  .then(data => {
+    const container = document.getElementById('caseList');
+    container.innerHTML = data.map(c => `
+      <div class="case-card">
+        <div class="case-title">${c.title}</div>
+        <div class="case-date">${c.date}</div>
+        <div class="case-content">${c.content}</div>
+      </div>
+    `).join('');
+  })
+  .catch(() => { document.getElementById('caseList').innerHTML = '<p>暂无案例</p>'; });
+</script>
+</body>
+</html>

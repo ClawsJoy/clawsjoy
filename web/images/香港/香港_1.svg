@@ -1,0 +1,6 @@
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="600" fill="#667eea" rx="20"/>
+  <text x="400" y="280" text-anchor="middle" fill="white" font-size="48" font-weight="bold">香港</text>
+  <text x="400" y="350" text-anchor="middle" fill="white" font-size="24">素材 1 / 5</text>
+  <text x="400" y="500" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="16">ClawsJoy Spider 采集</text>
+</svg>

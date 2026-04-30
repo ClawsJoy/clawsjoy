@@ -1,0 +1,86 @@
+/home/flybo/clawsjoy/bin/task_runner.sh: line 6: /home/flybo/clawsjoy/bin/make_city_promo.sh: No such file or directory
+mv: cannot move '/tmp/tenants/task_hongkong.json' to '/tmp/tenants/done/': Not a directory
+/home/flybo/clawsjoy/bin/task_runner.sh: line 6: /home/flybo/clawsjoy/bin/make_city_promo.sh: No such file or directory
+mv: cannot move '/tmp/tenants/task_hongkong.json' to '/tmp/tenants/done/': Not a directory
+/home/flybo/clawsjoy/bin/task_runner.sh: line 6: /home/flybo/clawsjoy/bin/make_city_promo.sh: No such file or directory
+mv: cannot move '/tmp/tenants/task_hongkong.json' to '/tmp/tenants/done/': Not a directory
+/home/flybo/clawsjoy/bin/task_runner.sh: line 6: /home/flybo/clawsjoy/bin/make_city_promo.sh: No such file or directory
+mv: cannot move '/tmp/tenants/task_hongkong.json' to '/tmp/tenants/done/': Not a directory
+/home/flybo/clawsjoy/bin/task_runner.sh: line 6: /home/flybo/clawsjoy/bin/make_city_promo.sh: No such file or directory
+mv: cannot move '/tmp/tenants/task_hongkong.json' to '/tmp/tenants/done/': Not a directory
+/home/flybo/clawsjoy/bin/task_runner.sh: line 6: /home/flybo/clawsjoy/bin/make_city_promo.sh: No such file or directory
+mv: cannot move '/tmp/tenants/task_hongkong.json' to '/tmp/tenants/done/': Not a directory
+/home/flybo/clawsjoy/bin/task_runner.sh: line 6: /home/flybo/clawsjoy/bin/make_city_promo.sh: No such file or directory
+mv: cannot move '/tmp/tenants/task_hongkong.json' to '/tmp/tenants/done/': Not a directory
+/home/flybo/clawsjoy/bin/task_runner.sh: line 6: /home/flybo/clawsjoy/bin/make_city_promo.sh: No such file or directory
+mv: cannot move '/tmp/tenants/task_hongkong.json' to '/tmp/tenants/done/': Not a directory
+/home/flybo/clawsjoy/bin/task_runner.sh: line 6: /home/flybo/clawsjoy/bin/make_city_promo.sh: No such file or directory
+jq: parse error: Invalid numeric literal at line 1, column 3
+/home/flybo/clawsjoy/bin/task_runner.sh: line 6: /home/flybo/clawsjoy/bin/make_city_promo.sh: No such file or directory
+/home/flybo/clawsjoy/bin/task_runner.sh: line 7: /home/flybo/clawsjoy/bin/make_city_promo.sh: No such file or directory
+/home/flybo/clawsjoy/bin/task_runner.sh: line 7: /home/flybo/clawsjoy/bin/make_city_promo.sh: No such file or directory
+[2026-04-25 13:40:56] 🚀 任务执行器启动，监听目录: /tmp/tenants/queue
+[2026-04-25 13:41:01] 📋 处理任务: 租户=租户1, 类型=full_promo
+🕷️ 开始采集: shanghai culture (共 5 张)
+Traceback (most recent call last):
+  File "<string>", line 3, in <module>
+  File "/usr/lib/python3.12/json/__init__.py", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+✅ 采集任务完成
+✅ 已提交审核: 香港宣传片标题建议包含 Tech / AI / 智慧城市
+📁 文件: /home/flybo/clawsjoy/outbox/writer_20260425_134101_340105844.review.json
+✅ 已提交设计: 封面
+🎬 Video-Maker 开始制作视频...
+📝 脚本: 温馨人文...
+🖼️ 使用图片: /home/flybo/.openclaw/web/images/cover3.svg
+🔊 生成配音...
+🎬 合成视频中（时长 1秒）...
+✅ 视频已生成: /home/flybo/.openclaw/web/videos/promo.mp4
+📹 大小: 24K
+✅ 已提交视频: 宣传片
+🎬 链接: /videos/promo.mp4
+📋 已提交审核
+✅ 已提交发布任务: 宣传片完成 -> xiaohongshu
+📁 文件: /home/flybo/clawsjoy/outbox/messenger_20260425_134104_168407910.publish.json
+📋 查看看板: http://localhost:8083/review/index.html
+[2026-04-25 13:41:04] ✅ 任务完成: /tmp/tenants/queue/task1.json
+[2026-04-25 13:41:04] 📋 处理任务: 租户=租户2, 类型=design
+✅ 已提交设计: 封面
+[2026-04-25 13:41:04] ✅ 任务完成: /tmp/tenants/queue/task2.json
+[2026-04-25 13:56:07] 🚀 任务执行器启动，监听目录: /tmp/tenants/queue
+[2026-04-25 13:56:15] 📋 处理任务: 租户=租户1, 类型=full_promo, 城市=shanghai
+❌ 请设置环境变量: export UNSPLASH_ACCESS_KEY=你的Key
+✅ 已提交审核: shanghai宣传片
+📁 文件: /home/flybo/clawsjoy/outbox/writer_20260425_135615_731040936.review.json
+✅ 已提交设计: shanghai封面
+🎬 Video-Maker 开始制作视频...
+📝 脚本: shanghai...
+🖼️ 使用图片: /home/flybo/.openclaw/web/images/cover3.svg
+🔊 生成配音...
+🎬 合成视频中（时长 1秒）...
+✅ 视频已生成: /home/flybo/.openclaw/web/videos/promo.mp4
+📹 大小: 24K
+✅ 已提交视频: shanghai宣传片
+🎬 链接: /videos/promo.mp4
+📋 已提交审核
+✅ 已提交发布任务: shanghai宣传片完成 -> wechat
+📁 文件: /home/flybo/clawsjoy/outbox/messenger_20260425_135618_776636223.publish.json
+📋 查看看板: http://localhost:8083/review/index.html
+[2026-04-25 13:56:18] ✅ 任务完成: /tmp/tenants/queue/task_租户1_1777096571.json
+[2026-04-25 13:58:49] 🚀 任务执行器启动（带数据库）
+[2026-04-25 13:58:59] 📋 处理: 租户=租户1, 类型=full_promo, 城市=hongkong
+[2026-04-25 13:59:02] ✅ 成功: full_promo
+[2026-04-25 13:59:30] 📋 处理: 租户=租户1, 类型=full_promo, 城市=hongkong
+[2026-04-25 13:59:33] ✅ 成功: full_promo
+[2026-04-25 14:14:03] 📋 处理: 租户=租户1, 类型=full_promo, 城市=shanghai
+[2026-04-25 14:14:07] ✅ 成功: full_promo

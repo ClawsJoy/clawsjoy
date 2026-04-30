@@ -1,0 +1,53 @@
+#!/bin/bash
+OUTBOX_DIR="$HOME/clawsjoy/outbox"
+PROCESSING_DIR="$OUTBOX_DIR/processing"
+DONE_DIR="$OUTBOX_DIR/done"
+FAILED_DIR="$OUTBOX_DIR/failed"
+LOG_DIR="$HOME/clawsjoy/logs"
+LOG_FILE="$LOG_DIR/universal_router.log"
+SUBMIT_API="http://localhost:5005/api/submit"
+MAX_RETRIES=3
+RETRY_DELAY=2
+
+log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"; }
+
+submit_with_retry() {
+    local file="$1" retry=0
+    while [ $retry -lt $MAX_RETRIES ]; do
+        log "提交审核 (尝试 $((retry+1))/$MAX_RETRIES): $file"
+        if curl -s -f -X POST "$SUBMIT_API" -H 'Content-Type: application/json' -d @"$file" > /dev/null 2>&1; then
+            log "✅ 提交成功"; return 0
+        else
+            retry=$((retry+1))
+            [ $retry -lt $MAX_RETRIES ] && { log "⚠️ 提交失败，${RETRY_DELAY}秒后重试..."; sleep $RETRY_DELAY; }
+        fi
+    done
+    log "❌ 提交失败，已达最大重试次数"; return 1
+}
+
+process_file() {
+    local file="$1" filename=$(basename "$file") temp_processing="$PROCESSING_DIR/$filename"
+    mv "$file" "$temp_processing" 2>/dev/null || { log "⚠️ 无法移动文件到 processing: $file"; return 1; }
+    log "📄 开始处理: $filename"
+    if [[ "$filename" == *.review.json ]] || grep -q '"title".*"content".*"submitter"' "$temp_processing" 2>/dev/null; then
+        if submit_with_retry "$temp_processing"; then
+            mv "$temp_processing" "$DONE_DIR/$filename"; log "✅ 文件已移至 DONE: $filename"
+        else
+            mv "$temp_processing" "$FAILED_DIR/$filename"; log "❌ 文件已移至 FAILED: $filename"
+        fi
+    else
+        log "⚠️ 未知文件类型，移至 FAILED: $filename"
+        mv "$temp_processing" "$FAILED_DIR/$filename"
+    fi
+}
+
+mkdir -p "$OUTBOX_DIR" "$PROCESSING_DIR" "$DONE_DIR" "$FAILED_DIR" "$LOG_DIR"
+if ! command -v inotifywait >/dev/null 2>&1; then
+    log "❌ 未找到 inotifywait，请安装 inotify-tools"; exit 1
+fi
+log "🚀 通用路由器已启动，监听目录: $OUTBOX_DIR"
+inotifywait -m "$OUTBOX_DIR" -e create -e moved_to --format '%f' 2>/dev/null | while read filename; do
+    [[ "$filename" =~ ^\. || "$filename" =~ \.swp$|\.tmp$|~$ ]] && continue
+    full_path="$OUTBOX_DIR/$filename"; sleep 0.3
+    [ -f "$full_path" ] && process_file "$full_path"
+done

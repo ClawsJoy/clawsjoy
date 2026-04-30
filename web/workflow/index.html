@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workflow 监控 - ClawsJoy</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%);
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+        }
+        .header {
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .header h1 {
+            color: #667eea;
+            font-size: 24px;
+        }
+        .header p {
+            color: #888;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #888;
+            margin-top: 8px;
+        }
+        .workflow-list {
+            background: rgba(0,0,0,0.2);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        .workflow-header {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 1.5fr;
+            padding: 15px 20px;
+            background: rgba(255,255,255,0.05);
+            font-weight: bold;
+            font-size: 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .workflow-item {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 1.5fr;
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .workflow-item:hover {
+            background: rgba(255,255,255,0.05);
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-completed { background: #4caf50; color: #fff; }
+        .status-running { background: #ff9800; color: #fff; }
+        .status-paused { background: #2196f3; color: #fff; }
+        .status-failed { background: #f56565; color: #fff; }
+        .status-pending { background: #666; color: #fff; }
+        .detail-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .detail-content {
+            background: #1a1a2e;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 1px solid #667eea;
+        }
+        .detail-content h3 {
+            color: #667eea;
+            margin-bottom: 16px;
+        }
+        .detail-step {
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 12px;
+            margin: 12px 0;
+        }
+        .close-btn {
+            background: #667eea;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            color: #fff;
+            cursor: pointer;
+            margin-top: 16px;
+        }
+        .refresh-btn {
+            background: #667eea;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            color: #fff;
+            cursor: pointer;
+            margin-bottom: 16px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 Workflow 监控中心</h1>
+        <p>实时查看 Workflow 执行状态与历史记录</p>
+    </div>
+    <div class="container">
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalCount">0</div>
+                <div class="stat-label">总 Workflow</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="completedCount">0</div>
+                <div class="stat-label">已完成</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="runningCount">0</div>
+                <div class="stat-label">运行中</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="failedCount">0</div>
+                <div class="stat-label">失败</div>
+            </div>
+        </div>
+        
+        <button class="refresh-btn" onclick="loadData()">🔄 刷新</button>
+        
+        <div class="workflow-list">
+            <div class="workflow-header">
+                <span>Workflow ID</span>
+                <span>状态</span>
+                <span>进度</span>
+                <span>更新时间</span>
+                <span>操作</span>
+            </div>
+            <div id="workflowList"></div>
+        </div>
+    </div>
+    
+    <div id="detailModal" class="detail-modal">
+        <div class="detail-content">
+            <h3 id="modalTitle">Workflow 详情</h3>
+            <div id="modalBody"></div>
+            <button class="close-btn" onclick="closeModal()">关闭</button>
+        </div>
+    </div>
+
+    <script>
+        async function loadData() {
+            try {
+                const res = await fetch('http://localhost:8091/api/workflow/list');
+                const data = await res.json();
+                const workflows = data.workflows || [];
+                
+                // 更新统计
+                document.getElementById('totalCount').innerText = workflows.length;
+                document.getElementById('completedCount').innerText = workflows.filter(w => w.status === 'completed').length;
+                document.getElementById('runningCount').innerText = workflows.filter(w => w.status === 'running').length;
+                document.getElementById('failedCount').innerText = workflows.filter(w => w.status === 'failed').length;
+                
+                // 渲染列表
+                const container = document.getElementById('workflowList');
+                if (workflows.length === 0) {
+                    container.innerHTML = '<div class="empty-state">暂无 Workflow 记录</div>';
+                    return;
+                }
+                
+                container.innerHTML = workflows.map(w => `
+                    <div class="workflow-item" onclick="showDetail('${w.id}')">
+                        <span style="font-family:monospace">${w.id}</span>
+                        <span><span class="status status-${w.status}">${w.status}</span></span>
+                        <span>${w.progress || '0/0'}</span>
+                        <span>${w.updated_at ? new Date(w.updated_at).toLocaleString() : '-'}</span>
+                        <span><button class="refresh-btn" style="padding:4px 12px;font-size:12px" onclick="event.stopPropagation();showDetail('${w.id}')">查看</button></span>
+                    </div>
+                `).join('');
+            } catch(e) {
+                console.error(e);
+                document.getElementById('workflowList').innerHTML = '<div class="empty-state">加载失败，请确保 API 服务运行中</div>';
+            }
+        }
+        
+        async function showDetail(workflowId) {
+            try {
+                const res = await fetch(`http://localhost:8091/api/workflow/detail?workflow_id=${workflowId}`);
+                const data = await res.json();
+                
+                document.getElementById('modalTitle').innerHTML = `Workflow: ${workflowId}`;
+                
+                let stepsHtml = '';
+                if (data.steps && data.steps.length) {
+                    stepsHtml = data.steps.map((step, i) => `
+                        <div class="detail-step">
+                            <strong>${i + 1}. ${step.name}</strong>
+                            <span class="status status-${step.status}" style="margin-left:10px">${step.status}</span>
+                            <div style="font-size:12px;color:#888;margin-top:5px">Skill: ${step.skill}</div>
+                            ${step.result ? `<div style="font-size:12px;margin-top:5px">结果: ${JSON.stringify(step.result).substring(0, 100)}</div>` : ''}
+                        </div>
+                    `).join('');
+                } else {
+                    stepsHtml = '<div>暂无步骤信息</div>';
+                }
+                
+                document.getElementById('modalBody').innerHTML = `
+                    <div><strong>状态:</strong> <span class="status status-${data.status}">${data.status}</span></div>
+                    <div style="margin-top:10px"><strong>租户:</strong> ${data.tenant_id || '1'}</div>
+                    <div style="margin-top:10px"><strong>创建时间:</strong> ${data.created_at || '-'}</div>
+                    <div style="margin-top:10px"><strong>更新时间:</strong> ${data.updated_at || '-'}</div>
+                    <div style="margin-top:15px"><strong>步骤详情:</strong></div>
+                    ${stepsHtml}
+                `;
+                
+                document.getElementById('detailModal').style.display = 'flex';
+            } catch(e) {
+                console.error(e);
+                alert('加载详情失败');
+            }
+        }
+        
+        function closeModal() {
+            document.getElementById('detailModal').style.display = 'none';
+        }
+        
+        // 自动刷新
+        loadData();
+        setInterval(loadData, 5000);
+    </script>
+</body>
+</html>

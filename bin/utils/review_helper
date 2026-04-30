@@ -1,0 +1,48 @@
+#!/bin/bash
+# Reviewer 审核辅助脚本
+
+API_URL="http://localhost:5005/api/admin"
+
+case "$1" in
+  list)
+    echo "=== 📋 待审核任务列表 ==="
+    curl -s $API_URL/tasks | python3 -c "
+import sys,json
+tasks = json.load(sys.stdin)
+pending = [t for t in tasks if t.get('status') == 'pending']
+if not pending:
+    print('暂无待审核任务')
+else:
+    print(f'共 {len(pending)} 个待审核任务\n')
+    for t in pending:
+        print(f'  ID: {t[\"id\"]}')
+        print(f'  标题: {t[\"title\"]}')
+        print(f'  提交者: {t[\"submitter\"]}')
+        print('  ---')
+"
+    ;;
+  view)
+    TASK_ID="$2"
+    curl -s $API_URL/tasks | python3 -c "
+import sys,json
+tasks = json.load(sys.stdin)
+for t in tasks:
+    if t['id'] == $TASK_ID:
+        print(f'标题: {t[\"title\"]}')
+        print(f'内容:\n{t[\"content\"]}')
+        print(f'提交者: {t[\"submitter\"]}')
+        break
+"
+    ;;
+  approve)
+    curl -s -X POST $API_URL/approve -H "Content-Type: application/json" -d "{\"id\": $2, \"comment\": \"$3\"}"
+    echo ""
+    ;;
+  reject)
+    curl -s -X POST $API_URL/reject -H "Content-Type: application/json" -d "{\"id\": $2, \"reason\": \"$3\"}"
+    echo ""
+    ;;
+  *)
+    echo "用法: review_helper {list|view|approve|reject} [id] [comment]"
+    ;;
+esac

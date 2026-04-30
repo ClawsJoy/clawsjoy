@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>ClawsJoy 管理员中心</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        h1 { color: #667eea; margin-bottom: 20px; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+        }
+        .stat-number { font-size: 36px; font-weight: bold; color: #667eea; }
+        .stat-label { font-size: 12px; color: #aaa; }
+        .panel {
+            background: rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .panel-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            padding-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            color: #ccc;
+        }
+        th { color: #667eea; }
+        .refresh-btn {
+            background: #667eea;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            float: right;
+            margin-top: -50px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h1>👑 ClawsJoy 管理员中心</h1>
+        <button class="refresh-btn" onclick="location.reload()">🔄 刷新</button>
+    </div>
+
+    <div class="stats-grid" id="statsGrid">
+        <div class="stat-card"><div class="stat-number" id="totalTasks">-</div><div class="stat-label">总任务</div></div>
+        <div class="stat-card"><div class="stat-number" id="pendingTasks">-</div><div class="stat-label">待审核</div></div>
+        <div class="stat-card"><div class="stat-number" id="approvedTasks">-</div><div class="stat-label">已通过</div></div>
+        <div class="stat-card"><div class="stat-number" id="rejectedTasks">-</div><div class="stat-label">已驳回</div></div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-title">🤖 Agent 进化统计</div>
+        <div id="agentStats">加载中...</div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-title">⚙️ 系统状态</div>
+        <div id="systemStatus">加载中...</div>
+    </div>
+</div>
+
+<script>
+async function loadStats() {
+    try {
+        const resp = await fetch('http://localhost:5005/api/admin/tasks');
+        const tasks = await resp.json();
+        document.getElementById('totalTasks').innerText = tasks.length;
+        document.getElementById('pendingTasks').innerText = tasks.filter(t => t.status === 'pending').length;
+        document.getElementById('approvedTasks').innerText = tasks.filter(t => t.status === 'approved').length;
+        document.getElementById('rejectedTasks').innerText = tasks.filter(t => t.status === 'rejected').length;
+    } catch(e) {
+        console.error('统计加载失败', e);
+    }
+}
+
+async function loadAgentStats() {
+    try {
+        const resp = await fetch('http://localhost:5006/api/stats/agents');
+        const agents = await resp.json();
+        let html = '<table><thead><tr><th>Agent</th><th>学习数</th></tr></thead><tbody>';
+        agents.forEach(a => {
+            html += `<tr><td>${a.name}</td><td>${a.learn_count}</td></tr>`;
+        });
+        html += '</tbody></table>';
+        document.getElementById('agentStats').innerHTML = html;
+    } catch(e) {
+        document.getElementById('agentStats').innerHTML = '<div>加载失败</div>';
+    }
+}
+
+async function loadSystemStatus() {
+    const services = [
+        { name: '审核 API', url: 'http://localhost:5005/api/admin/tasks', port: 5005 },
+        { name: '数据看板 API', url: 'http://localhost:5006/api/stats/overview', port: 5006 },
+        { name: 'Web 服务', url: 'http://localhost:8083/', port: 8083 }
+    ];
+    let html = '<table><thead><tr><th>服务</th><th>状态</th><th>端口</th></tr></thead><tbody>';
+    for (const svc of services) {
+        try {
+            await fetch(svc.url, { method: 'HEAD', cache: 'no-cache' });
+            html += `<tr><td>${svc.name}</td><td style="color: #10b981;">✅ 运行中</td><td>${svc.port}</td></tr>`;
+        } catch(e) {
+            html += `<tr><td>${svc.name}</td><td style="color: #ef4444;">❌ 未运行</td><td>${svc.port}</td></tr>`;
+        }
+    }
+    html += '</tbody></table>';
+    document.getElementById('systemStatus').innerHTML = html;
+}
+
+loadStats();
+loadAgentStats();
+loadSystemStatus();
+setInterval(() => { loadStats(); loadAgentStats(); }, 30000);
+</script>
+</body>
+</html>

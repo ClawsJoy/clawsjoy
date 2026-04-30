@@ -1,0 +1,74 @@
+#!/bin/bash
+QUEUE_DIR="/tmp/tenants/queue"
+PROCESSED_DIR="/tmp/tenants/done"
+DB_FILE="$HOME/.openclaw/task_results.db"
+mkdir -p "$QUEUE_DIR" "$PROCESSED_DIR"
+
+log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"; }
+
+record_result() {
+  sqlite3 "$DB_FILE" "INSERT INTO task_results (tenant, task_type, city, status, output) VALUES ('$1', '$2', '$3', '$4', '$5');"
+}
+
+process_task() {
+  local task_file="$1"
+  local tenant=$(jq -r '.tenant' "$task_file" 2>/dev/null)
+  local task_type=$(jq -r '.task_type' "$task_file" 2>/dev/null)
+  local city=$(jq -r '.city' "$task_file" 2>/dev/null)
+  local output_file="/tmp/task_output_$$.log"
+  
+  log "📋 处理: 租户=$tenant, 类型=$task_type, 城市=$city"
+  
+  export CURRENT_CITY="$city"
+  
+  case "$task_type" in
+    "full_promo")
+      ~/clawsjoy/bin/rule_executor.sh "$tenant" "spider" > "$output_file" 2>&1
+      ~/clawsjoy/bin/rule_executor.sh "$tenant" "review" >> "$output_file" 2>&1
+      ~/clawsjoy/bin/rule_executor.sh "$tenant" "design" >> "$output_file" 2>&1
+      ~/clawsjoy/bin/rule_executor.sh "$tenant" "video" >> "$output_file" 2>&1
+      ~/clawsjoy/bin/rule_executor.sh "$tenant" "publish" >> "$output_file" 2>&1
+      ;;
+    "spider")
+      ~/clawsjoy/bin/spider_unsplash "${city:-hongkong}" 5 > "$output_file" 2>&1
+      ;;
+    "video")
+      ~/clawsjoy/bin/make_video "${city:-宣传片}" "$HOME/.openclaw/web/images" "promo" "宣传片" > "$output_file" 2>&1
+      ;;
+    "review")
+      ~/clawsjoy/bin/write_review "${city}宣传片" "<h1>${city}宣传片</h1>" writer > "$output_file" 2>&1
+      ;;
+    "design")
+      ~/clawsjoy/bin/write_design "${city}封面" "<svg><text>${city}</text></svg>" designer > "$output_file" 2>&1
+      ;;
+    "publish")
+      ~/clawsjoy/bin/write_publish "${city}宣传片完成" "<p>${city}视频已生成</p>" wechat > "$output_file" 2>&1
+      ;;
+    *)
+      log "⚠️ 未知任务类型: $task_type"
+      record_result "$tenant" "$task_type" "$city" "failed" "未知任务类型"
+      mv "$task_file" "$PROCESSED_DIR/"
+      return
+      ;;
+  esac
+  
+  if [ $? -eq 0 ]; then
+    record_result "$tenant" "$task_type" "$city" "success" "$(cat "$output_file" | head -c 500)"
+    log "✅ 成功: $task_type"
+  else
+    record_result "$tenant" "$task_type" "$city" "failed" "$(cat "$output_file" | head -c 500)"
+    log "❌ 失败: $task_type"
+  fi
+  
+  rm -f "$output_file"
+  mv "$task_file" "$PROCESSED_DIR/"
+}
+
+log "🚀 任务执行器启动（带数据库）"
+while true; do
+  for task_file in "$QUEUE_DIR"/*.json; do
+    [ -f "$task_file" ] || continue
+    process_task "$task_file"
+  done
+  sleep 5
+done

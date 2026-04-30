@@ -1,0 +1,88 @@
+#!/bin/bash
+# ============================================================
+# universal_router.sh - 统一文件事件路由器
+# ============================================================
+
+OUTBOX_DIR="$HOME/clawsjoy/outbox"
+PROCESSING_DIR="$OUTBOX_DIR/processing"
+DONE_DIR="$OUTBOX_DIR/done"
+FAILED_DIR="$OUTBOX_DIR/failed"
+LOG_DIR="$HOME/clawsjoy/logs"
+LOG_FILE="$LOG_DIR/universal_router.log"
+
+SUBMIT_API="http://localhost:5005/api/submit"
+
+MAX_RETRIES=3
+RETRY_DELAY=2
+
+log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"; }
+
+execute_with_retry() {
+    local action="$1"
+    local cmd="$2"
+    local retry=0
+    while [ $retry -lt $MAX_RETRIES ]; do
+        log "执行 $action (尝试 $((retry+1))/$MAX_RETRIES)"
+        eval "$cmd" && {
+            log "✅ $action 成功"
+            return 0
+        }
+        log "⚠️ $action 失败 (尝试 $((retry+1))/$MAX_RETRIES)"
+        retry=$((retry+1))
+        sleep $((RETRY_DELAY * retry))
+    done
+    log "❌ $action 最终失败"
+    return 1
+}
+
+move_file() {
+    local src="$1"; local dst_dir="$2"
+    local basename=$(basename "$src")
+    local dst="$dst_dir/$basename"
+    if [ -e "$dst" ]; then
+        dst="$dst_dir/${basename%.*}_$(date +%s).${basename##*.}"
+    fi
+    mv "$src" "$dst"
+    echo "$dst"
+}
+
+mkdir -p "$OUTBOX_DIR" "$PROCESSING_DIR" "$DONE_DIR" "$FAILED_DIR" "$LOG_DIR"
+log "🚀 通用路由器启动，监听目录: $OUTBOX_DIR"
+
+inotifywait -m -e create --format '%f' "$OUTBOX_DIR" | while read filename; do
+    filepath="$OUTBOX_DIR/$filename"
+    sleep 0.2
+    [ ! -f "$filepath" ] && continue
+    log "📄 检测到新文件: $filename"
+
+    case "$filename" in
+        *.review.json)
+            log "🚦 路由: 提交审核"
+            processing=$(move_file "$filepath" "$PROCESSING_DIR")
+            cmd="curl -s -X POST \"$SUBMIT_API\" -H 'Content-Type: application/json' -d @\"$processing\""
+            if execute_with_retry "提交审核" "$cmd"; then
+                final=$(move_file "$processing" "$DONE_DIR")
+                log "📦 已归档到 $final"
+            else
+                final=$(move_file "$processing" "$FAILED_DIR")
+                log "💔 移到失败目录: $final"
+            fi
+            ;;
+        *.xiaohongshu.html)
+            log "🚦 路由: 发布到小红书"
+            processing=$(move_file "$filepath" "$PROCESSING_DIR")
+            cmd="curl -s -X POST \"https://api.xiaohongshu.com/note/publish\" -H 'Content-Type: application/json' -d @\"$processing\""
+            if execute_with_retry "小红书发布" "$cmd"; then
+                final=$(move_file "$processing" "$DONE_DIR")
+            else
+                final=$(move_file "$processing" "$FAILED_DIR")
+            fi
+            ;;
+        *)
+            log "⚠️ 未知文件类型: $filename"
+            unknown_dir="$OUTBOX_DIR/unknown"
+            mkdir -p "$unknown_dir"
+            move_file "$filepath" "$unknown_dir"
+            ;;
+    esac
+done

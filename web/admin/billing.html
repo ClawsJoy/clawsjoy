@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>计费管理 - ClawsJoy</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{background:#0f0f1a;color:#fff;font-family:system-ui;padding:20px}
+        .container{max-width:1200px;margin:0 auto}
+        h1{color:#667eea;margin-bottom:20px}
+        .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:30px}
+        .card{background:#1a1a2e;border-radius:12px;padding:20px}
+        .card h3{color:#888;margin-bottom:8px;font-size:14px}
+        .card .number{font-size:32px;font-weight:bold;color:#667eea}
+        table{width:100%;border-collapse:collapse}
+        th,td{padding:12px;text-align:left;border-bottom:1px solid #333}
+        th{color:#888;font-weight:normal}
+        .recharge-btn{background:#667eea;border:none;padding:8px 16px;border-radius:8px;color:#fff;cursor:pointer}
+        input{padding:8px;border-radius:8px;border:none;margin-right:8px}
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>💰 计费管理系统</h1>
+    
+    <div class="stats">
+        <div class="card">
+            <h3>当前余额</h3>
+            <div class="number" id="balance">-</div>
+        </div>
+        <div class="card">
+            <h3>本月消费</h3>
+            <div class="number" id="monthlyCost">-</div>
+        </div>
+        <div class="card">
+            <h3>总对话次数</h3>
+            <div class="number" id="totalChats">-</div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h3>📋 使用明细</h3>
+        <div style="margin:16px 0">
+            <input type="number" id="rechargeAmount" placeholder="充值金额">
+            <button class="recharge-btn" onclick="recharge()">充值</button>
+        </div>
+        <table id="usageTable">
+            <thead><tr><th>任务类型</th><th>次数</th><th>费用</th></tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+async function loadData() {
+    const tenantId = new URLSearchParams(location.search).get('tenant') || '1';
+    
+    // 查询余额
+    const balanceRes = await fetch(`http://localhost:8090/api/billing/balance?tenant_id=${tenantId}`);
+    const balanceData = await balanceRes.json();
+    document.getElementById('balance').innerText = `¥${balanceData.balance.toFixed(2)}`;
+    
+    // 查询使用统计
+    const usageRes = await fetch(`http://localhost:8090/api/billing/usage?tenant_id=${tenantId}&days=30`);
+    const usageData = await usageRes.json();
+    
+    let totalCost = 0;
+    let totalChats = 0;
+    const tbody = document.querySelector('#usageTable tbody');
+    tbody.innerHTML = '';
+    
+    for (const item of usageData.usage) {
+        totalCost += item.cost;
+        if (item.task_type === 'chat') totalChats += item.count;
+        const row = tbody.insertRow();
+        row.insertCell(0).innerText = item.task_type;
+        row.insertCell(1).innerText = item.count;
+        row.insertCell(2).innerText = `¥${item.cost.toFixed(4)}`;
+    }
+    
+    document.getElementById('monthlyCost').innerText = `¥${totalCost.toFixed(2)}`;
+    document.getElementById('totalChats').innerText = totalChats;
+}
+
+async function recharge() {
+    const amount = parseFloat(document.getElementById('rechargeAmount').value);
+    if (isNaN(amount) || amount <= 0) {
+        alert('请输入有效金额');
+        return;
+    }
+    
+    const tenantId = new URLSearchParams(location.search).get('tenant') || '1';
+    const res = await fetch('http://localhost:8090/api/billing/recharge', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({tenant_id: tenantId, amount: amount})
+    });
+    const data = await res.json();
+    if (data.success) {
+        alert(`充值成功！新余额: ¥${data.new_balance.toFixed(2)}`);
+        loadData();
+    } else {
+        alert('充值失败');
+    }
+}
+
+loadData();
+</script>
+</body>
+</html>

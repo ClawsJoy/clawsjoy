@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Joy Mate - 租户 AI 助手</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{background:linear-gradient(135deg,#0f0f1a 0%,#1a1a2e 100%);color:#fff;font-family:system-ui}
+        .app{display:flex;height:100vh}
+        .sidebar{width:200px;background:#0a0a14;padding:20px}
+        .logo{font-size:20px;color:#667eea;margin-bottom:30px}
+        .tenant-info{background:#1a1a2e;padding:12px;border-radius:10px;margin-bottom:20px;text-align:center}
+        .service{padding:10px;background:#1a1a2e;border-radius:10px;margin:10px 0;cursor:pointer;text-align:center}
+        .service:hover{background:#2a2a3e}
+        .main{flex:1;display:flex;flex-direction:column}
+        .chat{flex:1;overflow:auto;padding:20px}
+        .msg{margin:10px 0;padding:10px 15px;border-radius:18px;max-width:75%}
+        .user{background:#667eea;margin-left:auto;text-align:right}
+        .bot{background:#2a2a3e}
+        .mic-area{text-align:center;padding:16px}
+        .mic-btn{width:70px;height:70px;border-radius:50%;background:#667eea;border:none;font-size:32px;cursor:pointer}
+        .mic-btn.listening{background:#f56565;animation:pulse 1s infinite}
+        @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+        .input-area{display:flex;padding:12px 20px;gap:10px}
+        input{flex:1;padding:10px;background:#1a1a2e;border:1px solid #333;border-radius:30px;color:#fff}
+        button{padding:10px 20px;background:#667eea;border:none;border-radius:30px;color:#fff;cursor:pointer}
+        .logout{background:#555;margin-top:20px}
+        .logout:hover{background:#f56565}
+    </style>
+</head>
+<body>
+<div class="app">
+    <div class="sidebar">
+        <div class="logo">🦞 Joy Mate</div>
+        <div class="tenant-info" id="tenantInfo">租户: 加载中...</div>
+        <div class="service" onclick="quickSend('制作香港宣传片')">🎬 宣传片</div>
+        <div class="service" onclick="quickSend('我想喝咖啡')">☕ 咖啡</div>
+        <div class="service" onclick="quickSend('查看订单')">📋 订单</div>
+        <button class="service logout" onclick="logout()">🚪 退出登录</button>
+    </div>
+    <div class="main">
+        <div class="chat" id="chat"></div>
+        <div class="mic-area">
+            <button class="mic-btn" id="micBtn" onclick="toggleVoice()">🎤</button>
+            <div id="status" style="color:#888;margin-top:8px">⚡ 点击说话</div>
+            <div class="input-area">
+                <input type="text" id="textInput" placeholder="输入..." onkeypress="if(event.keyCode===13)sendMsg()">
+                <button onclick="sendMsg()">发送</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let tenantId = new URLSearchParams(location.search).get('tenant') || localStorage.getItem('joymate_tenant') || '1';
+    let token = localStorage.getItem('joymate_token');
+    let user = JSON.parse(localStorage.getItem('joymate_user') || '{}');
+    
+    // 显示租户信息
+    document.getElementById('tenantInfo').innerHTML = `🏢 租户 ${tenantId}<br><span style="font-size:11px">${user.name || '用户'}</span>`;
+    
+    function addMsg(role, text) {
+        let chat = document.getElementById('chat');
+        let div = document.createElement('div');
+        div.className = 'msg ' + role;
+        div.innerText = text;
+        chat.appendChild(div);
+        div.scrollIntoView();
+    }
+    
+    async function sendMsg() {
+        let input = document.getElementById('textInput');
+        let text = input.value.trim();
+        if (!text) return;
+        input.value = '';
+        addMsg('user', text);
+        await process(text);
+    }
+    
+    async function quickSend(text) {
+        addMsg('user', text);
+        await process(text);
+    }
+    
+    async function process(text) {
+        addMsg('bot', '🤔...');
+        try {
+            let res = await fetch('http://localhost:11434/api/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    model: 'qwen2.5:3b', 
+                    prompt: `租户${tenantId}用户问: ${text}，请友好回答`,
+                    stream: false 
+                })
+            });
+            let data = await res.json();
+            let reply = data.response || '收到';
+            document.querySelector('.msg.bot:last-child').remove();
+            addMsg('bot', reply);
+        } catch(e) {
+            document.querySelector('.msg.bot:last-child').remove();
+            addMsg('bot', '网络错误');
+        }
+    }
+    
+    function logout() {
+        localStorage.clear();
+        window.location.href = '/tenant/index.html';
+    }
+    
+    function initVoice() {
+        if ('webkitSpeechRecognition' in window) {
+            let recognition = new webkitSpeechRecognition();
+            recognition.lang = 'zh-CN';
+            let listening = false;
+            recognition.onstart = () => {
+                listening = true;
+                document.getElementById('micBtn').classList.add('listening');
+                document.getElementById('status').innerHTML = '🎤 聆听中...';
+            };
+            recognition.onend = () => {
+                listening = false;
+                document.getElementById('micBtn').classList.remove('listening');
+                document.getElementById('status').innerHTML = '⚡ 点击说话';
+            };
+            recognition.onresult = (e) => {
+                let text = e.results[0][0].transcript;
+                document.getElementById('textInput').value = text;
+                sendMsg();
+            };
+            window.toggleVoice = () => {
+                if (listening) recognition.stop();
+                else recognition.start();
+            };
+        } else {
+            document.getElementById('status').innerHTML = '⚠️ 请用 Chrome';
+            window.toggleVoice = () => alert('请用 Chrome 浏览器');
+        }
+    }
+    
+    initVoice();
+</script>
+</body>
+</html>

@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ClawsJoy 审核看板</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        h1 { color: #667eea; margin-bottom: 20px; }
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.1);
+            padding: 10px 20px;
+            border-radius: 12px;
+        }
+        .stat-number { font-size: 24px; font-weight: bold; color: #667eea; }
+        .stat-label { font-size: 12px; color: #aaa; }
+        .task-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+            gap: 20px;
+        }
+        .task-card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 20px;
+        }
+        .task-title { font-size: 18px; font-weight: bold; color: #fff; margin-bottom: 10px; }
+        .task-submitter {
+            background: rgba(102,126,234,0.3);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        .svg-preview {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+            text-align: center;
+            min-height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .svg-preview svg {
+            max-width: 100%;
+            height: auto;
+        }
+        .deploy-card {
+            background: #0d0d1a;
+            border-radius: 12px;
+            padding: 15px;
+            border-left: 4px solid #10b981;
+            margin: 15px 0;
+        }
+        .deploy-command {
+            background: #1a1a2e;
+            padding: 12px;
+            border-radius: 8px;
+            font-family: monospace;
+            color: #50fa7b;
+            font-size: 13px;
+        }
+        .video-player {
+            margin: 15px 0;
+            text-align: center;
+        }
+        .video-player iframe {
+            width: 100%;
+            max-width: 480px;
+            height: 270px;
+            border-radius: 12px;
+        }
+        .btn-approve, .btn-reject {
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+            margin-right: 10px;
+        }
+        .btn-approve { background: #10b981; color: white; }
+        .btn-reject { background: #ef4444; color: white; }
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .filter-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            color: white;
+            cursor: pointer;
+        }
+        .filter-btn.active { background: #667eea; }
+        .refresh-btn {
+            background: #667eea;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            margin-left: 20px;
+        }
+        .score-input {
+            width: 70px;
+            padding: 8px;
+            border-radius: 6px;
+            border: none;
+            text-align: center;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+        }
+        .badge-pending { background: #f59e0b; }
+        .badge-approved { background: #10b981; }
+        .badge-rejected { background: #ef4444; }
+        .score-large {
+            font-size: 20px;
+            font-weight: bold;
+            color: #f59e0b;
+        }
+    </style>
+<script>
+function renderVideoContent_fixed(task) {
+    var videoUrl = task.video_url || task.content || "";
+    if (videoUrl && (videoUrl.endsWith(".mp4") || videoUrl.endsWith(".webm") || videoUrl.endsWith(".mov") || videoUrl.startsWith("/videos/"))) {
+        return "<video controls src="" + videoUrl + "" style="width:100%; max-height:250px; border-radius:8px;"></video>";
+    }
+    var ytMatch = videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+    if (ytMatch) {
+        return "<iframe src="https://www.youtube.com/embed/" + ytMatch[1] + "" style="width:100%; height:200px; border-radius:8px;"></iframe>";
+    }
+    return "<div style="padding:20px;text-align:center;background:#333;border-radius:8px;">🎬 " + (task.title || "视频") + "<br>无视频链接</div>";
+}
+</script>
+<script>
+function renderVideoContent(content, title) {
+    var videoUrl = content || "";
+    if (videoUrl && (videoUrl.startsWith("/videos/") || videoUrl.endsWith(".mp4") || videoUrl.endsWith(".webm") || videoUrl.endsWith(".mov"))) {
+        return "<video controls src="" + videoUrl + "" style="width:100%; max-height:250px; border-radius:8px;"></video>";
+    }
+    var ytMatch = videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+    if (ytMatch) {
+        return "<iframe src="https://www.youtube.com/embed/" + ytMatch[1] + "" style="width:100%; height:200px; border-radius:8px;"></iframe>";
+    }
+    if (videoUrl && videoUrl !== "null") {
+        return "<div style="padding:15px;text-align:center;background:#333;border-radius:8px;">🎬 <a href="" + videoUrl + "" target="_blank" style="color:#667eea;">点击打开视频链接</a></div>";
+    }
+    return "<div style="padding:20px;text-align:center;background:#333;border-radius:8px;">🎬 " + (title || "视频") + "<br>无视频链接</div>";
+}
+</script>
+</head>
+<body>
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h1>👑 ClawsJoy 审核看板</h1>
+        <button class="refresh-btn" onclick="loadTasks()">🔄 刷新</button>
+    </div>
+
+    <div class="stats">
+        <div class="stat-card"><div class="stat-number" id="pendingCount">0</div><div class="stat-label">待审核</div></div>
+        <div class="stat-card"><div class="stat-number" id="approvedCount">0</div><div class="stat-label">已通过</div></div>
+        <div class="stat-card"><div class="stat-number" id="rejectedCount">0</div><div class="stat-label">已驳回</div></div>
+    </div>
+
+    <div class="filter-bar" id="filterBar">
+        <button class="filter-btn active" data-filter="all">全部</button>
+        <button class="filter-btn" data-filter="pending">待审核</button>
+        <button class="filter-btn" data-filter="approved">已通过</button>
+        <button class="filter-btn" data-filter="rejected">已驳回</button>
+    </div>
+
+    <div id="taskList" class="task-grid">加载中...</div>
+</div>
+
+<script>
+    const API_URL = 'http://localhost:5005/api/admin';
+    let currentFilter = 'all';
+
+    function getIcon(submitter) {
+        const icons = {
+            'writer': '✍️', 'engineer': '🔧', 'spider': '🕷️',
+            'messenger': '💬', 'video-maker': '🎬', 'youtube': '📺',
+            'xiaohongshu': '📕', 'designer': '🎨'
+        };
+        return icons[submitter] || '🤖';
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return String(text).replace(/[&<>]/g, m => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;'));
+    }
+
+    function renderSvg(content) {
+        // 提取 SVG 代码
+        let svgMatch = content.match(/<svg[\s\S]*?<\/svg>/i);
+        if (svgMatch) {
+            return `<div class="svg-preview">${svgMatch[0]}</div>`;
+        }
+        // 如果 content 本身就是 SVG
+        if (content.trim().startsWith('<svg')) {
+            return `<div class="svg-preview">${content}</div>`;
+        }
+        return null;
+    }
+
+    function renderContent(task) {
+        const submitter = task.submitter;
+        let content = task.content || '';
+        
+        // 设计稿 - 渲染 SVG
+        if (submitter === 'designer') {
+            const svgHtml = renderSvg(content);
+            if (svgHtml) {
+                return svgHtml;
+            }
+            return `<pre style="white-space:pre-wrap; font-size:12px;">${escapeHtml(content)}</pre>`;
+        }
+        
+        // 工程师任务
+        if (submitter === 'engineer') {
+            const cmd = task.parsed_command || task.command || content;
+            const desc = task.parsed_description || task.description || '';
+            return `
+                <div class="deploy-card">
+                    <div style="color:#10b981; margin-bottom:8px;">🔧 部署任务</div>
+                    <div class="deploy-command">$ ${escapeHtml(cmd)}</div>
+                    ${desc ? `<div class="deploy-desc" style="color:#aaa; font-size:12px; margin-top:8px;">📝 ${escapeHtml(desc)}</div>` : ''}
+                </div>
+            `;
+        }
+        
+        // 视频任务
+        if ((submitter === 'video-maker' || submitter === 'youtube') && task.youtube_id) {
+            return `
+                <div class="video-player">
+                    <iframe src="https://www.youtube.com/embed/${task.youtube_id}" frameborder="0" allowfullscreen></iframe>
+                </div>
+            `;
+        }
+        
+        // 小红书
+        if (submitter === 'xiaohongshu') {
+            return `<div style="background:rgba(255,255,255,0.08); padding:12px; border-radius:12px;">📕 ${escapeHtml(content)}</div>`;
+        }
+        
+        // HTML 内容
+        if (content.includes('<h') && content.includes('<p')) {
+            return `<div style="color:#ccc; line-height:1.5;">${content}</div>`;
+        }
+        
+        return `<pre style="white-space:pre-wrap; font-size:12px;">${escapeHtml(content)}</pre>`;
+    }
+
+    async function approveTask(id) {
+        const score = document.getElementById(`score_${id}`).value;
+        await fetch(`${API_URL}/approve`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: id, comment: `通过，评分:${score}` })
+        });
+        loadTasks();
+    }
+
+    async function rejectTask(id) {
+        const reason = prompt('驳回原因:');
+        if (!reason) return;
+        await fetch(`${API_URL}/reject`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: id, reason: reason })
+        });
+        loadTasks();
+    }
+
+    async function loadTasks() {
+        try {
+            const resp = await fetch(`${API_URL}/tasks`);
+            let tasks = await resp.json();
+            
+            const pending = tasks.filter(t => t.status === 'pending').length;
+            const approved = tasks.filter(t => t.status === 'approved').length;
+            const rejected = tasks.filter(t => t.status === 'rejected').length;
+            
+            document.getElementById('pendingCount').innerText = pending;
+            document.getElementById('approvedCount').innerText = approved;
+            document.getElementById('rejectedCount').innerText = rejected;
+            
+            if (currentFilter !== 'all') {
+                tasks = tasks.filter(t => t.status === currentFilter);
+            }
+            
+            const container = document.getElementById('taskList');
+            if (tasks.length === 0) {
+                container.innerHTML = '<div style="text-align:center;padding:50px;">暂无任务</div>';
+                return;
+            }
+            
+            container.innerHTML = tasks.map(task => {
+                const statusClass = `badge-${task.status}`;
+                const statusText = task.status === 'pending' ? '⏳ 待审核' : (task.status === 'approved' ? '✅ 已通过' : '❌ 已驳回');
+                
+                return `
+                    <div class="task-card">
+                        <div class="task-title">${getIcon(task.submitter)} ${escapeHtml(task.title || '无标题')}</div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <span class="task-submitter">${escapeHtml(task.submitter)}</span>
+                            <span class="badge ${statusClass}">${statusText}</span>
+                        </div>
+                        <div class="score-large">⭐ ${task.score || '未评分'}</div>
+                        ${renderContent(task)}
+                        <div style="font-size:11px; color:#666; margin: 10px 0;">📅 ${task.created_at || ''}</div>
+                        ${task.status === 'pending' ? `
+                            <div>
+                                <input type="number" id="score_${task.id}" class="score-input" value="85" min="0" max="100">
+                                <button class="btn-approve" onclick="approveTask(${task.id})">✅ 通过</button>
+                                <button class="btn-reject" onclick="rejectTask(${task.id})">❌ 驳回</button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        } catch(e) {
+            console.error(e);
+            document.getElementById('taskList').innerHTML = `<div style="padding:50px;">加载失败: ${e.message}</div>`;
+        }
+    }
+
+    // 筛选器
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.onclick = () => {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentFilter = btn.dataset.filter;
+            loadTasks();
+        };
+    });
+
+    loadTasks();
+    setInterval(loadTasks, 10000);
+</script>
+</body>
+</html>
+<script>
+// 修复视频预览：识别 /videos/ 开头的本地视频
+function isLocalVideo(content) {
+    return content && (content.startsWith('/videos/') || content.endsWith('.mp4') || content.endsWith('.webm'));
+}
+
+// 覆盖原有的视频渲染逻辑
+window.renderVideoContent_fixed = function(task) {
+    var content = task.content || '';
+    if (isLocalVideo(content)) {
+        return '<video controls src="' + content + '" style="width:100%; max-height:250px; border-radius:8px;"></video>';
+    }
+    // YouTube 检测
+    var ytMatch = content.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+    if (ytMatch) {
+        return '<iframe src="https://www.youtube.com/embed/' + ytMatch[1] + '" style="width:100%; height:200px; border-radius:8px;"></iframe>';
+    }
+    return '<div style="padding:20px;text-align:center;background:#333;border-radius:8px;">🎬 视频链接: <a href="' + content + '" target="_blank">点击播放</a></div>';
+};
+</script>

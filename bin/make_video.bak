@@ -1,0 +1,86 @@
+#!/bin/bash
+# Video-Maker 视频生成工具（修复判断）
+
+SCRIPT_SOURCE="$1"
+IMAGE_SOURCE="$2"
+OUTPUT_NAME="${3:-video_$(date +%Y%m%d_%H%M%S)}"
+TITLE="${4:-ClawsJoy 宣传片}"
+
+mkdir -p "$HOME/.openclaw/web/videos"
+mkdir -p "$HOME/clawsjoy/outbox"
+
+# 获取脚本文本
+if [ -f "$SCRIPT_SOURCE" ]; then
+    SCRIPT_TEXT=$(cat "$SCRIPT_SOURCE")
+else
+    SCRIPT_TEXT="$SCRIPT_SOURCE"
+fi
+
+echo "🎬 Video-Maker 开始制作视频..."
+echo "📝 脚本: ${SCRIPT_TEXT:0:100}..."
+
+# 1. 准备图片
+if [ -f "$IMAGE_SOURCE" ]; then
+    IMAGE_FILE="$IMAGE_SOURCE"
+elif [ -d "$IMAGE_SOURCE" ]; then
+    # 找第一张图片
+    IMAGE_FILE=$(find "$IMAGE_SOURCE" -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.svg" \) | head -1)
+else
+    echo "❌ 无效的图片来源: $IMAGE_SOURCE"
+    exit 1
+fi
+
+if [ ! -f "$IMAGE_FILE" ]; then
+    echo "❌ 找不到图片: $IMAGE_FILE"
+    exit 1
+fi
+
+echo "🖼️ 使用图片: $IMAGE_FILE"
+
+# 2. 生成配音
+AUDIO_FILE="/tmp/voice_$$.mp3"
+echo "🔊 生成配音..."
+if command -v edge-tts &> /dev/null; then
+    edge-tts --text "$SCRIPT_TEXT" --write-media "$AUDIO_FILE" --voice zh-CN-XiaoxiaoNeural 2>/dev/null
+else
+    echo "❌ edge-tts 未安装"
+    exit 1
+fi
+
+# 3. SVG 转 PNG
+if [[ "$IMAGE_FILE" == *.svg ]]; then
+    PNG_FILE="/tmp/cover_$$.png"
+    convert "$IMAGE_FILE" "$PNG_FILE" 2>/dev/null || {
+        echo "❌ SVG 转换失败"
+        exit 1
+    }
+    IMAGE_FILE="$PNG_FILE"
+fi
+
+# 4. 获取音频时长
+DURATION=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$AUDIO_FILE" 2>/dev/null)
+DURATION=${DURATION%.*}
+[ -z "$DURATION" ] || [ "$DURATION" -lt 1 ] && DURATION=10
+
+# 5. 合成视频
+VIDEO_FILE="$HOME/.openclaw/web/videos/${OUTPUT_NAME}.mp4"
+echo "🎬 合成视频中（时长 ${DURATION}秒）..."
+
+ffmpeg -loop 1 -i "$IMAGE_FILE" -i "$AUDIO_FILE" \
+       -c:v libx264 -c:a aac -shortest \
+       -vf "fps=30,scale=1280:720:force_original_aspect_ratio=1,pad=1280:720:(ow-iw)/2:(oh-ih)/2,drawtext=text='${TITLE}':fontfile=/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc:fontsize=36:fontcolor=white:x=(w-text_w)/2:y=50:box=1:boxcolor=black@0.6:boxborderw=10,drawtext=text='${SCRIPT_TEXT:0:50}':fontfile=/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc:fontsize=24:fontcolor=#c3d0fe:x=10:y=h-80:box=1:boxcolor=black@0.5:boxborderw=8" \
+       -y "$VIDEO_FILE" -loglevel error
+
+# 6. 检查结果
+if [ -f "$VIDEO_FILE" ] && [ $(stat -c%s "$VIDEO_FILE" 2>/dev/null || echo 0) -gt 10000 ]; then
+    echo "✅ 视频已生成: $VIDEO_FILE"
+    echo "📹 大小: $(du -h "$VIDEO_FILE" | cut -f1)"
+    ~/clawsjoy/bin/write_video "$TITLE" "/videos/${OUTPUT_NAME}.mp4" "video-maker"
+    echo "📋 已提交审核"
+else
+    echo "❌ 视频生成失败，文件大小不足"
+    exit 1
+fi
+
+# 清理临时文件
+rm -f "$AUDIO_FILE" "$PNG_FILE" 2>/dev/null

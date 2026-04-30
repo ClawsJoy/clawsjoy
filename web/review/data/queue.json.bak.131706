@@ -1,0 +1,193 @@
+{
+  "pending_review": [
+    {
+      "id": "test_001",
+      "title": "AI团队协作测试",
+      "content": "💡【AI助力高效协作】✨\nAI让团队协作更顺畅！",
+      "source_agent": "writer",
+      "submitted_at": "2026-04-21T10:00:00",
+      "status": "pending_review"
+    },
+    {
+      "id": 1777001817764,
+      "title": "AI 写作技巧",
+      "content": "<h1>AI 写作的5个技巧</h1><p>1. 明确主题</p><p>2. 结构清晰</p><p>3. 使用示例</p><p>4. 语言简洁</p><p>5. 反复修改</p>",
+      "submitter": "writer",
+      "status": "pending",
+      "created_at": "2026-04-24 11:36:57"
+    },
+    {
+      "id": 1777001818316,
+      "title": "JOY Mate 功能介绍",
+      "content": "<h1>JOY Mate 核心功能</h1><ul><li>多租户隔离</li><li>Agent 自动进化</li><li>文件事件驱动</li><li>审核看板</li></ul>",
+      "submitter": "writer",
+      "status": "pending",
+      "created_at": "2026-04-24 11:36:58"
+    },
+    {
+      "id": 1777001858858,
+      "title": "格式错误的文章",
+      "content": "这是纯文本，没有HTML标签，格式不规范，应该被驳回",
+      "submitter": "writer_test",
+      "status": "pending",
+      "created_at": "2026-04-24 11:37:38"
+    },
+    {
+      "id": 1777002506305,
+      "title": "AI 新闻：OpenAI 发布新模型",
+      "content": "<h1>OpenAI 发布 GPT-5</h1><p>OpenAI 今日发布新一代语言模型，性能提升显著。</p><ul><li>更强的推理能力</li><li>更长的上下文窗口</li><li>更低的延迟</li></ul>",
+      "submitter": "spider",
+      "status": "pending",
+      "created_at": "2026-04-24 11:48:26"
+    },
+    {
+      "id": 1777003557964,
+      "title": "JOY Mate 正式发布",
+      "content": "<h1>JOY Mate</h1><p>让AI安全地为每个人工作</p>",
+      "submitter": "messenger",
+      "status": "pending",
+      "created_at": "2026-04-24 12:05:57"
+    },
+    {
+      "id": 1777005556946,
+      "title": "更新配置",
+      "content": "",
+      "submitter": "engineer",
+      "status": "pending",
+      "created_at": "2026-04-24 12:39:16"
+    },
+    {
+      "id": 1777005557487,
+      "title": "系统更新部署",
+      "content": "",
+      "submitter": "engineer",
+      "status": "pending",
+      "created_at": "2026-04-24 12:39:17"
+    },
+    {
+      "id": 1777005558023,
+      "title": "JOY Mate 介绍",
+      "content": "<h1>JOY Mate</h1><p>让 AI 安全地为每个人工作。</p><ul><li>多租户隔离</li><li>Agent 自动进化</li><li>文件事件驱动</li></ul>",
+      "submitter": "messenger",
+      "status": "pending",
+      "created_at": "2026-04-24 12:39:18"
+    },
+    {
+      "id": 1777005558579,
+      "title": "AI 新闻：OpenAI 发布新模型",
+      "content": "<h1>OpenAI 发布 GPT-5</h1><p>OpenAI 今日发布新一代语言模型，性能提升显著。</p><ul><li>更强的推理能力</li><li>更长的上下文窗口</li><li>更低的延迟</li></ul>",
+      "submitter": "spider",
+      "status": "pending",
+      "created_at": "2026-04-24 12:39:18"
+    },
+    {
+      "id": 1777005559124,
+      "title": "测试采集：AI 资讯",
+      "content": "<h1>AI 最新资讯</h1><p>2026年4月24日，AI 领域发生重要更新。</p><ul><li>OpenAI 发布新功能</li><li>Google AI 推出新模型</li><li>国内 AI 企业获得融资</li></ul>",
+      "submitter": "spider",
+      "status": "pending",
+      "created_at": "2026-04-24 12:39:19"
+    },
+    {
+      "id": 1777005559652,
+      "title": "宣传视频",
+      "content": "",
+      "submitter": "video-maker",
+      "status": "pending",
+      "created_at": "2026-04-24 12:39:19"
+    },
+    {
+      "id": 1777005560188,
+      "title": "ClawsJoy 产品介绍视频",
+      "content": "",
+      "submitter": "video-maker",
+      "status": "pending",
+      "created_at": "2026-04-24 12:39:20"
+    },
+    {
+      "id": 1777005560766,
+      "title": "评分功能测试",
+      "content": "<h1>测试评分</h1><p>这是一个测试评分的文章</p>",
+      "submitter": "tester",
+      "status": "pending",
+      "created_at": "2026-04-24 12:39:20"
+    },
+    {
+      "id": 1777005561294,
+      "title": "ClawsJoy 使用体验",
+      "content": "发现了一个超好用的 AI 工具 ClawsJoy！#AI #效率工具",
+      "submitter": "xiaohongshu",
+      "status": "pending",
+      "created_at": "2026-04-24 12:39:21"
+    },
+    {
+      "id": 1777005561836,
+      "title": "ClawsJoy 入门教程",
+      "content": "",
+      "submitter": "youtube",
+      "status": "pending",
+      "created_at": "2026-04-24 12:39:21"
+    },
+    {
+      "id": 1777006196436,
+      "title": "ClawsJoy 产品介绍视频",
+      "content": "",
+      "submitter": "video-maker",
+      "status": "pending",
+      "created_at": "2026-04-24 12:49:56"
+    },
+    {
+      "id": 1777006196970,
+      "title": "ClawsJoy 教程",
+      "content": "",
+      "submitter": "youtube",
+      "status": "pending",
+      "created_at": "2026-04-24 12:49:56"
+    },
+    {
+      "id": 1777006882469,
+      "title": "ClawsJoy 演示视频",
+      "content": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "submitter": "video-maker",
+      "status": "pending",
+      "created_at": "2026-04-24 13:01:22"
+    },
+    {
+      "id": 1777006975846,
+      "title": "修复审核看板视频预览功能",
+      "content": "",
+      "submitter": "chief",
+      "status": "pending",
+      "created_at": "2026-04-24 13:02:55"
+    },
+    {
+      "id": 1777007019928,
+      "title": "ClawsJoy 功能演示",
+      "content": "",
+      "submitter": "video-maker",
+      "status": "pending",
+      "created_at": "2026-04-24 13:03:39"
+    },
+    {
+      "id": 1777007410162,
+      "title": "修复审核看板",
+      "content": "{\n  \"title\": \"修复审核看板\",\n  \"command\": \"cd ~/.openclaw/web/review && cp index.html index.html.bak\",\n  \"description\": \"修复视频预览功能\",\n  \"submitter\": \"engineer\",\n  \"created_at\": \"2026-04-24T13:10:09+08:00\",\n  \"status\": \"pending\"\n}\n",
+      "submitter": "engineer",
+      "status": "pending",
+      "created_at": "2026-04-24 13:10:10"
+    }
+  ],
+  "pending_final": [],
+  "completed": [
+    {
+      "id": 1777001627904,
+      "title": "Reviewer训练测试文章",
+      "content": "<h1>测试审核功能</h1><p>这是一篇用于训练Reviewer的文章。</p><ul><li>测试点1：格式检查</li><li>测试点2：内容评估</li><li>测试点3：评分标准</li></ul><p>希望Reviewer能给出85分以上的评价。</p>",
+      "submitter": "writer_train",
+      "status": "approved",
+      "created_at": "2026-04-24 11:33:47",
+      "reviewer_comment": "✅ 88分：格式规范，内容清晰，测试文章质量良好，建议通过",
+      "reviewed_at": "2026-04-24T11:39:32.916657"
+    }
+  ]
+}

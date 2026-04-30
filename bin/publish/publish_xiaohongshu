@@ -1,0 +1,20 @@
+#!/bin/bash
+# 小红书发布专用
+
+TITLE="$1"
+CONTENT="$2"
+FILENAME="$HOME/clawsjoy/outbox/xiaohongshu_$(date +%Y%m%d_%H%M%S_%N).xhs.json"
+
+mkdir -p "$HOME/clawsjoy/outbox"
+
+cat > "$FILENAME" << JSON
+{
+  "title": "$TITLE",
+  "content": "$CONTENT",
+  "platform": "xiaohongshu",
+  "submitter": "xiaohongshu",
+  "created_at": "$(date -Iseconds)"
+}
+JSON
+
+echo "✅ 小红书发布任务已提交: $TITLE"

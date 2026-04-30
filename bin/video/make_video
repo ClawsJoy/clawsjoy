@@ -1,0 +1,70 @@
+#!/bin/bash
+# make_video - 支持中文目录的图片转视频脚本
+
+SCRIPT_TEXT="$1"
+IMAGE_SOURCE="$2"
+OUTPUT_FILE="$3"
+TITLE="$4"
+
+echo "🎬 Video-Maker 开始制作视频..."
+echo "📝 脚本: ${SCRIPT_TEXT:0:50}..."
+
+# 查找图片文件（增强中文支持）
+IMAGE_FILE=""
+
+# 如果是目录，查找目录下的图片
+if [ -d "$IMAGE_SOURCE" ]; then
+    # 使用 ls 直接列出，支持中文
+    IMAGE_FILE=$(ls -1 "$IMAGE_SOURCE"/*.{jpg,jpeg,png} 2>/dev/null | head -1)
+fi
+
+# 如果没找到，尝试在 web/images 下查找最新图片
+if [ -z "$IMAGE_FILE" ]; then
+    IMAGE_FILE=$(find /root/.openclaw/web/images -type f \( -name "*.jpg" -o -name "*.png" \) -printf "%T@ %p\n" 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-)
+fi
+
+# 如果还是没找到，用占位图
+if [ -z "$IMAGE_FILE" ] || [ ! -f "$IMAGE_FILE" ]; then
+    echo "⚠️ 没有找到图片，使用占位图"
+    IMAGE_FILE="/root/.openclaw/web/images/placeholder.jpg"
+    # 创建占位图
+    convert -size 1280x720 xc:"#667eea" "$IMAGE_FILE" 2>/dev/null || echo "占位图备用"
+fi
+
+echo "🖼️ 使用图片: $IMAGE_FILE"
+
+# 音频生成
+AUDIO_FILE="/tmp/audio_$$.mp3"
+echo "🔊 生成配音..."
+if command -v edge-tts >/dev/null 2>&1; then
+    edge-tts --text "$SCRIPT_TEXT" --voice zh-CN-XiaoxiaoNeural --write-media "$AUDIO_FILE" 2>/dev/null
+else
+    echo "⚠️ edge-tts 未安装，使用静音"
+    ffmpeg -f lavfi -i anullsrc=r=24000:cl=mono -t 10 -y "$AUDIO_FILE" 2>/dev/null
+fi
+
+# 生成视频帧
+PNG_FILE="/tmp/frame_$$.png"
+if command -v convert >/dev/null 2>&1; then
+    convert "$IMAGE_FILE" -resize 1280x720 -background "#667eea" -gravity center -extent 1280x720 "$PNG_FILE" 2>/dev/null
+else
+    cp "$IMAGE_FILE" "$PNG_FILE" 2>/dev/null
+fi
+
+# 合成视频
+ffmpeg -loop 1 -i "$PNG_FILE" -i "$AUDIO_FILE" \
+    -c:v libx264 -tune stillimage -c:a aac -b:a 128k \
+    -pix_fmt yuv420p -shortest -y "$OUTPUT_FILE" 2>/dev/null
+
+if [ -f "$OUTPUT_FILE" ] && [ $(stat -c%s "$OUTPUT_FILE" 2>/dev/null || echo 0) -gt 10000 ]; then
+    echo "✅ 视频已生成: $OUTPUT_FILE"
+    echo "📹 大小: $(du -h "$OUTPUT_FILE" | cut -f1)"
+    ~/clawsjoy/bin/write_video "$TITLE" "/videos/$(basename "$OUTPUT_FILE")" "video-maker"
+    echo "📋 已提交审核"
+else
+    echo "❌ 视频生成失败，创建占位视频"
+    ffmpeg -f lavfi -i color=c=#667eea:s=1280x720:d=5 -vf "drawtext=text='$TITLE':fontcolor=white:fontsize=48:x=(w-text_w)/2:y=(h-text_h)/2" -y "$OUTPUT_FILE" 2>/dev/null
+fi
+
+rm -f "$AUDIO_FILE" "$PNG_FILE" 2>/dev/null
+echo "🎉 完成"

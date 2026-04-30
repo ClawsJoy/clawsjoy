@@ -1,0 +1,54 @@
+{
+  "shops": [
+    {
+      "id": 1,
+      "name": "星巴克",
+      "distance": "200m",
+      "rating": 4.8,
+      "delivery_fee": 5.0,
+      "menu": {
+        "拿铁": {"price": 32, "size": "中杯", "hot_ice": ["热","冰"]},
+        "美式": {"price": 28, "size": "中杯", "hot_ice": ["热","冰"]},
+        "卡布奇诺": {"price": 32, "size": "中杯", "hot_ice": ["热"]},
+        "摩卡": {"price": 35, "size": "中杯", "hot_ice": ["热","冰"]},
+        "焦糖玛奇朵": {"price": 36, "size": "中杯", "hot_ice": ["热","冰"]}
+      }
+    },
+    {
+      "id": 2,
+      "name": "瑞幸咖啡",
+      "distance": "350m",
+      "rating": 4.6,
+      "delivery_fee": 0,
+      "menu": {
+        "拿铁": {"price": 26, "size": "大杯", "hot_ice": ["热","冰"]},
+        "美式": {"price": 23, "size": "大杯", "hot_ice": ["热","冰"]},
+        "卡布奇诺": {"price": 28, "size": "大杯", "hot_ice": ["热"]},
+        "摩卡": {"price": 29, "size": "大杯", "hot_ice": ["热","冰"]}
+      }
+    },
+    {
+      "id": 3,
+      "name": "Costa",
+      "distance": "500m",
+      "rating": 4.7,
+      "delivery_fee": 6.0,
+      "menu": {
+        "拿铁": {"price": 34, "size": "中杯", "hot_ice": ["热","冰"]},
+        "美式": {"price": 30, "size": "中杯", "hot_ice": ["热","冰"]},
+        "摩卡": {"price": 36, "size": "中杯", "hot_ice": ["热","冰"]}
+      }
+    },
+    {
+      "id": 4,
+      "name": "Manner Coffee",
+      "distance": "800m",
+      "rating": 4.5,
+      "delivery_fee": 7.0,
+      "menu": {
+        "拿铁": {"price": 20, "size": "小杯", "hot_ice": ["热","冰"]},
+        "澳白": {"price": 22, "size": "小杯", "hot_ice": ["热"]}
+      }
+    }
+  ]
+}

@@ -1,0 +1,118 @@
+{
+  "agents": {
+    "free": [
+      {
+        "id": "chief_free",
+        "name": "首席秘书",
+        "description": "任务分配和协调，JOY Mate 的核心智能体",
+        "price": 0,
+        "type": "free",
+        "agent_type": "chief",
+        "icon": "🎯",
+        "features": ["任务分配", "进度追踪", "异常处理"]
+      },
+      {
+        "id": "spider_free",
+        "name": "信息采集员",
+        "description": "自动采集热点新闻和数据",
+        "price": 0,
+        "type": "free",
+        "agent_type": "spider",
+        "icon": "🕷️",
+        "features": ["热点采集", "数据监控", "定时任务"]
+      }
+    ],
+    "paid": [
+      {
+        "id": "writer_pro",
+        "name": "文案大师",
+        "description": "AI 文案生成，小红书/公众号/抖音多平台适配",
+        "price": 9.9,
+        "price_yearly": 99,
+        "type": "paid",
+        "agent_type": "writer",
+        "icon": "✍️",
+        "features": ["多平台文案", "SEO优化", "风格定制", "批量生成"]
+      },
+      {
+        "id": "reviewer_pro",
+        "name": "内容审核官",
+        "description": "A/B/C 级评分，内容质量把控",
+        "price": 9.9,
+        "price_yearly": 99,
+        "type": "paid",
+        "agent_type": "reviewer",
+        "icon": "✅",
+        "features": ["智能评分", "内容优化建议", "批量审核", "历史追溯"]
+      },
+      {
+        "id": "designer_pro",
+        "name": "视觉设计师",
+        "description": "自动生成封面图、配图、Logo",
+        "price": 9.9,
+        "price_yearly": 99,
+        "type": "paid",
+        "agent_type": "designer",
+        "icon": "🎨",
+        "features": ["封面设计", "配图生成", "品牌规范", "批量输出"]
+      },
+      {
+        "id": "messenger_pro",
+        "name": "多平台发布官",
+        "description": "一键发布到小红书、公众号、抖音",
+        "price": 9.9,
+        "price_yearly": 99,
+        "type": "paid",
+        "agent_type": "messenger",
+        "icon": "📱",
+        "features": ["多平台发布", "定时发布", "批量管理", "数据统计"]
+      },
+      {
+        "id": "engineer_pro",
+        "name": "技术工程师",
+        "description": "自动化脚本生成，技术支持",
+        "price": 9.9,
+        "price_yearly": 99,
+        "type": "paid",
+        "agent_type": "engineer",
+        "icon": "🔧",
+        "features": ["脚本生成", "自动化部署", "技术诊断", "代码优化"]
+      },
+      {
+        "id": "video_maker_pro",
+        "name": "视频制作人",
+        "description": "AI 视频生成，自动配音配字幕",
+        "price": 19.9,
+        "price_yearly": 199,
+        "type": "paid",
+        "agent_type": "video-maker",
+        "icon": "🎬",
+        "features": ["视频生成", "自动配音", "字幕添加", "模板库"]
+      }
+    ],
+    "bundles": [
+      {
+        "id": "creator_bundle",
+        "name": "创作者套装",
+        "description": "文案 + 设计 + 发布，内容创作全流程",
+        "price": 19.9,
+        "price_yearly": 199,
+        "type": "bundle",
+        "agents": ["writer_pro", "designer_pro", "messenger_pro"],
+        "icon": "📦",
+        "features": ["文案生成", "视觉设计", "多平台发布", "节省 40%"]
+      },
+      {
+        "id": "full_bundle",
+        "name": "完整套装",
+        "description": "所有智能体，全能 AI 助手",
+        "price": 49.9,
+        "price_yearly": 499,
+        "type": "bundle",
+        "agents": ["chief_free", "spider_free", "writer_pro", "reviewer_pro", "designer_pro", "messenger_pro", "engineer_pro", "video_maker_pro"],
+        "icon": "🚀",
+        "features": ["全部智能体", "优先支持", "专属客服", "节省 50%"]
+      }
+    ]
+  }
+}

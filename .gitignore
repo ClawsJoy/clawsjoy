@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+env/
+venv/
+.env
+*.log
+*.pid
+*.pkl
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Data
+data/*.db
+data/*.db-journal
+logs/
+outbox/
+tenants/*/workspace/
+backups/
+
+# Secrets
+config/.env
+config/webhook.json

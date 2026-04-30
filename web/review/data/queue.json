@@ -1,0 +1,1805 @@
+{
+  "pending_review": [
+    {
+      "id": "test_001",
+      "title": "AI\u56e2\u961f\u534f\u4f5c\u6d4b\u8bd5",
+      "content": "\ud83d\udca1\u3010AI\u52a9\u529b\u9ad8\u6548\u534f\u4f5c\u3011\u2728\nAI\u8ba9\u56e2\u961f\u534f\u4f5c\u66f4\u987a\u7545\uff01",
+      "source_agent": "writer",
+      "submitted_at": "2026-04-21T10:00:00",
+      "status": "pending_review"
+    },
+    {
+      "id": 1777097644391,
+      "title": "\u5c01\u9762",
+      "content": "<svg><rect fill='#ff6b6b'/><text></text></svg>",
+      "submitter": "designer",
+      "status": "pending",
+      "created_at": "2026-04-25 14:14:04"
+    },
+    {
+      "id": 1777097648181,
+      "title": "\u5ba3\u4f20\u7247\u5b8c\u6210",
+      "content": "<p>\u89c6\u9891\u5df2\u751f\u6210</p>",
+      "submitter": "messenger",
+      "status": "pending",
+      "created_at": "2026-04-25 14:14:08"
+    },
+    {
+      "id": 1777098250341,
+      "title": "\u5c01\u9762",
+      "content": "<svg><rect fill='#ff6b6b'/><text></text></svg>",
+      "submitter": "designer",
+      "status": "pending",
+      "created_at": "2026-04-25 14:24:10"
+    },
+    {
+      "id": 1777098251903,
+      "title": "\u5ba3\u4f20\u7247\u5b8c\u6210",
+      "content": "<p>\u89c6\u9891\u5df2\u751f\u6210</p>",
+      "submitter": "messenger",
+      "status": "pending",
+      "created_at": "2026-04-25 14:24:11"
+    },
+    {
+      "id": 1777098261603,
+      "title": "\u5c01\u9762",
+      "content": "<svg><rect fill='#ff6b6b'/><text></text></svg>",
+      "submitter": "designer",
+      "status": "pending",
+      "created_at": "2026-04-25 14:24:21"
+    },
+    {
+      "id": 1777098277431,
+      "title": "\u5ba3\u4f20\u7247\u5b8c\u6210",
+      "content": "<p>\u89c6\u9891\u5df2\u751f\u6210</p>",
+      "submitter": "messenger",
+      "status": "pending",
+      "created_at": "2026-04-25 14:24:37"
+    },
+    {
+      "id": 1777098277954,
+      "title": "\u5c01\u9762",
+      "content": "<svg><rect fill='#ff6b6b'/><text></text></svg>",
+      "submitter": "designer",
+      "status": "pending",
+      "created_at": "2026-04-25 14:24:37"
+    },
+    {
+      "id": 1777098279979,
+      "title": "\u5ba3\u4f20\u7247\u5b8c\u6210",
+      "content": "<p>\u89c6\u9891\u5df2\u751f\u6210</p>",
+      "submitter": "messenger",
+      "status": "pending",
+      "created_at": "2026-04-25 14:24:39"
+    },
+    {
+      "id": 1777102017261,
+      "title": "shanghai\u5ba3\u4f20\u7247",
+      "content": "\u4efb\u52a1: shanghai, \u98ce\u683c: warm",
+      "submitter": "\u79df\u6237_\u79df\u62371",
+      "tenant": "\u79df\u62371",
+      "status": "pending",
+      "created_at": "2026-04-25 15:26:57"
+    },
+    {
+      "id": 1777102149949,
+      "title": "\u624b\u52a8\u6d4b\u8bd5\u4efb\u52a1",
+      "content": "\u8fd9\u662f\u624b\u52a8\u6dfb\u52a0\u7684\u6d4b\u8bd5\u5185\u5bb9",
+      "submitter": "\u79df\u62371",
+      "tenant": "\u79df\u62371",
+      "status": "pending",
+      "created_at": "2026-04-25 15:29:09"
+    },
+    {
+      "id": 1777102237888,
+      "title": "shenzhen\u5ba3\u4f20\u7247",
+      "content": "\u57ce\u5e02: shenzhen, \u98ce\u683c: modern",
+      "submitter": "\u79df\u6237_\u79df\u62371",
+      "tenant": "\u79df\u62371",
+      "status": "pending",
+      "created_at": "2026-04-25 15:30:37"
+    },
+    {
+      "id": 1777102375794,
+      "title": "shenzhen\u5ba3\u4f20\u7247",
+      "content": "\u57ce\u5e02: shenzhen, \u98ce\u683c: modern",
+      "submitter": "\u79df\u62371",
+      "tenant": "\u79df\u62371",
+      "status": "pending",
+      "created_at": "2026-04-25 15:32:55"
+    },
+    {
+      "id": 1777102486952,
+      "title": "shenzhen\u5ba3\u4f20\u7247",
+      "content": "\u57ce\u5e02: shenzhen, \u98ce\u683c: modern",
+      "submitter": "\u79df\u62371",
+      "tenant": "\u79df\u62371",
+      "status": "pending",
+      "created_at": "2026-04-25 15:34:46"
+    },
+    {
+      "id": 1777105203090,
+      "title": "test\u5ba3\u4f20\u7247",
+      "content": "\u57ce\u5e02: test, \u98ce\u683c: modern",
+      "submitter": "\u79df\u6237_\u79df\u62371",
+      "tenant": "\u79df\u62371",
+      "status": "pending",
+      "created_at": "2026-04-25 16:20:03"
+    }
+  ],
+  "pending_final": [],
+  "completed": [
+    {
+      "id": 1777001627904,
+      "title": "Reviewer\u8bad\u7ec3\u6d4b\u8bd5\u6587\u7ae0",
+      "content": "<h1>\u6d4b\u8bd5\u5ba1\u6838\u529f\u80fd</h1><p>\u8fd9\u662f\u4e00\u7bc7\u7528\u4e8e\u8bad\u7ec3Reviewer\u7684\u6587\u7ae0\u3002</p><ul><li>\u6d4b\u8bd5\u70b91\uff1a\u683c\u5f0f\u68c0\u67e5</li><li>\u6d4b\u8bd5\u70b92\uff1a\u5185\u5bb9\u8bc4\u4f30</li><li>\u6d4b\u8bd5\u70b93\uff1a\u8bc4\u5206\u6807\u51c6</li></ul><p>\u5e0c\u671bReviewer\u80fd\u7ed9\u51fa85\u5206\u4ee5\u4e0a\u7684\u8bc4\u4ef7\u3002</p>",
+      "submitter": "writer_train",
+      "status": "approved",
+      "created_at": "2026-04-24 11:33:47",
+      "reviewer_comment": "\u2705 88\u5206\uff1a\u683c\u5f0f\u89c4\u8303\uff0c\u5185\u5bb9\u6e05\u6670\uff0c\u6d4b\u8bd5\u6587\u7ae0\u8d28\u91cf\u826f\u597d\uff0c\u5efa\u8bae\u901a\u8fc7",
+      "reviewed_at": "2026-04-24T11:39:32.916657"
+    },
+    {
+      "id": 1777007827383,
+      "title": "\u6dfb\u52a0\u5de5\u7a0b\u5e08\u4efb\u52a1\u9884\u89c8",
+      "content": "{\n  \"title\": \"\u6dfb\u52a0\u5de5\u7a0b\u5e08\u4efb\u52a1\u9884\u89c8\",\n  \"command\": \"cat > ~/.openclaw/web/review/index.html.patch\",\n  \"description\": \"\u4e3a engineer \u63d0\u4ea4\u7684\u5185\u5bb9\u6dfb\u52a0\u4e13\u95e8\u7684\u90e8\u7f72\u5361\u7247\u6837\u5f0f\",\n  \"submitter\": \"engineer\",\n  \"created_at\": \"2026-04-24T13:17:06+08:00\",\n  \"status\": \"pending\"\n}\n",
+      "submitter": "engineer",
+      "status": "approved",
+      "created_at": "2026-04-24 13:17:07",
+      "reviewer_comment": "\u901a\u8fc7\uff0c\u8bc4\u5206:85",
+      "reviewed_at": "2026-04-24T13:49:40.048250"
+    },
+    {
+      "id": 1777007019928,
+      "title": "ClawsJoy \u529f\u80fd\u6f14\u793a",
+      "content": "",
+      "submitter": "video-maker",
+      "status": "approved",
+      "created_at": "2026-04-24 13:03:39",
+      "reviewer_comment": "\u901a\u8fc7\uff0c\u8bc4\u5206:85",
+      "reviewed_at": "2026-04-24T13:50:01.217492"
+    },
+    {
+      "id": 1777006882469,
+      "title": "ClawsJoy \u6f14\u793a\u89c6\u9891",
+      "content": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "submitter": "video-maker",
+      "status": "approved",
+      "created_at": "2026-04-24 13:01:22",
+      "reviewer_comment": "\u901a\u8fc7\uff0c\u8bc4\u5206:85",
+      "reviewed_at": "2026-04-24T13:54:32.321933"
+    },
+    {
+      "id": 1777001817764,
+      "title": "AI \u5199\u4f5c\u6280\u5de7",
+      "content": "<h1>AI \u5199\u4f5c\u76845\u4e2a\u6280\u5de7</h1><p>1. \u660e\u786e\u4e3b\u9898</p><p>2. \u7ed3\u6784\u6e05\u6670</p><p>3. \u4f7f\u7528\u793a\u4f8b</p><p>4. \u8bed\u8a00\u7b80\u6d01</p><p>5. \u53cd\u590d\u4fee\u6539</p>",
+      "submitter": "writer",
+      "status": "approved",
+      "created_at": "2026-04-24 11:36:57",
+      "reviewer_comment": "\u901a\u8fc7\uff0c\u8bc4\u5206:85",
+      "reviewed_at": "2026-04-24T13:56:07.144642"
+    },
+    {
+      "id": 1777001858858,
+      "title": "\u683c\u5f0f\u9519\u8bef\u7684\u6587\u7ae0",
+      "content": "\u8fd9\u662f\u7eaf\u6587\u672c\uff0c\u6ca1\u6709HTML\u6807\u7b7e\uff0c\u683c\u5f0f\u4e0d\u89c4\u8303\uff0c\u5e94\u8be5\u88ab\u9a73\u56de",
+      "submitter": "writer_test",
+      "status": "rejected",
+      "created_at": "2026-04-24 11:37:38",
+      "reject_reason": "\u683c\u5f0f\u9519\u8bef",
+      "reviewed_at": "2026-04-24T13:56:26.664027"
+    },
+    {
+      "id": 1777002506305,
+      "title": "AI \u65b0\u95fb\uff1aOpenAI \u53d1\u5e03\u65b0\u6a21\u578b",
+      "content": "<h1>OpenAI \u53d1\u5e03 GPT-5</h1><p>OpenAI \u4eca\u65e5\u53d1\u5e03\u65b0\u4e00\u4ee3\u8bed\u8a00\u6a21\u578b\uff0c\u6027\u80fd\u63d0\u5347\u663e\u8457\u3002</p><ul><li>\u66f4\u5f3a\u7684\u63a8\u7406\u80fd\u529b</li><li>\u66f4\u957f\u7684\u4e0a\u4e0b\u6587\u7a97\u53e3</li><li>\u66f4\u4f4e\u7684\u5ef6\u8fdf</li></ul>",
+      "submitter": "spider",
+      "status": "rejected",
+      "created_at": "2026-04-24 11:48:26",
+      "reject_reason": "\u6bd4\u8f83\u65f6\u9700\u8981\u6570\u636e\u6765\u8bc1\u660e",
+      "reviewed_at": "2026-04-24T13:56:56.062797"
+    },
+    {
+      "id": 1777005558579,
+      "title": "AI \u65b0\u95fb\uff1aOpenAI \u53d1\u5e03\u65b0\u6a21\u578b",
+      "content": "<h1>OpenAI \u53d1\u5e03 GPT-5</h1><p>OpenAI \u4eca\u65e5\u53d1\u5e03\u65b0\u4e00\u4ee3\u8bed\u8a00\u6a21\u578b\uff0c\u6027\u80fd\u63d0\u5347\u663e\u8457\u3002</p><ul><li>\u66f4\u5f3a\u7684\u63a8\u7406\u80fd\u529b</li><li>\u66f4\u957f\u7684\u4e0a\u4e0b\u6587\u7a97\u53e3</li><li>\u66f4\u4f4e\u7684\u5ef6\u8fdf</li></ul>",
+      "submitter": "spider",
+      "status": "rejected",
+      "created_at": "2026-04-24 12:39:18",
+      "reject_reason": "\u9700\u8981\u6570\u636e\u8bf4\u8bdd\uff0c\u63d0\u5347\u4e86\u4ec0\u4e48\uff0c\u591a\u5c11\u7b49",
+      "reviewed_at": "2026-04-24T13:57:35.148931"
+    },
+    {
+      "id": 1777005559124,
+      "title": "\u6d4b\u8bd5\u91c7\u96c6\uff1aAI \u8d44\u8baf",
+      "content": "<h1>AI \u6700\u65b0\u8d44\u8baf</h1><p>2026\u5e744\u670824\u65e5\uff0cAI \u9886\u57df\u53d1\u751f\u91cd\u8981\u66f4\u65b0\u3002</p><ul><li>OpenAI \u53d1\u5e03\u65b0\u529f\u80fd</li><li>Google AI \u63a8\u51fa\u65b0\u6a21\u578b</li><li>\u56fd\u5185 AI \u4f01\u4e1a\u83b7\u5f97\u878d\u8d44</li></ul>",
+      "submitter": "spider",
+      "status": "rejected",
+      "created_at": "2026-04-24 12:39:19",
+      "reject_reason": "\u53ef\u4ee5\u8be6\u7ec6\u4ecb\u7ecd\u8c01/\u65f6\u95f4/\u5f15\u7528\u51fa\u5904",
+      "reviewed_at": "2026-04-24T14:14:07.954299"
+    },
+    {
+      "id": 1777005558023,
+      "title": "JOY Mate \u4ecb\u7ecd",
+      "content": "<h1>JOY Mate</h1><p>\u8ba9 AI \u5b89\u5168\u5730\u4e3a\u6bcf\u4e2a\u4eba\u5de5\u4f5c\u3002</p><ul><li>\u591a\u79df\u6237\u9694\u79bb</li><li>Agent \u81ea\u52a8\u8fdb\u5316</li><li>\u6587\u4ef6\u4e8b\u4ef6\u9a71\u52a8</li></ul>",
+      "submitter": "messenger",
+      "status": "approved",
+      "created_at": "2026-04-24 12:39:18",
+      "reviewer_comment": "\u901a\u8fc7\uff0c\u8bc4\u5206:85",
+      "reviewed_at": "2026-04-24T14:14:27.720878"
+    },
+    {
+      "id": 1777005559652,
+      "title": "\u5ba3\u4f20\u89c6\u9891",
+      "content": "",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-24 12:39:19",
+      "reject_reason": "\u89c6\u9891\u6ca1\u9884\u89c8",
+      "reviewed_at": "2026-04-24T14:14:50.572688"
+    },
+    {
+      "id": 1777005560188,
+      "title": "ClawsJoy \u4ea7\u54c1\u4ecb\u7ecd\u89c6\u9891",
+      "content": "",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-24 12:39:20",
+      "reject_reason": "\u89c6\u9891\u6ca1\u9884\u89c8",
+      "reviewed_at": "2026-04-24T14:14:59.939321"
+    },
+    {
+      "id": 1777005561836,
+      "title": "ClawsJoy \u5165\u95e8\u6559\u7a0b",
+      "content": "",
+      "submitter": "youtube",
+      "status": "rejected",
+      "created_at": "2026-04-24 12:39:21",
+      "reject_reason": "\u6ca1\u6709\u9884\u89c8",
+      "reviewed_at": "2026-04-24T14:15:14.998050"
+    },
+    {
+      "id": 1777006196436,
+      "title": "ClawsJoy \u4ea7\u54c1\u4ecb\u7ecd\u89c6\u9891",
+      "content": "",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-24 12:49:56",
+      "reject_reason": "\u6ca1\u6709\u9884\u89c8",
+      "reviewed_at": "2026-04-24T14:15:23.155936"
+    },
+    {
+      "id": 1777006196970,
+      "title": "ClawsJoy \u6559\u7a0b",
+      "content": "",
+      "submitter": "youtube",
+      "status": "rejected",
+      "created_at": "2026-04-24 12:49:56",
+      "reject_reason": "\u6ca1\u6709\u9884\u89c8",
+      "reviewed_at": "2026-04-24T14:15:31.569046"
+    },
+    {
+      "id": 1777007826863,
+      "title": "\u4fee\u590d\u5ba1\u6838\u770b\u677f\u89c6\u9891\u9884\u89c8",
+      "content": "{\n  \"title\": \"\u4fee\u590d\u5ba1\u6838\u770b\u677f\u89c6\u9891\u9884\u89c8\",\n  \"command\": \"cd ~/.openclaw/web/review && sed -i 's/video-placeholder/video-preview/g' index.html\",\n  \"description\": \"\u5c06\u89c6\u9891\u5360\u4f4d\u7b26\u66ff\u6362\u4e3a\u771f\u5b9e\u7684 YouTube \u5d4c\u5165\u64ad\u653e\u5668\",\n  \"submitter\": \"engineer\",\n  \"created_at\": \"2026-04-24T13:17:06+08:00\",\n  \"status\": \"pending\"\n}\n",
+      "submitter": "engineer",
+      "status": "rejected",
+      "created_at": "2026-04-24 13:17:06",
+      "reject_reason": "\u53ea\u6709\u94fe\u63a5\uff0c\u6ca1\u6709\u9884\u89c8",
+      "reviewed_at": "2026-04-24T14:15:51.237622"
+    },
+    {
+      "id": 1777007410162,
+      "title": "\u4fee\u590d\u5ba1\u6838\u770b\u677f",
+      "content": "{\n  \"title\": \"\u4fee\u590d\u5ba1\u6838\u770b\u677f\",\n  \"command\": \"cd ~/.openclaw/web/review && cp index.html index.html.bak\",\n  \"description\": \"\u4fee\u590d\u89c6\u9891\u9884\u89c8\u529f\u80fd\",\n  \"submitter\": \"engineer\",\n  \"created_at\": \"2026-04-24T13:10:09+08:00\",\n  \"status\": \"pending\"\n}\n",
+      "submitter": "engineer",
+      "status": "rejected",
+      "created_at": "2026-04-24 13:10:10",
+      "reject_reason": "\u53ea\u6709\u94fe\u63a5\uff0c\u6ca1\u6709\u9884\u89c8",
+      "reviewed_at": "2026-04-24T14:16:02.414497"
+    },
+    {
+      "id": 1777005560766,
+      "title": "\u8bc4\u5206\u529f\u80fd\u6d4b\u8bd5",
+      "content": "<h1>\u6d4b\u8bd5\u8bc4\u5206</h1><p>\u8fd9\u662f\u4e00\u4e2a\u6d4b\u8bd5\u8bc4\u5206\u7684\u6587\u7ae0</p>",
+      "submitter": "tester",
+      "status": "approved",
+      "created_at": "2026-04-24 12:39:20",
+      "reviewer_comment": "\u901a\u8fc7\uff0c\u8bc4\u5206:85",
+      "reviewed_at": "2026-04-24T14:16:25.036137"
+    },
+    {
+      "id": 1777005561294,
+      "title": "ClawsJoy \u4f7f\u7528\u4f53\u9a8c",
+      "content": "\u53d1\u73b0\u4e86\u4e00\u4e2a\u8d85\u597d\u7528\u7684 AI \u5de5\u5177 ClawsJoy\uff01#AI #\u6548\u7387\u5de5\u5177",
+      "submitter": "xiaohongshu",
+      "status": "approved",
+      "created_at": "2026-04-24 12:39:21",
+      "reviewer_comment": "\u901a\u8fc7\uff0c\u8bc4\u5206:85",
+      "reviewed_at": "2026-04-24T14:16:31.186911"
+    },
+    {
+      "id": 1777003557964,
+      "title": "JOY Mate \u6b63\u5f0f\u53d1\u5e03",
+      "content": "<h1>JOY Mate</h1><p>\u8ba9AI\u5b89\u5168\u5730\u4e3a\u6bcf\u4e2a\u4eba\u5de5\u4f5c</p>",
+      "submitter": "messenger",
+      "status": "approved",
+      "created_at": "2026-04-24 12:05:57",
+      "reviewer_comment": "\u901a\u8fc7\uff0c\u8bc4\u5206:85",
+      "reviewed_at": "2026-04-24T14:17:02.410992"
+    },
+    {
+      "id": 1777006975846,
+      "title": "\u4fee\u590d\u5ba1\u6838\u770b\u677f\u89c6\u9891\u9884\u89c8\u529f\u80fd",
+      "content": "",
+      "submitter": "chief",
+      "status": "approved",
+      "created_at": "2026-04-24 13:02:55",
+      "reviewer_comment": "\u901a\u8fc7\uff0c\u8bc4\u5206:85",
+      "reviewed_at": "2026-04-24T14:17:14.335022"
+    },
+    {
+      "id": 1777001818316,
+      "title": "JOY Mate \u529f\u80fd\u4ecb\u7ecd",
+      "content": "<h1>JOY Mate \u6838\u5fc3\u529f\u80fd</h1><ul><li>\u591a\u79df\u6237\u9694\u79bb</li><li>Agent \u81ea\u52a8\u8fdb\u5316</li><li>\u6587\u4ef6\u4e8b\u4ef6\u9a71\u52a8</li><li>\u5ba1\u6838\u770b\u677f</li></ul>",
+      "submitter": "writer",
+      "status": "rejected",
+      "created_at": "2026-04-24 11:36:58",
+      "reject_reason": "\u6709\u770b\u5230\u4e00\u4e32\u7f16\u7801\uff0c\u6ca1\u6709\u9884\u89c8",
+      "reviewed_at": "2026-04-24T14:23:53.472180"
+    },
+    {
+      "id": 1777011999477,
+      "title": "ClawsJoy \u54c1\u724cLogo",
+      "content": "<svg width=\"300\" height=\"100\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"300\" height=\"100\" fill=\"#667eea\" rx=\"15\"/><text x=\"150\" y=\"45\" text-anchor=\"middle\" fill=\"white\" font-size=\"28\" font-weight=\"bold\">ClawsJoy</text><text x=\"150\" y=\"70\" text-anchor=\"middle\" fill=\"#c3d0fe\" font-size=\"14\">\u8ba9AI\u5b89\u5168\u5730\u4e3a\u6bcf\u4e2a\u4eba\u5de5\u4f5c</text></svg>",
+      "submitter": "designer",
+      "status": "approved",
+      "created_at": "2026-04-24 14:26:39",
+      "reviewer_comment": "\u901a\u8fc7\uff0c\u8bc4\u5206:85",
+      "reviewed_at": "2026-04-24T14:28:41.052527"
+    },
+    {
+      "id": 1777012712442,
+      "title": "ClawsJoy \u54c1\u724c\u8bbe\u8ba1\u7a3f",
+      "content": "<svg width=\"400\" height=\"150\" xmlns=\"http://www.w3.org/2000/svg\"><defs><linearGradient id=\"grad\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"100%\"><stop offset=\"0%\" style=\"stop-color:#667eea\"/><stop offset=\"100%\" style=\"stop-color:#764ba2\"/></linearGradient></defs><rect width=\"400\" height=\"150\" fill=\"url(#grad)\" rx=\"20\"/><text x=\"200\" y=\"55\" text-anchor=\"middle\" fill=\"white\" font-size=\"36\" font-weight=\"bold\">ClawsJoy</text><text x=\"200\" y=\"85\" text-anchor=\"middle\" fill=\"#c3d0fe\" font-size=\"16\">\u8ba9AI\u5b89\u5168\u5730\u4e3a\u6bcf\u4e2a\u4eba\u5de5\u4f5c</text><text x=\"200\" y=\"110\" text-anchor=\"middle\" fill=\"#e0e7ff\" font-size=\"12\">\u5de5\u5177\u6613\u4e0a\u624b\uff0c\u7ed3\u679c\u4ee4\u4eba\u6109\u60a6</text></svg>",
+      "submitter": "designer",
+      "status": "approved",
+      "created_at": "2026-04-24 14:38:32",
+      "reviewer_comment": "\u901a\u8fc7\uff0c\u8bc4\u5206:85",
+      "reviewed_at": "2026-04-24T14:39:35.479811"
+    },
+    {
+      "id": 1777013806702,
+      "title": "ClawsJoy \u54c1\u724c\u5ba3\u4f20\u7247 - \u7b2c16\u671f",
+      "content": "<h1>\ud83c\udfac ClawsJoy \u54c1\u724c\u5ba3\u4f20\u7247 \u7b2c16\u671f</h1><h2>\ud83d\udcd6 \u672c\u671f\u4e3b\u9898\uff1a\u591a\u79df\u6237\u9694\u79bb\uff1a\u60a8\u7684\u6570\u636e\u7edd\u5bf9\u5b89\u5168</h2><p>ClawsJoy \u8ba9 AI \u5b89\u5168\u5730\u4e3a\u6bcf\u4e2a\u4eba\u5de5\u4f5c\u3002</p><h2>\ud83c\udfaf \u6838\u5fc3\u4eae\u70b9</h2><ul><li>\ud83d\udd12 \u591a\u79df\u6237\u9694\u79bb\uff1a\u94f6\u884c\u7ea7\u6570\u636e\u5b89\u5168</li><li>\ud83e\udde0 Agent\u81ea\u52a8\u8fdb\u5316\uff1a\u4ece\u53cd\u9988\u4e2d\u5b66\u4e60</li><li>\ud83d\udcc1 \u6587\u4ef6\u4e8b\u4ef6\u9a71\u52a8\uff1aAI\u53ea\u521b\u4f5c\uff0c\u7cfb\u7edf\u6765\u6267\u884c</li><li>\ud83d\udc41\ufe0f \u53ef\u89c6\u542c\u5316\u5ba1\u6838\uff1a\u56fe\u7247/\u89c6\u9891/SVG\u5b9e\u65f6\u9884\u89c8</li></ul><h2>\ud83c\udfac \u5206\u955c</h2><ul><li>0-5\u79d2\uff1aLogo\u52a8\u753b</li><li>5-20\u79d2\uff1a\u6838\u5fc3\u6280\u672f\u5c55\u793a</li><li>20-35\u79d2\uff1a\u4ea7\u54c1\u8f6e\u64ad</li><li>35-45\u79d2\uff1a\u54c1\u724cSlogan + CTA</li></ul><hr><p style='text-align:center;color:#667eea;'>ClawsJoy \u2014 \u5de5\u5177\u6613\u4e0a\u624b\uff0c\u7ed3\u679c\u4ee4\u4eba\u6109\u60a6</p>",
+      "submitter": "weekly_promo",
+      "status": "approved",
+      "created_at": "2026-04-24 14:56:46",
+      "reviewer_comment": "\u81ea\u52a8\u5ba1\u6838\uff1a\u5185\u5bb9\u5b8c\u6574\uff0c\u683c\u5f0f\u89c4\u8303\uff0c\u7b26\u5408\u54c1\u724c\u8c03\u6027\uff0c\u8bc4\u5206:88",
+      "reviewed_at": "2026-04-24T14:57:14.908540"
+    },
+    {
+      "id": 1777013390739,
+      "title": "ClawsJoy \u5ba3\u4f20\u7247\u811a\u672c - \u8ba9AI\u5b89\u5168\u5730\u4e3a\u6bcf\u4e2a\u4eba\u5de5\u4f5c",
+      "content": "<h1>\ud83c\udfac ClawsJoy \u516c\u53f8\u5ba3\u4f20\u7247\u811a\u672c</h1><h2>\ud83d\udccb \u57fa\u672c\u4fe1\u606f</h2><ul>  <li><strong>\u7247\u540d</strong>\uff1aClawsJoy \u2014 \u8ba9AI\u5b89\u5168\u5730\u4e3a\u6bcf\u4e2a\u4eba\u5de5\u4f5c</li>  <li><strong>\u65f6\u957f</strong>\uff1a60\u79d2</li>  <li><strong>\u98ce\u683c</strong>\uff1a\u79d1\u6280\u611f + \u4fe1\u4efb\u611f + \u6d3b\u529b</li>  <li><strong>\u76ee\u6807</strong>\uff1a\u5c55\u793aClawsJoy\u6838\u5fc3\u4ef7\u503c\u548c\u6280\u672f\u4f18\u52bf</li></ul><h2>\ud83c\udfac \u5206\u955c\u811a\u672c</h2><h3>\u573a\u666f1\uff1a\u5f00\u573a (0-8\u79d2)</h3><p><strong>\u753b\u9762</strong>\uff1a\u6df1\u8272\u80cc\u666f\uff0cClawsJoy Logo \u6e10\u663e\uff08\u7d2b\u8272\u6e10\u53d8 + \u722a\u5b50\u56fe\u6807\uff09</p><p><strong>\u65c1\u767d</strong>\uff1a\u300c\u5728AI\u65f6\u4ee3\uff0c\u5b89\u5168\u4e0e\u6548\u7387\u53ef\u4ee5\u517c\u5f97\u3002\u300d</p><p><strong>\u5b57\u5e55</strong>\uff1aClawsJoy | \u8ba9AI\u5b89\u5168\u5730\u4e3a\u6bcf\u4e2a\u4eba\u5de5\u4f5c</p><h3>\u573a\u666f2\uff1a\u95ee\u9898\u63d0\u51fa (8-18\u79d2)</h3><p><strong>\u753b\u9762</strong>\uff1a\u591a\u4e2a\u72ec\u7acb\u7684\u5c0f\u623f\u5b50\uff08\u4ee3\u8868\u79df\u6237\uff09\uff0c\u6bcf\u4e2a\u95e8\u4e0a\u663e\u793a\u4e0d\u540c\u79df\u6237\u540d\u79f0</p><p><strong>\u65c1\u767d</strong>\uff1a\u300c\u6bcf\u4e2a\u4f01\u4e1a\u90fd\u9700\u8981\u81ea\u5df1\u7684AI\u7a7a\u95f4\u3002\u4f46\u6570\u636e\u5b89\u5168\u5982\u4f55\u4fdd\u969c\uff1f\u300d</p><p><strong>\u5b57\u5e55</strong>\uff1a\u591a\u79df\u6237\u9694\u79bb \u00b7 \u6570\u636e\u5b89\u5168</p><h3>\u573a\u666f3\uff1a\u89e3\u51b3\u65b9\u6848 (18-35\u79d2)</h3><p><strong>\u753b\u9762</strong>\uff1a\u5c55\u793aClawsJoy\u6838\u5fc3\u67b6\u6784\u52a8\u753b\uff1a\u591a\u79df\u6237\u9694\u79bb\u3001Agent\u8fdb\u5316\u3001\u6587\u4ef6\u4e8b\u4ef6\u9a71\u52a8</p><p><strong>\u65c1\u767d</strong>\uff1a\u300cClawsJoy\u91c7\u7528\u94f6\u884c\u7ea7\u591a\u79df\u6237\u9694\u79bb\u67b6\u6784\u3002\u300d</p><p><strong>\u753b\u9762\u5207\u6362</strong>\uff1aAgent\u8fdb\u5316\u6811\u52a8\u753b\uff0c\u4ece\u5c0f\u6811\u82d7\u957f\u6210\u5927\u6811</p><p><strong>\u65c1\u767d</strong>\uff1a\u300cAgent\u81ea\u52a8\u8fdb\u5316\uff0c\u8d8a\u7528\u8d8a\u806a\u660e\u3002\u300d</p><p><strong>\u5b57\u5e55</strong>\uff1aAgent\u81ea\u52a8\u8fdb\u5316 \u00b7 \u4ece\u53cd\u9988\u4e2d\u5b66\u4e60</p><h3>\u573a\u666f4\uff1a\u4ea7\u54c1\u5c55\u793a (35-50\u79d2)</h3><p><strong>\u753b\u9762</strong>\uff1a\u5feb\u901f\u5207\u6362\u5404Agent\u5de5\u4f5c\u754c\u9762</p><ul>  <li>\u270d\ufe0f Writer \u521b\u4f5c\u754c\u9762 \u2192 \u81ea\u52a8\u751f\u6210\u6587\u7ae0</li>  <li>\ud83c\udfa8 Designer \u8bbe\u8ba1\u754c\u9762 \u2192 SVG\u56fe\u5f62\u5b9e\u65f6\u6e32\u67d3</li>  <li>\ud83d\udd0d Reviewer \u5ba1\u6838\u754c\u9762 \u2192 \u53ef\u89c6\u5316\u9884\u89c8\u548c\u8bc4\u5206</li>  <li>\ud83d\udcac Messenger \u53d1\u5e03\u754c\u9762 \u2192 \u591a\u5e73\u53f0\u4e00\u952e\u53d1\u5e03</li></ul><p><strong>\u65c1\u767d</strong>\uff1a\u300c\u4ece\u521b\u4f5c\u5230\u5ba1\u6838\uff0c\u4ece\u8bbe\u8ba1\u5230\u53d1\u5e03\uff0c\u5168\u6d41\u7a0b\u81ea\u52a8\u5316\u3002\u300d</p><h3>\u573a\u666f5\uff1a\u7ed3\u5c3e (50-60\u79d2)</h3><p><strong>\u753b\u9762</strong>\uff1aClawsJoy + JOY Mate \u8054\u5408Logo\uff0c\u80cc\u666f\u6e10\u53d8\u95ea\u70c1</p><p><strong>\u65c1\u767d</strong>\uff1a\u300cClawsJoy \u2014 \u5de5\u5177\u6613\u4e0a\u624b\uff0c\u7ed3\u679c\u4ee4\u4eba\u6109\u60a6\u3002\u300d</p><p><strong>\u5b57\u5e55</strong>\uff1aJOY Mate \u00b7 \u60a8\u7684AI\u667a\u80fd\u4f19\u4f34 | www.clawsjoy.com</p><h2>\ud83c\udfb5 \u914d\u4e50\u5efa\u8bae</h2><ul>  <li>\u5f00\u573a\uff1a\u79d1\u6280\u611f\u7535\u5b50\u97f3\u6548</li>  <li>\u4e2d\u95f4\uff1a\u8f7b\u5feb\u6709\u8282\u594f\u611f\u7684\u80cc\u666f\u97f3\u4e50</li>  <li>\u7ed3\u5c3e\uff1a\u6e29\u6696\u6536\u5c3e\uff0c\u54c1\u724c\u97f3\u6548</li></ul><h2>\ud83d\udcf1 \u53d1\u5e03\u5e73\u53f0</h2><ul>  <li>YouTube (\u5b8c\u6574\u724860\u79d2)</li>  <li>\u5c0f\u7ea2\u4e66 (30\u79d2\u7cbe\u534e\u7248)</li>  <li>\u5fae\u4fe1\u516c\u4f17\u53f7 (\u5d4c\u5165\u89c6\u9891)</li></ul><hr><p style='text-align:center;color:#667eea;'>ClawsJoy \u2014 \u8ba9AI\u5b89\u5168\u5730\u4e3a\u6bcf\u4e2a\u4eba\u5de5\u4f5c</p>",
+      "submitter": "writer",
+      "status": "approved",
+      "created_at": "2026-04-24 14:49:50",
+      "reviewer_comment": "\u901a\u8fc7\uff0c\u8bc4\u5206:85",
+      "reviewed_at": "2026-04-24T15:10:35.336151"
+    },
+    {
+      "id": 1777013562883,
+      "title": "ClawsJoy \u5ba3\u4f20\u7247\u811a\u672c V2 - \u8ba9AI\u5b89\u5168\u5730\u4e3a\u6bcf\u4e2a\u4eba\u5de5\u4f5c",
+      "content": "<h1>\ud83c\udfac ClawsJoy \u516c\u53f8\u5ba3\u4f20\u7247\u811a\u672c (\u4f18\u5316\u7248)</h1><h2>\ud83d\udccb \u57fa\u672c\u4fe1\u606f</h2><ul>  <li><strong>\u7247\u540d</strong>\uff1aClawsJoy \u2014 \u8ba9AI\u5b89\u5168\u5730\u4e3a\u6bcf\u4e2a\u4eba\u5de5\u4f5c</li>  <li><strong>\u65f6\u957f</strong>\uff1a45\u79d2\uff08\u7cbe\u7b80\u7248\uff09</li>  <li><strong>\u98ce\u683c</strong>\uff1a\u79d1\u6280\u611f + \u7b80\u6d01\u6709\u529b</li></ul><h2>\ud83c\udfac \u5206\u955c\u811a\u672c</h2><h3>\u573a\u666f1\uff1a\u5f00\u573a (0-5\u79d2)</h3><p><strong>\u753b\u9762</strong>\uff1a\u6df1\u8272\u80cc\u666f\uff0cClawsJoy Logo \u6e10\u663e</p><p><strong>\u5b57\u5e55</strong>\uff1aClawsJoy | AI\u5b89\u5168\u9694\u79bb</p><h3>\u573a\u666f2\uff1a\u6838\u5fc3\u4ef7\u503c (5-20\u79d2)</h3><p><strong>\u753b\u9762</strong>\uff1a\u56db\u4e2a\u72ec\u7acb\u7684\u5b89\u5168\u8231\uff08\u4ee3\u8868\u79df\u6237\u9694\u79bb\uff09</p><p><strong>\u5b57\u5e55</strong>\uff1a\u591a\u79df\u6237\u9694\u79bb \u00b7 \u6570\u636e\u53ea\u5c5e\u4e8e\u4f60</p><p><strong>\u753b\u9762\u5207\u6362</strong>\uff1aAgent\u8fdb\u5316\u52a8\u753b</p><p><strong>\u5b57\u5e55</strong>\uff1aAgent\u81ea\u52a8\u8fdb\u5316 \u00b7 \u8d8a\u7528\u8d8a\u806a\u660e</p><h3>\u573a\u666f3\uff1a\u4ea7\u54c1\u5c55\u793a (20-35\u79d2)</h3><p><strong>\u753b\u9762</strong>\uff1a\u5feb\u901f\u8f6e\u64ad\u5404Agent\u754c\u9762</p><ul>  <li>Writer \u2192 \u81ea\u52a8\u5199\u6587\u7ae0</li>  <li>Designer \u2192 \u751f\u6210\u8bbe\u8ba1\u7a3f</li>  <li>Reviewer \u2192 \u667a\u80fd\u5ba1\u6838</li>  <li>Messenger \u2192 \u4e00\u952e\u53d1\u5e03</li></ul><h3>\u573a\u666f4\uff1a\u7ed3\u5c3e (35-45\u79d2)</h3><p><strong>\u753b\u9762</strong>\uff1aJOY Mate Logo + \u54c1\u724c\u53e3\u53f7</p><p><strong>\u5b57\u5e55</strong>\uff1aJOY Mate \u00b7 \u60a8\u7684AI\u667a\u80fd\u4f19\u4f34 | \u5de5\u5177\u6613\u4e0a\u624b\uff0c\u7ed3\u679c\u4ee4\u4eba\u6109\u60a6</p><hr><p style='text-align:center;color:#667eea;'>ClawsJoy \u2014 \u8ba9AI\u5b89\u5168\u5730\u4e3a\u6bcf\u4e2a\u4eba\u5de5\u4f5c</p>",
+      "submitter": "writer",
+      "status": "approved",
+      "created_at": "2026-04-24 14:52:42",
+      "reviewer_comment": "\u901a\u8fc7\uff0c\u8bc4\u5206:85",
+      "reviewed_at": "2026-04-24T15:10:46.874983"
+    },
+    {
+      "id": 1777013617187,
+      "title": "ClawsJoy \u516c\u53f8\u5ba3\u4f20\u7247 V2 (45\u79d2)",
+      "content": "",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-24 14:53:37",
+      "reject_reason": "\u89c6\u9891\u6ca1\u6709\u9884\u89c8\uff0c\u91cd\u65b0\u63d0\u4ea4\u53ef\u4ee5\u9884\u89c8\u7684",
+      "reviewed_at": "2026-04-24T15:12:08.517738"
+    },
+    {
+      "id": 1777013438138,
+      "title": "ClawsJoy \u516c\u53f8\u5ba3\u4f20\u7247 (60\u79d2)",
+      "content": "",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-24 14:50:38",
+      "reject_reason": "\u89c6\u9891\u6ca1\u6709\u9884\u89c8\uff0c\u91cd\u65b0\u63d0\u4ea4\u53ef\u4ee5\u9884\u89c8\u7684\uff0c\u53ef\u4ee5\u627e\u5de5\u7a0b\u5e08\u95ee\u4e0b",
+      "reviewed_at": "2026-04-24T15:12:42.680885"
+    },
+    {
+      "id": 1777013375691,
+      "title": "\u3010Chief\u3011\u5236\u4f5cClawsJoy\u516c\u53f8\u5ba3\u4f20\u7247",
+      "content": "{\n  \"title\": \"\u3010Chief\u3011\u5236\u4f5cClawsJoy\u516c\u53f8\u5ba3\u4f20\u7247\",\n  \"command\": \"\u534f\u8c03Writer\u3001Designer\u3001Spider\u3001Video-Maker\u534f\u4f5c\u5b8c\u6210\u5ba3\u4f20\u7247\",\n  \"description\": \"\u603b\u6307\u6325\uff1a\u542f\u52a8\u5ba3\u4f20\u7247\u5236\u4f5c\u9879\u76ee\uff0c\u5404Agent\u5206\u5de5\u534f\u4f5c\",\n  \"submitter\": \"engineer\",\n  \"created_at\": \"2026-04-24T14:49:35+08:00\",\n  \"status\": \"pending\"\n}\n",
+      "submitter": "engineer",
+      "status": "rejected",
+      "created_at": "2026-04-24 14:49:35",
+      "reject_reason": "\u89c6\u9891\u4e0d\u53ef\u9884\u89c8\uff0c\u534f\u8c03\u7ed9\u4e0e\u6280\u672f\u652f\u6301\uff0c\u53ef\u4ee5\u505a\u4e2a\u9884\u89c8\u9875\u9762",
+      "reviewed_at": "2026-04-24T15:14:08.347441"
+    },
+    {
+      "id": 1777013808318,
+      "title": "ClawsJoy \u5ba3\u4f20\u7247 - \u7b2c16\u671f",
+      "content": "",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-24 14:56:48",
+      "reject_reason": "\u89c6\u9891\u4e0d\u53ef\u9884\u89c8\uff0c\u91cd\u65b0\u63d0\u4ea4",
+      "reviewed_at": "2026-04-24T15:14:29.907607"
+    },
+    {
+      "id": 1777015419403,
+      "title": "ClawsJoy \u516c\u53f8\u5ba3\u4f20\u7247 V3 (\u4fee\u590d\u7248)",
+      "content": "",
+      "submitter": "video-maker",
+      "status": "approved",
+      "created_at": "2026-04-24 15:23:39",
+      "reviewer_comment": "\u81ea\u52a8\u5ba1\u6838\u901a\u8fc7\uff0c\u89c6\u9891\u5185\u5bb9\u5b8c\u6574\uff0c\u8bc4\u520675",
+      "reviewed_at": "2026-04-24T15:27:14.725443"
+    },
+    {
+      "id": 1777015536894,
+      "title": "ClawsJoy \u516c\u53f8\u5ba3\u4f20\u7247 V3 (\u4fee\u590d\u7248)",
+      "content": "",
+      "submitter": "video-maker",
+      "status": "approved",
+      "created_at": "2026-04-24 15:25:36",
+      "reviewer_comment": "\u81ea\u52a8\u5ba1\u6838\u901a\u8fc7\uff0c\u89c6\u9891\u5185\u5bb9\u5b8c\u6574\uff0c\u8bc4\u520675",
+      "reviewed_at": "2026-04-24T15:27:14.733274"
+    },
+    {
+      "id": 1777015537437,
+      "title": "ClawsJoy \u54c1\u724c\u5ba3\u4f20\u7247 - \u7b2c17\u671f",
+      "content": "",
+      "submitter": "video-maker",
+      "status": "approved",
+      "created_at": "2026-04-24 15:25:37",
+      "reviewer_comment": "\u81ea\u52a8\u5ba1\u6838\u901a\u8fc7\uff0c\u89c6\u9891\u5185\u5bb9\u5b8c\u6574\uff0c\u8bc4\u520675",
+      "reviewed_at": "2026-04-24T15:27:14.743996"
+    },
+    {
+      "id": 1777015601903,
+      "title": "ClawsJoy \u5b98\u65b9\u5ba3\u4f20\u7247 (\u6b63\u5f0f\u7248)",
+      "content": "",
+      "submitter": "video-maker",
+      "status": "approved",
+      "created_at": "2026-04-24 15:26:41",
+      "reviewer_comment": "\u81ea\u52a8\u5ba1\u6838\u901a\u8fc7\uff0c\u89c6\u9891\u5185\u5bb9\u5b8c\u6574\uff0c\u8bc4\u520675",
+      "reviewed_at": "2026-04-24T15:27:14.752726"
+    },
+    {
+      "id": 1777015602432,
+      "title": "ClawsJoy \u6bcf\u5468\u5ba3\u4f20\u7247 - Agent\u8fdb\u5316\u7bc7",
+      "content": "",
+      "submitter": "video-maker",
+      "status": "approved",
+      "created_at": "2026-04-24 15:26:42",
+      "reviewer_comment": "\u81ea\u52a8\u5ba1\u6838\u901a\u8fc7\uff0c\u89c6\u9891\u5185\u5bb9\u5b8c\u6574\uff0c\u8bc4\u520675",
+      "reviewed_at": "2026-04-24T15:27:14.760370"
+    },
+    {
+      "id": 1777015948495,
+      "title": "\u4fee\u590d\u5ba1\u6838\u770b\u677f\u5237\u65b0\u6309\u94ae",
+      "content": "{\n  \"title\": \"\u4fee\u590d\u5ba1\u6838\u770b\u677f\u5237\u65b0\u6309\u94ae\",\n  \"command\": \"sed -i 's/location.reload/loadTasks/g' ~/.openclaw/web/review/index.html && pkill -f http.server && cd ~/.openclaw/web && nohup python3 -m http.server 8083 &\",\n  \"description\": \"\u5df2\u4fee\u590d\u5237\u65b0\u6309\u94ae\uff0c\u5c06 location.reload \u66ff\u6362\u4e3a loadTasks \u51fd\u6570\u8c03\u7528\",\n  \"submitter\": \"engineer\",\n  \"created_at\": \"2026-04-24T15:32:27+08:00\",\n  \"status\": \"pending\"\n}\n",
+      "submitter": "engineer",
+      "status": "approved",
+      "created_at": "2026-04-24 15:32:28",
+      "reviewer_comment": "\u901a\u8fc7\uff0c\u8bc4\u5206:85",
+      "reviewed_at": "2026-04-24T15:33:01.051906"
+    },
+    {
+      "id": 1777015263350,
+      "title": "ClawsJoy \u4eca\u65e5\u54c1\u724c\u52a8\u6001",
+      "content": "<h1>ClawsJoy \u4eca\u65e5\u54c1\u724c\u52a8\u6001</h1><h2>\ud83d\udcd6 \u4e3b\u9898\u80cc\u666f</h2><p>2026\u5e7404\u670824\u65e5 \u54c1\u724c\u6700\u65b0\u52a8\u6001</p><h2>\ud83c\udfaf ClawsJoy \u89e3\u51b3\u65b9\u6848</h2><ul><li>\ud83d\udd12 \u591a\u79df\u6237\u9694\u79bb\uff1a\u60a8\u7684\u6570\u636e\u7edd\u5bf9\u5b89\u5168</li><li>\ud83e\udde0 Agent\u81ea\u52a8\u8fdb\u5316\uff1a\u8d8a\u7528\u8d8a\u806a\u660e</li><li>\ud83d\udcc1 \u6587\u4ef6\u4e8b\u4ef6\u9a71\u52a8\uff1aAI\u53ea\u521b\u4f5c\uff0c\u7cfb\u7edf\u6267\u884c</li><li>\ud83d\udc41\ufe0f \u53ef\u89c6\u542c\u5316\u5ba1\u6838\uff1a\u4e00\u76ee\u4e86\u7136</li></ul><h2>\ud83d\udca1 \u603b\u7ed3</h2><p>ClawsJoy \u2014 \u8ba9AI\u5b89\u5168\u5730\u4e3a\u6bcf\u4e2a\u4eba\u5de5\u4f5c\uff0c\u5de5\u5177\u6613\u4e0a\u624b\uff0c\u7ed3\u679c\u4ee4\u4eba\u6109\u60a6\u3002</p><hr><p style='text-align:center;color:#667eea;'>\u7531 Engineer \u89e6\u53d1\uff0cWriter \u81ea\u52a8\u751f\u6210\u4e8e 2026-04-24 15:21:02</p>",
+      "submitter": "writer_auto",
+      "status": "approved",
+      "created_at": "2026-04-24 15:21:03",
+      "reviewer_comment": "\u5ba1\u6838\u901a\u8fc7\uff0c\u8bc4\u5206:83",
+      "reviewed_at": "2026-04-24T15:59:09.364316"
+    },
+    {
+      "id": 1777015268422,
+      "title": "\u81ea\u52a8\u90e8\u7f72 - \u66f4\u65b0\u7f51\u7ad9\u5185\u5bb9",
+      "content": "{\n  \"title\": \"\u81ea\u52a8\u90e8\u7f72 - \u66f4\u65b0\u7f51\u7ad9\u5185\u5bb9\",\n  \"command\": \"~/clawsjoy/bin/website_maintain.sh && ~/clawsjoy/bin/auto_publish_to_website.sh\",\n  \"description\": \"Engineer \u81ea\u52a8\u534f\u8c03\u90e8\u7f72\",\n  \"submitter\": \"engineer\",\n  \"created_at\": \"2026-04-24T15:21:07+08:00\",\n  \"status\": \"pending\"\n}\n",
+      "submitter": "engineer",
+      "status": "rejected",
+      "created_at": "2026-04-24 15:21:08",
+      "reject_reason": "\u505a\u4e00\u4e2a\u4e34\u65f6\u9875\u9762\uff0c\u4eba\u7c7b\u770b\u4ee3\u7801\u4e0d\u77e5\u9053\u6548\u679c\u5982\u4f55",
+      "reviewed_at": "2026-04-24T16:03:40.054759"
+    },
+    {
+      "id": 1777019159517,
+      "title": "ClawsJoy \u54c1\u724c\u5ba3\u4f20\u7247 - \u7b2c16\u671f",
+      "content": "<h1>\ud83c\udfac ClawsJoy \u54c1\u724c\u5ba3\u4f20\u7247 \u7b2c16\u671f</h1><h2>\ud83d\udcd6 \u672c\u671f\u4e3b\u9898\uff1a\u591a\u79df\u6237\u9694\u79bb\uff1a\u60a8\u7684\u6570\u636e\u7edd\u5bf9\u5b89\u5168</h2><p>ClawsJoy \u8ba9 AI \u5b89\u5168\u5730\u4e3a\u6bcf\u4e2a\u4eba\u5de5\u4f5c\u3002</p><h2>\ud83c\udfaf \u6838\u5fc3\u4eae\u70b9</h2><ul><li>\ud83d\udd12 \u591a\u79df\u6237\u9694\u79bb\uff1a\u94f6\u884c\u7ea7\u6570\u636e\u5b89\u5168</li><li>\ud83e\udde0 Agent\u81ea\u52a8\u8fdb\u5316\uff1a\u4ece\u53cd\u9988\u4e2d\u5b66\u4e60</li><li>\ud83d\udcc1 \u6587\u4ef6\u4e8b\u4ef6\u9a71\u52a8\uff1aAI\u53ea\u521b\u4f5c\uff0c\u7cfb\u7edf\u6765\u6267\u884c</li><li>\ud83d\udc41\ufe0f \u53ef\u89c6\u542c\u5316\u5ba1\u6838\uff1a\u56fe\u7247/\u89c6\u9891/SVG\u5b9e\u65f6\u9884\u89c8</li></ul><h2>\ud83c\udfac \u5206\u955c</h2><ul><li>0-5\u79d2\uff1aLogo\u52a8\u753b</li><li>5-20\u79d2\uff1a\u6838\u5fc3\u6280\u672f\u5c55\u793a</li><li>20-35\u79d2\uff1a\u4ea7\u54c1\u8f6e\u64ad</li><li>35-45\u79d2\uff1a\u54c1\u724cSlogan + CTA</li></ul><hr><p style='text-align:center;color:#667eea;'>ClawsJoy \u2014 \u5de5\u5177\u6613\u4e0a\u624b\uff0c\u7ed3\u679c\u4ee4\u4eba\u6109\u60a6</p>",
+      "submitter": "weekly_promo",
+      "status": "approved",
+      "created_at": "2026-04-24 16:25:59",
+      "reviewer_comment": "\u81ea\u52a8\u5ba1\u6838\uff1a\u5185\u5bb9\u5b8c\u6574\uff0c\u683c\u5f0f\u89c4\u8303\uff0c\u7b26\u5408\u54c1\u724c\u8c03\u6027\uff0c\u8bc4\u5206:88",
+      "reviewed_at": "2026-04-24T16:26:27.367176"
+    },
+    {
+      "id": 1777019413204,
+      "title": "ClawsJoy \u54c1\u724c\u5ba3\u4f20\u7247 - \u7b2c16\u671f",
+      "content": "<h1>\ud83c\udfac ClawsJoy \u54c1\u724c\u5ba3\u4f20\u7247 \u7b2c16\u671f</h1><h2>\ud83d\udcd6 \u672c\u671f\u4e3b\u9898\uff1a\u591a\u79df\u6237\u9694\u79bb\uff1a\u60a8\u7684\u6570\u636e\u7edd\u5bf9\u5b89\u5168</h2><p>ClawsJoy \u8ba9 AI \u5b89\u5168\u5730\u4e3a\u6bcf\u4e2a\u4eba\u5de5\u4f5c\u3002</p><h2>\ud83c\udfaf \u6838\u5fc3\u4eae\u70b9</h2><ul><li>\ud83d\udd12 \u591a\u79df\u6237\u9694\u79bb\uff1a\u94f6\u884c\u7ea7\u6570\u636e\u5b89\u5168</li><li>\ud83e\udde0 Agent\u81ea\u52a8\u8fdb\u5316\uff1a\u4ece\u53cd\u9988\u4e2d\u5b66\u4e60</li><li>\ud83d\udcc1 \u6587\u4ef6\u4e8b\u4ef6\u9a71\u52a8\uff1aAI\u53ea\u521b\u4f5c\uff0c\u7cfb\u7edf\u6765\u6267\u884c</li><li>\ud83d\udc41\ufe0f \u53ef\u89c6\u542c\u5316\u5ba1\u6838\uff1a\u56fe\u7247/\u89c6\u9891/SVG\u5b9e\u65f6\u9884\u89c8</li></ul><h2>\ud83c\udfac \u5206\u955c</h2><ul><li>0-5\u79d2\uff1aLogo\u52a8\u753b</li><li>5-20\u79d2\uff1a\u6838\u5fc3\u6280\u672f\u5c55\u793a</li><li>20-35\u79d2\uff1a\u4ea7\u54c1\u8f6e\u64ad</li><li>35-45\u79d2\uff1a\u54c1\u724cSlogan + CTA</li></ul><hr><p style='text-align:center;color:#667eea;'>ClawsJoy \u2014 \u5de5\u5177\u6613\u4e0a\u624b\uff0c\u7ed3\u679c\u4ee4\u4eba\u6109\u60a6</p>",
+      "submitter": "weekly_promo",
+      "status": "approved",
+      "created_at": "2026-04-24 16:30:13",
+      "reviewer_comment": "\u81ea\u52a8\u5ba1\u6838\uff1a\u5185\u5bb9\u5b8c\u6574\uff0c\u683c\u5f0f\u89c4\u8303\uff0c\u7b26\u5408\u54c1\u724c\u8c03\u6027\uff0c\u8bc4\u5206:88",
+      "reviewed_at": "2026-04-24T16:30:41.539295"
+    },
+    {
+      "id": 1777019468702,
+      "title": "ClawsJoy \u54c1\u724c\u5ba3\u4f20\u7247 - \u7b2c16\u671f",
+      "content": "<h1>\ud83c\udfac ClawsJoy \u54c1\u724c\u5ba3\u4f20\u7247 \u7b2c16\u671f</h1><h2>\ud83d\udcd6 \u672c\u671f\u4e3b\u9898\uff1a\u591a\u79df\u6237\u9694\u79bb\uff1a\u60a8\u7684\u6570\u636e\u7edd\u5bf9\u5b89\u5168</h2><p>ClawsJoy \u8ba9 AI \u5b89\u5168\u5730\u4e3a\u6bcf\u4e2a\u4eba\u5de5\u4f5c\u3002</p><h2>\ud83c\udfaf \u6838\u5fc3\u4eae\u70b9</h2><ul><li>\ud83d\udd12 \u591a\u79df\u6237\u9694\u79bb\uff1a\u94f6\u884c\u7ea7\u6570\u636e\u5b89\u5168</li><li>\ud83e\udde0 Agent\u81ea\u52a8\u8fdb\u5316\uff1a\u4ece\u53cd\u9988\u4e2d\u5b66\u4e60</li><li>\ud83d\udcc1 \u6587\u4ef6\u4e8b\u4ef6\u9a71\u52a8\uff1aAI\u53ea\u521b\u4f5c\uff0c\u7cfb\u7edf\u6765\u6267\u884c</li><li>\ud83d\udc41\ufe0f \u53ef\u89c6\u542c\u5316\u5ba1\u6838\uff1a\u56fe\u7247/\u89c6\u9891/SVG\u5b9e\u65f6\u9884\u89c8</li></ul><h2>\ud83c\udfac \u5206\u955c</h2><ul><li>0-5\u79d2\uff1aLogo\u52a8\u753b</li><li>5-20\u79d2\uff1a\u6838\u5fc3\u6280\u672f\u5c55\u793a</li><li>20-35\u79d2\uff1a\u4ea7\u54c1\u8f6e\u64ad</li><li>35-45\u79d2\uff1a\u54c1\u724cSlogan + CTA</li></ul><hr><p style='text-align:center;color:#667eea;'>ClawsJoy \u2014 \u5de5\u5177\u6613\u4e0a\u624b\uff0c\u7ed3\u679c\u4ee4\u4eba\u6109\u60a6</p>",
+      "submitter": "weekly_promo",
+      "status": "approved",
+      "created_at": "2026-04-24 16:31:08",
+      "reviewer_comment": "\u81ea\u52a8\u5ba1\u6838\uff1a\u5185\u5bb9\u5b8c\u6574\uff0c\u683c\u5f0f\u89c4\u8303\uff0c\u7b26\u5408\u54c1\u724c\u8c03\u6027\uff0c\u8bc4\u5206:88",
+      "reviewed_at": "2026-04-24T16:31:37.129018"
+    },
+    {
+      "id": 1777019161135,
+      "title": "ClawsJoy \u5ba3\u4f20\u7247 - \u7b2c16\u671f",
+      "content": "",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-24 16:26:01",
+      "reject_reason": "\u6ca1\u663e\u793a",
+      "reviewed_at": "2026-04-24T17:14:03.105663"
+    },
+    {
+      "id": 1777019414803,
+      "title": "ClawsJoy \u5ba3\u4f20\u7247 - \u7b2c16\u671f",
+      "content": "",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-24 16:30:14",
+      "reject_reason": "\u6ca1\u663e\u793a",
+      "reviewed_at": "2026-04-24T17:14:11.624024"
+    },
+    {
+      "id": 1777021040551,
+      "title": "ClawsJoy \u5b98\u65b9\u5ba3\u4f20\u7247",
+      "content": "",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-24 16:57:20",
+      "reject_reason": "\u6ca1\u663e\u793a",
+      "reviewed_at": "2026-04-24T17:14:21.938476"
+    },
+    {
+      "id": 1777019470294,
+      "title": "ClawsJoy \u5ba3\u4f20\u7247 - \u7b2c16\u671f",
+      "content": "",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-24 16:31:10",
+      "reject_reason": "\u6ca1\u663e\u793a",
+      "reviewed_at": "2026-04-24T17:14:31.798423"
+    },
+    {
+      "id": 1777021041083,
+      "title": "\u4ea7\u54c1\u6559\u7a0b",
+      "content": "",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-24 16:57:21",
+      "reject_reason": "\u6ca1\u663e\u793a",
+      "reviewed_at": "2026-04-24T17:14:43.497804"
+    },
+    {
+      "id": 1777021507258,
+      "title": "\u89c6\u9891\u6807\u9898",
+      "content": "",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-24 17:05:07",
+      "reject_reason": "\u6ca1\u663e\u793a\uff0c\u627e\u5de5\u7a0b\u5e08\u5904\u7406\u4e00\u4e0b",
+      "reviewed_at": "2026-04-24T17:14:54.651862"
+    },
+    {
+      "id": 1777021507778,
+      "title": "\u89c6\u9891\u6807\u9898",
+      "content": "",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-24 17:05:07",
+      "reject_reason": "\u6ca1\u663e\u793a\uff0c\u627e\u5de5\u7a0b\u5e08\u89e3\u51b3",
+      "reviewed_at": "2026-04-24T17:15:10.917172"
+    },
+    {
+      "id": 1777021991885,
+      "title": "API\u6d4b\u8bd5\u89c6\u98912",
+      "content": "",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-24 17:13:11",
+      "reject_reason": "\u6362\u4e2a\u7b2c\u4e09\u65b9\u7f51\u7ad9\u7684\u89c6\u9891\u6d4b\u8bd5\u4e00\u4e0b\uff0c\u6211\u4eec\u672c\u5730\u89c6\u9891\u65e0\u6cd5\u663e\u793a\uff0c\u627e\u4e0b\u5de5\u7a0b\u5e08\u5546\u91cf\u51fa\u89e3\u51b3\u529e\u6cd5",
+      "reviewed_at": "2026-04-24T17:16:38.069291"
+    },
+    {
+      "id": 1777021931109,
+      "title": "API\u6d4b\u8bd5\u89c6\u9891",
+      "content": "",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-24 17:12:11",
+      "reject_reason": "\u6ca1\u663e\u793a\uff0c\u627e\u4e0b\u5de5\u7a0b\u5e08\u95ee\u4e0b\u89e3\u51b3\u529e\u6cd5",
+      "reviewed_at": "2026-04-24T17:17:01.391394"
+    },
+    {
+      "id": 1777023219795,
+      "title": "\u6d4b\u8bd5\u89c6\u9891-\u7acb\u5373\u68c0\u67e5",
+      "content": "",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-24 17:33:39",
+      "reject_reason": "\u6ca1\u663e\u793a",
+      "reviewed_at": "2026-04-24T17:46:46.907033"
+    },
+    {
+      "id": 1777024803922,
+      "title": "",
+      "content": "{\n  \"title\": \"\",\n  \"command\": \"\",\n  \"description\": \"\u65e0\u63cf\u8ff0\",\n  \"submitter\": \"engineer\",\n  \"created_at\": \"2026-04-24T18:00:01+08:00\",\n  \"status\": \"pending\"\n}\n",
+      "submitter": "engineer",
+      "status": "rejected",
+      "created_at": "2026-04-24 18:00:03",
+      "reject_reason": "\u6ca1\u6709\u9884\u89c8\u9875\u9762\u94fe\u63a5",
+      "reviewed_at": "2026-04-24T18:00:41.190763"
+    },
+    {
+      "id": 1777024803401,
+      "title": "",
+      "content": "{\n  \"title\": \"\",\n  \"command\": \"\",\n  \"description\": \"\u65e0\u63cf\u8ff0\",\n  \"submitter\": \"engineer\",\n  \"created_at\": \"2026-04-24T18:00:01+08:00\",\n  \"status\": \"pending\"\n}\n",
+      "submitter": "engineer",
+      "status": "rejected",
+      "created_at": "2026-04-24 18:00:03",
+      "reject_reason": "\u6ca1\u6709\u9884\u89c8\u9875\u9762\u94fe\u63a5",
+      "reviewed_at": "2026-04-24T18:00:50.308599"
+    },
+    {
+      "id": 1777024801817,
+      "title": "",
+      "content": "{\n  \"title\": \"\",\n  \"command\": \"\",\n  \"description\": \"\u65e0\u63cf\u8ff0\",\n  \"submitter\": \"engineer\",\n  \"created_at\": \"2026-04-24T18:00:01+08:00\",\n  \"status\": \"pending\"\n}\n",
+      "submitter": "engineer",
+      "status": "rejected",
+      "created_at": "2026-04-24 18:00:01",
+      "reject_reason": "\u6ca1\u6709\u9875\u9762\u663e\u793a",
+      "reviewed_at": "2026-04-24T18:01:01.416562"
+    },
+    {
+      "id": 1777024802361,
+      "title": "",
+      "content": "{\n  \"title\": \"\",\n  \"command\": \"\",\n  \"description\": \"\u65e0\u63cf\u8ff0\",\n  \"submitter\": \"engineer\",\n  \"created_at\": \"2026-04-24T18:00:01+08:00\",\n  \"status\": \"pending\"\n}\n",
+      "submitter": "engineer",
+      "status": "rejected",
+      "created_at": "2026-04-24 18:00:02",
+      "reject_reason": "\u6ca1\u6709\u9884\u89c8\u6548\u679c\uff0c\u9700\u8981\u94fe\u63a5",
+      "reviewed_at": "2026-04-24T18:02:00.159252"
+    },
+    {
+      "id": 1777024802879,
+      "title": "",
+      "content": "",
+      "submitter": "writer",
+      "status": "rejected",
+      "created_at": "2026-04-24 18:00:02",
+      "reject_reason": "\u65e0\u6807\u9898",
+      "reviewed_at": "2026-04-24T18:05:08.023580"
+    },
+    {
+      "id": 1777024806236,
+      "title": "\u517c\u5bb9\u6d4b\u8bd5\u89c6\u9891",
+      "content": "/videos/test_good.mp4",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-24 18:00:06",
+      "reject_reason": "test",
+      "reviewed_at": "2026-04-24T18:05:16.855990"
+    },
+    {
+      "id": 1777024571426,
+      "title": "\u672c\u5730\u6d4b\u8bd5\u89c6\u9891\u6b63\u786e\u7248",
+      "content": "/videos/test.mp4",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-24 17:56:11",
+      "reject_reason": "test",
+      "reviewed_at": "2026-04-24T18:14:44.603528"
+    },
+    {
+      "id": 1777023660980,
+      "title": "\u672c\u5730\u6d4b\u8bd5\u89c6\u9891",
+      "content": "/videos/test.mp4",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-24 17:41:00",
+      "reject_reason": "test",
+      "reviewed_at": "2026-04-24T18:18:10.407951"
+    },
+    {
+      "id": 1777023608942,
+      "title": "\u4fee\u590d\u7248\u6d4b\u8bd5\u89c6\u9891",
+      "content": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "submitter": "video-maker",
+      "status": "approved",
+      "created_at": "2026-04-24 17:40:08",
+      "reviewer_comment": "\u901a\u8fc7\uff0c\u8bc4\u5206:85",
+      "reviewed_at": "2026-04-24T18:18:21.431381"
+    },
+    {
+      "id": 1777023653089,
+      "title": "\u672c\u5730\u6d4b\u8bd5\u89c6\u9891",
+      "content": "/videos/\u4f60\u7684\u89c6\u9891\u6587\u4ef6\u540d.mp4",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-24 17:40:53",
+      "reject_reason": "test",
+      "reviewed_at": "2026-04-24T18:24:24.761714"
+    },
+    {
+      "id": 1777023706614,
+      "title": "ClawsJoy \u4ea7\u54c1\u6f14\u793a",
+      "content": "/videos/clawsjoy_demo.mp4",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-24 17:41:46",
+      "reject_reason": "\u6ca1\u58f0\u97f3\uff0c\u89c6\u9891\u65f6\u957f\u4e0d\u7b26-\u540845\u79d2\u8981\u6c42",
+      "reviewed_at": "2026-04-24T18:25:17.393502"
+    },
+    {
+      "id": 1777023947031,
+      "title": "\u89c6\u9891\u6807\u9898",
+      "content": "/videos/\u4f60\u7684\u89c6\u9891\u6587\u4ef6\u540d.mp4",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-24 17:45:47",
+      "reject_reason": "\u65e0\u6807\u9898\uff0c\u6ca1\u6709\u5185\u5bb9",
+      "reviewed_at": "2026-04-24T18:25:51.034776"
+    },
+    {
+      "id": 1777024488698,
+      "title": "\u6d4b\u8bd5\u672c\u5730\u89c6\u9891",
+      "content": "/videos/test.mp4",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-24 17:54:48",
+      "reject_reason": "\u6d4b\u8bd5\u4f7f\u7528\uff0c\u73b0\u5728\u5220\u9664",
+      "reviewed_at": "2026-04-24T18:26:08.346466"
+    },
+    {
+      "id": 1777025845814,
+      "title": "\u89c6\u9891\u6807\u9898",
+      "content": "/videos/\u4f60\u7684\u89c6\u9891\u6587\u4ef6.mp4",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-24 18:17:25",
+      "reject_reason": "\u65e0\u6807\u9898\uff0c\u65e0\u5185\u5bb9\uff0c\u65e0\u58f0\u97f3\uff0c\u4e0d\u5408\u683c\uff0c\u9a73\u56de",
+      "reviewed_at": "2026-04-24T18:26:32.140331"
+    },
+    {
+      "id": 1777021709598,
+      "title": "ClawsJoy \u6bcf\u5468\u5ba3\u4f20\u7247 - \u7b2c18\u671f",
+      "content": "",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-24 17:08:29",
+      "reject_reason": "\u753b\u9762\u65e0\u6cd5\u663e\u793a\uff0c\u5148\u9a73\u56de",
+      "reviewed_at": "2026-04-24T18:26:48.838756"
+    },
+    {
+      "id": 1777021709073,
+      "title": "ClawsJoy \u516c\u53f8\u5ba3\u4f20\u7247 V4 (\u53ef\u64ad\u653e\u7248)",
+      "content": "",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-24 17:08:29",
+      "reject_reason": "\u753b\u9762\u65e0\u6cd5\u663e\u793a\uff0c\u5148\u9a73\u56de",
+      "reviewed_at": "2026-04-24T18:27:02.501769"
+    },
+    {
+      "id": 1777026122503,
+      "title": "\u6d4b\u8bd5\u90e8\u7f72",
+      "content": "\u9884\u89c8\u5730\u5740: http://localhost:8083/preview/deploy_20260424_182201_973060729.html\n\u547d\u4ee4: echo 'Hello from ClawsJoy'\n\u63cf\u8ff0: \u6d4b\u8bd5\u81ea\u52a8\u90e8\u7f72\u529f\u80fd",
+      "submitter": "engineer",
+      "status": "rejected",
+      "created_at": "2026-04-24 18:22:02",
+      "reject_reason": "\u6d4b\u8bd5\u4f7f\u7528\uff0c\u73b0\u5220\u9664",
+      "reviewed_at": "2026-04-24T18:27:24.730768"
+    },
+    {
+      "id": 1777026190787,
+      "title": "ClawsJoy \u516c\u53f8\u5ba3\u4f20\u7247 - \u7a81\u51fb\u7248",
+      "content": "<h1>\ud83c\udfac ClawsJoy \u516c\u53f8\u5ba3\u4f20\u7247</h1><h2>\ud83d\udcd6 \u5173\u4e8e\u6211\u4eec</h2><p>ClawsJoy \u6210\u7acb\u4e8e2026\u5e74\uff0c\u81f4\u529b\u4e8e<strong>\u8ba9 AI \u5b89\u5168\u5730\u4e3a\u6bcf\u4e2a\u4eba\u5de5\u4f5c</strong>\u3002</p><h2>\ud83c\udfd7\ufe0f \u6838\u5fc3\u6280\u672f</h2><ul><li>\ud83d\udd12 <strong>\u591a\u79df\u6237\u9694\u79bb</strong>\uff1a\u94f6\u884c\u7ea7\u6570\u636e\u5b89\u5168\uff0c\u79df\u6237\u4e4b\u95f4\u5b8c\u5168\u9694\u79bb</li><li>\ud83e\udde0 <strong>Agent \u81ea\u52a8\u8fdb\u5316</strong>\uff1a\u4ece\u53cd\u9988\u4e2d\u5b66\u4e60\uff0c\u8d8a\u7528\u8d8a\u806a\u660e</li><li>\ud83d\udcc1 <strong>\u6587\u4ef6\u4e8b\u4ef6\u9a71\u52a8</strong>\uff1aAI\u53ea\u521b\u4f5c\uff0c\u7cfb\u7edf\u6765\u6267\u884c</li><li>\ud83d\udc41\ufe0f <strong>\u53ef\u89c6\u542c\u5316\u5ba1\u6838</strong>\uff1a\u56fe\u7247/\u89c6\u9891/SVG\u5b9e\u65f6\u9884\u89c8</li></ul><h2>\ud83e\udd16 \u6211\u4eec\u7684 Agent \u56e2\u961f</h2><ul><li>\u270d\ufe0f Writer - \u5185\u5bb9\u521b\u4f5c\u5927\u5e08</li><li>\ud83c\udfa8 Designer - \u79d2\u7ea7\u751f\u6210\u8bbe\u8ba1\u7a3f</li><li>\ud83d\udd0d Reviewer - \u667a\u80fd\u5ba1\u6838\u8bc4\u5206</li><li>\ud83d\udd77\ufe0f Spider - \u6570\u636e\u91c7\u96c6\u4e13\u5bb6</li><li>\ud83d\udcac Messenger - \u591a\u5e73\u53f0\u4e00\u952e\u53d1\u5e03</li><li>\ud83d\udd27 Engineer - \u81ea\u52a8\u5316\u90e8\u7f72</li><li>\ud83c\udfac Video-Maker - \u89c6\u9891\u5236\u4f5c</li></ul><h2>\ud83c\udf1f \u54c1\u724c\u53e3\u53f7</h2><p style='color:#667eea;font-weight:bold;font-size:24px;text-align:center;'>\u5de5\u5177\u6613\u4e0a\u624b\uff0c\u7ed3\u679c\u4ee4\u4eba\u6109\u60a6</p><hr><p style='text-align:center;'>ClawsJoy \u2014 \u8ba9 AI \u5b89\u5168\u5730\u4e3a\u6bcf\u4e2a\u4eba\u5de5\u4f5c</p>",
+      "submitter": "writer",
+      "status": "rejected",
+      "created_at": "2026-04-24 18:23:10",
+      "reject_reason": "\u94fe\u63a5404\uff0c\u9a73\u56de",
+      "reviewed_at": "2026-04-24T18:27:43.088874"
+    },
+    {
+      "id": 1777023510983,
+      "title": "\u4fee\u590d\u7248\u6d4b\u8bd5\u89c6\u9891",
+      "content": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "submitter": "video-maker",
+      "status": "approved",
+      "created_at": "2026-04-24 17:38:30",
+      "reviewer_comment": "\u901a\u8fc7\uff0c\u8bc4\u5206:85",
+      "reviewed_at": "2026-04-24T18:48:20.457735"
+    },
+    {
+      "id": 1777026202844,
+      "title": "ClawsJoy \u516c\u53f8\u5ba3\u4f20\u7247 - \u7a81\u51fb\u7248",
+      "content": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "submitter": "video-maker",
+      "status": "approved",
+      "created_at": "2026-04-24 18:23:22",
+      "reviewer_comment": "\u901a\u8fc7\uff0c\u8bc4\u5206:85",
+      "reviewed_at": "2026-04-24T18:48:22.102380"
+    },
+    {
+      "id": 1777026787425,
+      "title": "ClawsJoy \u516c\u53f8\u5ba3\u4f20\u7247\u811a\u672c",
+      "content": "<h1>\ud83c\udfac ClawsJoy \u516c\u53f8\u5ba3\u4f20\u7247</h1><h2>\ud83d\udcd6 \u5173\u4e8e ClawsJoy</h2><p>ClawsJoy \u8ba9 AI \u5b89\u5168\u5730\u4e3a\u6bcf\u4e2a\u4eba\u5de5\u4f5c\u3002</p><h2>\ud83c\udfd7\ufe0f \u6838\u5fc3\u4f18\u52bf</h2><ul><li>\ud83d\udd12 \u591a\u79df\u6237\u9694\u79bb\uff1a\u94f6\u884c\u7ea7\u6570\u636e\u5b89\u5168</li><li>\ud83e\udde0 Agent\u81ea\u52a8\u8fdb\u5316\uff1a\u8d8a\u7528\u8d8a\u806a\u660e</li><li>\ud83d\udcc1 \u6587\u4ef6\u4e8b\u4ef6\u9a71\u52a8\uff1aAI\u53ea\u521b\u4f5c\uff0c\u7cfb\u7edf\u6267\u884c</li><li>\ud83d\udc41\ufe0f \u53ef\u89c6\u542c\u5316\u5ba1\u6838\uff1a\u5b9e\u65f6\u9884\u89c8</li></ul><h2>\ud83e\udd16 Agent \u56e2\u961f</h2><ul><li>\u270d\ufe0f Writer - \u5185\u5bb9\u521b\u4f5c</li><li>\ud83c\udfa8 Designer - \u8bbe\u8ba1\u751f\u6210</li><li>\ud83d\udd0d Reviewer - \u667a\u80fd\u5ba1\u6838</li><li>\ud83d\udd77\ufe0f Spider - \u6570\u636e\u91c7\u96c6</li><li>\ud83d\udcac Messenger - \u591a\u5e73\u53f0\u53d1\u5e03</li><li>\ud83d\udd27 Engineer - \u81ea\u52a8\u90e8\u7f72</li><li>\ud83c\udfac Video-Maker - \u89c6\u9891\u5236\u4f5c</li></ul><p style='color:#667eea;font-weight:bold;text-align:center;'>\u5de5\u5177\u6613\u4e0a\u624b\uff0c\u7ed3\u679c\u4ee4\u4eba\u6109\u60a6</p>",
+      "submitter": "writer",
+      "status": "approved",
+      "created_at": "2026-04-24 18:33:07",
+      "reviewer_comment": "\u901a\u8fc7\uff0c\u8bc4\u5206:85",
+      "reviewed_at": "2026-04-24T18:51:52.673164"
+    },
+    {
+      "id": 1777026682209,
+      "title": "\u3010\u7d27\u6025\u3011\u5236\u4f5c\u516c\u53f8\u5ba3\u4f20\u7247",
+      "content": "\u9884\u89c8\u5730\u5740: http://localhost:8083/preview/deploy_20260424_183121_689818064.html\n\u547d\u4ee4: \u542f\u52a8\u5168Agent\u534f\u4f5c\u6d41\u6c34\u7ebf\n\u63cf\u8ff0: \u4efb\u52a1\uff1a\u5236\u4f5cClawsJoy\u516c\u53f8\u5ba3\u4f20\u7247\uff0c\u6240\u6709Agent\u6309\u804c\u8d23\u63d0\u4ea4\u7d20\u6750\uff0c2\u5c0f\u65f6\u5185\u5b8c\u6210",
+      "submitter": "engineer",
+      "status": "approved",
+      "created_at": "2026-04-24 18:31:22",
+      "reviewer_comment": "\u901a\u8fc7\uff0c\u8bc4\u5206:85",
+      "reviewed_at": "2026-04-24T18:52:02.847067"
+    },
+    {
+      "id": 1777028608582,
+      "title": "\u624b\u52a8\u6d4b\u8bd5\u89c6\u9891",
+      "content": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-24 19:03:28",
+      "reject_reason": "test",
+      "reviewed_at": "2026-04-24T19:04:30.788020"
+    },
+    {
+      "id": 1777028299466,
+      "title": "ClawsJoy \u5ba3\u4f20\u7247 - \u7b2c16\u671f",
+      "content": "\u3010ClawsJoy \u6bcf\u5468\u5ba3\u4f20\u7247 \u7b2c16\u671f\u3011\u4e3b\u9898: \u591a\u79df\u6237\u9694\u79bb\uff1a\u60a8\u7684\u6570\u636e\u7edd\u5bf9\u5b89\u5168\u65f6\u957f: 45\u79d2\u5206\u8fa8\u7387: 1920x1080\u98ce\u683c: \u79d1\u6280\u611f + \u7b80\u6d01\u672c\u671f\u5185\u5bb9:- \u6838\u5fc3\u529f\u80fd\u5c55\u793a: \u591a\u79df\u6237\u9694\u79bb\u3001Agent\u8fdb\u5316\u3001\u6587\u4ef6\u4e8b\u4ef6\u9a71\u52a8- \u4ea7\u54c1\u8f6e\u64ad: Writer \u2192 Designer \u2192 Reviewer \u2192 Messenger- \u54c1\u724c\u53e3\u53f7: \u8ba9AI\u5b89\u5168\u5730\u4e3a\u6bcf\u4e2a\u4eba\u5de5\u4f5c\u8f93\u51fa\u683c\u5f0f: MP4\u9884\u8ba1\u5b8c\u6210\u65f6\u95f4: 30\u5206\u949f\u540e",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-24 18:58:19",
+      "reject_reason": "\u65e0\u6548\u94fe\u63a5",
+      "reviewed_at": "2026-04-24T19:04:42.771320"
+    },
+    {
+      "id": 1777028572768,
+      "title": "\u6d4b\u8bd5\u6b63\u786e\u89c6\u9891",
+      "content": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-24 19:02:52",
+      "reject_reason": "\u6d4b\u8bd5\u89c6\u9891",
+      "reviewed_at": "2026-04-24T19:04:55.836136"
+    },
+    {
+      "id": 1777028777824,
+      "title": "\u6d4b\u8bd5\u6587\u7ae0",
+      "content": "<h1>\u6d4b\u8bd5</h1><p>\u5185\u5bb9</p>",
+      "submitter": "tester",
+      "status": "rejected",
+      "created_at": "2026-04-24 19:06:17",
+      "reject_reason": "test",
+      "reviewed_at": "2026-04-24T19:07:30.592223"
+    },
+    {
+      "id": 1777028778360,
+      "title": "\u6d4b\u8bd5\u89c6\u9891",
+      "content": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "submitter": "tester",
+      "status": "rejected",
+      "created_at": "2026-04-24 19:06:18",
+      "reject_reason": "test",
+      "reviewed_at": "2026-04-24T19:07:37.385436"
+    },
+    {
+      "id": 1777028788429,
+      "title": "ClawsJoy \u54c1\u724c\u5ba3\u4f20\u7247 - \u7b2c16\u671f",
+      "content": "<h1>\ud83c\udfac ClawsJoy \u54c1\u724c\u5ba3\u4f20\u7247 \u7b2c16\u671f</h1><h2>\ud83d\udcd6 \u672c\u671f\u4e3b\u9898\uff1a\u591a\u79df\u6237\u9694\u79bb\uff1a\u60a8\u7684\u6570\u636e\u7edd\u5bf9\u5b89\u5168</h2><p>ClawsJoy \u8ba9 AI \u5b89\u5168\u5730\u4e3a\u6bcf\u4e2a\u4eba\u5de5\u4f5c\u3002</p><h2>\ud83c\udfaf \u6838\u5fc3\u4eae\u70b9</h2><ul><li>\ud83d\udd12 \u591a\u79df\u6237\u9694\u79bb\uff1a\u94f6\u884c\u7ea7\u6570\u636e\u5b89\u5168</li><li>\ud83e\udde0 Agent\u81ea\u52a8\u8fdb\u5316\uff1a\u4ece\u53cd\u9988\u4e2d\u5b66\u4e60</li><li>\ud83d\udcc1 \u6587\u4ef6\u4e8b\u4ef6\u9a71\u52a8\uff1aAI\u53ea\u521b\u4f5c\uff0c\u7cfb\u7edf\u6765\u6267\u884c</li><li>\ud83d\udc41\ufe0f \u53ef\u89c6\u542c\u5316\u5ba1\u6838\uff1a\u56fe\u7247/\u89c6\u9891/SVG\u5b9e\u65f6\u9884\u89c8</li></ul><h2>\ud83c\udfac \u5206\u955c</h2><ul><li>0-5\u79d2\uff1aLogo\u52a8\u753b</li><li>5-20\u79d2\uff1a\u6838\u5fc3\u6280\u672f\u5c55\u793a</li><li>20-35\u79d2\uff1a\u4ea7\u54c1\u8f6e\u64ad</li><li>35-45\u79d2\uff1a\u54c1\u724cSlogan + CTA</li></ul><hr><p style='text-align:center;color:#667eea;'>ClawsJoy \u2014 \u5de5\u5177\u6613\u4e0a\u624b\uff0c\u7ed3\u679c\u4ee4\u4eba\u6109\u60a6</p>",
+      "submitter": "weekly_promo",
+      "status": "rejected",
+      "created_at": "2026-04-24 19:06:28",
+      "reject_reason": "test",
+      "reviewed_at": "2026-04-24T19:07:44.960222"
+    },
+    {
+      "id": 1777028885661,
+      "title": "ClawsJoy \u54c1\u724c\u5ba3\u4f20\u7247 - \u7b2c16\u671f",
+      "content": "<h1>ClawsJoy \u54c1\u724c\u5ba3\u4f20\u7247</h1><h2>\u4e3b\u9898\uff1aAgent\u81ea\u52a8\u8fdb\u5316\uff1a\u8d8a\u7528\u8d8a\u806a\u660e</h2><p>\u8ba9AI\u5b89\u5168\u5730\u4e3a\u6bcf\u4e2a\u4eba\u5de5\u4f5c</p>",
+      "submitter": "weekly_promo",
+      "status": "approved",
+      "created_at": "2026-04-24 19:08:05",
+      "reviewer_comment": "\u81ea\u52a8\u5ba1\u6838\u901a\u8fc7\uff0c88\u5206",
+      "reviewed_at": "2026-04-24T19:08:16.294489"
+    },
+    {
+      "id": 1777028891756,
+      "title": "ClawsJoy \u5ba3\u4f20\u7247 - \u7b2c16\u671f",
+      "content": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "submitter": "weekly_promo",
+      "status": "approved",
+      "created_at": "2026-04-24 19:08:11",
+      "reviewer_comment": "\u81ea\u52a8\u5ba1\u6838\u901a\u8fc7\uff0c88\u5206",
+      "reviewed_at": "2026-04-24T19:08:16.302436"
+    },
+    {
+      "id": 1777030577792,
+      "title": "ClawsJoy \u5ba3\u4f20\u7247 - \u7b2c16\u671f",
+      "content": "<h1>ClawsJoy \u54c1\u724c\u5ba3\u4f20\u7247</h1><h2>\u4e3b\u9898\uff1a\u591a\u79df\u6237\u9694\u79bb\uff1a\u60a8\u7684\u6570\u636e\u7edd\u5bf9\u5b89\u5168</h2><p>ClawsJoy \u8ba9 AI \u5b89\u5168\u5730\u4e3a\u6bcf\u4e2a\u4eba\u5de5\u4f5c\u3002</p><h2>\u6838\u5fc3\u4f18\u52bf</h2><ul><li>\ud83d\udd12 \u591a\u79df\u6237\u9694\u79bb</li><li>\ud83e\udde0 Agent\u81ea\u52a8\u8fdb\u5316</li><li>\ud83d\udcc1 \u6587\u4ef6\u4e8b\u4ef6\u9a71\u52a8</li><li>\ud83d\udc41\ufe0f \u53ef\u89c6\u542c\u5316\u5ba1\u6838</li></ul><p style='color:#667eea;'>\u5de5\u5177\u6613\u4e0a\u624b\uff0c\u7ed3\u679c\u4ee4\u4eba\u6109\u60a6</p>",
+      "submitter": "weekly_promo",
+      "status": "approved",
+      "created_at": "2026-04-24 19:36:17",
+      "reviewer_comment": "\u81ea\u52a8\u5ba1\u6838\u901a\u8fc7\uff0c\u8bc4\u520690",
+      "reviewed_at": "2026-04-24T19:36:35.532640"
+    },
+    {
+      "id": 1777030589998,
+      "title": "ClawsJoy \u5ba3\u4f20\u7247 - \u7b2c16\u671f",
+      "content": "/videos/promo_16.mp4",
+      "submitter": "weekly_promo",
+      "status": "approved",
+      "created_at": "2026-04-24 19:36:29",
+      "reviewer_comment": "\u81ea\u52a8\u5ba1\u6838\u901a\u8fc7\uff0c\u8bc4\u520690",
+      "reviewed_at": "2026-04-24T19:36:35.540117"
+    },
+    {
+      "id": 1777034817942,
+      "title": "ClawsJoy \u5ba3\u4f20\u7247 - \u7b2c16\u671f",
+      "content": "<h1>ClawsJoy \u54c1\u724c\u5ba3\u4f20\u7247</h1><h2>\u4e3b\u9898\uff1a\u591a\u79df\u6237\u9694\u79bb\uff1a\u60a8\u7684\u6570\u636e\u7edd\u5bf9\u5b89\u5168</h2><p>ClawsJoy \u8ba9 AI \u5b89\u5168\u5730\u4e3a\u6bcf\u4e2a\u4eba\u5de5\u4f5c\u3002</p><h2>\u6838\u5fc3\u4f18\u52bf</h2><ul><li>\ud83d\udd12 \u591a\u79df\u6237\u9694\u79bb</li><li>\ud83e\udde0 Agent\u81ea\u52a8\u8fdb\u5316</li><li>\ud83d\udcc1 \u6587\u4ef6\u4e8b\u4ef6\u9a71\u52a8</li><li>\ud83d\udc41\ufe0f \u53ef\u89c6\u542c\u5316\u5ba1\u6838</li></ul><p style='color:#667eea;'>\u5de5\u5177\u6613\u4e0a\u624b\uff0c\u7ed3\u679c\u4ee4\u4eba\u6109\u60a6</p>",
+      "submitter": "weekly_promo",
+      "status": "approved",
+      "created_at": "2026-04-24 20:46:57",
+      "reviewer_comment": "\u81ea\u52a8\u5ba1\u6838\u901a\u8fc7\uff0c\u8bc4\u520690",
+      "reviewed_at": "2026-04-24T20:47:15.131512"
+    },
+    {
+      "id": 1777034829602,
+      "title": "ClawsJoy \u5ba3\u4f20\u7247 - \u7b2c16\u671f",
+      "content": "/videos/promo_16.mp4",
+      "submitter": "weekly_promo",
+      "status": "approved",
+      "created_at": "2026-04-24 20:47:09",
+      "reviewer_comment": "\u81ea\u52a8\u5ba1\u6838\u901a\u8fc7\uff0c\u8bc4\u520690",
+      "reviewed_at": "2026-04-24T20:47:15.139505"
+    },
+    {
+      "id": 1777031592236,
+      "title": "\u6267\u884c\u529b\u6d4b\u8bd5 - \u7b80\u5355\u5ba3\u4f20\u8bed",
+      "content": "<h1>ClawsJoy</h1><p>\u8ba9AI\u5b89\u5168\u5730\u4e3a\u6bcf\u4e2a\u4eba\u5de5\u4f5c</p><p>\u5de5\u5177\u6613\u4e0a\u624b\uff0c\u7ed3\u679c\u4ee4\u4eba\u6109\u60a6</p>",
+      "submitter": "test_commander",
+      "status": "rejected",
+      "created_at": "2026-04-24 19:53:12",
+      "reject_reason": "test",
+      "reviewed_at": "2026-04-24T20:51:10.598917"
+    },
+    {
+      "id": 1777032002152,
+      "title": "",
+      "content": "",
+      "submitter": "writer",
+      "status": "rejected",
+      "created_at": "2026-04-24 20:00:02",
+      "reject_reason": "\u65e0\u5185\u5bb9\u65e0\u6807\u9898\u9a73\u56de",
+      "reviewed_at": "2026-04-24T20:51:25.331819"
+    },
+    {
+      "id": 1777032002678,
+      "title": "",
+      "content": "",
+      "submitter": "writer",
+      "status": "rejected",
+      "created_at": "2026-04-24 20:00:02",
+      "reject_reason": "\u65e0\u5185\u5bb9\u65e0\u6807\u9898\u9a73\u56de",
+      "reviewed_at": "2026-04-24T20:51:36.453695"
+    },
+    {
+      "id": 1777032003202,
+      "title": "",
+      "content": "",
+      "submitter": "writer",
+      "status": "rejected",
+      "created_at": "2026-04-24 20:00:03",
+      "reject_reason": "\u65e0\u5185\u5bb9\u65e0\u6807\u9898\u9a73\u56de",
+      "reviewed_at": "2026-04-24T20:51:47.658629"
+    },
+    {
+      "id": 1777033642005,
+      "title": "ClawsJoy Logo",
+      "content": "<svg...>",
+      "submitter": "test_commander",
+      "status": "rejected",
+      "created_at": "2026-04-24 20:27:22",
+      "reject_reason": "\u94fe\u63a5\u5047\u7684\u5185\u5bb9\uff0c\u9a73\u56de",
+      "reviewed_at": "2026-04-24T20:52:11.277170"
+    },
+    {
+      "id": 1777033847883,
+      "title": "\u4f53\u68c0-\u6d4b\u8bd5\u6807\u9898",
+      "content": "<h1>\u4f53\u68c0</h1><p>Agent\u6267\u884c\u529b\u6d4b\u8bd5</p>",
+      "submitter": "health_check",
+      "status": "rejected",
+      "created_at": "2026-04-24 20:30:47",
+      "reject_reason": "\u94fe\u63a5\u5bb6\u7684\u5185\u5bb9\u9a73\u56de",
+      "reviewed_at": "2026-04-24T20:52:37.081567"
+    },
+    {
+      "id": 1777034620948,
+      "title": "\u5de5\u5177\u6d4b\u8bd5",
+      "content": "<h1>\u6d4b\u8bd5</h1>",
+      "submitter": "tool_test",
+      "status": "rejected",
+      "created_at": "2026-04-24 20:43:40",
+      "reject_reason": "test",
+      "reviewed_at": "2026-04-24T20:52:46.763219"
+    },
+    {
+      "id": 1777034625310,
+      "title": "\u5de5\u5177\u6d4b\u8bd5",
+      "content": "<h1>\u5de5\u5177\u4fee\u590d\u9a8c\u8bc1</h1><p>Agent\u73b0\u5728\u5e94\u8be5\u80fd\u76f4\u63a5\u6267\u884c\u547d\u4ee4\u4e86</p>",
+      "submitter": "tool_test",
+      "status": "rejected",
+      "created_at": "2026-04-24 20:43:45",
+      "reject_reason": "test",
+      "reviewed_at": "2026-04-24T20:52:53.348936"
+    },
+    {
+      "id": 1777031141561,
+      "title": "ClawsJoy \u6d4b\u8bd5\u5ba3\u4f20\u7247",
+      "content": "/videos/test_video.mp4",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-24 19:45:41",
+      "reject_reason": "\u56fe\u6587\u6ca1\u505a\u597d\uff0c\u8ba9\u8bbe\u8ba1\u5e08\u91cd\u65b0\u63d0\u4f9b\u597d\u7684\u7d20\u6750\uff0c\u89c6\u9891\u91cd\u65b0\u505a\uff0c\u914d\u4e0a\u5b57\u5e55\u7b49",
+      "reviewed_at": "2026-04-24T20:53:48.898822"
+    },
+    {
+      "id": 1777038822936,
+      "title": "\u6807\u9898",
+      "content": "/videos/\u8f93\u51fa\u540d.mp4",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-24 21:53:42",
+      "reject_reason": "\u65e0\u6807\u9898 \u9a73\u56de",
+      "reviewed_at": "2026-04-24T21:54:43.688946"
+    },
+    {
+      "id": 1777035569378,
+      "title": "ClawsJoy \u5ba3\u4f20\u7247",
+      "content": "/videos/promo_fixed2.mp4",
+      "submitter": "video-maker",
+      "status": "approved",
+      "created_at": "2026-04-24 20:59:29",
+      "reviewer_comment": "\u901a\u8fc7\uff0c\u8bc4\u5206:85",
+      "reviewed_at": "2026-04-24T22:42:26.542105"
+    },
+    {
+      "id": 1777037624044,
+      "title": "\u6807\u9898",
+      "content": "/videos/test2.mp4",
+      "submitter": "video-maker",
+      "status": "approved",
+      "created_at": "2026-04-24 21:33:44",
+      "reviewer_comment": "\u901a\u8fc7\uff0c\u8bc4\u5206:85",
+      "reviewed_at": "2026-04-24T22:42:27.757159"
+    },
+    {
+      "id": 1777038147248,
+      "title": "\u6a21\u578b\u6d4b\u8bd5",
+      "content": "/videos/test_model.mp4",
+      "submitter": "video-maker",
+      "status": "approved",
+      "created_at": "2026-04-24 21:42:27",
+      "reviewer_comment": "\u901a\u8fc7\uff0c\u8bc4\u5206:85",
+      "reviewed_at": "2026-04-24T22:42:28.817908"
+    },
+    {
+      "id": 1777038841598,
+      "title": "ClawsJoy \u5ba3\u4f20\u7247",
+      "content": "/videos/promo_week17.mp4",
+      "submitter": "video-maker",
+      "status": "approved",
+      "created_at": "2026-04-24 21:54:01",
+      "reviewer_comment": "\u901a\u8fc7\uff0c\u8bc4\u5206:85",
+      "reviewed_at": "2026-04-24T22:42:29.663293"
+    },
+    {
+      "id": 1777038842117,
+      "title": "ClawsJoy \u5ba3\u4f20\u7247",
+      "content": "/videos/promo_week17.mp4",
+      "submitter": "video-maker",
+      "status": "approved",
+      "created_at": "2026-04-24 21:54:02",
+      "reviewer_comment": "\u901a\u8fc7\uff0c\u8bc4\u5206:85",
+      "reviewed_at": "2026-04-24T22:42:30.511299"
+    },
+    {
+      "id": 1777038935703,
+      "title": "ClawsJoy \u5ba3\u4f20\u7247",
+      "content": "/videos/promo_week17.mp4",
+      "submitter": "video-maker",
+      "status": "approved",
+      "created_at": "2026-04-24 21:55:35",
+      "reviewer_comment": "\u901a\u8fc7\uff0c\u8bc4\u5206:85",
+      "reviewed_at": "2026-04-24T22:42:31.871448"
+    },
+    {
+      "id": 1777039045626,
+      "title": "ClawsJoy \u5ba3\u4f20\u7247",
+      "content": "/videos/promo_week17.mp4",
+      "submitter": "video-maker",
+      "status": "approved",
+      "created_at": "2026-04-24 21:57:25",
+      "reviewer_comment": "\u901a\u8fc7\uff0c\u8bc4\u5206:85",
+      "reviewed_at": "2026-04-24T22:42:33.181921"
+    },
+    {
+      "id": 1777039138657,
+      "title": "ClawsJoy \u5ba3\u4f20\u7247 - \u591a\u56fe\u7248",
+      "content": "/videos/promo_multi.mp4",
+      "submitter": "video-maker",
+      "status": "approved",
+      "created_at": "2026-04-24 21:58:58",
+      "reviewer_comment": "\u901a\u8fc7\uff0c\u8bc4\u5206:85",
+      "reviewed_at": "2026-04-24T22:42:35.640760"
+    },
+    {
+      "id": 1777039177135,
+      "title": "ClawsJoy \u5ba3\u4f20\u7247 - \u591a\u56fe\u7248",
+      "content": "/videos/promo_multi.mp4",
+      "submitter": "video-maker",
+      "status": "approved",
+      "created_at": "2026-04-24 21:59:37",
+      "reviewer_comment": "\u901a\u8fc7\uff0c\u8bc4\u5206:85",
+      "reviewed_at": "2026-04-24T22:42:53.156634"
+    },
+    {
+      "id": 1777041696093,
+      "title": "\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f \u7d20\u6750\u5305",
+      "content": "<h2>\u91c7\u96c6\u7ed3\u679c: \u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f \u7d20\u6750\u5305</h2><p>\u5171\u91c7\u96c6 20 \u5f20\u56fe\u7247</p><ul><li><img src='/images/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_\u7d20\u6750\u5305/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_1.jpg' width='200'/></li><li><img src='/images/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_\u7d20\u6750\u5305/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_10.jpg' width='200'/></li><li><img src='/images/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_\u7d20\u6750\u5305/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_11.jpg' width='200'/></li><li><img src='/images/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_\u7d20\u6750\u5305/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_12.jpg' width='200'/></li><li><img src='/images/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_\u7d20\u6750\u5305/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_13.jpg' width='200'/></li><li><img src='/images/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_\u7d20\u6750\u5305/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_14.jpg' width='200'/></li><li><img src='/images/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_\u7d20\u6750\u5305/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_15.jpg' width='200'/></li><li><img src='/images/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_\u7d20\u6750\u5305/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_16.jpg' width='200'/></li><li><img src='/images/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_\u7d20\u6750\u5305/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_17.jpg' width='200'/></li><li><img src='/images/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_\u7d20\u6750\u5305/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_18.jpg' width='200'/></li><li><img src='/images/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_\u7d20\u6750\u5305/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_19.jpg' width='200'/></li><li><img src='/images/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_\u7d20\u6750\u5305/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_2.jpg' width='200'/></li><li><img src='/images/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_\u7d20\u6750\u5305/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_20.jpg' width='200'/></li><li><img src='/images/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_\u7d20\u6750\u5305/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_3.jpg' width='200'/></li><li><img src='/images/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_\u7d20\u6750\u5305/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_4.jpg' width='200'/></li><li><img src='/images/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_\u7d20\u6750\u5305/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_5.jpg' width='200'/></li><li><img src='/images/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_\u7d20\u6750\u5305/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_6.jpg' width='200'/></li><li><img src='/images/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_\u7d20\u6750\u5305/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_7.jpg' width='200'/></li><li><img src='/images/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_\u7d20\u6750\u5305/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_8.jpg' width='200'/></li><li><img src='/images/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_\u7d20\u6750\u5305/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f_9.jpg' width='200'/></li></ul>",
+      "submitter": "spider",
+      "status": "approved",
+      "created_at": "2026-04-24 22:41:36",
+      "reviewer_comment": "\u901a\u8fc7\uff0c\u8bc4\u5206:85",
+      "reviewed_at": "2026-04-24T22:52:11.380462"
+    },
+    {
+      "id": 1777041696617,
+      "title": "artificial intelligence \u7d20\u6750\u5305",
+      "content": "<h2>\u91c7\u96c6\u7ed3\u679c: artificial intelligence \u7d20\u6750\u5305</h2><p>\u5171\u91c7\u96c6 0 \u5f20\u56fe\u7247</p><ul></ul>",
+      "submitter": "spider",
+      "status": "approved",
+      "created_at": "2026-04-24 22:41:36",
+      "reviewer_comment": "\u901a\u8fc7\uff0c\u8bc4\u5206:85",
+      "reviewed_at": "2026-04-24T22:52:12.117006"
+    },
+    {
+      "id": 1777041861452,
+      "title": "\u9999\u6e2f\u7d20\u6750 \u7d20\u6750\u5305",
+      "content": "<h2>\ud83d\udd77\ufe0f \u91c7\u96c6\u7ed3\u679c: \u9999\u6e2f\u7d20\u6750</h2><p>\u5171\u91c7\u96c6 5 \u5f20\u56fe\u7247</p><div style='display:flex; flex-wrap:wrap; gap:10px;'><div style='width:200px; text-align:center;'>                    <img src='/images/\u9999\u6e2f\u7d20\u6750/\u9999\u6e2f_1.jpg' style='width:100%; height:150px; object-fit:cover; border-radius:8px;'>                    <div style='font-size:11px; color:#aaa;'>\u9999\u6e2f_1.jpg</div>                 </div><div style='width:200px; text-align:center;'>                    <img src='/images/\u9999\u6e2f\u7d20\u6750/\u9999\u6e2f_2.jpg' style='width:100%; height:150px; object-fit:cover; border-radius:8px;'>                    <div style='font-size:11px; color:#aaa;'>\u9999\u6e2f_2.jpg</div>                 </div><div style='width:200px; text-align:center;'>                    <img src='/images/\u9999\u6e2f\u7d20\u6750/\u9999\u6e2f_3.jpg' style='width:100%; height:150px; object-fit:cover; border-radius:8px;'>                    <div style='font-size:11px; color:#aaa;'>\u9999\u6e2f_3.jpg</div>                 </div><div style='width:200px; text-align:center;'>                    <img src='/images/\u9999\u6e2f\u7d20\u6750/\u9999\u6e2f_4.jpg' style='width:100%; height:150px; object-fit:cover; border-radius:8px;'>                    <div style='font-size:11px; color:#aaa;'>\u9999\u6e2f_4.jpg</div>                 </div><div style='width:200px; text-align:center;'>                    <img src='/images/\u9999\u6e2f\u7d20\u6750/\u9999\u6e2f_5.jpg' style='width:100%; height:150px; object-fit:cover; border-radius:8px;'>                    <div style='font-size:11px; color:#aaa;'>\u9999\u6e2f_5.jpg</div>                 </div></div>",
+      "submitter": "spider",
+      "status": "approved",
+      "created_at": "2026-04-24 22:44:21",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.051201"
+    },
+    {
+      "id": 1777042283143,
+      "title": "\u7ef4\u591a\u5229\u4e9a\u6e2f\u591c\u666f \u7d20\u6750\u5305",
+      "content": "<h2>\ud83d\udcc1 \u7ef4\u591a\u5229\u4e9a\u6e2f\u591c\u666f</h2><p>\ud83c\udff7\ufe0f \u5206\u7c7b: hk / victoria</p><p>\ud83d\udcca \u7d20\u6750\u6570\u91cf: 0 \u4e2a</p><p>\ud83d\udcc2 \u8def\u5f84: <code>/home/flybo/.openclaw/web/images/hongkong/victoria</code></p><p>\ud83d\udd17 \u9884\u89c8: <a href='/images/hongkong/victoria' target='_blank'>http://localhost:8083/images/hongkong/victoria</a></p>",
+      "submitter": "spider",
+      "status": "approved",
+      "created_at": "2026-04-24 22:51:23",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.059917"
+    },
+    {
+      "id": 1777042283668,
+      "title": "AI\u673a\u5668\u4eba\u63d2\u753b \u7d20\u6750\u5305",
+      "content": "<h2>\ud83d\udcc1 AI\u673a\u5668\u4eba\u63d2\u753b</h2><p>\ud83c\udff7\ufe0f \u5206\u7c7b: ai / robot</p><p>\ud83d\udcca \u7d20\u6750\u6570\u91cf: 0 \u4e2a</p><p>\ud83d\udcc2 \u8def\u5f84: <code>/home/flybo/.openclaw/web/images/ai/robot</code></p><p>\ud83d\udd17 \u9884\u89c8: <a href='/images/ai/robot' target='_blank'>http://localhost:8083/images/ai/robot</a></p>",
+      "submitter": "spider",
+      "status": "approved",
+      "created_at": "2026-04-24 22:51:23",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.068621"
+    },
+    {
+      "id": 1777042284186,
+      "title": "ClawsJoy Logo \u7d20\u6750\u5305",
+      "content": "<h2>\ud83d\udcc1 ClawsJoy Logo</h2><p>\ud83c\udff7\ufe0f \u5206\u7c7b: brand / logo</p><p>\ud83d\udcca \u7d20\u6750\u6570\u91cf: 0 \u4e2a</p><p>\ud83d\udcc2 \u8def\u5f84: <code>/home/flybo/.openclaw/web/images/clawsjoy/logo</code></p><p>\ud83d\udd17 \u9884\u89c8: <a href='/images/clawsjoy/logo' target='_blank'>http://localhost:8083/images/clawsjoy/logo</a></p>",
+      "submitter": "spider",
+      "status": "approved",
+      "created_at": "2026-04-24 22:51:24",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.077710"
+    },
+    {
+      "id": 1777042316136,
+      "title": "\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f \u7d20\u6750\u5305",
+      "content": "<h2>\ud83d\udcc1 \u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f</h2><p>\ud83d\udcca \u5171 20 \u4e2a\u7d20\u6750\u6587\u4ef6</p><p>\ud83d\udcc2 \u6587\u4ef6\u5939\u8def\u5f84: <code>/home/flybo/.openclaw/web/images/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f</code></p><p>\ud83d\udd17 \u8bbf\u95ee\u94fe\u63a5: <a href='/images/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f' target='_blank'>http://localhost:8083/images/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f</a></p><p>\ud83d\udca1 \u63d0\u793a: \u70b9\u51fb\u94fe\u63a5\u67e5\u770b\u6240\u6709\u7d20\u6750\u6587\u4ef6</p>",
+      "submitter": "spider",
+      "status": "approved",
+      "created_at": "2026-04-24 22:51:56",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.087275"
+    },
+    {
+      "id": 1777042407353,
+      "title": "\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f \u7d20\u6750\u5305",
+      "content": "<h2>\ud83d\udcc1 \u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f</h2><p>\ud83d\udcca \u5171 0 \u4e2a\u7d20\u6750\u6587\u4ef6</p><p>\ud83d\udcc2 \u6587\u4ef6\u5939\u8def\u5f84: <code>/home/flybo/.openclaw/web/hk</code></p><p>\ud83d\udd17 \u8bbf\u95ee\u94fe\u63a5: <a href='/hk' target='_blank'>http://localhost:8083/hk</a></p><p>\ud83d\udca1 \u63d0\u793a: \u70b9\u51fb\u94fe\u63a5\u67e5\u770b\u6240\u6709\u7d20\u6750\u6587\u4ef6</p>",
+      "submitter": "spider",
+      "status": "approved",
+      "created_at": "2026-04-24 22:53:27",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.095512"
+    },
+    {
+      "id": 1777042421089,
+      "title": "\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f \u7d20\u6750\u5305",
+      "content": "<h2>\ud83d\udcc1 \u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f</h2><p>\ud83c\udff7\ufe0f \u5206\u7c7b: hongkong / victoria</p><p>\ud83d\udcc2 \u7d20\u6750\u76ee\u5f55: <code>/home/flybo/.openclaw/web/images/hongkong/victoria</code></p><p>\ud83d\udd17 <a href='/hongkong/victoria/' target='_blank'>\u70b9\u51fb\u9884\u89c8\u7d20\u6750\u6587\u4ef6\u5939</a></p><p>\ud83d\udca1 \u4f7f\u7528\u65b9\u5f0f: Designer \u76f4\u63a5\u4ece\u8be5\u76ee\u5f55\u53d6\u56fe</p>",
+      "submitter": "spider",
+      "status": "approved",
+      "created_at": "2026-04-24 22:53:41",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.104751"
+    },
+    {
+      "id": 1777042504441,
+      "title": "\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f \u7d20\u6750\u5305",
+      "content": "<h2>\ud83d\udcc1 \u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f</h2><p>\ud83c\udff7\ufe0f \u5206\u7c7b: hongkong / victoria</p><p>\ud83d\udcc2 \u7d20\u6750\u76ee\u5f55: <code>/home/flybo/.openclaw/web/images/hongkong/victoria</code></p><p>\ud83d\udd17 <a href='/hongkong/victoria/' target='_blank'>\u70b9\u51fb\u9884\u89c8\u7d20\u6750\u6587\u4ef6\u5939</a></p><p>\ud83d\udca1 \u4f7f\u7528\u65b9\u5f0f: Designer \u76f4\u63a5\u4ece\u8be5\u76ee\u5f55\u53d6\u56fe</p>",
+      "submitter": "spider",
+      "status": "approved",
+      "created_at": "2026-04-24 22:55:04",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.113549"
+    },
+    {
+      "id": 1777045857747,
+      "title": "\u9999\u6e2f\u7d20\u6750 \u7d20\u6750\u5305",
+      "content": "<h2>\ud83d\udcc1 \u9999\u6e2f\u7d20\u6750</h2><p>\ud83c\udff7\ufe0f \u5206\u7c7b: hongkong / victoria</p><p>\ud83d\udcc2 \u7d20\u6750\u76ee\u5f55: <code>/home/flybo/.openclaw/web/images/hongkong/victoria</code></p><p>\ud83d\udd17 <a href='/hongkong/victoria/' target='_blank'>\u70b9\u51fb\u9884\u89c8\u7d20\u6750\u6587\u4ef6\u5939</a></p><p>\ud83d\udca1 \u4f7f\u7528\u65b9\u5f0f: Designer \u76f4\u63a5\u4ece\u8be5\u76ee\u5f55\u53d6\u56fe</p>",
+      "submitter": "spider",
+      "status": "approved",
+      "created_at": "2026-04-24 23:50:57",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.122316"
+    },
+    {
+      "id": 1777045939230,
+      "title": "ai \u7d20\u6750\u5305 \u7d20\u6750\u5305",
+      "content": "<h2>\ud83d\udcc1 ai \u7d20\u6750\u5305</h2><p>\ud83c\udff7\ufe0f \u5206\u7c7b: images / ai</p><p>\ud83d\udcc2 \u7d20\u6750\u76ee\u5f55: <code>/home/flybo/.openclaw/web/images/images/ai</code></p><p>\ud83d\udd17 <a href='/images/ai/' target='_blank'>\u70b9\u51fb\u9884\u89c8\u7d20\u6750\u6587\u4ef6\u5939</a></p><p>\ud83d\udca1 \u4f7f\u7528\u65b9\u5f0f: Designer \u76f4\u63a5\u4ece\u8be5\u76ee\u5f55\u53d6\u56fe</p>",
+      "submitter": "spider",
+      "status": "approved",
+      "created_at": "2026-04-24 23:52:19",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.131259"
+    },
+    {
+      "id": 1777045939749,
+      "title": "ai_brain \u7d20\u6750\u5305 \u7d20\u6750\u5305",
+      "content": "<h2>\ud83d\udcc1 ai_brain \u7d20\u6750\u5305</h2><p>\ud83c\udff7\ufe0f \u5206\u7c7b: images / ai_brain</p><p>\ud83d\udcc2 \u7d20\u6750\u76ee\u5f55: <code>/home/flybo/.openclaw/web/images/images/ai_brain</code></p><p>\ud83d\udd17 <a href='/images/ai_brain/' target='_blank'>\u70b9\u51fb\u9884\u89c8\u7d20\u6750\u6587\u4ef6\u5939</a></p><p>\ud83d\udca1 \u4f7f\u7528\u65b9\u5f0f: Designer \u76f4\u63a5\u4ece\u8be5\u76ee\u5f55\u53d6\u56fe</p>",
+      "submitter": "spider",
+      "status": "approved",
+      "created_at": "2026-04-24 23:52:19",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.140702"
+    },
+    {
+      "id": 1777045940267,
+      "title": "artificial_intelligence \u7d20\u6750\u5305 \u7d20\u6750\u5305",
+      "content": "<h2>\ud83d\udcc1 artificial_intelligence \u7d20\u6750\u5305</h2><p>\ud83c\udff7\ufe0f \u5206\u7c7b: images / artificial_intelligence</p><p>\ud83d\udcc2 \u7d20\u6750\u76ee\u5f55: <code>/home/flybo/.openclaw/web/images/images/artificial_intelligence</code></p><p>\ud83d\udd17 <a href='/images/artificial_intelligence/' target='_blank'>\u70b9\u51fb\u9884\u89c8\u7d20\u6750\u6587\u4ef6\u5939</a></p><p>\ud83d\udca1 \u4f7f\u7528\u65b9\u5f0f: Designer \u76f4\u63a5\u4ece\u8be5\u76ee\u5f55\u53d6\u56fe</p>",
+      "submitter": "spider",
+      "status": "approved",
+      "created_at": "2026-04-24 23:52:20",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.149326"
+    },
+    {
+      "id": 1777045940786,
+      "title": "clawsjoy \u7d20\u6750\u5305 \u7d20\u6750\u5305",
+      "content": "<h2>\ud83d\udcc1 clawsjoy \u7d20\u6750\u5305</h2><p>\ud83c\udff7\ufe0f \u5206\u7c7b: images / clawsjoy</p><p>\ud83d\udcc2 \u7d20\u6750\u76ee\u5f55: <code>/home/flybo/.openclaw/web/images/images/clawsjoy</code></p><p>\ud83d\udd17 <a href='/images/clawsjoy/' target='_blank'>\u70b9\u51fb\u9884\u89c8\u7d20\u6750\u6587\u4ef6\u5939</a></p><p>\ud83d\udca1 \u4f7f\u7528\u65b9\u5f0f: Designer \u76f4\u63a5\u4ece\u8be5\u76ee\u5f55\u53d6\u56fe</p>",
+      "submitter": "spider",
+      "status": "approved",
+      "created_at": "2026-04-24 23:52:20",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.158005"
+    },
+    {
+      "id": 1777045941305,
+      "title": "cloud_computing \u7d20\u6750\u5305 \u7d20\u6750\u5305",
+      "content": "<h2>\ud83d\udcc1 cloud_computing \u7d20\u6750\u5305</h2><p>\ud83c\udff7\ufe0f \u5206\u7c7b: images / cloud_computing</p><p>\ud83d\udcc2 \u7d20\u6750\u76ee\u5f55: <code>/home/flybo/.openclaw/web/images/images/cloud_computing</code></p><p>\ud83d\udd17 <a href='/images/cloud_computing/' target='_blank'>\u70b9\u51fb\u9884\u89c8\u7d20\u6750\u6587\u4ef6\u5939</a></p><p>\ud83d\udca1 \u4f7f\u7528\u65b9\u5f0f: Designer \u76f4\u63a5\u4ece\u8be5\u76ee\u5f55\u53d6\u56fe</p>",
+      "submitter": "spider",
+      "status": "approved",
+      "created_at": "2026-04-24 23:52:21",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.166767"
+    },
+    {
+      "id": 1777045941825,
+      "title": "data_center \u7d20\u6750\u5305 \u7d20\u6750\u5305",
+      "content": "<h2>\ud83d\udcc1 data_center \u7d20\u6750\u5305</h2><p>\ud83c\udff7\ufe0f \u5206\u7c7b: images / data_center</p><p>\ud83d\udcc2 \u7d20\u6750\u76ee\u5f55: <code>/home/flybo/.openclaw/web/images/images/data_center</code></p><p>\ud83d\udd17 <a href='/images/data_center/' target='_blank'>\u70b9\u51fb\u9884\u89c8\u7d20\u6750\u6587\u4ef6\u5939</a></p><p>\ud83d\udca1 \u4f7f\u7528\u65b9\u5f0f: Designer \u76f4\u63a5\u4ece\u8be5\u76ee\u5f55\u53d6\u56fe</p>",
+      "submitter": "spider",
+      "status": "approved",
+      "created_at": "2026-04-24 23:52:21",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.176307"
+    },
+    {
+      "id": 1777045942350,
+      "title": "hongkong \u7d20\u6750\u5305 \u7d20\u6750\u5305",
+      "content": "<h2>\ud83d\udcc1 hongkong \u7d20\u6750\u5305</h2><p>\ud83c\udff7\ufe0f \u5206\u7c7b: images / hongkong</p><p>\ud83d\udcc2 \u7d20\u6750\u76ee\u5f55: <code>/home/flybo/.openclaw/web/images/images/hongkong</code></p><p>\ud83d\udd17 <a href='/images/hongkong/' target='_blank'>\u70b9\u51fb\u9884\u89c8\u7d20\u6750\u6587\u4ef6\u5939</a></p><p>\ud83d\udca1 \u4f7f\u7528\u65b9\u5f0f: Designer \u76f4\u63a5\u4ece\u8be5\u76ee\u5f55\u53d6\u56fe</p>",
+      "submitter": "spider",
+      "status": "approved",
+      "created_at": "2026-04-24 23:52:22",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.185394"
+    },
+    {
+      "id": 1777045942869,
+      "title": "hongkong_skyline \u7d20\u6750\u5305 \u7d20\u6750\u5305",
+      "content": "<h2>\ud83d\udcc1 hongkong_skyline \u7d20\u6750\u5305</h2><p>\ud83c\udff7\ufe0f \u5206\u7c7b: images / hongkong_skyline</p><p>\ud83d\udcc2 \u7d20\u6750\u76ee\u5f55: <code>/home/flybo/.openclaw/web/images/images/hongkong_skyline</code></p><p>\ud83d\udd17 <a href='/images/hongkong_skyline/' target='_blank'>\u70b9\u51fb\u9884\u89c8\u7d20\u6750\u6587\u4ef6\u5939</a></p><p>\ud83d\udca1 \u4f7f\u7528\u65b9\u5f0f: Designer \u76f4\u63a5\u4ece\u8be5\u76ee\u5f55\u53d6\u56fe</p>",
+      "submitter": "spider",
+      "status": "approved",
+      "created_at": "2026-04-24 23:52:22",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.194432"
+    },
+    {
+      "id": 1777045943390,
+      "title": "hongkong_street \u7d20\u6750\u5305 \u7d20\u6750\u5305",
+      "content": "<h2>\ud83d\udcc1 hongkong_street \u7d20\u6750\u5305</h2><p>\ud83c\udff7\ufe0f \u5206\u7c7b: images / hongkong_street</p><p>\ud83d\udcc2 \u7d20\u6750\u76ee\u5f55: <code>/home/flybo/.openclaw/web/images/images/hongkong_street</code></p><p>\ud83d\udd17 <a href='/images/hongkong_street/' target='_blank'>\u70b9\u51fb\u9884\u89c8\u7d20\u6750\u6587\u4ef6\u5939</a></p><p>\ud83d\udca1 \u4f7f\u7528\u65b9\u5f0f: Designer \u76f4\u63a5\u4ece\u8be5\u76ee\u5f55\u53d6\u56fe</p>",
+      "submitter": "spider",
+      "status": "approved",
+      "created_at": "2026-04-24 23:52:23",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.204728"
+    },
+    {
+      "id": 1777045943925,
+      "title": "hongkong_victoria_harbour \u7d20\u6750\u5305 \u7d20\u6750\u5305",
+      "content": "<h2>\ud83d\udcc1 hongkong_victoria_harbour \u7d20\u6750\u5305</h2><p>\ud83c\udff7\ufe0f \u5206\u7c7b: images / hongkong_victoria_harbour</p><p>\ud83d\udcc2 \u7d20\u6750\u76ee\u5f55: <code>/home/flybo/.openclaw/web/images/images/hongkong_victoria_harbour</code></p><p>\ud83d\udd17 <a href='/images/hongkong_victoria_harbour/' target='_blank'>\u70b9\u51fb\u9884\u89c8\u7d20\u6750\u6587\u4ef6\u5939</a></p><p>\ud83d\udca1 \u4f7f\u7528\u65b9\u5f0f: Designer \u76f4\u63a5\u4ece\u8be5\u76ee\u5f55\u53d6\u56fe</p>",
+      "submitter": "spider",
+      "status": "approved",
+      "created_at": "2026-04-24 23:52:23",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.214940"
+    },
+    {
+      "id": 1777045944447,
+      "title": "robot_future \u7d20\u6750\u5305 \u7d20\u6750\u5305",
+      "content": "<h2>\ud83d\udcc1 robot_future \u7d20\u6750\u5305</h2><p>\ud83c\udff7\ufe0f \u5206\u7c7b: images / robot_future</p><p>\ud83d\udcc2 \u7d20\u6750\u76ee\u5f55: <code>/home/flybo/.openclaw/web/images/images/robot_future</code></p><p>\ud83d\udd17 <a href='/images/robot_future/' target='_blank'>\u70b9\u51fb\u9884\u89c8\u7d20\u6750\u6587\u4ef6\u5939</a></p><p>\ud83d\udca1 \u4f7f\u7528\u65b9\u5f0f: Designer \u76f4\u63a5\u4ece\u8be5\u76ee\u5f55\u53d6\u56fe</p>",
+      "submitter": "spider",
+      "status": "approved",
+      "created_at": "2026-04-24 23:52:24",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.224470"
+    },
+    {
+      "id": 1777045944967,
+      "title": "technology_circuit \u7d20\u6750\u5305 \u7d20\u6750\u5305",
+      "content": "<h2>\ud83d\udcc1 technology_circuit \u7d20\u6750\u5305</h2><p>\ud83c\udff7\ufe0f \u5206\u7c7b: images / technology_circuit</p><p>\ud83d\udcc2 \u7d20\u6750\u76ee\u5f55: <code>/home/flybo/.openclaw/web/images/images/technology_circuit</code></p><p>\ud83d\udd17 <a href='/images/technology_circuit/' target='_blank'>\u70b9\u51fb\u9884\u89c8\u7d20\u6750\u6587\u4ef6\u5939</a></p><p>\ud83d\udca1 \u4f7f\u7528\u65b9\u5f0f: Designer \u76f4\u63a5\u4ece\u8be5\u76ee\u5f55\u53d6\u56fe</p>",
+      "submitter": "spider",
+      "status": "approved",
+      "created_at": "2026-04-24 23:52:24",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.233476"
+    },
+    {
+      "id": 1777045945485,
+      "title": "victoria_harbour \u7d20\u6750\u5305 \u7d20\u6750\u5305",
+      "content": "<h2>\ud83d\udcc1 victoria_harbour \u7d20\u6750\u5305</h2><p>\ud83c\udff7\ufe0f \u5206\u7c7b: images / victoria_harbour</p><p>\ud83d\udcc2 \u7d20\u6750\u76ee\u5f55: <code>/home/flybo/.openclaw/web/images/images/victoria_harbour</code></p><p>\ud83d\udd17 <a href='/images/victoria_harbour/' target='_blank'>\u70b9\u51fb\u9884\u89c8\u7d20\u6750\u6587\u4ef6\u5939</a></p><p>\ud83d\udca1 \u4f7f\u7528\u65b9\u5f0f: Designer \u76f4\u63a5\u4ece\u8be5\u76ee\u5f55\u53d6\u56fe</p>",
+      "submitter": "spider",
+      "status": "approved",
+      "created_at": "2026-04-24 23:52:25",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.242305"
+    },
+    {
+      "id": 1777045946015,
+      "title": "\u9999\u6e2f \u7d20\u6750\u5305 \u7d20\u6750\u5305",
+      "content": "<h2>\ud83d\udcc1 \u9999\u6e2f \u7d20\u6750\u5305</h2><p>\ud83c\udff7\ufe0f \u5206\u7c7b: images / \u9999\u6e2f</p><p>\ud83d\udcc2 \u7d20\u6750\u76ee\u5f55: <code>/home/flybo/.openclaw/web/images/images/\u9999\u6e2f</code></p><p>\ud83d\udd17 <a href='/images/\u9999\u6e2f/' target='_blank'>\u70b9\u51fb\u9884\u89c8\u7d20\u6750\u6587\u4ef6\u5939</a></p><p>\ud83d\udca1 \u4f7f\u7528\u65b9\u5f0f: Designer \u76f4\u63a5\u4ece\u8be5\u76ee\u5f55\u53d6\u56fe</p>",
+      "submitter": "spider",
+      "status": "approved",
+      "created_at": "2026-04-24 23:52:26",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.251612"
+    },
+    {
+      "id": 1777045946535,
+      "title": "\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f \u7d20\u6750\u5305 \u7d20\u6750\u5305",
+      "content": "<h2>\ud83d\udcc1 \u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f \u7d20\u6750\u5305</h2><p>\ud83c\udff7\ufe0f \u5206\u7c7b: images / \u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f</p><p>\ud83d\udcc2 \u7d20\u6750\u76ee\u5f55: <code>/home/flybo/.openclaw/web/images/images/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f</code></p><p>\ud83d\udd17 <a href='/images/\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f/' target='_blank'>\u70b9\u51fb\u9884\u89c8\u7d20\u6750\u6587\u4ef6\u5939</a></p><p>\ud83d\udca1 \u4f7f\u7528\u65b9\u5f0f: Designer \u76f4\u63a5\u4ece\u8be5\u76ee\u5f55\u53d6\u56fe</p>",
+      "submitter": "spider",
+      "status": "approved",
+      "created_at": "2026-04-24 23:52:26",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.261443"
+    },
+    {
+      "id": 1777046174336,
+      "title": "\u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f \u7d20\u6750\u5305",
+      "content": "\n<h2>\ud83d\udcc1 \u9999\u6e2f\u7ef4\u591a\u5229\u4e9a\u6e2f</h2>\n<p>\ud83c\udff7\ufe0f \u5206\u7c7b: hongkong / victoria</p>\n<p>\ud83d\udcca \u7d20\u6750\u6570\u91cf: 2 \u4e2a</p>\n<p>\ud83d\udcc2 \u8def\u5f84: <code>/home/flybo/.openclaw/web/images/hongkong/victoria</code></p>\n<p>\ud83d\udd17 <a href='/hongkong/victoria/' target='_blank'>\u70b9\u51fb\u9884\u89c8\u7d20\u6750</a></p>\n\n",
+      "submitter": "spider",
+      "status": "approved",
+      "created_at": "2026-04-24 23:56:14",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.270044"
+    },
+    {
+      "id": 1777046402627,
+      "title": "",
+      "content": "",
+      "submitter": "writer",
+      "status": "approved",
+      "created_at": "2026-04-25 00:00:02",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.278940"
+    },
+    {
+      "id": 1777046403157,
+      "title": "",
+      "content": "",
+      "submitter": "writer",
+      "status": "approved",
+      "created_at": "2026-04-25 00:00:03",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.288814"
+    },
+    {
+      "id": 1777046403685,
+      "title": "",
+      "content": "",
+      "submitter": "writer",
+      "status": "approved",
+      "created_at": "2026-04-25 00:00:03",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.297539"
+    },
+    {
+      "id": 1777046404215,
+      "title": "",
+      "content": "",
+      "submitter": "writer",
+      "status": "approved",
+      "created_at": "2026-04-25 00:00:04",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.306509"
+    },
+    {
+      "id": 1777046404735,
+      "title": "",
+      "content": "",
+      "submitter": "writer",
+      "status": "approved",
+      "created_at": "2026-04-25 00:00:04",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.315726"
+    },
+    {
+      "id": 1777046405264,
+      "title": "",
+      "content": "",
+      "submitter": "writer",
+      "status": "approved",
+      "created_at": "2026-04-25 00:00:05",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.325211"
+    },
+    {
+      "id": 1777046491625,
+      "title": " \u7d20\u6750\u5305",
+      "content": "\n<h2>\ud83d\udcc1 </h2>\n<p>\ud83c\udff7\ufe0f \u5206\u7c7b:  / </p>\n<p>\ud83d\udcca \u7d20\u6750\u6570\u91cf: 51 \u4e2a</p>\n<p>\ud83d\udcc2 \u8def\u5f84: <code>/home/flybo/.openclaw/web/images//</code></p>\n<p>\ud83d\udd17 <a href='///' target='_blank'>\u70b9\u51fb\u9884\u89c8\u7d20\u6750</a></p>\n\n",
+      "submitter": "spider",
+      "status": "approved",
+      "created_at": "2026-04-25 00:01:31",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.334010"
+    },
+    {
+      "id": 1777079711002,
+      "title": "ClawsJoy \u5ba3\u4f20\u7247",
+      "content": "/videos/promo.mp4",
+      "submitter": "video-maker",
+      "status": "approved",
+      "created_at": "2026-04-25 09:15:11",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.343070"
+    },
+    {
+      "id": 1777079811681,
+      "title": "ClawsJoy \u5ba3\u4f20\u7247",
+      "content": "/videos/promo.mp4",
+      "submitter": "video-maker",
+      "status": "approved",
+      "created_at": "2026-04-25 09:16:51",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.351872"
+    },
+    {
+      "id": 1777079932777,
+      "title": "ClawsJoy \u5ba3\u4f20\u7247",
+      "content": "/videos/promo.mp4",
+      "submitter": "video-maker",
+      "status": "approved",
+      "created_at": "2026-04-25 09:18:52",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.361022"
+    },
+    {
+      "id": 1777079938984,
+      "title": "AI\u672a\u6765",
+      "content": "\u4eba\u5de5\u667a\u80fd\u6b63\u5728\u6539\u53d8\u4e16\u754c",
+      "submitter": "writer",
+      "status": "approved",
+      "created_at": "2026-04-25 09:18:58",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.370284"
+    },
+    {
+      "id": 1777079958267,
+      "title": "\u90e8\u7f72\u4efb\u52a1",
+      "content": "\u9884\u89c8\u5730\u5740: http://localhost:8083/preview/deploy_20260425_091917_739666662.html\n\u547d\u4ee4: echo 'deploy'\n\u63cf\u8ff0: \u81ea\u52a8\u90e8\u7f72",
+      "submitter": "engineer",
+      "status": "approved",
+      "created_at": "2026-04-25 09:19:18",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.379919"
+    },
+    {
+      "id": 1777080055770,
+      "title": "\u7d20\u6750\u5305 \u7d20\u6750\u5305",
+      "content": "\n<h2>\ud83d\udcc1 \u7d20\u6750\u5305</h2>\n<p>\ud83c\udff7\ufe0f \u5206\u7c7b: hongkong / victoria</p>\n<p>\ud83d\udcca \u7d20\u6750\u6570\u91cf: 2 \u4e2a</p>\n<p>\ud83d\udcc2 \u8def\u5f84: <code>/home/flybo/.openclaw/web/images/hongkong/victoria</code></p>\n<p>\ud83d\udd17 <a href='/hongkong/victoria/' target='_blank'>\u70b9\u51fb\u9884\u89c8\u7d20\u6750</a></p>\n\n",
+      "submitter": "spider",
+      "status": "approved",
+      "created_at": "2026-04-25 09:20:55",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.389122"
+    },
+    {
+      "id": 1777080068098,
+      "title": "ClawsJoy \u5ba3\u4f20\u7247",
+      "content": "/videos/promo.mp4",
+      "submitter": "video-maker",
+      "status": "approved",
+      "created_at": "2026-04-25 09:21:08",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.400205"
+    },
+    {
+      "id": 1777080094602,
+      "title": "AI\u672a\u6765",
+      "content": "\u4eba\u5de5\u667a\u80fd\u6b63\u5728\u6539\u53d8\u4e16\u754c",
+      "submitter": "writer",
+      "status": "approved",
+      "created_at": "2026-04-25 09:21:34",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.410093"
+    },
+    {
+      "id": 1777080112177,
+      "title": "\u5ba3\u4f20\u7247\u811a\u672c - \uff0c\u4e3b\u9898\uff1aAgent\u81ea\u52a8\u8fdb\u5316",
+      "content": "<h1>ClawsJoy \u5ba3\u4f20\u7247</h1><h2>\u4e3b\u9898\uff1a\uff0c\u4e3b\u9898\uff1aAgent\u81ea\u52a8\u8fdb\u5316</h2><p>\u8ba9AI\u5b89\u5168\u5730\u4e3a\u6bcf\u4e2a\u4eba\u5de5\u4f5c</p>",
+      "submitter": "writer",
+      "status": "approved",
+      "created_at": "2026-04-25 09:21:52",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.419158"
+    },
+    {
+      "id": 1777080148630,
+      "title": "\u5fae\u4fe1\u53d1\u5e03",
+      "content": "<p>\uff0c\u5185\u5bb9\uff1aClawsJoy\u4eca\u65e5\u53d1\u5e03\u65b0\u529f\u80fd</p>",
+      "submitter": "messenger",
+      "status": "approved",
+      "created_at": "2026-04-25 09:22:28",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.427885"
+    },
+    {
+      "id": 1777080168671,
+      "title": "\u5c0f\u7ea2\u4e66\u53d1\u5e03",
+      "content": "#ClawsJoy #AI #\u5b89\u5168",
+      "submitter": "messenger",
+      "status": "approved",
+      "created_at": "2026-04-25 09:22:48",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.436951"
+    },
+    {
+      "id": 1777080178825,
+      "title": "\u90e8\u7f72\u4efb\u52a1",
+      "content": "\u9884\u89c8\u5730\u5740: http://localhost:8083/preview/deploy_20260425_092258_308160565.html\n\u547d\u4ee4: \uff0c\u547d\u4ee4\uff1aecho deploy\n\u63cf\u8ff0: \u81ea\u52a8\u90e8\u7f72",
+      "submitter": "engineer",
+      "status": "approved",
+      "created_at": "2026-04-25 09:22:58",
+      "reviewer_comment": "\u6279\u91cf\u901a\u8fc7",
+      "reviewed_at": "2026-04-25T09:23:33.446172"
+    },
+    {
+      "id": 1777098274506,
+      "title": "\u5c01\u9762",
+      "content": "<svg><rect fill='#ff6b6b'/><text></text></svg>",
+      "submitter": "designer",
+      "status": "approved",
+      "created_at": "2026-04-25 14:24:34",
+      "reviewed_at": "2026-04-25T15:37:39.592525",
+      "tenant": "1"
+    },
+    {
+      "id": 1777080612514,
+      "title": "ClawsJoy \u4eca\u65e5\u54c1\u724c\u52a8\u6001",
+      "content": "<h1>ClawsJoy \u4eca\u65e5\u54c1\u724c\u52a8\u6001</h1><h2>\ud83d\udcd6 \u4e3b\u9898\u80cc\u666f</h2><p>2026\u5e7404\u670825\u65e5 \u54c1\u724c\u6700\u65b0\u52a8\u6001</p><h2>\ud83c\udfaf ClawsJoy \u89e3\u51b3\u65b9\u6848</h2><ul><li>\ud83d\udd12 \u591a\u79df\u6237\u9694\u79bb\uff1a\u60a8\u7684\u6570\u636e\u7edd\u5bf9\u5b89\u5168</li><li>\ud83e\udde0 Agent\u81ea\u52a8\u8fdb\u5316\uff1a\u8d8a\u7528\u8d8a\u806a\u660e</li><li>\ud83d\udcc1 \u6587\u4ef6\u4e8b\u4ef6\u9a71\u52a8\uff1aAI\u53ea\u521b\u4f5c\uff0c\u7cfb\u7edf\u6267\u884c</li><li>\ud83d\udc41\ufe0f \u53ef\u89c6\u542c\u5316\u5ba1\u6838\uff1a\u4e00\u76ee\u4e86\u7136</li></ul><h2>\ud83d\udca1 \u603b\u7ed3</h2><p>ClawsJoy \u2014 \u8ba9AI\u5b89\u5168\u5730\u4e3a\u6bcf\u4e2a\u4eba\u5de5\u4f5c\uff0c\u5de5\u5177\u6613\u4e0a\u624b\uff0c\u7ed3\u679c\u4ee4\u4eba\u6109\u60a6\u3002</p><hr><p style='text-align:center;color:#667eea;'>\u7531 Engineer \u89e6\u53d1\uff0cWriter \u81ea\u52a8\u751f\u6210\u4e8e 2026-04-25 09:30:11</p>",
+      "submitter": "writer_auto",
+      "status": "approved",
+      "created_at": "2026-04-25 09:30:12",
+      "reviewed_at": "2026-04-26T00:31:02.909809",
+      "tenant": "\u79df\u62371"
+    },
+    {
+      "id": 1777080615926,
+      "title": "\u81ea\u52a8\u90e8\u7f72 - \u66f4\u65b0\u7f51\u7ad9\u5185\u5bb9",
+      "content": "\u9884\u89c8\u5730\u5740: http://localhost:8083/preview/deploy_20260425_093015_358294916.html\n\u547d\u4ee4: ~/clawsjoy/bin/website_maintain.sh && ~/clawsjoy/bin/auto_publish_to_website.sh\n\u63cf\u8ff0: Engineer \u81ea\u52a8\u534f\u8c03\u90e8\u7f72",
+      "submitter": "engineer",
+      "status": "approved",
+      "created_at": "2026-04-25 09:30:15",
+      "reviewed_at": "2026-04-26T00:31:07.093204",
+      "tenant": "\u79df\u62371"
+    },
+    {
+      "id": 1777082402574,
+      "title": "",
+      "content": "",
+      "submitter": "writer",
+      "status": "rejected",
+      "created_at": "2026-04-25 10:00:02",
+      "reject_reason": "\u65e0\u6807\u9898",
+      "reviewed_at": "2026-04-26T00:31:17.320129",
+      "tenant": "\u79df\u62371"
+    },
+    {
+      "id": 1777082403095,
+      "title": "",
+      "content": "",
+      "submitter": "writer",
+      "status": "rejected",
+      "created_at": "2026-04-25 10:00:03",
+      "reject_reason": "\u65e0\u6807\u9898",
+      "reviewed_at": "2026-04-26T00:31:26.712374",
+      "tenant": "\u79df\u62371"
+    },
+    {
+      "id": 1777082403655,
+      "title": "",
+      "content": "",
+      "submitter": "writer",
+      "status": "rejected",
+      "created_at": "2026-04-25 10:00:03",
+      "reject_reason": "\u65e0\u6807\u9898",
+      "reviewed_at": "2026-04-26T00:31:33.374635",
+      "tenant": "\u79df\u62371"
+    },
+    {
+      "id": 1777082404180,
+      "title": "",
+      "content": "",
+      "submitter": "writer",
+      "status": "rejected",
+      "created_at": "2026-04-25 10:00:04",
+      "reject_reason": "\u65e0\u6807\u9898",
+      "reviewed_at": "2026-04-26T00:31:40.905013",
+      "tenant": "\u79df\u62371"
+    },
+    {
+      "id": 1777082404717,
+      "title": "",
+      "content": "",
+      "submitter": "writer",
+      "status": "rejected",
+      "created_at": "2026-04-25 10:00:04",
+      "reject_reason": "\u65e0\u6807\u9898",
+      "reviewed_at": "2026-04-26T00:31:47.618572",
+      "tenant": "\u79df\u62371"
+    },
+    {
+      "id": 1777082405235,
+      "title": "",
+      "content": "",
+      "submitter": "writer",
+      "status": "rejected",
+      "created_at": "2026-04-25 10:00:05",
+      "reject_reason": "\u65e0\u6807\u9898",
+      "reviewed_at": "2026-04-26T00:31:54.128787",
+      "tenant": "\u79df\u62371"
+    },
+    {
+      "id": 1777098264799,
+      "title": "\u5ba3\u4f20\u7247\u5b8c\u6210",
+      "content": "<p>\u89c6\u9891\u5df2\u751f\u6210</p>",
+      "submitter": "messenger",
+      "status": "rejected",
+      "created_at": "2026-04-25 14:24:24",
+      "reject_reason": "\u65f6\u5e38\u77ed\u53ea\u67091\u79d2\u4e0d\u7b26\u5408\u89c6\u9891\u89c2\u770b",
+      "reviewed_at": "2026-04-26T00:35:42.815503",
+      "tenant": "\u79df\u62371"
+    },
+    {
+      "id": 1777097647624,
+      "title": "\u5ba3\u4f20\u7247",
+      "content": "/videos/promo.mp4",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-25 14:14:07",
+      "reject_reason": "\u65f6\u5e38\u77ed\u53ea\u67091\u79d2\u4e0d\u7b26\u5408\u89c6\u9891\u89c2\u770b",
+      "reviewed_at": "2026-04-26T00:36:01.833940",
+      "tenant": "\u79df\u62371"
+    },
+    {
+      "id": 1777098251363,
+      "title": "\u5ba3\u4f20\u7247",
+      "content": "/videos/promo.mp4",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-25 14:24:11",
+      "reject_reason": "\u65f6\u5e38\u77ed\u53ea\u67091\u79d2\u4e0d\u7b26\u5408\u89c6\u9891\u89c2\u770b",
+      "reviewed_at": "2026-04-26T00:36:09.049479",
+      "tenant": "\u79df\u62371"
+    },
+    {
+      "id": 1777098264252,
+      "title": "\u5ba3\u4f20\u7247",
+      "content": "/videos/promo.mp4",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-25 14:24:24",
+      "reject_reason": "\u65f6\u5e38\u77ed\u53ea\u67091\u79d2\u4e0d\u7b26\u5408\u89c6\u9891\u89c2\u770b",
+      "reviewed_at": "2026-04-26T00:36:19.194446",
+      "tenant": "\u79df\u62371"
+    },
+    {
+      "id": 1777098276877,
+      "title": "\u5ba3\u4f20\u7247",
+      "content": "/videos/promo.mp4",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-25 14:24:36",
+      "reject_reason": "\u65f6\u5e38\u77ed\u53ea\u67091\u79d2\u4e0d\u7b26\u5408\u89c6\u9891\u89c2\u770b",
+      "reviewed_at": "2026-04-26T00:36:29.210017",
+      "tenant": "\u79df\u62371"
+    },
+    {
+      "id": 1777098279456,
+      "title": "\u5ba3\u4f20\u7247",
+      "content": "/videos/promo.mp4",
+      "submitter": "video-maker",
+      "status": "rejected",
+      "created_at": "2026-04-25 14:24:39",
+      "reject_reason": "\u65f6\u5e38\u77ed\u53ea\u67091\u79d2\u4e0d\u7b26\u5408\u89c6\u9891\u89c2\u770b",
+      "reviewed_at": "2026-04-26T00:36:39.698319",
+      "tenant": "\u79df\u62371"
+    }
+  ]
+}

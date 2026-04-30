@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  clawsjoy:
+    build: .
+    container_name: clawsjoy
+    ports:
+      - "8082:8082"   # Web
+      - "8084:8084"   # Task API
+      - "8085:8085"   # Coffee API
+      - "8086:8086"   # Promo API
+      - "8087:8087"   # API
+      - "8088:8088"   # Tenant API
+      - "8089:8089"   # Router API
+      - "8090:8090"   # Billing API
+      - "8091:8091"   # Queue API
+      - "8092:8092"   # Auth API
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./tenants:/app/tenants
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8088/api/tenants"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine
+    container_name: clawsjoy-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+volumes:
+  redis_data:

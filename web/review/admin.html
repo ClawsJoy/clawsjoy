@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>管理员审核看板</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        h1 { color: #667eea; }
+        .refresh-btn { background: #667eea; border: none; padding: 10px 24px; border-radius: 8px; color: white; cursor: pointer; }
+        .stats { display: flex; gap: 20px; margin-bottom: 20px; }
+        .stat-card { background: rgba(255,255,255,0.1); padding: 12px 24px; border-radius: 12px; text-align: center; }
+        .stat-number { font-size: 28px; font-weight: bold; color: #667eea; }
+        .stat-label { font-size: 12px; color: #aaa; }
+        .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; }
+        .filter-btn { background: rgba(255,255,255,0.1); border: none; padding: 8px 16px; border-radius: 20px; color: white; cursor: pointer; }
+        .filter-btn.active { background: #667eea; }
+        .task-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(500px, 1fr)); gap: 20px; max-height: 65vh; overflow-y: auto; }
+        .task-card { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 16px; padding: 20px; }
+        .task-title { font-size: 18px; font-weight: bold; color: #fff; }
+        .task-submitter { background: rgba(102,126,234,0.3); padding: 4px 12px; border-radius: 20px; display: inline-block; font-size: 12px; margin: 8px 0; }
+        .task-actions { margin-top: 15px; display: flex; gap: 10px; }
+        .score-input { width: 70px; padding: 8px; border-radius: 6px; border: none; text-align: center; }
+        .comment-input { flex: 1; padding: 8px; border-radius: 6px; border: none; }
+        .btn-approve { background: #10b981; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; }
+        .btn-reject { background: #ef4444; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>👑 管理员审核看板（所有租户）</h1>
+        <button class="refresh-btn" onclick="loadTasks()">🔄 刷新</button>
+    </div>
+
+    <div class="stats">
+        <div class="stat-card"><div class="stat-number" id="totalCount">0</div><div class="stat-label">总计</div></div>
+        <div class="stat-card"><div class="stat-number" id="pendingCount">0</div><div class="stat-label">待审核</div></div>
+        <div class="stat-card"><div class="stat-number" id="approvedCount">0</div><div class="stat-label">已通过</div></div>
+        <div class="stat-card"><div class="stat-number" id="rejectedCount">0</div><div class="stat-label">已驳回</div></div>
+    </div>
+
+    <div class="filter-bar">
+        <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">全部</button>
+        <button class="filter-btn" data-filter="pending" onclick="setFilter('pending')">待审核</button>
+        <button class="filter-btn" data-filter="approved" onclick="setFilter('approved')">已通过</button>
+        <button class="filter-btn" data-filter="rejected" onclick="setFilter('rejected')">已驳回</button>
+    </div>
+
+    <div id="taskList" class="task-grid">加载中...</div>
+</div>
+
+<script>
+    const API_URL = 'http://localhost:5005/api/admin';
+    let currentFilter = 'all';
+    let allTasks = [];
+
+    async function loadTasks() {
+        try {
+            const resp = await fetch(`${API_URL}/tasks?_=${Date.now()}`);
+            allTasks = await resp.json();
+
+            document.getElementById('totalCount').innerText = allTasks.length;
+            document.getElementById('pendingCount').innerText = allTasks.filter(t => t.status === 'pending').length;
+            document.getElementById('approvedCount').innerText = allTasks.filter(t => t.status === 'approved').length;
+            document.getElementById('rejectedCount').innerText = allTasks.filter(t => t.status === 'rejected').length;
+
+            let filtered = allTasks;
+            if (currentFilter !== 'all') {
+                filtered = allTasks.filter(t => t.status === currentFilter);
+            }
+
+            const container = document.getElementById('taskList');
+            if (!filtered.length) {
+                container.innerHTML = '<div style="text-align:center;padding:50px;">✨ 暂无任务</div>';
+                return;
+            }
+
+            container.innerHTML = filtered.map(task => `
+                <div class="task-card">
+                    <div class="task-title">${task.title || '无标题'} (租户: ${task.tenant || '未指定'})</div>
+                    <div class="task-submitter">👤 ${task.submitter || 'unknown'}</div>
+                    <div>⭐ ${task.score || '未评分'} | ${task.status === 'pending' ? '⏳ 待审核' : (task.status === 'approved' ? '✅ 已通过' : '❌ 已驳回')}</div>
+                    <div style="font-size:12px; color:#aaa;">📅 ${task.created_at || ''}</div>
+                    ${task.status === 'pending' ? `
+                        <div class="task-actions">
+                            <input type="number" id="score_${task.id}" class="score-input" value="85" min="0" max="100">
+                            <input type="text" id="comment_${task.id}" class="comment-input" placeholder="审核意见">
+                            <button class="btn-approve" onclick="approveTask(${task.id})">✅ 通过</button>
+                            <button class="btn-reject" onclick="rejectTask(${task.id})">❌ 驳回</button>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        } catch(e) {
+            document.getElementById('taskList').innerHTML = '<div style="padding:50px;">❌ 加载失败</div>';
+        }
+    }
+
+    async function approveTask(id) {
+        const score = document.getElementById(`score_${id}`).value;
+        const comment = document.getElementById(`comment_${id}`).value || `通过，评分:${score}`;
+        await fetch(`${API_URL}/approve`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: id, comment: comment })
+        });
+        loadTasks();
+    }
+
+    async function rejectTask(id) {
+        const reason = document.getElementById(`comment_${id}`)?.value || prompt('驳回原因:');
+        if (!reason) return;
+        await fetch(`${API_URL}/reject`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: id, reason: reason })
+        });
+        loadTasks();
+    }
+
+    function setFilter(filter) {
+        currentFilter = filter;
+        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelector(`.filter-btn[data-filter="${filter}"]`).classList.add('active');
+        loadTasks();
+    }
+
+    loadTasks();
+    setInterval(loadTasks, 30000);
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="0; url=/admin/index.html">
+    <title>跳转中...</title>
+</head>
+<body>
+    <p>跳转到 <a href="/admin/index.html">管理员中心</a>...</p>
+</body>
+</html>

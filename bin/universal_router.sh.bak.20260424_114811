@@ -1,0 +1,72 @@
+#!/bin/bash
+# ============================================================
+# universal_router.sh - 统一文件事件路由器（修复版）
+# ============================================================
+
+OUTBOX_DIR="$HOME/clawsjoy/outbox"
+PROCESSING_DIR="$OUTBOX_DIR/processing"
+DONE_DIR="$OUTBOX_DIR/done"
+FAILED_DIR="$OUTBOX_DIR/failed"
+LOG_DIR="$HOME/clawsjoy/logs"
+LOG_FILE="$LOG_DIR/universal_router.log"
+
+SUBMIT_API="http://localhost:5005/api/submit"
+
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
+}
+
+process_file() {
+    local file="$1"
+    local filename=$(basename "$file")
+    
+    log "📄 检测到文件: $filename"
+    
+    # 移动到 processing 目录
+    local temp_processing="$PROCESSING_DIR/$filename"
+    mv "$file" "$temp_processing" 2>/dev/null || {
+        log "⚠️ 无法移动文件: $file"
+        return 1
+    }
+    
+    # 判断是否为 review.json 文件
+    if [[ "$filename" == *.review.json ]]; then
+        log "📝 提交审核: $filename"
+        
+        # 使用 curl 提交到审核 API
+        if curl -s -X POST "$SUBMIT_API" \
+            -H "Content-Type: application/json" \
+            -d @"$temp_processing" | grep -q '"status":\|"success"'; then
+            mv "$temp_processing" "$DONE_DIR/$filename"
+            log "✅ 提交成功，已移至 DONE: $filename"
+        else
+            mv "$temp_processing" "$FAILED_DIR/$filename"
+            log "❌ 提交失败，已移至 FAILED: $filename"
+        fi
+    else
+        log "⚠️ 未知文件类型，移至 FAILED: $filename"
+        mv "$temp_processing" "$FAILED_DIR/$filename"
+    fi
+}
+
+# 创建目录
+mkdir -p "$OUTBOX_DIR" "$PROCESSING_DIR" "$DONE_DIR" "$FAILED_DIR" "$LOG_DIR"
+
+log "🚀 路由器启动，监听: $OUTBOX_DIR"
+
+# 使用 inotifywait 监听
+inotifywait -m "$OUTBOX_DIR" -e create -e moved_to --format '%f' 2>/dev/null | while read FILENAME; do
+    # 跳过空文件名和临时文件
+    [ -z "$FILENAME" ] && continue
+    [[ "$FILENAME" =~ ^\. ]] && continue
+    [[ "$FILENAME" =~ \.swp$|\.tmp$|~$ ]] && continue
+    
+    FULL_PATH="$OUTBOX_DIR/$FILENAME"
+    
+    # 等待文件写入完成
+    sleep 0.5
+    
+    if [ -f "$FULL_PATH" ]; then
+        process_file "$FULL_PATH"
+    fi
+done

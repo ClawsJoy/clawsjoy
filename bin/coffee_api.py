@@ -1,0 +1,152 @@
+#!/usr/bin/env python3
+"""
+Joy Mate 买咖啡 API - 静态数据方案
+支持：搜索、菜单、下单
+"""
+
+import json
+import uuid
+from pathlib import Path
+from datetime import datetime
+from http.server import HTTPServer, BaseHTTPRequestHandler
+from urllib.parse import urlparse, parse_qs
+from settings import DATA_DIR, CLAWSJOY_ROOT, PORT_COFFEE
+from py_logging import get_logger
+
+SHOPS_FILE = DATA_DIR / "coffee_shops.json"
+ORDERS_FILE = DATA_DIR / "orders.json"
+LOGGER = get_logger("coffee_api")
+
+# 加载咖啡店静态数据（启动时读取到内存）。
+with open(SHOPS_FILE) as f:
+    shops_data = json.load(f)
+
+# 加载或初始化订单记录。
+if ORDERS_FILE.exists():
+    with open(ORDERS_FILE) as f:
+        orders = json.load(f)
+else:
+    orders = []
+
+class CoffeeHandler(BaseHTTPRequestHandler):
+    """咖啡相关 API 处理器。"""
+
+    def do_GET(self):
+        """处理店铺检索、菜单查询、订单查询接口。"""
+        parsed = urlparse(self.path)
+        path = parsed.path
+        
+        if path == '/api/coffee/shops':
+            # 搜索附近咖啡店：按店名或菜单关键字过滤。
+            params = parse_qs(parsed.query)
+            keyword = params.get('keyword', [''])[0]
+            
+            shops = shops_data['shops']
+            if keyword:
+                shops = [s for s in shops if keyword in s['name'] or keyword in s['menu'].keys()]
+            
+            self.send_json({'success': True, 'shops': shops})
+        
+        elif path == '/api/coffee/menu':
+            params = parse_qs(parsed.query)
+            shop_id = int(params.get('shop_id', [0])[0])
+            
+            shop = next((s for s in shops_data['shops'] if s['id'] == shop_id), None)
+            if shop:
+                self.send_json({'success': True, 'shop': shop['name'], 'menu': shop['menu']})
+            else:
+                self.send_json({'success': False, 'error': '店铺不存在'})
+        
+        elif path == '/api/coffee/orders':
+            # 查询订单历史（当前实现按 user_id 过滤近 10 条）。
+            user_id = params.get('user_id', ['1'])[0]
+            user_orders = [o for o in orders if o.get('user_id') == user_id]
+            self.send_json({'success': True, 'orders': user_orders[-10:]})
+        
+        else:
+            self.send_error(404)
+    
+    def do_POST(self):
+        """处理下单接口。"""
+        length = int(self.headers.get('Content-Length', 0))
+        body = json.loads(self.rfile.read(length))
+        
+        if self.path == '/api/coffee/order':
+            # 创建订单并持久化到本地 JSON 文件。
+            order = {
+                'order_id': str(uuid.uuid4())[:8],
+                'user_id': body.get('user_id', '1'),
+                'shop_id': body.get('shop_id'),
+                'shop_name': body.get('shop_name'),
+                'item': body.get('item'),
+                'price': body.get('price'),
+                'status': 'pending',
+                'created_at': datetime.now().isoformat(),
+                'estimated_time': '15-25分钟'
+            }
+            orders.append(order)
+            
+            # 保存订单：以内存列表为准覆盖写回。
+            with open(ORDERS_FILE, 'w') as f:
+                json.dump(orders, f, indent=2, ensure_ascii=False)
+            
+            self.send_json({
+                'success': True,
+                'order': order,
+                'message': f"已在 {order['shop_name']} 下单 {order['item']}，预计 {order['estimated_time']} 送达"
+            })
+        
+        else:
+            self.send_error(404)
+    
+    def send_json(self, data):
+        """统一 JSON 响应并附带基础 CORS 头。"""
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.end_headers()
+        self.wfile.write(json.dumps(data, ensure_ascii=False).encode())
+    
+    def log_message(self, format, *args):
+        """记录标准访问日志。"""
+        LOGGER.info(format % args)
+
+if __name__ == "__main__":
+    port = PORT_COFFEE
+    LOGGER.info("Coffee API started: http://localhost:%s", port)
+    LOGGER.info("Route: GET /api/coffee/shops?keyword=...")
+    LOGGER.info("Route: GET /api/coffee/menu?shop_id=1")
+    LOGGER.info("Route: POST /api/coffee/order")
+    HTTPServer(("0.0.0.0", port), CoffeeHandler).serve_forever()
+
+# ============ 宣传片制作 API ============
+import subprocess
+import os
+
+def make_promo(city, style="tech"):
+    """调用宣传片制作脚本（实验性辅助函数）。"""
+    try:
+        # 1. 采集图片
+        subprocess.run([str(CLAWSJOY_ROOT / "bin" / "spider_unsplash"), f"{city} {style}", "5"], timeout=60)
+        
+        # 2. 生成脚本
+        script = f"{city}科技宣传片脚本"
+        
+        # 3. 返回结果
+        return {
+            "success": True,
+            "message": f"✅ {city}科技宣传片已开始制作",
+            "city": city,
+            "style": style,
+            "status": "processing"
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+# 宣传片路由辅助类（与主 HTTP 处理器独立）。
+class PromoHandler:
+    def handle_promo(self, data):
+        city = data.get('city', '香港')
+        style = data.get('style', 'tech')
+        result = make_promo(city, style)
+        return result

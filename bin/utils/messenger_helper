@@ -1,0 +1,51 @@
+#!/bin/bash
+# Messenger 发布辅助脚本
+
+API_URL="http://localhost:5005/api/admin"
+
+case "$1" in
+  list-approved)
+    echo "=== 待发布内容 (已审核通过) ==="
+    curl -s $API_URL/tasks | python3 -c "
+import sys,json
+tasks = json.load(sys.stdin)
+approved = [t for t in tasks if t.get('status') == 'approved']
+if not approved:
+    print('暂无待发布内容')
+else:
+    print(f'共 {len(approved)} 条待发布\n')
+    for t in approved:
+        print(f'  ID: {t[\"id\"]}')
+        print(f'  标题: {t[\"title\"]}')
+        print(f'  提交者: {t[\"submitter\"]}')
+        print('  ---')
+"
+    ;;
+  publish)
+    TITLE="$2"
+    CONTENT="$3"
+    PLATFORM="$4"
+    ~/clawsjoy/bin/write_publish "$TITLE" "$CONTENT" "$PLATFORM"
+    ;;
+  platforms)
+    echo "=== 支持的平台 ==="
+    echo "  wechat        - 微信公众号"
+    echo "  xiaohongshu   - 小红书"
+    echo "  youtube       - YouTube"
+    echo "  all           - 全平台"
+    ;;
+  stats)
+    echo "=== Messenger 统计 ==="
+    echo "学习记录: $(cat ~/.openclaw/agents/messenger/evolution/LEARNINGS.md 2>/dev/null | grep -v '^$' | wc -l) 条"
+    echo "成功案例: $(cat ~/.openclaw/agents/messenger/evolution/SUCCESSES.md 2>/dev/null | grep -v '^$' | wc -l) 条"
+    ;;
+  *)
+    echo "Messenger 发布辅助脚本"
+    echo ""
+    echo "用法:"
+    echo "  messenger_helper list-approved   列出待发布内容"
+    echo "  messenger_helper publish <标题> <内容> <平台>  提交发布任务"
+    echo "  messenger_helper platforms       查看支持平台"
+    echo "  messenger_helper stats           查看统计"
+    ;;
+esac

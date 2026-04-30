@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>审核看板 - JOY Mate</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+        .container { max-width: 800px; margin: 0 auto; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .back-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 30px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        h1 { color: #667eea; font-size: 28px; }
+        .subtitle { color: #a0a0a0; margin-top: 5px; }
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            flex: 1;
+            background: rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+        }
+        .stat-number { font-size: 32px; font-weight: bold; color: #667eea; }
+        .stat-label { font-size: 14px; color: #a0a0a0; margin-top: 5px; }
+        .task-card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 16px;
+            margin-bottom: 20px;
+            border-left: 4px solid #ffc107;
+        }
+        .task-header {
+            padding: 20px;
+            background: rgba(0,0,0,0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .task-title { font-size: 18px; font-weight: bold; }
+        .task-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            background: #ffc107;
+            color: #000;
+            font-size: 12px;
+        }
+        .task-body { padding: 20px; }
+        .task-content {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 12px;
+            margin: 15px 0;
+        }
+        .btn-group { display: flex; gap: 15px; margin-top: 15px; }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .btn-approve { background: #28a745; color: white; }
+        .btn-reject { background: #dc3545; color: white; }
+        .feedback-input {
+            width: 100%;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            color: #fff;
+            margin: 10px 0;
+        }
+        .refresh-btn {
+            background: #667eea;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div>
+            <a href="/joymate/frontend/nav.html" class="back-btn">← 返回导航页</a>
+            <h1>📋 审核看板</h1>
+            <div class="subtitle" id="tenantInfo">租户: -</div>
+        </div>
+        <button class="refresh-btn" onclick="loadTasks()">🔄 刷新</button>
+    </div>
+    
+    <div class="stats">
+        <div class="stat-card"><div class="stat-number" id="totalCount">0</div><div class="stat-label">总任务</div></div>
+        <div class="stat-card"><div class="stat-number" id="pendingCount">0</div><div class="stat-label">待审核</div></div>
+        <div class="stat-card"><div class="stat-number" id="approvedCount">0</div><div class="stat-label">已通过</div></div>
+    </div>
+    
+    <div id="taskList"></div>
+</div>
+
+<script>
+const API_BASE = 'http://localhost:5005';
+let currentTenantId = 4;
+let tasks = [];
+
+document.getElementById('tenantInfo').innerText = `租户: ${currentTenantId}`;
+
+async function loadTasks() {
+    try {
+        const res = await fetch(`${API_BASE}/api/tenant/tasks/${currentTenantId}`);
+        const data = await res.json();
+        tasks = data.tasks || [];
+        updateStats();
+        renderTasks();
+    } catch(e) {
+        console.error(e);
+        document.getElementById('taskList').innerHTML = '<div style="text-align:center; padding:40px;">加载失败，请确保服务已启动</div>';
+    }
+}
+
+function updateStats() {
+    const pending = tasks.filter(t => t.status === 'pending').length;
+    const approved = tasks.filter(t => t.status === 'approved').length;
+    document.getElementById('totalCount').innerText = tasks.length;
+    document.getElementById('pendingCount').innerText = pending;
+    document.getElementById('approvedCount').innerText = approved;
+}
+
+function renderTasks() {
+    const pendingTasks = tasks.filter(t => t.status === 'pending');
+    const container = document.getElementById('taskList');
+    
+    if (pendingTasks.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding:40px;">✅ 所有任务已审核完成</div>';
+        return;
+    }
+    
+    container.innerHTML = pendingTasks.map(task => `
+        <div class="task-card">
+            <div class="task-header">
+                <div class="task-title">${escapeHtml(task.title)}</div>
+                <span class="task-status">待审核</span>
+            </div>
+            <div class="task-body">
+                <div class="task-content">${escapeHtml(task.content)}</div>
+                <textarea id="feedback_${task.id}" class="feedback-input" placeholder="审核意见（驳回时必填）" rows="2"></textarea>
+                <div class="btn-group">
+                    <button class="btn btn-approve" onclick="approveTask(${task.id})">✅ 通过</button>
+                    <button class="btn btn-reject" onclick="rejectTask(${task.id})">❌ 驳回</button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function approveTask(id) {
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+    
+    await fetch(`${API_BASE}/api/tenant/tasks/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenant_id: currentTenantId, task_id: id })
+    });
+    loadTasks();
+    alert(`✅ 已通过: ${task.title}`);
+}
+
+async function rejectTask(id) {
+    const feedback = document.getElementById(`feedback_${id}`).value;
+    if (!feedback) {
+        alert('请填写驳回原因');
+        return;
+    }
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+    
+    await fetch(`${API_BASE}/api/tenant/tasks/reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenant_id: currentTenantId, task_id: id, feedback })
+    });
+    loadTasks();
+    alert(`❌ 已驳回: ${task.title}`);
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+loadTasks();
+</script>
+</body>
+</html>
