@@ -6,11 +6,10 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# 复制 requirements.txt
 COPY bin/requirements.txt ./bin/
 
-# 安装依赖（在容器内，没有外部环境限制）
-RUN pip install --no-cache-dir -r bin/requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+# 使用官方源，不用清华源
+RUN pip install --no-cache-dir -r bin/requirements.txt
 
 COPY bin/ ./bin/
 COPY skills/ ./skills/
