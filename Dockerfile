@@ -8,8 +8,8 @@ RUN apt-get update && apt-get install -y \
 
 COPY bin/requirements.txt ./bin/
 
-# 使用官方源，逐个安装确保成功
-RUN pip install --no-cache-dir redis requests pyjwt flask flask-cors
+# 使用阿里云镜像源
+RUN pip install --no-cache-dir -r bin/requirements.txt -i https://mirrors.aliyun.com/pypi/simple/
 
 COPY bin/ ./bin/
 COPY skills/ ./skills/
