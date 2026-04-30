@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y \
 
 COPY bin/requirements.txt ./bin/
 
-# 使用阿里云镜像源
+# 使用阿里云镜像源（替换清华源）
 RUN pip install --no-cache-dir -r bin/requirements.txt -i https://mirrors.aliyun.com/pypi/simple/
 
 COPY bin/ ./bin/
