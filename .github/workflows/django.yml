@@ -28,9 +28,9 @@ jobs:
     
     - name: Run tests
       run: |
-        # 如果 tests 目录存在，运行测试
+        # 检查是否有 tests 目录
         if [ -d "tests" ]; then
-          python3 -m pytest tests/ -v --cov=. --cov-report=xml || true
+          python3 -m pytest tests/ -v --cov=. --cov-report=xml
         else
           echo "No tests directory found - skipping tests"
         fi
