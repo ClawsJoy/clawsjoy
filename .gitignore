@@ -16,8 +16,6 @@ venv/
 *.swp
 
 # Data
-data/*.db
-data/*.db-journal
 logs/
 outbox/
 tenants/*/workspace/
@@ -38,7 +36,6 @@ backups/
 
 # 用户数据
 tenants/*/data/
-data/*.db
 
 # 敏感配置
 config/.env
@@ -98,3 +95,5 @@ __pycache__/
 *.pkl
 *.pickle
 *.db
+data/*.db
+data/*.pkl
