@@ -61,3 +61,6 @@ __pycache__/
 # 本地环境
 .env
 .venv/
+.coverage
+coverage.xml
+htmlcov/
