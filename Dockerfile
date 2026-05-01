@@ -25,7 +25,7 @@ COPY skills/ ./skills/
 COPY web/ ./web/
 
 # 创建运行时目录
-RUN mkdir -p /app/logs /app/outbox /app/data
+RUN mkdir -p /app/logs /app/outbox
 
 # 暴露必要端口（减少暴露）
 EXPOSE 8082 8084 8087
