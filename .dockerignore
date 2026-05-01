@@ -1,20 +1,36 @@
+# Git
 .git/
+.gitignore
+
+# Python 缓存
 __pycache__/
 *.pyc
 .pytest_cache/
 .coverage
-tenants/
-data/
-logs/
-outbox/
-web/uploads/
-skills/executor/
-skills/memory/
-skills/task/
+coverage.xml
+
+# 敏感数据（排除内容，但保留目录结构）
+data/*.db
+data/*.pkl
+data/*.log
+
+# 备份文件
 *.bak
+*.backup
 *.tar.gz
-tests/
+
+# IDE
+.vscode/
+.idea/
+
+# 本地环境
+.env
+.venv/
+
+# Docker 相关
 Dockerfile
 .dockerignore
-README.md
-.env
+docker-compose*.yml
+
+# 测试
+tests/
