@@ -64,3 +64,37 @@ __pycache__/
 .coverage
 coverage.xml
 htmlcov/
+
+# ========== 重要资料（永不推送）==========
+# 租户数据
+tenants/
+!tenants/.gitkeep
+
+# 用户上传文件
+web/uploads/
+
+# Skill 核心模块（私有）
+skills/executor/
+skills/memory/
+skills/task/
+
+# 备份文件
+bin/*/backup/
+*.bak
+*.backup
+
+# 运行时数据
+.coverage
+coverage.xml
+.pytest_cache/
+__pycache__/
+*.pyc
+
+# 视频文件（如需要保密，取消注释）
+# web/videos/*.mp4
+
+# 敏感数据文件
+*.log
+*.pkl
+*.pickle
+*.db
