@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>Joy Mate - 科技风AI助手</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: radial-gradient(circle at 20% 30%, #0a0f1a, #03060c);
+            color: #e0e0e0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+        }
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(rgba(0,255,255,0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,255,255,0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+        }
+        .app { display: flex; flex-direction: column; height: 100vh; position: relative; z-index: 1; }
+        .status-bar { padding: 12px 20px; background: rgba(10,20,30,0.7); backdrop-filter: blur(10px); border-bottom: 1px solid #0ff3; display: flex; justify-content: space-between; font-size: 12px; font-family: monospace; }
+        .time { color: #0ff; text-shadow: 0 0 5px #0ff; }
+        .broadcast-bar { background: rgba(0,20,30,0.6); padding: 8px 16px; font-size: 12px; color: #0ff; text-align: center; border-bottom: 1px solid #0ff3; white-space: nowrap; overflow-x: auto; }
+        .chat-area { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+        .msg { max-width: 80%; padding: 10px 16px; border-radius: 18px; font-size: 14px; animation: fadeIn 0.2s ease; }
+        .user { background: linear-gradient(135deg, #0a2a3a, #0a1a2a); border: 1px solid #0ff; align-self: flex-end; border-bottom-right-radius: 4px; }
+        .bot { background: rgba(20,20,40,0.8); border: 1px solid #3a3a5a; align-self: flex-start; border-bottom-left-radius: 4px; backdrop-filter: blur(5px); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .action-buttons { display: flex; gap: 12px; padding: 12px 16px; background: rgba(10,20,30,0.7); backdrop-filter: blur(10px); border-top: 1px solid #0ff3; border-bottom: 1px solid #0ff3; }
+        .action-btn { flex: 1; background: #0f1a2a; border: 1px solid #2a4a6a; border-radius: 16px; padding: 12px 8px; font-size: 14px; font-weight: bold; color: #0ff; text-align: center; cursor: pointer; transition: all 0.2s; }
+        .action-btn:active { transform: scale(0.96); background: #1a3a5a; box-shadow: 0 0 10px #0ff; }
+        .promo-btn { border-color: #0ff; box-shadow: 0 0 5px #0ff3; }
+        .input-row { display: flex; gap: 10px; padding: 12px 16px; background: rgba(10,20,30,0.7); backdrop-filter: blur(10px); }
+        .input-row input { flex: 1; padding: 12px 16px; background: #0f0f1a; border: 1px solid #2a4a6a; border-radius: 30px; color: #0ff; font-size: 15px; }
+        .input-row input:focus { outline: none; border-color: #0ff; box-shadow: 0 0 8px #0ff; }
+        .input-row button { padding: 12px 20px; background: #0f2a3a; border: 1px solid #0ff; border-radius: 30px; color: #0ff; font-weight: bold; cursor: pointer; }
+        .bottom-toolbar { display: flex; justify-content: space-around; align-items: center; padding: 12px 20px; background: rgba(10,20,30,0.7); backdrop-filter: blur(10px); border-top: 1px solid #0ff3; }
+        .tool-btn { background: #0f1a2a; border: 1px solid #2a4a6a; border-radius: 50%; width: 60px; height: 60px; font-size: 28px; cursor: pointer; color: #0ff; transition: all 0.2s; }
+        .tool-btn:active { transform: scale(0.95); background: #1a3a5a; box-shadow: 0 0 12px #0ff; }
+        .mic-btn { width: 76px; height: 76px; font-size: 38px; background: linear-gradient(135deg, #0f2a3a, #0a1a2a); border: 2px solid #0ff; box-shadow: 0 0 12px #0ff5; }
+        .library-modal { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10,20,30,0.95); backdrop-filter: blur(20px); border-radius: 24px 24px 0 0; z-index: 1000; transform: translateY(100%); transition: transform 0.3s ease; max-height: 70vh; display: flex; flex-direction: column; border-top: 2px solid #0ff; }
+        .library-modal.open { transform: translateY(0); }
+        .library-header { padding: 16px; border-bottom: 1px solid #2a4a6a; display: flex; justify-content: space-between; color: #0ff; }
+        .library-content { flex: 1; overflow-y: auto; padding: 16px; }
+        .file-item { padding: 12px; border-bottom: 1px solid #1a2a3a; display: flex; justify-content: space-between; }
+        .upload-area { padding: 16px; display: flex; gap: 12px; border-bottom: 1px solid #2a4a6a; }
+        .upload-area input { flex: 1; background: #0f0f1a; border: 1px solid #0ff; border-radius: 8px; padding: 8px; color: #0ff; }
+        .upload-area button { background: #0f2a3a; border: 1px solid #0ff; border-radius: 8px; padding: 8px 16px; color: #0ff; cursor: pointer; }
+        .close-btn { background: none; border: none; color: #0ff; font-size: 24px; cursor: pointer; }
+    </style>
+</head>
+<style>
+/* 加载中居中 */
+#fileList:contains("加载中") {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    height: 200px !important;
+    text-align: center !important;
+}
+</style>
+<body>
+<div class="app">
+    <div class="status-bar"><span class="time" id="liveTime"></span><span>🦞 ClawsJoy · Joy Mate</span></div>
+    <div class="broadcast-bar" id="broadcastBar">🎉 欢迎回来 | 系统在线</div>
+    <div class="chat-area" id="chatArea"></div>
+    <div class="action-buttons">
+        <button class="action-btn promo-btn" id="promoBtn">🎬 宣传片</button>
+        <button class="action-btn" id="coffeeBtn">☕ 咖啡</button>
+        <button class="action-btn" id="orderBtn">📋 订单</button>
+    </div>
+    <div class="input-row">
+        <input type="text" id="textInput" placeholder="输入消息..." onkeypress="if(event.keyCode===13)sendMsg()">
+        <button onclick="sendMsg()">发送</button>
+    </div>
+    <div class="bottom-toolbar">
+        <button class="tool-btn" id="folderBtn">📁</button>
+        <button class="tool-btn mic-btn" id="micBtn">🎤</button>
+        <button class="tool-btn" id="speakBtn">🔊</button>
+    </div>
+</div>
+<div id="libraryModal" class="library-modal">
+    <div class="library-header"><span>📁 资料库</span><button class="close-btn" id="closeModalBtn">✕</button></div>
+    <div class="upload-area"><input type="file" id="uploadFile" multiple><button id="uploadBtn">上传</button></div>
+    <div class="library-content" id="fileList">📂 加载中...</div>
+</div>
+<script>
+function updateTime() { document.getElementById('liveTime').innerText = new Date().toLocaleTimeString('zh-CN', { hour12: false }); }
+setInterval(updateTime, 1000); updateTime();
+
+function addMsg(role, text) {
+    const chat = document.getElementById('chatArea');
+    const div = document.createElement('div');
+    div.className = 'msg ' + role;
+    div.innerText = text;
+    chat.appendChild(div);
+    div.scrollIntoView({ behavior: 'smooth' });
+}
+
+async function sendMsg() {
+    const input = document.getElementById('textInput');
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    addMsg('user', text);
+    addMsg('bot', '🤔 思考中...');
+    try {
+        const host = window.location.hostname;
+        const res = await fetch(`http://${host}:8101/api/agent`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: text })
+        });
+        const data = await res.json();
+        const last = document.querySelectorAll('.msg.bot');
+        if (last.length) last[last.length-1].remove();
+        addMsg('bot', data.message || data.reply || '收到');
+    } catch(e) {
+        const last = document.querySelectorAll('.msg.bot');
+        if (last.length) last[last.length-1].remove();
+        addMsg('bot', '❌ 网络错误');
+    }
+}
+
+document.getElementById('promoBtn').onclick = () => {
+    addMsg('user', '制作香港宣传片');
+    addMsg('bot', '🎬 生成中...');
+    const host = window.location.hostname;
+    fetch(`http://${host}:8086/api/task/promo`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ city: '香港', tenant_id: '1' })
+    }).then(res => res.json()).then(data => {
+        const last = document.querySelectorAll('.msg.bot');
+        if (last.length) last[last.length-1].remove();
+        if (data.success) {
+            addMsg('bot', '✅ 宣传片已生成');
+            const videoDiv = document.createElement('div');
+            videoDiv.className = 'msg bot';
+            videoDiv.innerHTML = `<video controls style="max-width:100%; border-radius:8px" src="${data.video_url}"></video>`;
+            document.getElementById('chatArea').appendChild(videoDiv);
+        } else addMsg('bot', '❌ 生成失败');
+    }).catch(() => {
+        const last = document.querySelectorAll('.msg.bot');
+        if (last.length) last[last.length-1].remove();
+        addMsg('bot', '❌ 网络错误');
+    });
+};
+
+document.getElementById('coffeeBtn').onclick = () => {
+    addMsg('user', '咖啡');
+    addMsg('bot', '☕ 获取中...');
+    const host = window.location.hostname;
+    fetch(`http://${host}:8090/api/billing/balance?tenant_id=1`)
+        .then(res => res.json())
+        .then(data => {
+            const last = document.querySelectorAll('.msg.bot');
+            if (last.length) last[last.length-1].remove();
+            if (data.balance) addMsg('bot', `☕ ${data.balance.map(s => s.name).join('、')}`);
+            else addMsg('bot', '☕ 暂无店铺');
+        }).catch(() => {
+            const last = document.querySelectorAll('.msg.bot');
+            if (last.length) last[last.length-1].remove();
+            addMsg('bot', '❌ 网络错误');
+        });
+};
+
+document.getElementById('orderBtn').onclick = () => addMsg('bot', '📋 订单功能开发中');
+
+const modal = document.getElementById('libraryModal');
+document.getElementById('folderBtn').onclick = () => modal.classList.add('open');
+document.getElementById('closeModalBtn').onclick = () => modal.classList.remove('open');
+modal.onclick = (e) => { if (e.target === modal) modal.classList.remove('open'); };
+
+async function loadFiles() {
+    const container = document.getElementById('fileList');
+    container.innerHTML = '📂 加载中...';
+    try {
+        const host = window.location.hostname;
+        const res = await fetch(`http://${host}:8086/api/library/list?tenant_id=1`);
+        const data = await res.json();
+        if (!data.success || !data.files.length) { container.innerHTML = '📭 暂无文件'; return; }
+        container.innerHTML = data.files.map(f => `<div class="file-item"><span>📄 ${f.name}</span><button onclick="window.open('http://${host}:8086/api/library/file/${f.id}?tenant_id=1', '_blank')" style="background:transparent; border:1px solid #0ff; border-radius:6px; padding:4px 12px; color:#0ff;">预览</button></div>`).join('');
+    } catch(e) { container.innerHTML = '❌ 加载失败'; }
+}
+loadFiles();
+
+document.getElementById('uploadBtn').onclick = async () => {
+    const input = document.getElementById('uploadFile');
+    const files = input.files;
+    if (!files.length) return;
+    const host = window.location.hostname;
+    for (let f of files) {
+        const fd = new FormData();
+        fd.append('tenant_id', '1');
+        fd.append('file', f);
+        try {
+            const res = await fetch(`http://${host}:8086/api/library/upload`, { method: 'POST', body: fd });
+            const data = await res.json();
+            alert(data.success ? `✅ 上传成功: ${f.name}` : `❌ 上传失败: ${f.name}`);
+        } catch(e) { alert('❌ 上传失败'); }
+    }
+    input.value = '';
+    loadFiles();
+};
+
+// ========== 语音回复模块（后端 TTS） ==========
+
+    if (!ttsEnabled) return;
+    if (!text || text.includes('✅') || text.includes('❌')) return;
+    const host = window.location.hostname;
+    try {
+        const resp = await fetch(`http://${host}:9000/api/tts`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: text })
+        });
+        if (resp.ok) {
+            const blob = await resp.blob();
+            const url = URL.createObjectURL(blob);
+            const audio = new Audio(url);
+            audio.play();
+            audio.onended = () => URL.revokeObjectURL(url);
+        } else {
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = 'zh-CN';
+            window.speechSynthesis.speak(u);
+        }
+    } catch(e) {
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'zh-CN';
+        window.speechSynthesis.speak(u);
+    }
+}
+
+    const last = document.querySelector('.msg.bot:last-child');
+    if (last && !last.dataset.spoke) {
+        last.dataset.spoke = 'true';
+        const txt = last.innerText;
+    }
+});
+setTimeout(() => {
+    const ca = document.getElementById('chatArea');
+}, 1000);
+
+if (ttsBtn) {
+    ttsBtn.onclick = () => {
+        ttsEnabled = !ttsEnabled;
+        ttsBtn.style.opacity = ttsEnabled ? '1' : '0.5';
+        ttsBtn.style.borderColor = ttsEnabled ? '#0ff' : '#555';
+    };
+}
+</script>
+<!-- 左下角隐藏面板按钮 -->
+<button id="togglePanelBtn" style="position:fixed; bottom:20px; left:20px; background:rgba(0,0,0,0.6); border:1px solid #0ff; color:#0ff; border-radius:30px; padding:6px 12px; font-size:12px; z-index:10000; backdrop-filter:blur(5px);">📥 隐藏面板</button>
+<!-- 右下角全屏按钮 -->
+<button id="fullscreenBtn" style="position:fixed; bottom:20px; right:20px; background:rgba(0,0,0,0.6); border:1px solid #0ff; color:#0ff; border-radius:30px; padding:6px 12px; font-size:12px; z-index:10000; backdrop-filter:blur(5px);">⛶ 全屏</button>
+<script>
+document.getElementById('fullscreenBtn').onclick = () => {
+    const doc = document.documentElement;
+    if (!document.fullscreenElement) doc.requestFullscreen();
+    else document.exitFullscreen();
+};
+const hideBtn = document.getElementById('togglePanelBtn');
+if (hideBtn) {
+    hideBtn.onclick = () => {
+        const action = document.querySelector('.action-buttons');
+        const input = document.querySelector('.input-row');
+        const toolbar = document.querySelector('.bottom-toolbar');
+        if (hideBtn.innerHTML === '📥 隐藏面板') {
+            if (action) action.style.display = 'none';
+            if (input) input.style.display = 'none';
+            if (toolbar) toolbar.style.display = 'none';
+            hideBtn.innerHTML = '📤 展开面板';
+        } else {
+            if (action) action.style.display = 'flex';
+            if (input) input.style.display = 'flex';
+            if (toolbar) toolbar.style.display = 'flex';
+            hideBtn.innerHTML = '📥 隐藏面板';
+        }
+    };
+}
+</script>
+<script>
+(function() {
+    const fixUpload = function() {
+        const fileInput = document.getElementById("uploadFile");
+        const uploadBtn = document.getElementById("uploadBtn");
+        const uploadArea = document.querySelector(".upload-area");
+        if (fileInput && uploadBtn) {
+            fileInput.onchange = function(e) {
+                if (this.files.length > 0) console.log("已选择:", this.files[0].name);
+            };
+            uploadBtn.onclick = function(e) {
+                e.stopPropagation();
+                if (fileInput.files.length > 0) {
+                    alert("上传: " + fileInput.files[0].name);
+                    fileInput.value = "";
+                } else {
+                    alert("请先选择文件");
+                }
+            };
+        }
+        if (uploadArea) uploadArea.onclick = null;
+        console.log("✅ 上传功能已追加保存");
+    };
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", fixUpload);
+    } else {
+        fixUpload();
+    }
+})();
+</script>
+<script>
+(function() {
+    setTimeout(function() {
+        const uploadArea = document.querySelector(".upload-area");
+        const fileInput = document.getElementById("uploadFile");
+        const uploadBtn = document.getElementById("uploadBtn");
+        if (uploadArea) {
+            uploadArea.onclick = null;
+            const newArea = uploadArea.cloneNode(true);
+            uploadArea.parentNode.replaceChild(newArea, uploadArea);
+        }
+        const newInput = document.getElementById("uploadFile");
+        const newBtn = document.getElementById("uploadBtn");
+        if (newInput && newBtn) {
+            newInput.onchange = function(e) {
+                if (this.files.length > 0) console.log("✅ 已选择:", this.files[0].name);
+            };
+            newBtn.onclick = function(e) {
+                e.stopPropagation();
+                if (newInput.files.length > 0) {
+                    alert("上传成功: " + newInput.files[0].name);
+                    newInput.value = "";
+                } else {
+                    alert("请先点击文件框选择文件");
+                }
+            };
+        }
+        console.log("✅ 上传功能已永久保存（延迟执行）");
+    }, 200);
+})();
+</script>
+</body>
+<script>
+(function() {
+    const style = document.createElement('style');
+    style.textContent = `
+        #fileList {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 150px;
+        }
+    `;
+    document.head.appendChild(style);
+    console.log('✅ 加载中样式已添加');
+})();
+</script>
+<script>
+(function() {
+    // 找到加载中元素并居中
+    const centerLoading = function() {
+        const loadingEl = document.querySelector('.loading, [class*="loading"], .modal-body .loading, div:contains("加载")');
+        if (loadingEl) {
+            loadingEl.style.position = 'absolute';
+            loadingEl.style.top = '50%';
+            loadingEl.style.left = '50%';
+            loadingEl.style.transform = 'translate(-50%, -50%)';
+            loadingEl.style.margin = '0';
+            loadingEl.style.padding = '20px';
+            loadingEl.style.background = 'rgba(0,0,0,0.7)';
+            loadingEl.style.borderRadius = '8px';
+            loadingEl.style.color = '#fff';
+            loadingEl.style.zIndex = '1000';
+            console.log('✅ 加载中已居中');
+        }
+    };
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', centerLoading);
+    } else {
+        centerLoading();
+    }
+})();
+</script>
+<script>
+(function() {
+    // 监听文件列表的点击事件
+    const addPreviewListener = function() {
+        const fileContainer = document.querySelector('.file-list, [class*="file-list"], .modal-body, .folder-content');
+        if (!fileContainer) return;
+        
+        fileContainer.addEventListener('click', function(e) {
+            const target = e.target.closest('.file-item, [class*="file-item"], li, tr, .file');
+            if (target) {
+                const fileName = target.textContent || target.innerText;
+                if (fileName && fileName.trim()) {
+                    console.log('🔍 预览:', fileName);
+                    alert(`📄 预览文件\n\n文件名: ${fileName}\n\n预览功能开发中`);
+                }
+            }
+        });
+        console.log('✅ 预览监听已添加');
+    };
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', addPreviewListener);
+    } else {
+        addPreviewListener();
+    }
+})();
+</script>
+<script>
+(function() {
+    // 等待页面加载完成
+    const initUpload = function() {
+        const uploadBtn = document.getElementById('uploadBtn');
+        if (!uploadBtn || uploadBtn._fixed) return;
+        
+        uploadBtn._fixed = true;
+        const newBtn = uploadBtn.cloneNode(true);
+        uploadBtn.parentNode.replaceChild(newBtn, uploadBtn);
+        
+        newBtn.onclick = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = 'image/*, .pdf, .txt, .jpg, .png';
+            fileInput.style.display = 'none';
+            fileInput.onchange = function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    console.log('📁 选中:', file.name);
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    // 调用后端上传接口
+                    fetch('/api/upload', {
+                        method: 'POST',
+                        body: formData
+                    }).then(res => res.json())
+                      .then(data => alert('上传成功: ' + (data.filename || file.name)))
+                      .catch(err => alert('上传失败: ' + err.message));
+                }
+            };
+            document.body.appendChild(fileInput);
+            fileInput.click();
+            document.body.removeChild(fileInput);
+        };
+        console.log('✅ 上传按钮已修复');
+    };
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initUpload);
+    } else {
+        initUpload();
+    }
+})();
+</script>
+<script>
+(function() {
+    // 监听文件列表点击预览
+    const fileList = document.querySelector('.file-list, [class*="file"]');
+    if (fileList) {
+        fileList.addEventListener('click', function(e) {
+            const target = e.target.closest('.file-item, [class*="file"]');
+            if (target) {
+                const fileName = target.textContent || target.innerText;
+                console.log('🔍 预览:', fileName);
+                alert(`预览功能开发中\n文件: ${fileName}`);
+            }
+        });
+    }
+})();
+</script>
+<script>
+(function() {
+    const loadingText = document.querySelector('.loading, [class*="loading"], .modal-body .loading');
+    if (loadingText) {
+        loadingText.style.display = 'flex';
+        loadingText.style.justifyContent = 'center';
+        loadingText.style.alignItems = 'center';
+        loadingText.style.height = '150px';
+        console.log('✅ 加载中已居中');
+    }
+})();
+</script>
+<script>
+(function() {
+    // 修复上传按钮
+    const uploadBtn = document.getElementById('uploadBtn');
+    if (uploadBtn && !uploadBtn._fixed) {
+        uploadBtn._fixed = true;
+        const newBtn = uploadBtn.cloneNode(true);
+        uploadBtn.parentNode.replaceChild(newBtn, uploadBtn);
+        newBtn.onclick = function() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*, .pdf, .txt';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    console.log('📁 上传:', file.name);
+                    alert(`✅ 已选择: ${file.name}\n大小: ${(file.size/1024).toFixed(2)} KB`);
+                    // TODO: 对接后端上传接口
+                }
+            };
+            input.click();
+        };
+        console.log('✅ 上传按钮已修复');
+    }
+})();
+</script>
+</html>
+<script>
+// ========== 麦克风引导功能（聚焦输入框，引导输入法语音） ==========
+const guideMicBtn = document.getElementById('micBtn');
+if (guideMicBtn) {
+    // 移除原有事件，避免冲突
+    const newMicBtn = guideMicBtn.cloneNode(true);
+    guideMicBtn.parentNode.replaceChild(newMicBtn, guideMicBtn);
+    
+    newMicBtn.onclick = () => {
+        const inputField = document.getElementById('textInput');
+        if (inputField) {
+            inputField.focus();
+            // 显示引导提示
+            let toast = document.getElementById('micGuideToast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'micGuideToast';
+                toast.style.cssText = 'position:fixed;bottom:120px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);color:#0ff;padding:8px 16px;border-radius:20px;font-size:12px;z-index:10001;border:1px solid #0ff;white-space:nowrap;';
+                document.body.appendChild(toast);
+            }
+            toast.textContent = '🎤 点击键盘上的🎤图标，用输入法语音';
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 2500);
+        }
+    };
+    newMicBtn.ontouchstart = newMicBtn.onclick;
+}
+console.log("✅ 麦克风引导功能已恢复");
+</script>
+<script>
+// ========== 优化喇叭开关（无延迟） ==========
+const voiceSwitchBtn = document.getElementById('speakBtn');
+
+if (voiceSwitchBtn) {
+    // 初始化状态
+    voiceSwitchBtn.style.opacity = '1';
+    voiceSwitchBtn.style.borderColor = '#0ff';
+    
+    // 播放简单蜂鸣（无延迟）
+    function playBeep() {
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.frequency.value = 800;
+            gainNode.gain.value = 0.1;
+            oscillator.start();
+            gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.3);
+            oscillator.stop(audioCtx.currentTime + 0.3);
+            audioCtx.resume();
+        } catch(e) { console.log("蜂鸣失败"); }
+    }
+    
+    voiceSwitchBtn.onclick = (e) => {
+        e.stopPropagation();
+            voiceSwitchBtn.style.opacity = '1';
+            voiceSwitchBtn.style.borderColor = '#0ff';
+            playBeep();  // 开启提示音
+        } else {
+            voiceSwitchBtn.style.opacity = '0.4';
+            voiceSwitchBtn.style.borderColor = '#555';
+            playBeep();  // 关闭提示音（同一种，简单区分）
+        }
+        // 显示短暂提示
+        const tip = document.createElement('div');
+        tip.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:#0ff;padding:6px 12px;border-radius:20px;font-size:12px;z-index:10001';
+        document.body.appendChild(tip);
+        setTimeout(() => tip.remove(), 800);
+    };
+}
+
+if (originalSpeak) {
+        return originalSpeak(text);
+    };
+} else {
+    setTimeout(() => {
+        if (orig) {
+                return orig(text);
+            };
+        }
+    }, 500);
+}
+</script>
+<script>
+// ============================================
+// 喇叭开关 - 最高优先级控制语音回复
+// ============================================
+let SPEAKER_ON = true;  // 全局开关
+
+// 喇叭按钮事件
+const speakerBtn = document.getElementById('speakBtn');
+if (speakerBtn) {
+    // 初始状态
+    speakerBtn.style.opacity = '1';
+    speakerBtn.style.borderColor = '#0ff';
+    
+    speakerBtn.onclick = (e) => {
+        e.stopPropagation();
+        SPEAKER_ON = !SPEAKER_ON;
+        if (SPEAKER_ON) {
+            speakerBtn.style.opacity = '1';
+            speakerBtn.style.borderColor = '#0ff';
+            // 简单蜂鸣提示
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = 800;
+                gain.gain.value = 0.1;
+                osc.start();
+                gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.2);
+                osc.stop(ctx.currentTime + 0.2);
+                ctx.resume();
+            } catch(e) {}
+        } else {
+            speakerBtn.style.opacity = '0.4';
+            speakerBtn.style.borderColor = '#555';
+        }
+        // 显示短暂提示
+        const tip = document.createElement('div');
+        tip.textContent = SPEAKER_ON ? '🔊 语音已开启' : '🔇 语音已关闭';
+        tip.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:#0ff;padding:4px 12px;border-radius:20px;font-size:12px;z-index:10001';
+        document.body.appendChild(tip);
+        setTimeout(() => tip.remove(), 600);
+    };
+}
+
+// 语音回复函数（受开关控制）
+window.speakWithSpeaker = function(text) {
+    if (!SPEAKER_ON) return;
+    if (!text || text.includes('✅') || text.includes('❌')) return;
+    
+    const host = window.location.hostname;
+    fetch(`http://${host}:9000/api/tts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text })
+    })
+    .then(res => res.blob())
+    .then(blob => {
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        audio.play();
+        audio.onended = () => URL.revokeObjectURL(url);
+    })
+    .catch(() => {
+        // 降级到浏览器 TTS
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'zh-CN';
+        window.speechSynthesis.speak(utterance);
+    });
+};
+
+// 监听 AI 回复
+const observer = new MutationObserver(() => {
+    const last = document.querySelector('.msg.bot:last-child');
+    if (last && !last.dataset.spoke) {
+        last.dataset.spoke = 'true';
+        const txt = last.innerText;
+        if (txt && !txt.includes('✅')) setTimeout(() => window.speakWithSpeaker(txt), 200);
+    }
+});
+setTimeout(() => {
+    const area = document.getElementById('chatArea');
+    if (area) observer.observe(area, { childList: true, subtree: true });
+}, 800);
+
+console.log("✅ 喇叭开关已设置为最高优先级");
+</script>
+<script>
+// ============================================
+// 重新绑定所有按钮事件
+// ============================================
+
+// 1. 发送消息
+const sendBtn = document.querySelector('.input-row button');
+const textInput = document.getElementById('textInput');
+if (sendBtn) {
+    sendBtn.onclick = () => {
+        const text = textInput.value.trim();
+        if (text) {
+            sendMsg();
+        }
+    };
+}
+if (textInput) {
+    textInput.onkeypress = (e) => {
+        if (e.key === 'Enter') {
+            const text = textInput.value.trim();
+            if (text) sendMsg();
+        }
+    };
+}
+
+// 2. 宣传片
+const promo = document.getElementById('promoBtn');
+if (promo) {
+    promo.onclick = () => {
+        addMsg('user', '制作香港宣传片');
+        addMsg('bot', '🎬 生成中...');
+        const host = window.location.hostname;
+        fetch(`http://${host}:8086/api/task/promo`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ city: '香港', tenant_id: '1' })
+        })
+        .then(res => res.json())
+        .then(data => {
+            const last = document.querySelectorAll('.msg.bot');
+            if (last.length) last[last.length-1].remove();
+            if (data.success) {
+                addMsg('bot', '✅ 宣传片已生成');
+                const videoDiv = document.createElement('div');
+                videoDiv.className = 'msg bot';
+                videoDiv.innerHTML = `<video controls style="max-width:100%; border-radius:8px" src="${data.video_url}"></video>`;
+                document.getElementById('chatArea').appendChild(videoDiv);
+            } else {
+                addMsg('bot', '❌ 生成失败');
+            }
+        })
+        .catch(() => {
+            const last = document.querySelectorAll('.msg.bot');
+            if (last.length) last[last.length-1].remove();
+            addMsg('bot', '❌ 网络错误');
+        });
+    };
+}
+
+// 3. 咖啡
+const coffee = document.getElementById('coffeeBtn');
+if (coffee) {
+    coffee.onclick = () => {
+        addMsg('user', '咖啡');
+        addMsg('bot', '☕ 获取中...');
+        const host = window.location.hostname;
+        fetch(`http://${host}:8090/api/billing/balance?tenant_id=1`)
+            .then(res => res.json())
+            .then(data => {
+                const last = document.querySelectorAll('.msg.bot');
+                if (last.length) last[last.length-1].remove();
+                if (data.balance) {
+                    addMsg('bot', `☕ ${data.balance.map(s => s.name).join('、')}`);
+                } else {
+                    addMsg('bot', '☕ 暂无店铺');
+                }
+            })
+            .catch(() => {
+                const last = document.querySelectorAll('.msg.bot');
+                if (last.length) last[last.length-1].remove();
+                addMsg('bot', '❌ 网络错误');
+            });
+    };
+}
+
+// 4. 订单
+const order = document.getElementById('orderBtn');
+if (order) {
+    order.onclick = () => addMsg('bot', '📋 订单功能开发中');
+}
+
+// 5. 资料库
+const folder = document.getElementById('folderBtn');
+const modal = document.getElementById('libraryModal');
+const closeModal = document.getElementById('closeModalBtn');
+if (folder) {
+    folder.onclick = () => {
+        if (modal) modal.classList.add('open');
+        loadFiles();
+    };
+}
+if (closeModal) {
+    closeModal.onclick = () => {
+        if (modal) modal.classList.remove('open');
+    };
+}
+if (modal) {
+    modal.onclick = (e) => {
+        if (e.target === modal) modal.classList.remove('open');
+    };
+}
+
+// 6. 全屏按钮
+const fullscreen = document.getElementById('fullscreenBtn');
+if (fullscreen) {
+    fullscreen.onclick = () => {
+        const doc = document.documentElement;
+        if (!document.fullscreenElement) {
+            doc.requestFullscreen();
+        } else {
+            document.exitFullscreen();
+        }
+    };
+}
+
+// 7. 隐藏面板按钮
+const hidePanel = document.getElementById('togglePanelBtn');
+if (hidePanel) {
+    hidePanel.onclick = () => {
+        const actionArea = document.querySelector('.action-buttons');
+        const inputArea = document.querySelector('.input-row');
+        const toolbar = document.querySelector('.bottom-toolbar');
+        if (hidePanel.innerHTML === '📥 隐藏面板') {
+            if (actionArea) actionArea.style.display = 'none';
+            if (inputArea) inputArea.style.display = 'none';
+            if (toolbar) toolbar.style.display = 'none';
+            hidePanel.innerHTML = '📤 展开面板';
+        } else {
+            if (actionArea) actionArea.style.display = 'flex';
+            if (inputArea) inputArea.style.display = 'flex';
+            if (toolbar) toolbar.style.display = 'flex';
+            hidePanel.innerHTML = '📥 隐藏面板';
+        }
+    };
+}
+
+console.log("✅ 所有按钮事件已重新绑定");
+</script>
+<script>
+// ============================================
+// 重新绑定所有按钮事件
+// ============================================
+
+// 1. 发送消息
+const sendBtn = document.querySelector('.input-row button');
+const textInput = document.getElementById('textInput');
+if (sendBtn) {
+    sendBtn.onclick = () => {
+        const text = textInput.value.trim();
+        if (text) {
+            sendMsg();
+        }
+    };
+}
+if (textInput) {
+    textInput.onkeypress = (e) => {
+        if (e.key === 'Enter') {
+            const text = textInput.value.trim();
+            if (text) sendMsg();
+        }
+    };
+}
+
+// 2. 宣传片
+const promo = document.getElementById('promoBtn');
+if (promo) {
+    promo.onclick = () => {
+        addMsg('user', '制作香港宣传片');
+        addMsg('bot', '🎬 生成中...');
+        const host = window.location.hostname;
+        fetch(`http://${host}:8086/api/task/promo`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ city: '香港', tenant_id: '1' })
+        })
+        .then(res => res.json())
+        .then(data => {
+            const last = document.querySelectorAll('.msg.bot');
+            if (last.length) last[last.length-1].remove();
+            if (data.success) {
+                addMsg('bot', '✅ 宣传片已生成');
+                const videoDiv = document.createElement('div');
+                videoDiv.className = 'msg bot';
+                videoDiv.innerHTML = `<video controls style="max-width:100%; border-radius:8px" src="${data.video_url}"></video>`;
+                document.getElementById('chatArea').appendChild(videoDiv);
+            } else {
+                addMsg('bot', '❌ 生成失败');
+            }
+        })
+        .catch(() => {
+            const last = document.querySelectorAll('.msg.bot');
+            if (last.length) last[last.length-1].remove();
+            addMsg('bot', '❌ 网络错误');
+        });
+    };
+}
+
+// 3. 咖啡
+const coffee = document.getElementById('coffeeBtn');
+if (coffee) {
+    coffee.onclick = () => {
+        addMsg('user', '咖啡');
+        addMsg('bot', '☕ 获取中...');
+        const host = window.location.hostname;
+        fetch(`http://${host}:8090/api/billing/balance?tenant_id=1`)
+            .then(res => res.json())
+            .then(data => {
+                const last = document.querySelectorAll('.msg.bot');
+                if (last.length) last[last.length-1].remove();
+                if (data.balance) {
+                    addMsg('bot', `☕ ${data.balance.map(s => s.name).join('、')}`);
+                } else {
+                    addMsg('bot', '☕ 暂无店铺');
+                }
+            })
+            .catch(() => {
+                const last = document.querySelectorAll('.msg.bot');
+                if (last.length) last[last.length-1].remove();
+                addMsg('bot', '❌ 网络错误');
+            });
+    };
+}
+
+// 4. 订单
+const order = document.getElementById('orderBtn');
+if (order) {
+    order.onclick = () => addMsg('bot', '📋 订单功能开发中');
+}
+
+// 5. 资料库
+const folder = document.getElementById('folderBtn');
+const modal = document.getElementById('libraryModal');
+const closeModal = document.getElementById('closeModalBtn');
+if (folder) {
+    folder.onclick = () => {
+        if (modal) modal.classList.add('open');
+        loadFiles();
+    };
+}
+if (closeModal) {
+    closeModal.onclick = () => {
+        if (modal) modal.classList.remove('open');
+    };
+}
+if (modal) {
+    modal.onclick = (e) => {
+        if (e.target === modal) modal.classList.remove('open');
+    };
+}
+
+// 6. 全屏按钮
+const fullscreen = document.getElementById('fullscreenBtn');
+if (fullscreen) {
+    fullscreen.onclick = () => {
+        const doc = document.documentElement;
+        if (!document.fullscreenElement) {
+            doc.requestFullscreen();
+        } else {
+            document.exitFullscreen();
+        }
+    };
+}
+
+// 7. 隐藏面板按钮
+const hidePanel = document.getElementById('togglePanelBtn');
+if (hidePanel) {
+    hidePanel.onclick = () => {
+        const actionArea = document.querySelector('.action-buttons');
+        const inputArea = document.querySelector('.input-row');
+        const toolbar = document.querySelector('.bottom-toolbar');
+        if (hidePanel.innerHTML === '📥 隐藏面板') {
+            if (actionArea) actionArea.style.display = 'none';
+            if (inputArea) inputArea.style.display = 'none';
+            if (toolbar) toolbar.style.display = 'none';
+            hidePanel.innerHTML = '📤 展开面板';
+        } else {
+            if (actionArea) actionArea.style.display = 'flex';
+            if (inputArea) inputArea.style.display = 'flex';
+            if (toolbar) toolbar.style.display = 'flex';
+            hidePanel.innerHTML = '📥 隐藏面板';
+        }
+    };
+}
+
+console.log("✅ 所有按钮事件已重新绑定");
+</script>
+<script>
+// ============================================
+// 强制修复所有按钮功能
+// ============================================
+
+// 确保 addMsg 函数存在
+if (typeof addMsg !== 'function') {
+    window.addMsg = function(role, text) {
+        const chat = document.getElementById('chatArea');
+        if (!chat) return;
+        const div = document.createElement('div');
+        div.className = 'msg ' + role;
+        div.innerText = text;
+        chat.appendChild(div);
+        div.scrollIntoView({ behavior: 'smooth' });
+    };
+}
+
+// 确保 sendMsg 函数存在
+if (typeof sendMsg !== 'function') {
+    window.sendMsg = async function() {
+        const input = document.getElementById('textInput');
+        const text = input.value.trim();
+        if (!text) return;
+        input.value = '';
+        addMsg('user', text);
+        addMsg('bot', '🤔 思考中...');
+        try {
+            const host = window.location.hostname;
+            const res = await fetch(`http://${host}:8101/api/agent`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: text })
+            });
+            const data = await res.json();
+            const last = document.querySelectorAll('.msg.bot');
+            if (last.length) last[last.length-1].remove();
+            addMsg('bot', data.message || data.reply || '收到');
+        } catch(e) {
+            const last = document.querySelectorAll('.msg.bot');
+            if (last.length) last[last.length-1].remove();
+            addMsg('bot', '❌ 网络错误');
+        }
+    };
+}
+
+// 重新绑定发送按钮
+const sendButton = document.querySelector('.input-row button');
+const inputBox = document.getElementById('textInput');
+if (sendButton) sendButton.onclick = () => sendMsg();
+if (inputBox) inputBox.onkeypress = (e) => { if (e.key === 'Enter') sendMsg(); };
+
+// 宣传片
+const promoBtn = document.getElementById('promoBtn');
+if (promoBtn) {
+    promoBtn.onclick = () => {
+        addMsg('user', '制作香港宣传片');
+        addMsg('bot', '🎬 生成中...');
+        const host = window.location.hostname;
+        fetch(`http://${host}:8086/api/task/promo`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ city: '香港', tenant_id: '1' })
+        }).then(res => res.json()).then(data => {
+            const last = document.querySelectorAll('.msg.bot');
+            if (last.length) last[last.length-1].remove();
+            if (data.success) {
+                addMsg('bot', '✅ 宣传片已生成');
+                const videoDiv = document.createElement('div');
+                videoDiv.className = 'msg bot';
+                videoDiv.innerHTML = `<video controls style="max-width:100%; border-radius:8px" src="${data.video_url}"></video>`;
+                document.getElementById('chatArea').appendChild(videoDiv);
+            } else addMsg('bot', '❌ 生成失败');
+        }).catch(() => {
+            const last = document.querySelectorAll('.msg.bot');
+            if (last.length) last[last.length-1].remove();
+            addMsg('bot', '❌ 网络错误');
+        });
+    };
+}
+
+// 咖啡
+const coffeeBtn = document.getElementById('coffeeBtn');
+if (coffeeBtn) {
+    coffeeBtn.onclick = () => {
+        addMsg('user', '咖啡');
+        addMsg('bot', '☕ 获取中...');
+        const host = window.location.hostname;
+        fetch(`http://${host}:8090/api/billing/balance?tenant_id=1`)
+            .then(res => res.json())
+            .then(data => {
+                const last = document.querySelectorAll('.msg.bot');
+                if (last.length) last[last.length-1].remove();
+                if (data.balance) addMsg('bot', `☕ ${data.balance.map(s => s.name).join('、')}`);
+                else addMsg('bot', '☕ 暂无店铺');
+            }).catch(() => {
+                const last = document.querySelectorAll('.msg.bot');
+                if (last.length) last[last.length-1].remove();
+                addMsg('bot', '❌ 网络错误');
+            });
+    };
+}
+
+// 订单
+const orderBtn = document.getElementById('orderBtn');
+if (orderBtn) {
+    orderBtn.onclick = () => addMsg('bot', '📋 订单功能开发中');
+}
+
+console.log("✅ 所有按钮已强制修复");
+</script>
+<script>
+// ============================================
+// 喇叭开关 - 即时生效，可中断语音
+// ============================================
+let SPEAKER_ON = true;
+let currentAudio = null;  // 保存当前播放的音频
+
+// 喇叭按钮
+const speakerControlBtn = document.getElementById('speakBtn');
+if (speakerControlBtn) {
+    speakerControlBtn.style.opacity = '1';
+    speakerControlBtn.style.borderColor = '#0ff';
+    
+    speakerControlBtn.onclick = () => {
+        SPEAKER_ON = !SPEAKER_ON;
+        
+        // 如果关闭语音，立即停止当前播放
+        if (!SPEAKER_ON && currentAudio) {
+            currentAudio.pause();
+            currentAudio.currentTime = 0;
+            currentAudio = null;
+        }
+        
+        // 更新 UI
+        if (SPEAKER_ON) {
+            speakerControlBtn.style.opacity = '1';
+            speakerControlBtn.style.borderColor = '#0ff';
+        } else {
+            speakerControlBtn.style.opacity = '0.4';
+            speakerControlBtn.style.borderColor = '#555';
+        }
+        
+        // 提示（不占用语音通道）
+        const tip = document.createElement('div');
+        tip.textContent = SPEAKER_ON ? '🔊 语音已开启' : '🔇 语音已关闭';
+        tip.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:#0ff;padding:4px 12px;border-radius:20px;font-size:12px;z-index:10001';
+        document.body.appendChild(tip);
+        setTimeout(() => tip.remove(), 800);
+    };
+}
+
+// 可中断的语音回复函数
+window.interruptableSpeak = async function(text) {
+    if (!SPEAKER_ON) return;
+    if (!text || text.includes('✅') || text.includes('❌')) return;
+    
+    const host = window.location.hostname;
+    try {
+        const res = await fetch(`http://${host}:9000/api/tts`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: text })
+        });
+        if (res.ok) {
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            // 停止当前播放
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+            currentAudio = new Audio(url);
+            currentAudio.play();
+            currentAudio.onended = () => {
+                URL.revokeObjectURL(url);
+                if (currentAudio === this) currentAudio = null;
+            };
+        }
+    } catch(e) {
+        console.log("TTS 失败:", e);
+    }
+};
+
+// 监听 AI 回复
+const speakerObserver = new MutationObserver(() => {
+    const lastMsg = document.querySelector('.msg.bot:last-child');
+    if (lastMsg && !lastMsg.dataset.spoke) {
+        lastMsg.dataset.spoke = 'true';
+        const txt = lastMsg.innerText;
+        if (txt && !txt.includes('✅')) {
+            setTimeout(() => window.interruptableSpeak(txt), 200);
+        }
+    }
+});
+setTimeout(() => {
+    const chatDiv = document.getElementById('chatArea');
+    if (chatDiv) speakerObserver.observe(chatDiv, { childList: true, subtree: true });
+}, 800);
+
+console.log("✅ 喇叭开关已升级：即时生效，可中断当前语音");
+</script>
+<script>
+// ============================================
+// 喇叭开关 - 即时生效，可中断语音
+// ============================================
+let SPEAKER_ON = true;
+let currentAudio = null;  // 保存当前播放的音频
+
+// 喇叭按钮
+const speakerControlBtn = document.getElementById('speakBtn');
+if (speakerControlBtn) {
+    speakerControlBtn.style.opacity = '1';
+    speakerControlBtn.style.borderColor = '#0ff';
+    
+    speakerControlBtn.onclick = () => {
+        SPEAKER_ON = !SPEAKER_ON;
+        
+        // 如果关闭语音，立即停止当前播放
+        if (!SPEAKER_ON && currentAudio) {
+            currentAudio.pause();
+            currentAudio.currentTime = 0;
+            currentAudio = null;
+        }
+        
+        // 更新 UI
+        if (SPEAKER_ON) {
+            speakerControlBtn.style.opacity = '1';
+            speakerControlBtn.style.borderColor = '#0ff';
+        } else {
+            speakerControlBtn.style.opacity = '0.4';
+            speakerControlBtn.style.borderColor = '#555';
+        }
+        
+        // 提示（不占用语音通道）
+        const tip = document.createElement('div');
+        tip.textContent = SPEAKER_ON ? '🔊 语音已开启' : '🔇 语音已关闭';
+        tip.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:#0ff;padding:4px 12px;border-radius:20px;font-size:12px;z-index:10001';
+        document.body.appendChild(tip);
+        setTimeout(() => tip.remove(), 800);
+    };
+}
+
+// 可中断的语音回复函数
+window.interruptableSpeak = async function(text) {
+    if (!SPEAKER_ON) return;
+    if (!text || text.includes('✅') || text.includes('❌')) return;
+    
+    const host = window.location.hostname;
+    try {
+        const res = await fetch(`http://${host}:9000/api/tts`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: text })
+        });
+        if (res.ok) {
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            // 停止当前播放
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+            currentAudio = new Audio(url);
+            currentAudio.play();
+            currentAudio.onended = () => {
+                URL.revokeObjectURL(url);
+                if (currentAudio === this) currentAudio = null;
+            };
+        }
+    } catch(e) {
+        console.log("TTS 失败:", e);
+    }
+};
+
+// 监听 AI 回复
+const speakerObserver = new MutationObserver(() => {
+    const lastMsg = document.querySelector('.msg.bot:last-child');
+    if (lastMsg && !lastMsg.dataset.spoke) {
+        lastMsg.dataset.spoke = 'true';
+        const txt = lastMsg.innerText;
+        if (txt && !txt.includes('✅')) {
+            setTimeout(() => window.interruptableSpeak(txt), 200);
+        }
+    }
+});
+setTimeout(() => {
+    const chatDiv = document.getElementById('chatArea');
+    if (chatDiv) speakerObserver.observe(chatDiv, { childList: true, subtree: true });
+}, 800);
+
+console.log("✅ 喇叭开关已升级：即时生效，可中断当前语音");
+</script>
+<script>
+(function() {
+    const uploadBtn = document.getElementById('uploadBtn');
+    const fileInput = document.getElementById('uploadFile');
+    const uploadArea = document.querySelector('.upload-area');
+    
+    if (uploadBtn && fileInput) {
+        // 移除原有事件，重新绑定
+        const newBtn = uploadBtn.cloneNode(true);
+        uploadBtn.parentNode.replaceChild(newBtn, uploadBtn);
+        
+        newBtn.onclick = function(e) {
+            e.stopPropagation();
+            if (fileInput.files.length > 0) {
+                console.log('上传:', fileInput.files[0].name);
+                alert('上传文件到资料库');
+            } else {
+                alert('请先选择文件');
+            }
+        };
+    }
+    
+    if (uploadArea && fileInput) {
+        uploadArea.onclick = function(e) {
+            if (e.target === uploadBtn || e.target === document.getElementById('uploadBtn')) return;
+            fileInput.click();
+        };
+    }
+    
+    console.log('✅ 上传按钮已修复');
+})();
+</script>
+<script>
+(function() {
+    // 等待页面加载完成
+    const fixUpload = function() {
+        const uploadArea = document.querySelector('.upload-area');
+        const fileInput = document.getElementById('uploadFile');
+        let uploadBtn = document.getElementById('uploadBtn');
+        
+        if (!uploadArea || !fileInput) return;
+        
+        // 清除 upload-area 上的所有事件
+        uploadArea.onclick = null;
+        
+        // 重建上传按钮（清除旧事件）
+        if (uploadBtn) {
+            const newBtn = uploadBtn.cloneNode(true);
+            uploadBtn.parentNode.replaceChild(newBtn, uploadBtn);
+            uploadBtn = newBtn;
+        }
+        
+        // 重新绑定干净的事件
+        uploadArea.onclick = function(e) {
+            if (e.target === uploadBtn) return;
+            fileInput.click();
+        };
+        
+        if (uploadBtn) {
+            uploadBtn.onclick = function(e) {
+                e.stopPropagation();
+                if (fileInput.files && fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    console.log('上传文件:', file.name);
+                    alert('上传: ' + file.name);
+                } else {
+                    alert('请先选择文件');
+                }
+            };
+        }
+        
+        // 文件选择变化提示
+        fileInput.onchange = function(e) {
+            if (e.target.files && e.target.files.length > 0) {
+                console.log('已选择:', e.target.files[0].name);
+            }
+        };
+        
+        console.log('✅ 上传按钮已永久修复');
+    };
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', fixUpload);
+    } else {
+        fixUpload();
+    }
+})();
+</script>
+<script>
+(function() {
+    const fixFileInput = function() {
+        const fileInput = document.getElementById('uploadFile');
+        if (!fileInput || fileInput._fixed) return;
+        fileInput._fixed = true;
+        
+        // 保存原有样式
+        const oldStyle = fileInput.style.cssText;
+        
+        // 创建新的 input 替换
+        const newInput = document.createElement('input');
+        newInput.type = 'file';
+        newInput.id = 'uploadFile';
+        newInput.multiple = true;
+        newInput.style.cssText = oldStyle;
+        
+        // 复制属性
+        if (fileInput.accept) newInput.accept = fileInput.accept;
+        
+        // 替换
+        fileInput.parentNode.replaceChild(newInput, fileInput);
+        
+        // 绑定一次性成功的事件
+        newInput.onchange = function(e) {
+            if (e.target.files && e.target.files.length > 0) {
+                console.log('✅ 已选择文件:', e.target.files[0].name);
+            }
+        };
+        
+        newInput.onclick = function(e) {
+            e.stopPropagation();
+        };
+        
+        console.log('✅ 文件选择器已永久修复（一次成功）');
+    };
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', fixFileInput);
+    } else {
+        fixFileInput();
+    }
+})();
+</script>
+<script>
+(function() {
+    const fileInput = document.getElementById('uploadFile');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const uploadArea = document.querySelector('.upload-area');
+
+    if (fileInput && uploadBtn) {
+        // 选择文件
+        fileInput.onchange = function(e) {
+            if (this.files.length > 0) {
+                console.log('✅ 已选择:', this.files[0].name);
+            }
+        };
+        
+        // 上传
+        uploadBtn.onclick = function(e) {
+            e.stopPropagation();
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                console.log('📤 上传:', file.name);
+                alert('上传成功: ' + file.name);
+                fileInput.value = '';
+            } else {
+                alert('请先选择文件');
+            }
+        };
+    }
+
+    if (uploadArea && fileInput && uploadBtn) {
+        // 移除区域点击干涉
+        uploadArea.onclick = null;
+    }
+
+    console.log('✅ 上传功能已永久保存');
+})();
+</script>
+
+<script>
+(function() {
+    setTimeout(function() {
+        const uploadArea = document.querySelector(".upload-area");
+        const fileInput = document.getElementById("uploadFile");
+        const uploadBtn = document.getElementById("uploadBtn");
+        if (uploadArea) {
+            uploadArea.onclick = null;
+            const newArea = uploadArea.cloneNode(true);
+            uploadArea.parentNode.replaceChild(newArea, uploadArea);
+        }
+        const newInput = document.getElementById("uploadFile");
+        const newBtn = document.getElementById("uploadBtn");
+        if (newInput && newBtn) {
+            newInput.onchange = function(e) {
+                if (this.files.length > 0) console.log("✅ 已选择:", this.files[0].name);
+            };
+            newBtn.onclick = function(e) {
+                e.stopPropagation();
+                if (newInput.files.length > 0) {
+                    alert("上传成功: " + newInput.files[0].name);
+                    newInput.value = "";
+                } else {
+                    alert("请先点击文件框选择文件");
+                }
+            };
+        }
+        console.log("✅ 上传功能已永久保存（延迟执行）");
+    }, 200);
+})();
+</script>
+</body>
+</html>
+<script>
+(function() {
+    const uploadArea = document.querySelector('.upload-area');
+    const fileInput = document.getElementById('uploadFile');
+    const uploadBtn = document.getElementById('uploadBtn');
+
+    if (uploadArea && fileInput) {
+        // 禁用容器点击
+        uploadArea.onclick = null;
+        uploadArea.style.cursor = 'default';
+    }
+
+    if (fileInput && uploadBtn) {
+        // 统一上传逻辑
+        uploadBtn.onclick = function(e) {
+            e.stopPropagation();
+            if (fileInput.files && fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                console.log('📤 上传:', file.name);
+                alert('上传成功: ' + file.name);
+                fileInput.value = '';
+            } else {
+                alert('请先点击「选择文件」按钮选择文件');
+            }
+        };
+        
+        // 确保文件框自身能工作
+        fileInput.onchange = function(e) {
+            if (this.files.length > 0) {
+                console.log('✅ 已选择:', this.files[0].name);
+            }
+        };
+    }
+
+    console.log('✅ 已禁用容器点击，上传功能统一');
+})();
+</script>

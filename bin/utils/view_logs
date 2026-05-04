@@ -1,0 +1,40 @@
+#!/bin/bash
+# 查看所有日志
+
+echo "=== 📋 ClawsJoy 日志查看器 ==="
+echo ""
+
+echo "1. 路由器日志 (最新5行):"
+echo "---"
+tail -5 ~/clawsjoy/logs/universal_router.log 2>/dev/null || echo "暂无日志"
+echo ""
+
+echo "2. 自动审核日志 (最新5行):"
+echo "---"
+tail -5 ~/clawsjoy/logs/auto_reviewer.log 2>/dev/null || echo "暂无日志"
+echo ""
+
+echo "3. 自动采集日志 (最新5行):"
+echo "---"
+tail -5 ~/clawsjoy/logs/auto_spider.log 2>/dev/null || echo "暂无日志"
+echo ""
+
+echo "4. 自动发布日志 (最新5行):"
+echo "---"
+tail -5 ~/clawsjoy/logs/auto_messenger.log 2>/dev/null || echo "暂无日志"
+echo ""
+
+echo "5. 进化引擎日志 (最新5行):"
+echo "---"
+tail -5 ~/.openclaw/evolution/logs/cron.log 2>/dev/null || echo "暂无日志"
+echo ""
+
+echo "6. 审核看板 API 日志:"
+echo "---"
+tail -3 /tmp/review_api.log 2>/dev/null || echo "暂无日志"
+echo ""
+
+echo "=== 文件状态 ==="
+echo "发件箱: $(ls ~/clawsjoy/outbox/*.json 2>/dev/null | wc -l) 个"
+echo "已完成: $(ls ~/clawsjoy/outbox/done/ 2>/dev/null | wc -l) 个"
+echo "失败: $(ls ~/clawsjoy/outbox/failed/ 2>/dev/null | wc -l) 个"

@@ -1,0 +1,8 @@
+{
+  "name": "tts-piper",
+  "version": "1.0.0",
+  "description": "本地离线 TTS（Piper）",
+  "author": "ClawsJoy",
+  "price": 0,
+  "entry": "main.py"
+}

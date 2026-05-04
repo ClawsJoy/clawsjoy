@@ -1,0 +1,8 @@
+{
+  "name": "voice-chat-assistant",
+  "version": "1.0.0",
+  "description": "智能语音助手，自然对话并提取关键信息",
+  "author": "ClawsJoy",
+  "price": 0,
+  "entry": "main.py"
+}

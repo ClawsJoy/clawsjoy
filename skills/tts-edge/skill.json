@@ -1,0 +1,8 @@
+{
+  "name": "tts-edge",
+  "version": "1.0.0",
+  "description": "在线 TTS（edge-tts）",
+  "author": "ClawsJoy",
+  "price": 0,
+  "entry": "main.py"
+}

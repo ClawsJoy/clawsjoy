@@ -1,0 +1,29 @@
+#!/bin/bash
+KEYWORD="$1"
+COUNT="${2:-3}"
+API_KEY="$UNSPLASH_ACCESS_KEY"
+
+echo "🕷️ 开始采集: $KEYWORD (共 $COUNT 张)"
+
+# URL 编码中文
+ENCODED=$(echo -n "$KEYWORD" | od -An -tx1 | tr ' ' % | tr -d '\n')
+if [ -z "$ENCODED" ]; then
+    ENCODED="$KEYWORD"
+fi
+
+curl -s "https://api.unsplash.com/search/photos?query=$ENCODED&per_page=$COUNT&client_id=$API_KEY" \
+    | python3 -c "
+import sys, json, urllib.request, os
+
+data = json.load(sys.stdin)
+save_dir = os.path.expanduser(f'~/.openclaw/web/images/{sys.argv[1]}')
+os.makedirs(save_dir, exist_ok=True)
+
+for i, img in enumerate(data.get('results', [])):
+    url = img.get('urls', {}).get('regular', '')
+    if url:
+        urllib.request.urlretrieve(url, f'{save_dir}/img_{i}.jpg')
+        print(f'✅ 下载图片 {i+1}')
+" "$KEYWORD"
+
+echo "✅ 采集完成"

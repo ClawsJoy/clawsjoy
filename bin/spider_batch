@@ -1,0 +1,18 @@
+#!/bin/bash
+# Spider 批量采集
+
+TOPICS=("hongkong skyline" "victoria harbour" "hongkong street" 
+        "artificial intelligence" "robot future" "ai brain"
+        "technology circuit" "cloud computing" "data center")
+
+for topic in "${TOPICS[@]}"; do
+    echo ""
+    echo "🕷️ 采集: $topic"
+    ~/clawsjoy/bin/spider_unsplash "$topic" 3
+    sleep 2
+done
+
+echo ""
+echo "✅ 批量采集完成"
+echo "📁 素材目录: ~/.openclaw/web/images/"
+ls -la ~/.openclaw/web/images/

@@ -1,0 +1,4 @@
+#!/bin/bash
+AGENT="$1"
+shift
+~/clawsjoy/bin/agent_do.sh "$AGENT" "$*"

@@ -1,0 +1,33 @@
+services:
+  clawsjoy:
+    build: .
+    container_name: clawsjoy
+    ports:
+      - "8100:8100"   # chat_api_agent
+      - "8080:8080"
+      - "8083:8082"
+      - "8085:8085"
+      - "8086:8086"
+      - "8088:8088"
+      - "8089:8089"
+      - "8090:8090"
+      - "8091:8091"
+      - "8092:8092"
+      - "8188:8188"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./tenants:/app/tenants
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: clawsjoy-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+volumes:
+  redis_data:

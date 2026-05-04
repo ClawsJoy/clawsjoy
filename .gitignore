@@ -1,0 +1,21 @@
+# 备份和临时文件
+*_backup_*
+*.bak
+*.tar.gz
+*.log
+*.tmp
+__pycache__/
+*.pyc
+
+# 敏感配置
+.env
+config/.env
+webhook.json
+
+# 私有目录
+clawsjoy/
+venv/
+get-docker.sh
+start-clawsjoy.bat
+stop-clawsjoy.bat
+backups/

@@ -1,0 +1,8 @@
+{
+  "name": "customer-profile-manager",
+  "version": "1.0.0",
+  "description": "客户资料库管理",
+  "author": "ClawsJoy",
+  "price": 0,
+  "entry": "main.py"
+}
