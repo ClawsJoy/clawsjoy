@@ -70,3 +70,16 @@ function startVoice() {
 document.getElementById('micBtn').onmousedown = startVoice;
 document.getElementById('micBtn').ontouchstart = startVoice;
 </script>
+<script>
+function editImage(btn) {
+    const fileId = btn.getAttribute('data-id');
+    let fileUrl = btn.getAttribute('data-url');
+    // 构建编辑器 URL
+    const editorUrl = `/joymate/editor.html?id=${fileId}&url=${encodeURIComponent(fileUrl)}&tenant=${tenantId}`;
+    window.open(editorUrl, '_blank', 'width=1200,height=800');
+}
+function previewImage(btn) {
+    const fileUrl = btn.getAttribute('data-url');
+    window.open(fileUrl, '_blank');
+}
+</script>

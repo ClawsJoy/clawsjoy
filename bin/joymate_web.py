@@ -11,17 +11,19 @@ from pathlib import Path
 
 WEB_DIR = Path("/root/clawsjoy/web/joymate")
 
+
 class JoyMateHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(WEB_DIR), **kwargs)
-    
+
     def end_headers(self):
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Cache-Control', 'no-store')
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Cache-Control", "no-store")
         super().end_headers()
-    
+
     def log_message(self, format, *args):
         print(f"[JoyMate] {format % args}")
+
 
 if __name__ == "__main__":
     port = 3000

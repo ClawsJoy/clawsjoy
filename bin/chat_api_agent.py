@@ -3,6 +3,7 @@ import json
 import requests
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
+
 class AgentHandler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
         self.send_response(200)
@@ -13,19 +14,21 @@ class AgentHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         if self.path == "/api/agent":
-            length = int(self.headers.get('Content-Length', 0))
+            length = int(self.headers.get("Content-Length", 0))
             data = json.loads(self.rfile.read(length))
-            prompt = data.get('text', '')
-            resp = requests.post('http://127.0.0.1:11434/api/generate',
-                                 json={"model": "qwen:0.5b", "prompt": prompt},
-                                 stream=True)
-            full = ''
+            prompt = data.get("text", "")
+            resp = requests.post(
+                "http://127.0.0.1:11434/api/generate",
+                json={"model": "qwen:0.5b", "prompt": prompt},
+                stream=True,
+            )
+            full = ""
             for line in resp.iter_lines():
                 if line:
                     try:
                         chunk = json.loads(line)
-                        full += chunk.get('response', '')
-                        if chunk.get('done'):
+                        full += chunk.get("response", "")
+                        if chunk.get("done"):
                             break
                     except:
                         pass
@@ -39,6 +42,7 @@ class AgentHandler(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         self.wfile.write(json.dumps(data, ensure_ascii=False).encode())
+
 
 if __name__ == "__main__":
     port = 8101

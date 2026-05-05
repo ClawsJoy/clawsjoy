@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
-HTML = '''<!DOCTYPE html>
+HTML = """<!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"><title>ClawsJoy API 文档</title></head>
 <body style="background:#0f0f1a;color:#fff;font-family:monospace;padding:20px">
@@ -27,16 +27,18 @@ curl -X POST http://redis:8092/api/auth/login -d '{"username":"admin","password"
 curl -X POST http://redis:8084/api/task/promo -d '{"city":"香港"}' -H "Content-Type: application/json"
 </pre>
 </body>
-</html>'''
+</html>"""
+
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
-        self.send_header('Content-Type', 'text/html; charset=utf-8')
+        self.send_header("Content-Type", "text/html; charset=utf-8")
         self.end_headers()
-        self.wfile.write(HTML.encode('utf-8'))
+        self.wfile.write(HTML.encode("utf-8"))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     port = 8094
     print(f"API Docs: http://redis:{port}")
     HTTPServer(("0.0.0.0", port), Handler).serve_forever()

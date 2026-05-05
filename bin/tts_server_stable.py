@@ -3,19 +3,20 @@ import asyncio
 import edge_tts
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
+
 class TTSHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         if self.path == "/api/tts":
             try:
-                length = int(self.headers.get('Content-Length', 0))
+                length = int(self.headers.get("Content-Length", 0))
                 data = json.loads(self.rfile.read(length))
-                text = data.get('text', '')
-                voice = data.get('voice', 'zh-CN-XiaoxiaoNeural')
+                text = data.get("text", "")
+                voice = data.get("voice", "zh-CN-XiaoxiaoNeural")
 
                 # 生成音频
                 async def generate():
                     communicate = edge_tts.Communicate(text, voice)
-                    audio_data = b''
+                    audio_data = b""
                     async for chunk in communicate.stream():
                         if chunk["type"] == "audio":
                             audio_data += chunk["data"]
@@ -46,6 +47,7 @@ class TTSHandler(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
+
 
 if __name__ == "__main__":
     port = 9000

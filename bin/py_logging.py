@@ -4,7 +4,6 @@
 import logging
 import sys
 
-
 LOG_FORMAT = "[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s"
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%S%z"
 

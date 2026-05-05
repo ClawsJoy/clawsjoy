@@ -1,9 +1,10 @@
 import re
-with open('task_api.py', 'r') as f:
+
+with open("task_api.py", "r") as f:
     content = f.read()
 
-old_method = r'def _handle_promo\(self\):.*?(?=\n    def \w|$)'
-new_method = '''
+old_method = r"def _handle_promo\(self\):.*?(?=\n    def \w|$)"
+new_method = """
     def _handle_promo(self):
         try:
             length = int(self.headers.get('Content-Length', 0))
@@ -46,9 +47,9 @@ new_method = '''
                 self.send_json({'success': False, 'error': '视频合成失败'})
         except Exception as e:
             self.send_json({'success': False, 'error': str(e)}, 500)
-'''
+"""
 
 content = re.sub(old_method, new_method, content, flags=re.DOTALL)
-with open('task_api.py', 'w') as f:
+with open("task_api.py", "w") as f:
     f.write(content)
 print("✅ _handle_promo 已替换")

@@ -8,6 +8,7 @@ from pathlib import Path
 
 AUDIT_LOG = Path("/mnt/d/clawsjoy/logs/audit.log")
 
+
 def log_audit(tenant_id: str, action: str, detail: str):
     """记录审计日志"""
     AUDIT_LOG.parent.mkdir(parents=True, exist_ok=True)
@@ -15,10 +16,11 @@ def log_audit(tenant_id: str, action: str, detail: str):
         "timestamp": datetime.now().isoformat(),
         "tenant": tenant_id,
         "action": action,
-        "detail": detail
+        "detail": detail,
     }
     with open(AUDIT_LOG, "a") as f:
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
 
 def query_audit(tenant_id: str = None, limit: int = 100):
     """查询审计日志"""
@@ -31,6 +33,7 @@ def query_audit(tenant_id: str = None, limit: int = 100):
             if tenant_id is None or entry.get("tenant") == tenant_id:
                 entries.append(entry)
     return entries[-limit:]
+
 
 if __name__ == "__main__":
     # 测试

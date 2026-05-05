@@ -3,6 +3,7 @@ import os, importlib.util, json
 
 SKILLS_DIR = "/home/flybo/clawsjoy/skills"
 
+
 def load_skill(skill_name):
     skill_path = os.path.join(SKILLS_DIR, skill_name, "main.py")
     if not os.path.exists(skill_path):
@@ -11,6 +12,7 @@ def load_skill(skill_name):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
 
 def list_skills():
     skills = []

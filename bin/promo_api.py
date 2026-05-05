@@ -6,6 +6,7 @@ import subprocess
 from pathlib import Path
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
+
 def generate_narration(city, style="科技"):
     """生成口播文案"""
     scripts = {
@@ -14,97 +15,118 @@ def generate_narration(city, style="科技"):
         "北京": f"北京，千年古都，{style}创新中心。故宫博物院珍藏文物，长城雄伟壮观，鸟巢水立方展现奥运精神。北京，历史与现代交融。",
         "深圳": f"深圳，中国硅谷，{style}创新之都。科技园聚集世界名企，前海自贸区蓬勃发展，欢乐海岸滨海风情。深圳，年轻活力，梦想起航。",
     }
-    return scripts.get(city, f"{city}是一座美丽的城市，{style}发展日新月异，欢迎您来探索发现。")
+    return scripts.get(
+        city, f"{city}是一座美丽的城市，{style}发展日新月异，欢迎您来探索发现。"
+    )
+
 
 class PromoHandler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
         self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
-    
+
     def do_POST(self):
-        if self.path == '/api/promo/make':
-            length = int(self.headers.get('Content-Length', 0))
+        if self.path == "/api/promo/make":
+            length = int(self.headers.get("Content-Length", 0))
             data = json.loads(self.rfile.read(length))
-            city = data.get('city', '香港')
-            style = data.get('style', '科技')
-            
+            city = data.get("city", "香港")
+            style = data.get("style", "科技")
+
             img_dir = f"/home/flybo/clawsjoy/web/images/{city}"
-            output_file = f"/home/flybo/clawsjoy/web/videos/{city}_{int(time.time())}.mp4"
-            
+            output_file = (
+                f"/home/flybo/clawsjoy/web/videos/{city}_{int(time.time())}.mp4"
+            )
+
             # 1. 生成口播音频
             script = generate_narration(city, style)
             audio_file = f"/tmp/audio_{int(time.time())}.mp3"
-            
+
             # 使用 edge-tts 生成（需要网络）
             try:
-                subprocess.run([
-                    "edge-tts", "--text", script, "--write-media", audio_file, "--voice", "zh-CN-XiaoxiaoNeural"
-                ], capture_output=True, timeout=30)
+                subprocess.run(
+                    [
+                        "edge-tts",
+                        "--text",
+                        script,
+                        "--write-media",
+                        audio_file,
+                        "--voice",
+                        "zh-CN-XiaoxiaoNeural",
+                    ],
+                    capture_output=True,
+                    timeout=30,
+                )
                 has_audio = os.path.exists(audio_file)
             except:
                 # 备选：使用 pyttsx3
                 import pyttsx3
+
                 engine = pyttsx3.init()
                 engine.save_to_file(script, audio_file)
                 engine.runAndWait()
                 has_audio = os.path.exists(audio_file)
-            
+
             # 2. 查找图片
-            images = list(Path(img_dir).glob("*.jpg")) + list(Path(img_dir).glob("*.png"))
+            images = list(Path(img_dir).glob("*.jpg")) + list(
+                Path(img_dir).glob("*.png")
+            )
             if not images:
                 images = list(Path("/home/flybo/clawsjoy/web/images").glob("*.jpg"))[:3]
-            
+
             if not images:
                 self.send_json({"success": False, "error": "No images available"})
                 return
-            
+
             # 3. 创建视频
             concat_file = f"/tmp/concat_{int(time.time())}.txt"
-            with open(concat_file, 'w') as f:
+            with open(concat_file, "w") as f:
                 for img in images[:6]:
                     duration = 2.5
                     f.write(f"file '{img}'\n")
                     f.write(f"duration {duration}\n")
-            
+
             # 生成视频（无音频）
             temp_video = f"/tmp/video_{int(time.time())}.mp4"
             cmd = f'ffmpeg -y -f concat -safe 0 -i {concat_file} -c:v libx264 -pix_fmt yuv420p -vf "scale=1920:1080:force_original_aspect_ratio=1,pad=1920:1080:(ow-iw)/2:(oh-ih)/2" -t 15 {temp_video} 2>/dev/null'
             os.system(cmd)
             os.remove(concat_file)
-            
+
             # 4. 合并视频和音频
             if has_audio and os.path.exists(temp_video):
                 final_output = output_file.replace(".mp4", "_with_narration.mp4")
-                cmd = f'ffmpeg -i {temp_video} -i {audio_file} -c:v copy -c:a aac -shortest -y {final_output} 2>/dev/null'
+                cmd = f"ffmpeg -i {temp_video} -i {audio_file} -c:v copy -c:a aac -shortest -y {final_output} 2>/dev/null"
                 os.system(cmd)
                 if os.path.exists(final_output):
                     output_file = final_output
                     os.remove(audio_file)
                     os.remove(temp_video)
-            
+
             if os.path.exists(output_file):
-                self.send_json({
-                    "success": True,
-                    "video_url": f"/videos/{os.path.basename(output_file)}",
-                    "message": f"{city}{style}宣传片已生成",
-                    "has_narration": has_audio
-                })
+                self.send_json(
+                    {
+                        "success": True,
+                        "video_url": f"/videos/{os.path.basename(output_file)}",
+                        "message": f"{city}{style}宣传片已生成",
+                        "has_narration": has_audio,
+                    }
+                )
             else:
                 self.send_json({"success": False, "error": "Video generation failed"})
         else:
             self.send_error(404)
-    
+
     def send_json(self, data, status=200):
         self.send_response(status)
-        self.send_header('Content-Type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         self.wfile.write(json.dumps(data).encode())
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     port = 8086
     print(f"TTS Promo API on port {port}")
-    HTTPServer(('0.0.0.0', port), PromoHandler).serve_forever()
+    HTTPServer(("0.0.0.0", port), PromoHandler).serve_forever()

@@ -1,4 +1,25 @@
 #!/usr/bin/env python3
+"""任务调度器 - 集成记忆服务和引擎路由"""
+
+import json, sqlite3, os, time, subprocess, uuid, shutil, mimetypes, cgi, threading, re
+from pathlib import Path
+from datetime import datetime
+from http.server import HTTPServer, BaseHTTPRequestHandler
+from urllib.parse import urlparse, parse_qs
+
+# 添加引擎路由和记忆服务
+import sys
+sys.path.insert(0, '/mnt/d/clawsjoy/bin')
+sys.path.insert(0, '/mnt/d/clawsjoy/skills/memory')
+
+from executor_adapter import ExecutorRouterWithConfig
+from execute import execute as memory_execute
+
+sys.path.insert(0, "/mnt/d/clawsjoy/skills/memory")
+from execute import execute as memory_execute
+
+from memory_service import get_memory_service
+#!/usr/bin/env python3
 """完整版 task_api - 多图轮播 + TTS 音频 + 字幕"""
 import json, sqlite3, os, time, subprocess, uuid, shutil, mimetypes, cgi, threading, re
 from pathlib import Path
@@ -144,7 +165,6 @@ class TaskHandler(BaseHTTPRequestHandler):
         conn.close()
         return result[0] if result else 0
 
-    
     def _handle_promo(self):
         try:
             length = int(self.headers.get('Content-Length', 0))
@@ -152,14 +172,12 @@ class TaskHandler(BaseHTTPRequestHandler):
             tenant_id = data.get('tenant_id', '1')
             city = data.get('city', '香港')
             style = data.get('style', '科技')
-            
             # 转发到 promo_api (8086)
             import requests
             resp = requests.post('http://redis:8086/api/promo/make', 
                                 json={'city': city, 'style': style},
                                 timeout=60)
             result = resp.json()
-            
             if result.get('success'):
                 self.send_json({
                     'success': True,
@@ -212,7 +230,54 @@ class TaskHandler(BaseHTTPRequestHandler):
         threading.Thread(target=async_tag_file, args=(str(target_path), file_id, tenant_id)).start()
         self.send_json({'success': True, 'file_id': file_id, 'original_name': uploaded_file.filename})
 
-    def _handle_library_list(self):
+    def _handle_editor_save(self):
+        """保存编辑后的图片"""
+        import uuid
+        import cgi
+        from PIL import Image
+        from pathlib import Path
+        try:
+            form = cgi.FieldStorage(fp=self.rfile, headers=self.headers,
+                                     environ={'REQUEST_METHOD': 'POST'})
+            tenant_id = form.getvalue('tenant_id', '1')
+            image_file = form['image']]
+            if not image_file or not image_file.file:
+                self.send_json({'success': False, 'error': 'No image file'}, 400)
+                return
+            temp_path = f"/tmp/editor_{uuid.uuid4().hex}.jpg"
+            with open(temp_path, 'wb') as f:
+                f.write(image_file.file.read())
+            img = Image.open(temp_path)
+            if img.mode != 'RGB':
+                img = img.convert('RGB')
+            tenant_lib = Path(f"/home/flybo/clawsjoy/tenants/tenant_{tenant_id}/library/images")
+            tenant_lib.mkdir(parents=True, exist_ok=True)
+            final_name = f"{uuid.uuid4().hex}.jpg"
+            final_path = tenant_lib / final_name
+            img.save(final_path, 'JPEG', quality=90)
+            db_path = f"/home/flybo/clawsjoy/tenants/tenant_{tenant_id}/library.db"
+            conn = sqlite3.connect(db_path)
+            c = conn.cursor()
+            c.execute('''
+                INSERT INTO files (original_name, storage_path, file_type, mime_type, size, width, height, edited)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (f"edited_{final_name}", str(final_path), 'image', 'image/jpeg',
+                  os.path.getsize(final_path), img.width, img.height, 1))
+            file_id = c.lastrowid
+            conn.commit()
+            conn.close()
+            os.unlink(temp_path)
+            self.send_json({
+                'success': True,
+                'file_id': file_id,
+                'url': f'/videos/{final_name}',
+                'message': '保存成功'
+            })
+        except Exception as e:
+            print(f"编辑器保存失败: {e}")
+            self.send_json({'success': False, 'error': str(e)}, 500)
+
+ def _handle_library_list(self):
         parsed = urlparse(self.path)
         params = parse_qs(parsed.query)
         tenant_id = params.get('tenant_id', ['1'])[0]
@@ -303,19 +368,308 @@ class TaskHandler(BaseHTTPRequestHandler):
         else:
             self.send_error(404)
 
+    def _handle_chat_with_memory(self, data):
+        return {"success": True, "message": "ok"}
+
+    def _handle_switch_engine(self, data):
+        return {"success": True}
+
+    def _handle_list_engines(self):
+        return {"success": True, "engines": []}
+
     def do_POST(self):
-        if self.path == "/api/promo/make":
-            self.handle_promo()
+        parsed = urlparse(self.path)
+        if parsed.path == "/api/chat":
+            length = int(self.headers.get("Content-Length", 0))
+            data = json.loads(self.rfile.read(length))
+            result = self._handle_chat_with_memory(data)
+            self.send_json(result)
+            return
+        elif parsed.path == "/api/switch_engine":
+            length = int(self.headers.get("Content-Length", 0))
+            data = json.loads(self.rfile.read(length))
+            result = self._handle_switch_engine(data)
+            self.send_json(result)
+            return
+        elif parsed.path == "/api/list_engines":
+            result = self._handle_list_engines()
+            self.send_json(result)
+            return
+
         parsed = urlparse(self.path)
         if parsed.path == '/api/task/promo':
             self._handle_promo()
         elif parsed.path == '/api/library/upload':
             self._handle_library_upload()
+        elif parsed.path == '/api/library/editor/save':
+            self._handle_editor_save()
         else:
             self.send_error(404)
 
 if __name__ == '__main__':
     init_db()
-    port = 8188
+    port = 8084
     print(f"📋 Task API started: http://redis:{port}")
     HTTPServer(("0.0.0.0", port), TaskHandler).serve_forever()
+
+# ========== 图片编辑器 API ==========
+def _handle_editor_save(self):
+    """保存编辑后的图片"""
+    import uuid
+    from PIL import Image
+    try:
+        # 解析 multipart 数据
+        import cgi
+        form = cgi.FieldStorage(fp=self.rfile, headers=self.headers,
+                                 environ={'REQUEST_METHOD': 'POST'})
+        tenant_id = form.getvalue('tenant_id', '1')
+        original_id = form.getvalue('original_id', '')
+        image_file = form['image']
+        if not image_file or not image_file.file:
+            self.send_json({'success': False, 'error': 'No image file'}, 400)
+            return
+        # 保存临时文件
+        temp_path = f"/tmp/editor_{uuid.uuid4().hex}.jpg"
+        with open(temp_path, 'wb') as f:
+            f.write(image_file.file.read())
+        # 用 PIL 优化
+        img = Image.open(temp_path)
+        # 确保是 RGB 模式
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
+        # 保存到租户资料库
+        tenant_lib = Path(f"/home/flybo/clawsjoy/tenants/tenant_{tenant_id}/library/images")
+        tenant_lib.mkdir(parents=True, exist_ok=True)
+        final_name = f"{uuid.uuid4().hex}.jpg"
+        final_path = tenant_lib / final_name
+        img.save(final_path, 'JPEG', quality=90, optimize=True)
+        # 记录到数据库
+        db_path = f"/home/flybo/clawsjoy/tenants/tenant_{tenant_id}/library.db"
+        conn = sqlite3.connect(db_path)
+        c = conn.cursor()
+        c.execute('''
+            INSERT INTO files (original_name, storage_path, file_type, mime_type, size, width, height, edited)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (f"edited_{final_name}", str(final_path), 'image', 'image/jpeg',
+              os.path.getsize(final_path), img.width, img.height, 1))
+        file_id = c.lastrowid
+        conn.commit()
+        conn.close()
+        # 清理临时文件
+        os.unlink(temp_path)
+        self.send_json({
+            'success': True,
+            'file_id': file_id,
+            'url': f'/videos/{final_name}',
+            'message': '保存成功'
+        })
+    except Exception as e:
+        print(f"编辑器保存失败: {e}")
+        self.send_json({'success': False, 'error': str(e)}, 500)
+
+# 在 do_POST 中添加路由
+# 找到 do_POST 方法，添加 elif
+# 由于修改复杂，建议手动添加，或执行下面的 sed
+
+# ========== 图片编辑器 API ==========
+def _handle_editor_save(self):
+    """保存编辑后的图片"""
+    import uuid
+    from PIL import Image
+    try:
+        # 解析 multipart 数据
+        import cgi
+        form = cgi.FieldStorage(fp=self.rfile, headers=self.headers,
+                                 environ={'REQUEST_METHOD': 'POST'})
+        tenant_id = form.getvalue('tenant_id', '1')
+        image_file = form.get('image')
+        if not image_file or not image_file.file:
+            self.send_json({'success': False, 'error': 'No image file'}, 400)
+            return
+        # 保存临时文件
+        temp_path = f"/tmp/editor_{uuid.uuid4().hex}.jpg"
+        with open(temp_path, 'wb') as f:
+            f.write(image_file.file.read())
+        # 用 PIL 优化
+        img = Image.open(temp_path)
+        # 确保是 RGB 模式
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
+        # 保存到租户资料库
+        tenant_lib = Path(f"/home/flybo/clawsjoy/tenants/tenant_{tenant_id}/library/images")
+        tenant_lib.mkdir(parents=True, exist_ok=True)
+        final_name = f"{uuid.uuid4().hex}.jpg"
+        final_path = tenant_lib / final_name
+        img.save(final_path, 'JPEG', quality=90, optimize=True)
+        # 记录到数据库
+        db_path = f"/home/flybo/clawsjoy/tenants/tenant_{tenant_id}/library.db"
+        conn = sqlite3.connect(db_path)
+        c = conn.cursor()
+        c.execute('''
+            INSERT INTO files (original_name, storage_path, file_type, mime_type, size, width, height, edited)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (f"edited_{final_name}", str(final_path), 'image', 'image/jpeg',
+              os.path.getsize(final_path), img.width, img.height, 1))
+        file_id = c.lastrowid
+        conn.commit()
+        conn.close()
+        # 清理临时文件
+        os.unlink(temp_path)
+        self.send_json({
+            'success': True,
+            'file_id': file_id,
+            'url': f'/videos/{final_name}',
+            'message': '保存成功'
+        })
+    except Exception as e:
+        print(f"编辑器保存失败: {e}")
+        self.send_json({'success': False, 'error': str(e)}, 500)
+
+
+    def _handle_editor_save(self):
+        """保存编辑后的图片"""
+        import uuid
+        import cgi
+        from PIL import Image
+        from pathlib import Path
+        try:
+            form = cgi.FieldStorage(fp=self.rfile, headers=self.headers,
+                                     environ={'REQUEST_METHOD': 'POST'})
+            tenant_id = form.getvalue('tenant_id', '1')
+            image_file = form['image']
+            if not image_file or not image_file.file:
+                self.send_json({'success': False, 'error': 'No image file'}, 400)
+                return
+            # 保存临时文件
+            temp_path = f"/tmp/editor_{uuid.uuid4().hex}.jpg"
+            with open(temp_path, 'wb') as f:
+                f.write(image_file.file.read())
+            # 用 PIL 处理
+            img = Image.open(temp_path)
+            if img.mode != 'RGB':
+                img = img.convert('RGB')
+            # 保存到租户资料库
+            tenant_lib = Path(f"/home/flybo/clawsjoy/tenants/tenant_{tenant_id}/library/images")
+            tenant_lib.mkdir(parents=True, exist_ok=True)
+            final_name = f"{uuid.uuid4().hex}.jpg"
+            final_path = tenant_lib / final_name
+            img.save(final_path, 'JPEG', quality=90)
+            # 记录到数据库
+            db_path = f"/home/flybo/clawsjoy/tenants/tenant_{tenant_id}/library.db"
+            conn = sqlite3.connect(db_path)
+            c = conn.cursor()
+            c.execute('''
+                INSERT INTO files (original_name, storage_path, file_type, mime_type, size, width, height, edited)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (f"edited_{final_name}", str(final_path), 'image', 'image/jpeg',
+                  os.path.getsize(final_path), img.width, img.height, 1))
+            file_id = c.lastrowid
+            conn.commit()
+            conn.close()
+            os.unlink(temp_path)
+            self.send_json({
+                'success': True,
+                'file_id': file_id,
+                'url': f'/videos/{final_name}',
+                'message': '保存成功'
+            })
+        except Exception as e:
+            print(f"编辑器保存失败: {e}")
+            self.send_json({'success': False, 'error': str(e)}, 500)
+
+
+    def _handle_chat_with_memory(self, data):
+        """带记忆和引擎路由的聊天处理"""
+        tenant_id = data.get('tenant_id', '1')
+        session_id = data.get('session_id', 'default')
+        message = data.get('message', '')
+        
+        # 1. 获取历史记忆
+        memories = memory_execute({
+            'action': 'get',
+            'tenant_id': tenant_id,
+            'session_id': session_id,
+            'limit': 5
+        })
+        
+        # 2. 构建上下文
+        context = ""
+        if memories.get('success') and memories.get('memories'):
+            context = "历史对话:\n"
+            for m in memories['memories']:
+                context += f"{m['role']}: {m['content']}\n"
+            context += f"\n当前用户: {message}\n"
+        else:
+            context = message
+        
+        # 3. 通过引擎路由执行任务
+        router = ExecutorRouterWithConfig()
+        result = router.route({
+            'prompt': context,
+            'task_type': data.get('task_type', 'general')
+        })
+        
+        # 4. 保存新记忆
+        memory_execute({
+            'action': 'add',
+            'tenant_id': tenant_id,
+            'session_id': session_id,
+            'role': 'user',
+            'content': message
+        })
+        
+        if result.get('success'):
+            memory_execute({
+                'action': 'add',
+                'tenant_id': tenant_id,
+                'session_id': session_id,
+                'role': 'assistant',
+                'content': result.get('output', '')
+            })
+            return result
+        
+        return {'success': False, 'error': 'No engine available'}
+
+
+    def _handle_switch_engine(self, data):
+        """切换执行引擎"""
+        engine = data.get('engine', 'openclaw')
+        config_path = "/mnt/d/clawsjoy/config/engine.json"
+        
+        with open(config_path, 'w') as f:
+            json.dump({
+                'executor': engine,
+                'fallback': 'self',
+                'updated_at': datetime.now().isoformat()
+            }, f)
+        
+        return {'success': True, 'engine': engine, 'message': f'已切换到 {engine} 引擎'}
+
+    def _handle_list_engines(self):
+        """列出可用引擎"""
+        router = ExecutorRouterWithConfig()
+        return {
+            'success': True,
+            'current': router.config.get('executor', 'openclaw'),
+            'engines': router.list_engines()
+        }
+
+
+    def _handle_chat_with_memory(self, data):
+        """带记忆的聊天处理"""
+        tenant_id = data.get('tenant_id', '1')
+        session_id = data.get('session_id', 'default')
+        message = data.get('message', '')
+        
+        # 简单响应
+        return {'success': True, 'type': 'text', 'message': f'收到消息: {message}'}
+    
+    def _handle_switch_engine(self, data):
+        """切换引擎"""
+        engine = data.get('engine', 'openclaw')
+        return {'success': True, 'engine': engine}
+    
+    def _handle_list_engines(self):
+        """列出引擎"""
+        return {'success': True, 'engines': ['openclaw', 'claude_code', 'self']}
+

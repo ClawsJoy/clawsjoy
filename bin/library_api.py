@@ -6,6 +6,7 @@ import os
 
 DB_PATH = "/mnt/d/clawsjoy/data/library.db"
 
+
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/api/library/list":
@@ -28,6 +29,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def log_message(self, fmt, *args):
         print(f"[Library] {fmt % args}")
+
 
 if __name__ == "__main__":
     HTTPServer(("0.0.0.0", 8100), Handler).serve_forever()

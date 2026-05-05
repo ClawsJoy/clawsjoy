@@ -19,6 +19,7 @@ from typing import List, Dict, Tuple, Optional
 try:
     import numpy as np
     from sklearn.metrics.pairwise import cosine_similarity
+
     HAS_VECTOR = True
 except ImportError:
     HAS_VECTOR = False
@@ -40,7 +41,7 @@ def get_embedding(text: str) -> Optional[List[float]]:
         resp = requests.post(
             f"{OLLAMA_URL}/api/embeddings",
             json={"model": EMBEDDING_MODEL, "prompt": text[:800]},
-            timeout=30
+            timeout=30,
         )
         if resp.status_code == 200:
             return resp.json().get("embedding", [])
@@ -51,78 +52,103 @@ def get_embedding(text: str) -> Optional[List[float]]:
 
 class KeywordRetriever:
     """关键词检索器"""
-    
+
     @staticmethod
     def extract_keywords(text: str) -> List[str]:
-        words = re.findall(r'[\u4e00-\u9fa5]{2,}', text)
-        words += re.findall(r'[a-zA-Z]{3,}', text.lower())
-        stopwords = {'的', '了', '是', '在', '我', '有', '和', '就', '不', '人', '都', '一', '个', '上', '也', '很', '到', '说', '要', '去'}
+        words = re.findall(r"[\u4e00-\u9fa5]{2,}", text)
+        words += re.findall(r"[a-zA-Z]{3,}", text.lower())
+        stopwords = {
+            "的",
+            "了",
+            "是",
+            "在",
+            "我",
+            "有",
+            "和",
+            "就",
+            "不",
+            "人",
+            "都",
+            "一",
+            "个",
+            "上",
+            "也",
+            "很",
+            "到",
+            "说",
+            "要",
+            "去",
+        }
         return [w for w in words if w not in stopwords]
-    
+
     @staticmethod
     def search(memory_text: str, query: str, top_k: int = 3) -> List[Dict]:
         query_kws = KeywordRetriever.extract_keywords(query)
         if not query_kws:
             return []
-        
-        sections = re.split(r'\n##\s+', memory_text)
+
+        sections = re.split(r"\n##\s+", memory_text)
         results = []
         for sec in sections:
             if not sec.strip():
                 continue
             score = sum(1 for kw in query_kws if kw in sec.lower())
             if score > 0:
-                title = sec.split('\n')[0].strip()
-                results.append({
-                    "title": title,
-                    "content": sec.strip()[:500],
-                    "score": score,
-                    "type": "keyword"
-                })
+                title = sec.split("\n")[0].strip()
+                results.append(
+                    {
+                        "title": title,
+                        "content": sec.strip()[:500],
+                        "score": score,
+                        "type": "keyword",
+                    }
+                )
         results.sort(key=lambda x: x["score"], reverse=True)
         return results[:top_k]
 
 
 class VectorRetriever:
     """向量检索器"""
-    
+
     def __init__(self, tenant_id: int, agent: str = "main"):
-        self.memory_path = TENANTS_ROOT / f"tenant_{tenant_id}" / "agents" / agent / "evolution"
+        self.memory_path = (
+            TENANTS_ROOT / f"tenant_{tenant_id}" / "agents" / agent / "evolution"
+        )
         self.index_path = self.memory_path / ".vectors.pkl"
         self.chunks = []
         self.embeddings = []
-    
+
     def _chunk_memory(self, content: str) -> List[str]:
         chunks = []
-        for sec in re.split(r'\n##\s+', content):
+        for sec in re.split(r"\n##\s+", content):
             if len(sec.strip()) > 50:
                 chunks.append(sec.strip()[:800])
         return chunks
-    
+
     def build_index(self):
         learnings_file = self.memory_path / "LEARNINGS.md"
         if not learnings_file.exists():
             return False
-        content = learnings_file.read_text(encoding='utf-8')
+        content = learnings_file.read_text(encoding="utf-8")
         self.chunks = self._chunk_memory(content)
         for chunk in self.chunks:
             emb = get_embedding(chunk)
             if emb:
                 self.embeddings.append(emb)
         if self.embeddings:
-            with open(self.index_path, 'wb') as f:
-                pickle.dump({'chunks': self.chunks, 'embeddings': self.embeddings}, f)
+            with open(self.index_path, "wb") as f:
+                pickle.dump({"chunks": self.chunks, "embeddings": self.embeddings}, f)
         return len(self.embeddings) > 0
-    
+
     def load_index(self) -> bool:
         if self.index_path.exists():
-            with open(self.index_path, 'rb') as f:
+            with open(self.index_path, "rb") as f:
                 data = pickle.load(f)
-                self.chunks = data['chunks']
-                self.embeddings = data['embeddings']
+                self.chunks = data["chunks"]
+                self.embeddings = data["embeddings"]
             return True
         return False
-    
+
     def search(self, query: str, top_k: int = 3) -> List[Dict]:
         if not HAS_VECTOR or not self.load_index() and not self.build_index():
             return []
@@ -138,45 +164,51 @@ class VectorRetriever:
         results = []
         for i in idxs:
             if scores[i] > 0.3:
-                results.append({
-                    "content": self.chunks[i][:400],
-                    "score": float(scores[i]),
-                    "type": "vector"
-                })
+                results.append(
+                    {
+                        "content": self.chunks[i][:400],
+                        "score": float(scores[i]),
+                        "type": "vector",
+                    }
+                )
         return results
 
 
 class MemoryManager:
     """统一记忆管理器"""
-    
+
     def __init__(self, tenant_id: int, agent: str = "main"):
         self.tenant_id = tenant_id
         self.keyword = KeywordRetriever()
         self.vector = VectorRetriever(tenant_id, agent)
-        self.memory_path = TENANTS_ROOT / f"tenant_{tenant_id}" / "agents" / agent / "evolution"
-    
+        self.memory_path = (
+            TENANTS_ROOT / f"tenant_{tenant_id}" / "agents" / agent / "evolution"
+        )
+
     def load_memories(self) -> str:
         p = self.memory_path / "LEARNINGS.md"
-        return p.read_text(encoding='utf-8') if p.exists() else ""
-    
-    def retrieve(self, query: str, use_vector: bool = True, top_k: int = 3) -> Tuple[List[Dict], str]:
+        return p.read_text(encoding="utf-8") if p.exists() else ""
+
+    def retrieve(
+        self, query: str, use_vector: bool = True, top_k: int = 3
+    ) -> Tuple[List[Dict], str]:
         memory_text = self.load_memories()
         if not memory_text:
             return [], "无记忆"
-        
+
         # 先尝试关键词
         kw_results = self.keyword.search(memory_text, query, top_k)
         if kw_results and kw_results[0].get("score", 0) >= 2:
             return kw_results, "关键词匹配"
-        
+
         # 再尝试向量
         if use_vector and HAS_VECTOR:
             vec_results = self.vector.search(query, top_k)
             if vec_results:
                 return vec_results, "向量匹配"
-        
+
         return kw_results, "关键词匹配（低质量）"
-    
+
     def format_context(self, results: List[Dict], method: str) -> str:
         if not results:
             return ""
@@ -192,23 +224,30 @@ class MemoryManager:
 
 class SkillGenerator:
     """自动 Skill 生成器"""
-    
+
     def __init__(self, tenant_id: int, agent: str = "main"):
-        self.success_path = TENANTS_ROOT / f"tenant_{tenant_id}" / "agents" / agent / "evolution" / "SUCCESSES.md"
+        self.success_path = (
+            TENANTS_ROOT
+            / f"tenant_{tenant_id}"
+            / "agents"
+            / agent
+            / "evolution"
+            / "SUCCESSES.md"
+        )
         self.skills_dir = SKILLS_ROOT / "auto_generated"
-    
+
     def generate(self) -> List[str]:
         if not self.success_path.exists():
             return []
-        content = self.success_path.read_text(encoding='utf-8')
-        cases = re.split(r'\n##\s+', content)
+        content = self.success_path.read_text(encoding="utf-8")
+        cases = re.split(r"\n##\s+", content)
         self.skills_dir.mkdir(parents=True, exist_ok=True)
         generated = []
         for case in cases:
             if not case.strip():
                 continue
-            title = case.split('\n')[0].strip()
-            skill_name = re.sub(r'[^\w\-]', '', title.replace(' ', '_').lower())[:50]
+            title = case.split("\n")[0].strip()
+            skill_name = re.sub(r"[^\w\-]", "", title.replace(" ", "_").lower())[:50]
             skill_path = self.skills_dir / f"{skill_name}.md"
             if skill_path.exists():
                 continue
@@ -228,7 +267,7 @@ created_at: {datetime.now().isoformat()}
 ## 执行方式
 根据成功经验执行对应脚本。
 """
-            skill_path.write_text(skill_content, encoding='utf-8')
+            skill_path.write_text(skill_content, encoding="utf-8")
             generated.append(str(skill_path))
         return generated
 
@@ -253,7 +292,7 @@ def get_stats(tenant_id: int) -> Dict:
     for name in ["LEARNINGS.md", "SUCCESSES.md", "ERRORS.md"]:
         f = p / name
         if f.exists():
-            stats[name.replace('.md', '').lower()] = len(f.read_text().split('\n##'))
+            stats[name.replace(".md", "").lower()] = len(f.read_text().split("\n##"))
     return stats
 
 
@@ -264,9 +303,9 @@ if __name__ == "__main__":
         print("  memory_retriever_complete.py generate <tenant_id>")
         print("  memory_retriever_complete.py stats <tenant_id>")
         sys.exit(1)
-    
+
     cmd = sys.argv[1]
-    
+
     if cmd == "retrieve" and len(sys.argv) >= 4:
         tenant = int(sys.argv[2])
         query = " ".join(sys.argv[3:])
@@ -274,7 +313,7 @@ if __name__ == "__main__":
         if use_vector:
             query = query.replace("--vector", "").strip()
         print(retrieve(tenant, query, use_vector))
-    
+
     elif cmd == "generate" and len(sys.argv) >= 3:
         tenant = int(sys.argv[2])
         generated = generate_skills(tenant)
@@ -284,7 +323,7 @@ if __name__ == "__main__":
                 print(f"   {g}")
         else:
             print("无新 Skills 需要生成")
-    
+
     elif cmd == "stats" and len(sys.argv) >= 3:
         tenant = int(sys.argv[2])
         print(json.dumps(get_stats(tenant), indent=2))

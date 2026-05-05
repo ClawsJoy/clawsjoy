@@ -30,7 +30,9 @@ LOG_APP_DIR = Path(os.getenv("CLAWSJOY_LOG_APP_DIR", str(LOGS_DIR / "app")))
 LOG_RUNNER_DIR = Path(os.getenv("CLAWSJOY_LOG_RUNNER_DIR", str(LOGS_DIR / "runner")))
 LOG_AUDIT_DIR = Path(os.getenv("CLAWSJOY_LOG_AUDIT_DIR", str(LOGS_DIR / "audit")))
 LOG_SYSTEM_DIR = Path(os.getenv("CLAWSJOY_LOG_SYSTEM_DIR", str(LOGS_DIR / "system")))
-SKILLS_DIR = Path(os.getenv("CLAWSJOY_SKILLS_DIR", str(CLAWSJOY_ROOT / "skills" / "auto_generated")))
+SKILLS_DIR = Path(
+    os.getenv("CLAWSJOY_SKILLS_DIR", str(CLAWSJOY_ROOT / "skills" / "auto_generated"))
+)
 
 # 任务队列默认统一为持久化 tenants 路径，可用环境变量覆盖。
 TASK_QUEUE_DIR = Path(os.getenv("CLAWSJOY_TASK_QUEUE_DIR", str(TENANTS_DIR / "queue")))

@@ -15,7 +15,10 @@ for tenant_dir in Path(BASE).glob("tenant_*"):
     conn = sqlite3.connect(db_path)
     c = conn.cursor()
     cutoff = (datetime.now() - timedelta(days=DAYS)).isoformat()
-    c.execute("SELECT id, storage_path FROM files WHERE importance = ? AND created_at < ?", (IMPORTANCE_LEVEL, cutoff))
+    c.execute(
+        "SELECT id, storage_path FROM files WHERE importance = ? AND created_at < ?",
+        (IMPORTANCE_LEVEL, cutoff),
+    )
     rows = c.fetchall()
     for file_id, storage_path in rows:
         if os.path.exists(storage_path):
