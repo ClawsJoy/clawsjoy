@@ -240,7 +240,7 @@ class TaskHandler(BaseHTTPRequestHandler):
             form = cgi.FieldStorage(fp=self.rfile, headers=self.headers,
                                      environ={'REQUEST_METHOD': 'POST'})
             tenant_id = form.getvalue('tenant_id', '1')
-            image_file = form['image']]
+            image_file = form['image']
             if not image_file or not image_file.file:
                 self.send_json({'success': False, 'error': 'No image file'}, 400)
                 return

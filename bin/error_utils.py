@@ -1,71 +1,23 @@
-#!/usr/bin/env python3
-"""统一错误响应格式"""
+"""错误处理工具模块"""
 
 import json
-from typing import Dict, Any, Optional
+from http.server import BaseHTTPRequestHandler
 
-# 标准错误码
-ERROR_CODES = {
-    # 4xx 客户端错误
-    "BAD_REQUEST": 400,
-    "UNAUTHORIZED": 401,
-    "FORBIDDEN": 403,
-    "NOT_FOUND": 404,
-    "CONFLICT": 409,
-    "VALIDATION_ERROR": 422,
-    "TOO_MANY_REQUESTS": 429,
-    # 5xx 服务端错误
-    "INTERNAL_ERROR": 500,
-    "SERVICE_UNAVAILABLE": 503,
-    "TIMEOUT": 504,
-}
-
-
-def error_response(code: str, message: str, details: Optional[Dict] = None) -> Dict:
-    """生成统一格式的错误响应"""
-    http_code = ERROR_CODES.get(code, 500)
-    response = {
-        "success": False,
-        "error": {"code": code, "http_code": http_code, "message": message},
-    }
-    if details:
-        response["error"]["details"] = details
-    return response
-
-
-def success_response(data: Any = None, message: str = "success") -> Dict:
-    """生成统一格式的成功响应"""
-    response = {"success": True, "message": message}
-    if data is not None:
-        response["data"] = data
-    return response
-
-
-def send_json_response(handler, data: Dict, status: int = 200):
+def send_json_response(handler, data, status=200):
     """发送 JSON 响应"""
     handler.send_response(status)
-    handler.send_header("Content-Type", "application/json")
-    handler.send_header("Access-Control-Allow-Origin", "*")
+    handler.send_header('Content-Type', 'application/json')
+    handler.send_header('Access-Control-Allow-Origin', '*')
     handler.end_headers()
     handler.wfile.write(json.dumps(data, ensure_ascii=False).encode())
 
-
-def send_error(handler, code: str, message: str, details: Optional[Dict] = None):
+def send_error(handler, message, status=400):
     """发送错误响应"""
-    http_code = ERROR_CODES.get(code, 500)
-    data = error_response(code, message, details)
-    send_json_response(handler, data, http_code)
+    send_json_response(handler, {'success': False, 'error': message}, status)
 
-
-def send_success(
-    handler, data: Any = None, message: str = "success", status: int = 200
-):
+def send_success(handler, data=None, message='success'):
     """发送成功响应"""
-    data = success_response(data, message)
-    send_json_response(handler, data, status)
-
-
-if __name__ == "__main__":
-    # 测试
-    print(error_response("UNAUTHORIZED", "用户名或密码错误"))
-    print(success_response({"id": 1}, "创建成功"))
+    response = {'success': True, 'message': message}
+    if data:
+        response.update(data)
+    send_json_response(handler, response)
