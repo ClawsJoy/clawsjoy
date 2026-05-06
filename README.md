@@ -1,43 +1,52 @@
 # ClawsJoy / JoyMate
 
-AI 驱动的智能助手平台，支持 Docker 部署，集成 Ollama。
+> 轻量化 AI 管家系统 | 租户隔离 | 关键词驱动 | 工作流编排
 
-## 快速启动
+## 🎯 核心特性
 
-\`\`\`bash
-# 1. 复制环境变量
-cp .env.example .env
+- 🤖 **Agent 管家** - 每个租户专属管家，自动干活
+- 🔒 **租户隔离** - 数据完全私有，不上传云端
+- 🎬 **视频生成** - 自动采集图片 + TTS 配音 + 合成视频
+- 📝 **关键词驱动** - 自动采集和扩展关键词
+- 🔧 **工作流编排** - 积木式组合任务
+- 🐳 **一键部署** - Docker Compose 快速启动
 
-# 2. 启动 Docker 后端
+## 🚀 快速开始
+
+### 一键安装
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ClawsJoy/ClawsJoy/main/install.sh | bash
+Docker 部署
+git clone https://github.com/ClawsJoy/ClawsJoy.git
+cd ClawsJoy
 docker-compose up -d
+访问服务
+Web 界面: http://localhost:18082/joymate/index.html?tenant=1
 
-# 3. 启动 Chat API
-cd bin && nohup python3 chat_api_agent.py &
+Agent API: http://localhost:18103/api/agent/chat
+📁 项目结构
+clawsjoy/
+├── bin/           # 核心服务（开源）
+├── skills/        # Skill 积木（开源）
+├── workflows/     # 工作流定义（开源）
+├── web/           # 前端界面（开源）
+├── tenants/       # 租户数据（私有，不推送）
+└── data/          # 运行时数据（私有）
+🔧 创建新租户
+./bin/init_tenant.sh tenant_2
+📊 服务端口
+服务	端口
+Web 前端	 18082
+Chat API	         18101
+Promo API	 8108
+Agent API	18103
+TTS  	        9000
+📄 License
+Apache 2.0
+🙏 致谢
+Ollama - 本地大模型
 
-# 4. 启动前端（Windows）
-start python -m http.server 8082 --directory web
-\`\`\`
+Unsplash - 图片采集
 
-## 服务端口
-
-| 服务 | 端口 |
-|------|------|
-| Web 前端 | 8082 |
-| Tenant API | 8088 |
-| Task API | 8084 |
-| Chat API | 8101 |
-| Ollama | 11434 |
-
-## 技术栈
-
-- Python 3.10+
-- Docker + Docker Compose
-- Ollama (qwen:0.5b)
-- PM2 进程管理
-- SQLite
-
-## 安全注意事项
-
-- 所有密钥使用环境变量
-- 数据库文件已加入 .gitignore
-- 生产环境请更换 SECRET_KEY
+FFmpeg - 视频合成
