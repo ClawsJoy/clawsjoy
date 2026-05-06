@@ -1,132 +1,121 @@
 #!/usr/bin/env python3
+"""Promo API - 升级版（真实图片 + 基础音频）"""
+
 import json
 import os
 import time
+import uuid
+import requests
 import subprocess
 from pathlib import Path
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
+PORT = 8108
+VIDEO_DIR = Path("/mnt/d/clawsjoy/web/videos")
+IMAGE_DIR = Path("/mnt/d/clawsjoy/web/images")
+IMAGE_DIR.mkdir(parents=True, exist_ok=True)
+VIDEO_DIR.mkdir(parents=True, exist_ok=True)
 
-def generate_narration(city, style="科技"):
-    """生成口播文案"""
-    scripts = {
-        "香港": f"欢迎来到香港，亚洲国际都会。{style}创新枢纽，维多利亚港夜景璀璨，天际100俯瞰全城。香港，魅力之都，活力之城。",
-        "上海": f"上海，东方明珠，{style}创新高地。外滩万国建筑群，陆家嘴金融中心，迪士尼乐园欢乐无限。上海，开放包容，引领未来。",
-        "北京": f"北京，千年古都，{style}创新中心。故宫博物院珍藏文物，长城雄伟壮观，鸟巢水立方展现奥运精神。北京，历史与现代交融。",
-        "深圳": f"深圳，中国硅谷，{style}创新之都。科技园聚集世界名企，前海自贸区蓬勃发展，欢乐海岸滨海风情。深圳，年轻活力，梦想起航。",
-    }
-    return scripts.get(
-        city, f"{city}是一座美丽的城市，{style}发展日新月异，欢迎您来探索发现。"
-    )
+def fetch_real_images(keyword, count=5):
+    """从 Unsplash 采集真实图片"""
+    API_KEY = "ijXPXhcaX2k5neNoQAzN1cw8DJl3i9gx8FlRnzspqKs"
+    images = []
+    try:
+        url = f"https://api.unsplash.com/search/photos"
+        params = {"query": keyword, "per_page": count, "orientation": "landscape"}
+        headers = {"Authorization": f"Client-ID {API_KEY}"}
+        resp = requests.get(url, headers=headers, params=params, timeout=15)
+        if resp.status_code == 200:
+            for photo in resp.json().get('results', []):
+                img_url = photo['urls']['regular']
+                img_data = requests.get(img_url, timeout=30).content
+                img_name = f"{uuid.uuid4().hex}.jpg"
+                img_path = IMAGE_DIR / img_name
+                with open(img_path, 'wb') as f:
+                    f.write(img_data)
+                images.append(str(img_path))
+        print(f"📸 采集到 {len(images)} 张图片")
+    except Exception as e:
+        print(f"图片采集失败: {e}")
+    return images
 
+def generate_simple_audio(text, output_path):
+    """生成简单音频（使用 edge-tts）"""
+    try:
+        cmd = f'edge-tts --text "{text}" --write-media {output_path} --voice zh-CN-XiaoxiaoNeural'
+        subprocess.run(cmd, shell=True, timeout=60)
+        return output_path.exists() and output_path.stat().st_size > 1000
+    except:
+        return False
 
-class PromoHandler(BaseHTTPRequestHandler):
+class Handler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
         self.send_response(200)
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
         self.end_headers()
-
+    
     def do_POST(self):
-        if self.path == "/api/promo/make":
-            length = int(self.headers.get("Content-Length", 0))
+        if self.path == '/api/promo/make':
+            length = int(self.headers.get('Content-Length', 0))
             data = json.loads(self.rfile.read(length))
-            city = data.get("city", "香港")
-            style = data.get("style", "科技")
-
-            img_dir = f"/home/flybo/clawsjoy/web/images/{city}"
-            output_file = (
-                f"/home/flybo/clawsjoy/web/videos/{city}_{int(time.time())}.mp4"
-            )
-
-            # 1. 生成口播音频
-            script = generate_narration(city, style)
-            audio_file = f"/tmp/audio_{int(time.time())}.mp3"
-
-            # 使用 edge-tts 生成（需要网络）
-            try:
-                subprocess.run(
-                    [
-                        "edge-tts",
-                        "--text",
-                        script,
-                        "--write-media",
-                        audio_file,
-                        "--voice",
-                        "zh-CN-XiaoxiaoNeural",
-                    ],
-                    capture_output=True,
-                    timeout=30,
-                )
-                has_audio = os.path.exists(audio_file)
-            except:
-                # 备选：使用 pyttsx3
-                import pyttsx3
-
-                engine = pyttsx3.init()
-                engine.save_to_file(script, audio_file)
-                engine.runAndWait()
-                has_audio = os.path.exists(audio_file)
-
-            # 2. 查找图片
-            images = list(Path(img_dir).glob("*.jpg")) + list(
-                Path(img_dir).glob("*.png")
-            )
-            if not images:
-                images = list(Path("/home/flybo/clawsjoy/web/images").glob("*.jpg"))[:3]
-
-            if not images:
-                self.send_json({"success": False, "error": "No images available"})
-                return
-
-            # 3. 创建视频
-            concat_file = f"/tmp/concat_{int(time.time())}.txt"
-            with open(concat_file, "w") as f:
-                for img in images[:6]:
-                    duration = 2.5
-                    f.write(f"file '{img}'\n")
-                    f.write(f"duration {duration}\n")
-
-            # 生成视频（无音频）
-            temp_video = f"/tmp/video_{int(time.time())}.mp4"
-            cmd = f'ffmpeg -y -f concat -safe 0 -i {concat_file} -c:v libx264 -pix_fmt yuv420p -vf "scale=1920:1080:force_original_aspect_ratio=1,pad=1920:1080:(ow-iw)/2:(oh-ih)/2" -t 15 {temp_video} 2>/dev/null'
-            os.system(cmd)
-            os.remove(concat_file)
-
-            # 4. 合并视频和音频
-            if has_audio and os.path.exists(temp_video):
-                final_output = output_file.replace(".mp4", "_with_narration.mp4")
-                cmd = f"ffmpeg -i {temp_video} -i {audio_file} -c:v copy -c:a aac -shortest -y {final_output} 2>/dev/null"
-                os.system(cmd)
-                if os.path.exists(final_output):
-                    output_file = final_output
-                    os.remove(audio_file)
-                    os.remove(temp_video)
-
-            if os.path.exists(output_file):
-                self.send_json(
-                    {
-                        "success": True,
-                        "video_url": f"/videos/{os.path.basename(output_file)}",
-                        "message": f"{city}{style}宣传片已生成",
-                        "has_narration": has_audio,
-                    }
-                )
+            topic = data.get('topic', data.get('city', '香港'))
+            duration = data.get('duration', 30)
+            
+            # 1. 采集真实图片
+            images = fetch_real_images(topic, min(10, max(3, duration // 5)))
+            
+            # 2. 生成文案和音频
+            script = data.get('script', f"{topic}科技宣传片，展现城市魅力。")
+            audio_path = Path(f"/tmp/audio_{int(time.time())}.mp3")
+            has_audio = generate_simple_audio(script, audio_path)
+            
+            # 3. 生成视频
+            video_name = f"promo_{topic}_{int(time.time())}.mp4"
+            video_path = VIDEO_DIR / video_name
+            
+            if images:
+                # 多图轮播
+                concat_file = Path(f"/tmp/concat_{int(time.time())}.txt")
+                per_img = max(2, duration / len(images))
+                with open(concat_file, 'w') as f:
+                    for img in images:
+                        f.write(f"file '{img}'\n")
+                        f.write(f"duration {per_img}\n")
+                
+                if has_audio:
+                    cmd = f'ffmpeg -f concat -safe 0 -i {concat_file} -i {audio_path} -vf "scale=1920:1080:force_original_aspect_ratio=1,pad=1920:1080:(ow-iw)/2:(oh-ih)/2" -c:v libx264 -c:a aac -shortest -y "{video_path}"'
+                else:
+                    cmd = f'ffmpeg -f concat -safe 0 -i {concat_file} -vf "scale=1920:1080:force_original_aspect_ratio=1,pad=1920:1080:(ow-iw)/2:(oh-ih)/2" -c:v libx264 -y "{video_path}"'
+                subprocess.run(cmd, shell=True)
+                concat_file.unlink()
             else:
-                self.send_json({"success": False, "error": "Video generation failed"})
+                # 无图片时的降级方案
+                cmd = f'ffmpeg -f lavfi -i color=c=blue:s=1920x1080:d={duration} -vf "drawtext=text=\'{topic}宣传片\':fontcolor=white:fontsize=60:x=(w-text_w)/2:y=(h-text_h)/2" -y "{video_path}"'
+                subprocess.run(cmd, shell=True)
+            
+            # 清理临时文件
+            for img in images:
+                Path(img).unlink()
+            if audio_path.exists():
+                audio_path.unlink()
+            
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            
+            result = {
+                "success": True,
+                "video_url": f"/videos/{video_name}",
+                "duration": duration,
+                "has_audio": has_audio,
+                "image_count": len(images)
+            }
+            self.wfile.write(json.dumps(result).encode())
         else:
             self.send_error(404)
 
-    def send_json(self, data, status=200):
-        self.send_response(status)
-        self.send_header("Content-Type", "application/json")
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.end_headers()
-        self.wfile.write(json.dumps(data).encode())
-
-
-if __name__ == "__main__":
-    port = 8086
-    print(f"TTS Promo API on port {port}")
-    HTTPServer(("0.0.0.0", port), PromoHandler).serve_forever()
+if __name__ == '__main__':
+    print(f"🎬 Promo API (升级版) on port {PORT}")
+    HTTPServer(('0.0.0.0', PORT), Handler).serve_forever()

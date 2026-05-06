@@ -6,6 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
     <title>Joy Mate - 科技风AI助手</title>
     <style>
+        /* 资料库链接悬停效果 */
+        .library-header a:hover {
+            text-shadow: 0 0 5px #0ff;
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             background: radial-gradient(circle at 20% 30%, #0a0f1a, #03060c);
@@ -48,7 +52,7 @@
         .tool-btn { background: #0f1a2a; border: 1px solid #2a4a6a; border-radius: 50%; width: 60px; height: 60px; font-size: 28px; cursor: pointer; color: #0ff; transition: all 0.2s; }
         .tool-btn:active { transform: scale(0.95); background: #1a3a5a; box-shadow: 0 0 12px #0ff; }
         .mic-btn { width: 76px; height: 76px; font-size: 38px; background: linear-gradient(135deg, #0f2a3a, #0a1a2a); border: 2px solid #0ff; box-shadow: 0 0 12px #0ff5; }
-        .library-modal { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10,20,30,0.95); backdrop-filter: blur(20px); border-radius: 24px 24px 0 0; z-index: 1000; transform: translateY(100%); transition: transform 0.3s ease; max-height: 70vh; display: flex; flex-direction: column; border-top: 2px solid #0ff; }
+        .library-modal { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10,20,30,0.95); backdrop-filter: blur(20px); border-radius: 24px 24px 0 0; z-index: 1000; transform: translateY(100%); transition: transform 0.3s ease; max-height: 60vh; display: flex; flex-direction: column; border-top: 2px solid #0ff; }
         .library-modal.open { transform: translateY(0); }
         .library-header { padding: 16px; border-bottom: 1px solid #2a4a6a; display: flex; justify-content: space-between; color: #0ff; }
         .library-content { flex: 1; overflow-y: auto; padding: 16px; }
@@ -60,6 +64,10 @@
     </style>
 </head>
 <style>
+        /* 资料库链接悬停效果 */
+        .library-header a:hover {
+            text-shadow: 0 0 5px #0ff;
+        }
 /* 加载中居中 */
 #fileList:contains("加载中") {
     display: flex !important;
@@ -90,26 +98,17 @@
     </div>
 </div>
 <div id="libraryModal" class="library-modal">
-    <div class="library-header"><span>📁 资料库</span><button class="close-btn" id="closeModalBtn">✕</button></div>
+    <div class="library-header"><a href="/joymate/library.html" style="color: #0ff; text-decoration: none; display: flex; align-items: center; gap: 8px;">📁 资料库</a><button class="close-btn" id="closeModalBtn">✕</button></div>
     <div class="upload-area"><input type="file" id="uploadFile" multiple><button id="uploadBtn">上传</button></div>
-    <div class="library-content" id="fileList">📂 加载中...</div>
-</div>
-<script>
-function updateTime() { document.getElementById('liveTime').innerText = new Date().toLocaleTimeString('zh-CN', { hour12: false }); }
-setInterval(updateTime, 1000); updateTime();
-
-function addMsg(role, text) {
-    const chat = document.getElementById('chatArea');
-    const div = document.createElement('div');
+<div class="library-content" id="fileList" style="flex: 1; overflow-y: auto; padding: 16px;">
+    📂 加载中...
+    <div style="display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 20px; position: sticky; bottom: 0; background: rgba(10,20,30,0.95); padding: 12px; border-radius: 12px;">
+        </div>
+        <!-- 资料库操作按钮 -->
     div.className = 'msg ' + role;
     div.innerText = text;
     chat.appendChild(div);
     div.scrollIntoView({ behavior: 'smooth' });
-}
-
-async function sendMsg() {
-    const input = document.getElementById('textInput');
-    const text = input.value.trim();
     if (!text) return;
     input.value = '';
     addMsg('user', text);
@@ -136,7 +135,7 @@ document.getElementById('promoBtn').onclick = () => {
     addMsg('user', '制作香港宣传片');
     addMsg('bot', '🎬 生成中...');
     const host = window.location.hostname;
-    fetch(`http://${host}:8086/api/task/promo`, {
+    fetch(`http://${host}:8108/api/task/promo`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ city: '香港', tenant_id: '1' })
@@ -147,7 +146,7 @@ document.getElementById('promoBtn').onclick = () => {
             addMsg('bot', '✅ 宣传片已生成');
             const videoDiv = document.createElement('div');
             videoDiv.className = 'msg bot';
-            videoDiv.innerHTML = `<video controls style="max-width:100%; border-radius:8px" src="${data.video_url}"></video>`;
+            videoDiv.innerHTML = `<video controls style="max-width:100%; border-radius:8px" src="http://localhost:18082${data.video_url}"></video>`;
             document.getElementById('chatArea').appendChild(videoDiv);
         } else addMsg('bot', '❌ 生成失败');
     }).catch(() => {
@@ -187,10 +186,10 @@ async function loadFiles() {
     container.innerHTML = '📂 加载中...';
     try {
         const host = window.location.hostname;
-        const res = await fetch(`http://${host}:8086/api/library/list?tenant_id=1`);
+        const res = await fetch(`http://${host}:8108/api/library/list?tenant_id=1`);
         const data = await res.json();
         if (!data.success || !data.files.length) { container.innerHTML = '📭 暂无文件'; return; }
-        container.innerHTML = data.files.map(f => `<div class="file-item"><span>📄 ${f.name}</span><button onclick="window.open('http://${host}:8086/api/library/file/${f.id}?tenant_id=1', '_blank')" style="background:transparent; border:1px solid #0ff; border-radius:6px; padding:4px 12px; color:#0ff;">预览</button></div>`).join('');
+        container.innerHTML = data.files.map(f => `<div class="file-item"><span>📄 ${f.name}</span><button onclick="window.open('http://${host}:8108/api/library/file/${f.id}?tenant_id=1', '_blank')" style="background:transparent; border:1px solid #0ff; border-radius:6px; padding:4px 12px; color:#0ff;">预览</button></div>`).join('');
     } catch(e) { container.innerHTML = '❌ 加载失败'; }
 }
 loadFiles();
@@ -205,7 +204,7 @@ document.getElementById('uploadBtn').onclick = async () => {
         fd.append('tenant_id', '1');
         fd.append('file', f);
         try {
-            const res = await fetch(`http://${host}:8086/api/library/upload`, { method: 'POST', body: fd });
+            const res = await fetch(`http://${host}:8108/api/library/upload`, { method: 'POST', body: fd });
             const data = await res.json();
             alert(data.success ? `✅ 上传成功: ${f.name}` : `❌ 上传失败: ${f.name}`);
         } catch(e) { alert('❌ 上传失败'); }
@@ -262,16 +261,26 @@ if (ttsBtn) {
 }
 </script>
 <!-- 左下角隐藏面板按钮 -->
-<button id="togglePanelBtn" style="position:fixed; bottom:20px; left:20px; background:rgba(0,0,0,0.6); border:1px solid #0ff; color:#0ff; border-radius:30px; padding:6px 12px; font-size:12px; z-index:10000; backdrop-filter:blur(5px);">📥 隐藏面板</button>
+<button id="togglePanelBtn" style="position:fixed; bottom:20px; left:20px; background:rgba(0,0,0,0.6); border:1px solid #0ff; color:#0ff; border-radius:30px; padding:6px 12px; font-size:12px; z-index:10002; backdrop-filter:blur(5px);">📥 隐藏面板</button>
+<button id="libraryBtn" style="position:fixed; bottom:20px; left:80px; background:rgba(0,0,0,0.6); border:1px solid #0ff; color:#0ff; border-radius:30px; padding:6px 12px; font-size:12px; z-index:20000; backdrop-filter:blur(5px);"; backdrop-filter:blur(5px);">📁 资料库</button>
 <!-- 右下角全屏按钮 -->
-<button id="fullscreenBtn" style="position:fixed; bottom:20px; right:20px; background:rgba(0,0,0,0.6); border:1px solid #0ff; color:#0ff; border-radius:30px; padding:6px 12px; font-size:12px; z-index:10000; backdrop-filter:blur(5px);">⛶ 全屏</button>
+<button id="fullscreenBtn" style="position:fixed; bottom:20px; right:20px; background:rgba(0,0,0,0.6); border:1px solid #0ff; color:#0ff; border-radius:30px; padding:6px 12px; font-size:12px; z-index:10002; backdrop-filter:blur(5px);">⛶ 全屏</button>
 <script>
 document.getElementById('fullscreenBtn').onclick = () => {
+// 资料库按钮事件
+const libraryBtn = document.getElementById("libraryBtn");
+if (libraryBtn) {
+    libraryBtn.onclick = () => {
+        const modal = document.getElementById("libraryModal");
+        if (modal) modal.classList.add("open");
+    };
+}
     const doc = document.documentElement;
     if (!document.fullscreenElement) doc.requestFullscreen();
     else document.exitFullscreen();
 };
 const hideBtn = document.getElementById('togglePanelBtn');
+<button id="libraryBtn" style="position:fixed; bottom:20px; left:80px; background:rgba(0,0,0,0.6); border:1px solid #0ff; color:#0ff; border-radius:30px; padding:6px 12px; font-size:12px; z-index:20000; backdrop-filter:blur(5px);"; backdrop-filter:blur(5px);">📁 资料库</button>
 if (hideBtn) {
     hideBtn.onclick = () => {
         const action = document.querySelector('.action-buttons');
@@ -729,7 +738,7 @@ if (promo) {
         addMsg('user', '制作香港宣传片');
         addMsg('bot', '🎬 生成中...');
         const host = window.location.hostname;
-        fetch(`http://${host}:8086/api/task/promo`, {
+        fetch(`http://${host}:8108/api/task/promo`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ city: '香港', tenant_id: '1' })
@@ -742,7 +751,7 @@ if (promo) {
                 addMsg('bot', '✅ 宣传片已生成');
                 const videoDiv = document.createElement('div');
                 videoDiv.className = 'msg bot';
-                videoDiv.innerHTML = `<video controls style="max-width:100%; border-radius:8px" src="${data.video_url}"></video>`;
+                videoDiv.innerHTML = `<video controls style="max-width:100%; border-radius:8px" src="http://localhost:18082${data.video_url}"></video>`;
                 document.getElementById('chatArea').appendChild(videoDiv);
             } else {
                 addMsg('bot', '❌ 生成失败');
@@ -824,6 +833,7 @@ if (fullscreen) {
 
 // 7. 隐藏面板按钮
 const hidePanel = document.getElementById('togglePanelBtn');
+<button id="libraryBtn" style="position:fixed; bottom:20px; left:80px; background:rgba(0,0,0,0.6); border:1px solid #0ff; color:#0ff; border-radius:30px; padding:6px 12px; font-size:12px; z-index:20000; backdrop-filter:blur(5px);"; backdrop-filter:blur(5px);">📁 资料库</button>
 if (hidePanel) {
     hidePanel.onclick = () => {
         const actionArea = document.querySelector('.action-buttons');
@@ -877,7 +887,7 @@ if (promo) {
         addMsg('user', '制作香港宣传片');
         addMsg('bot', '🎬 生成中...');
         const host = window.location.hostname;
-        fetch(`http://${host}:8086/api/task/promo`, {
+        fetch(`http://${host}:8108/api/task/promo`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ city: '香港', tenant_id: '1' })
@@ -890,7 +900,7 @@ if (promo) {
                 addMsg('bot', '✅ 宣传片已生成');
                 const videoDiv = document.createElement('div');
                 videoDiv.className = 'msg bot';
-                videoDiv.innerHTML = `<video controls style="max-width:100%; border-radius:8px" src="${data.video_url}"></video>`;
+                videoDiv.innerHTML = `<video controls style="max-width:100%; border-radius:8px" src="http://localhost:18082${data.video_url}"></video>`;
                 document.getElementById('chatArea').appendChild(videoDiv);
             } else {
                 addMsg('bot', '❌ 生成失败');
@@ -972,6 +982,7 @@ if (fullscreen) {
 
 // 7. 隐藏面板按钮
 const hidePanel = document.getElementById('togglePanelBtn');
+<button id="libraryBtn" style="position:fixed; bottom:20px; left:80px; background:rgba(0,0,0,0.6); border:1px solid #0ff; color:#0ff; border-radius:30px; padding:6px 12px; font-size:12px; z-index:20000; backdrop-filter:blur(5px);"; backdrop-filter:blur(5px);">📁 资料库</button>
 if (hidePanel) {
     hidePanel.onclick = () => {
         const actionArea = document.querySelector('.action-buttons');
@@ -1052,7 +1063,7 @@ if (promoBtn) {
         addMsg('user', '制作香港宣传片');
         addMsg('bot', '🎬 生成中...');
         const host = window.location.hostname;
-        fetch(`http://${host}:8086/api/task/promo`, {
+        fetch(`http://${host}:8108/api/task/promo`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ city: '香港', tenant_id: '1' })
@@ -1063,7 +1074,7 @@ if (promoBtn) {
                 addMsg('bot', '✅ 宣传片已生成');
                 const videoDiv = document.createElement('div');
                 videoDiv.className = 'msg bot';
-                videoDiv.innerHTML = `<video controls style="max-width:100%; border-radius:8px" src="${data.video_url}"></video>`;
+                videoDiv.innerHTML = `<video controls style="max-width:100%; border-radius:8px" src="http://localhost:18082${data.video_url}"></video>`;
                 document.getElementById('chatArea').appendChild(videoDiv);
             } else addMsg('bot', '❌ 生成失败');
         }).catch(() => {

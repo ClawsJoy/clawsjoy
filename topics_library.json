@@ -1,0 +1,182 @@
+{
+    "immigration": [
+        {
+            "topic": "香港优才计划2026最新政策",
+            "category": "immigration",
+            "keywords": ["优才", "人才", "移民", "申请", "评分"],
+            "priority": 5
+        },
+        {
+            "topic": "香港高才通申请全攻略",
+            "category": "immigration",
+            "keywords": ["高才", "高端人才", "快速通道"],
+            "priority": 5
+        },
+        {
+            "topic": "香港专才计划 vs 优才计划区别",
+            "category": "immigration",
+            "keywords": ["专才", "工作签证", "雇主担保"],
+            "priority": 4
+        },
+        {
+            "topic": "香港投资移民重启细节",
+            "category": "immigration",
+            "keywords": ["投资移民", "资本", "资产"],
+            "priority": 3
+        },
+        {
+            "topic": "香港身份7年转永居条件",
+            "category": "immigration",
+            "keywords": ["永居", "永久居民", "7年"],
+            "priority": 4
+        },
+        {
+            "topic": "香港新移民必办事项清单",
+            "category": "immigration",
+            "keywords": ["新移民", "落地", "身份证", "银行"],
+            "priority": 3
+        }
+    ],
+    "education": [
+        {
+            "topic": "香港大学2026本科申请指南",
+            "category": "education",
+            "keywords": ["港大", "本科", "申请", "录取"],
+            "priority": 5
+        },
+        {
+            "topic": "香港科技大学热门专业推荐",
+            "category": "education",
+            "keywords": ["港科大", "专业", "就业", "排名"],
+            "priority": 4
+        },
+        {
+            "topic": "香港中文大学研究生申请条件",
+            "category": "education",
+            "keywords": ["港中文", "研究生", "硕士", "PhD"],
+            "priority": 4
+        },
+        {
+            "topic": "香港留学一年费用明细",
+            "category": "education",
+            "keywords": ["留学", "费用", "学费", "生活费"],
+            "priority": 5
+        },
+        {
+            "topic": "香港读研 vs 内地读研怎么选",
+            "category": "education",
+            "keywords": ["读研", "考研", "选择", "对比"],
+            "priority": 3
+        },
+        {
+            "topic": "香港八大院校特色专业盘点",
+            "category": "education",
+            "keywords": ["八大", "院校", "专业", "特色"],
+            "priority": 3
+        }
+    ],
+    "living": [
+        {
+            "topic": "香港生活成本大揭秘",
+            "category": "living",
+            "keywords": ["生活", "成本", "开支", "消费"],
+            "priority": 5
+        },
+        {
+            "topic": "香港租房攻略：哪里性价比高",
+            "category": "living",
+            "keywords": ["租房", "租金", "房源", "地区"],
+            "priority": 5
+        },
+        {
+            "topic": "香港美食探店：必吃清单",
+            "category": "living",
+            "keywords": ["美食", "探店", "餐厅", "小吃"],
+            "priority": 4
+        },
+        {
+            "topic": "香港交通攻略：八达通vs月票",
+            "category": "living",
+            "keywords": ["交通", "地铁", "巴士", "八达通"],
+            "priority": 3
+        },
+        {
+            "topic": "香港看病就医指南",
+            "category": "living",
+            "keywords": ["医疗", "医院", "看病", "保险"],
+            "priority": 3
+        },
+        {
+            "topic": "香港周末好去处推荐",
+            "category": "living",
+            "keywords": ["周末", "游玩", "景点", "休闲"],
+            "priority": 3
+        }
+    ],
+    "news": [
+        {
+            "topic": "香港北部都会区最新进展",
+            "category": "news",
+            "keywords": ["北部都会区", "发展", "规划"],
+            "priority": 4
+        },
+        {
+            "topic": "香港通关最新消息",
+            "category": "news",
+            "keywords": ["通关", "口岸", "跨境"],
+            "priority": 4
+        },
+        {
+            "topic": "香港就业市场分析",
+            "category": "news",
+            "keywords": ["就业", "招聘", "工资", "行业"],
+            "priority": 4
+        },
+        {
+            "topic": "香港楼市最新动态",
+            "category": "news",
+            "keywords": ["楼市", "房价", "买卖", "租售"],
+            "priority": 3
+        }
+    ],
+    "tech": [
+        {
+            "topic": "香港金融科技发展趋势",
+            "category": "tech",
+            "keywords": ["金融科技", "FinTech", "创新"],
+            "priority": 3
+        },
+        {
+            "topic": "香港Web3.0发展机遇",
+            "category": "tech",
+            "keywords": ["Web3", "区块链", "加密货币"],
+            "priority": 2
+        },
+        {
+            "topic": "香港创科企业扶持政策",
+            "category": "tech",
+            "keywords": ["创科", "扶持", "补贴", "孵化"],
+            "priority": 3
+        }
+    ],
+    "culture": [
+        {
+            "topic": "香港历史文化深度游",
+            "category": "culture",
+            "keywords": ["历史", "文化", "古迹", "博物馆"],
+            "priority": 3
+        },
+        {
+            "topic": "香港传统节日习俗",
+            "category": "culture",
+            "keywords": ["节日", "习俗", "传统", "庆典"],
+            "priority": 2
+        },
+        {
+            "topic": "香港艺术展览推荐",
+            "category": "culture",
+            "keywords": ["艺术", "展览", "画廊", "M+"],
+            "priority": 2
+        }
+    ]
+}

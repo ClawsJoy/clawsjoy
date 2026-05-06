@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>图片编辑器</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #fff;
+            color: #333;
+            padding: 16px;
+            min-height: 100vh;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e5e5e5;
+        }
+        .header h1 { font-size: 20px; font-weight: 600; }
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #007aff;
+        }
+        .preview-area {
+            background: #f5f5f5;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            text-align: center;
+            min-height: 300px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .img-container img {
+            max-width: 100%;
+            max-height: 50vh;
+        }
+        .tool-group {
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e5e5e5;
+        }
+        .tool-group h3 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #333;
+        }
+        button {
+            background: #007aff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+        .danger-btn {
+            background: #ff3b30;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .action-buttons button {
+            flex: 1;
+            padding: 14px;
+            font-size: 16px;
+        }
+        input[type="range"] {
+            width: 100%;
+            margin: 8px 0;
+        }
+        .value-label {
+            display: inline-block;
+            margin-left: 10px;
+            color: #007aff;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>✏️ 编辑图片</h1>
+        <button class="close-btn" onclick="window.close()">✕</button>
+    </div>
+    
+    <div class="preview-area">
+        <div class="img-container">
+            <img id="image" src="">
+        </div>
+    </div>
+    
+    <div class="tool-group">
+        <h3>🔄 旋转</h3>
+        <button onclick="rotate(-90)">↺ 向左</button>
+        <button onclick="rotate(90)">↻ 向右</button>
+        <button onclick="reset()">重置</button>
+    </div>
+    
+    <div class="tool-group">
+        <h3>✂️ 裁剪</h3>
+        <button onclick="enableCrop()">启用裁剪</button>
+        <button onclick="applyCrop()">应用裁剪</button>
+        <button onclick="disableCrop()">取消</button>
+    </div>
+    
+    <div class="tool-group">
+        <h3>☀️ 亮度</h3>
+        <input type="range" id="brightness" min="-100" max="100" value="0" oninput="applyFilters()">
+        <span class="value-label" id="brightnessVal">0</span>
+    </div>
+    
+    <div class="tool-group">
+        <h3>🎯 对比度</h3>
+        <input type="range" id="contrast" min="-100" max="100" value="0" oninput="applyFilters()">
+        <span class="value-label" id="contrastVal">0</span>
+    </div>
+    
+    <div class="action-buttons">
+        <button class="danger-btn" onclick="window.close()">取消</button>
+        <button onclick="saveImage()">✅ 保存</button>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const imageUrl = decodeURIComponent(urlParams.get('url') || '');
+        const tenantId = urlParams.get('tenant') || '1';
+        
+        let cropper = null;
+        const img = document.getElementById('image');
+        img.src = imageUrl;
+        
+        img.onload = function() {
+            if (cropper) cropper.destroy();
+            cropper = new Cropper(img, {
+                aspectRatio: 16/9,
+                viewMode: 1,
+                dragMode: 'move',
+                cropBoxMovable: true,
+                cropBoxResizable: true,
+                zoomable: true
+            });
+        };
+        
+        img.onerror = function() {
+            alert('图片加载失败，请检查文件是否存在');
+        };
+        
+        function rotate(deg) { if (cropper) cropper.rotate(deg); }
+        function reset() { if (cropper) cropper.reset(); }
+        function enableCrop() { if (cropper) cropper.setDragMode('crop'); }
+        function applyCrop() { if (cropper) cropper.setDragMode('move'); }
+        function disableCrop() { if (cropper) cropper.setDragMode('move'); }
+        
+        function applyFilters() {
+            const brightness = document.getElementById('brightness').value;
+            const contrast = document.getElementById('contrast').value;
+            document.getElementById('brightnessVal').innerText = brightness;
+            document.getElementById('contrastVal').innerText = contrast;
+            img.style.filter = `brightness(${100 + parseInt(brightness)}%) contrast(${100 + parseInt(contrast)}%)`;
+        }
+        
+        async function saveImage() {
+            if (!cropper) { alert('请等待图片加载完成'); return; }
+            const canvas = cropper.getCroppedCanvas({ width: 1920, height: 1080 });
+            const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.9));
+            const formData = new FormData();
+            formData.append('tenant_id', tenantId);
+            formData.append('image', blob, 'edited.jpg');
+            
+            try {
+                const res = await fetch('http://localhost:8084/api/library/editor/save', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.success) {
+                    alert('✅ 保存成功！');
+                    if (window.opener) window.opener.location.reload();
+                    window.close();
+                } else {
+                    alert('保存失败: ' + (data.error || '未知错误'));
+                }
+            } catch(e) {
+                alert('网络错误: ' + e.message);
+            }
+        }
+    </script>
+</body>
+</html>

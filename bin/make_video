@@ -1,38 +1,11 @@
 #!/bin/bash
-# 使用 ffmpeg 生成宣传片视频
-
-TITLE="$1"
+SCRIPT="$1"
 IMAGE_DIR="$2"
-OUTPUT_FILE="$3"
-DURATION="${5:-15}"
-
-echo "🎬 使用 ffmpeg 生成视频..."
-echo "📁 图片目录: $IMAGE_DIR"
-echo "⏱️  时长: ${DURATION}秒"
-
-# 查找第一张图片
-FIRST_IMAGE=$(find "$IMAGE_DIR" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" \) | head -1)
-
-if [ -z "$FIRST_IMAGE" ]; then
-    echo "❌ 未找到图片"
-    exit 1
-fi
-
-echo "🖼️  使用图片: $FIRST_IMAGE"
-
-# 使用 ffmpeg 生成视频
-ffmpeg -y -loop 1 -i "$FIRST_IMAGE" \
-    -c:v libx264 -preset fast \
-    -t "$DURATION" \
-    -pix_fmt yuv420p \
-    -vf "scale=1920:1080:force_original_aspect_ratio=1,pad=1920:1080:(ow-iw)/2:(oh-ih)/2" \
-    "$OUTPUT_FILE" 2>/dev/null
-
-if [ -f "$OUTPUT_FILE" ]; then
-    ACTUAL=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$OUTPUT_FILE" 2>/dev/null)
-    echo "✅ 视频生成成功: $OUTPUT_FILE"
-    echo "📊 实际时长: ${ACTUAL}秒"
-else
-    echo "❌ 生成失败"
-    exit 1
-fi
+OUTPUT="$3"
+TITLE="$4"
+echo "制作视频: $TITLE"
+echo "脚本: $SCRIPT"
+echo "图片目录: $IMAGE_DIR"
+curl -s -X POST http://localhost:8105/api/promo/make \
+  -H "Content-Type: application/json" \
+  -d "{\"city\":\"香港\",\"style\":\"人文\"}"

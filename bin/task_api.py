@@ -9,16 +9,16 @@ from urllib.parse import urlparse, parse_qs
 
 # 添加引擎路由和记忆服务
 import sys
-sys.path.insert(0, '/mnt/d/clawsjoy/bin')
-sys.path.insert(0, '/mnt/d/clawsjoy/skills/memory')
+sys.path.insert(0, '/app/bin')
+sys.path.insert(0, '/app/skills/memory')
 
 from executor_adapter import ExecutorRouterWithConfig
 from execute import execute as memory_execute
 
-sys.path.insert(0, "/mnt/d/clawsjoy/skills/memory")
+sys.path.insert(0, "/app/skills/memory")
 from execute import execute as memory_execute
 
-from memory_service import get_memory_service
+from memory_service import get_memory_service, get_memory_context
 #!/usr/bin/env python3
 """完整版 task_api - 多图轮播 + TTS 音频 + 字幕"""
 import json, sqlite3, os, time, subprocess, uuid, shutil, mimetypes, cgi, threading, re
@@ -27,7 +27,7 @@ from datetime import datetime
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
-DB_PATH = "/home/flybo/clawsjoy/data/tasks.db"
+DB_PATH = "/app/data/tasks.db"
 
 def init_db():
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
@@ -43,7 +43,7 @@ def init_db():
     conn.close()
 
 def get_tenant_library_dir(tenant_id):
-    base = Path(f"/home/flybo/clawsjoy/tenants/tenant_{tenant_id}/library")
+    base = Path(f"/app/tenants/tenant_{tenant_id}/library")
     for sub in ['images', 'videos', 'documents', 'audio', 'thumbnails']:
         (base / sub).mkdir(parents=True, exist_ok=True)
     return base
@@ -69,7 +69,7 @@ def get_video_duration(filepath):
     except: return None
 
 def init_library_db(tenant_id):
-    db_path = f"/home/flybo/clawsjoy/tenants/tenant_{tenant_id}/library.db"
+    db_path = f"/app/tenants/tenant_{tenant_id}/library.db"
     conn = sqlite3.connect(db_path)
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS files (
@@ -86,7 +86,7 @@ def async_tag_file(file_path, file_id, tenant_id):
     words = re.findall(r'[\u4e00-\u9fff]+', name)
     tags = words[:3] if words else ["图片"]
     if tags:
-        db_path = f"/home/flybo/clawsjoy/tenants/tenant_{tenant_id}/library.db"
+        db_path = f"/app/tenants/tenant_{tenant_id}/library.db"
         conn = sqlite3.connect(db_path)
         conn.execute("UPDATE files SET auto_tags = ? WHERE id = ?", (','.join(tags), file_id))
         conn.commit()
@@ -94,7 +94,7 @@ def async_tag_file(file_path, file_id, tenant_id):
         print(f"🏷️ 文件 {file_id} 标签: {tags}")
 
 def get_library_images_by_tags(tenant_id, tags, limit=10):
-    db_path = f"/home/flybo/clawsjoy/tenants/tenant_{tenant_id}/library.db"
+    db_path = f"/app/tenants/tenant_{tenant_id}/library.db"
     if not os.path.exists(db_path):
         return []
     conn = sqlite3.connect(db_path)
@@ -108,9 +108,9 @@ def get_library_images_by_tags(tenant_id, tags, limit=10):
     return [row[0] for row in rows]
 
 def fetch_external_images(city, style, count=6):
-    target_dir = f"/home/flybo/clawsjoy/web/images/{city}_{style}_{uuid.uuid4().hex[:6]}"
+    target_dir = f"/app/web/images/{city}_{style}_{uuid.uuid4().hex[:6]}"
     os.makedirs(target_dir, exist_ok=True)
-    cmd = ['/home/flybo/clawsjoy/bin/spider_unsplash', f"{city} {style}", str(count)]
+    cmd = ['/app/bin/spider_unsplash', f"{city} {style}", str(count)]
     subprocess.run(cmd, cwd=target_dir, capture_output=True)
     from glob import glob
     return glob(f"{target_dir}/*.jpg")[:count]
@@ -218,7 +218,7 @@ class TaskHandler(BaseHTTPRequestHandler):
             width, height = get_image_size(target_path)
         elif category == 'video':
             duration = get_video_duration(target_path)
-        db_path = f"/home/flybo/clawsjoy/tenants/tenant_{tenant_id}/library.db"
+        db_path = f"/app/tenants/tenant_{tenant_id}/library.db"
         conn = sqlite3.connect(db_path)
         c = conn.cursor()
         c.execute('''INSERT INTO files (original_name, storage_path, file_type, mime_type, size, width, height, duration)
@@ -250,12 +250,12 @@ class TaskHandler(BaseHTTPRequestHandler):
             img = Image.open(temp_path)
             if img.mode != 'RGB':
                 img = img.convert('RGB')
-            tenant_lib = Path(f"/home/flybo/clawsjoy/tenants/tenant_{tenant_id}/library/images")
+            tenant_lib = Path(f"/app/tenants/tenant_{tenant_id}/library/images")
             tenant_lib.mkdir(parents=True, exist_ok=True)
             final_name = f"{uuid.uuid4().hex}.jpg"
             final_path = tenant_lib / final_name
             img.save(final_path, 'JPEG', quality=90)
-            db_path = f"/home/flybo/clawsjoy/tenants/tenant_{tenant_id}/library.db"
+            db_path = f"/app/tenants/tenant_{tenant_id}/library.db"
             conn = sqlite3.connect(db_path)
             c = conn.cursor()
             c.execute('''
@@ -277,14 +277,14 @@ class TaskHandler(BaseHTTPRequestHandler):
             print(f"编辑器保存失败: {e}")
             self.send_json({'success': False, 'error': str(e)}, 500)
 
- def _handle_library_list(self):
+    def _handle_library_list(self):
         parsed = urlparse(self.path)
         params = parse_qs(parsed.query)
         tenant_id = params.get('tenant_id', ['1'])[0]
         file_type = params.get('type', [''])[0]
         limit = int(params.get('limit', [50])[0])
         offset = int(params.get('offset', [0])[0])
-        db_path = f"/home/flybo/clawsjoy/tenants/tenant_{tenant_id}/library.db"
+        db_path = f"/app/tenants/tenant_{tenant_id}/library.db"
         if not os.path.exists(db_path):
             self.send_json({'success': True, 'files': [], 'total': 0})
             return
@@ -314,7 +314,7 @@ class TaskHandler(BaseHTTPRequestHandler):
         if not tenant_id:
             self.send_error(401, "Missing tenant_id")
             return
-        db_path = f"/home/flybo/clawsjoy/tenants/tenant_{tenant_id}/library.db"
+        db_path = f"/app/tenants/tenant_{tenant_id}/library.db"
         if not os.path.exists(db_path):
             self.send_error(404)
             return
@@ -327,7 +327,7 @@ class TaskHandler(BaseHTTPRequestHandler):
             self.send_error(404)
             return
         file_path = row[0]
-        expected_prefix = f"/home/flybo/clawsjoy/tenants/tenant_{tenant_id}/library"
+        expected_prefix = f"/app/tenants/tenant_{tenant_id}/library"
         if not file_path.startswith(expected_prefix):
             self.send_error(403)
             return
@@ -408,7 +408,7 @@ class TaskHandler(BaseHTTPRequestHandler):
 
 if __name__ == '__main__':
     init_db()
-    port = 8084
+    port = 8094
     print(f"📋 Task API started: http://redis:{port}")
     HTTPServer(("0.0.0.0", port), TaskHandler).serve_forever()
 
@@ -438,13 +438,13 @@ def _handle_editor_save(self):
         if img.mode != 'RGB':
             img = img.convert('RGB')
         # 保存到租户资料库
-        tenant_lib = Path(f"/home/flybo/clawsjoy/tenants/tenant_{tenant_id}/library/images")
+        tenant_lib = Path(f"/app/tenants/tenant_{tenant_id}/library/images")
         tenant_lib.mkdir(parents=True, exist_ok=True)
         final_name = f"{uuid.uuid4().hex}.jpg"
         final_path = tenant_lib / final_name
         img.save(final_path, 'JPEG', quality=90, optimize=True)
         # 记录到数据库
-        db_path = f"/home/flybo/clawsjoy/tenants/tenant_{tenant_id}/library.db"
+        db_path = f"/app/tenants/tenant_{tenant_id}/library.db"
         conn = sqlite3.connect(db_path)
         c = conn.cursor()
         c.execute('''
@@ -496,13 +496,13 @@ def _handle_editor_save(self):
         if img.mode != 'RGB':
             img = img.convert('RGB')
         # 保存到租户资料库
-        tenant_lib = Path(f"/home/flybo/clawsjoy/tenants/tenant_{tenant_id}/library/images")
+        tenant_lib = Path(f"/app/tenants/tenant_{tenant_id}/library/images")
         tenant_lib.mkdir(parents=True, exist_ok=True)
         final_name = f"{uuid.uuid4().hex}.jpg"
         final_path = tenant_lib / final_name
         img.save(final_path, 'JPEG', quality=90, optimize=True)
         # 记录到数据库
-        db_path = f"/home/flybo/clawsjoy/tenants/tenant_{tenant_id}/library.db"
+        db_path = f"/app/tenants/tenant_{tenant_id}/library.db"
         conn = sqlite3.connect(db_path)
         c = conn.cursor()
         c.execute('''
@@ -549,13 +549,13 @@ def _handle_editor_save(self):
             if img.mode != 'RGB':
                 img = img.convert('RGB')
             # 保存到租户资料库
-            tenant_lib = Path(f"/home/flybo/clawsjoy/tenants/tenant_{tenant_id}/library/images")
+            tenant_lib = Path(f"/app/tenants/tenant_{tenant_id}/library/images")
             tenant_lib.mkdir(parents=True, exist_ok=True)
             final_name = f"{uuid.uuid4().hex}.jpg"
             final_path = tenant_lib / final_name
             img.save(final_path, 'JPEG', quality=90)
             # 记录到数据库
-            db_path = f"/home/flybo/clawsjoy/tenants/tenant_{tenant_id}/library.db"
+            db_path = f"/app/tenants/tenant_{tenant_id}/library.db"
             conn = sqlite3.connect(db_path)
             c = conn.cursor()
             c.execute('''
@@ -634,7 +634,7 @@ def _handle_editor_save(self):
     def _handle_switch_engine(self, data):
         """切换执行引擎"""
         engine = data.get('engine', 'openclaw')
-        config_path = "/mnt/d/clawsjoy/config/engine.json"
+        config_path = "/app/config/engine.json"
         
         with open(config_path, 'w') as f:
             json.dump({

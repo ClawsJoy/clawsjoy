@@ -1,0 +1,30 @@
+{
+    "skills": {
+        "spider": {
+            "path": "skills/spider/execute.py",
+            "capabilities": ["collect", "scrape"],
+            "evolution_score": 85
+        },
+        "promo": {
+            "path": "skills/promo/execute.py",
+            "capabilities": ["video", "promo"],
+            "evolution_score": 90
+        },
+        "writer": {
+            "path": "skills/content-writer/execute.py",
+            "capabilities": ["write", "script"],
+            "evolution_score": 75
+        },
+        "tts": {
+            "path": "skills/tts-edge/main.py",
+            "capabilities": ["voice", "tts"],
+            "evolution_score": 88
+        }
+    },
+    "routing_rules": [
+        {"intent": "采集", "skill": "spider"},
+        {"intent": "视频", "skill": "promo"},
+        {"intent": "写", "skill": "writer"},
+        {"intent": "配音", "skill": "tts"}
+    ]
+}

@@ -1,92 +1,138 @@
 #!/usr/bin/env python3
-"""记忆服务 Skill - 三层记忆系统"""
+"""ClawsJoy 记忆系统 - 简化版"""
 
-import sqlite3
 import json
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Optional
 
-class MemoryService:
-    def __init__(self, tenant_id: str):
-        self.tenant_id = tenant_id
-        self.db_path = Path(f"/home/flybo/clawsjoy/tenants/tenant_{tenant_id}/memory.db")
-        self._init_db()
+class ClawsJoyMemory:
+    def __init__(self, tenant_id="1"):
+        self.memory_file = Path(f"/mnt/d/clawsjoy/data/memory/tenant_{tenant_id}.json")
+        self.load()
     
-    def _init_db(self):
-        self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        conn = sqlite3.connect(self.db_path)
-        c = conn.cursor()
-        c.execute('''
-            CREATE TABLE IF NOT EXISTS short_term (
-                id INTEGER PRIMARY KEY, session_id TEXT, role TEXT, content TEXT, created_at TIMESTAMP
-            )
-        ''')
-        c.execute('''
-            CREATE TABLE IF NOT EXISTS long_term (
-                id INTEGER PRIMARY KEY, key TEXT UNIQUE, value TEXT, updated_at TIMESTAMP
-            )
-        ''')
-        c.execute('''
-            CREATE TABLE IF NOT EXISTS skill_memory (
-                id INTEGER PRIMARY KEY, skill_name TEXT, success_count INTEGER, last_used TIMESTAMP, params TEXT
-            )
-        ''')
-        conn.commit()
-        conn.close()
+    def load(self):
+        if self.memory_file.exists():
+            with open(self.memory_file) as f:
+                self.data = json.load(f)
+        else:
+            self.data = {
+                "tasks": [],        # 任务历史
+                "skills": {},       # Skill 统计
+                "preferences": {},  # 用户偏好
+                "knowledge": []     # 知识积累
+            }
     
-    def add_short_term(self, session_id: str, role: str, content: str):
-        conn = sqlite3.connect(self.db_path)
-        c = conn.cursor()
-        c.execute('INSERT INTO short_term (session_id, role, content, created_at) VALUES (?, ?, ?, ?)',
-                  (session_id, role, content, datetime.now().isoformat()))
-        conn.commit()
-        conn.close()
+    def save(self):
+        self.memory_file.parent.mkdir(parents=True, exist_ok=True)
+        with open(self.memory_file, 'w') as f:
+            json.dump(self.data, f, indent=2)
     
-    def get_short_term(self, session_id: str, limit: int = 10) -> List[Dict]:
-        conn = sqlite3.connect(self.db_path)
-        c = conn.cursor()
-        c.execute('SELECT role, content FROM short_term WHERE session_id = ? ORDER BY created_at DESC LIMIT ?',
-                  (session_id, limit))
-        rows = c.fetchall()
-        conn.close()
-        return [{'role': r[0], 'content': r[1]} for r in reversed(rows)]
+    # 任务记忆
+    def remember_task(self, task_type, input_data, output, success=True):
+        self.data["tasks"].append({
+            "type": task_type,
+            "input": input_data,
+            "output": output[:300] if output else None,
+            "success": success,
+            "time": datetime.now().isoformat()
+        })
+        if len(self.data["tasks"]) > 100:
+            self.data["tasks"] = self.data["tasks"][-100:]
+        self.save()
     
-    def set_long_term(self, key: str, value: str):
-        conn = sqlite3.connect(self.db_path)
-        c = conn.cursor()
-        c.execute('INSERT OR REPLACE INTO long_term (key, value, updated_at) VALUES (?, ?, ?)',
-                  (key, value, datetime.now().isoformat()))
-        conn.commit()
-        conn.close()
+    def recall_task(self, task_type):
+        """回忆成功的任务经验"""
+        for task in reversed(self.data["tasks"]):
+            if task["type"] == task_type and task["success"]:
+                return task["output"]
+        return None
     
-    def get_long_term(self, key: str) -> Optional[str]:
-        conn = sqlite3.connect(self.db_path)
-        c = conn.cursor()
-        c.execute('SELECT value FROM long_term WHERE key = ?', (key,))
-        row = c.fetchone()
-        conn.close()
-        return row[0] if row else None
+    # Skill 统计
+    def record_skill(self, skill_name, success, duration):
+        if skill_name not in self.data["skills"]:
+            self.data["skills"][skill_name] = {"total": 0, "success": 0, "total_duration": 0}
+        s = self.data["skills"][skill_name]
+        s["total"] += 1
+        if success:
+            s["success"] += 1
+        s["total_duration"] += duration
+        s["avg_duration"] = s["total_duration"] / s["total"]
+        s["success_rate"] = s["success"] / s["total"]
+        self.save()
+    
+    def get_skill_score(self, skill_name):
+        s = self.data["skills"].get(skill_name)
+        if not s:
+            return 50
+        return s["success_rate"] * 100
+    
+    # 偏好
+    def set_preference(self, key, value):
+        self.data["preferences"][key] = value
+        self.save()
+    
+    def get_preference(self, key, default=None):
+        return self.data["preferences"].get(key, default)
+    
+    # 知识
+    def add_knowledge(self, category, content):
+        self.data["knowledge"].append({
+            "category": category,
+            "content": content,
+            "time": datetime.now().isoformat()
+        })
+        if len(self.data["knowledge"]) > 200:
+            self.data["knowledge"] = self.data["knowledge"][-200:]
+        self.save()
+    
+    def search_knowledge(self, keyword):
+        return [k for k in self.data["knowledge"] if keyword in k["content"]]
+    
+    def report(self):
+        print("=" * 50)
+        print("🧠 记忆系统报告")
+        print("=" * 50)
+        print(f"任务数: {len(self.data['tasks'])}")
+        print(f"Skill数: {len(self.data['skills'])}")
+        print(f"知识数: {len(self.data['knowledge'])}")
+        for name, s in self.data["skills"].items():
+            print(f"  {name}: {s['success_rate']*100:.0f}%")
+        print("=" * 50)
 
-def execute(params: Dict) -> Dict:
-    """Skill 执行入口"""
-    action = params.get('action')
-    tenant_id = params.get('tenant_id', '1')
-    session_id = params.get('session_id', 'default')
+def execute(params):
+    memory = ClawsJoyMemory(params.get("tenant_id", "1"))
+    action = params.get("action")
     
-    service = MemoryService(tenant_id)
+    if action == "remember":
+        memory.remember_task(params["task_type"], params.get("input"), params.get("output"), params.get("success", True))
+        return {"success": True}
+    elif action == "recall":
+        result = memory.recall_task(params["task_type"])
+        return {"success": True, "memory": result}
+    elif action == "skill":
+        memory.record_skill(params["skill"], params["success"], params.get("duration", 0))
+        return {"success": True, "score": memory.get_skill_score(params["skill"])}
+    elif action == "preference":
+        if "value" in params:
+            memory.set_preference(params["key"], params["value"])
+            return {"success": True}
+        else:
+            return {"success": True, "value": memory.get_preference(params["key"])}
+    elif action == "knowledge":
+        memory.add_knowledge(params["category"], params["content"])
+        return {"success": True}
+    elif action == "search":
+        results = memory.search_knowledge(params["keyword"])
+        return {"success": True, "results": results}
+    elif action == "report":
+        memory.report()
+        return {"success": True}
     
-    if action == 'add':
-        service.add_short_term(session_id, params.get('role', 'user'), params.get('content', ''))
-        return {'success': True}
-    elif action == 'get':
-        memories = service.get_short_term(session_id, params.get('limit', 10))
-        return {'success': True, 'memories': memories}
-    elif action == 'set_pref':
-        service.set_long_term(params.get('key', ''), params.get('value', ''))
-        return {'success': True}
-    elif action == 'get_pref':
-        value = service.get_long_term(params.get('key', ''))
-        return {'success': True, 'value': value}
-    else:
-        return {'success': False, 'error': f'Unknown action: {action}'}
+    return {"error": f"未知 action: {action}"}
+
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv) > 1:
+        import json
+        params = json.loads(sys.argv[1])
+        print(execute(params))

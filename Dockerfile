@@ -35,3 +35,7 @@ COPY docker-start.sh /docker-start.sh
 RUN chmod +x /docker-start.sh
 
 CMD ["/docker-start.sh"]
+
+# 安装 Whisper STT 依赖
+
+# 安装额外依赖

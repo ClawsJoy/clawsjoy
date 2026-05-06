@@ -33,3 +33,8 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     HTTPServer(("0.0.0.0", 8100), Handler).serve_forever()
+# 资料库 API 扩展
+# GET /api/library/list?tenant_id=1&type=videos
+# POST /api/library/upload
+# DELETE /api/library/delete?id=xxx
+# POST /api/library/save_script

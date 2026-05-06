@@ -51,5 +51,5 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    print("🎬 异步宣传片 API: http://redis:8086")
-    HTTPServer(("0.0.0.0", 8086), Handler).serve_forever()
+    print("🎬 异步宣传片 API: http://redis:8109")
+    HTTPServer(("0.0.0.0", 8109), Handler).serve_forever()

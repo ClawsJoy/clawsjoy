@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>我的资料库</title>
+    <style>
+        body { font-family: system-ui; padding: 20px; background: #0a0a14; color: #fff; }
+        .file-item { border-bottom: 1px solid #333; padding: 10px; display: flex; justify-content: space-between; }
+        button { background: #667eea; border: none; color: #fff; padding: 5px 15px; border-radius: 5px; cursor: pointer; }
+        img { max-width: 50px; max-height: 50px; margin-right: 10px; }
+    </style>
+</head>
+<body>
+    <h1>📁 我的资料库</h1>
+    <div id="fileList">加载中...</div>
+    <script>
+        const tenantId = new URLSearchParams(location.search).get('tenant') || '1';
+        
+        async function loadFiles() {
+            const res = await fetch(`http://localhost:8084/api/library/list?tenant_id=${tenantId}`);
+            const data = await res.json();
+            const container = document.getElementById('fileList');
+            if (!data.files || !data.files.length) {
+                container.innerHTML = '<div>暂无文件</div>';
+                return;
+            }
+            container.innerHTML = data.files.map(f => `
+                <div class="file-item">
+                    <div>
+                        ${f.name.match(/\.(jpg|png|gif|jpeg)$/i) ? `<img src="http://localhost:8084/api/file/${f.name}" onerror="this.style.display='none'">` : ''}
+                        ${f.name} (${(f.size/1024).toFixed(1)} KB)
+                    </div>
+                    <div>
+                        <a href="http://localhost:8084/api/file/${f.name}" target="_blank" style="color:#667eea;">预览</a>
+                    </div>
+                </div>
+            `).join('');
+        }
+        loadFiles();
+    </script>
+</body>
+</html>
