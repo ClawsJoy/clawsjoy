@@ -52,3 +52,37 @@ tenants/*/library.db
 *.swo
 tenants/
 tenants/*
+
+# 租户数据（私有）
+tenants/
+tenants/*
+!tenants/template/
+tenants/template/*
+
+# 运行时数据
+data/
+logs/
+*.db
+*.sqlite
+*.sqlite3
+
+# 用户上传和生成
+web/uploads/
+web/videos/*.mp4
+web/images/*.jpg
+web/images/*.png
+web/audio/*.mp3
+
+# Agent 状态
+*/agent/state.json
+*/agent/credentials.json
+*/agent/keywords.json
+
+# 配置文件（含可能密钥）
+config/*.json
+!config/templates/
+
+# 临时文件
+tmp/
+temp/
+*.tmp
