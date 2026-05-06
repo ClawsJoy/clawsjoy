@@ -86,3 +86,6 @@ config/*.json
 tmp/
 temp/
 *.tmp
+config/youtube/*.pickle
+config/youtube/client_secrets.json
+agents/oauth_playground*.py
