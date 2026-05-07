@@ -1,0 +1,158 @@
+#!/usr/bin/env python3
+"""关键词学习器 - 优化版"""
+
+import re
+import json
+import time
+from pathlib import Path
+
+class KeywordLearner:
+    def __init__(self):
+        self.keywords_file = Path("/mnt/d/clawsjoy/data/keywords.json")
+        self.pending_file = Path("/mnt/d/clawsjoy/data/keyword_pending.json")
+        self._init_files()
+    
+    def _init_files(self):
+        self.pending_file.parent.mkdir(parents=True, exist_ok=True)
+        if not self.pending_file.exists():
+            with open(self.pending_file, 'w') as f:
+                json.dump({"candidates": {}, "config": {"threshold": 2}}, f)
+    
+    def extract_candidates(self, text, source="user"):
+        """优化版提取候选词"""
+        # 只提取有意义的词：2-6 个中文字符，且不是纯数字/标点
+        candidates = set()
+        
+        # 提取中文词
+        chinese_words = re.findall(r'[\u4e00-\u9fa5]{2,4}', text)
+        for w in chinese_words:
+            # 过滤无意义词
+            if len(w) >= 2 and not self._is_stopword(w):
+                candidates.add(w)
+        
+        # 提取英文词（3-8 字母）
+        english_words = re.findall(r'[a-zA-Z]{3,8}', text)
+        for w in english_words:
+            candidates.add(w.lower())
+        
+        # 加载已有关键词
+        existing = self._get_existing_keywords()
+        new_candidates = [c for c in candidates if c not in existing]
+        
+        # 更新暂存区
+        self._update_pending(new_candidates, source)
+        
+        return new_candidates
+    
+    def _is_stopword(self, word):
+        """停用词过滤"""
+        stopwords = {
+            '我们', '他们', '这个', '那个', '可以', '已经', '还是', '一个', '没有', '不是',
+            '就是', '而且', '但是', '因为', '所以', '如果', '那么', '然后', '之后', '之前',
+            '以上', '以下', '这些', '那些', '这样', '那样', '怎样', '什么', '怎么', '为什么',
+            '哪里', '这里', '那里', '每个', '很多', '很少', '太多', '太少', '非常', '特别',
+            '十分', '一般', '通常', '经常', '偶尔', '有时', '总是', '永远', '从未', '一直',
+            '制作', '上传', '生成', '宣传', '视频', '分钟', '配置', '钉钉', '告警', 'webhook',
+            '你好', '帮我', '这是', '我的', '今天', '香港', '上海', '深圳', '北京', '广州'
+        }
+        return word in stopwords or word.isdigit()
+    
+    def _get_existing_keywords(self):
+        existing = set()
+        if self.keywords_file.exists():
+            with open(self.keywords_file) as f:
+                data = json.load(f)
+            for cat, info in data.get("categories", {}).items():
+                for kw in info.get("keywords", []):
+                    name = kw.get("name", kw) if isinstance(kw, dict) else kw
+                    existing.add(name)
+        return existing
+    
+    def _update_pending(self, candidates, source):
+        with open(self.pending_file) as f:
+            pending = json.load(f)
+        
+        now = time.time()
+        for cand in candidates:
+            if cand not in pending["candidates"]:
+                pending["candidates"][cand] = {
+                    "count": 1,
+                    "sources": [source],
+                    "first_seen": now,
+                    "last_seen": now
+                }
+            else:
+                pending["candidates"][cand]["count"] += 1
+                pending["candidates"][cand]["last_seen"] = now
+        
+        with open(self.pending_file, 'w') as f:
+            json.dump(pending, f, indent=2)
+    
+    def auto_learn(self, default_category="通用"):
+        with open(self.pending_file) as f:
+            pending = json.load(f)
+        
+        threshold = pending["config"].get("threshold", 2)
+        learned = []
+        
+        for cand, info in list(pending["candidates"].items()):
+            if info["count"] >= threshold:
+                category = self._predict_category(cand)
+                self._add_to_keywords(cand, category)
+                learned.append({"keyword": cand, "category": category, "count": info["count"]})
+                del pending["candidates"][cand]
+        
+        if learned:
+            with open(self.pending_file, 'w') as f:
+                json.dump(pending, f, indent=2)
+            print(f"📚 自动学习 {len(learned)} 个新关键词")
+        
+        return learned
+    
+    def _predict_category(self, keyword):
+        category_map = {
+            "移民": ["优才", "高才", "人才", "签证", "永居", "身份", "落户", "移民"],
+            "教育": ["留学", "大学", "申请", "学位", "硕士", "博士", "教育"],
+            "生活": ["租房", "美食", "交通", "购物", "生活"],
+            "科技": ["人工智能", "AI", "芯片", "科技", "机器", "学习", "深度", "算法"],
+            "工作": ["求职", "招聘", "工作", "职位", "职业", "面试"]
+        }
+        for cat, keywords in category_map.items():
+            for kw in keywords:
+                if kw in keyword or keyword in kw:
+                    return cat
+        return "通用"
+    
+    def _add_to_keywords(self, keyword, category):
+        with open(self.keywords_file) as f:
+            data = json.load(f)
+        
+        if category not in data["categories"]:
+            data["categories"][category] = {"keywords": [], "weight": 1.0}
+        
+        # 检查是否已存在
+        exists = False
+        for kw in data["categories"][category]["keywords"]:
+            name = kw.get("name", kw) if isinstance(kw, dict) else kw
+            if name == keyword:
+                exists = True
+                break
+        
+        if not exists:
+            data["categories"][category]["keywords"].append({
+                "name": keyword,
+                "slug": keyword.lower().replace(" ", "_"),
+                "learned_at": time.time()
+            })
+            with open(self.keywords_file, 'w') as f:
+                json.dump(data, f, indent=2)
+
+# 测试
+if __name__ == "__main__":
+    learner = KeywordLearner()
+    print("=== 优化版关键词学习器 ===")
+    test = "我喜欢机器学习和深度学习，还有AI芯片"
+    new = learner.extract_candidates(test)
+    print(f"提取: {new}")
+    learned = learner.auto_learn()
+    print(f"学习: {learned}")

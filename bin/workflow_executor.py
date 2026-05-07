@@ -99,3 +99,31 @@ if __name__ == "__main__":
         print(json.dumps(result, ensure_ascii=False, indent=2))
     else:
         print("可用工作流:", executor.list_workflows())
+
+# ========== 重试机制 ==========
+def execute_with_retry(self, step, max_retries=3):
+    for i in range(max_retries):
+        result = self.execute_step(step)
+        if result.get('success'):
+            return result
+        print(f"⚠️ 步骤 {step.get('name')} 失败，重试 {i+1}/{max_retries}")
+        time.sleep(2 ** i)  # 指数退避
+    # 写入死信队列
+    self._write_to_dlq(step, result)
+    return result
+
+def _write_to_dlq(self, step, error):
+    dlq_file = Path("/mnt/d/clawsjoy/data/dead_letter_queue.json")
+    dlq_file.parent.mkdir(parents=True, exist_ok=True)
+    data = []
+    if dlq_file.exists():
+        with open(dlq_file) as f:
+            data = json.load(f)
+    data.append({
+        "step": step,
+        "error": error,
+        "time": __import__("time").time()
+    })
+    with open(dlq_file, 'w') as f:
+        json.dump(data[-100:], f, indent=2)
+    print(f"💀 已写入死信队列: {dlq_file}")

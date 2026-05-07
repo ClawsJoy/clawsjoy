@@ -1,86 +1,220 @@
 #!/usr/bin/env python3
-"""租户专属 Agent - 管家模式"""
+"""TenantAgent - 完整版"""
 
 import json
 import re
+import requests
+import subprocess
 from pathlib import Path
+from agents.keyword_learner import KeywordLearner
+from keyword_index import KeywordIndex
+from memory_manager import MemoryManager
 
 class TenantAgent:
-    
-    def __init__(self, tenant_id):
+    def __init__(self, tenant_id="tenant_1"):
         self.tenant_id = tenant_id
-        self.config_dir = Path(f"/mnt/d/clawsjoy/tenants/{tenant_id}/agent")
-        self.config_dir.mkdir(parents=True, exist_ok=True)
-        self.load_state()
+        self.keyword_learner = KeywordLearner()
+        self.keyword_index = KeywordIndex(tenant_id)
+        self.memory = MemoryManager(tenant_id)
+        self.config_file = Path(f"/mnt/d/clawsjoy/tenants/{tenant_id}/agent_config.json")
+        self._load_config()
     
-    def load_state(self):
-        state_file = self.config_dir / "state.json"
-        if state_file.exists():
-            with open(state_file) as f:
-                self.state = json.load(f)
+    def _load_config(self):
+        if self.config_file.exists():
+            with open(self.config_file) as f:
+                self.config = json.load(f)
         else:
-            self.state = {
-                "tenant_id": self.tenant_id,
-                "youtube_configured": False,
-                "created_at": __import__('datetime').datetime.now().isoformat()
-            }
+            self.config = {"tenant_id": self.tenant_id, "alert_webhooks": {}}
     
-    def save_state(self):
-        state_file = self.config_dir / "state.json"
-        with open(state_file, 'w') as f:
-            json.dump(self.state, f, indent=2)
+    def process(self, user_input):
+        print(f"📥 处理: {user_input[:50]}...")
+        
+        # 1. 学习关键词
+        self.keyword_learner.extract_candidates(user_input)
+        learned = self.keyword_learner.auto_learn()
+        if learned:
+            print(f"📚 新学习: {learned}")
+        
+        # 2. 记录记忆
+        self.memory.add(user_input, "conversation")
+        
+        # 3. 分发
+        lower = user_input.lower()
+        if "统计" in lower or "关键词" in lower:
+            return self._stats()
+        if any(k in lower for k in ["制作", "生成", "宣传片"]):
+            return self._video(user_input)
+        if "上传" in lower and "youtube" in lower:
+            return self._upload()
+        if "告警" in lower or "钉钉" in lower:
+            return self._alert(user_input)
+        return self._chat(user_input)
     
-    def collect_keywords(self, text):
-        """从用户对话中采集新关键词"""
-        patterns = [
-            r'(?:关于|聊|讲|说|什么是?|了解)([^，,。？?！!]{2,10})',
-            r'([\u4e00-\u9fa5]{2,6})(?:计划|政策|申请|流程|条件)',
-        ]
-        
-        new_keywords = []
-        for pattern in patterns:
-            matches = re.findall(pattern, text)
-            new_keywords.extend(matches)
-        
-        if new_keywords:
-            kw_file = self.config_dir / "keywords.json"
-            if kw_file.exists():
-                with open(kw_file) as f:
-                    keywords = json.load(f)
-            else:
-                keywords = []
-            
-            for kw in new_keywords:
-                if kw not in keywords:
-                    keywords.append(kw)
-            
-            with open(kw_file, 'w') as f:
-                json.dump(keywords, f, ensure_ascii=False, indent=2)
-            
-            print(f"📝 采集到新关键词: {new_keywords}")
-        
-        return new_keywords
+    def _stats(self):
+        stats = self.keyword_learner.get_stats()
+        return {"type": "result", "message": f"📊 关键词库: {stats['total_keywords']} 个, 待学习: {stats['pending_count']} 个", "data": stats}
     
-    def chat(self, user_input):
-        """主对话方法 - 增强版包含关键词采集"""
-        # 采集关键词
-        self.collect_keywords(user_input)
-        
-        # 密钥识别、意图路由、脱敏处理等
-        user_lower = user_input.lower()
-        
-        if "youtube" in user_lower and "配置" in user_lower:
-            return {"action": "configure_youtube", "message": "请提供 client_secrets.json 文件路径"}
-        
-        if "上传" in user_lower and "视频" in user_lower:
-            return {"action": "upload_video", "message": "正在上传视频..."}
-        
-        return {"action": "chat", "message": f"收到：{user_input}"}
-
-def get_agent(tenant_id):
-    return TenantAgent(tenant_id)
+    def _video(self, user_input):
+        topic = next((c for c in ["香港", "上海", "深圳", "北京"] if c in user_input), "香港")
+        try:
+            resp = requests.post("http://localhost:8108/api/promo/make", json={"topic": topic, "duration": 30}, timeout=120)
+            if resp.status_code == 200:
+                data = resp.json()
+                if data.get("success"):
+                    return {"type": "result", "message": "✅ 视频已生成", "data": {"video_url": data.get("video_url")}}
+        except Exception as e:
+            return {"type": "result", "message": f"生成失败: {str(e)}"}
+        return {"type": "result", "message": "生成失败"}
+    
+    def _upload(self):
+        try:
+            result = subprocess.run(["python3", "/mnt/d/clawsjoy/agents/youtube_uploader.py", "--tenant", self.tenant_id], capture_output=True, text=True, timeout=300)
+            return {"type": "result", "message": "✅ 已上传" if result.returncode == 0 else "上传失败"}
+        except:
+            return {"type": "result", "message": "上传异常"}
+    
+    def _alert(self, user_input):
+        url_match = re.search(r'https?://[^\s]+', user_input)
+        if not url_match:
+            return {"type": "text", "message": "请提供 Webhook URL"}
+        platform = "dingtalk" if "钉钉" in user_input else "feishu" if "飞书" in user_input else "dingtalk"
+        self.config.setdefault("alert_webhooks", {})[platform] = url_match.group()
+        with open(self.config_file, 'w') as f:
+            json.dump(self.config, f, indent=2)
+        return {"type": "result", "message": f"✅ 已配置 {platform} 告警"}
+    
+    def _chat(self, user_input):
+        try:
+            resp = requests.post("http://localhost:11434/api/generate", json={"model": "qwen2.5:3b", "prompt": user_input, "stream": False, "options": {"num_predict": 500}}, timeout=60)
+            if resp.status_code == 200:
+                return {"type": "text", "message": resp.json().get("response", "")}
+        except:
+            pass
+        return {"type": "text", "message": "服务暂时不可用"}
 
 if __name__ == "__main__":
-    agent = TenantAgent("tenant_1")
-    print(agent.chat("关于香港优才计划"))
-    print(agent.chat("上传视频"))
+    agent = TenantAgent()
+    print(agent.process("关键词统计"))
+
+    # ========== URL 采集集成 ==========
+    def _collect_urls(self, user_input):
+        """采集 URL（使用现有 url_scout）"""
+        from url_scout import URLScout
+        scout = URLScout()
+        
+        import re
+        url_match = re.search(r'https?://[^\s]+', user_input)
+        if url_match:
+            source_url = url_match.group()
+            new_urls = scout.discover_from_seed(source_url)
+            return {"type": "result", "message": f"从 {source_url} 发现 {len(new_urls)} 个新 URL"}
+        
+        # 默认从种子 URL 采集
+        seeds = scout.load_seeds()
+        total_new = 0
+        for seed in seeds[:3]:
+            new = scout.discover_from_seed(seed)
+            total_new += len(new)
+        return {"type": "result", "message": f"发现 {total_new} 个新 URL"}
+    
+    def _crawl_content(self, url):
+        """抓取内容（使用现有 content_crawler）"""
+        from content_crawler import ContentCrawler
+        crawler = ContentCrawler()
+        result = crawler.crawl(url)
+        return {"type": "result", "message": f"已抓取 {url}", "data": result}
+
+    # ========== URL 采集意图 ==========
+    def _handle_url_command(self, user_input):
+        lower = user_input.lower()
+        
+        # 采集 URL
+        if "采集" in lower and ("url" in lower or "链接" in lower):
+            return self._collect_urls(user_input)
+        
+        # 查看 URL 统计
+        if "url统计" in lower or "链接统计" in lower:
+            return self._url_stats()
+        
+        # 抓取内容
+        if "抓取" in lower and ("内容" in lower or "页面" in lower):
+            return self._crawl_content(user_input)
+        
+        return None
+    
+    def _url_stats(self):
+        import json
+        from pathlib import Path
+        
+        url_file = Path("/mnt/d/clawsjoy/data/urls/discovered.json")
+        if url_file.exists():
+            with open(url_file) as f:
+                urls = json.load(f)
+            return {"type": "result", "message": f"📊 已发现 {len(urls)} 个 URL"}
+        return {"type": "result", "message": "暂无 URL 数据"}
+
+    # ========== URL 采集意图处理 ==========
+    def _handle_url_intent(self, user_input):
+        lower = user_input.lower()
+        
+        if "采集" in lower and ("url" in lower or "链接" in lower):
+            return self._trigger_url_collection()
+        
+        if "抓取" in lower and ("内容" in lower or "页面" in lower):
+            return self._trigger_content_crawl()
+        
+        if "url统计" in lower or "链接统计" in lower:
+            return self._get_url_stats()
+        
+        return None
+    
+    def _trigger_url_collection(self):
+        """触发 URL 采集"""
+        from url_scout import URLScout
+        scout = URLScout()
+        
+        # 从种子 URL 采集
+        seeds = ["https://www.immd.gov.hk/hks/", "https://www.info.gov.hk/gia/general/today.htm"]
+        total = 0
+        for seed in seeds:
+            new = scout.discover_from_seed(seed)
+            total += len(new)
+        
+        return {"type": "result", "message": f"✅ 发现 {total} 个新 URL"}
+    
+    def _trigger_content_crawl(self):
+        """触发内容抓取"""
+        from content_crawler import ContentCrawler
+        import json
+        from pathlib import Path
+        
+        # 获取待抓取的 URL
+        url_file = Path("/mnt/d/clawsjoy/data/urls/discovered.json")
+        with open(url_file) as f:
+            urls = json.load(f)
+        
+        crawler = ContentCrawler()
+        count = 0
+        for url in list(urls.keys())[:5]:  # 每次抓取5个
+            result = crawler.crawl(url)
+            if result.get("success"):
+                count += 1
+        
+        return {"type": "result", "message": f"✅ 已抓取 {count} 个页面"}
+    
+    def _get_url_stats(self):
+        import json
+        from pathlib import Path
+        
+        url_file = Path("/mnt/d/clawsjoy/data/urls/discovered.json")
+        content_dir = Path("/mnt/d/clawsjoy/data/content")
+        
+        with open(url_file) as f:
+            urls = json.load(f)
+        
+        content_count = len(list(content_dir.glob("*.txt"))) if content_dir.exists() else 0
+        
+        return {
+            "type": "result",
+            "message": f"📊 已发现 {len(urls)} 个 URL，已抓取 {content_count} 个页面"
+        }

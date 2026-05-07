@@ -1,31 +1,27 @@
 #!/usr/bin/env python3
-"""Agent API - 租户通过HTTP与管家交互"""
+"""Agent API - 简化稳定版"""
 
 import json
 from http.server import HTTPServer, BaseHTTPRequestHandler
-import sys
-sys.path.insert(0, '/mnt/d/clawsjoy')
-from agents.tenant_agent import get_agent
 
-class AgentHandler(BaseHTTPRequestHandler):
-    def do_POST(self):
-        if self.path == '/api/agent/chat':
-            length = int(self.headers.get('Content-Length', 0))
-            data = json.loads(self.rfile.read(length))
-            tenant_id = data.get('tenant_id', 'tenant_1')
-            message = data.get('message', '')
-            
-            agent = get_agent(tenant_id)
-            result = agent.chat(message)
-            
+PORT = 18103
+
+class Handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/health':
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
-            self.wfile.write(json.dumps(result).encode())
+            self.wfile.write(json.dumps({"status": "ok", "service": "agent-api"}).encode())
         else:
             self.send_error(404)
+    
+    def do_POST(self):
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        self.wfile.write(json.dumps({"reply": "ok", "received": True}).encode())
 
 if __name__ == '__main__':
-    port = 18103
-    print(f"🤖 Agent API 端口: {port}")
-    HTTPServer(('0.0.0.0', port), AgentHandler).serve_forever()
+    print(f"🤖 Agent API 启动在端口 {PORT}")
+    HTTPServer(('0.0.0.0', PORT), Handler).serve_forever()

@@ -135,7 +135,7 @@ document.getElementById('promoBtn').onclick = () => {
     addMsg('user', '制作香港宣传片');
     addMsg('bot', '🎬 生成中...');
     const host = window.location.hostname;
-    fetch(`http://${host}:8108/api/task/promo`, {
+    fetch(`http://${host}:18108/api/task/promo`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ city: '香港', tenant_id: '1' })
@@ -146,7 +146,7 @@ document.getElementById('promoBtn').onclick = () => {
             addMsg('bot', '✅ 宣传片已生成');
             const videoDiv = document.createElement('div');
             videoDiv.className = 'msg bot';
-            videoDiv.innerHTML = `<video controls style="max-width:100%; border-radius:8px" src="http://localhost:18082${data.video_url}"></video>`;
+            videoDiv.innerHTML = `<video controls style="max-width:100%; border-radius:8px" src="http://localhost:18083${data.video_url}"></video>`;
             document.getElementById('chatArea').appendChild(videoDiv);
         } else addMsg('bot', '❌ 生成失败');
     }).catch(() => {
@@ -186,10 +186,10 @@ async function loadFiles() {
     container.innerHTML = '📂 加载中...';
     try {
         const host = window.location.hostname;
-        const res = await fetch(`http://${host}:8108/api/library/list?tenant_id=1`);
+        const res = await fetch(`http://${host}:18084/api/library/list?tenant_id=1`);
         const data = await res.json();
         if (!data.success || !data.files.length) { container.innerHTML = '📭 暂无文件'; return; }
-        container.innerHTML = data.files.map(f => `<div class="file-item"><span>📄 ${f.name}</span><button onclick="window.open('http://${host}:8108/api/library/file/${f.id}?tenant_id=1', '_blank')" style="background:transparent; border:1px solid #0ff; border-radius:6px; padding:4px 12px; color:#0ff;">预览</button></div>`).join('');
+        container.innerHTML = data.files.map(f => `<div class="file-item"><span>📄 ${f.name}</span><button onclick="window.open('http://${host}:18084/api/library/file/${f.id}?tenant_id=1', '_blank')" style="background:transparent; border:1px solid #0ff; border-radius:6px; padding:4px 12px; color:#0ff;">预览</button></div>`).join('');
     } catch(e) { container.innerHTML = '❌ 加载失败'; }
 }
 loadFiles();
@@ -204,7 +204,7 @@ document.getElementById('uploadBtn').onclick = async () => {
         fd.append('tenant_id', '1');
         fd.append('file', f);
         try {
-            const res = await fetch(`http://${host}:8108/api/library/upload`, { method: 'POST', body: fd });
+            const res = await fetch(`http://${host}:18084/api/library/upload`, { method: 'POST', body: fd });
             const data = await res.json();
             alert(data.success ? `✅ 上传成功: ${f.name}` : `❌ 上传失败: ${f.name}`);
         } catch(e) { alert('❌ 上传失败'); }
@@ -738,7 +738,7 @@ if (promo) {
         addMsg('user', '制作香港宣传片');
         addMsg('bot', '🎬 生成中...');
         const host = window.location.hostname;
-        fetch(`http://${host}:8108/api/task/promo`, {
+        fetch(`http://${host}:18108/api/task/promo`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ city: '香港', tenant_id: '1' })
@@ -751,7 +751,7 @@ if (promo) {
                 addMsg('bot', '✅ 宣传片已生成');
                 const videoDiv = document.createElement('div');
                 videoDiv.className = 'msg bot';
-                videoDiv.innerHTML = `<video controls style="max-width:100%; border-radius:8px" src="http://localhost:18082${data.video_url}"></video>`;
+                videoDiv.innerHTML = `<video controls style="max-width:100%; border-radius:8px" src="http://localhost:18083${data.video_url}"></video>`;
                 document.getElementById('chatArea').appendChild(videoDiv);
             } else {
                 addMsg('bot', '❌ 生成失败');
@@ -887,7 +887,7 @@ if (promo) {
         addMsg('user', '制作香港宣传片');
         addMsg('bot', '🎬 生成中...');
         const host = window.location.hostname;
-        fetch(`http://${host}:8108/api/task/promo`, {
+        fetch(`http://${host}:18108/api/task/promo`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ city: '香港', tenant_id: '1' })
@@ -900,7 +900,7 @@ if (promo) {
                 addMsg('bot', '✅ 宣传片已生成');
                 const videoDiv = document.createElement('div');
                 videoDiv.className = 'msg bot';
-                videoDiv.innerHTML = `<video controls style="max-width:100%; border-radius:8px" src="http://localhost:18082${data.video_url}"></video>`;
+                videoDiv.innerHTML = `<video controls style="max-width:100%; border-radius:8px" src="http://localhost:18083${data.video_url}"></video>`;
                 document.getElementById('chatArea').appendChild(videoDiv);
             } else {
                 addMsg('bot', '❌ 生成失败');
@@ -1063,7 +1063,7 @@ if (promoBtn) {
         addMsg('user', '制作香港宣传片');
         addMsg('bot', '🎬 生成中...');
         const host = window.location.hostname;
-        fetch(`http://${host}:8108/api/task/promo`, {
+        fetch(`http://${host}:18108/api/task/promo`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ city: '香港', tenant_id: '1' })
@@ -1074,7 +1074,7 @@ if (promoBtn) {
                 addMsg('bot', '✅ 宣传片已生成');
                 const videoDiv = document.createElement('div');
                 videoDiv.className = 'msg bot';
-                videoDiv.innerHTML = `<video controls style="max-width:100%; border-radius:8px" src="http://localhost:18082${data.video_url}"></video>`;
+                videoDiv.innerHTML = `<video controls style="max-width:100%; border-radius:8px" src="http://localhost:18083${data.video_url}"></video>`;
                 document.getElementById('chatArea').appendChild(videoDiv);
             } else addMsg('bot', '❌ 生成失败');
         }).catch(() => {

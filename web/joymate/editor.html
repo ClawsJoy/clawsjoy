@@ -337,7 +337,7 @@
 
     <script>
         const API_BASE = 'http://localhost:18095';
-        const PROMO_API = 'http://localhost:8108';
+        const PROMO_API = 'http://localhost:18108';
         let currentImages = [];
         let selectedImages = [];
         
@@ -444,7 +444,7 @@
             statusDiv.innerHTML = '📝 正在生成文案...';
             
             try {
-                const response = await fetch('http://localhost:18101/api/agent', {
+                const response = await fetch('http://localhost:18106/api/agent', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ text: `为${city}写一段${style}风格的宣传片文案，30秒` })

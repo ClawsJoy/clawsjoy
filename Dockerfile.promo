@@ -4,3 +4,4 @@ RUN pip install requests
 COPY bin/promo_api.py /app/
 EXPOSE 8105
 CMD ["python3", "promo_api.py"]
+RUN pip install edge-tts

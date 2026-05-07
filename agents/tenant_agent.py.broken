@@ -1,0 +1,257 @@
+#!/usr/bin/env python3
+"""TenantAgent 简化版 - 用于测试告警配置"""
+
+import json
+from pathlib import Path
+
+class TenantAgent:
+    def __init__(self, tenant_id="tenant_1"):
+        self.tenant_id = tenant_id
+        self.config_file = Path(f"/mnt/d/clawsjoy/tenants/{tenant_id}/agent_config.json")
+        self.config_file.parent.mkdir(parents=True, exist_ok=True)
+        self._load_config()
+    
+    def _load_config(self):
+        if self.config_file.exists():
+            with open(self.config_file) as f:
+                self.config = json.load(f)
+        else:
+            self.config = {"tenant_id": self.tenant_id, "alert_webhooks": {}, "preferences": {}}
+    
+    def _save_config(self):
+        with open(self.config_file, 'w') as f:
+            json.dump(self.config, f, indent=2)
+    
+    def set_alert_webhook(self, platform, webhook_url):
+        if "alert_webhooks" not in self.config:
+            self.config["alert_webhooks"] = {}
+        self.config["alert_webhooks"][platform] = webhook_url
+        self._save_config()
+        return {"success": True, "platform": platform}
+    
+    def get_alert_webhook(self, platform=None):
+        if platform:
+            return self.config.get("alert_webhooks", {}).get(platform)
+        return self.config.get("alert_webhooks", {})
+    
+    def send_alert(self, message, title="ClawsJoy 告警"):
+        import requests
+        webhooks = self.get_alert_webhook()
+        if not webhooks:
+            return {"success": False, "error": "未配置告警渠道"}
+        results = {}
+        for platform, url in webhooks.items():
+            try:
+                if "dingtalk" in platform or "dingtalk" in url:
+                    data = {"msgtype": "markdown", "markdown": {"title": title, "text": f"## {title}\n{message}"}}
+                elif "feishu" in platform or "feishu" in url:
+                    data = {"msg_type": "text", "content": {"text": f"[{title}]\n{message}"}}
+                else:
+                    data = {"msgtype": "markdown", "markdown": {"content": f"## {title}\n{message}"}}
+                resp = requests.post(url, json=data, timeout=5)
+                results[platform] = resp.status_code == 200
+            except:
+                results[platform] = False
+        return results
+
+if __name__ == "__main__":
+    agent = TenantAgent("tenant_1")
+    print(agent.set_alert_webhook("dingtalk", "https://oapi.dingtalk.com/robot/send?token=test"))
+    print(agent.send_alert("测试消息"))
+
+# ========== YouTube 配置 ==========
+def setup_youtube(self, user_input=None):
+    """自动引导用户完成 YouTube OAuth"""
+    
+    # 1. 检查是否已配置
+    if self.secret_filter.has_secret("youtube_token"):
+        return {"success": True, "message": "YouTube 已配置，可直接使用上传功能"}
+    
+    # 2. 如果没有 client_secrets，需要用户提供
+    if not self.secret_filter.has_secret("client_secrets"):
+        return {
+            "success": False, 
+            "action": "ask_secrets",
+            "message": "请提供 Google Cloud 的 client_secrets.json 文件内容或路径"
+        }
+    
+    # 3. 执行 OAuth 授权（调用现有脚本）
+    import subprocess
+    result = subprocess.run(
+        ["python3", "/mnt/d/clawsjoy/agents/youtube_uploader.py", "--tenant", self.tenant_id, "--auth"],
+        capture_output=True, text=True
+    )
+    
+    if result.returncode == 0:
+        self.secret_filter.extract_and_sanitize(f"youtube_token={result.stdout}")
+        return {"success": True, "message": "✅ YouTube 授权成功，已保存 token"}
+    
+    return {"success": False, "message": f"授权失败: {result.stderr}"}
+
+def upload_to_youtube(self, video_path=None, title=None):
+    """自动上传视频到 YouTube"""
+    if not self.secret_filter.has_secret("youtube_token"):
+        return {"success": False, "message": "请先配置 YouTube（说：帮我配置 YouTube）"}
+    
+    import subprocess
+    cmd = ["python3", "/mnt/d/clawsjoy/agents/youtube_uploader.py", "--tenant", self.tenant_id]
+    if title:
+        cmd.extend(["--title", title])
+    
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode == 0:
+        return {"success": True, "message": "✅ 视频已上传", "output": result.stdout}
+    return {"success": False, "message": f"上传失败: {result.stderr}"}
+
+# ========== 生成并上传联动 ==========
+def process_user_request(self, user_input):
+    """处理用户请求（统一入口）"""
+    user_lower = user_input.lower()
+    
+    # 1. 生成并上传
+    if ("生成" in user_lower or "制作" in user_lower) and ("上传" in user_lower or "发布" in user_lower):
+        # 提取城市
+        topic = "香港"
+        for city in ["香港", "上海", "深圳", "北京", "广州", "杭州"]:
+            if city in user_input:
+                topic = city
+                break
+        
+        # 提取时长
+        duration = 30
+        match = re.search(r'(\d+)\s*分钟', user_input)
+        if match:
+            duration = int(match.group(1)) * 60
+        match = re.search(r'(\d+)\s*秒', user_input)
+        if match:
+            duration = int(match.group(1))
+        
+        result = self.generate_and_upload(topic, duration)
+        return {"type": "result", "message": result.get("message", "完成"), "data": result}
+    
+    # 2. 仅上传
+    if "上传" in user_lower and ("youtube" in user_lower or "视频" in user_lower):
+        result = self.upload_to_youtube()
+        return {"type": "result", "message": result.get("message", "上传完成"), "data": result}
+    
+    # 3. 仅生成
+    if ("生成" in user_lower or "制作" in user_lower) and "上传" not in user_lower:
+        result = self.generate_video_only(user_input)
+        return {"type": "result", "message": result.get("message", "生成完成"), "data": result}
+    
+    # 4. 默认：调用大模型回答
+    return self._call_chat_api(user_input)
+
+def generate_video_only(self, user_input):
+    """仅生成视频，不上传"""
+    import requests
+    
+    # 提取城市
+    topic = "香港"
+    for city in ["香港", "上海", "深圳", "北京", "广州", "杭州"]:
+        if city in user_input:
+            topic = city
+            break
+    
+    # 调用 Promo API
+    try:
+        resp = requests.post("http://localhost:8108/api/promo/make", 
+                            json={"topic": topic, "duration": 30}, timeout=120)
+        if resp.status_code == 200:
+            data = resp.json()
+            return {"success": True, "message": f"✅ 视频已生成", "video_url": data.get("video_url")}
+        return {"success": False, "message": "生成失败"}
+    except Exception as e:
+        return {"success": False, "message": f"错误: {str(e)}"}
+
+# ========== 生成并上传联动 ==========
+def generate_video_only(self, user_input):
+    """仅生成视频，不上传"""
+    import requests
+    
+    # 提取城市
+    topic = "香港"
+    for city in ["香港", "上海", "深圳", "北京", "广州", "杭州"]:
+        if city in user_input:
+            topic = city
+            break
+    
+    try:
+        resp = requests.post("http://localhost:8108/api/promo/make", 
+                            json={"topic": topic, "duration": 30}, timeout=120)
+        if resp.status_code == 200:
+            data = resp.json()
+            return {"success": True, "message": f"✅ 视频已生成", "video_url": data.get("video_url")}
+        return {"success": False, "message": "生成失败"}
+    except Exception as e:
+        return {"success": False, "message": f"错误: {str(e)}"}
+
+# ========== 生成并上传联动 ==========
+def generate_and_upload(self, topic, duration=30):
+    """生成视频并自动上传到 YouTube"""
+    import requests
+    import subprocess
+    
+    # 1. 检查 YouTube 是否已配置
+    if not hasattr(self, 'secret_filter') or not self.secret_filter.has_secret("youtube_token"):
+        return {"success": False, "message": "请先配置 YouTube（说：帮我配置 YouTube）"}
+    
+    # 2. 调用 Promo API 生成视频
+    try:
+        print(f"🎬 正在生成 {topic} 宣传片...")
+        resp = requests.post("http://localhost:8108/api/promo/make", 
+                            json={"topic": topic, "duration": duration, "purpose": "youtube"},
+                            timeout=180)
+        if resp.status_code != 200:
+            return {"success": False, "message": f"视频生成失败: HTTP {resp.status_code}"}
+        
+        video_data = resp.json()
+        if not video_data.get("success"):
+            return {"success": False, "message": video_data.get("error", "视频生成失败")}
+        
+        video_url = video_data.get("video_url")
+        print(f"✅ 视频生成完成: {video_url}")
+    except Exception as e:
+        return {"success": False, "message": f"视频生成异常: {str(e)}"}
+    
+    # 3. 上传到 YouTube
+    try:
+        print("📤 正在上传到 YouTube...")
+        result = subprocess.run(
+            ["python3", "/mnt/d/clawsjoy/agents/youtube_uploader.py", "--tenant", self.tenant_id, "--title", f"{topic}宣传片"],
+            capture_output=True, text=True, timeout=300
+        )
+        
+        if result.returncode == 0:
+            return {
+                "success": True,
+                "message": "✅ 视频已生成并上传到 YouTube",
+                "video_url": video_url,
+                "youtube_result": result.stdout
+            }
+        else:
+            return {
+                "success": False,
+                "message": f"视频已生成但上传失败: {result.stderr}",
+                "video_url": video_url
+            }
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"视频已生成但上传异常: {str(e)}",
+            "video_url": video_url
+        }
+
+def upload_to_youtube(self):
+    """上传视频到 YouTube"""
+    import subprocess
+    try:
+        result = subprocess.run(
+            ["python3", "/mnt/d/clawsjoy/agents/youtube_uploader.py", "--tenant", self.tenant_id],
+            capture_output=True, text=True, timeout=300
+        )
+        if result.returncode == 0:
+            return {"success": True, "message": "✅ 视频已上传", "output": result.stdout}
+        return {"success": False, "message": f"上传失败: {result.stderr}"}
+    except Exception as e:
+        return {"success": False, "message": f"上传异常: {str(e)}"}

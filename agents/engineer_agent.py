@@ -11,8 +11,8 @@ from pathlib import Path
 
 class EngineerAgent:
     def __init__(self):
-        self.status_file = Path("data/system_status.json")
-        self.log_file = Path("logs/engineer.log")
+        self.status_file = Path("/mnt/d/clawsjoy/data/system_status.json")
+        self.log_file = Path("/mnt/d/clawsjoy/logs/engineer.log")
         self.load_status()
     
     def load_status(self):
@@ -159,3 +159,233 @@ if __name__ == "__main__":
         # 默认执行健康检查
         result = engineer.run_health_check()
         print(json.dumps(result, ensure_ascii=False, indent=2))
+
+    def learn_fix(self, problem, symptom, solution):
+        """学习新的修复方案"""
+        fix = {
+            "problem": problem,
+            "symptom": symptom,
+            "solution": solution,
+            "learned_at": str(datetime.now())
+        }
+        
+        # 保存到知识库
+        import json
+        from pathlib import Path
+        kb_file = Path("/mnt/d/clawsjoy/data/knowledge/common_fixes.json")
+        if kb_file.exists():
+            with open(kb_file) as f:
+                kb = json.load(f)
+            kb["fixes"].append(fix)
+            with open(kb_file, 'w') as f:
+                json.dump(kb, f, indent=2)
+        self.log(f"📚 学习了新修复方案: {problem}")
+        return fix
+    
+    def get_learning_stats(self):
+        """获取学习统计"""
+        import json
+        from pathlib import Path
+        kb_file = Path("/mnt/d/clawsjoy/data/knowledge/common_fixes.json")
+        if kb_file.exists():
+            with open(kb_file) as f:
+                kb = json.load(f)
+            return {
+                "total_fixes": len(kb.get("fixes", [])),
+                "fixes": [f["problem"] for f in kb.get("fixes", [])]
+            }
+        return {"total_fixes": 0, "fixes": []}
+
+    def self_learn_from_errors(self):
+        """从错误日志中学习故障模式"""
+        from pathlib import Path
+        import re
+        
+        log_dir = Path("/mnt/d/clawsjoy/logs")
+        error_patterns = {}
+        
+        for log_file in log_dir.glob("*.log"):
+            if log_file.stat().st_size > 0:
+                with open(log_file) as f:
+                    content = f.read()
+                # 提取错误模式
+                errors = re.findall(r'ERROR|Error|Exception|failed|timeout', content)
+                for err in errors[:20]:
+                    error_patterns[err] = error_patterns.get(err, 0) + 1
+        
+        # 记录高频错误模式
+        new_knowledge = []
+        for pattern, count in error_patterns.items():
+            if count > 3:  # 出现超过3次
+                new_knowledge.append({
+                    "pattern": pattern,
+                    "count": count,
+                    "learned_at": time.time()
+                })
+        
+        if new_knowledge:
+            self.status["learned_patterns"] = new_knowledge
+            self.save_status()
+            print(f"🔧 自我学习: 记录了 {len(new_knowledge)} 个错误模式")
+        
+        return new_knowledge
+    
+    def auto_heal_loop(self, interval_minutes=10):
+        """自动修复循环"""
+        import time
+        while True:
+            print(f"🔧 工程师自动巡检 (间隔{interval_minutes}分钟)")
+            self.self_learn_from_errors()
+            self.auto_fix()
+            time.sleep(interval_minutes * 60)
+
+    def self_learn_from_errors(self):
+        """从错误日志中学习故障模式"""
+        from pathlib import Path
+        import re
+        
+        log_dir = Path("/mnt/d/clawsjoy/logs")
+        error_patterns = {}
+        
+        for log_file in log_dir.glob("*.log"):
+            if log_file.stat().st_size > 0:
+                with open(log_file) as f:
+                    content = f.read()
+                # 提取错误模式
+                errors = re.findall(r'ERROR|Error|Exception|failed|timeout', content)
+                for err in errors[:20]:
+                    error_patterns[err] = error_patterns.get(err, 0) + 1
+        
+        # 记录高频错误模式
+        new_knowledge = []
+        for pattern, count in error_patterns.items():
+            if count > 3:  # 出现超过3次
+                new_knowledge.append({
+                    "pattern": pattern,
+                    "count": count,
+                    "learned_at": time.time()
+                })
+        
+        if new_knowledge:
+            self.status["learned_patterns"] = new_knowledge
+            self.save_status()
+            print(f"🔧 自我学习: 记录了 {len(new_knowledge)} 个错误模式")
+        
+        return new_knowledge
+    
+    def auto_heal_loop(self, interval_minutes=10):
+        """自动修复循环"""
+        import time
+        while True:
+            print(f"🔧 工程师自动巡检 (间隔{interval_minutes}分钟)")
+            self.self_learn_from_errors()
+            self.auto_fix()
+            time.sleep(interval_minutes * 60)
+
+    def self_learn_from_errors(self):
+        """从错误日志中学习故障模式"""
+        from pathlib import Path
+        import re
+        
+        log_dir = Path("/mnt/d/clawsjoy/logs")
+        error_patterns = {}
+        
+        for log_file in log_dir.glob("*.log"):
+            if log_file.stat().st_size > 0:
+                with open(log_file) as f:
+                    content = f.read()
+                # 提取错误模式
+                errors = re.findall(r'ERROR|Error|Exception|failed|timeout', content)
+                for err in errors[:20]:
+                    error_patterns[err] = error_patterns.get(err, 0) + 1
+        
+        # 记录高频错误模式
+        new_knowledge = []
+        for pattern, count in error_patterns.items():
+            if count > 3:  # 出现超过3次
+                new_knowledge.append({
+                    "pattern": pattern,
+                    "count": count,
+                    "learned_at": time.time()
+                })
+        
+        if new_knowledge:
+            self.status["learned_patterns"] = new_knowledge
+            self.save_status()
+            print(f"🔧 自我学习: 记录了 {len(new_knowledge)} 个错误模式")
+        
+        return new_knowledge
+    
+    def auto_heal_loop(self, interval_minutes=10):
+        """自动修复循环"""
+        import time
+        while True:
+            print(f"🔧 工程师自动巡检 (间隔{interval_minutes}分钟)")
+            self.self_learn_from_errors()
+            self.auto_fix()
+            time.sleep(interval_minutes * 60)
+
+    def learn_service_recovery(self):
+        """学习服务恢复"""
+        services = ["chat-api", "promo-api", "agent-api", "health-api"]
+        
+        for service in services:
+            # 检查服务是否真的在运行
+            result = subprocess.run(f"pm2 list | grep {service} | grep -q online", shell=True)
+            
+            if result.returncode != 0:
+                # 服务挂了，尝试重启
+                print(f"🔧 检测到 {service} 服务异常，尝试重启...")
+                subprocess.run(f"pm2 start {service} --interpreter python3", shell=True)
+                
+                # 记录学习经验
+                self.learn_fix({
+                    "problem": f"{service} service stopped",
+                    "solution": f"pm2 start {service} --interpreter python3",
+                    "learned_at": time.time()
+                })
+    
+    def learn_connection_pool(self):
+        """学习解决连接池问题"""
+        # 检查错误日志中的连接问题
+        error_log = Path("/mnt/d/clawsjoy/logs/system.log")
+        if error_log.exists():
+            with open(error_log) as f:
+                logs = f.read()
+            
+            if "Connection pool" in logs or "HTTPConnectionPool" in logs:
+                # 学习解决方案
+                self.learn_fix({
+                    "problem": "HTTP connection pool error",
+                    "solution": "增加连接池大小: sed -i 's/pool_connections=10/pool_connections=20/g' promo_api.py",
+                    "learned_at": time.time()
+                })
+                print("📚 学会处理连接池问题")
+
+    def learn_from_recent_errors(self):
+        """从最近的错误中学习"""
+        log_file = Path("/mnt/d/clawsjoy/logs/system.log")
+        if not log_file.exists():
+            return
+        
+        with open(log_file) as f:
+            logs = f.read()
+        
+        # 提取错误模式
+        error_patterns = {
+            "not found": "pm2 restart {service}",
+            "already in use": "sudo fuser -k {port}/tcp",
+            "connection refused": "pm2 restart {service}",
+            "ModuleNotFoundError": "pip install -r requirements.txt",
+            "Permission denied": "sudo chown -R flybo:flybo /mnt/d/clawsjoy"
+        }
+        
+        learned = []
+        for pattern, solution in error_patterns.items():
+            if pattern in logs:
+                learned.append({"problem": pattern, "solution": solution})
+        
+        if learned:
+            self.status["learned_fixes"] = learned
+            self.save_status()
+            print(f"📚 学会了 {len(learned)} 个修复方案")

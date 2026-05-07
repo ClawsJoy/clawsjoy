@@ -235,7 +235,7 @@ async function generateScript() {
     const prompt = `为${topic}写一段${minutes}分钟的${style}风格宣传片文案，约${Math.round(duration * 2.5)}字，适合配音朗读。`;
     
     try {
-        const response = await fetch('http://localhost:18101/api/agent', {
+        const response = await fetch('http://localhost:18106/api/agent', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ text: prompt })
@@ -350,7 +350,7 @@ async function makeVideo() {
     showStatus('🎬 正在生成视频，请稍候（约1-2分钟）...', 'loading');
     
     try {
-        const response = await fetch('http://localhost:8108/api/promo/make', {
+        const response = await fetch('http://localhost:18108/api/promo/make', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
@@ -363,7 +363,7 @@ async function makeVideo() {
         const data = await response.json();
         if (data.success) {
             showStatus(`✅ 视频生成成功！`, 'success');
-            window.open(`http://localhost:18082${data.video_url}`, '_blank');
+            window.open(`http://localhost:18083${data.video_url}`, '_blank');
         } else {
             showStatus('❌ 视频生成失败', 'error');
         }
