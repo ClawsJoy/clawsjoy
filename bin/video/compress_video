@@ -1,0 +1,40 @@
+#!/bin/bash
+# 压缩视频文件（智能版）
+
+INPUT="$1"
+OUTPUT="${2:-${INPUT%.*}_compressed.mp4}"
+QUALITY="${3:-medium}"
+
+# 获取文件大小（字节）
+SIZE=$(stat -c%s "$INPUT" 2>/dev/null || stat -f%z "$INPUT" 2>/dev/null)
+
+# 小于 500KB 的视频不压缩，直接复制
+if [ "$SIZE" -lt 500000 ]; then
+    echo "⚠️ 文件太小 (小于 500KB)，跳过压缩"
+    cp "$INPUT" "$OUTPUT"
+    echo "✅ 已复制: $OUTPUT"
+    exit 0
+fi
+
+case $QUALITY in
+    low)    CRF="32"; PRESET="fast";;
+    medium) CRF="28"; PRESET="medium";;
+    high)   CRF="23"; PRESET="slow";;
+    *)      CRF="28"; PRESET="medium";;
+esac
+
+ffmpeg -i "$INPUT" -c:v libx264 -crf $CRF -preset $PRESET \
+       -c:a aac -b:a 96k -movflags +faststart \
+       -y "$OUTPUT" -loglevel error
+
+NEW_SIZE=$(stat -c%s "$OUTPUT" 2>/dev/null || stat -f%z "$OUTPUT" 2>/dev/null)
+
+if [ "$NEW_SIZE" -lt "$SIZE" ]; then
+    RATIO=$(( (SIZE - NEW_SIZE) * 100 / SIZE ))
+    echo "✅ 压缩完成: $OUTPUT (减小 ${RATIO}%)"
+else
+    echo "⚠️ 压缩未减小体积，使用原文件"
+    cp "$INPUT" "$OUTPUT"
+fi
+
+ls -lh "$INPUT" "$OUTPUT"

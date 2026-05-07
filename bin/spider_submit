@@ -1,0 +1,35 @@
+#!/bin/bash
+# Spider 提交素材 - 自动通过版
+
+TITLE="$1"
+CATEGORY="$2"
+SUBJECT="$3"
+
+BASE_DIR="$HOME/.openclaw/web/images"
+CLASSIFIED_DIR="$BASE_DIR/$CATEGORY/$SUBJECT"
+mkdir -p "$CLASSIFIED_DIR"
+
+COUNT=$(find "$CLASSIFIED_DIR" -type f \( -name "*.jpg" -o -name "*.png" -o -name "*.svg" \) 2>/dev/null | wc -l)
+
+CONTENT="
+<h2>📁 $TITLE</h2>
+<p>🏷️ 分类: $CATEGORY / $SUBJECT</p>
+<p>📊 素材数量: $COUNT 个</p>
+<p>📂 路径: <code>$CLASSIFIED_DIR</code></p>
+<p>🔗 <a href='/$CATEGORY/$SUBJECT/' target='_blank'>点击预览素材</a></p>
+"
+
+# 直接提交为 approved 状态（跳过审核）
+cat > "$HOME/clawsjoy/outbox/spider_$(date +%Y%m%d_%H%M%S_%N).data.json" << JSON
+{
+  "title": "$TITLE 素材包",
+  "content": $(echo "$CONTENT" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))'),
+  "submitter": "spider",
+  "status": "approved",
+  "created_at": "$(date -Iseconds)",
+  "score": 85
+}
+JSON
+
+echo "✅ 已提交并自动通过：$TITLE"
+echo "📁 素材位置: $CLASSIFIED_DIR"

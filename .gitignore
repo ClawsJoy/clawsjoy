@@ -1,0 +1,91 @@
+# 备份和临时文件
+*_backup_*
+*.bak
+*.tar.gz
+*.log
+*.tmp
+__pycache__/
+*.pyc
+
+# 敏感配置
+.env
+config/.env
+webhook.json
+
+# 私有目录
+clawsjoy/
+venv/
+get-docker.sh
+start-clawsjoy.bat
+stop-clawsjoy.bat
+backups/
+*.db
+*.sqlite
+*.sqlite3
+.coverage
+.pytest_cache/
+__pycache__/
+*.pyc
+.env
+.venv
+venv/
+data/*.db
+data/*.sqlite
+data/*.db
+*.db
+.coverage
+
+# 安全敏感文件
+*.db
+*.sqlite
+*.sqlite3
+.coverage
+.pytest_cache/
+__pycache__/
+*.pyc
+.env
+*.log
+data/
+tenants/*/library.db
+.env
+*.swp
+*.swo
+tenants/
+tenants/*
+
+# 租户数据（私有）
+tenants/
+tenants/*
+!tenants/template/
+tenants/template/*
+
+# 运行时数据
+data/
+logs/
+*.db
+*.sqlite
+*.sqlite3
+
+# 用户上传和生成
+web/uploads/
+web/videos/*.mp4
+web/images/*.jpg
+web/images/*.png
+web/audio/*.mp3
+
+# Agent 状态
+*/agent/state.json
+*/agent/credentials.json
+*/agent/keywords.json
+
+# 配置文件（含可能密钥）
+config/*.json
+!config/templates/
+
+# 临时文件
+tmp/
+temp/
+*.tmp
+config/youtube/*.pickle
+config/youtube/client_secrets.json
+agents/oauth_playground*.py

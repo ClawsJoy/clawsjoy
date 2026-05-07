@@ -1,0 +1,8 @@
+#!/bin/bash
+KEYWORD="$1"
+COUNT="${2:-6}"
+echo "采集图片: $KEYWORD, 数量: $COUNT"
+# 实际调用 Unsplash API
+curl -s "https://api.unsplash.com/search/photos?query=$KEYWORD&per_page=$COUNT" \
+  -H "Authorization: Client-ID ijXPXhcaX2k5neNoQAzN1cw8DJl3i9gx8FlRnzspqKs" \
+  | python3 -c "import sys,json; [print(p['urls']['regular']) for p in json.load(sys.stdin).get('results',[])]"

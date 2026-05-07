@@ -1,0 +1,6 @@
+#!/bin/bash
+TITLE="$1"
+CONTENT="$2"
+WRITER="$3"
+echo "写文案: $TITLE, 作者: $WRITER"
+echo "$CONTENT" > /tmp/script_$(date +%s).txt

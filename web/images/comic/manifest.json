@@ -1,0 +1,10 @@
+{
+    "name": "狮子山精神漫画素材库",
+    "created": "2026-05-06",
+    "images": [
+        {"file": "comic_1.jpg", "type": "pollinations", "desc": "AI生成漫画"},
+        {"file": "comic_bg.jpg", "type": "gradient", "desc": "渐变背景"},
+        {"file": "comic_text.jpg", "type": "text", "desc": "励志文字"}
+    ],
+    "total": 3
+}
