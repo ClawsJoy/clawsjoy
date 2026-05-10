@@ -28,3 +28,9 @@
         {"intent": "配音", "skill": "tts"}
     ]
 }
+,
+    "self_heal": {
+        "path": "skills/self_heal/execute.py",
+        "capabilities": ["自愈", "修复", "恢复", "health"],
+        "evolution_score": 85
+    }
