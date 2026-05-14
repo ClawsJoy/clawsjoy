@@ -1,0 +1,7 @@
+{
+    "training": [
+        {"question": "如何重启Docker容器", "answer": "使用 docker restart <容器名> 命令"},
+        {"question": "Python虚拟环境怎么创建", "answer": "使用 python -m venv venv 命令创建"},
+        {"question": "Git如何提交代码", "answer": "git add . && git commit -m 'message' && git push"}
+    ]
+}

@@ -1,0 +1,37 @@
+{
+  "rules": [
+    {
+      "name": "api_down_trigger",
+      "condition": "api_status == false",
+      "action": "restart_api",
+      "cooldown": 300,
+      "last_trigger": null,
+      "enabled": true
+    },
+    {
+      "name": "ollama_down_trigger",
+      "condition": "ollama_status == false",
+      "action": "restart_ollama",
+      "cooldown": 300,
+      "last_trigger": null,
+      "enabled": true
+    },
+    {
+      "name": "disk_high_trigger",
+      "condition": "disk_usage > 85",
+      "action": "clean_logs",
+      "cooldown": 3600,
+      "last_trigger": null,
+      "enabled": true
+    },
+    {
+      "name": "skills_low_trigger",
+      "condition": "skills_count < 10",
+      "action": "register_new_skill",
+      "cooldown": 1800,
+      "last_trigger": null,
+      "enabled": true
+    }
+  ],
+  "check_interval": 30
+}

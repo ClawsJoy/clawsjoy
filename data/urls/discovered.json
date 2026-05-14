@@ -1,0 +1,697 @@
+{
+  "https://www.immd.gov.hk/hks/menu/forms.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/",
+    "status": "done"
+  },
+  "https://www.immd.gov.hk/hks/faq/index.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/",
+    "status": "done"
+  },
+  "https://www.immd.gov.hk/hks/forms/hkid.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/",
+    "status": "done"
+  },
+  "https://www.immd.gov.hk/hks/online-services/index.html#2": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/",
+    "status": "done"
+  },
+  "https://www.immd.gov.hk/hks/forms/hk-travel-doc.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/",
+    "status": "done"
+  },
+  "https://www.immd.gov.hk/hks/useful_information/enforcement.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/",
+    "status": "done"
+  },
+  "https://www.immd.gov.hk/hks/#skiptocontent": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/",
+    "status": "done"
+  },
+  "https://www.immd.gov.hk/hks/services/birth-death-marriage-registration.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/",
+    "status": "done"
+  },
+  "https://www.immd.gov.hk/hks/services/travel_document/index.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/",
+    "status": "done"
+  },
+  "https://www.immd.gov.hk/hks/services/hkid.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/",
+    "status": "done"
+  },
+  "https://www.info.gov.hk/gia/general/202605/06c.htm": {
+    "category": "新闻",
+    "source": "https://www.info.gov.hk/gia/general/today.htm",
+    "status": "done"
+  },
+  "http://sc.isd.gov.hk/TuniS//www.info.gov.hk/gia/general/202605/06c.htm": {
+    "category": "新闻",
+    "source": "https://www.info.gov.hk/gia/general/today.htm",
+    "status": "done"
+  },
+  "https://www.info.gov.hk/gia/general/today.htm": {
+    "category": "新闻",
+    "source": "https://www.info.gov.hk/gia/general/today.htm",
+    "status": "done"
+  },
+  "https://www.info.gov.hk/gia/general/today.htm#TOP": {
+    "category": "新闻",
+    "source": "https://www.info.gov.hk/gia/general/today.htm",
+    "status": "done"
+  },
+  "https://www.info.gov.hk/gia/general/today.htm#contentBody": {
+    "category": "新闻",
+    "source": "https://www.info.gov.hk/gia/general/today.htm",
+    "status": "done"
+  },
+  "https://www.info.gov.hk/gia/general/202605/05.htm": {
+    "category": "新闻",
+    "source": "https://www.info.gov.hk/gia/general/today.htm",
+    "status": "done"
+  },
+  "https://www.info.gov.hk/gia/ISD_public_Calendar_en.html": {
+    "category": "新闻",
+    "source": "https://www.info.gov.hk/gia/general/today.htm",
+    "status": "done"
+  },
+  "https://www.edb.gov.hk/sc/about-edb/press/insiderperspective/index.html": {
+    "category": "教育",
+    "source": "https://www.edb.gov.hk/sc/",
+    "status": "done"
+  },
+  "https://www.edb.gov.hk/sc/sch-admin/sch-quality-assurance/about-sch-quality-assurance/index.html": {
+    "category": "教育",
+    "source": "https://www.edb.gov.hk/sc/",
+    "status": "done"
+  },
+  "https://www.edb.gov.hk/sc/sch-admin/sch-quality-assurance/sse/index.html": {
+    "category": "教育",
+    "source": "https://www.edb.gov.hk/sc/",
+    "status": "done"
+  },
+  "https://www.edb.gov.hk/sc/public-admin/contract-award-notice/award.html": {
+    "category": "教育",
+    "source": "https://www.edb.gov.hk/sc/",
+    "status": "pending"
+  },
+  "https://www.edb.gov.hk/sc/edu-system/preprimary-kindergarten/kindergarten-k1-admission-arrangements/front.html": {
+    "category": "教育",
+    "source": "https://www.edb.gov.hk/sc/",
+    "status": "pending"
+  },
+  "https://www.edb.gov.hk/sc/curriculum-development/cross-kla-studies/applied-learning/index.html": {
+    "category": "教育",
+    "source": "https://www.edb.gov.hk/sc/",
+    "status": "pending"
+  },
+  "https://www.edb.gov.hk/sc/sch-admin/admin/about-teaching/copyright/index.html": {
+    "category": "教育",
+    "source": "https://www.edb.gov.hk/sc/",
+    "status": "pending"
+  },
+  "https://www.edb.gov.hk/sc/student-parents/sch-info/fees-charges-in-sch/index.html": {
+    "category": "教育",
+    "source": "https://www.edb.gov.hk/sc/",
+    "status": "pending"
+  },
+  "https://www.edb.gov.hk/sc/textsize/index.html": {
+    "category": "教育",
+    "source": "https://www.edb.gov.hk/sc/",
+    "status": "pending"
+  },
+  "https://www.edb.gov.hk/sc/sch-admin/admin/newly-arrived-ncs-children/index.html": {
+    "category": "教育",
+    "source": "https://www.edb.gov.hk/sc/",
+    "status": "pending"
+  },
+  "https://www.labour.gov.hk/tc/news/other_activities.htm": {
+    "category": "工作",
+    "source": "https://www.labour.gov.hk/tc/",
+    "status": "pending"
+  },
+  "https://www.labour.gov.hk/tc/#mainContentSkip": {
+    "category": "工作",
+    "source": "https://www.labour.gov.hk/tc/",
+    "status": "pending"
+  },
+  "https://www.labour.gov.hk/tc/": {
+    "category": "工作",
+    "source": "https://www.labour.gov.hk/tc/",
+    "status": "pending"
+  },
+  "https://www.labour.gov.hk/tc/major/content.htm": {
+    "category": "工作",
+    "source": "https://www.labour.gov.hk/tc/",
+    "status": "pending"
+  },
+  "https://www.labour.gov.hk/tc/news/highlights.htm": {
+    "category": "工作",
+    "source": "https://www.labour.gov.hk/tc/",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/menu/forms.html#skiptocontent": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/menu/forms.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/index.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/menu/forms.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/forms/chinese-nationality-application-form.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/menu/forms.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/forms/other.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/menu/forms.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/menu/forms.html#top": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/menu/forms.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/forms/right-of-abode-in-hksar.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/menu/forms.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/forms/hk-visas.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/menu/forms.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/faq/1868.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/faq/index.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/faq/faq_hkic.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/faq/index.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/faq/births-deaths-registration.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/faq/index.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/faq/1868chatbot.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/faq/index.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/faq/imm-clearance.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/faq/index.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/faq/index.html#top": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/faq/index.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/faq/others.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/faq/index.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/faq/enforcement.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/faq/index.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/forms/forms/rop-e-143a.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/forms/hkid.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/forms/forms/rop138.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/forms/hkid.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/forms/forms/sf-rop-166-c.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/forms/hkid.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/forms/forms/rop35a.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/forms/hkid.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/forms/forms/rop1t.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/forms/hkid.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/forms/forms/rop143.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/forms/hkid.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/forms/forms/rop-c-144a.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/forms/hkid.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/forms/forms/rop-e-144a.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/forms/hkid.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/services/index.html#tab_c_1": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/online-services/index.html#2",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/services/index.html#tab_a_1": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/online-services/index.html#2",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/online-services/index.html#skiptocontent": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/online-services/index.html#2",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/services/index.html#tab_f_1": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/online-services/index.html#2",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/services/hkid/amend_hkid.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/online-services/index.html#2",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/online-services/index.html#top": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/online-services/index.html#2",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/online-services/e-submission.html#a": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/online-services/index.html#2",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/services/index.html#tab_e_1": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/online-services/index.html#2",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/services/index.html#tab_d_1": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/online-services/index.html#2",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/forms/forms/id912.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/forms/hk-travel-doc.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/forms/forms/id-e-844a.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/forms/hk-travel-doc.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/pdf/HKDI_Supplementary_Info_Sheet_hkt.pdf": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/forms/hk-travel-doc.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/forms/forms/id853a.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/forms/hk-travel-doc.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/forms/forms/id-e-437.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/forms/hk-travel-doc.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/forms/forms/id855.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/forms/hk-travel-doc.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/forms/forms/id873.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/forms/hk-travel-doc.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/forms/forms/id845.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/forms/hk-travel-doc.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/pdf/Detention Policy_S.32_sc.pdf": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/useful_information/enforcement.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/menu/useful-information-statistics.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/useful_information/enforcement.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/pdf/arrestguide_sc.pdf": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/useful_information/enforcement.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/useful_information/rules-of-persons-residing.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/useful_information/enforcement.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/useful_information/country-of-origin-information.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/useful_information/enforcement.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/pdforms/Non-refoulement Claim Form.pdf": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/useful_information/enforcement.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/pdforms/supplementary-claim-form.pdf": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/useful_information/enforcement.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/useful_information/non-refoulement-making-claim.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/useful_information/enforcement.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/pdf/notice_non-refoulement_claim_en.pdf": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/useful_information/enforcement.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/services/birth-death/Registering_a_death.html#bb": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/services/birth-death-marriage-registration.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/services/birth-death/Registration_of_a_Birth.html#bb": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/services/birth-death-marriage-registration.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/services/fee-tables/index.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/services/birth-death-marriage-registration.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/services/birth-death/Apply_for_Addition_or_Alteration_of_Child_name.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/services/birth-death-marriage-registration.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/services/birth-death-marriage-registration.html#top": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/services/birth-death-marriage-registration.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/services/birth-death-marriage-registration.html#skiptocontent": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/services/birth-death-marriage-registration.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/services/birth-death/Application_for_Search_of_Birth_Records_and_Certified_Copy_of_Birth_Entry.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/services/birth-death-marriage-registration.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/services/birth-death/Apply_for_a_permit_to_remove_a_dead_body_from_Hong_Kong.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/services/birth-death-marriage-registration.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/services/birth-death/Registration_of_a_Birth.html#aa": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/services/birth-death-marriage-registration.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/service/travel_document/Application_for_HKSAR_Document_of_Identity_for_Visa_Purposes.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/services/travel_document/index.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/service/travel_document/apply_for_hksar_passport.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/services/travel_document/index.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/service/travel_document/Application_for_HKSAR_Re-entry_Permit.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/services/travel_document/index.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/residents/immigration/traveldoc/hksarpassport/characteristics.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/services/travel_document/index.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/service/travel_document/Application_for_Hong Kong_Seamans_Identity_Book.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/services/travel_document/index.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/service/travel_document/visa_free_access.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/services/travel_document/index.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/services/travel_document/index.html#top": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/services/travel_document/index.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/services/hkid/rop35a.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/services/hkid.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/services/hkid/ccic.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/services/hkid.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/services/hkid/smartid.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/services/hkid.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/ic_collection_kiosk.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/services/hkid.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/services/hkid/reg_replace.html#overseas": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/services/hkid.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/services/hkid/reg_replace.html#under_11": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/services/hkid.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/menu/our-services.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/services/hkid.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/pdsk.html": {
+    "category": "移民",
+    "source": "https://www.immd.gov.hk/hks/services/hkid.html",
+    "status": "pending"
+  },
+  "https://www.info.gov.hk/gia/general/202605/06c.htm#contentBody": {
+    "category": "新闻",
+    "source": "https://www.info.gov.hk/gia/general/202605/06c.htm",
+    "status": "pending"
+  },
+  "https://www.info.gov.hk/gia/general/202605/05c.htm": {
+    "category": "新闻",
+    "source": "https://www.info.gov.hk/gia/general/202605/06c.htm",
+    "status": "pending"
+  },
+  "https://www.info.gov.hk/gia/general/ctoday.htm": {
+    "category": "新闻",
+    "source": "https://www.info.gov.hk/gia/general/202605/06c.htm",
+    "status": "pending"
+  },
+  "https://www.info.gov.hk/gia/ISD_public_Calendar_tc.html": {
+    "category": "新闻",
+    "source": "https://www.info.gov.hk/gia/general/202605/06c.htm",
+    "status": "pending"
+  },
+  "https://www.info.gov.hk/gia/general/202605/06c.htm#TOP": {
+    "category": "新闻",
+    "source": "https://www.info.gov.hk/gia/general/202605/06c.htm",
+    "status": "pending"
+  },
+  "https://www.info.gov.hk/gia/general/202605/06.htm": {
+    "category": "新闻",
+    "source": "https://www.info.gov.hk/gia/general/202605/06c.htm",
+    "status": "pending"
+  },
+  "https://sc.isd.gov.hk/TuniS/www.info.gov.hk/gia/general/202605/05c.htm": {
+    "category": "新闻",
+    "source": "http://sc.isd.gov.hk/TuniS//www.info.gov.hk/gia/general/202605/06c.htm",
+    "status": "pending"
+  },
+  "http://sc.isd.gov.hk/TuniS//www.info.gov.hk/gia/general/202605/06c.htm#contentBody": {
+    "category": "新闻",
+    "source": "http://sc.isd.gov.hk/TuniS//www.info.gov.hk/gia/general/202605/06c.htm",
+    "status": "pending"
+  },
+  "http://sc.isd.gov.hk/TuniS//www.info.gov.hk/gia/general/202605/06c.htm#TOP": {
+    "category": "新闻",
+    "source": "http://sc.isd.gov.hk/TuniS//www.info.gov.hk/gia/general/202605/06c.htm",
+    "status": "pending"
+  },
+  "https://sc.isd.gov.hk/TuniS/www.info.gov.hk/gia/general/202605/06.htm": {
+    "category": "新闻",
+    "source": "http://sc.isd.gov.hk/TuniS//www.info.gov.hk/gia/general/202605/06c.htm",
+    "status": "pending"
+  },
+  "https://sc.isd.gov.hk/TuniS/www.info.gov.hk/gia/general/ctoday.htm": {
+    "category": "新闻",
+    "source": "http://sc.isd.gov.hk/TuniS//www.info.gov.hk/gia/general/202605/06c.htm",
+    "status": "pending"
+  },
+  "https://sc.isd.gov.hk/TuniS/www.info.gov.hk/gia/ISD_public_Calendar_tc.html": {
+    "category": "新闻",
+    "source": "http://sc.isd.gov.hk/TuniS//www.info.gov.hk/gia/general/202605/06c.htm",
+    "status": "pending"
+  },
+  "https://www.info.gov.hk/gia/general/202605/05/P2026050500272.htm": {
+    "category": "新闻",
+    "source": "https://www.info.gov.hk/gia/general/202605/05.htm",
+    "status": "pending"
+  },
+  "https://www.info.gov.hk/gia/general/202605/05/P2026050500283.htm": {
+    "category": "新闻",
+    "source": "https://www.info.gov.hk/gia/general/202605/05.htm",
+    "status": "pending"
+  },
+  "https://www.info.gov.hk/gia/general/202605/05/P2026050500276.htm": {
+    "category": "新闻",
+    "source": "https://www.info.gov.hk/gia/general/202605/05.htm",
+    "status": "pending"
+  },
+  "https://www.info.gov.hk/gia/general/202605/05/P2026050500236.htm": {
+    "category": "新闻",
+    "source": "https://www.info.gov.hk/gia/general/202605/05.htm",
+    "status": "pending"
+  },
+  "https://www.info.gov.hk/gia/general/202605/05/P2026050500706.htm": {
+    "category": "新闻",
+    "source": "https://www.info.gov.hk/gia/general/202605/05.htm",
+    "status": "pending"
+  },
+  "https://www.info.gov.hk/gia/general/202605/05.htm#TOP": {
+    "category": "新闻",
+    "source": "https://www.info.gov.hk/gia/general/202605/05.htm",
+    "status": "pending"
+  },
+  "http://sc.isd.gov.hk/TuniS//www.info.gov.hk/gia/general/202605/05c.htm": {
+    "category": "新闻",
+    "source": "https://www.info.gov.hk/gia/general/202605/05.htm",
+    "status": "pending"
+  },
+  "https://www.info.gov.hk/gia/general/202605/04.htm": {
+    "category": "新闻",
+    "source": "https://www.info.gov.hk/gia/general/202605/05.htm",
+    "status": "pending"
+  },
+  "https://www.info.gov.hk/gia/general/202605/05/P2026050500328.htm": {
+    "category": "新闻",
+    "source": "https://www.info.gov.hk/gia/general/202605/05.htm",
+    "status": "pending"
+  },
+  "https://www.info.gov.hk/gia/general/202605/05/P2026050500360.htm": {
+    "category": "新闻",
+    "source": "https://www.info.gov.hk/gia/general/202605/05.htm",
+    "status": "pending"
+  },
+  "https://www.info.gov.hk/gia/ISD_public_Calendar_en.html#contentBody": {
+    "category": "新闻",
+    "source": "https://www.info.gov.hk/gia/ISD_public_Calendar_en.html",
+    "status": "pending"
+  },
+  "http://sc.isd.gov.hk/TuniS/www.info.gov.hk/gia/ISD_public_Calendar_tc.html": {
+    "category": "新闻",
+    "source": "https://www.info.gov.hk/gia/ISD_public_Calendar_en.html",
+    "status": "pending"
+  },
+  "http://www.info.gov.hk/isd/speech/sensp.htm": {
+    "category": "新闻",
+    "source": "https://www.info.gov.hk/gia/ISD_public_Calendar_en.html",
+    "status": "pending"
+  },
+  "https://www.edb.gov.hk/sc/about-edb/press/insiderperspective/index.html#Header": {
+    "category": "教育",
+    "source": "https://www.edb.gov.hk/sc/about-edb/press/insiderperspective/index.html",
+    "status": "pending"
+  },
+  "https://www.edb.gov.hk/sc/about-edb/press/insiderperspective/insiderperspective20251111.html": {
+    "category": "教育",
+    "source": "https://www.edb.gov.hk/sc/about-edb/press/insiderperspective/index.html",
+    "status": "pending"
+  },
+  "https://www.edb.gov.hk/sc/about-edb/press/insiderperspective/insiderperspective20260205.html": {
+    "category": "教育",
+    "source": "https://www.edb.gov.hk/sc/about-edb/press/insiderperspective/index.html",
+    "status": "pending"
+  },
+  "https://www.edb.gov.hk/sc/sch-admin/sch-quality-assurance/partnership-edu-sector/serve-er.html": {
+    "category": "教育",
+    "source": "https://www.edb.gov.hk/sc/sch-admin/sch-quality-assurance/about-sch-quality-assurance/index.html",
+    "status": "pending"
+  },
+  "https://www.immd.gov.hk/hks/fdh.html": {
+    "source": "https://www.immd.gov.hk/hks/",
+    "status": "pending",
+    "discovered_at": "1778227294.7408829"
+  },
+  "http://sc.isd.gov.hk/TuniS//www.info.gov.hk/gia/general/202605/08c.htm": {
+    "source": "https://www.info.gov.hk/gia/general/today.htm",
+    "status": "pending",
+    "discovered_at": "1778227295.1723418"
+  },
+  "https://www.edb.gov.hk/sc/": {
+    "source": "self_learn",
+    "status": "pending",
+    "discovered_at": 1778230012.9503608
+  },
+  "https://www.ha.org.hk/": {
+    "source": "self_learn",
+    "status": "pending",
+    "discovered_at": 1778230012.950362
+  },
+  "https://www.immd.gov.hk/hks/": {
+    "source": "self_learn",
+    "status": "pending",
+    "discovered_at": 1778230012.9503624
+  }
+}

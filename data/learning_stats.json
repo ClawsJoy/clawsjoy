@@ -1,0 +1,37 @@
+{
+  "learned": 1,
+  "patterns": [],
+  "last_learn": {
+    "total_experiences": 200,
+    "success_rate": 0.295,
+    "top_skills": [
+      [
+        "SmartConcierge",
+        196
+      ],
+      [
+        "SelfHealingExecutor",
+        3
+      ],
+      [
+        "SelfHealer",
+        1
+      ]
+    ],
+    "common_errors": [
+      [
+        "",
+        137
+      ],
+      [
+        "HTTPConnectionPool(host='localhost', port=8107): M",
+        2
+      ],
+      [
+        "Connection refused to port 8101",
+        1
+      ]
+    ],
+    "learned_at": "2026-05-09T17:35:42.743059"
+  }
+}

@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+.venv/
+env/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 日志
+logs/*.log
+logs/*.log.*
+
+# 数据
+data/uploads/*
+data/*.db
+data/*.sqlite
+
+# 输出
+output/*
+output/bg/*
+output/characters/*
+
+# 临时文件
+*.tmp
+*.bak
+*.backup
+*.old
+
+# 测试
+.pytest_cache/
+.coverage
+htmlcov/
+
+# 大型目录
+localmind/
+tenants/
+web/audio/
+web/videos/
+web/images/
+
+# 备份
+backups/
+*.tar.gz
+*.zip

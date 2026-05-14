@@ -1,0 +1,14 @@
+{
+  "\u65e5\u5e38\u68c0\u67e5": [
+    "\u78c1\u76d8\u4f7f\u7528: df -h",
+    "\u5185\u5b58\u4f7f\u7528: free -h",
+    "CPU\u8d1f\u8f7d: top -bn1 | head -5",
+    "\u670d\u52a1\u72b6\u6001: pm2 list",
+    "\u5bb9\u5668\u72b6\u6001: docker ps"
+  ],
+  "\u6027\u80fd\u4f18\u5316": [
+    "\u6e05\u7406\u65e5\u5fd7: find logs -name '*.log' -size +50M -delete",
+    "\u6e05\u7406\u7f13\u5b58: docker system prune -f",
+    "\u91cd\u542f\u670d\u52a1: pm2 restart all"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "domain": "web_crawling",
+  "seed_urls": ["immd.gov.hk", "info.gov.hk", "edb.gov.hk"],
+  "crawl_rules": {
+    "max_depth": 2,
+    "delay": 1,
+    "user_agent": "ClawsJoy/1.0"
+  },
+  "url_filters": ["\\.jpg$", "\\.png$", "\\.pdf$", "#"]
+}

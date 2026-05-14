@@ -1,0 +1,19 @@
+{
+    "name": "memory_manager",
+    "version": "2.0.0",
+    "description": "memory_manager 核心Agent",
+    "personality": {
+        "style": "professional",
+        "language": "zh-CN",
+        "response_format": "concise",
+        "timeout": 30
+    },
+    "skills": [],
+    "memory": {
+        "enabled": true,
+        "max_items": 200,
+        "ttl_days": 30
+    },
+    "workspace": "./workspace",
+    "auto_save": true
+}

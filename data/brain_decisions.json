@@ -1,0 +1,30 @@
+[
+  {
+    "timestamp": "2026-05-12T23:52:07.175623",
+    "state": {
+      "timestamp": "2026-05-12T23:51:43.678251",
+      "brain": {
+        "experiences": 191,
+        "success_rate": 0.3089005235602094,
+        "knowledge_nodes": 90,
+        "best_practices": 2
+      },
+      "services": {
+        "gateway": false,
+        "file": true,
+        "agent": true,
+        "doc": true
+      },
+      "performance": {
+        "cpu_percent": 0.0,
+        "memory_percent": 8.4,
+        "disk_percent": 4.0
+      },
+      "previous_decisions": []
+    },
+    "decisions": [
+      {
+        "action": "fix_services",
+        "priority": 100,
+        "reason": "\u670d\u52a1\u5f02\u5e38: ['gateway']",
+        "executor": 

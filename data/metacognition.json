@@ -1,0 +1,13 @@
+{
+  "learning_strategies": [],
+  "effectiveness_history": [],
+  "current_strategy": "aggressive",
+  "self_improvements": [
+    {
+      "timestamp": "2026-05-12T18:17:22.209253",
+      "old_strategy": "aggressive",
+      "new_strategy": "aggressive",
+      "reason": "\u5b66\u4e60\u901f\u5ea6\u6162\uff0c\u52a0\u901f\u5b66\u4e60"
+    }
+  ]
+}

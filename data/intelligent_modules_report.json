@@ -1,0 +1,38 @@
+{
+  "timestamp": "2026-05-10T19:16:21.791340",
+  "modules": {
+    "\u5927\u8111\u540c\u6b65": {
+      "file": "bin/sync_brain_keywords.py",
+      "status": "\u2705",
+      "tested": true
+    },
+    "\u5411\u91cf\u4f18\u5316": {
+      "file": "agent_core/cached_vector.py",
+      "status": "\u2705",
+      "has_optimize": true
+    },
+    "\u6280\u80fd\u5065\u5eb7": {
+      "file": "skills/workflow_engine.py",
+      "status": "\u2705",
+      "has_health_check": true
+    },
+    "\u914d\u7f6e\u76d1\u542c": {
+      "file": "agent_core/config_watcher.py",
+      "status": "\u2705",
+      "tested": true
+    },
+    "\u7edf\u4e00\u914d\u7f6e": {
+      "file": "config/unified_config.json",
+      "status": "\u2705",
+      "exists": true
+    },
+    "\u7ecf\u9a8c\u5e93": {
+      "file": "knowledge/experiences.json",
+      "status": "\u2705",
+      "count": 10
+    }
+  },
+  "total_modules": 6,
+  "healthy_modules": 6,
+  "ready_for_production": true
+}

@@ -1,0 +1,38 @@
+{
+  "learned_at": "2026-05-08T16:41:26.658982",
+  "knowledge": [
+    {
+      "type": "domain_pattern",
+      "domain": "www.immd.gov.hk",
+      "count": 84,
+      "learned_at": 1778229686.6589735
+    },
+    {
+      "type": "domain_pattern",
+      "domain": "www.info.gov.hk",
+      "count": 23,
+      "learned_at": 1778229686.6589744
+    },
+    {
+      "type": "domain_pattern",
+      "domain": "www.edb.gov.hk",
+      "count": 14,
+      "learned_at": 1778229686.6589746
+    },
+    {
+      "type": "domain_pattern",
+      "domain": "sc.isd.gov.hk",
+      "count": 10,
+      "learned_at": 1778229686.658975
+    },
+    {
+      "type": "domain_pattern",
+      "domain": "www.labour.gov.hk",
+      "count": 5,
+      "learned_at": 1778229686.6589751
+    }
+  ],
+  "stats": {
+    "total_domains": 5
+  }
+}

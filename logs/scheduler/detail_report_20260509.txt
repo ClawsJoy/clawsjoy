@@ -1,0 +1,48 @@
+
+╔══════════════════════════════════════════════════════════════╗
+║              ClawsJoy 调度专家每日报告                        ║
+║              日期: 2026-05-09                    ║
+╚══════════════════════════════════════════════════════════════╝
+
+📊 任务统计:
+   - 定时任务总数: 58
+   - 今日错误数: 5
+
+💻 系统资源:
+   - 磁盘: 4%
+
+📋 定时任务列表 (58 个):
+   1. PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+   2. 0 6,12 * * * cd /mnt/d/clawsjoy_clean && ./collect_only.sh >> logs/collect.log 2
+   3. 0 8 * * * cd /mnt/d/clawsjoy_clean && ./workflow/rag_pipeline.sh >> logs/rag_dai
+   4. 0 9 * * * cd /mnt/d/clawsjoy_clean && ./test_workflow_quality.sh >> logs/daily_q
+   5. 0 23 * * * cd /mnt/d/clawsjoy_clean && ./workflow/night_task.sh >> logs/night.lo
+   6. * * * * * /mnt/d/clawsjoy_clean/scheduler/gpu_optimized.sh
+   7. 55 * * * * cd /mnt/d/clawsjoy_clean && ./workflow/auto_publish.sh >> logs/publis
+   8. 0 * * * * cd /mnt/d/clawsjoy_clean && python3 agents/engineer_agent.py run >> lo
+   9. 0 2 * * * cd /mnt/d/clawsjoy_clean && python3 agents/cleaner_agent.py smart >> l
+   10. 0 9 * * * cd /mnt/d/clawsjoy_clean && python3 agents/youtube_upload_final.py >> 
+   11. 0 8 * * * cd /mnt/d/clawsjoy_clean && python3 agents/youtube_optimizer.py >> log
+   12. 0 2 * * * cd /mnt/d/clawsjoy && python3 agents/keyword_learner.py --auto >> logs
+   13. 0 * * * * /mnt/d/clawsjoy/bin/sync_to_n8n.sh
+   14. */5 * * * * cd /mnt/d/clawsjoy && python3 bin/metrics_collector.py >> logs/metri
+   15. */5 * * * * cd /mnt/d/clawsjoy && python3 bin/async_upload.py process >> logs/as
+   16. */30 * * * * cd /mnt/d/clawsjoy && python3 system_scheduler.py url >> logs/syste
+   17. 0 * * * * cd /mnt/d/clawsjoy && python3 system_scheduler.py crawl >> logs/system
+   18. */30 * * * * cd /mnt/d/clawsjoy && python3 system_scheduler.py keyword >> logs/s
+   19. 0 2 * * * cd /mnt/d/clawsjoy && python3 system_scheduler.py video >> logs/system
+   20. 0 3 * * * cd /mnt/d/clawsjoy && python3 system_scheduler.py clean >> logs/system
+   ... 还有 38 个任务
+
+⚠️ 错误日志详情 (5 条):
+   [engineer.log] [2026-05-08 16:17:46] [ERROR] ❌ promo_api 重启失败: pkill: killing pid 57946 failed: Oper
+   [engineer.log] [2026-05-08 16:22:34] [ERROR] ❌ chat_api 重启失败: pkill: killing pid 94705 failed: Opera
+   [engineer.log] [2026-05-08 16:22:36] [ERROR] ❌ promo_api 重启失败: pkill: killing pid 57946 failed: Oper
+   [engineer.log] [2026-05-08 16:23:29] [ERROR] ❌ chat_api 重启失败: pkill: killing pid 94705 failed: Opera
+   [engineer.log] [2026-05-08 16:23:31] [ERROR] ❌ promo_api 重启失败: pkill: killing pid 57946 failed: Oper
+
+📁 日志位置: /mnt/d/clawsjoy/logs/
+
+---
+ClawsJoy 智能运维系统
+报告时间: 2026-05-09 12:14:16

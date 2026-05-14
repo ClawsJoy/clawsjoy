@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>API Test</title>
+</head>
+<body>
+    <h1>API 测试</h1>
+    <div id="result">测试中...</div>
+    <script>
+        fetch('http://192.168.3.11:8084/api/library/list?tenant_id=1')
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('result').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            })
+            .catch(err => {
+                document.getElementById('result').innerHTML = '错误: ' + err.message;
+            });
+    </script>
+</body>
+</html>

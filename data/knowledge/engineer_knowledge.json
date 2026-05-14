@@ -1,0 +1,9 @@
+{
+  "domain": "system_engineering",
+  "topics": ["进程管理", "端口冲突", "服务依赖", "资源监控"],
+  "fixes": [
+    {"symptom": "Address already in use", "solution": "sudo fuser -k {port}/tcp"},
+    {"symptom": "Connection refused", "solution": "pm2 restart {service}"},
+    {"symptom": "No space left", "solution": "python3 agents/cleaner_agent.py smart"}
+  ]
+}

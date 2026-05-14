@@ -1,0 +1,22 @@
+{
+  "total": 17,
+  "success": 11,
+  "by_service": {
+    "agent-api": {
+      "total": 3,
+      "success": 2
+    },
+    "chat-api": {
+      "total": 8,
+      "success": 3
+    },
+    "promo-api": {
+      "total": 3,
+      "success": 3
+    },
+    "health-api": {
+      "total": 3,
+      "success": 3
+    }
+  }
+}

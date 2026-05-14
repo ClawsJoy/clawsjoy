@@ -1,0 +1,14 @@
+#!/bin/bash
+# 裁剪视频
+# 用法: video_trim <输入视频> <开始时间> <时长> [输出文件]
+# 时间格式: HH:MM:SS 或 秒数
+
+INPUT="$1"
+START="$2"
+DURATION="$3"
+OUTPUT="${4:-${INPUT%.*}_trimmed.mp4}"
+
+ffmpeg -i "$INPUT" -ss "$START" -t "$DURATION" \
+       -c:v libx264 -c:a aac -y "$OUTPUT" -loglevel error
+
+echo "✅ 裁剪完成: $OUTPUT (从 $START 开始, 时长 $DURATION)"

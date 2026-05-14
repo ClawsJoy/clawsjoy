@@ -1,0 +1,55 @@
+{
+  "timestamp": "2026-05-10T19:00:56.419407",
+  "scores": {
+    "大脑经验库": 0,
+    "向量知识库": 40,
+    "技能库": 23.5,
+    "配置库": 26,
+    "模板库": 0,
+    "协同度": 25.0
+  },
+  "total_score": 19.083333333333332,
+  "details": {
+    "brain": {
+      "has_exp": false,
+      "exp_count": 0,
+      "has_cached": false
+    },
+    "vector": {
+      "has_vector_db": false,
+      "vector_count": 0,
+      "has_embedding": false,
+      "retrieval_method": "semantic_search"
+    },
+    "skills": {
+      "total": 47,
+      "types": {
+        "python": 20
+      }
+    },
+    "config": {
+      "total": 13,
+      "formats": {
+        ".yaml": 1,
+        ".json": 12
+      }
+    },
+    "templates": {
+      "total": 0,
+      "types": {}
+    },
+    "coordination": {
+      "brain_keyword_sync": false,
+      "vector_brain_integration": false,
+      "skill_keyword_trigger": true,
+      "config_template_binding": false
+    }
+  },
+  "suggestions": [
+    "📈 大脑经验库: 建议积累 200+ 经验条，当前数量较少",
+    "🚀 向量知识库: 建议建立向量索引，提升检索效率",
+    "🔧 技能库: 建议扩展至 50+ 技能，增强自动化能力",
+    "🔄 建议: 建立大脑与关键词的实时同步机制",
+    "🎯 建议: 深度集成向量库与大脑，实现智能检索"
+  ]
+}

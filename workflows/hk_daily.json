@@ -1,0 +1,30 @@
+{
+    "workflow_id": "hk_daily_series",
+    "name": "香港每日视频生产",
+    "tenant_id": "1",
+    "steps": [
+        {
+            "name": "plan_topic",
+            "skill": "topic-planner",
+            "params": {"category": "immigration", "count": 1}
+        },
+        {
+            "name": "write_script",
+            "skill": "content-writer",
+            "params": {"topic": "{plan_topic.topics[0]}", "duration": 3},
+            "depends_on": ["plan_topic"]
+        },
+        {
+            "name": "make_video",
+            "skill": "promo",
+            "params": {"city": "香港", "style": "人文"},
+            "depends_on": ["write_script"]
+        },
+        {
+            "name": "publish",
+            "skill": "publisher",
+            "params": {"platform": "youtube", "title": "{plan_topic.topics[0]}"},
+            "depends_on": ["make_video"]
+        }
+    ]
+}

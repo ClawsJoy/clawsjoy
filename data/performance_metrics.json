@@ -1,0 +1,19 @@
+[
+  {
+    "timestamp": "2026-05-12T20:59:26.271942",
+    "cpu": {
+      "percent": 0.1,
+      "cores": 16
+    },
+    "memory": {
+      "percent": 11.0,
+      "used_gb": 1.70654296875,
+      "total_gb": 15.496261596679688
+    },
+    "disk": {
+      "percent": 4.0,
+      "free_gb": 917.5720901489258
+    },
+    "processes": 33
+  }
+]

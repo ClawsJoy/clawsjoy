@@ -1,0 +1,12 @@
+{
+  "name": "memory_integration",
+  "version": "1.0.0",
+  "description": "\u8bb0\u5fc6\u96c6\u6210",
+  "category": "memory",
+  "price": 0.99,
+  "author": "ClawsJoy",
+  "tags": [
+    "memory",
+    "memory_integration"
+  ]
+}

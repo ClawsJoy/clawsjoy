@@ -1,0 +1,18 @@
+#!/bin/bash
+TITLE="$1"
+CONTENT="$2"
+SUBMITTER="${3:-writer}"
+TIMESTAMP=$(date +%Y%m%d_%H%M%S_%N)
+FILENAME="$HOME/clawsjoy/outbox/${SUBMITTER}_${TIMESTAMP}.review.json"
+mkdir -p "$HOME/clawsjoy/outbox"
+cat > "$FILENAME" << JSON
+{
+  "title": "$TITLE",
+  "content": "$CONTENT",
+  "submitter": "$SUBMITTER",
+  "created_at": "$(date -Iseconds)",
+  "status": "pending"
+}
+JSON
+echo "✅ 已提交审核: $TITLE"
+echo "📁 文件: $FILENAME"

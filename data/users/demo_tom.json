@@ -1,0 +1,13 @@
+{
+  "username": "tom",
+  "password_hash": "$2b$12$G3uyJh1SaWBwpTlgJhmMMuoQjP1wJDfn0kOl8A9lEV46Jn/lWC4rG",
+  "balance": 99.01,
+  "purchases": [
+    {
+      "skill": "weather",
+      "price": 0.99,
+      "time": "2026-05-12T09:42:55.966245"
+    }
+  ],
+  "created_at": "2026-05-12T09:42:55.640212"
+}

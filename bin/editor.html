@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片编辑器 - Joy Mate</title>
+    <link rel="stylesheet" href="cropper.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0a14;
+            color: #fff;
+            font-family: system-ui;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            padding: 16px 24px;
+            background: #0f0f1a;
+            border-bottom: 1px solid #2a2a3e;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { font-size: 20px; color: #667eea; }
+        .close-btn {
+            background: #2a2a3e;
+            border: none;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .main {
+            flex: 1;
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            overflow: hidden;
+        }
+        .preview-area {
+            flex: 2;
+            background: #0f0f1a;
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: auto;
+        }
+        .img-container {
+            max-width: 100%;
+            max-height: 70vh;
+        }
+        .img-container img {
+            max-width: 100%;
+            display: block;
+        }
+        .toolbar {
+            flex: 1;
+            background: #0f0f1a;
+            border-radius: 16px;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .tool-group {
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #2a2a3e;
+        }
+        .tool-group h3 {
+            font-size: 14px;
+            margin-bottom: 12px;
+            color: #888;
+        }
+        button {
+            background: #2a2a3e;
+            border: none;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-right: 8px;
+            margin-top: 8px;
+        }
+        button:hover { background: #3a3a5e; }
+        .btn-primary {
+            background: #667eea;
+        }
+        .btn-danger {
+            background: #e53e3e;
+        }
+        .action-buttons {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #2a2a3e;
+        }
+        .action-buttons button {
+            width: 48%;
+            padding: 12px;
+        }
+        input[type="range"] {
+            width: 100%;
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎨 图片编辑器</h1>
+        <button class="close-btn" onclick="window.close()">✕ 关闭</button>
+    </div>
+    <div class="main">
+        <div class="preview-area">
+            <div class="img-container">
+                <img id="image" src="" alt="预览图片">
+            </div>
+        </div>
+        <div class="toolbar">
+            <div class="tool-group">
+                <h3>🔄 旋转</h3>
+                <button onclick="rotateLeft()">↺ 向左</button>
+                <button onclick="rotateRight()">↻ 向右</button>
+                <button onclick="resetImage()">重置</button>
+            </div>
+            <div class="tool-group">
+                <h3>✂️ 裁剪</h3>
+                <button onclick="enableCrop()">启用裁剪</button>
+                <button onclick="applyCrop()">应用裁剪</button>
+                <button onclick="disableCrop()">取消</button>
+            </div>
+            <div class="tool-group">
+                <h3>☀️ 亮度</h3>
+                <input type="range" id="brightness" min="-100" max="100" value="0" oninput="applyFilters()">
+            </div>
+            <div class="tool-group">
+                <h3>🎯 对比度</h3>
+                <input type="range" id="contrast" min="-100" max="100" value="0" oninput="applyFilters()">
+            </div>
+            <div class="action-buttons">
+                <button class="btn-danger" onclick="window.close()">取消</button>
+                <button class="btn-primary" onclick="saveImage()">✅ 确认保存</button>
+            </div>
+        </div>
+    </div>
+    <script src="cropper.min.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const imageUrl = decodeURIComponent(urlParams.get('url') || '');
+        const tenantId = urlParams.get('tenant') || '1';
+        
+        let cropper = null;
+        const imgElement = document.getElementById('image');
+        imgElement.src = imageUrl;
+        
+        imgElement.onload = function() {
+            if (cropper) cropper.destroy();
+            cropper = new Cropper(imgElement, {
+                aspectRatio: 16 / 9,
+                viewMode: 1,
+                dragMode: 'move',
+                cropBoxMovable: true,
+                cropBoxResizable: true,
+                zoomable: true
+            });
+        };
+        
+        function rotateLeft() { cropper.rotate(-90); }
+        function rotateRight() { cropper.rotate(90); }
+        function resetImage() { cropper.reset(); }
+        function enableCrop() { cropper.setDragMode('crop'); }
+        function applyCrop() { cropper.setDragMode('move'); }
+        function disableCrop() { cropper.setDragMode('move'); }
+        
+        function applyFilters() {
+            const brightness = document.getElementById('brightness').value;
+            const contrast = document.getElementById('contrast').value;
+            imgElement.style.filter = `brightness(${100 + parseInt(brightness)}%) contrast(${100 + parseInt(contrast)}%)`;
+        }
+        
+        async function saveImage() {
+            if (!cropper) return;
+            const canvas = cropper.getCroppedCanvas({ width: 1920, height: 1080 });
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+            const formData = new FormData();
+            formData.append('tenant_id', tenantId);
+            formData.append('image', blob, 'edited.jpg');
+            
+            try {
+                const res = await fetch('http://localhost:8084/api/library/editor/save', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.success) {
+                    alert('✅ 保存成功！');
+                    if (window.opener) window.opener.location.reload();
+                    window.close();
+                } else {
+                    alert('保存失败: ' + (data.error || '未知错误'));
+                }
+            } catch(e) {
+                alert('网络错误: ' + e.message);
+            }
+        }
+    </script>
+</body>
+</html>

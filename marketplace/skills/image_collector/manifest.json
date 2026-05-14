@@ -1,0 +1,12 @@
+{
+  "name": "image_collector",
+  "version": "1.0.0",
+  "description": "\u91c7\u96c6\u56fe\u7247\uff08\u652f\u6301 Unsplash API\uff0c\u964d\u7ea7\u5230 Lorem Picsum\uff09",
+  "category": "content",
+  "price": 0.99,
+  "author": "ClawsJoy",
+  "tags": [
+    "content",
+    "image_collector"
+  ]
+}

@@ -1,0 +1,22 @@
+#!/bin/bash
+# Code Agent 命令行工具
+
+cd /mnt/d/clawsjoy
+
+if [ -z "$1" ]; then
+    echo "用法: codegen <需求描述>"
+    echo "示例: codegen '创建读取 JSON 文件的函数'"
+    exit 1
+fi
+
+python3 -c "
+import sys
+sys.path.insert(0, '/mnt/d/clawsjoy')
+from skills.code_agent_skill import skill
+
+result = skill.execute({'requirement': '$1'})
+if result.get('success'):
+    print(result['code'])
+else:
+    print(f'错误: {result.get(\"error\")}')
+"

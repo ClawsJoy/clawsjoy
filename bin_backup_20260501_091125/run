@@ -1,0 +1,5 @@
+#!/bin/bash
+# 统一任务执行入口
+AGENT="$1"
+shift
+~/clawsjoy/bin/agent_do.sh "$AGENT" "$*"

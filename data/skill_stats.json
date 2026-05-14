@@ -1,0 +1,12 @@
+{
+  "spider": {
+    "total": 1,
+    "success": 1,
+    "avg_duration": 0.009966
+  },
+  "fix_agent_api": {
+    "total": 1,
+    "success": 0,
+    "avg_duration": 0.010167
+  }
+}

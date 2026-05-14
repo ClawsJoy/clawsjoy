@@ -1,0 +1,32 @@
+{
+  "timestamp": "2026-05-06T12:00:08.348786",
+  "services": {
+    "chat_api": {
+      "status": "down",
+      "error": "HTTPConnectionPool(host='localhost', port=8101): Max retries exceeded with url: /api/agent (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8101): Failed to establish a new connection: [Errno 111] Connection refused\"))"
+    },
+    "promo_api": {
+      "status": "down",
+      "error": "HTTPConnectionPool(host='localhost', port=8105): Max retries exceeded with url: /api/promo/make (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8105): Failed to establish a new connection: [Errno 111] Connection refused\"))"
+    },
+    "web": {
+      "status": "ok",
+      "code": 200
+    },
+    "joymate_api": {
+      "status": "ok",
+      "code": 200
+    },
+    "tts": {
+      "status": "ok",
+      "code": 200
+    }
+  },
+  "summary": {
+    "total": 5,
+    "ok": 3,
+    "error": 0,
+    "down": 2
+  },
+  "recent_fixes": []
+}

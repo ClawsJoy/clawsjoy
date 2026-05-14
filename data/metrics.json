@@ -1,0 +1,69 @@
+{
+  "timestamp": "2026-05-10T13:16:33.994985",
+  "services": {
+    "chat-api": {
+      "status": "up",
+      "port": 18109
+    },
+    "promo-api": {
+      "status": "up",
+      "port": 8108
+    },
+    "agent-api": {
+      "status": "up",
+      "port": 18103
+    },
+    "web": {
+      "status": "up",
+      "port": 18083
+    },
+    "redis": {
+      "status": "up",
+      "port": 16380
+    },
+    "tts": {
+      "status": "up",
+      "port": 19001
+    },
+    "ollama": {
+      "status": "up",
+      "port": 11434
+    },
+    "meilisearch": {
+      "status": "down",
+      "port": 7700
+    },
+    "qdrant": {
+      "status": "down",
+      "port": 6333
+    }
+  },
+  "resources": {
+    "disk_usage_percent": 28,
+    "memory_used_mb": 1509,
+    "memory_total_mb": 15868,
+    "memory_percent": 9.5
+  },
+  "pm2": {
+    "promo-api": {
+      "status": "online",
+      "restarts": 1579
+    },
+    "agent-api": {
+      "status": "online",
+      "restarts": 37
+    },
+    "web": {
+      "status": "online",
+      "restarts": 5
+    },
+    "chat-api": {
+      "status": "online",
+      "restarts": 60
+    },
+    "health-api": {
+      "status": "online",
+      "restarts": 0
+    }
+  }
+}

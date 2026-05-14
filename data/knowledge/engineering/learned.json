@@ -1,0 +1,62 @@
+{
+  "learned_at": "2026-05-08T16:41:26.519694",
+  "knowledge": [
+    {
+      "type": "port_usage",
+      "port": "11434",
+      "process": "(\"ollama\",pid=39300,fd=3",
+      "learned_at": 1778229686.4077456
+    },
+    {
+      "type": "port_usage",
+      "port": "18110",
+      "process": "(\"python3\",pid=91255,fd=4",
+      "learned_at": 1778229686.4077468
+    },
+    {
+      "type": "port_usage",
+      "port": "18109",
+      "process": "(\"python3\",pid=91375,fd=4",
+      "learned_at": 1778229686.4077473
+    },
+    {
+      "type": "port_usage",
+      "port": "18081",
+      "process": "(\"python3\",pid=21934,fd=3",
+      "learned_at": 1778229686.4077475
+    },
+    {
+      "type": "port_usage",
+      "port": "46043",
+      "process": "(\"ollama\",pid=4376,fd=13",
+      "learned_at": 1778229686.407748
+    },
+    {
+      "type": "port_usage",
+      "port": "8108",
+      "process": "(\"python3\",pid=96811,fd=4",
+      "learned_at": 1778229686.4077485
+    },
+    {
+      "type": "service_status",
+      "name": "2",
+      "status": "0"
+    },
+    {
+      "type": "service_status",
+      "name": "27",
+      "status": "91375"
+    },
+    {
+      "type": "service_status",
+      "name": "14",
+      "status": "91255"
+    },
+    {
+      "type": "service_status",
+      "name": "22",
+      "status": "96811"
+    }
+  ],
+  "stats": {}
+}

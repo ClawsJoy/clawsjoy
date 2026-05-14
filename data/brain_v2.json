@@ -1,0 +1,7064 @@
+{
+  "experiences": [
+    {
+      "id": "508f32c4",
+      "agent": "gateway",
+      "action": "API\u670d\u52a1\u6302\u4e86\uff0c\u6267\u884c\u91cd\u542f\u547d\u4ee4",
+      "result": {
+        "success": true
+      },
+      "context": "",
+      "timestamp": "2026-05-12T14:46:10.707957",
+      "success": true,
+      "reward": 1.0,
+      "embedding": [
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554,
+        0.7554
+      ]
+    },
+    {
+      "id": "6ed29a85",
+      "agent": "gateway",
+      "action": "Ollama\u8fde\u63a5\u5931\u8d25\uff0c\u68c0\u67e5\u670d\u52a1\u72b6\u6001",
+      "result": {
+        "success": true
+      },
+      "context": "",
+      "timestamp": "2026-05-12T14:46:10.906781",
+      "success": true,
+      "reward": 1.0,
+      "embedding": [
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674,
+        0.4674
+      ]
+    },
+    {
+      "id": "d9f66218",
+      "agent": "gateway",
+      "action": "API\u670d\u52a1\u5f02\u5e38\uff0c\u6267\u884c\u91cd\u542f",
+      "result": {
+        "success": true,
+        "quality": 0.9
+      },
+      "context": "",
+      "timestamp": "2026-05-12T14:49:05.533796",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "api\u670d\u52a1\u5f02\u5e38",
+        "\u6267\u884c\u91cd\u542f"
+      ]
+    },
+    {
+      "id": "b64cf6ae",
+      "agent": "gateway",
+      "action": "Ollama\u8fde\u63a5\u5931\u8d25\uff0c\u68c0\u67e5\u670d\u52a1",
+      "result": {
+        "success": true
+      },
+      "context": "",
+      "timestamp": "2026-05-12T14:49:05.538000",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "ollama\u8fde\u63a5\u5931\u8d25",
+        "\u68c0\u67e5\u670d\u52a1"
+      ]
+    },
+    {
+      "id": "9ccbdeff",
+      "agent": "skills",
+      "action": "\u6280\u80fd\u52a0\u8f7d\u5931\u8d25\uff0c\u91cd\u65b0\u6ce8\u518c",
+      "result": {
+        "success": false
+      },
+      "context": "",
+      "timestamp": "2026-05-12T14:49:05.547839",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "\u6280\u80fd\u52a0\u8f7d\u5931\u8d25",
+        "\u91cd\u65b0\u6ce8\u518c"
+      ]
+    },
+    {
+      "id": "efb41644",
+      "agent": "gateway",
+      "action": "API\u670d\u52a1\u65e0\u6cd5\u8bbf\u95ee\uff0c\u6267\u884c\u91cd\u542f\u547d\u4ee4",
+      "result": {
+        "success": true,
+        "quality": 0.9
+      },
+      "context": "",
+      "timestamp": "2026-05-12T14:54:23.326960",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "api\u670d\u52a1\u65e0\u6cd5\u8bbf\u95ee",
+        "\u6267\u884c\u91cd\u542f\u547d\u4ee4"
+      ]
+    },
+    {
+      "id": "24c51f13",
+      "agent": "gateway",
+      "action": "Ollama\u8fde\u63a5\u5931\u8d25\uff0c\u68c0\u67e5\u670d\u52a1\u72b6\u6001",
+      "result": {
+        "success": true
+      },
+      "context": "",
+      "timestamp": "2026-05-12T14:54:23.331161",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "ollama\u8fde\u63a5\u5931\u8d25",
+        "\u68c0\u67e5\u670d\u52a1\u72b6\u6001"
+      ]
+    },
+    {
+      "id": "a79e73ea",
+      "agent": "gateway",
+      "action": "\u78c1\u76d8\u7a7a\u95f4\u4e0d\u8db3\uff0c\u6e05\u7406\u65e5\u5fd7\u6587\u4ef6",
+      "result": {
+        "success": true,
+        "quality": 0.8
+      },
+      "context": "",
+      "timestamp": "2026-05-12T14:54:23.340379",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u78c1\u76d8\u7a7a\u95f4\u4e0d\u8db3",
+        "\u6e05\u7406\u65e5\u5fd7\u6587\u4ef6"
+      ]
+    },
+    {
+      "id": "add69d66",
+      "agent": "gateway",
+      "action": "\u6280\u80fd\u52a0\u8f7d\u5931\u8d25\uff0c\u91cd\u65b0\u6ce8\u518c\u6280\u80fd",
+      "result": {
+        "success": true
+      },
+      "context": "",
+      "timestamp": "2026-05-12T14:54:23.349371",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u6280\u80fd\u52a0\u8f7d\u5931\u8d25",
+        "\u91cd\u65b0\u6ce8\u518c\u6280\u80fd"
+      ]
+    },
+    {
+      "id": "3417602d",
+      "agent": "gateway",
+      "action": "\u5185\u5b58\u4f7f\u7528\u8fc7\u9ad8\uff0c\u91cd\u542f\u670d\u52a1\u91ca\u653e\u5185\u5b58",
+      "result": {
+        "success": true,
+        "quality": 0.7
+      },
+      "context": "",
+      "timestamp": "2026-05-12T14:54:23.358408",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u5185\u5b58\u4f7f\u7528\u8fc7\u9ad8",
+        "\u91cd\u542f\u670d\u52a1\u91ca\u653e\u5185\u5b58"
+      ]
+    },
+    {
+      "id": "d0f8ee59",
+      "agent": "database",
+      "action": "\u6570\u636e\u5e93\u8fde\u63a5\u8d85\u65f6\uff0c\u68c0\u67e5\u7f51\u7edc\u548c\u7aef\u53e3",
+      "result": {
+        "success": true
+      },
+      "context": "",
+      "timestamp": "2026-05-12T14:54:23.366155",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u6570\u636e\u5e93\u8fde\u63a5\u8d85\u65f6",
+        "\u68c0\u67e5\u7f51\u7edc\u548c\u7aef\u53e3"
+      ]
+    },
+    {
+      "id": "233709a5",
+      "agent": "database",
+      "action": "\u67e5\u8be2\u6162\uff0c\u4f18\u5316\u7d22\u5f15\u6216\u6e05\u7406\u7f13\u5b58",
+      "result": {
+        "success": true,
+        "quality": 0.8
+      },
+      "context": "",
+      "timestamp": "2026-05-12T14:54:23.373883",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u67e5\u8be2\u6162",
+        "\u4f18\u5316\u7d22\u5f15\u6216\u6e05\u7406\u7f13\u5b58"
+      ]
+    },
+    {
+      "id": "5b8ccf54",
+      "agent": "redis",
+      "action": "Redis\u8fde\u63a5\u5931\u8d25\uff0c\u68c0\u67e5\u670d\u52a1\u72b6\u6001",
+      "result": {
+        "success": true
+      },
+      "context": "",
+      "timestamp": "2026-05-12T14:54:23.382044",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "redis\u8fde\u63a5\u5931\u8d25",
+        "\u68c0\u67e5\u670d\u52a1\u72b6\u6001"
+      ]
+    },
+    {
+      "id": "519a63d9",
+      "agent": "SupervisorAgent",
+      "action": "\u7cfb\u7edf\u76d1\u63a7",
+      "result": {
+        "success": true,
+        "summary": "\u76d1\u63a7\u5b8c\u6210\uff0c7/7 \u9879\u6b63\u5e38"
+      },
+      "context": "\u6267\u884c\u76d1\u7ba1\u4efb\u52a1",
+      "timestamp": "2026-05-12T17:13:11.897636",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u7cfb\u7edf\u76d1\u63a7"
+      ]
+    },
+    {
+      "id": "6b256496",
+      "agent": "SupervisorAgent",
+      "action": "\u7cfb\u7edf\u76d1\u63a7",
+      "result": {
+        "success": true,
+        "summary": "\u76d1\u63a7\u5b8c\u6210\uff0c7/7 \u9879\u6b63\u5e38"
+      },
+      "context": "\u6267\u884c\u76d1\u7ba1\u4efb\u52a1",
+      "timestamp": "2026-05-12T17:14:18.107213",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u7cfb\u7edf\u76d1\u63a7"
+      ]
+    },
+    {
+      "id": "aa4e815c",
+      "agent": "SupervisorAgent",
+      "action": "\u7cfb\u7edf\u76d1\u63a7",
+      "result": {
+        "success": true,
+        "summary": "\u76d1\u63a7\u5b8c\u6210\uff0c7/7 \u9879\u6b63\u5e38"
+      },
+      "context": "\u6267\u884c\u76d1\u7ba1\u4efb\u52a1",
+      "timestamp": "2026-05-12T17:14:29.921132",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u7cfb\u7edf\u76d1\u63a7"
+      ]
+    },
+    {
+      "id": "dd418942",
+      "agent": "SupervisorAgent",
+      "action": "\u7cfb\u7edf\u76d1\u63a7",
+      "result": {
+        "success": true,
+        "summary": "\u76d1\u63a7\u5b8c\u6210\uff0c7/7 \u9879\u6b63\u5e38"
+      },
+      "context": "\u6267\u884c\u76d1\u7ba1\u4efb\u52a1",
+      "timestamp": "2026-05-12T17:14:40.303915",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u7cfb\u7edf\u76d1\u63a7"
+      ]
+    },
+    {
+      "id": "628289c1",
+      "agent": "SupervisorAgent",
+      "action": "\u7cfb\u7edf\u76d1\u63a7",
+      "result": {
+        "success": true,
+        "summary": "\u76d1\u63a7\u5b8c\u6210\uff0c7/7 \u9879\u6b63\u5e38"
+      },
+      "context": "\u6267\u884c\u76d1\u7ba1\u4efb\u52a1",
+      "timestamp": "2026-05-12T17:14:51.170771",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u7cfb\u7edf\u76d1\u63a7"
+      ]
+    },
+    {
+      "id": "becbe87e",
+      "agent": "user_alice",
+      "action": "ClawsJoy\u662f\u4ec0\u4e48\uff1f",
+      "result": {
+        "success": true,
+        "response": "ClawsJoy\u662f\u4e00\u6b3e\u6e38\u620f\u5e73\u53f0\uff0c\u4e13\u95e8\u9488\u5bf9\u624b\u6e38\u73a9\u5bb6\u3002\u5b83\u5141\u8bb8\u7528\u6237\u8d2d\u4e70\u548c\u4e0b\u8f7d\u5404\u79cd\u6e38\u620f\uff0c\u5305\u62ec\u539f\u521b\u6e38\u620f\u3001\u7b2c\u4e09\u65b9\u6e38\u620f\u4ee5\u53ca\u5728\u7ebf\u6e38\u620f\u3002\n\nClawsJoy\u7684\u7279\u70b9\uff1a\n\n1. \u4e25\u683c\u5206\u914d\uff1aClawsJoy\u4f1a\u6839\u636e\u4e0d\u540c\u7684\u7c7b\u522b\u8fdb"
+      },
+      "context": "chat",
+      "timestamp": "2026-05-12T17:58:39.885404",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "clawsjoy\u662f\u4ec0\u4e48"
+      ]
+    },
+    {
+      "id": "a34de39d",
+      "agent": "user_alice",
+      "action": "\u4f60\u597d",
+      "result": {
+        "success": true,
+        "response": "\u4f60\u597d\uff01\uff08hello\uff09\u6211\u662f AI \u7684\u670d\u52a1\u5458\uff0c\u6b22\u8fce\u6765\u5230\u6211\u4eec\u7684\u5e73\u53f0\u3002\u60a8\u6709\u4ec0\u4e48\u9700\u8981\u5e2e\u52a9\u5417\uff1f"
+      },
+      "context": "chat",
+      "timestamp": "2026-05-12T18:01:33.826046",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u4f60\u597d"
+      ]
+    },
+    {
+      "id": "6ea2c6e1",
+      "agent": "SupervisorAgent",
+      "action": "\u7cfb\u7edf\u76d1\u63a7",
+      "result": {
+        "success": true,
+        "summary": "\u76d1\u63a7\u5b8c\u6210\uff0c7/7 \u9879\u6b63\u5e38"
+      },
+      "context": "\u6267\u884c\u76d1\u7ba1\u4efb\u52a1",
+      "timestamp": "2026-05-12T18:02:29.053284",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u7cfb\u7edf\u76d1\u63a7"
+      ]
+    },
+    {
+      "id": "26330df8",
+      "agent": "file_service",
+      "action": "\u4e0a\u4f20\u6587\u4ef6: test.txt",
+      "result": {
+        "success": true,
+        "size": 13
+      },
+      "context": "upload",
+      "timestamp": "2026-05-12T18:03:59.254341",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u4e0a\u4f20\u6587\u4ef6",
+        "test",
+        "txt"
+      ]
+    },
+    {
+      "id": "09090d3e",
+      "agent": "file_service",
+      "action": "\u5217\u51fa\u6587\u4ef6",
+      "result": {
+        "success": true,
+        "count": 43
+      },
+      "context": "list",
+      "timestamp": "2026-05-12T18:03:59.316712",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u5217\u51fa\u6587\u4ef6"
+      ]
+    },
+    {
+      "id": "8ef6f027",
+      "agent": "file_service",
+      "action": "\u8bfb\u53d6\u6587\u4ef6: test.txt",
+      "result": {
+        "success": true,
+        "size": 13
+      },
+      "context": "read",
+      "timestamp": "2026-05-12T18:03:59.346957",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u8bfb\u53d6\u6587\u4ef6",
+        "test",
+        "txt"
+      ]
+    },
+    {
+      "id": "d399a7e8",
+      "agent": "file_service",
+      "action": "\u5220\u9664\u6587\u4ef6: test.txt",
+      "result": {
+        "success": true
+      },
+      "context": "delete",
+      "timestamp": "2026-05-12T18:03:59.411020",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u5220\u9664\u6587\u4ef6",
+        "test",
+        "txt"
+      ]
+    },
+    {
+      "id": "e39891c0",
+      "agent": "file_service",
+      "action": "\u4e0a\u4f20\u6587\u4ef6: test.txt",
+      "result": {
+        "success": true,
+        "size": 13
+      },
+      "context": "upload",
+      "timestamp": "2026-05-12T18:04:58.711839",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u4e0a\u4f20\u6587\u4ef6",
+        "test",
+        "txt"
+      ]
+    },
+    {
+      "id": "0eedb564",
+      "agent": "file_service",
+      "action": "\u5217\u51fa\u6587\u4ef6",
+      "result": {
+        "success": true,
+        "count": 43
+      },
+      "context": "list",
+      "timestamp": "2026-05-12T18:04:58.776745",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u5217\u51fa\u6587\u4ef6"
+      ]
+    },
+    {
+      "id": "d10ef867",
+      "agent": "file_service",
+      "action": "\u8bfb\u53d6\u6587\u4ef6: test.txt",
+      "result": {
+        "success": true,
+        "size": 13
+      },
+      "context": "read",
+      "timestamp": "2026-05-12T18:04:58.808341",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u8bfb\u53d6\u6587\u4ef6",
+        "test",
+        "txt"
+      ]
+    },
+    {
+      "id": "15d4eb6d",
+      "agent": "file_service",
+      "action": "\u5220\u9664\u6587\u4ef6: test.txt",
+      "result": {
+        "success": true
+      },
+      "context": "delete",
+      "timestamp": "2026-05-12T18:04:58.874471",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u5220\u9664\u6587\u4ef6",
+        "test",
+        "txt"
+      ]
+    },
+    {
+      "id": "ad20f8a8",
+      "agent": "file_service",
+      "action": "\u4e0a\u4f20\u6587\u4ef6: test.txt",
+      "result": {
+        "success": true,
+        "size": 13
+      },
+      "context": "upload",
+      "timestamp": "2026-05-12T18:05:07.889460",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u4e0a\u4f20\u6587\u4ef6",
+        "test",
+        "txt"
+      ]
+    },
+    {
+      "id": "17d5297f",
+      "agent": "file_service",
+      "action": "\u5217\u51fa\u6587\u4ef6",
+      "result": {
+        "success": true,
+        "count": 43
+      },
+      "context": "list",
+      "timestamp": "2026-05-12T18:05:07.948281",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u5217\u51fa\u6587\u4ef6"
+      ]
+    },
+    {
+      "id": "b45893d3",
+      "agent": "file_service",
+      "action": "\u8bfb\u53d6\u6587\u4ef6: test.txt",
+      "result": {
+        "success": true,
+        "size": 13
+      },
+      "context": "read",
+      "timestamp": "2026-05-12T18:05:07.978668",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u8bfb\u53d6\u6587\u4ef6",
+        "test",
+        "txt"
+      ]
+    },
+    {
+      "id": "f664b2d8",
+      "agent": "file_service",
+      "action": "\u5220\u9664\u6587\u4ef6: test.txt",
+      "result": {
+        "success": true
+      },
+      "context": "delete",
+      "timestamp": "2026-05-12T18:05:08.039770",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u5220\u9664\u6587\u4ef6",
+        "test",
+        "txt"
+      ]
+    },
+    {
+      "id": "0ab51b17",
+      "agent": "file_service",
+      "action": "\u4e0a\u4f20\u6587\u4ef6: test.txt",
+      "result": {
+        "success": true,
+        "size": 13
+      },
+      "context": "upload",
+      "timestamp": "2026-05-12T18:05:19.233735",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u4e0a\u4f20\u6587\u4ef6",
+        "test",
+        "txt"
+      ]
+    },
+    {
+      "id": "1381d1fe",
+      "agent": "file_service",
+      "action": "\u5217\u51fa\u6587\u4ef6",
+      "result": {
+        "success": true,
+        "count": 43
+      },
+      "context": "list",
+      "timestamp": "2026-05-12T18:05:19.294972",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u5217\u51fa\u6587\u4ef6"
+      ]
+    },
+    {
+      "id": "879dd4d4",
+      "agent": "file_service",
+      "action": "\u8bfb\u53d6\u6587\u4ef6: test.txt",
+      "result": {
+        "success": true,
+        "size": 13
+      },
+      "context": "read",
+      "timestamp": "2026-05-12T18:05:19.319637",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u8bfb\u53d6\u6587\u4ef6",
+        "test",
+        "txt"
+      ]
+    },
+    {
+      "id": "93ab987f",
+      "agent": "file_service",
+      "action": "\u5220\u9664\u6587\u4ef6: test.txt",
+      "result": {
+        "success": true
+      },
+      "context": "delete",
+      "timestamp": "2026-05-12T18:05:19.386808",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u5220\u9664\u6587\u4ef6",
+        "test",
+        "txt"
+      ]
+    },
+    {
+      "id": "ea530202",
+      "agent": "active_explorer",
+      "action": "\u5b9e\u9a8c: \u63a2\u7d22 \u5f02\u5e38\u5904\u7406 \u7684\u6700\u4f73\u5b9e\u8df5",
+      "result": {
+        "success": false,
+        "skill": "ai_image_gen",
+        "output": "{'success': False, 'error': 'prompt is required'}"
+      },
+      "context": "\u63a2\u7d22\u6027\u5b9e\u9a8c",
+      "timestamp": "2026-05-12T18:09:57.326943",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "\u5b9e\u9a8c",
+        "\u63a2\u7d22",
+        "\u5f02\u5e38\u5904\u7406",
+        "\u7684\u6700\u4f73\u5b9e\u8df5"
+      ]
+    },
+    {
+      "id": "dae580e3",
+      "agent": "active_explorer",
+      "action": "\u5b9e\u9a8c: \u5982\u679c\u5728\u7a0b\u5e8f\u4e2d\u5408\u7406\u5730\u4f7f\u7528\u5f02\u5e38\u5904\u7406\u673a\u5236\u6765\u66ff\u4ee3\u9519\u8bef\u7801\u8fd4\u56de\u65b9\u5f0f\uff0c\u5e94\u7528\u7a0b\u5e8f\u7684\u53ef\u7ef4\u62a4\u6027\u548c\u5065\u58ee\u6027\u5c06\u4f1a\u63d0\u9ad8\u3002",
+      "result": {
+        "success": true,
+        "skill": "cartoon_images",
+        "output": "{'success': True, 'message': '\u5361\u901a\u56fe\u7247\u751f\u6210 \u6267\u884c\u6210\u529f', 'data': {'test': True}}"
+      },
+      "context": "\u63a2\u7d22\u6027\u5b9e\u9a8c",
+      "timestamp": "2026-05-12T18:09:59.047544",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u5b9e\u9a8c",
+        "\u5982\u679c\u5728\u7a0b\u5e8f\u4e2d\u5408\u7406\u5730\u4f7f\u7528\u5f02\u5e38\u5904\u7406\u673a\u5236\u6765\u66ff\u4ee3\u9519\u8bef\u7801\u8fd4\u56de\u65b9\u5f0f",
+        "\u5e94\u7528\u7a0b\u5e8f\u7684\u53ef\u7ef4\u62a4\u6027\u548c\u5065\u58ee\u6027\u5c06\u4f1a\u63d0\u9ad8"
+      ]
+    },
+    {
+      "id": "eb1e2df3",
+      "agent": "active_explorer",
+      "action": "\u5b9e\u9a8c: \u5982\u679c\u91c7\u7528\u5e76\u884c\u8ba1\u7b97\u6280\u672f\u5904\u7406\u5927\u89c4\u6a21\u6570\u636e\u96c6\u4efb\u52a1\uff0c\u6027\u80fd\u5c06\u4f1a\u5f97\u5230\u663e\u8457\u63d0\u5347\u3002",
+      "result": {
+        "success": true,
+        "skill": "clean_script_v2",
+        "output": "{'success': True, 'message': '\u811a\u672c\u6e05\u7406\u5de5\u5177 v2 \u6267\u884c\u6210\u529f', 'data': {'test': True}}"
+      },
+      "context": "\u63a2\u7d22\u6027\u5b9e\u9a8c",
+      "timestamp": "2026-05-12T18:10:00.312834",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u5b9e\u9a8c",
+        "\u5982\u679c\u91c7\u7528\u5e76\u884c\u8ba1\u7b97\u6280\u672f\u5904\u7406\u5927\u89c4\u6a21\u6570\u636e\u96c6\u4efb\u52a1",
+        "\u6027\u80fd\u5c06\u4f1a\u5f97\u5230\u663e\u8457\u63d0\u5347"
+      ]
+    },
+    {
+      "id": "70ba4191",
+      "agent": "reflection_engine",
+      "action": "\u7cfb\u7edf\u53cd\u601d",
+      "result": {
+        "success": true,
+        "analysis": "### \u6210\u529f\u6a21\u5f0f\n\n1. **\u6570\u636e\u5e93\u64cd\u4f5c**\uff1a\u5f53\u6570\u636e\u5e93\u8fde\u63a5\u51fa\u73b0\u8d85\u65f6\u6216\u67e5\u8be2\u901f\u5ea6\u6162\u65f6\uff0c\u901a\u8fc7\u68c0\u67e5\u7f51\u7edc\u548c\u7aef\u53e3\u3001\u4f18\u5316\u7d22\u5f15\u6216\u6e05\u7406\u7f13\u5b58\u7b49\u63aa\u65bd\u53ef\u4ee5\u6210\u529f\u89e3\u51b3\u95ee\u9898\u3002\n2. **\u7cfb\u7edf\u76d1\u63a7**\uff1a\u5b9a\u671f\u6267\u884c\u7cfb\u7edf\u76d1\u63a7\u4efb\u52a1\u4e14\u6240\u6709\u9879\u76ee"
+      },
+      "context": "reflection",
+      "timestamp": "2026-05-12T18:10:35.122345",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u7cfb\u7edf\u53cd\u601d"
+      ]
+    },
+    {
+      "id": "27e1bf40",
+      "agent": "autonomous_decider",
+      "action": "\u968f\u673a\u6d4b\u8bd5_cartoon_images",
+      "result": {
+        "success": true
+      },
+      "context": "auto_test",
+      "timestamp": "2026-05-12T18:14:42.937899",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u968f\u673a\u6d4b\u8bd5",
+        "cartoon",
+        "images"
+      ]
+    },
+    {
+      "id": "8ce4727e",
+      "agent": "autonomous_decider",
+      "action": "test_random",
+      "result": {
+        "success": true
+      },
+      "context": "\u63a2\u7d22\u672a\u77e5",
+      "timestamp": "2026-05-12T18:14:42.943711",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "test",
+        "random"
+      ]
+    },
+    {
+      "id": "86dda483",
+      "agent": "autonomous_decider",
+      "action": "\u968f\u673a\u6d4b\u8bd5_angle_manager",
+      "result": {
+        "success": true
+      },
+      "context": "auto_test",
+      "timestamp": "2026-05-12T18:14:45.387307",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u968f\u673a\u6d4b\u8bd5",
+        "angle",
+        "manager"
+      ]
+    },
+    {
+      "id": "24830fce",
+      "agent": "autonomous_decider",
+      "action": "test_random",
+      "result": {
+        "success": true
+      },
+      "context": "\u63a2\u7d22\u672a\u77e5",
+      "timestamp": "2026-05-12T18:14:45.392428",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "test",
+        "random"
+      ]
+    },
+    {
+      "id": "3339023a",
+      "agent": "autonomous_decider",
+      "action": "\u968f\u673a\u6d4b\u8bd5_extract_content_v2",
+      "result": {
+        "success": true
+      },
+      "context": "auto_test",
+      "timestamp": "2026-05-12T18:56:45.436621",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u968f\u673a\u6d4b\u8bd5",
+        "extract",
+        "content"
+      ]
+    },
+    {
+      "id": "ecfdbedf",
+      "agent": "autonomous_decider",
+      "action": "test_random",
+      "result": {
+        "success": true
+      },
+      "context": "\u63a2\u7d22\u672a\u77e5",
+      "timestamp": "2026-05-12T18:56:45.467930",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "test",
+        "random"
+      ]
+    },
+    {
+      "id": "33416921",
+      "agent": "active_explorer",
+      "action": "\u5b9e\u9a8c: \u63a2\u7d22 \u6027\u80fd\u63d0\u5347 \u7684\u6700\u4f73\u5b9e\u8df5",
+      "result": {
+        "success": false,
+        "skill": "billing",
+        "output": "{'error': 'Unknown action: None'}"
+      },
+      "context": "\u63a2\u7d22\u6027\u5b9e\u9a8c",
+      "timestamp": "2026-05-12T19:10:04.806455",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "\u5b9e\u9a8c",
+        "\u63a2\u7d22",
+        "\u6027\u80fd\u63d0\u5347",
+        "\u7684\u6700\u4f73\u5b9e\u8df5"
+      ]
+    },
+    {
+      "id": "1e49094c",
+      "agent": "active_explorer",
+      "action": "\u5b9e\u9a8c: \u63a2\u7d22 \u5de5\u4f5c\u6d41\u4f18\u5316 \u7684\u6700\u4f73\u5b9e\u8df5",
+      "result": {
+        "success": true,
+        "skill": "comic_generator",
+        "output": "{'success': True, 'message': '\u6f2b\u753b\u751f\u6210\u5668 \u6267\u884c\u6210\u529f', 'data': {'test': True}}"
+      },
+      "context": "\u63a2\u7d22\u6027\u5b9e\u9a8c",
+      "timestamp": "2026-05-12T19:11:04.885691",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u5b9e\u9a8c",
+        "\u63a2\u7d22",
+        "\u5de5\u4f5c\u6d41\u4f18\u5316",
+        "\u7684\u6700\u4f73\u5b9e\u8df5"
+      ]
+    },
+    {
+      "id": "61d3d1d6",
+      "agent": "active_explorer",
+      "action": "\u5b9e\u9a8c: \u5982\u679c\u91c7\u7528\u5e76\u884c\u8ba1\u7b97\u6280\u672f\u5904\u7406\u5927\u89c4\u6a21\u6570\u636e\u96c6\u4efb\u52a1\uff0c\u7cfb\u7edf\u7684\u5904\u7406\u901f\u5ea6\u5c06\u4f1a\u63d0\u534750%\u3002",
+      "result": {
+        "success": false,
+        "skill": "ai_image_gen",
+        "output": "{'success': False, 'error': 'prompt is required'}"
+      },
+      "context": "\u63a2\u7d22\u6027\u5b9e\u9a8c",
+      "timestamp": "2026-05-12T19:11:36.666293",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "\u5b9e\u9a8c",
+        "\u5982\u679c\u91c7\u7528\u5e76\u884c\u8ba1\u7b97\u6280\u672f\u5904\u7406\u5927\u89c4\u6a21\u6570\u636e\u96c6\u4efb\u52a1",
+        "\u7cfb\u7edf\u7684\u5904\u7406\u901f\u5ea6\u5c06\u4f1a\u63d0\u5347"
+      ]
+    },
+    {
+      "id": "ffd18bb0",
+      "agent": "learner",
+      "action": "auto_optimize",
+      "result": {
+        "insight": {
+          "type": "success",
+          "message": "\u6210\u529f\u7387\u4f18\u79c0 (92%)",
+          "suggestion": "\u7ee7\u7eed\u4fdd\u6301\u5f53\u524d\u7b56\u7565"
+        }
+      },
+      "context": "\u7ee7\u7eed\u4fdd\u6301\u5f53\u524d\u7b56\u7565",
+      "timestamp": "2026-05-12T19:40:19.488833",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "auto",
+        "optimize"
+      ]
+    },
+    {
+      "id": "5929883b",
+      "agent": "SupervisorAgent",
+      "action": "\u7cfb\u7edf\u76d1\u63a7",
+      "result": {
+        "success": true,
+        "summary": "\u76d1\u63a7\u5b8c\u6210\uff0c5/7 \u9879\u6b63\u5e38"
+      },
+      "context": "\u6267\u884c\u76d1\u7ba1\u4efb\u52a1",
+      "timestamp": "2026-05-12T19:44:15.323503",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u7cfb\u7edf\u76d1\u63a7"
+      ]
+    },
+    {
+      "id": "de9aebf9",
+      "agent": "SupervisorAgent",
+      "action": "\u7cfb\u7edf\u76d1\u63a7",
+      "result": {
+        "success": true,
+        "summary": "\u76d1\u63a7\u5b8c\u6210\uff0c5/7 \u9879\u6b63\u5e38"
+      },
+      "context": "\u6267\u884c\u76d1\u7ba1\u4efb\u52a1",
+      "timestamp": "2026-05-12T20:27:24.948062",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u7cfb\u7edf\u76d1\u63a7"
+      ]
+    },
+    {
+      "id": "2eeba59e",
+      "agent": "SupervisorAgent",
+      "action": "\u7cfb\u7edf\u76d1\u63a7",
+      "result": {
+        "success": true,
+        "summary": "\u76d1\u63a7\u5b8c\u6210\uff0c5/7 \u9879\u6b63\u5e38"
+      },
+      "context": "\u6267\u884c\u76d1\u7ba1\u4efb\u52a1",
+      "timestamp": "2026-05-12T20:27:49.189968",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "\u7cfb\u7edf\u76d1\u63a7"
+      ]
+    },
+    {
+      "id": "8043c73e",
+      "agent": "learner",
+      "action": "auto_optimize",
+      "result": {
+        "insight": {
+          "type": "success",
+          "message": "\u6210\u529f\u7387\u4f18\u79c0 (91%)",
+          "suggestion": "\u7ee7\u7eed\u4fdd\u6301\u5f53\u524d\u7b56\u7565"
+        }
+      },
+      "context": "\u7ee7\u7eed\u4fdd\u6301\u5f53\u524d\u7b56\u7565",
+      "timestamp": "2026-05-12T20:27:51.343864",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "auto",
+        "optimize"
+      ]
+    },
+    {
+      "id": "d8fc17ec",
+      "agent": "decision_engine",
+      "action": "\u6574\u5408\u591a\u79cd\u667a\u80fd\u4ee3\u7406\u4ee5\u589e\u5f3a\u7cfb\u7edf\u7075\u6d3b\u6027\u548c\u9002\u5e94\u6027",
+      "result": {
+        "confidence": 92
+      },
+      "context": "\u7cfb\u7edf\u8fd0\u884c\u6b63\u5e38\uff0c\u5982\u4f55\u8fdb\u4e00\u6b65\u4f18\u5316\uff1f",
+      "timestamp": "2026-05-12T20:36:15.408772",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "\u6574\u5408\u591a\u79cd\u667a\u80fd\u4ee3\u7406\u4ee5\u589e\u5f3a\u7cfb\u7edf\u7075\u6d3b\u6027\u548c\u9002\u5e94\u6027"
+      ]
+    },
+    {
+      "id": "45433481",
+      "agent": "closed_loop",
+      "action": "gateway_down_restart",
+      "result": {
+        "success": false,
+        "duration": 0.00037980079650878906,
+        "confidence": 0.5
+      },
+      "context": "{\"strategy\": \"restart\", \"resolved\": false}",
+      "timestamp": "2026-05-12T21:23:28.218700",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "gateway",
+        "down",
+        "restart"
+      ]
+    },
+    {
+      "id": "6eee227c",
+      "agent": "closed_loop",
+      "action": "agent_down_restart",
+      "result": {
+        "success": false,
+        "duration": 0.00041174888610839844,
+        "confidence": 0.5
+      },
+      "context": "{\"strategy\": \"restart\", \"resolved\": false}",
+      "timestamp": "2026-05-12T21:23:33.259368",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "agent",
+        "down",
+        "restart"
+      ]
+    },
+    {
+      "id": "d818a587",
+      "agent": "closed_loop",
+      "action": "gateway_down_restart",
+      "result": {
+        "success": false,
+        "duration": 0.00043511390686035156,
+        "confidence": 0.5
+      },
+      "context": "{\"strategy\": \"restart\", \"resolved\": false}",
+      "timestamp": "2026-05-12T21:24:38.388251",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "gateway",
+        "down",
+        "restart"
+      ]
+    },
+    {
+      "id": "f3650bab",
+      "agent": "closed_loop",
+      "action": "agent_down_restart",
+      "result": {
+        "success": true,
+        "duration": 0.00037360191345214844,
+        "confidence": 0.5
+      },
+      "context": "{\"strategy\": \"restart\", \"resolved\": true}",
+      "timestamp": "2026-05-12T21:24:43.435897",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "agent",
+        "down",
+        "restart"
+      ]
+    },
+    {
+      "id": "bd550782",
+      "agent": "closed_loop",
+      "action": "learn_gateway_restart",
+      "result": {
+        "success": false
+      },
+      "context": "{\"strategy\": \"restart\"}",
+      "timestamp": "2026-05-12T21:32:40.405879",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "learn",
+        "gateway",
+        "restart"
+      ]
+    },
+    {
+      "id": "6fbebac9",
+      "agent": "real_closed_loop",
+      "action": "fix_gateway_restart",
+      "result": {
+        "success": false,
+        "duration": 0.0005669593811035156
+      },
+      "context": "auto_heal",
+      "timestamp": "2026-05-12T21:39:43.697469",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "gateway",
+        "restart"
+      ]
+    },
+    {
+      "id": "fcc5402a",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 1.1920928955078125e-06
+      },
+      "context": "{\"service\": \"gateway\"}",
+      "timestamp": "2026-05-12T21:40:24.175685",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "7e90f6ea",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_restart_gateway",
+      "result": {
+        "resolved": false,
+        "duration": 1.6689300537109375e-06
+      },
+      "context": "{\"service\": \"adaptation\"}",
+      "timestamp": "2026-05-12T21:40:27.210432",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "restart",
+        "gateway"
+      ]
+    },
+    {
+      "id": "27e05b14",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_check_logs",
+      "result": {
+        "resolved": true,
+        "duration": 7.152557373046875e-07
+      },
+      "context": "{\"service\": \"agent\"}",
+      "timestamp": "2026-05-12T21:40:30.245716",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "check",
+        "logs"
+      ]
+    },
+    {
+      "id": "55d17677",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_check_logs",
+      "result": {
+        "resolved": false,
+        "duration": 9.5367431640625e-07
+      },
+      "context": "{\"service\": \"agent_api\"}",
+      "timestamp": "2026-05-12T21:40:33.257538",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "check",
+        "logs"
+      ]
+    },
+    {
+      "id": "26bdbd88",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 1.1920928955078125e-06
+      },
+      "context": "{\"service\": \"alerts\"}",
+      "timestamp": "2026-05-12T21:40:36.272736",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "e2637d0d",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 1.430511474609375e-06
+      },
+      "context": "{\"service\": \"audit\"}",
+      "timestamp": "2026-05-12T21:40:39.287913",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "b68ab63a",
+      "agent": "fault_learning_loop",
+      "action": "fix_connection_refused_restart_service",
+      "result": {
+        "resolved": false,
+        "duration": 1.9073486328125e-06
+      },
+      "context": "{\"service\": \"auto_train\"}",
+      "timestamp": "2026-05-12T21:40:42.301934",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "connection",
+        "refused",
+        "restart",
+        "service"
+      ]
+    },
+    {
+      "id": "885c7144",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 9.5367431640625e-07
+      },
+      "context": "{\"service\": \"backup\"}",
+      "timestamp": "2026-05-12T21:40:45.316495",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "83d27f6a",
+      "agent": "fault_learning_loop",
+      "action": "fix_import_error_install_deps",
+      "result": {
+        "resolved": false,
+        "duration": 7.152557373046875e-07
+      },
+      "context": "{\"service\": \"brain_daemon\"}",
+      "timestamp": "2026-05-12T21:40:48.325974",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "import",
+        "error",
+        "install",
+        "deps"
+      ]
+    },
+    {
+      "id": "a74aea7a",
+      "agent": "fault_learning_loop",
+      "action": "fix_timeout_increase_timeout",
+      "result": {
+        "resolved": false,
+        "duration": 2.1457672119140625e-05
+      },
+      "context": "{\"service\": \"collect\"}",
+      "timestamp": "2026-05-12T21:40:51.339466",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "timeout",
+        "increase",
+        "timeout"
+      ]
+    },
+    {
+      "id": "f8d6d539",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": true,
+        "duration": 9.5367431640625e-07
+      },
+      "context": "{\"service\": \"doc\"}",
+      "timestamp": "2026-05-12T21:40:54.353478",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "3aa5745b",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 7.152557373046875e-07
+      },
+      "context": "{\"service\": \"file\"}",
+      "timestamp": "2026-05-12T21:40:57.368026",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "e03acdab",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 7.152557373046875e-07
+      },
+      "context": "{\"service\": \"gateway\"}",
+      "timestamp": "2026-05-12T21:41:00.384534",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "f79a4a26",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 4.76837158203125e-07
+      },
+      "context": "{\"service\": \"intelligence\"}",
+      "timestamp": "2026-05-12T21:41:03.396348",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "155142ff",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 7.152557373046875e-07
+      },
+      "context": "{\"service\": \"keepalive\"}",
+      "timestamp": "2026-05-12T21:41:06.411106",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "bf2924c1",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 7.152557373046875e-07
+      },
+      "context": "{\"service\": \"learning\"}",
+      "timestamp": "2026-05-12T21:41:09.426287",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "d2893961",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 7.152557373046875e-07
+      },
+      "context": "{\"service\": \"memory_optimization\"}",
+      "timestamp": "2026-05-12T21:41:12.445234",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "29bbac1b",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 2.384185791015625e-06
+      },
+      "context": "{\"service\": \"monitor\"}",
+      "timestamp": "2026-05-12T21:41:15.464615",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "a6fd85dc",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 9.5367431640625e-07
+      },
+      "context": "{\"service\": \"ollama\"}",
+      "timestamp": "2026-05-12T21:41:18.482118",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "3f33cfc9",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 9.5367431640625e-07
+      },
+      "context": "{\"service\": \"scheduler\"}",
+      "timestamp": "2026-05-12T21:41:21.499329",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "99070867",
+      "agent": "fault_learning_loop",
+      "action": "fix_connection_refused_check_network",
+      "result": {
+        "resolved": false,
+        "duration": 1.430511474609375e-06
+      },
+      "context": "{\"service\": \"script\"}",
+      "timestamp": "2026-05-12T21:41:24.514771",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "connection",
+        "refused",
+        "check",
+        "network"
+      ]
+    },
+    {
+      "id": "ececf367",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 7.152557373046875e-07
+      },
+      "context": "{\"service\": \"security_alerts\"}",
+      "timestamp": "2026-05-12T21:41:27.529584",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "31669ae3",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 7.152557373046875e-07
+      },
+      "context": "{\"service\": \"security_audit\"}",
+      "timestamp": "2026-05-12T21:41:30.557381",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "dc38a6d4",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 7.152557373046875e-07
+      },
+      "context": "{\"service\": \"service_guard\"}",
+      "timestamp": "2026-05-12T21:41:33.579342",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "c396ff77",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 7.152557373046875e-07
+      },
+      "context": "{\"service\": \"topic\"}",
+      "timestamp": "2026-05-12T21:41:36.607860",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "e52957da",
+      "agent": "fault_learning_loop",
+      "action": "fix_port_in_use_kill_port_process",
+      "result": {
+        "resolved": false,
+        "duration": 0.057237863540649414
+      },
+      "context": "{\"service\": \"true4_api\"}",
+      "timestamp": "2026-05-12T21:41:39.681624",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "port",
+        "in",
+        "use",
+        "kill",
+        "port",
+        "process"
+      ]
+    },
+    {
+      "id": "4eb3f3da",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 7.152557373046875e-07
+      },
+      "context": "{\"service\": \"gateway\"}",
+      "timestamp": "2026-05-12T21:42:12.933858",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "86d60550",
+      "agent": "fault_learning_loop",
+      "action": "fix_connection_refused_wait",
+      "result": {
+        "resolved": false,
+        "duration": 10.0100839138031
+      },
+      "context": "{\"service\": \"agent\"}",
+      "timestamp": "2026-05-12T21:42:25.987394",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "connection",
+        "refused",
+        "wait"
+      ]
+    },
+    {
+      "id": "1f4685a3",
+      "agent": "fault_learning_loop",
+      "action": "fix_connection_refused_restart_service",
+      "result": {
+        "resolved": true,
+        "duration": 0.0003535747528076172
+      },
+      "context": "{\"service\": \"doc\"}",
+      "timestamp": "2026-05-12T21:42:29.003787",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "connection",
+        "refused",
+        "restart",
+        "service"
+      ]
+    },
+    {
+      "id": "dd8ff118",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 7.152557373046875e-07
+      },
+      "context": "{\"service\": \"adaptation\"}",
+      "timestamp": "2026-05-12T21:42:32.019951",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "b16fadb8",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 1.1920928955078125e-06
+      },
+      "context": "{\"service\": \"agent\"}",
+      "timestamp": "2026-05-12T21:42:35.029645",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "4007ae01",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 9.5367431640625e-07
+      },
+      "context": "{\"service\": \"agent_api\"}",
+      "timestamp": "2026-05-12T21:42:38.044963",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "1a68ed00",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 1.430511474609375e-06
+      },
+      "context": "{\"service\": \"alerts\"}",
+      "timestamp": "2026-05-12T21:42:41.061648",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "7a7eb9df",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 9.5367431640625e-07
+      },
+      "context": "{\"service\": \"audit\"}",
+      "timestamp": "2026-05-12T21:42:44.077526",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "ef624925",
+      "agent": "fault_learning_loop",
+      "action": "fix_connection_refused_restart_service",
+      "result": {
+        "resolved": false,
+        "duration": 2.6226043701171875e-06
+      },
+      "context": "{\"service\": \"auto_train\"}",
+      "timestamp": "2026-05-12T21:42:47.093730",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "connection",
+        "refused",
+        "restart",
+        "service"
+      ]
+    },
+    {
+      "id": "dc74cdac",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 9.5367431640625e-07
+      },
+      "context": "{\"service\": \"backup\"}",
+      "timestamp": "2026-05-12T21:42:50.113038",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "f6594076",
+      "agent": "fault_learning_loop",
+      "action": "fix_import_error_fix_path",
+      "result": {
+        "resolved": false,
+        "duration": 7.152557373046875e-07
+      },
+      "context": "{\"service\": \"brain_daemon\"}",
+      "timestamp": "2026-05-12T21:42:53.129791",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "import",
+        "error",
+        "fix",
+        "path"
+      ]
+    },
+    {
+      "id": "eca03ba5",
+      "agent": "fault_learning_loop",
+      "action": "fix_timeout_restart",
+      "result": {
+        "resolved": false,
+        "duration": 1.1920928955078125e-06
+      },
+      "context": "{\"service\": \"collect\"}",
+      "timestamp": "2026-05-12T21:42:56.144141",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "timeout",
+        "restart"
+      ]
+    },
+    {
+      "id": "c13514ba",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": true,
+        "duration": 9.5367431640625e-07
+      },
+      "context": "{\"service\": \"doc\"}",
+      "timestamp": "2026-05-12T21:42:59.158750",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "1be12ef8",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 1.6689300537109375e-06
+      },
+      "context": "{\"service\": \"file\"}",
+      "timestamp": "2026-05-12T21:43:02.173313",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "5ff97295",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 1.9073486328125e-06
+      },
+      "context": "{\"service\": \"gateway\"}",
+      "timestamp": "2026-05-12T21:43:05.187501",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "93eb4f99",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 1.9073486328125e-06
+      },
+      "context": "{\"service\": \"intelligence\"}",
+      "timestamp": "2026-05-12T21:43:08.203680",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "2308dfc8",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 7.152557373046875e-07
+      },
+      "context": "{\"service\": \"keepalive\"}",
+      "timestamp": "2026-05-12T21:43:11.220144",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "fdfc4cde",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 1.1920928955078125e-06
+      },
+      "context": "{\"service\": \"learning\"}",
+      "timestamp": "2026-05-12T21:43:14.237374",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "b4de1f22",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 1.1920928955078125e-06
+      },
+      "context": "{\"service\": \"memory_optimization\"}",
+      "timestamp": "2026-05-12T21:43:17.253965",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "1736a625",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 9.5367431640625e-07
+      },
+      "context": "{\"service\": \"monitor\"}",
+      "timestamp": "2026-05-12T21:43:20.271919",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "89153b4e",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 7.152557373046875e-07
+      },
+      "context": "{\"service\": \"ollama\"}",
+      "timestamp": "2026-05-12T21:43:23.288692",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "e779a97e",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 7.152557373046875e-07
+      },
+      "context": "{\"service\": \"scheduler\"}",
+      "timestamp": "2026-05-12T21:43:26.307374",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "645f38f0",
+      "agent": "fault_learning_loop",
+      "action": "fix_connection_refused_restart_service",
+      "result": {
+        "resolved": false,
+        "duration": 2.86102294921875e-06
+      },
+      "context": "{\"service\": \"script\"}",
+      "timestamp": "2026-05-12T21:43:29.324942",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "connection",
+        "refused",
+        "restart",
+        "service"
+      ]
+    },
+    {
+      "id": "5264c8b2",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 9.5367431640625e-07
+      },
+      "context": "{\"service\": \"security_alerts\"}",
+      "timestamp": "2026-05-12T21:43:32.342132",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "25db25e5",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 7.152557373046875e-07
+      },
+      "context": "{\"service\": \"security_audit\"}",
+      "timestamp": "2026-05-12T21:43:35.358334",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "15d62026",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 1.1920928955078125e-06
+      },
+      "context": "{\"service\": \"service_guard\"}",
+      "timestamp": "2026-05-12T21:43:38.378851",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "e7d9659a",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 1.1920928955078125e-06
+      },
+      "context": "{\"service\": \"topic\"}",
+      "timestamp": "2026-05-12T21:43:41.398372",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "263b5a0c",
+      "agent": "fault_learning_loop",
+      "action": "fix_port_in_use_change_port",
+      "result": {
+        "resolved": false,
+        "duration": 1.1920928955078125e-06
+      },
+      "context": "{\"service\": \"true4_api\"}",
+      "timestamp": "2026-05-12T21:43:44.416112",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "port",
+        "in",
+        "use",
+        "change",
+        "port"
+      ]
+    },
+    {
+      "id": "08d1edbb",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 1.430511474609375e-06
+      },
+      "context": "{\"service\": \"gateway\"}",
+      "timestamp": "2026-05-12T21:44:17.681575",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "62ff6dfe",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 1.1920928955078125e-06
+      },
+      "context": "{\"service\": \"adaptation\"}",
+      "timestamp": "2026-05-12T21:44:20.700380",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "de72fb26",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": true,
+        "duration": 7.152557373046875e-07
+      },
+      "context": "{\"service\": \"agent\"}",
+      "timestamp": "2026-05-12T21:44:23.733590",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "d7f5ee5c",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 1.430511474609375e-06
+      },
+      "context": "{\"service\": \"agent_api\"}",
+      "timestamp": "2026-05-12T21:44:26.757944",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "6249962e",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 7.152557373046875e-07
+      },
+      "context": "{\"service\": \"alerts\"}",
+      "timestamp": "2026-05-12T21:44:29.773420",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "efcc2e75",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 1.1920928955078125e-06
+      },
+      "context": "{\"service\": \"audit\"}",
+      "timestamp": "2026-05-12T21:44:32.790803",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "8c135325",
+      "agent": "fault_learning_loop",
+      "action": "fix_connection_refused_restart_service",
+      "result": {
+        "resolved": false,
+        "duration": 2.1457672119140625e-06
+      },
+      "context": "{\"service\": \"auto_train\"}",
+      "timestamp": "2026-05-12T21:44:35.805745",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "connection",
+        "refused",
+        "restart",
+        "service"
+      ]
+    },
+    {
+      "id": "d5c0a907",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 7.152557373046875e-07
+      },
+      "context": "{\"service\": \"backup\"}",
+      "timestamp": "2026-05-12T21:44:38.822544",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "1f9176b6",
+      "agent": "fault_learning_loop",
+      "action": "fix_import_error_reload",
+      "result": {
+        "resolved": false,
+        "duration": 7.152557373046875e-07
+      },
+      "context": "{\"service\": \"brain_daemon\"}",
+      "timestamp": "2026-05-12T21:44:41.838294",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "import",
+        "error",
+        "reload"
+      ]
+    },
+    {
+      "id": "a6872b04",
+      "agent": "fault_learning_loop",
+      "action": "fix_timeout_optimize",
+      "result": {
+        "resolved": false,
+        "duration": 1.1920928955078125e-06
+      },
+      "context": "{\"service\": \"collect\"}",
+      "timestamp": "2026-05-12T21:44:44.853519",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "timeout",
+        "optimize"
+      ]
+    },
+    {
+      "id": "08a7b77d",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": true,
+        "duration": 7.152557373046875e-07
+      },
+      "context": "{\"service\": \"doc\"}",
+      "timestamp": "2026-05-12T21:44:47.869069",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "05038b09",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 2.384185791015625e-06
+      },
+      "context": "{\"service\": \"file\"}",
+      "timestamp": "2026-05-12T21:44:50.887020",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "754e9418",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 7.152557373046875e-07
+      },
+      "context": "{\"service\": \"gateway\"}",
+      "timestamp": "2026-05-12T21:44:53.903459",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "c6b2fdc7",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 9.5367431640625e-07
+      },
+      "context": "{\"service\": \"intelligence\"}",
+      "timestamp": "2026-05-12T21:44:56.932509",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "93eaebdd",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 9.5367431640625e-07
+      },
+      "context": "{\"service\": \"keepalive\"}",
+      "timestamp": "2026-05-12T21:44:59.953958",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "1daac3a6",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 7.152557373046875e-07
+      },
+      "context": "{\"service\": \"learning\"}",
+      "timestamp": "2026-05-12T21:45:02.970190",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "38533998",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 1.6689300537109375e-06
+      },
+      "context": "{\"service\": \"memory_optimization\"}",
+      "timestamp": "2026-05-12T21:45:05.987710",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "95a17157",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 1.1920928955078125e-06
+      },
+      "context": "{\"service\": \"monitor\"}",
+      "timestamp": "2026-05-12T21:45:09.003276",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "991c5c42",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 1.9073486328125e-06
+      },
+      "context": "{\"service\": \"ollama\"}",
+      "timestamp": "2026-05-12T21:45:12.020411",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "0ca82e6d",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 9.5367431640625e-07
+      },
+      "context": "{\"service\": \"scheduler\"}",
+      "timestamp": "2026-05-12T21:45:15.038284",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "4a3b3758",
+      "agent": "fault_learning_loop",
+      "action": "fix_connection_refused_restart_service",
+      "result": {
+        "resolved": false,
+        "duration": 2.6226043701171875e-06
+      },
+      "context": "{\"service\": \"script\"}",
+      "timestamp": "2026-05-12T21:45:18.056224",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "connection",
+        "refused",
+        "restart",
+        "service"
+      ]
+    },
+    {
+      "id": "95a24a8b",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 7.152557373046875e-07
+      },
+      "context": "{\"service\": \"security_alerts\"}",
+      "timestamp": "2026-05-12T21:45:21.075297",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "8a2d9ffd",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 1.1920928955078125e-06
+      },
+      "context": "{\"service\": \"security_audit\"}",
+      "timestamp": "2026-05-12T21:45:24.094703",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "81cbfd11",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 1.1920928955078125e-06
+      },
+      "context": "{\"service\": \"service_guard\"}",
+      "timestamp": "2026-05-12T21:45:27.111612",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "f978ed9b",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 7.152557373046875e-07
+      },
+      "context": "{\"service\": \"topic\"}",
+      "timestamp": "2026-05-12T21:45:30.128435",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "51f5a9de",
+      "agent": "fault_learning_loop",
+      "action": "fix_port_in_use_wait_and_retry",
+      "result": {
+        "resolved": false,
+        "duration": 10.007412195205688
+      },
+      "context": "{\"service\": \"true4_api\"}",
+      "timestamp": "2026-05-12T21:45:43.155251",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "port",
+        "in",
+        "use",
+        "wait",
+        "and",
+        "retry"
+      ]
+    },
+    {
+      "id": "5d4198cb",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 1.6689300537109375e-05
+      },
+      "context": "{\"service\": \"gateway\"}",
+      "timestamp": "2026-05-12T21:46:16.410730",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "40eba0ce",
+      "agent": "fault_learning_loop",
+      "action": "fix_connection_refused_restart_service",
+      "result": {
+        "resolved": true,
+        "duration": 0.0007071495056152344
+      },
+      "context": "{\"service\": \"agent\"}",
+      "timestamp": "2026-05-12T21:46:19.431579",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "connection",
+        "refused",
+        "restart",
+        "service"
+      ]
+    },
+    {
+      "id": "8a5cb37b",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 1.430511474609375e-06
+      },
+      "context": "{\"service\": \"adaptation\"}",
+      "timestamp": "2026-05-12T21:46:22.456098",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "b0d9b5af",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": true,
+        "duration": 9.5367431640625e-07
+      },
+      "context": "{\"service\": \"agent\"}",
+      "timestamp": "2026-05-12T21:46:25.477860",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "099f08b3",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 9.5367431640625e-07
+      },
+      "context": "{\"service\": \"agent_api\"}",
+      "timestamp": "2026-05-12T21:46:28.499616",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "30276f45",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 9.5367431640625e-07
+      },
+      "context": "{\"service\": \"alerts\"}",
+      "timestamp": "2026-05-12T21:46:31.516383",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "ee774513",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 9.5367431640625e-07
+      },
+      "context": "{\"service\": \"audit\"}",
+      "timestamp": "2026-05-12T21:46:34.543513",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "f32e1993",
+      "agent": "fault_learning_loop",
+      "action": "fix_connection_refused_restart_service",
+      "result": {
+        "resolved": false,
+        "duration": 3.0994415283203125e-06
+      },
+      "context": "{\"service\": \"auto_train\"}",
+      "timestamp": "2026-05-12T21:46:37.592505",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "connection",
+        "refused",
+        "restart",
+        "service"
+      ]
+    },
+    {
+      "id": "071df134",
+      "agent": "fault_learning_loop",
+      "action": "fix_api_error_retry",
+      "result": {
+        "resolved": false,
+        "duration": 7.152557373046875e-07
+      },
+      "context": "{\"service\": \"backup\"}",
+      "timestamp": "2026-05-12T21:46:40.611382",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "api",
+        "error",
+        "retry"
+      ]
+    },
+    {
+      "id": "673c6172",
+      "agent": "fault_learning_loop",
+      "action": "fix_import_error_install_deps",
+      "result": {
+        "resolved": false,
+        "duration": 7.152557373046875e-07
+      },
+      "context": "{\"service\": \"brain_daemon\"}",
+      "timestamp": "2026-05-12T21:46:43.644924",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "import",
+        "error",
+        "install",
+        "deps"
+      ]
+    },
+    {
+      "id": "8bb55a2e",
+      "agent": "real_fault_loop",
+      "action": "fix_service_error_gateway",
+      "result": {
+        "success": false,
+        "duration": 3.003875255584717
+      },
+      "context": "strategy_restart",
+      "timestamp": "2026-05-12T21:46:53.200194",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "service",
+        "error",
+        "gateway"
+      ]
+    },
+    {
+      "id": "097eaab2",
+      "agent": "real_fault_loop",
+      "action": "fix_service_error_gateway",
+      "result": {
+        "success": false,
+        "duration": 3.0037827491760254
+      },
+      "context": "strategy_restart",
+      "timestamp": "2026-05-12T21:48:01.498465",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "service",
+        "error",
+        "gateway"
+      ]
+    },
+    {
+      "id": "e69c13f5",
+      "agent": "real_fault_loop",
+      "action": "fix_service_down_agent",
+      "result": {
+        "success": true,
+        "duration": 3.002739191055298
+      },
+      "context": "strategy_restart",
+      "timestamp": "2026-05-12T21:48:09.522004",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "fix",
+        "service",
+        "down",
+        "agent"
+      ]
+    },
+    {
+      "id": "0ec076ae",
+      "agent": "real_fault_loop",
+      "action": "fix_service_down_doc",
+      "result": {
+        "success": true,
+        "duration": 3.0035693645477295
+      },
+      "context": "strategy_restart",
+      "timestamp": "2026-05-12T21:48:17.556032",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "fix",
+        "service",
+        "down",
+        "doc"
+      ]
+    },
+    {
+      "id": "6aca4908",
+      "agent": "real_fault_loop",
+      "action": "fix_service_error_gateway",
+      "result": {
+        "success": false,
+        "duration": 3.0027825832366943
+      },
+      "context": "strategy_restart",
+      "timestamp": "2026-05-12T21:49:25.838814",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "service",
+        "error",
+        "gateway"
+      ]
+    },
+    {
+      "id": "0f5bcd73",
+      "agent": "real_fault_loop",
+      "action": "fix_service_error_gateway",
+      "result": {
+        "success": false,
+        "duration": 3.003679037094116
+      },
+      "context": "strategy_restart",
+      "timestamp": "2026-05-12T21:50:34.105608",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "service",
+        "error",
+        "gateway"
+      ]
+    },
+    {
+      "id": "1fd4ccad",
+      "agent": "real_fault_loop",
+      "action": "fix_service_error_gateway",
+      "result": {
+        "success": false,
+        "duration": 3.0038158893585205
+      },
+      "context": "strategy_restart",
+      "timestamp": "2026-05-12T21:51:42.381766",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "service",
+        "error",
+        "gateway"
+      ]
+    },
+    {
+      "id": "63c5518d",
+      "agent": "real_fault_loop",
+      "action": "fix_service_down_agent",
+      "result": {
+        "success": true,
+        "duration": 3.0035624504089355
+      },
+      "context": "strategy_restart",
+      "timestamp": "2026-05-12T21:51:50.409477",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "fix",
+        "service",
+        "down",
+        "agent"
+      ]
+    },
+    {
+      "id": "eeb817e5",
+      "agent": "real_fault_loop",
+      "action": "fix_service_down_doc",
+      "result": {
+        "success": true,
+        "duration": 3.0038602352142334
+      },
+      "context": "strategy_restart",
+      "timestamp": "2026-05-12T21:51:58.437413",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "fix",
+        "service",
+        "down",
+        "doc"
+      ]
+    },
+    {
+      "id": "829cc8b7",
+      "agent": "real_fault_loop",
+      "action": "fix_service_error_gateway",
+      "result": {
+        "success": false,
+        "duration": 3.003556489944458
+      },
+      "context": "strategy_restart",
+      "timestamp": "2026-05-12T21:53:06.703666",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "service",
+        "error",
+        "gateway"
+      ]
+    },
+    {
+      "id": "a8211b1c",
+      "agent": "real_fault_loop",
+      "action": "fix_service_error_gateway",
+      "result": {
+        "success": false,
+        "duration": 3.0040535926818848
+      },
+      "context": "strategy_restart",
+      "timestamp": "2026-05-12T21:54:14.979662",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "service",
+        "error",
+        "gateway"
+      ]
+    },
+    {
+      "id": "208330f3",
+      "agent": "real_fault_loop",
+      "action": "fix_service_error_gateway",
+      "result": {
+        "success": false,
+        "duration": 3.003971815109253
+      },
+      "context": "strategy_restart",
+      "timestamp": "2026-05-12T21:55:23.294388",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "service",
+        "error",
+        "gateway"
+      ]
+    },
+    {
+      "id": "749399ce",
+      "agent": "real_fault_loop",
+      "action": "fix_service_error_gateway",
+      "result": {
+        "success": false,
+        "duration": 3.003891944885254
+      },
+      "context": "strategy_restart",
+      "timestamp": "2026-05-12T21:56:31.601001",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "service",
+        "error",
+        "gateway"
+      ]
+    },
+    {
+      "id": "3493713f",
+      "agent": "real_fault_loop",
+      "action": "fix_service_error_gateway",
+      "result": {
+        "success": false,
+        "duration": 2.9995155334472656
+      },
+      "context": "strategy_restart",
+      "timestamp": "2026-05-12T21:57:39.870233",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "service",
+        "error",
+        "gateway"
+      ]
+    },
+    {
+      "id": "14663ad0",
+      "agent": "real_fault_loop",
+      "action": "fix_service_error_gateway",
+      "result": {
+        "success": false,
+        "duration": 3.0040154457092285
+      },
+      "context": "strategy_restart",
+      "timestamp": "2026-05-12T21:58:48.157547",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "service",
+        "error",
+        "gateway"
+      ]
+    },
+    {
+      "id": "f0d4b886",
+      "agent": "real_fault_loop",
+      "action": "fix_service_error_gateway",
+      "result": {
+        "success": false,
+        "duration": 3.003939151763916
+      },
+      "context": "strategy_restart",
+      "timestamp": "2026-05-12T21:59:56.420329",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "service",
+        "error",
+        "gateway"
+      ]
+    },
+    {
+      "id": "bf3163a4",
+      "agent": "real_fault_loop",
+      "action": "fix_service_error_gateway",
+      "result": {
+        "success": false,
+        "duration": 3.0034193992614746
+      },
+      "context": "strategy_restart",
+      "timestamp": "2026-05-12T22:01:04.686318",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "service",
+        "error",
+        "gateway"
+      ]
+    },
+    {
+      "id": "a1c72294",
+      "agent": "real_fault_loop",
+      "action": "fix_service_error_gateway",
+      "result": {
+        "success": false,
+        "duration": 3.003521203994751
+      },
+      "context": "strategy_restart",
+      "timestamp": "2026-05-12T22:02:12.974629",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "service",
+        "error",
+        "gateway"
+      ]
+    },
+    {
+      "id": "94a85146",
+      "agent": "active_learner",
+      "action": "fix_service_gateway",
+      "result": {
+        "success": false,
+        "score": 0,
+        "duration": 5.026944160461426,
+        "success_rate": 0.0
+      },
+      "context": "total_1",
+      "timestamp": "2026-05-12T22:03:08.204175",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "service",
+        "gateway"
+      ]
+    },
+    {
+      "id": "91f2445d",
+      "agent": "active_learner",
+      "action": "fix_service_agent",
+      "result": {
+        "success": true,
+        "score": 1,
+        "duration": 5.016923904418945,
+        "success_rate": 1.0
+      },
+      "context": "total_1",
+      "timestamp": "2026-05-12T22:03:13.238357",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "fix",
+        "service",
+        "agent"
+      ]
+    },
+    {
+      "id": "db8ae264",
+      "agent": "active_learner",
+      "action": "fix_service_doc",
+      "result": {
+        "success": true,
+        "score": 1,
+        "duration": 5.020809888839722,
+        "success_rate": 1.0
+      },
+      "context": "total_1",
+      "timestamp": "2026-05-12T22:03:18.274896",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "fix",
+        "service",
+        "doc"
+      ]
+    },
+    {
+      "id": "34de28c6",
+      "agent": "active_learner",
+      "action": "fix_port_5002",
+      "result": {
+        "success": true,
+        "score": 1,
+        "duration": 1.0752248764038086,
+        "success_rate": 1.0
+      },
+      "context": "total_1",
+      "timestamp": "2026-05-12T22:03:19.384484",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "fix",
+        "port"
+      ]
+    },
+    {
+      "id": "ca7ad410",
+      "agent": "active_learner",
+      "action": "fix_port_5005",
+      "result": {
+        "success": true,
+        "score": 1,
+        "duration": 1.0469262599945068,
+        "success_rate": 1.0
+      },
+      "context": "total_1",
+      "timestamp": "2026-05-12T22:03:20.499766",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "fix",
+        "port"
+      ]
+    },
+    {
+      "id": "4129aaf7",
+      "agent": "active_learner",
+      "action": "fix_port_5008",
+      "result": {
+        "success": true,
+        "score": 1,
+        "duration": 1.049320936203003,
+        "success_rate": 1.0
+      },
+      "context": "total_1",
+      "timestamp": "2026-05-12T22:03:21.585684",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "fix",
+        "port"
+      ]
+    },
+    {
+      "id": "5920a24d",
+      "agent": "code_agent_trainer",
+      "action": "learn_intent_unknown",
+      "result": {
+        "commands_found": 0
+      },
+      "context": "# \u6d4b\u8bd5",
+      "timestamp": "2026-05-12T22:05:07.925248",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "learn",
+        "intent",
+        "unknown"
+      ]
+    },
+    {
+      "id": "6d7055c2",
+      "agent": "code_agent_trainer",
+      "action": "learn_intent_unknown",
+      "result": {
+        "commands_found": 0
+      },
+      "context": "print(\"\\n\u6d4b\u8bd5\u610f\u56fe\u8bc6\u522b:\")",
+      "timestamp": "2026-05-12T22:05:07.945079",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "learn",
+        "intent",
+        "unknown"
+      ]
+    },
+    {
+      "id": "cd09cc75",
+      "agent": "code_agent_trainer",
+      "action": "learn_intent_unknown",
+      "result": {
+        "commands_found": 0
+      },
+      "context": "test_inputs = [",
+      "timestamp": "2026-05-12T22:05:07.964516",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "learn",
+        "intent",
+        "unknown"
+      ]
+    },
+    {
+      "id": "65b57717",
+      "agent": "code_agent_trainer",
+      "action": "learn_intent_fix_port",
+      "result": {
+        "commands_found": 0
+      },
+      "context": "\"\u7aef\u53e35002\u88ab\u5360\u7528\u4e86\uff0c\u600e\u4e48\u529e\",",
+      "timestamp": "2026-05-12T22:05:07.982207",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "learn",
+        "intent",
+        "fix",
+        "port"
+      ]
+    },
+    {
+      "id": "28fa1ba9",
+      "agent": "code_agent_trainer",
+      "action": "learn_intent_restart_service",
+      "result": {
+        "commands_found": 0
+      },
+      "context": "\"\u5e2e\u6211\u91cd\u542f\u7f51\u5173\u670d\u52a1\",",
+      "timestamp": "2026-05-12T22:05:07.999933",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "learn",
+        "intent",
+        "restart",
+        "service"
+      ]
+    },
+    {
+      "id": "ea2e6677",
+      "agent": "code_agent_trainer",
+      "action": "learn_intent_view_logs",
+      "result": {
+        "commands_found": 0
+      },
+      "context": "\"\u67e5\u770b\u4e00\u4e0b\u65e5\u5fd7\",",
+      "timestamp": "2026-05-12T22:05:08.017853",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "learn",
+        "intent",
+        "view",
+        "logs"
+      ]
+    },
+    {
+      "id": "9c05f4ad",
+      "agent": "code_agent_trainer",
+      "action": "learn_intent_debug",
+      "result": {
+        "commands_found": 0
+      },
+      "context": "\"\u4ee3\u7801\u6709bug\u9700\u8981\u8c03\u8bd5\"",
+      "timestamp": "2026-05-12T22:05:08.036161",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "learn",
+        "intent",
+        "debug"
+      ]
+    },
+    {
+      "id": "ac521d0a",
+      "agent": "code_agent_trainer",
+      "action": "learn_intent_unknown",
+      "result": {
+        "commands_found": 0
+      },
+      "context": "]",
+      "timestamp": "2026-05-12T22:05:08.051844",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "learn",
+        "intent",
+        "unknown"
+      ]
+    },
+    {
+      "id": "87217a35",
+      "agent": "code_agent_trainer",
+      "action": "learn_intent_unknown",
+      "result": {
+        "commands_found": 0
+      },
+      "context": "for inp in test_inputs:",
+      "timestamp": "2026-05-12T22:05:08.071974",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "learn",
+        "intent",
+        "unknown"
+      ]
+    },
+    {
+      "id": "3d39d931",
+      "agent": "code_agent_trainer",
+      "action": "learn_intent_unknown",
+      "result": {
+        "commands_found": 0
+      },
+      "context": "intent = trainer.predict_intent(inp)",
+      "timestamp": "2026-05-12T22:05:08.090061",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "learn",
+        "intent",
+        "unknown"
+      ]
+    },
+    {
+      "id": "33f0de9b",
+      "agent": "code_agent_trainer",
+      "action": "learn_intent_unknown",
+      "result": {
+        "commands_found": 0
+      },
+      "context": "print(f\"\\n\u8f93\u5165: {inp}\")",
+      "timestamp": "2026-05-12T22:05:08.107555",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "learn",
+        "intent",
+        "unknown"
+      ]
+    },
+    {
+      "id": "edb607c8",
+      "agent": "code_agent_trainer",
+      "action": "learn_intent_unknown",
+      "result": {
+        "commands_found": 0
+      },
+      "context": "print(f\"\u610f\u56fe: {intent['intent']} (\u7f6e\u4fe1\u5ea6 {intent['confidence']:.0%})\")",
+      "timestamp": "2026-05-12T22:05:08.125676",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "learn",
+        "intent",
+        "unknown"
+      ]
+    },
+    {
+      "id": "76dd2c17",
+      "agent": "code_agent_trainer",
+      "action": "learn_intent_unknown",
+      "result": {
+        "commands_found": 0
+      },
+      "context": "print(f\"\u5efa\u8bae: {intent['suggested_action']}\")",
+      "timestamp": "2026-05-12T22:06:16.116448",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "learn",
+        "intent",
+        "unknown"
+      ]
+    },
+    {
+      "id": "fec07030",
+      "agent": "brain_decision",
+      "action": "fix_services",
+      "result": {
+        "fixed": [
+          "agent",
+          "doc"
+        ]
+      },
+      "context": "auto_detected",
+      "timestamp": "2026-05-12T23:42:40.299229",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "services"
+      ]
+    },
+    {
+      "id": "2f300fd5",
+      "agent": "brain_decision",
+      "action": "optimize_learning",
+      "result": {
+        "old_rate": 0.3,
+        "new_rate": 0.35
+      },
+      "context": "success_rate_low",
+      "timestamp": "2026-05-12T23:42:42.316589",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "optimize",
+        "learning"
+      ]
+    },
+    {
+      "id": "819c00e8",
+      "agent": "brain_decision",
+      "action": "fix_services",
+      "result": {
+        "fixed": [
+          "doc"
+        ]
+      },
+      "context": "auto_detected",
+      "timestamp": "2026-05-12T23:52:03.133579",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "fix",
+        "services"
+      ]
+    },
+    {
+      "id": "c9e1276d",
+      "agent": "brain_decision",
+      "action": "optimize_learning",
+      "result": {
+        "old_rate": 0.3,
+        "new_rate": 0.35
+      },
+      "context": "success_rate_low",
+      "timestamp": "2026-05-12T23:52:05.156116",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "optimize",
+        "learning"
+      ]
+    },
+    {
+      "id": "3ebf6a69",
+      "agent": "brain_decision",
+      "action": "decision_cycle",
+      "result": {
+        "executed_actions": [
+          "fix_services",
+          "optimize_learning"
+        ]
+      },
+      "context": "executed_2_actions",
+      "timestamp": "2026-05-12T23:52:07.178672",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "decision",
+        "cycle"
+      ]
+    },
+    {
+      "id": "2ccc6b0f",
+      "agent": "user_feedback",
+      "action": "positive_sample",
+      "result": {
+        "video_id": "CaazmtThfu0",
+        "title": "\u9999\u6e2f\u4f18\u624d\u8ba1\u5212\uff1a\u673a\u9047\u4e0e\u6311\u6218\u8be6\u89e3",
+        "transcript": "\u5341\u5b57\u5c71\u4e0b\u7684\u82af\u7247\u7ae0\u674e\u660e\u7ad9\u5728\u7a97\u524d\u7ef4\u591a\u5229\u4e9a\u6e2f\u7684\u5634\u9910\u767b\u706b\u4eff\u4f5b\u5728\u5411\u4ed6\u62db\u60a3\u684c\u4e0a\u4e00\u4efd\u540d\u4e3a\u4f18\u79c0\u4eba\u624d\u5165\u5883\u8ba1\u5212\u7684\u6587\u4ef6\u5411\u4e00\u9897\u6295\u5165\u65b0\u6e56\u7684\u5341\u5b57\u6fc0\u8d77\u4e86\u5c42\u5c42\u8054\u76ca\u9999\u6e2f\u8fd9\u5ea7\u5145\u6ee1\u6d3b\u529b\u7684\u57ce\u5e02\u6b63\u79fb\u4e00\u79cd\u524d\u6240\u672a\u6709\u7684\u59ff\u6001\u5411\u4ed6\u5c1d\u5f00\u5927\u95e8\u8fd9\u4f1a\u662f\u4ed6\u804c\u4e1a\u751f\u6daf\u7684\u661f\u671f\u70b9\u5417\u7533\u8bf7\u7684\u7b2c\u4e00\u6b65\u662f\u9a8c\u90d1\u8d44\u683c\u4ed6\u4ece\u62bd\u9898\u6df1\u5904\u53d6\u51fa\u4e86\u90a3\u672c\u57ce\u5bb0\u7740\u8fd9\u591a\u5e74\u558a\u6c34\u7fbd\u68a6\u60f3\u7684\u5b66\u4f4d\u6b63\u4e66\u5728\u9999\u6e2f\u7684\u84dd\u56fe\u4e2d\u826f\u597d\u7684\u5b66\u672f\u80cc\u666f\u662f\u5171\u7ebf\u667a\u6167\u7684\u5373\u65f6\u6216\u8005\u8fd9\u4efd\u8bc1\u660e\u4ed6\u611f\u89c9\u901a\u5f80\u672a\u6765\u7684\u5927\u95e8\u5df2\u7ecf\u6572\u7136\u5f00\u8d77\u4e86\u4e00\u6761\u5949\u7ec6\u4f46\u4ed6\u77e5\u9053\u8fd9\u4ec5\u4ec5\u662f\u5f00\u59cb\u9664\u4e86\u5b66\u4f8b\u653f\u7b56\u8fd8\u770b\u4e2d\u826f\u597d\u54c1\u683c\u4e0e\u8d22\u653f\u81ea\u5df1\u8fd9\u4e0d\u4ec5\u662f\u7eb8\u4e0a\u7684\u8981\u6c42\u66f4\u662f\u4ed6\u4e00\u76f4\u4fe1\u5c01\u7684\u804c\u4e1a\u6027\u6761\u653f\u6cbb\u4e0e\u6210\u5fc3\u770b\u7740\u81ea\u5df1\u672a\u672a\u6765\u51c6\u5907\u7684\u7ee7\u7eed\u4ed6\u611f\u5230\u4e00\u79cd\u524d\u6240\u672a\u6709\u7684\u8e0f\u5b9e\u4ed6\u4e0d\u662f\u53bb\u5c0b\u6c42\u907f\u62a4\u800c\u662f\u5e26\u7740\u5efa\u8bbe\u8fd9\u5ea7\u57ce\u5e02\u7684\u57ce\u76ca\u548c\u5e95\u6c14\u800c\u6765\u6700\u5173\u952e\u7684\u4e00\u6b65\u662f\u7ec8\u5408\u7ea7\u5206\u5236\u5e74\u9f84\u3001\u5b66\u4f8b\u3001\u5de5\u4f5c\u7ecf\u9a8c\u4ed6\u8fc7\u5f80\u7684\u6bcf\u4e00\u90e8\u5206\u6597\u90fd\u753b\u4f5c\u4e86\u65b0\u76d8\u4e0a\u7684\u70b9\u70b9\u65b0\u5149\u4ed6\u62ff\u7740\u6bd4\u4e00\u5c0f\u5fc3\u610f\u4e49\u7684\u8fde\u63a5\u7740\u6bcf\u4e00\u9897\u5fc3\u60c5\u770b\u7740\u4ed6\u4eec\u4f1a\u636e\u6210\u4e00\u6761\u901a\u5f80\u68a6\u60f3\u7684\u95ea\u4eae\u8f68\u9053\u5f53\u4ed6\u5c06\u4ee3\u8868\u5bb6\u5ead\u7684\u6e29\u6696\u65b0\u5149\u4e5f\u90a3\u5165\u5176\u4e2d\u65f6\u4ed6\u77e5\u9053\u8fd9\u4e0d\u4ec5\u662f\u4ed6\u4e00\u4e2a\u4eba\u7684\u65c5\u7a0b\u4e00\u5207\u51c6\u5907\u5c31\u7eed\u4ed6\u6309\u4e0b\u4e86\u63d0\u4ea4\u4ef6\u51e0\u4e2a\u6708\u540e\u674e\u660e\u7ec8\u4e8e\u7ad9\u5728\u4e86\u65bd\u5b50\u5c71\u4e0b\u811a\u4e0b\u662f\u575a\u5b9e\u7684\u571f\u5730\u773c\u524d\u662f\u5145\u6ee1\u65e0\u9650\u57fa\u4e8e\u7684\u57ce\u5e02\u4ed6\u4e0d\u5728\u662f\u7a97\u524d\u90a3\u4e2a\u9065\u671b\u7684\u68a6\u60f3\u5bb6\u800c\u662f\u8fd9\u573a\u53d8\u9769\u4e2d\u7684\u4e00\u4efd\u5b50\u4ed6\u8eab\u4f53\u4e00\u53e3\u6c14\u7a7a\u6c14\u4e2d\u5145\u6ee1\u4e86\u6311\u6218\u4e0e\u5e0c\u671b\u7684\u5473\u9053\u4ed6\u77e5\u9053\u5c5e\u4e8e\u4ed6\u7684\u5fc3\u504f\u5f20\u73b0\u5728\u624d\u521a\u521a\u5f00\u59cb",
+        "language": "zh",
+        "length_chars": 518
+      },
+      "context": "user\u516c\u5f00\u6b64\u89c6\u9891\uff0c\u4f5c\u4e3a\u6b63\u9762\u5b66\u4e60\u6837\u672c",
+      "timestamp": "2026-05-13T02:05:55.537607",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "positive",
+        "sample"
+      ]
+    },
+    {
+      "id": "0039a122",
+      "agent": "user_feedback",
+      "action": "positive_sample",
+      "result": {
+        "video_id": "PSNEaQFt8D4",
+        "title": "\u9999\u6e2f\u4f18\u624d\u8ba1\u5212 75\u5206\u901a\u5173\u653b\u7565",
+        "transcript": "Hong Kong's talent schemes guideFor decades, Hong Kong has been a global super connectorNow, it's embarking on its most ambitious project yet Attracting the world's brightest minds to build its future This isn't just about a new visa, it's a city-wide invitation to innovate create and thrive But why the sudden shift and what does it mean for professionals like you? Let's explore the challenge that sparked this transformation Hong Kong's success was built on connecting east and west But to lead into tomorrow's economy as a hub for everything from AI to aviation It faced a critical shortfall of specialized skills The city needed to rapidly infuse its workforce with new expertise to power its ambitious eight-centers vision In response, it didn't just open a door, it built a series of expressways for global talent Let's look at the two main entry points At the core of the strategy, our two flagship schemes, the top talent pass scheme, TTPS, is the express lane granting a visa based on your high income or lead education Even before you have a job offer In contrast, the quality migrant admission scheme, QMAS, is a flexible points-based system that evaluates your entire professional portfolio These two paths ensure both proven leaders and diverse experts can find their way But the network of opportunities is even wider Beyond the main gateways, a web of specialized schemes, caters to every career stage There are dedicated channels for those with job offers, programs to retain new university graduates and pathways for skilled technicians Crucially, the journey doesn't end with a visa, the Hong Kong talent engage, HKTE office, access a dedicated concierge Helping you and your family settle in from finding schools to learning the local language So, is this system really as open as it sounds? Forget the myth of a closed-off city, with a 95% approval rate and nearly half of top talent entering the tech sector Hong Kong is actively seeking innovators since late 2022, over 75,000 professionals and their families have already arrived Fuelling the city's transformation into a global hub for innovation, culture and more Each talent scheme is a unique strand in a bridge to the future, making Hong Kong not just a place to work but a place to build what's next",
+        "language": "en",
+        "length_chars": 2280
+      },
+      "context": "user\u516c\u5f00\u6b64\u89c6\u9891\uff0c\u4f5c\u4e3a\u6b63\u9762\u5b66\u4e60\u6837\u672c",
+      "timestamp": "2026-05-13T02:05:55.549110",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "positive",
+        "sample"
+      ]
+    },
+    {
+      "id": "4c9a7a1c",
+      "agent": "youtube_series",
+      "action": "episode_2_produced",
+      "result": {
+        "episode": 2,
+        "title": "\u8ffd\u68a6\u542f\u822a",
+        "transcript": "\u93e1\u982d\u7de9\u7de9\u63a8\u9032 \u674e\u865f\u5f9e\u6df1\u5733\u5317\u7ad9\u8d70\u51fa\u76ee\u5149\u4e2d\u5145\u6eff\u4e86\u5c0d\u672a\u4f86\u7684\u885d\u666f\u4ed6\u5b88\u63e1\u8457\u5c55\u65b0\u7684\u9999\u6e2f\u512a\u624d\u8a08\u756b\u5de5\u4f5c\u7c3d\u8b49\u80cc\u5f8c\u662f\u4ed6\u4eba\u751f\u7684\u5fc3\u60c5\u9ede \u9999\u6e2f\u5728\u5730\u9435\u7ad9\u53e3\u7531\u65bc\u9a19\u5ba2\u53e3\u8e0f\u4e0a\u4e86\u524d\u5f80\u5de5\u4f5c\u7684\u516c\u4ea4\u756b\u9762\u5207\u63db\u5230\u516c\u53f8\u9580\u53e3\u674e\u865f\u7ad9\u5728\u9580\u524d \u773c\u524d\u51fa\u73fe\u4e86\u4e00\u500b\u719f\u6089\u7684\u8072\u97f3\u4ed6\u4e0d\u78ba\u5b9a \u9019\u662f\u5426\u662f\u547d\u904b\u7684\u5b89\u6392\u5f35\u7d93\u7406\u674e\u865f\u6975\u5fd9\u4e0a\u524d\u6253\u62db\u547c \u4f60\u600e\u9ebc\u4f86\u4e86\u5f35\u7d93\u7406\u5fae\u7b11\u8457\u56de\u61c9\u6211\u6b63\u597d\u7d93\u904e\u9019\u88e1 \u4f86\u770b\u770b\u4f60\u5462\u5169\u4eba\u76f8\u8b58\u4e00\u7b11\u7a7a\u6c23\u4e2d\u8ff7\u6162\u9019\u4e00\u7d72\u719f\u6089\u7684\u5473\u9053\u9032\u5165\u65b0\u74b0\u5883\u7684\u88e1\u865f\u8d77\u521d\u9047\u5230\u4e86\u4e0d\u5c11\u6311\u6230\u8207\u5ef6\u9577\u611b\u548c\u6587\u5316\u5dee\u7570\u8b93\u4ed6\u6709\u4e9b\u624b\u8db3\u7121\u932f\u4f46\u662f \u5728\u540c\u4e8b\u7684\u5e6b\u52a9\u4e0b\u4ed6\u9010\u6f38\u9069\u61c9\u4e26\u5728\u5de5\u4f5c\u4e2d\u5c55\u73fe\u51fa\u4e86\u4e3b\u6085\u7684\u80fd\u529b\u4e00\u5929\u665a\u4e0a \u4ed6\u5728\u516c\u53f8\u52a0\u73ed\u6642\u610f\u5916\u767c\u73fe\u4e86\u4e00\u4efd\u91cd\u8981\u6587\u4ef6\u88ab\u4e00\u65bd\u4e86\u9019\u53ef\u662f\u516c\u53f8\u7684\u6a5f\u5bc6\u554a\u674e\u865f\u6975\u4e2d\u751f\u667a\u6c7a\u5b9a\u81ea\u5df1\u9078\u627e\u90a3\u4efd\u6587\u4ef6\u4ed6\u7a7f\u904e\u719f\u6089\u7684\u8d70\u72fc\u6bcf\u4e00\u500b\u89d2\u843d \u90fd\u8b93\u4ed6\u60f3\u8d77\u51fa\u4f86\u70b8\u9053\u7684\u60c5\u666f\u7a81\u7136 \u4e00\u9663\u6975\u7c97\u7684\u8173\u4e0d\u5347\u6253\u65b7\u4e86\u4ed6\u7684\u601d\u7dd2\u4e00\u500b\u540c\u4e8b\u6b63\u5728\u5145\u5fd9\u7684\u8d70\u5411\u524d\u81fa\u5c0f\u674e\u4f60\u5feb\u904e\u4f86\u4e00\u4e0b\u674e\u865f\u52a0\u5feb\u8173\u4e0d\u8ddf\u4e86\u4e0a\u53bb\u4ed6\u5011\u4e00\u8d77\u627e\u5230\u4e86\u90a3\u4f4d\u95dc\u9375\u4eba\u7269\u516c\u53f8\u7684\u8ca1\u52d9\u4e3b\u7ba1\u5c31\u662f\u9019\u4efd\u6587\u4ef6\u8ca1\u52d9\u4e3b\u7ba1\u53ea\u503c\u4e00\u5f35\u88ab\u907a\u5fd8\u7684\u8cc7\u6599\u8aaa\u53ea\u771f\u7684\u662f\u516c\u53f8\u9700\u8981\u7684\u55ce\u4ed6\u7684\u91cd\u8981\u6027\u8d85\u5a5a\u4f60\u7684\u60f3\u50cf\u674e\u865f\u7dca\u5f35\u7684\u601d\u8003\u8457\u4ed6\u610f\u8b58\u5230 \u81ea\u5df1\u624b\u4e2d\u7684\u4e0d\u50c5\u50c5\u662f\u4e00\u4efd\u7c21\u55ae\u7684\u6587\u4ef6\u800c\u662f\u95dc\u4e4e\u500b\u4eba\u8207\u516c\u53f8\u7684\u547d\u904b\u8f49\u6298\u9ede\u9019\u4e00\u523b \u4ed6\u7684\u5167\u5fc3\u5145\u6eff\u4e86\u820a\u89e3\u93e1\u982d\u8a02\u95a3\u5728\u674e\u865f\u6df1\u8272\u7684\u773c\u795e\u4e2d",
+        "audio_path": "experiments/youtube_series/workspace/episode_2_audio.mp3",
+        "video_path": "experiments/youtube_series/workspace/episode_2_video.mp4"
+      },
+      "context": "\u7b2c\u4e8c\u96c6\u5df2\u751f\u6210\uff0c\u5f85\u7528\u6237\u5ba1\u6838",
+      "timestamp": "2026-05-13T03:28:53.287953",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "episode",
+        "produced"
+      ]
+    },
+    {
+      "id": "b2a3959e",
+      "agent": "youtube_series",
+      "action": "episode_3_produced",
+      "result": {
+        "episode": 3,
+        "title": "\u6289\u62e9\u65f6\u523b\uff1a\u4fe1\u4efb\u4e0e\u80cc\u53db",
+        "script": "\u5728\u660f\u6697\u7684\u529e\u516c\u5ba4\u89d2\u843d\u91cc\uff0c\u674e\u6d69\u72ec\u81ea\u4e00\u4eba\u5750\u5728\u529e\u516c\u684c\u524d\uff0c\u624b\u4e2d\u7d27\u63e1\u7740\u4e00\u5f20\u6cdb\u9ec4\u7684\u7eb8\u5f20\u3002\u8fd9\u4e0d\u4ec5\u4ec5\u662f\u4e00\u4efd\u666e\u901a\u7684\u6587\u4ef6\uff0c\u5b83\u5305\u542b\u4e86\u5173\u4e8e\u516c\u53f8\u4e00\u4e2a\u65b0\u9879\u76ee\u7684\u60ca\u4eba\u4e8b\u5b9e\uff1a\u9879\u76ee\u8d44\u91d1\u6765\u6e90\u4e0d\u660e\uff0c\u4e14\u53ef\u80fd\u6d89\u53ca\u975e\u6cd5\u5229\u76ca\u8f93\u9001\u3002\u4ed6\u611f\u5230\u4e00\u79cd\u524d\u6240\u672a\u6709\u7684\u538b\u529b\u548c\u8d23\u4efb\u611f\u3002\n\n\u201c\u6211\u8be5\u600e\u4e48\u505a\uff1f\u201d\u4ed6\u4f4e\u58f0\u81ea\u95ee\uff0c\u201c\u5982\u679c\u5c06\u8fd9\u4efd\u4fe1\u606f\u516c\u4e4b\u4e8e\u4f17\uff0c\u662f\u5426\u80fd\u633d\u6551\u8fd9\u4e2a\u53ef\u80fd\u7684\u707e\u96be\uff1f\u4f46\u82e5\u4e0d\u91c7\u53d6\u884c\u52a8\uff0c\u516c\u53f8\u53ef\u80fd\u4f1a\u6df1\u9677\u5176\u4e2d\u2026\u2026\u201d\u9762\u5bf9\u8fd9\u4e9b\u590d\u6742\u7684\u60c5\u611f\u4e0e\u8d23\u4efb\uff0c\u674e\u6d69\u9677\u5165\u4e86\u6df1\u6df1\u7684\u6c89\u601d\uff0c\u601d\u8003\u7740\u5982\u4f55\u5904\u7406\u624b\u4e2d\u7684\u6587\u4ef6\u3002\n\n\u5c31\u5728\u8fd9\u4e2a\u65f6\u5019\uff0c\u4ed6\u7684\u624b\u673a\u9707\u52a8\u4e86\u4e00\u4e0b\uff0c\u662f\u516c\u53f8\u7684\u90ae\u4ef6\u63d0\u793a\u97f3\u3002\u4ed6\u72b9\u8c6b\u7247\u523b\u540e\uff0c\u6253\u5f00\u4e86\u90a3\u5c01\u90ae\u4ef6\u3002\u4fe1\u4e2d\u8be6\u7ec6\u5217\u51fa\u4e86\u4ed6\u5bf9\u9879\u76ee\u7684\u6240\u6709\u7591\u8651\uff0c\u5e76\u9644\u4e0a\u4e86\u90a3\u4efd\u91cd\u8981\u6587\u4ef6\u7684\u590d\u5370\u4ef6\u4f5c\u4e3a\u8bc1\u636e\u3002\u6b64\u65f6\u6b64\u523b\uff0c\u674e\u6d69\u7684\u5fc3\u8df3\u52a0\u901f\u4e86\u3002",
+        "audio_path": "experiments/youtube_series/workspace/episode_3_audio.mp3",
+        "video_path": "experiments/youtube_series/workspace/episode_3_video.mp4"
+      },
+      "context": "\u7b2c\u4e09\u96c6\u5df2\u751f\u6210\uff0c\u5f85\u7528\u6237\u5ba1\u6838",
+      "timestamp": "2026-05-13T03:40:21.513425",
+      "success": false,
+      "reward": -1.0,
+      "keywords": [
+        "episode",
+        "produced"
+      ]
+    },
+    {
+      "id": "67c35a5c",
+      "agent": "intelligence",
+      "action": "handle_api_down",
+      "result": {
+        "success": true
+      },
+      "context": "cd /mnt/d/clawsjoy && python3 agent_gateway_web.py &",
+      "timestamp": "2026-05-14T16:32:47.786284",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "handle",
+        "api",
+        "down"
+      ]
+    },
+    {
+      "id": "1c80109f",
+      "agent": "intelligence",
+      "action": "handle_api_down",
+      "result": {
+        "success": true
+      },
+      "context": "cd /mnt/d/clawsjoy && python3 agent_gateway_web.py &",
+      "timestamp": "2026-05-14T20:45:36.136033",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "handle",
+        "api",
+        "down"
+      ]
+    },
+    {
+      "id": "620d2039",
+      "agent": "intelligence",
+      "action": "handle_api_down",
+      "result": {
+        "success": true
+      },
+      "context": "cd /mnt/d/clawsjoy && python3 agent_gateway_web.py &",
+      "timestamp": "2026-05-14T20:51:09.912461",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "handle",
+        "api",
+        "down"
+      ]
+    },
+    {
+      "id": "fe90f196",
+      "agent": "intelligence",
+      "action": "handle_api_down",
+      "result": {
+        "success": true
+      },
+      "context": "cd /mnt/d/clawsjoy && python3 agent_gateway_web.py &",
+      "timestamp": "2026-05-14T22:48:01.287240",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "handle",
+        "api",
+        "down"
+      ]
+    },
+    {
+      "id": "b84bbf7b",
+      "agent": "intelligence",
+      "action": "handle_api_down",
+      "result": {
+        "success": true
+      },
+      "context": "cd /mnt/d/clawsjoy && python3 agent_gateway_web.py &",
+      "timestamp": "2026-05-14T23:16:05.516650",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "handle",
+        "api",
+        "down"
+      ]
+    },
+    {
+      "id": "4868d1f1",
+      "agent": "intelligence",
+      "action": "handle_api_down",
+      "result": {
+        "success": true
+      },
+      "context": "cd /mnt/d/clawsjoy && python3 agent_gateway_web.py &",
+      "timestamp": "2026-05-15T00:37:16.468595",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "handle",
+        "api",
+        "down"
+      ]
+    }
+  ],
+  "best_practices": [
+    {
+      "practice": "### \u6210\u529f\u6a21\u5f0f\n\n1. **\u6570\u636e\u5e93\u64cd\u4f5c**\uff1a\u5f53\u6570\u636e\u5e93\u8fde\u63a5\u51fa\u73b0\u8d85\u65f6\u6216\u67e5\u8be2\u901f\u5ea6\u6162\u65f6\uff0c\u901a\u8fc7\u68c0\u67e5\u7f51\u7edc\u548c\u7aef\u53e3\u3001\u4f18\u5316\u7d22\u5f15\u6216\u6e05\u7406\u7f13\u5b58\u7b49\u63aa\u65bd\u53ef\u4ee5\u6210\u529f\u89e3\u51b3\u95ee\u9898\u3002\n2. **\u7cfb\u7edf\u76d1\u63a7**\uff1a\u5b9a\u671f\u6267\u884c\u7cfb\u7edf\u76d1\u63a7\u4efb\u52a1\u4e14\u6240\u6709\u9879\u76ee\u6b63\u5e38\uff0c\u8868\u660e\u7cfb\u7edf\u7684\u7a33\u5b9a\u8fd0\u884c\u72b6\u6001\u3002\n\n### \u5931\u8d25\u6a21\u5f0f\n\n\u7ecf\u9a8c\u8bb0\u5f55\u4e2d\u672a\u660e\u786e\u7ed9\u51fa\u5931\u8d25\u6848\u4f8b\uff0c\u4f46\u6839\u636e\u5e38\u89c1\u95ee\u9898\u5206\u6790\uff1a\n- \u6570\u636e\u5e93\u76f8\u5173\u64cd\u4f5c\u82e5\u6ca1\u6709\u53ca\u65f6\u68c0\u67e5\u7f51\u7edc\u548c\u7aef\u53e3\u3001\u4f18\u5316\u7d22\u5f15\u6216\u6e05\u7406\u7f13\u5b58\u53ef\u80fd\u4f1a\u5bfc\u81f4\u6027\u80fd\u4e0b\u964d\u3002\n- \u7cfb\u7edf\u76d1",
+      "agent": "reflection_engine",
+      "tags": [],
+      "confidence": 0.7,
+      "use_count": 1,
+      "created_at": "2026-05-12T18:10:13.939848"
+    },
+    {
+      "practice": "### \u6210\u529f\u6a21\u5f0f\n- **\u6570\u636e\u5e93\u8fde\u63a5\u8d85\u65f6**\uff1a\u5f53\u9047\u5230\u6570\u636e\u5e93\u8fde\u63a5\u8d85\u65f6\u65f6\uff0c\u901a\u8fc7\u68c0\u67e5\u7f51\u7edc\u548c\u7aef\u53e3\u53ef\u4ee5\u6210\u529f\u89e3\u51b3\u3002\n- **\u67e5\u8be2\u6162\u7684\u95ee\u9898**\uff1a\u4f18\u5316\u7d22\u5f15\u6216\u6e05\u7406\u7f13\u5b58\u80fd\u591f\u6709\u6548\u63d0\u9ad8\u67e5\u8be2\u901f\u5ea6\u3002\n- **Redis\u8fde\u63a5\u5931\u8d25**\uff1a\u53ca\u65f6\u68c0\u67e5\u670d\u52a1\u72b6\u6001\u53ef\u4ee5\u907f\u514d\u6301\u7eed\u7684\u8fde\u63a5\u95ee\u9898\u3002\n\n### \u5931\u8d25\u6a21\u5f0f\n\u7ecf\u9a8c\u4e2d\u672a\u660e\u786e\u793a\u51fa\u5177\u4f53\u7684\u5931\u8d25\u6848\u4f8b\uff0c\u4f46\u53ef\u4ee5\u4ece\u4ee5\u4e0b\u65b9\u9762\u63a8\u6d4b\u53ef\u80fd\u5b58\u5728\u7684\u5931\u8d25\u6a21\u5f0f\uff1a\n- \u6ca1\u6709\u91c7\u53d6\u884c\u52a8\u89e3\u51b3\u5df2\u77e5\u95ee\u9898\uff08\u4f8b\u5982\u6ca1\u6709\u8fdb\u884c\u7d22\u5f15\u4f18\u5316\u6216\u6e05\u7406\u7f13\u5b58",
+      "agent": "reflection_engine",
+      "tags": [],
+      "confidence": 0.7,
+      "use_count": 1,
+      "created_at": "2026-05-12T18:10:25.189759"
+    }
+  ],
+  "failures": [],
+  "knowledge_graph": [
+    {
+      "concept": "api\u670d\u52a1\u6302\u4e86\uff0c\u6267\u884c\u91cd\u542f\u547d\u4ee4",
+      "related_actions": [
+        "508f32c4"
+      ],
+      "success_count": 1,
+      "strength": 1.0
+    },
+    {
+      "concept": "ollama\u8fde\u63a5\u5931\u8d25\uff0c\u68c0\u67e5\u670d\u52a1\u72b6\u6001",
+      "related_actions": [
+        "6ed29a85"
+      ],
+      "success_count": 1,
+      "strength": 1.0
+    },
+    {
+      "concept": "api\u670d\u52a1\u5f02\u5e38",
+      "related_ids": [
+        "d9f66218"
+      ],
+      "strength": 1.0,
+      "success_count": 1,
+      "created_at": "2026-05-12T14:49:05.534804"
+    },
+    {
+      "concept": "\u6267\u884c\u91cd\u542f",
+      "related_ids": [
+        "d9f66218"
+      ],
+      "strength": 1.0,
+      "success_count": 1,
+      "created_at": "2026-05-12T14:49:05.534810"
+    },
+    {
+      "concept": "ollama\u8fde\u63a5\u5931\u8d25",
+      "related_ids": [
+        "b64cf6ae",
+        "24c51f13"
+      ],
+      "strength": 1.2,
+      "success_count": 1,
+      "created_at": "2026-05-12T14:49:05.538026"
+    },
+    {
+      "concept": "\u68c0\u67e5\u670d\u52a1",
+      "related_ids": [
+        "b64cf6ae"
+      ],
+      "strength": 1.0,
+      "success_count": 1,
+      "created_at": "2026-05-12T14:49:05.538029"
+    },
+    {
+      "concept": "\u6280\u80fd\u52a0\u8f7d\u5931\u8d25",
+      "related_ids": [
+        "9ccbdeff",
+        "add69d66"
+      ],
+      "strength": 1.2,
+      "success_count": 0,
+      "created_at": "2026-05-12T14:49:05.547865"
+    },
+    {
+      "concept": "\u91cd\u65b0\u6ce8\u518c",
+      "related_ids": [
+        "9ccbdeff"
+      ],
+      "strength": 1.0,
+      "success_count": 0,
+      "created_at": "2026-05-12T14:49:05.547868"
+    },
+    {
+      "concept": "api\u670d\u52a1\u65e0\u6cd5\u8bbf\u95ee",
+      "related_ids": [
+        "efb41644"
+      ],
+      "strength": 1.0,
+      "success_count": 1,
+      "created_at": "2026-05-12T14:54:23.327927"
+    },
+    {
+      "concept": "\u6267\u884c\u91cd\u542f\u547d\u4ee4",
+      "related_ids": [
+        "efb41644"
+      ],
+      "strength": 1.0,
+      "success_count": 1,
+      "created_at": "2026-05-12T14:54:23.327935"
+    },
+    {
+      "concept": "\u68c0\u67e5\u670d\u52a1\u72b6\u6001",
+      "related_ids": [
+        "24c51f13",
+        "5b8ccf54"
+      ],
+      "strength": 1.2,
+      "success_count": 1,
+      "created_at": "2026-05-12T14:54:23.331187"
+    },
+    {
+      "concept": "\u78c1\u76d8\u7a7a\u95f4\u4e0d\u8db3",
+      "related_ids": [
+        "a79e73ea"
+      ],
+      "strength": 1.0,
+      "success_count": 1,
+      "created_at": "2026-05-12T14:54:23.340426"
+    },
+    {
+      "concept": "\u6e05\u7406\u65e5\u5fd7\u6587\u4ef6",
+      "related_ids": [
+        "a79e73ea"
+      ],
+      "strength": 1.0,
+      "success_count": 1,
+      "created_at": "2026-05-12T14:54:23.340430"
+    },
+    {
+      "concept": "\u91cd\u65b0\u6ce8\u518c\u6280\u80fd",
+      "related_ids": [
+        "add69d66"
+      ],
+      "strength": 1.0,
+      "success_count": 1,
+      "created_at": "2026-05-12T14:54:23.349398"
+    },
+    {
+      "concept": "\u5185\u5b58\u4f7f\u7528\u8fc7\u9ad8",
+      "related_ids": [
+        "3417602d"
+      ],
+      "strength": 1.0,
+      "success_count": 1,
+      "created_at": "2026-05-12T14:54:23.358434"
+    },
+    {
+      "concept": "\u91cd\u542f\u670d\u52a1\u91ca\u653e\u5185\u5b58",
+      "related_ids": [
+        "3417602d"
+      ],
+      "strength": 1.0,
+      "success_count": 1,
+      "created_at": "2026-05-12T14:54:23.358438"
+    },
+    {
+      "concept": "\u6570\u636e\u5e93\u8fde\u63a5\u8d85\u65f6",
+      "related_ids": [
+        "d0f8ee59"
+      ],
+      "strength": 1.0,
+      "success_count": 1,
+      "created_at": "2026-05-12T14:54:23.366176"
+    },
+    {
+      "concept": "\u68c0\u67e5\u7f51\u7edc\u548c\u7aef\u53e3",
+      "related_ids": [
+        "d0f8ee59"
+      ],
+      "strength": 1.0,
+      "success_count": 1,
+      "created_at": "2026-05-12T14:54:23.366180"
+    },
+    {
+      "concept": "\u67e5\u8be2\u6162",
+      "related_ids": [
+        "233709a5"
+      ],
+      "strength": 1.0,
+      "success_count": 1,
+      "created_at": "2026-05-12T14:54:23.373906"
+    },
+    {
+      "concept": "\u4f18\u5316\u7d22\u5f15\u6216\u6e05\u7406\u7f13\u5b58",
+      "related_ids": [
+        "233709a5"
+      ],
+      "strength": 1.0,
+      "success_count": 1,
+      "created_at": "2026-05-12T14:54:23.373909"
+    },
+    {
+      "concept": "redis\u8fde\u63a5\u5931\u8d25",
+      "related_ids": [
+        "5b8ccf54"
+      ],
+      "strength": 1.0,
+      "success_count": 1,
+      "created_at": "2026-05-12T14:54:23.382066"
+    },
+    {
+      "concept": "\u7cfb\u7edf\u76d1\u63a7",
+      "related_ids": [
+        "519a63d9",
+        "6b256496",
+        "aa4e815c",
+        "dd418942",
+        "628289c1",
+        "6ea2c6e1",
+        "5929883b",
+        "de9aebf9",
+        "2eeba59e"
+      ],
+      "strength": 2.6,
+      "success_count": 1,
+      "created_at": "2026-05-12T17:13:11.898506"
+    },
+    {
+      "concept": "clawsjoy\u662f\u4ec0\u4e48",
+      "related_ids": [
+        "becbe87e"
+      ],
+      "strength": 1.0,
+      "success_count": 1,
+      "created_at": "2026-05-12T17:58:39.886299"
+    },
+    {
+      "concept": "\u4f60\u597d",
+      "related_ids": [
+        "a34de39d"
+      ],
+      "strength": 1.0,
+      "success_count": 1,
+      "created_at": "2026-05-12T18:01:33.826110"
+    },
+    {
+      "concept": "\u4e0a\u4f20\u6587\u4ef6",
+      "related_ids": [
+        "26330df8",
+        "e39891c0",
+        "ad20f8a8",
+        "0ab51b17"
+      ],
+      "strength": 1.5999999999999999,
+      "success_count": 1,
+      "created_at": "2026-05-12T18:03:59.255085"
+    },
+    {
+      "concept": "test",
+      "related_ids": [
+        "26330df8",
+        "8ef6f027",
+        "d399a7e8",
+        "e39891c0",
+        "d10ef867",
+        "15d4eb6d",
+        "ad20f8a8",
+        "b45893d3",
+        "f664b2d8",
+        "0ab51b17",
+        "879dd4d4",
+        "93ab987f",
+        "8ce4727e",
+        "24830fce",
+        "ecfdbedf"
+      ],
+      "strength": 3.800000000000001,
+      "success_count": 1,
+      "created_at": "2026-05-12T18:03:59.255091"
+    },
+    {
+      "concept": "txt",
+      "related_ids": [
+        "26330df8",
+        "8ef6f027",
+        "d399a7e8",
+        "e39891c0",
+        "d10ef867",
+        "15d4eb6d",
+        "ad20f8a8",
+        "b45893d3",
+        "f664b2d8",
+        "0ab51b17",
+        "879dd4d4",
+        "93ab987f"
+      ],
+      "strength": 3.2000000000000006,
+      "success_count": 1,
+      "created_at": "2026-05-12T18:03:59.255095"
+    },
+    {
+      "concept": "\u5217\u51fa\u6587\u4ef6",
+      "related_ids": [
+        "09090d3e",
+        "0eedb564",
+        "17d5297f",
+        "1381d1fe"
+      ],
+      "strength": 1.5999999999999999,
+      "success_count": 1,
+      "created_at": "2026-05-12T18:03:59.316740"
+    },
+    {
+      "concept": "\u8bfb\u53d6\u6587\u4ef6",
+      "related_ids": [
+        "8ef6f027",
+        "d10ef867",
+        "b45893d3",
+        "879dd4d4"
+      ],
+      "strength": 1.5999999999999999,
+      "success_count": 1,
+      "created_at": "2026-05-12T18:03:59.346989"
+    },
+    {
+      "concept": "\u5220\u9664\u6587\u4ef6",
+      "related_ids": [
+        "d399a7e8",
+        "15d4eb6d",
+        "f664b2d8",
+        "93ab987f"
+      ],
+      "strength": 1.5999999999999999,
+      "success_count": 1,
+      "created_at": "2026-05-12T18:03:59.411053"
+    },
+    {
+      "concept": "\u5b9e\u9a8c",
+      "related_ids": [
+        "ea530202",
+        "dae580e3",
+        "eb1e2df3",
+        "33416921",
+        "1e49094c",
+        "61d3d1d6"
+      ],
+      "strength": 1.3999999999999997,
+      "success_count": 0,
+      "created_at": "2026-05-12T18:09:57.328942"
+    },
+    {
+      "concept": "\u63a2\u7d22",
+      "related_ids": [
+        "ea530202",
+        "33416921",
+        "1e49094c"
+      ],
+      "strength": 1.1,
+      "success_count": 0,
+      "created_at": "2026-05-12T18:09:57.328975"
+    },
+    {
+      "concept": "\u5f02\u5e38\u5904\u7406",
+      "related_ids": [
+        "ea530202"
+      ],
+      "strength": 1.0,
+      "success_count": 0,
+      "created_at": "2026-05-12T18:09:57.328983"
+    },
+    {
+      "concept": "\u7684\u6700\u4f73\u5b9e\u8df5",
+      "related_ids": [
+        "ea530202",
+        "33416921",
+        "1e49094c"
+      ],
+      "strength": 1.1,
+      "success_count": 0,
+      "created_at": "2026-05-12T18:09:57.328991"
+    },
+    {
+      "concept": "\u5982\u679c\u5728\u7a0b\u5e8f\u4e2d\u5408\u7406\u5730\u4f7f\u7528\u5f02\u5e38\u5904\u7406\u673a\u5236\u6765\u66ff\u4ee3\u9519\u8bef\u7801\u8fd4\u56de\u65b9\u5f0f",
+      "related_ids": [
+        "dae580e3"
+      ],
+      "strength": 1.0,
+      "success_count": 1,
+      "created_at": "2026-05-12T18:09:59.047582"
+    },
+    {
+      "concept": "\u5e94\u7528\u7a0b\u5e8f\u7684\u53ef\u7ef4\u62a4\u6027\u548c\u5065\u58ee\u6027\u5c06\u4f1a\u63d0\u9ad8",
+      "related_ids": [
+        "dae580e3"
+      ],
+      "strength": 1.0,
+      "success_count": 1,
+      "created_at": "2026-05-12T18:09:59.047586"
+    },
+    {
+      "concept": "\u5982\u679c\u91c7\u7528\u5e76\u884c\u8ba1\u7b97\u6280\u672f\u5904\u7406\u5927\u89c4\u6a21\u6570\u636e\u96c6\u4efb\u52a1",
+      "related_ids": [
+        "eb1e2df3",
+        "61d3d1d6"
+      ],
+      "strength": 0.9,
+      "success_count": 1,
+      "created_at": "2026-05-12T18:10:00.312873"
+    },
+    {
+      "concept": "\u6027\u80fd\u5c06\u4f1a\u5f97\u5230\u663e\u8457\u63d0\u5347",
+      "related_ids": [
+        "eb1e2df3"
+      ],
+      "strength": 1.0,
+      "success_count": 1,
+      "created_at": "2026-05-12T18:10:00.312878"
+    },
+    {
+      "concept": "\u7cfb\u7edf\u53cd\u601d",
+      "related_ids": [
+        "70ba4191"
+      ],
+      "strength": 1.0,
+      "success_count": 1,
+      "created_at": "2026-05-12T18:10:35.123265"
+    },
+    {
+      "concept": "\u968f\u673a\u6d4b\u8bd5",
+      "related_ids": [
+        "27e1bf40",
+        "86dda483",
+        "3339023a"
+      ],
+      "strength": 1.4,
+      "success_count": 1,
+      "created_at": "2026-05-12T18:14:42.938786"
+    },
+    {
+      "concept": "cartoon",
+      "related_ids": [
+        "27e1bf40"
+      ],
+      "strength": 1.0,
+      "success_count": 1,
+      "created_at": "2026-05-12T18:14:42.938795"
+    },
+    {
+      "concept": "images",
+      "related_ids": [
+        "27e1bf40"
+      ],
+      "strength": 1.0,
+      "success_count": 1,
+      "created_at": "2026-05-12T18:14:42.938799"
+    },
+    {
+      "concept": "random",
+      "related_ids": [
+        "8ce4727e",
+        "24830fce",
+        "ecfdbedf"
+      ],
+      "strength": 1.4,
+      "success_count": 1,
+      "created_at": "2026-05-12T18:14:42.943746"
+    },
+    {
+      "concept": "angle",
+      "related_ids": [
+        "86dda483"
+      ],
+      "strength": 1.0,
+      "success_count": 1,
+      "created_at": "2026-05-12T18:14:45.388058"
+    },
+    {
+      "concept": "manager",
+      "related_ids": [
+        "86dda483"
+      ],
+      "strength": 1.0,
+      "success_count": 1,
+      "created_at": "2026-05-12T18:14:45.388066"
+    },
+    {
+      "concept": "extract",
+      "related_ids": [
+        "3339023a"
+      ],
+      "strength": 1.0,
+      "success_count": 1,
+      "created_at": "2026-05-12T18:56:45.437181"
+    },
+    {
+      "concept": "content",
+      "related_ids": [
+        "3339023a"
+      ],
+      "strength": 1.0,
+      "success_count": 1,
+      "created_at": "2026-05-12T18:56:45.437225"
+    },
+    {
+      "concept": "\u6027\u80fd\u63d0\u5347",
+      "related_ids": [
+        "33416921"
+      ],
+      "strength": 1.0,
+      "success_count": 0,
+      "created_at": "2026-05-12T19:10:04.807497"
+    },
+    {
+      "concept": "\u5de5\u4f5c\u6d41\u4f18\u5316",
+      "related_ids": [
+        "1e49094c"
+      ],
+      "strength": 1.0,
+      "success_count": 1,
+      "created_at": "2026-05-12T19:11:04.886105"
+    },
+    {
+      "concept": "\u7cfb\u7edf\u7684\u5904\u7406\u901f\u5ea6\u5c06\u4f1a\u63d0\u5347",
+      "related_ids": [
+        "61d3d1d6"
+      ],
+      "strength": 1.0,
+      "success_count": 0,
+      "created_at": "2026-05-12T19:11:36.666337"
+    },
+    {
+      "concept": "auto",
+      "related_ids": [
+        "ffd18bb0",
+        "8043c73e"
+      ],
+      "strength": 0.9,
+      "success_count": 0,
+      "created_at": "2026-05-12T19:40:19.489774"
+    },
+    {
+      "concept": "optimize",
+      "related_ids": [
+        "ffd18bb0",
+        "8043c73e",
+        "a6872b04",
+        "2f300fd5",
+        "c9e1276d"
+      ],
+      "strength": 0.6000000000000001,
+      "success_count": 0,
+      "created_at": "2026-05-12T19:40:19.489784"
+    },
+    {
+      "concept": "\u6574\u5408\u591a\u79cd\u667a\u80fd\u4ee3\u7406\u4ee5\u589e\u5f3a\u7cfb\u7edf\u7075\u6d3b\u6027\u548c\u9002\u5e94\u6027",
+      "related_ids": [
+        "d8fc17ec"
+      ],
+      "strength": 1.0,
+      "success_count": 0,
+      "created_at": "2026-05-12T20:36:15.408857"
+    },
+    {
+      "concept": "gateway",
+      "related_ids": [
+        "45433481",
+        "d818a587",
+        "bd550782",
+        "6fbebac9",
+        "7e90f6ea",
+        "8bb55a2e",
+        "097eaab2",
+        "6aca4908",
+        "0f5bcd73",
+        "1fd4ccad",
+        "829cc8b7",
+        "a8211b1c",
+        "208330f3",
+        "749399ce",
+        "3493713f",
+        "14663ad0",
+        "f0d4b886",
+        "bf3163a4",
+        "a1c72294",
+        "94a85146"
+      ],
+      "strength": 0.1,
+      "success_count": 0,
+      "created_at": "2026-05-12T21:23:28.223285"
+    },
+    {
+      "concept": "down",
+      "related_ids": [
+        "45433481",
+        "6eee227c",
+        "d818a587",
+        "f3650bab",
+        "e69c13f5",
+        "0ec076ae",
+        "63c5518d",
+        "eeb817e5",
+        "67c35a5c",
+        "1c80109f",
+        "620d2039",
+        "fe90f196",
+        "b84bbf7b",
+        "4868d1f1"
+      ],
+      "strength": 3.0000000000000004,
+      "success_count": 0,
+      "created_at": "2026-05-12T21:23:28.223331"
+    },
+    {
+      "concept": "restart",
+      "related_ids": [
+        "45433481",
+        "6eee227c",
+        "d818a587",
+        "f3650bab",
+        "bd550782",
+        "6fbebac9",
+        "7e90f6ea",
+        "b68ab63a",
+        "1f4685a3",
+        "ef624925",
+        "eca03ba5",
+        "645f38f0",
+        "8c135325",
+        "4a3b3758",
+        "40eba0ce",
+        "f32e1993",
+        "28fa1ba9"
+      ],
+      "strength": 0.1,
+      "success_count": 0,
+      "created_at": "2026-05-12T21:23:28.223358"
+    },
+    {
+      "concept": "agent",
+      "related_ids": [
+        "6eee227c",
+        "f3650bab",
+        "e69c13f5",
+        "63c5518d",
+        "91f2445d"
+      ],
+      "strength": 1.7999999999999998,
+      "success_count": 0,
+      "created_at": "2026-05-12T21:23:33.259392"
+    },
+    {
+      "concept": "learn",
+      "related_ids": [
+        "bd550782",
+        "5920a24d",
+        "6d7055c2",
+        "cd09cc75",
+        "65b57717",
+        "28fa1ba9",
+        "ea2e6677",
+        "9c05f4ad",
+        "ac521d0a",
+        "87217a35",
+        "3d39d931",
+        "33f0de9b",
+        "edb607c8",
+        "76dd2c17"
+      ],
+      "strength": 0.1,
+      "success_count": 0,
+      "created_at": "2026-05-12T21:32:40.406691"
+    },
+    {
+      "concept": "fix",
+      "related_ids": [
+        "6fbebac9",
+        "fcc5402a",
+        "7e90f6ea",
+        "27e05b14",
+        "55d17677",
+        "26bdbd88",
+        "e2637d0d",
+        "b68ab63a",
+        "885c7144",
+        "83d27f6a",
+        "a74aea7a",
+        "f8d6d539",
+        "3aa5745b",
+        "e03acdab",
+        "f79a4a26",
+        "155142ff",
+        "bf2924c1",
+        "d2893961",
+        "29bbac1b",
+        "a6fd85dc",
+        "3f33cfc9",
+        "99070867",
+        "ececf367",
+        "31669ae3",
+        "dc38a6d4",
+        "c396ff77",
+        "e52957da",
+        "4eb3f3da",
+        "86d60550",
+        "1f4685a3",
+        "dd8ff118",
+        "b16fadb8",
+        "4007ae01",
+        "1a68ed00",
+        "7a7eb9df",
+        "ef624925",
+        "dc74cdac",
+        "f6594076",
+        "eca03ba5",
+        "c13514ba",
+        "1be12ef8",
+        "5ff97295",
+        "93eb4f99",
+        "2308dfc8",
+        "fdfc4cde",
+        "b4de1f22",
+        "1736a625",
+        "89153b4e",
+        "e779a97e",
+        "645f38f0",
+        "5264c8b2",
+        "25db25e5",
+        "15d62026",
+        "e7d9659a",
+        "263b5a0c",
+        "08d1edbb",
+        "62ff6dfe",
+        "de72fb26",
+        "d7f5ee5c",
+        "6249962e",
+        "efcc2e75",
+        "8c135325",
+        "d5c0a907",
+        "1f9176b6",
+        "a6872b04",
+        "08a7b77d",
+        "05038b09",
+        "754e9418",
+        "c6b2fdc7",
+        "93eaebdd",
+        "1daac3a6",
+        "38533998",
+        "95a17157",
+        "991c5c42",
+        "0ca82e6d",
+        "4a3b3758",
+        "95a24a8b",
+        "8a2d9ffd",
+        "81cbfd11",
+        "f978ed9b",
+        "51f5a9de",
+        "5d4198cb",
+        "40eba0ce",
+        "8a5cb37b",
+        "b0d9b5af",
+        "099f08b3",
+        "30276f45",
+        "ee774513",
+        "f32e1993",
+        "071df134",
+        "673c6172",
+        "8bb55a2e",
+        "097eaab2",
+        "e69c13f5",
+        "0ec076ae",
+        "6aca4908",
+        "0f5bcd73",
+        "1fd4ccad",
+        "63c5518d",
+        "eeb817e5",
+        "829cc8b7",
+        "a8211b1c",
+        "208330f3",
+        "749399ce",
+        "3493713f",
+        "14663ad0",
+        "f0d4b886",
+        "bf3163a4",
+        "a1c72294",
+        "94a85146",
+        "91f2445d",
+        "db8ae264",
+        "34de28c6",
+        "ca7ad410",
+        "4129aaf7",
+        "65b57717",
+        "fec07030",
+        "819c00e8"
+      ],
+      "strength": 0.7999999999999999,
+      "success_count": 0,
+      "created_at": "2026-05-12T21:39:43.698348"
+    },
+    {
+      "concept": "api",
+      "related_ids": [
+        "fcc5402a",
+        "7e90f6ea",
+        "27e05b14",
+        "55d17677",
+        "26bdbd88",
+        "e2637d0d",
+        "885c7144",
+        "f8d6d539",
+        "3aa5745b",
+        "e03acdab",
+        "f79a4a26",
+        "155142ff",
+        "bf2924c1",
+        "d2893961",
+        "29bbac1b",
+        "a6fd85dc",
+        "3f33cfc9",
+        "ececf367",
+        "31669ae3",
+        "dc38a6d4",
+        "c396ff77",
+        "4eb3f3da",
+        "dd8ff118",
+        "b16fadb8",
+        "4007ae01",
+        "1a68ed00",
+        "7a7eb9df",
+        "dc74cdac",
+        "c13514ba",
+        "1be12ef8",
+        "5ff97295",
+        "93eb4f99",
+        "2308dfc8",
+        "fdfc4cde",
+        "b4de1f22",
+        "1736a625",
+        "89153b4e",
+        "e779a97e",
+        "5264c8b2",
+        "25db25e5",
+        "15d62026",
+        "e7d9659a",
+        "08d1edbb",
+        "62ff6dfe",
+        "de72fb26",
+        "d7f5ee5c",
+        "6249962e",
+        "efcc2e75",
+        "d5c0a907",
+        "08a7b77d",
+        "05038b09",
+        "754e9418",
+        "c6b2fdc7",
+        "93eaebdd",
+        "1daac3a6",
+        "38533998",
+        "95a17157",
+        "991c5c42",
+        "0ca82e6d",
+        "95a24a8b",
+        "8a2d9ffd",
+        "81cbfd11",
+        "f978ed9b",
+        "5d4198cb",
+        "8a5cb37b",
+        "b0d9b5af",
+        "099f08b3",
+        "30276f45",
+        "ee774513",
+        "071df134",
+        "67c35a5c",
+        "1c80109f",
+        "620d2039",
+        "fe90f196",
+        "b84bbf7b",
+        "4868d1f1"
+      ],
+      "strength": 1.2999999999999998,
+      "success_count": 0,
+      "created_at": "2026-05-12T21:40:24.176366"
+    },
+    {
+      "concept": "error",
+      "related_ids": [
+        "fcc5402a",
+        "7e90f6ea",
+        "27e05b14",
+        "55d17677",
+        "26bdbd88",
+        "e2637d0d",
+        "885c7144",
+        "83d27f6a",
+        "f8d6d539",
+        "3aa5745b",
+        "e03acdab",
+        "f79a4a26",
+        "155142ff",
+        "bf2924c1",
+        "d2893961",
+        "29bbac1b",
+        "a6fd85dc",
+        "3f33cfc9",
+        "ececf367",
+        "31669ae3",
+        "dc38a6d4",
+        "c396ff77",
+        "4eb3f3da",
+        "dd8ff118",
+        "b16fadb8",
+        "4007ae01",
+        "1a68ed00",
+        "7a7eb9df",
+        "dc74cdac",
+        "f6594076",
+        "c13514ba",
+        "1be12ef8",
+        "5ff97295",
+        "93eb4f99",
+        "2308dfc8",
+        "fdfc4cde",
+        "b4de1f22",
+        "1736a625",
+        "89153b4e",
+        "e779a97e",
+        "5264c8b2",
+        "25db25e5",
+        "15d62026",
+        "e7d9659a",
+        "08d1edbb",
+        "62ff6dfe",
+        "de72fb26",
+        "d7f5ee5c",
+        "6249962e",
+        "efcc2e75",
+        "d5c0a907",
+        "1f9176b6",
+        "08a7b77d",
+        "05038b09",
+        "754e9418",
+        "c6b2fdc7",
+        "93eaebdd",
+        "1daac3a6",
+        "38533998",
+        "95a17157",
+        "991c5c42",
+        "0ca82e6d",
+        "95a24a8b",
+        "8a2d9ffd",
+        "81cbfd11",
+        "f978ed9b",
+        "5d4198cb",
+        "8a5cb37b",
+        "b0d9b5af",
+        "099f08b3",
+        "30276f45",
+        "ee774513",
+        "071df134",
+        "673c6172",
+        "8bb55a2e",
+        "097eaab2",
+        "6aca4908",
+        "0f5bcd73",
+        "1fd4ccad",
+        "829cc8b7",
+        "a8211b1c",
+        "208330f3",
+        "749399ce",
+        "3493713f",
+        "14663ad0",
+        "f0d4b886",
+        "bf3163a4",
+        "a1c72294"
+      ],
+      "strength": 0.1,
+      "success_count": 0,
+      "created_at": "2026-05-12T21:40:24.176373"
+    },
+    {
+      "concept": "retry",
+      "related_ids": [
+        "fcc5402a",
+        "26bdbd88",
+        "e2637d0d",
+        "885c7144",
+        "f8d6d539",
+        "3aa5745b",
+        "e03acdab",
+        "f79a4a26",
+        "155142ff",
+        "bf2924c1",
+        "d2893961",
+        "29bbac1b",
+        "a6fd85dc",
+        "3f33cfc9",
+        "ececf367",
+        "31669ae3",
+        "dc38a6d4",
+        "c396ff77",
+        "4eb3f3da",
+        "dd8ff118",
+        "b16fadb8",
+        "4007ae01",
+        "1a68ed00",
+        "7a7eb9df",
+        "dc74cdac",
+        "c13514ba",
+        "1be12ef8",
+        "5ff97295",
+        "93eb4f99",
+        "2308dfc8",
+        "fdfc4cde",
+        "b4de1f22",
+        "1736a625",
+        "89153b4e",
+        "e779a97e",
+        "5264c8b2",
+        "25db25e5",
+        "15d62026",
+        "e7d9659a",
+        "08d1edbb",
+        "62ff6dfe",
+        "de72fb26",
+        "d7f5ee5c",
+        "6249962e",
+        "efcc2e75",
+        "d5c0a907",
+        "08a7b77d",
+        "05038b09",
+        "754e9418",
+        "c6b2fdc7",
+        "93eaebdd",
+        "1daac3a6",
+        "38533998",
+        "95a17157",
+        "991c5c42",
+        "0ca82e6d",
+        "95a24a8b",
+        "8a2d9ffd",
+        "81cbfd11",
+        "f978ed9b",
+        "51f5a9de",
+        "5d4198cb",
+        "8a5cb37b",
+        "b0d9b5af",
+        "099f08b3",
+        "30276f45",
+        "ee774513",
+        "071df134"
+      ],
+      "strength": 0.1,
+      "success_count": 0,
+      "created_at": "2026-05-12T21:40:24.176378"
+    },
+    {
+      "concept": "check",
+      "related_ids": [
+        "27e05b14",
+        "55d17677",
+        "99070867"
+      ],
+      "strength": 0.8,
+      "success_count": 0,
+      "created_at": "2026-05-12T21:40:30.245752"
+    },
+    {
+      "concept": "logs",
+      "related_ids": [
+        "27e05b14",
+        "55d17677",
+        "ea2e6677"
+      ],
+      "strength": 0.8,
+      "success_count": 0,
+      "created_at": "2026-05-12T21:40:30.245757"
+    },
+    {
+      "concept": "connection",
+      "related_ids": [
+        "b68ab63a",
+        "99070867",
+        "86d60550",
+        "1f4685a3",
+        "ef624925",
+        "645f38f0",
+        "8c135325",
+        "4a3b3758",
+        "40eba0ce",
+        "f32e1993"
+      ],
+      "strength": 0.10000000000000014,
+      "success_count": 0,
+      "created_at": "2026-05-12T21:40:42.301968"
+    },
+    {
+      "concept": "refused",
+      "related_ids": [
+        "b68ab63a",
+        "99070867",
+        "86d60550",
+        "1f4685a3",
+        "ef624925",
+        "645f38f0",
+        "8c135325",
+        "4a3b3758",
+        "40eba0ce",
+        "f32e1993"
+      ],
+      "strength": 0.10000000000000014,
+      "success_count": 0,
+      "created_at": "2026-05-12T21:40:42.301974"
+    },
+    {
+      "concept": "service",
+      "related_ids": [
+        "b68ab63a",
+        "1f4685a3",
+        "ef624925",
+        "645f38f0",
+        "8c135325",
+        "4a3b3758",
+        "40eba0ce",
+        "f32e1993",
+        "8bb55a2e",
+        "097eaab2",
+        "e69c13f5",
+        "0ec076ae",
+        "6aca4908",
+        "0f5bcd73",
+        "1fd4ccad",
+        "63c5518d",
+        "eeb817e5",
+        "829cc8b7",
+        "a8211b1c",
+        "208330f3",
+        "749399ce",
+        "3493713f",
+        "14663ad0",
+        "f0d4b886",
+        "bf3163a4",
+        "a1c72294",
+        "94a85146",
+        "91f2445d",
+        "db8ae264",
+        "28fa1ba9"
+      ],
+      "strength": 0.4,
+      "success_count": 0,
+      "created_at": "2026-05-12T21:40:42.301983"
+    },
+    {
+      "concept": "import",
+      "related_ids": [
+        "83d27f6a",
+        "f6594076",
+        "1f9176b6",
+        "673c6172"
+      ],
+      "strength": 0.7000000000000001,
+      "success_count": 0,
+      "created_at": "2026-05-12T21:40:48.326005"
+    },
+    {
+      "concept": "install",
+      "related_ids": [
+        "83d27f6a",
+        "673c6172"
+      ],
+      "strength": 0.9,
+      "success_count": 0,
+      "created_at": "2026-05-12T21:40:48.326015"
+    },
+    {
+      "concept": "deps",
+      "related_ids": [
+        "83d27f6a",
+        "673c6172"
+      ],
+      "strength": 0.9,
+      "success_count": 0,
+      "created_at": "2026-05-12T21:40:48.326021"
+    },
+    {
+      "concept": "timeout",
+      "related_ids": [
+        "a74aea7a",
+        "eca03ba5",
+        "a6872b04"
+      ],
+      "strength": 0.7000000000000001,
+      "success_count": 0,
+      "created_at": "2026-05-12T21:40:51.339501"
+    },
+    {
+      "concept": "increase",
+      "related_ids": [
+        "a74aea7a"
+      ],
+      "strength": 1.0,
+      "success_count": 0,
+      "created_at": "2026-05-12T21:40:51.339507"
+    },
+    {
+      "concept": "network",
+      "related_ids": [
+        "99070867"
+      ],
+      "strength": 1.0,
+      "success_count": 0,
+      "created_at": "2026-05-12T21:41:24.514817"
+    },
+    {
+      "concept": "port",
+      "related_ids": [
+        "e52957da",
+        "263b5a0c",
+        "51f5a9de",
+        "34de28c6",
+        "ca7ad410",
+        "4129aaf7",
+        "65b57717"
+      ],
+      "strength": 1.0999999999999999,
+      "success_count": 0,
+      "created_at": "2026-05-12T21:41:39.681716"
+    },
+    {
+      "concept": "in",
+      "related_ids": [
+        "e52957da",
+        "263b5a0c",
+        "51f5a9de"
+      ],
+      "strength": 0.8,
+      "success_count": 0,
+      "created_at": "2026-05-12T21:41:39.681725"
+    },
+    {
+      "concept": "use",
+      "related_ids": [
+        "e52957da",
+        "263b5a0c",
+        "51f5a9de"
+      ],
+      "strength": 0.8,
+      "success_count": 0,
+      "created_at": "2026-05-12T21:41:39.681730"
+    },
+    {
+      "concept": "kill",
+      "related_ids": [
+        "e52957da"
+      ],
+      "strength": 1.0,
+      "success_count": 0,
+      "created_at": "2026-05-12T21:41:39.681736"
+    },
+    {
+      "concept": "process",
+      "related_ids": [
+        "e52957da"
+      ],
+      "strength": 1.0,
+      "success_count": 0,
+      "created_at": "2026-05-12T21:41:39.681746"
+    },
+    {
+      "concept": "wait",
+      "related_ids": [
+        "86d60550",
+        "51f5a9de"
+      ],
+      "strength": 0.9,
+      "success_count": 0,
+      "created_at": "2026-05-12T21:42:25.987445"
+    },
+    {
+      "concept": "path",
+      "related_ids": [
+        "f6594076"
+      ],
+      "strength": 1.0,
+      "success_count": 0,
+      "created_at": "2026-05-12T21:42:53.129849"
+    },
+    {
+      "concept": "change",
+      "related_ids": [
+        "263b5a0c"
+      ],
+      "strength": 1.0,
+      "success_count": 0,
+      "created_at": "2026-05-12T21:43:44.416162"
+    },
+    {
+      "concept": "reload",
+      "related_ids": [
+        "1f9176b6"
+      ],
+      "strength": 1.0,
+      "success_count": 0,
+      "created_at": "2026-05-12T21:44:41.838339"
+    },
+    {
+      "concept": "and",
+      "related_ids": [
+        "51f5a9de"
+      ],
+      "strength": 1.0,
+      "success_count": 0,
+      "created_at": "2026-05-12T21:45:43.155430"
+    },
+    {
+      "concept": "doc",
+      "related_ids": [
+        "0ec076ae",
+        "eeb817e5",
+        "db8ae264"
+      ],
+      "strength": 1.4,
+      "success_count": 1,
+      "created_at": "2026-05-12T21:48:17.556092"
+    },
+    {
+      "concept": "intent",
+      "related_ids": [
+        "5920a24d",
+        "6d7055c2",
+        "cd09cc75",
+        "65b57717",
+        "28fa1ba9",
+        "ea2e6677",
+        "9c05f4ad",
+        "ac521d0a",
+        "87217a35",
+        "3d39d931",
+        "33f0de9b",
+        "edb607c8",
+        "76dd2c17"
+      ],
+      "strength": 0.1,
+      "success_count": 0,
+      "created_at": "2026-05-12T22:05:07.926248"
+    },
+    {
+      "concept": "unknown",
+      "related_ids": [
+        "5920a24d",
+        "6d7055c2",
+        "cd09cc75",
+        "ac521d0a",
+        "87217a35",
+        "3d39d931",
+        "33f0de9b",
+        "edb607c8",
+        "76dd2c17"
+      ],
+      "strength": 0.20000000000000015,
+      "success_count": 0,
+      "created_at": "2026-05-12T22:05:07.926259"
+    },
+    {
+      "concept": "view",
+      "related_ids": [
+        "ea2e6677"
+      ],
+      "strength": 1.0,
+      "success_count": 0,
+      "created_at": "2026-05-12T22:05:08.017895"
+    },
+    {
+      "concept": "debug",
+      "related_ids": [
+        "9c05f4ad"
+      ],
+      "strength": 1.0,
+      "success_count": 0,
+      "created_at": "2026-05-12T22:05:08.036207"
+    },
+    {
+      "concept": "services",
+      "related_ids": [
+        "fec07030",
+        "819c00e8"
+      ],
+      "strength": 0.9,
+      "success_count": 0,
+      "created_at": "2026-05-12T23:42:40.300059"
+    },
+    {
+      "concept": "learning",
+      "related_ids": [
+        "2f300fd5",
+        "c9e1276d"
+      ],
+      "strength": 0.9,
+      "success_count": 0,
+      "created_at": "2026-05-12T23:42:42.316637"
+    },
+    {
+      "concept": "decision",
+      "related_ids": [
+        "3ebf6a69"
+      ],
+      "strength": 1.0,
+      "success_count": 0,
+      "created_at": "2026-05-12T23:52:07.178706"
+    },
+    {
+      "concept": "cycle",
+      "related_ids": [
+        "3ebf6a69"
+      ],
+      "strength": 1.0,
+      "success_count": 0,
+      "created_at": "2026-05-12T23:52:07.178713"
+    },
+    {
+      "concept": "positive",
+      "related_ids": [
+        "2ccc6b0f",
+        "0039a122"
+      ],
+      "strength": 0.9,
+      "success_count": 0,
+      "created_at": "2026-05-13T02:05:55.538339"
+    },
+    {
+      "concept": "sample",
+      "related_ids": [
+        "2ccc6b0f",
+        "0039a122"
+      ],
+      "strength": 0.9,
+      "success_count": 0,
+      "created_at": "2026-05-13T02:05:55.538349"
+    },
+    {
+      "concept": "episode",
+      "related_ids": [
+        "4c9a7a1c",
+        "b2a3959e"
+      ],
+      "strength": 0.9,
+      "success_count": 0,
+      "created_at": "2026-05-13T03:28:53.289024"
+    },
+    {
+      "concept": "produced",
+      "related_ids": [
+        "4c9a7a1c",
+        "b2a3959e"
+      ],
+      "strength": 0.9,
+      "success_count": 0,
+      "created_at": "2026-05-13T03:28:53.289037"
+    },
+    {
+      "concept": "handle",
+      "related_ids": [
+        "67c35a5c",
+        "1c80109f",
+        "620d2039",
+        "fe90f196",
+        "b84bbf7b",
+        "4868d1f1"
+      ],
+      "strength": 1.9999999999999998,
+      "success_count": 1,
+      "created_at": "2026-05-14T16:32:47.787204"
+    }
+  ],
+  "analogies": [
+    {
+      "id": "d78938cf",
+      "problem": "Redis\u8fde\u63a5\u5931\u8d25",
+      "analogy_to": "Ollama\u8fde\u63a5\u5931\u8d25 -> \u68c0\u67e5\u7aef\u53e3",
+      "created_at": "2026-05-12T14:46:11.058953"
+    },
+    {
+      "id": "2b9cc11c",
+      "problem": "Redis\u8fde\u63a5\u8d85\u65f6",
+      "analogy_to": "Ollama\u8fde\u63a5\u5931\u8d25 \u2192 \u68c0\u67e5\u7aef\u53e3\u548c\u670d\u52a1\u72b6\u6001",
+      "created_at": "2026-05-12T14:49:05.589020"
+    },
+    {
+      "source": "24c51f13",
+      "target": "b64cf6ae",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T14:54:23.331200"
+    },
+    {
+      "source": "add69d66",
+      "target": "9ccbdeff",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T14:54:23.349411"
+    },
+    {
+      "source": "5b8ccf54",
+      "target": "24c51f13",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T14:54:23.382082"
+    },
+    {
+      "source": "6b256496",
+      "target": "519a63d9",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T17:14:18.107994"
+    },
+    {
+      "source": "aa4e815c",
+      "target": "519a63d9",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T17:14:29.921991"
+    },
+    {
+      "source": "dd418942",
+      "target": "519a63d9",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T17:14:40.304984"
+    },
+    {
+      "source": "628289c1",
+      "target": "519a63d9",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T17:14:51.171571"
+    },
+    {
+      "source": "6ea2c6e1",
+      "target": "519a63d9",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T18:02:29.054515"
+    },
+    {
+      "source": "8ef6f027",
+      "target": "26330df8",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T18:03:59.347019"
+    },
+    {
+      "source": "d399a7e8",
+      "target": "26330df8",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T18:03:59.411084"
+    },
+    {
+      "source": "e39891c0",
+      "target": "26330df8",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T18:04:58.712626"
+    },
+    {
+      "source": "0eedb564",
+      "target": "09090d3e",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T18:04:58.776798"
+    },
+    {
+      "source": "d10ef867",
+      "target": "8ef6f027",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T18:04:58.808415"
+    },
+    {
+      "source": "15d4eb6d",
+      "target": "d399a7e8",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T18:04:58.874527"
+    },
+    {
+      "source": "ad20f8a8",
+      "target": "26330df8",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T18:05:07.890400"
+    },
+    {
+      "source": "17d5297f",
+      "target": "09090d3e",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T18:05:07.948335"
+    },
+    {
+      "source": "b45893d3",
+      "target": "8ef6f027",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T18:05:07.978731"
+    },
+    {
+      "source": "f664b2d8",
+      "target": "d399a7e8",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T18:05:08.039834"
+    },
+    {
+      "source": "0ab51b17",
+      "target": "26330df8",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T18:05:19.234687"
+    },
+    {
+      "source": "1381d1fe",
+      "target": "09090d3e",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T18:05:19.295030"
+    },
+    {
+      "source": "879dd4d4",
+      "target": "8ef6f027",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T18:05:19.319699"
+    },
+    {
+      "source": "93ab987f",
+      "target": "d399a7e8",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T18:05:19.386876"
+    },
+    {
+      "source": "eb1e2df3",
+      "target": "dae580e3",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T18:10:00.312910"
+    },
+    {
+      "source": "8ce4727e",
+      "target": "26330df8",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T18:14:42.943779"
+    },
+    {
+      "source": "86dda483",
+      "target": "27e1bf40",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T18:14:45.388100"
+    },
+    {
+      "source": "24830fce",
+      "target": "8ce4727e",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T18:14:45.392478"
+    },
+    {
+      "source": "3339023a",
+      "target": "27e1bf40",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T18:56:45.437448"
+    },
+    {
+      "source": "ecfdbedf",
+      "target": "8ce4727e",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T18:56:45.468114"
+    },
+    {
+      "source": "33416921",
+      "target": "ea530202",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T19:10:04.807562"
+    },
+    {
+      "source": "1e49094c",
+      "target": "ea530202",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T19:11:04.886418"
+    },
+    {
+      "source": "61d3d1d6",
+      "target": "eb1e2df3",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T19:11:36.666380"
+    },
+    {
+      "source": "5929883b",
+      "target": "519a63d9",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T19:44:15.324328"
+    },
+    {
+      "source": "de9aebf9",
+      "target": "519a63d9",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T20:27:24.948271"
+    },
+    {
+      "source": "2eeba59e",
+      "target": "519a63d9",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T20:27:49.190031"
+    },
+    {
+      "source": "8043c73e",
+      "target": "ffd18bb0",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T20:27:51.344638"
+    },
+    {
+      "source": "6eee227c",
+      "target": "45433481",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:23:33.259440"
+    },
+    {
+      "source": "d818a587",
+      "target": "45433481",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:24:38.388341"
+    },
+    {
+      "source": "f3650bab",
+      "target": "6eee227c",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:24:43.435996"
+    },
+    {
+      "source": "bd550782",
+      "target": "45433481",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:32:40.406746"
+    },
+    {
+      "source": "6fbebac9",
+      "target": "45433481",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:39:43.698404"
+    },
+    {
+      "source": "7e90f6ea",
+      "target": "6fbebac9",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:40:27.210834"
+    },
+    {
+      "source": "27e05b14",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:40:30.245802"
+    },
+    {
+      "source": "55d17677",
+      "target": "27e05b14",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:40:33.257622"
+    },
+    {
+      "source": "26bdbd88",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:40:36.272826"
+    },
+    {
+      "source": "e2637d0d",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:40:39.288072"
+    },
+    {
+      "source": "b68ab63a",
+      "target": "6fbebac9",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:40:42.302033"
+    },
+    {
+      "source": "885c7144",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:40:45.316600"
+    },
+    {
+      "source": "83d27f6a",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:40:48.326072"
+    },
+    {
+      "source": "a74aea7a",
+      "target": "6fbebac9",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:40:51.339565"
+    },
+    {
+      "source": "f8d6d539",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:40:54.353575"
+    },
+    {
+      "source": "3aa5745b",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:40:57.368114"
+    },
+    {
+      "source": "e03acdab",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:41:00.384652"
+    },
+    {
+      "source": "f79a4a26",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:41:03.396479"
+    },
+    {
+      "source": "155142ff",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:41:06.411203"
+    },
+    {
+      "source": "bf2924c1",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:41:09.426389"
+    },
+    {
+      "source": "d2893961",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:41:12.445410"
+    },
+    {
+      "source": "29bbac1b",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:41:15.464750"
+    },
+    {
+      "source": "a6fd85dc",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:41:18.482228"
+    },
+    {
+      "source": "3f33cfc9",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:41:21.499426"
+    },
+    {
+      "source": "99070867",
+      "target": "b68ab63a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:41:24.514877"
+    },
+    {
+      "source": "ececf367",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:41:27.529682"
+    },
+    {
+      "source": "31669ae3",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:41:30.557478"
+    },
+    {
+      "source": "dc38a6d4",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:41:33.579440"
+    },
+    {
+      "source": "c396ff77",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:41:36.607956"
+    },
+    {
+      "source": "4eb3f3da",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:42:12.934404"
+    },
+    {
+      "source": "86d60550",
+      "target": "b68ab63a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:42:25.987512"
+    },
+    {
+      "source": "1f4685a3",
+      "target": "b68ab63a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:42:29.003910"
+    },
+    {
+      "source": "dd8ff118",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:42:32.020075"
+    },
+    {
+      "source": "b16fadb8",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:42:35.029760"
+    },
+    {
+      "source": "4007ae01",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:42:38.045092"
+    },
+    {
+      "source": "1a68ed00",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:42:41.061771"
+    },
+    {
+      "source": "7a7eb9df",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:42:44.077637"
+    },
+    {
+      "source": "ef624925",
+      "target": "b68ab63a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:42:47.093866"
+    },
+    {
+      "source": "dc74cdac",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:42:50.113246"
+    },
+    {
+      "source": "f6594076",
+      "target": "83d27f6a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:42:53.129934"
+    },
+    {
+      "source": "eca03ba5",
+      "target": "6fbebac9",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:42:56.144253"
+    },
+    {
+      "source": "c13514ba",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:42:59.158907"
+    },
+    {
+      "source": "1be12ef8",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:43:02.173495"
+    },
+    {
+      "source": "5ff97295",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:43:05.187614"
+    },
+    {
+      "source": "93eb4f99",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:43:08.203791"
+    },
+    {
+      "source": "2308dfc8",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:43:11.220311"
+    },
+    {
+      "source": "fdfc4cde",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:43:14.237488"
+    },
+    {
+      "source": "b4de1f22",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:43:17.254091"
+    },
+    {
+      "source": "1736a625",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:43:20.272035"
+    },
+    {
+      "source": "89153b4e",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:43:23.288826"
+    },
+    {
+      "source": "e779a97e",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:43:26.307512"
+    },
+    {
+      "source": "645f38f0",
+      "target": "b68ab63a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:43:29.325153"
+    },
+    {
+      "source": "5264c8b2",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:43:32.342270"
+    },
+    {
+      "source": "25db25e5",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:43:35.358521"
+    },
+    {
+      "source": "15d62026",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:43:38.379002"
+    },
+    {
+      "source": "e7d9659a",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:43:41.398510"
+    },
+    {
+      "source": "263b5a0c",
+      "target": "e52957da",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:43:44.416243"
+    },
+    {
+      "source": "08d1edbb",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:44:17.681806"
+    },
+    {
+      "source": "62ff6dfe",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:44:20.700492"
+    },
+    {
+      "source": "de72fb26",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:44:23.733984"
+    },
+    {
+      "source": "d7f5ee5c",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:44:26.758059"
+    },
+    {
+      "source": "6249962e",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:44:29.773573"
+    },
+    {
+      "source": "efcc2e75",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:44:32.790918"
+    },
+    {
+      "source": "8c135325",
+      "target": "b68ab63a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:44:35.805861"
+    },
+    {
+      "source": "d5c0a907",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:44:38.822657"
+    },
+    {
+      "source": "1f9176b6",
+      "target": "f6594076",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:44:41.838417"
+    },
+    {
+      "source": "a6872b04",
+      "target": "a74aea7a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:44:44.853631"
+    },
+    {
+      "source": "08a7b77d",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:44:47.869260"
+    },
+    {
+      "source": "05038b09",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:44:50.887133"
+    },
+    {
+      "source": "754e9418",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:44:53.903689"
+    },
+    {
+      "source": "c6b2fdc7",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:44:56.932914"
+    },
+    {
+      "source": "93eaebdd",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:44:59.954100"
+    },
+    {
+      "source": "1daac3a6",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:45:02.970358"
+    },
+    {
+      "source": "38533998",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:45:05.987835"
+    },
+    {
+      "source": "95a17157",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:45:09.003392"
+    },
+    {
+      "source": "991c5c42",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:45:12.020553"
+    },
+    {
+      "source": "0ca82e6d",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:45:15.038405"
+    },
+    {
+      "source": "4a3b3758",
+      "target": "b68ab63a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:45:18.056419"
+    },
+    {
+      "source": "95a24a8b",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:45:21.075440"
+    },
+    {
+      "source": "8a2d9ffd",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:45:24.094880"
+    },
+    {
+      "source": "81cbfd11",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:45:27.111732"
+    },
+    {
+      "source": "f978ed9b",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:45:30.128552"
+    },
+    {
+      "source": "51f5a9de",
+      "target": "e52957da",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:45:43.155604"
+    },
+    {
+      "source": "5d4198cb",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:46:16.410846"
+    },
+    {
+      "source": "40eba0ce",
+      "target": "b68ab63a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:46:19.431847"
+    },
+    {
+      "source": "8a5cb37b",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:46:22.456216"
+    },
+    {
+      "source": "b0d9b5af",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:46:25.478006"
+    },
+    {
+      "source": "099f08b3",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:46:28.499742"
+    },
+    {
+      "source": "30276f45",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:46:31.516497"
+    },
+    {
+      "source": "ee774513",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:46:34.544277"
+    },
+    {
+      "source": "f32e1993",
+      "target": "b68ab63a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:46:37.592671"
+    },
+    {
+      "source": "071df134",
+      "target": "fcc5402a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:46:40.611502"
+    },
+    {
+      "source": "673c6172",
+      "target": "83d27f6a",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:46:43.645500"
+    },
+    {
+      "source": "8bb55a2e",
+      "target": "7e90f6ea",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:46:53.202823"
+    },
+    {
+      "source": "097eaab2",
+      "target": "8bb55a2e",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:48:01.498720"
+    },
+    {
+      "source": "e69c13f5",
+      "target": "6eee227c",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:48:09.522112"
+    },
+    {
+      "source": "0ec076ae",
+      "target": "e69c13f5",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:48:17.556165"
+    },
+    {
+      "source": "6aca4908",
+      "target": "8bb55a2e",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:49:25.839008"
+    },
+    {
+      "source": "0f5bcd73",
+      "target": "8bb55a2e",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:50:34.105780"
+    },
+    {
+      "source": "1fd4ccad",
+      "target": "8bb55a2e",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:51:42.381868"
+    },
+    {
+      "source": "63c5518d",
+      "target": "e69c13f5",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:51:50.409723"
+    },
+    {
+      "source": "eeb817e5",
+      "target": "0ec076ae",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:51:58.437579"
+    },
+    {
+      "source": "829cc8b7",
+      "target": "8bb55a2e",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:53:06.703771"
+    },
+    {
+      "source": "a8211b1c",
+      "target": "8bb55a2e",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:54:14.980185"
+    },
+    {
+      "source": "208330f3",
+      "target": "8bb55a2e",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:55:23.294912"
+    },
+    {
+      "source": "749399ce",
+      "target": "8bb55a2e",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:56:31.601108"
+    },
+    {
+      "source": "3493713f",
+      "target": "8bb55a2e",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:57:39.870345"
+    },
+    {
+      "source": "14663ad0",
+      "target": "8bb55a2e",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:58:48.157656"
+    },
+    {
+      "source": "f0d4b886",
+      "target": "8bb55a2e",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T21:59:56.420435"
+    },
+    {
+      "source": "bf3163a4",
+      "target": "8bb55a2e",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T22:01:04.686493"
+    },
+    {
+      "source": "a1c72294",
+      "target": "8bb55a2e",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T22:02:12.974735"
+    },
+    {
+      "source": "94a85146",
+      "target": "8bb55a2e",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T22:03:08.205103"
+    },
+    {
+      "source": "91f2445d",
+      "target": "e69c13f5",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T22:03:13.238504"
+    },
+    {
+      "source": "db8ae264",
+      "target": "0ec076ae",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T22:03:18.274993"
+    },
+    {
+      "source": "34de28c6",
+      "target": "263b5a0c",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T22:03:19.384953"
+    },
+    {
+      "source": "ca7ad410",
+      "target": "34de28c6",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T22:03:20.499868"
+    },
+    {
+      "source": "4129aaf7",
+      "target": "34de28c6",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T22:03:21.585791"
+    },
+    {
+      "source": "6d7055c2",
+      "target": "5920a24d",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T22:05:07.945189"
+    },
+    {
+      "source": "cd09cc75",
+      "target": "5920a24d",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T22:05:07.964795"
+    },
+    {
+      "source": "65b57717",
+      "target": "34de28c6",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T22:05:07.982316"
+    },
+    {
+      "source": "28fa1ba9",
+      "target": "5920a24d",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T22:05:08.000072"
+    },
+    {
+      "source": "ea2e6677",
+      "target": "5920a24d",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T22:05:08.017983"
+    },
+    {
+      "source": "9c05f4ad",
+      "target": "5920a24d",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T22:05:08.036273"
+    },
+    {
+      "source": "ac521d0a",
+      "target": "5920a24d",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T22:05:08.051952"
+    },
+    {
+      "source": "87217a35",
+      "target": "5920a24d",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T22:05:08.072095"
+    },
+    {
+      "source": "3d39d931",
+      "target": "5920a24d",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T22:05:08.090207"
+    },
+    {
+      "source": "33f0de9b",
+      "target": "5920a24d",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T22:05:08.107664"
+    },
+    {
+      "source": "edb607c8",
+      "target": "5920a24d",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T22:05:08.125792"
+    },
+    {
+      "source": "76dd2c17",
+      "target": "5920a24d",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T22:06:16.116551"
+    },
+    {
+      "source": "fec07030",
+      "target": "34de28c6",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T23:42:40.300125"
+    },
+    {
+      "source": "2f300fd5",
+      "target": "a6872b04",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T23:42:42.316697"
+    },
+    {
+      "source": "819c00e8",
+      "target": "fec07030",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T23:52:03.134642"
+    },
+    {
+      "source": "c9e1276d",
+      "target": "2f300fd5",
+      "similarity": 0.7,
+      "created_at": "2026-05-12T23:52:05.156677"
+    },
+    {
+      "source": "0039a122",
+      "target": "2ccc6b0f",
+      "similarity": 0.7,
+      "created_at": "2026-05-13T02:05:55.549197"
+    },
+    {
+      "source": "b2a3959e",
+      "target": "4c9a7a1c",
+      "similarity": 0.7,
+      "created_at": "2026-05-13T03:40:21.514334"
+    },
+    {
+      "source": "1c80109f",
+      "target": "67c35a5c",
+      "similarity": 0.7,
+      "created_at": "2026-05-14T20:45:36.138687"
+    },
+    {
+      "source": "620d2039",
+      "target": "67c35a5c",
+      "similarity": 0.7,
+      "created_at": "2026-05-14T20:51:09.912642"
+    },
+    {
+      "source": "fe90f196",
+      "target": "67c35a5c",
+      "similarity": 0.7,
+      "created_at": "2026-05-14T22:48:01.289628"
+    },
+    {
+      "source": "b84bbf7b",
+      "target": "67c35a5c",
+      "similarity": 0.7,
+      "created_at": "2026-05-14T23:16:05.517706"
+    },
+    {
+      "source": "4868d1f1",
+      "target": "67c35a5c",
+      "similarity": 0.7,
+      "created_at": "2026-05-15T00:37:16.470908"
+    }
+  ],
+  "skill_embeddings": {},
+  "transfer_matrix": {},
+  "stats": {
+    "total_actions": 204,
+    "successful": 65,
+    "failed": 139,
+    "inferences": 3,
+    "transfers": 2,
+    "analogies_used": 2
+  },
+  "learning_rate": 0.35
+}

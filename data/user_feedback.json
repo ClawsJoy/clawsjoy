@@ -1,0 +1,14 @@
+[
+  {
+    "input": "香港宠物移民怎么办",
+    "category": "移民身份",
+    "satisfied": false,
+    "action": "add_to_config"
+  },
+  {
+    "input": "香港咖啡馆推荐",
+    "category": "生活消费",
+    "satisfied": false,
+    "action": "add_to_config"
+  }
+]

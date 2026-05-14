@@ -1,0 +1,12 @@
+{
+  "name": "image_scheduler",
+  "version": "1.0.0",
+  "description": "\u56fe\u7247\u8c03\u5ea6\u5668",
+  "category": "image",
+  "price": 0.99,
+  "author": "ClawsJoy",
+  "tags": [
+    "image",
+    "image_scheduler"
+  ]
+}

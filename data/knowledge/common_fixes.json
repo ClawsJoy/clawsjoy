@@ -1,0 +1,64 @@
+{
+  "fixes": [
+    {
+      "problem": "端口被占用",
+      "symptom": "Address already in use",
+      "solution": "sudo fuser -k {port}/tcp 2>/dev/null || true",
+      "learned_at": "2026-05-08"
+    },
+    {
+      "problem": "Chat API 连接失败",
+      "symptom": "Connection refused.*18109",
+      "solution": "cd /mnt/d/clawsjoy && pm2 restart chat-api && sleep 3",
+      "learned_at": "2026-05-08"
+    },
+    {
+      "problem": "Promo API 超时",
+      "symptom": "timeout.*8108",
+      "solution": "cd /mnt/d/clawsjoy && pm2 restart promo-api && sleep 5",
+      "learned_at": "2026-05-08"
+    },
+    {
+      "problem": "Ollama 服务未运行",
+      "symptom": "Connection to localhost:11434 refused",
+      "solution": "ollama serve > /tmp/ollama.log 2>&1 &",
+      "learned_at": "2026-05-08"
+    },
+    {
+      "problem": "磁盘空间不足",
+      "symptom": "No space left on device",
+      "solution": "cd /mnt/d/clawsjoy && python3 agents/cleaner_agent.py smart",
+      "learned_at": "2026-05-08"
+    },
+    {
+      "problem": "Docker 服务停止",
+      "symptom": "Cannot connect to the Docker daemon",
+      "solution": "sudo service docker restart && sleep 5",
+      "learned_at": "2026-05-08"
+    },
+    {
+      "problem": "PM2 进程异常退出",
+      "symptom": "errored",
+      "solution": "pm2 restart all && pm2 save",
+      "learned_at": "2026-05-08"
+    },
+    {
+      "problem": "Python 依赖缺失",
+      "symptom": "ModuleNotFoundError",
+      "solution": "pip install -r /mnt/d/clawsjoy/bin/requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple",
+      "learned_at": "2026-05-08"
+    },
+    {
+      "problem": "FFmpeg 未安装",
+      "symptom": "ffmpeg: command not found",
+      "solution": "sudo apt update && sudo apt install -y ffmpeg",
+      "learned_at": "2026-05-08"
+    },
+    {
+      "problem": "代理连接失败",
+      "symptom": "127.0.0.1:7890",
+      "solution": "unset HTTP_PROXY HTTPS_PROXY",
+      "learned_at": "2026-05-08"
+    }
+  ]
+}

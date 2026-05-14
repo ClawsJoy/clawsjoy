@@ -1,0 +1,93 @@
+{
+  "add": {
+    "name": "add",
+    "category": "math",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T00:48:07.761407"
+  },
+  "multiply": {
+    "name": "multiply",
+    "category": "math",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T00:48:07.763944"
+  },
+  "divide": {
+    "name": "divide",
+    "category": "math",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T00:48:07.771572"
+  },
+  "math_enhanced": {
+    "name": "math_enhanced",
+    "category": "math",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T00:48:07.777717"
+  },
+  "remove_bg": {
+    "name": "remove_bg",
+    "category": "image",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T00:48:07.783786"
+  },
+  "spider": {
+    "name": "spider",
+    "category": "image",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T00:48:07.789465"
+  },
+  "image_slideshow": {
+    "name": "image_slideshow",
+    "category": "image",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T00:48:07.795347"
+  },
+  "manju_maker": {
+    "name": "manju_maker",
+    "category": "video",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T00:48:07.801151"
+  },
+  "video_uploader": {
+    "name": "video_uploader",
+    "category": "video",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T00:48:07.806821"
+  },
+  "add_subtitles": {
+    "name": "add_subtitles",
+    "category": "video",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T00:48:07.812919"
+  },
+  "do_anything": {
+    "name": "do_anything",
+    "category": "core",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T00:48:07.818684"
+  },
+  "calibrated_executor": {
+    "name": "calibrated_executor",
+    "category": "core",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T00:48:07.825109"
+  },
+  "quality_gate": {
+    "name": "quality_gate",
+    "category": "core",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T00:48:07.831443"
+  }
+}

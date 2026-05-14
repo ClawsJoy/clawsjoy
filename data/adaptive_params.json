@@ -1,0 +1,6 @@
+{
+  "target_duration": 30,
+  "script_length": 200,
+  "quality_threshold": 50,
+  "learning_rate": 0.08571428571428569
+}

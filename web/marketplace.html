@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>ClawsJoy 技能商店</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #1e1e2e; color: #fff; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        h1 { color: #667eea; margin-bottom: 20px; }
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .product-card { background: #2a2a3e; border-radius: 12px; padding: 20px; }
+        .product-name { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+        .product-category { display: inline-block; background: #3a3a4e; padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+        .product-desc { font-size: 13px; color: #a1a1aa; margin: 12px 0; }
+        .product-price { font-size: 20px; font-weight: bold; color: #667eea; }
+        .buy-btn { width: 100%; background: #667eea; border: none; padding: 10px; color: white; border-radius: 8px; margin-top: 15px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛒 ClawsJoy 技能商店</h1>
+        <div class="products-grid" id="products"></div>
+    </div>
+    <script>
+        // Mock 数据
+        const products = [
+            { name: "image_collector", category: "content", description: "图片采集技能，支持 Unsplash API", price: 0.99 },
+            { name: "script_writer", category: "content", description: "AI 脚本生成，自动生成视频脚本", price: 1.99 },
+            { name: "slideshow_maker", category: "video", description: "视频制作，图片轮播+配音+字幕", price: 2.99 },
+            { name: "auth", category: "api", description: "认证授权管理", price: 0.99 },
+            { name: "billing", category: "api", description: "计费账单管理", price: 0.99 },
+            { name: "weather", category: "utility", description: "天气查询", price: 0.5 },
+            { name: "youtube_publisher", category: "publish", description: "YouTube 视频发布", price: 1.99 },
+            { name: "video_maker", category: "video", description: "视频制作", price: 2.99 }
+        ];
+        
+        const productsDiv = document.getElementById('products');
+        productsDiv.innerHTML = products.map(p => `
+            <div class="product-card">
+                <div class="product-name">${p.name}</div>
+                <span class="product-category">${p.category}</span>
+                <div class="product-desc">${p.description}</div>
+                <div class="product-price">$${p.price}</div>
+                <button class="buy-btn" onclick="alert('演示模式，购买功能开发中')">购买</button>
+            </div>
+        `).join('');
+    </script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+[
+  {
+    "id": "c7594caec495",
+    "text": "香港优才计划2026年最新政策，分数降至75分，审批时间缩短至3个月",
+    "metadata": {
+      "category": "policy"
+    },
+    "added_at": "2026-05-09T17:50:45.513175"
+  },
+  {
+    "id": "369c029e5bb1",
+    "text": "Docker容器重启命令：docker restart <容器名>",
+    "metadata": {
+      "category": "tech"
+    },
+    "added_at": "2026-05-09T17:50:45.520485"
+  },
+  {
+    "id": "13b856f09449",
+    "text": "YouTube视频标题优化技巧：包含关键词、数字、情感词汇",
+    "metadata": {
+      "category": "youtube"
+    },
+    "added_at": "2026-05-09T17:50:45.530678"
+  },
+  {
+    "id": "5dbd85b0ad56",
+    "text": "香港旅游攻略：维多利亚港、太平山顶、迪士尼乐园",
+    "metadata": {
+      "category": "travel"
+    },
+    "added_at": "2026-05-09T17:50:45.537526"
+  }
+]

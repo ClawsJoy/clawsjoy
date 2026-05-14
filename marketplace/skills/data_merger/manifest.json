@@ -1,0 +1,12 @@
+{
+  "name": "data_merger",
+  "version": "1.0.0",
+  "description": "\u6570\u636e\u5408\u5e76\u5de5\u5177",
+  "category": "data",
+  "price": 0.99,
+  "author": "ClawsJoy",
+  "tags": [
+    "data",
+    "data_merger"
+  ]
+}

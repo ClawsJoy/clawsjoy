@@ -1,0 +1,206 @@
+{
+  "knowledge_base": [
+    {
+      "category": "programming",
+      "content": "Python 装饰器：是一种高阶函数，可以在不修改原函数代码的情况下扩展功能。使用 @decorator 语法。常见装饰器：@staticmethod、@classmethod、@property。",
+      "importance": 0.85
+    },
+    {
+      "category": "programming",
+      "content": "Python 生成器：使用 yield 关键字，可以逐个产生值，节省内存。适用于处理大数据流。",
+      "importance": 0.8
+    },
+    {
+      "category": "programming",
+      "content": "Python 上下文管理器：使用 with 语句，自动管理资源。可以通过实现 __enter__ 和 __exit__ 方法或使用 contextlib 模块创建。",
+      "importance": 0.8
+    },
+    {
+      "category": "programming",
+      "content": "Python 异步编程：使用 async/await 语法，配合 asyncio 库实现并发。适合 I/O 密集型任务。",
+      "importance": 0.85
+    },
+    {
+      "category": "programming",
+      "content": "Python 类型注解：Python 3.5+ 支持类型提示，使用 typing 模块。提高代码可读性和 IDE 支持。",
+      "importance": 0.75
+    },
+    {
+      "category": "programming",
+      "content": "Python 虚拟环境：使用 venv 模块创建隔离环境。命令：python -m venv venv，激活：source venv/bin/activate (Linux) 或 venv\\Scripts\\activate (Windows)。",
+      "importance": 0.9
+    },
+    {
+      "category": "programming",
+      "content": "Python 包管理：pip install package 安装，pip freeze > requirements.txt 导出依赖，pip install -r requirements.txt 安装依赖。",
+      "importance": 0.85
+    },
+    {
+      "category": "programming",
+      "content": "Python 常用库：requests（HTTP请求）、numpy（数值计算）、pandas（数据分析）、matplotlib（绘图）、scikit-learn（机器学习）、fastapi（Web框架）。",
+      "importance": 0.85
+    },
+    {
+      "category": "ai",
+      "content": "监督学习：需要标注数据，包括分类和回归。算法：线性回归、逻辑回归、决策树、随机森林、SVM、神经网络。",
+      "importance": 0.9
+    },
+    {
+      "category": "ai",
+      "content": "无监督学习：不需要标注数据，包括聚类和降维。算法：K-means、DBSCAN、PCA、t-SNE、层次聚类。",
+      "importance": 0.85
+    },
+    {
+      "category": "ai",
+      "content": "强化学习：通过奖励机制学习，包括 Q-learning、DQN、PPO。ClawsJoy 使用 Q-learning 实现大脑学习。",
+      "importance": 0.9
+    },
+    {
+      "category": "ai",
+      "content": "深度学习框架：PyTorch（动态图，研究友好）、TensorFlow（生产部署）、JAX（高性能计算）、Keras（高层API）。",
+      "importance": 0.85
+    },
+    {
+      "category": "ai",
+      "content": "Transformer 架构：注意力机制、自注意力、多头注意力、位置编码。是 GPT、BERT、LLaMA 等大模型的基础。",
+      "importance": 0.9
+    },
+    {
+      "category": "ai",
+      "content": "RAG（检索增强生成）：结合向量检索和 LLM，先用向量库检索相关知识，再让 LLM 基于知识回答。ClawsJoy 支持此功能。",
+      "importance": 0.9
+    },
+    {
+      "category": "docker",
+      "content": "Dockerfile 指令：FROM（基础镜像）、RUN（执行命令）、COPY（复制文件）、WORKDIR（工作目录）、EXPOSE（暴露端口）、CMD（默认命令）、ENTRYPOINT（入口点）。",
+      "importance": 0.9
+    },
+    {
+      "category": "docker",
+      "content": "Docker Compose：多容器编排。docker-compose.yml 定义服务，docker-compose up -d 启动，docker-compose down 停止，docker-compose logs 查看日志。",
+      "importance": 0.9
+    },
+    {
+      "category": "docker",
+      "content": "Docker 网络：bridge（默认）、host（主机网络）、overlay（跨主机）。命令：docker network create、docker network ls。",
+      "importance": 0.8
+    },
+    {
+      "category": "docker",
+      "content": "Docker 卷：数据持久化。docker volume create、docker run -v volume:/path。类型：匿名卷、命名卷、绑定挂载。",
+      "importance": 0.85
+    },
+    {
+      "category": "kubernetes",
+      "content": "K8s 核心概念：Pod（最小部署单元）、Deployment（副本管理）、Service（服务发现）、Ingress（入口）、ConfigMap（配置）、Secret（密钥）。",
+      "importance": 0.85
+    },
+    {
+      "category": "kubernetes",
+      "content": "kubectl 常用命令：kubectl get pods、kubectl describe pod、kubectl logs、kubectl exec、kubectl apply -f、kubectl delete。",
+      "importance": 0.85
+    },
+    {
+      "category": "git",
+      "content": "Git 分支策略：main（主分支）、develop（开发分支）、feature/*（功能分支）、release/*（发布分支）、hotfix/*（热修复分支）。",
+      "importance": 0.85
+    },
+    {
+      "category": "git",
+      "content": "Git 高级命令：git rebase（变基）、git cherry-pick（挑选提交）、git stash（暂存）、git bisect（二分查找）、git reflog（引用日志）。",
+      "importance": 0.8
+    },
+    {
+      "category": "linux",
+      "content": "Linux 权限管理：chmod 755 file（rwxr-xr-x）、chown user:group file、umask（默认权限掩码）。",
+      "importance": 0.85
+    },
+    {
+      "category": "linux",
+      "content": "Linux 进程管理：ps aux（查看进程）、top/htop（实时监控）、kill -9 PID（强制终止）、nice/renice（优先级）、bg/fg（后台/前台）。",
+      "importance": 0.85
+    },
+    {
+      "category": "linux",
+      "content": "Linux 网络工具：netstat/ss（端口监听）、curl/wget（HTTP请求）、ping（连通性）、traceroute（路由追踪）、tcpdump（抓包）。",
+      "importance": 0.85
+    },
+    {
+      "category": "database",
+      "content": "SQL 基础：SELECT（查询）、INSERT（插入）、UPDATE（更新）、DELETE（删除）、WHERE（条件）、JOIN（连接）、GROUP BY（分组）。",
+      "importance": 0.9
+    },
+    {
+      "category": "database",
+      "content": "MySQL 优化：索引优化、查询缓存、慢查询日志、EXPLAIN 分析、连接池、读写分离、分区表。",
+      "importance": 0.85
+    },
+    {
+      "category": "database",
+      "content": "PostgreSQL 特性：JSONB 支持、全文搜索、窗口函数、CTE、物化视图、扩展插件（PostGIS、TimescaleDB）。",
+      "importance": 0.85
+    },
+    {
+      "category": "database",
+      "content": "Redis 数据类型：String（字符串）、Hash（哈希）、List（列表）、Set（集合）、Sorted Set（有序集合）、Bitmap、HyperLogLog。",
+      "importance": 0.85
+    },
+    {
+      "category": "web",
+      "content": "RESTful API 设计：GET（获取）、POST（创建）、PUT（全量更新）、PATCH（部分更新）、DELETE（删除）、状态码（2xx成功、4xx客户端错误、5xx服务端错误）。",
+      "importance": 0.9
+    },
+    {
+      "category": "web",
+      "content": "Flask 框架：路由、请求/响应、模板渲染、蓝图、扩展（Flask-SQLAlchemy、Flask-Login、Flask-CORS）。",
+      "importance": 0.85
+    },
+    {
+      "category": "web",
+      "content": "FastAPI 特点：高性能（Starlette + Pydantic）、自动 API 文档（Swagger/ReDoc）、类型提示、异步支持、依赖注入。",
+      "importance": 0.85
+    },
+    {
+      "category": "devops",
+      "content": "CI/CD 流程：代码提交 → 自动测试 → 构建镜像 → 部署到测试环境 → 集成测试 → 部署到生产。工具：GitHub Actions、GitLab CI、Jenkins。",
+      "importance": 0.9
+    },
+    {
+      "category": "devops",
+      "content": "监控告警：Prometheus（采集）、Grafana（可视化）、Alertmanager（告警）、Loki（日志）、Tempo（链路追踪）。",
+      "importance": 0.85
+    },
+    {
+      "category": "clawsjoy",
+      "content": "ClawsJoy API 端点：/api/health（健康检查）、/api/chat（对话）、/api/agents/list（Agent列表）、/api/skills/list（技能列表）、/api/memory/add（添加记忆）、/api/brain/stats（大脑统计）、/api/vector/search（向量搜索）。",
+      "importance": 0.95
+    },
+    {
+      "category": "clawsjoy",
+      "content": "ClawsJoy 自定义 Agent 创建：POST /api/agents/custom/create，参数：name（名称）、description（描述）。创建后可添加训练数据、知识、执行任务。",
+      "importance": 0.9
+    },
+    {
+      "category": "clawsjoy",
+      "content": "ClawsJoy 技能调用：POST /api/skills/execute，参数：skill（calculator/random/datetime/base64_encode等）、params（对应参数）。",
+      "importance": 0.9
+    }
+  ],
+  "training_data": [
+    {"question": "Python 装饰器是什么？", "answer": "装饰器是 Python 的高阶函数，可以在不修改原函数代码的情况下扩展功能。使用 @decorator 语法，常用于日志、计时、权限检查等场景。"},
+    {"question": "Python 虚拟环境怎么用？", "answer": "创建：python -m venv venv；激活：Linux/Mac: source venv/bin/activate，Windows: venv\\Scripts\\activate；退出：deactivate；导出依赖：pip freeze > requirements.txt；安装依赖：pip install -r requirements.txt。"},
+    {"question": "Dockerfile 常用指令有哪些？", "answer": "FROM（基础镜像）、RUN（执行命令）、COPY/ADD（复制文件）、WORKDIR（工作目录）、EXPOSE（暴露端口）、CMD/ENTRYPOINT（启动命令）、ENV（环境变量）、ARG（构建参数）。"},
+    {"question": "Docker Compose 是什么？", "answer": "Docker Compose 是多容器编排工具，通过 docker-compose.yml 定义多个服务的关系，用 docker-compose up -d 一键启动所有服务，适合开发环境和微服务部署。"},
+    {"question": "K8s 核心组件有哪些？", "answer": "kube-apiserver（API网关）、etcd（存储）、kube-scheduler（调度）、kube-controller-manager（控制器）、kubelet（节点代理）、kube-proxy（网络代理）。"},
+    {"question": "Git 分支策略推荐？", "answer": "Git Flow：main（生产）、develop（开发）、feature/*（新功能）、release/*（发布准备）、hotfix/*（紧急修复）。GitHub Flow：main + feature branches。"},
+    {"question": "Linux 如何查看进程？", "answer": "ps aux 查看所有进程，top/htop 实时监控，lsof -i :端口 查看端口占用，kill -9 PID 强制终止，pgrep 按名称查找。"},
+    {"question": "SQL 查询优化技巧？", "answer": "使用索引、避免 SELECT *、减少 JOIN 数量、使用 EXPLAIN 分析、分页查询、避免子查询用 JOIN 代替、使用查询缓存、读写分离。"},
+    {"question": "Redis 支持哪些数据类型？", "answer": "String（字符串）、Hash（哈希表）、List（列表）、Set（集合）、Sorted Set（有序集合）、Bitmap（位图）、HyperLogLog（基数统计）、Geospatial（地理位置）。"},
+    {"question": "RESTful API 设计规范？", "answer": "使用名词表示资源、HTTP方法表操作（GET/POST/PUT/DELETE）、状态码标准（200/201/400/401/403/404/500）、版本控制（/v1/）、使用 JSON 格式。"},
+    {"question": "FastAPI 有什么优势？", "answer": "高性能（与 NodeJS/Go 相当）、自动生成 API 文档（Swagger/ReDoc）、类型提示验证、异步支持、依赖注入系统、基于 Starlette + Pydantic。"},
+    {"question": "CI/CD 流程是什么？", "answer": "持续集成：代码提交 → 自动构建 → 自动测试 → 静态分析 → 生成报告。持续部署：测试通过 → 构建镜像 → 部署到测试环境 → 集成测试 → 部署到生产。"},
+    {"question": "ClawsJoy 有哪些 API 端点？", "answer": "健康检查：/api/health；对话：/api/chat；Agent：/api/agents/list；技能：/api/skills/list；记忆：/api/memory/add、/api/memory/recall；大脑：/api/brain/stats；向量：/api/vector/search。"},
+    {"question": "如何让 ClawsJoy 学习新知识？", "answer": "方式1：通过记忆系统添加（POST /api/memory/add）；方式2：通过培训数据训练（POST /api/agents/custom/{id}/training）；方式3：添加向量知识（/api/vector/search 自动检索）。"},
+    {"question": "ClawsJoy 支持哪些模型？", "answer": "ClawsJoy 通过 Ollama 支持多种模型：llama3.2:3b（对话）、qwen2.5:7b（代码）、qwen2.5:3b（知识）、以及其他 Ollama 支持的开源模型。"}
+  ]
+}

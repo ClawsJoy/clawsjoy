@@ -1,0 +1,29 @@
+#!/bin/bash
+# 素材分类管理
+
+CATEGORY="$1"
+SUBJECT="$2"
+
+BASE_DIR="$HOME/.openclaw/web/images"
+
+# 分类映射
+case $CATEGORY in
+    hk|hongkong)
+        DIR="$BASE_DIR/hongkong/$SUBJECT"
+        ;;
+    ai)
+        DIR="$BASE_DIR/ai/$SUBJECT"
+        ;;
+    brand|clawsjoy)
+        DIR="$BASE_DIR/clawsjoy/$SUBJECT"
+        ;;
+    temp)
+        DIR="$BASE_DIR/temp"
+        ;;
+    *)
+        DIR="$BASE_DIR/$CATEGORY"
+        ;;
+esac
+
+mkdir -p "$DIR"
+echo "$DIR"

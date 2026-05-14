@@ -1,0 +1,12 @@
+{
+  "name": "billing",
+  "version": "1.0.0",
+  "description": "\u8ba1\u8d39\u548c\u8d26\u5355\u7ba1\u7406",
+  "category": "api",
+  "price": 0.99,
+  "author": "ClawsJoy",
+  "tags": [
+    "api",
+    "billing"
+  ]
+}

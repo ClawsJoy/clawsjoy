@@ -1,0 +1,12 @@
+[2026-05-08 01:00:13] [ERROR] ❌ chat_api 重启失败: pkill: killing pid 69095 failed: Operation not permitted
+[2026-05-08 01:00:15] [ERROR] ❌ promo_api 重启失败: pkill: killing pid 68975 failed: Operation not permitted
+[2026-05-08 02:00:13] [ERROR] ❌ chat_api 重启失败: pkill: killing pid 45343 failed: Operation not permitted
+[2026-05-08 02:00:15] [ERROR] ❌ promo_api 重启失败: pkill: killing pid 45437 failed: Operation not permitted
+[2026-05-08 02:00:13] [ERROR] ❌ chat_api 重启失败: pkill: killing pid 45343 failed: Operation not permitted
+[2026-05-08 02:00:15] [ERROR] ❌ promo_api 重启失败: pkill: killing pid 45437 failed: Operation not permitted
+[2026-05-08 16:17:44] [ERROR] ❌ chat_api 重启失败: pkill: killing pid 94705 failed: Operation not permitted
+[2026-05-08 16:17:46] [ERROR] ❌ promo_api 重启失败: pkill: killing pid 57946 failed: Operation not permitted
+[2026-05-08 16:22:34] [ERROR] ❌ chat_api 重启失败: pkill: killing pid 94705 failed: Operation not permitted
+[2026-05-08 16:22:36] [ERROR] ❌ promo_api 重启失败: pkill: killing pid 57946 failed: Operation not permitted
+[2026-05-08 16:23:29] [ERROR] ❌ chat_api 重启失败: pkill: killing pid 94705 failed: Operation not permitted
+[2026-05-08 16:23:31] [ERROR] ❌ promo_api 重启失败: pkill: killing pid 57946 failed: Operation not permitted

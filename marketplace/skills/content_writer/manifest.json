@@ -1,0 +1,12 @@
+{
+  "name": "content_writer",
+  "version": "1.0.0",
+  "description": "\u5185\u5bb9\u5199\u4f5c\u52a9\u624b",
+  "category": "content",
+  "price": 0.99,
+  "author": "ClawsJoy",
+  "tags": [
+    "content",
+    "content_writer"
+  ]
+}

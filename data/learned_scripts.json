@@ -1,0 +1,37 @@
+{
+  "successful": [
+    {
+      "task": "\u5199\u4e00\u4e2a\u811a\u672c\uff0c\u5217\u51fa\u5f53\u524d\u76ee\u5f55\u4e0b\u6240\u6709 Python \u6587\u4ef6",
+      "code": "import os\n\ndef find_python_files():\n    python_files = []\n    for root, dirs, files in os.walk('.'):\n        for file in files:\n            if file.endswith('.py') and not file.startswith('_'):\n                python_files.append(os.path.join(root, file))\n    return python_files\n\ntry:\n    result = find_python_files()\n    print(result)\nexcept Exception as e:\n    print(f\"An error occurred: {e}\")\n",
+      "success": true,
+      "error": "",
+      "attempt": 1,
+      "learned_at": "2026-05-09 19:54:54.496585"
+    },
+    {
+      "task": "\u5199\u4e00\u4e2a\u811a\u672c\uff0c\u5907\u4efd data \u76ee\u5f55",
+      "code": "import shutil\nimport os\n\ndef backup_data():\n    source_dir = 'data'\n    \n    try:\n        # Check if the source directory exists\n        if not os.path.exists(source_dir):\n            print(f\"Error: Directory '{source_dir}' does not exist.\")\n            return\n        \n        # Define the backup directory (optional, can be any valid path)\n        backup_dir = \"backup\"\n        \n        # Create the backup directory if it doesn't exist\n        if not os.path.exists(backup_dir):\n            os.mak",
+      "success": true,
+      "error": "",
+      "attempt": 1,
+      "learned_at": "2026-05-09 19:54:58.546709"
+    },
+    {
+      "task": "\u5199\u4e00\u4e2a\u811a\u672c\uff0c\u663e\u793a\u7cfb\u7edf\u5185\u5b58\u4f7f\u7528\u60c5\u51b5",
+      "code": "import psutil\n\ntry:\n    total_memory = psutil.virtual_memory().total // (1024**3) # Total memory in GB\n    used_memory = psutil.virtual_memory().used // (1024**3)\n    available_memory = psutil.virtual_memory().available // (1024**3)\n    \n    print(f\"Total Memory: {total_memory} GB\")\n    print(f\"Used Memory: {used_memory} GB\")\n    print(f\"Available Memory: {available_memory} GB\")\nexcept Exception as e:\n    print(f\"An error occurred: {e}\")\n",
+      "success": true,
+      "error": "",
+      "attempt": 1,
+      "learned_at": "2026-05-09 19:55:00.905603"
+    },
+    {
+      "task": "\u5199\u4e00\u4e2a\u811a\u672c\uff0c\u5217\u51fa\u5f53\u524d\u76ee\u5f55\u4e0b\u6240\u6709 Python \u6587\u4ef6",
+      "code": "import os\n\ndef find_python_files(directory='.'):\n    python_files = []\n    try:\n        for filename in os.listdir(directory):\n            if filename.endswith(\".py\"):\n                file_path = os.path.join(directory, filename)\n                python_files.append(file_path)\n    except OSError as e:\n        print(f\"Error: {e}\")\n    return python_files\n\nif __name__ == \"__main__\":\n    python_files = find_python_files()\n    for file in python_files:\n        print(file)\n",
+      "success": true,
+      "error": "",
+      "attempt": 1,
+      "learned_at": "2026-05-09T20:02:10.738060"
+    }
+  ],
+  "failed": []
+}

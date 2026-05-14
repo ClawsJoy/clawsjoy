@@ -1,0 +1,948 @@
+{
+  "items": [
+    {
+      "id": "fe3ad2799fe9ecf7c94ed819bd069d93",
+      "fact": "目标：做一个30秒香港优才视频 -> 计划：[{'skill': 'tts', 'args': {'text': '欢迎来到香港...', 'output_path': 'audio.mp3'}}, {'skill': 'image_slideshow', 'args': {'audio_path': 'audio.mp3', 'images': ['hk_cityscape.jpg']}}] -> 满意度：5（用户公开视频）",
+      "category": "user_satisfaction",
+      "timestamp": "2026-05-13T16:19:52.210065"
+    },
+    {
+      "id": "7e54dda3a52d77e75e63e6465b2fc1ff",
+      "fact": "video_meta:pending|title:Hong Kong Talent Scheme 75 Points - AI Guide|desc:Learn how to qualify for Hong Kong Talent Scheme with 75 points. Step by step guide for professionals.|tags:HongKong,TalentScheme,75points,AI",
+      "category": "video_metadata",
+      "timestamp": "2026-05-13T18:21:54.536160"
+    },
+    {
+      "id": "23399622cc2d92bba56acf329f56dfca",
+      "fact": "uploaded:wUfSM_X9AWE|Hong Kong Talent Scheme Test|unlisted",
+      "category": "video_uploads",
+      "timestamp": "2026-05-13T18:27:11.644462"
+    },
+    {
+      "id": "1de062ccf1f2e13de451cc77a50a1f31",
+      "fact": "video_meta:pending|title:Hong Kong Talent Scheme 75 Points - AI Guide|desc:Step by step guide to qualify for Hong Kong Talent Scheme with 75 points.|tags:HongKong,TalentScheme,75points",
+      "category": "video_metadata",
+      "timestamp": "2026-05-13T18:28:28.533444"
+    },
+    {
+      "id": "2d2daf826a4e341dbfb8d26f4f41609b",
+      "fact": "uploaded:rRz0tW9TAGc|Hong Kong Talent Scheme 75 Points - AI Guide|unlisted",
+      "category": "video_uploads",
+      "timestamp": "2026-05-13T18:28:39.288289"
+    },
+    {
+      "id": "9038432fd20b6b8f2bcde895c0b678a4",
+      "fact": "uploaded:XKwGszwV39o|Duplicate Test|unlisted",
+      "category": "video_uploads",
+      "timestamp": "2026-05-13T18:34:37.822994"
+    },
+    {
+      "id": "9e3c9d70e49e8fbe838f37b7e6fbfc21",
+      "fact": "video_meta:|title:Test Video|desc:This is a test\n\n[AI Generated] This video is created by AI technology.|tags:",
+      "category": "video_metadata",
+      "timestamp": "2026-05-13T18:35:40.847067"
+    },
+    {
+      "id": "416a6615abb113fbc668f7ba2ee27a5d",
+      "fact": "video_meta:|title:香港优才计划75分通关攻略|desc:AI 生成的香港优才计划75分通关攻略视频，讲解75分通关攻略。\n\n[AI Generated] This video is created by AI technology.|tags:HongKong,TalentScheme,75points",
+      "category": "video_metadata",
+      "timestamp": "2026-05-13T18:41:29.256496"
+    },
+    {
+      "id": "a02c956fd729c7ddc7c78e6f5ec59f74",
+      "fact": "uploaded:XAJ4HOkxzLI|香港优才计划75分通关攻略|unlisted",
+      "category": "video_uploads",
+      "timestamp": "2026-05-13T18:41:35.077537"
+    },
+    {
+      "id": "8d507569576336ede950b21dcd2781bd",
+      "fact": "video_meta:|title:香港高才通计划申请攻略|desc:AI 生成的高才通计划申请攻略，快速了解申请条件和流程。\n\n[AI Generated] This video is created by AI technology.|tags:HongKong,高才通,QualityMigrant",
+      "category": "video_metadata",
+      "timestamp": "2026-05-13T18:42:27.014576"
+    },
+    {
+      "id": "746da165a812826a14688bf65252f247",
+      "fact": "uploaded:Ol74KRq8X8c|香港高才通计划申请攻略|unlisted",
+      "category": "video_uploads",
+      "timestamp": "2026-05-13T18:42:33.127616"
+    },
+    {
+      "id": "b77685e42aa51a39de882113604ad5a5",
+      "fact": "video_meta:|title:香港高才通申请条件|desc:AI 生成的香港高才通申请条件视频，快速了解高才通计划。\n\n[AI Generated] This video is created by AI technology.|tags:HongKong,高才通,TTPS",
+      "category": "video_metadata",
+      "timestamp": "2026-05-13T18:51:37.296388"
+    },
+    {
+      "id": "117353666230914b63201d0ff6339247",
+      "fact": "uploaded:rgfedSl7eKo|香港高才通申请条件|unlisted",
+      "category": "video_uploads",
+      "timestamp": "2026-05-13T18:51:43.002056"
+    },
+    {
+      "id": "351b6153aea170ec1f8e351bd7cbc0e5",
+      "fact": "video_meta:|title:香港高才通A类收入要求|desc:AI 生成的香港高才通A类收入要求视频，快速了解高才通计划。\n\n[AI Generated] This video is created by AI technology.|tags:HongKong,高才通,TTPS",
+      "category": "video_metadata",
+      "timestamp": "2026-05-13T18:51:52.672995"
+    },
+    {
+      "id": "d337f89adfa98f35522fe3c9fc22f521",
+      "fact": "uploaded:NbLAnmBNXfI|香港高才通A类收入要求|unlisted",
+      "category": "video_uploads",
+      "timestamp": "2026-05-13T18:51:58.191847"
+    },
+    {
+      "id": "46bfc10bd213684ce1b5504be1056043",
+      "fact": "video_meta:|title:香港高才通B类工作经验|desc:AI 生成的香港高才通B类工作经验视频，快速了解高才通计划。\n\n[AI Generated] This video is created by AI technology.|tags:HongKong,高才通,TTPS",
+      "category": "video_metadata",
+      "timestamp": "2026-05-13T18:52:07.122505"
+    },
+    {
+      "id": "c57cbfe06516617971e4b352fa8bab02",
+      "fact": "uploaded:LU0Qry_qMr4|香港高才通B类工作经验|unlisted",
+      "category": "video_uploads",
+      "timestamp": "2026-05-13T18:52:12.438956"
+    },
+    {
+      "id": "edfe8d553fcf188e55cb69469a7d3d86",
+      "fact": "video_meta:|title:香港高才通审批时间|desc:AI 生成的香港高才通审批时间视频，快速了解高才通计划。\n\n[AI Generated] This video is created by AI technology.|tags:HongKong,高才通,TTPS",
+      "category": "video_metadata",
+      "timestamp": "2026-05-13T18:52:19.923941"
+    },
+    {
+      "id": "160f88401f161c5af41588a60e3e1756",
+      "fact": "uploaded:ImAw0RKHmqg|香港高才通审批时间|unlisted",
+      "category": "video_uploads",
+      "timestamp": "2026-05-13T18:52:25.478628"
+    },
+    {
+      "id": "eb7abc7915762dcfec555e9e6e25b256",
+      "fact": "【摘要】目标：做一个30秒香港优才视频 -> 总结发现，成功的视频制作计划包括使用文本到语音合成(TTS)生成音频，并配合图片轮播展示，且每张图片的展示时间设定为5秒。具体而言，所有包含明确目标介绍（如便捷的签证流程、免税购物优惠以及一流的教育资源等）并结合多张吸引人的香港城市风光、购物及教育设施图片的视频均能成功制作完成。相反，如果缺少必要的参数设置（如未指定每张图片展示时间），则可能导致计划失败。从用户偏好来看，简洁明了的目标介绍配合视觉吸引力强的图像更能获得成功。",
+      "category": "workflow_outcome",
+      "timestamp": "2026-05-13T20:38:04.158668"
+    },
+    {
+      "id": "dbf9b401e071c3fda221358241eb2068",
+      "fact": "优才计划: åªç§äººæå\n¥å¢è¨å | å\n¥å¢äºåè\nè·³è³ä¸»è¦å\n§å®¹\næåçæå\nåå°ä¸»é æåçæåç°½è­/é²å\n¥è¨±å¯åªç§äººæå\n¥å¢è¨ååªç§äººæå\n¥å¢è¨å\nå\n¥å¢ç°½è­ï¼é²å\n¥è¨±å¯ å³æç³è«\nå»¶é·éçæé å³æç³è«\nå\n¥å¢ç°½è­ï¼é²å\n¥è¨±å¯ å³æç³è«\nç³è«å ç³è«æçº ç³è«å¾\nç³è«å\nåªç§äººæå\n¥å¢è¨å\né¡¯ç¤ºå\n¨é¨\nééå\n¨é¨\næ¦è¦½\næ¬ç¶²é æ¨å¨çºæææ ¹æåªç§äººæå\n¥å¢è¨åï¼ä¸ç¨±ãæ¬è¨åãæãè¨åãï¼ç³è«åä¾ä¸­è",
+      "category": "knowledge_immd",
+      "timestamp": "2026-05-13T20:55:19.838459"
+    },
+    {
+      "id": "8de57605936f8bfd217bfdc6c9a7c655",
+      "fact": "目标:【背景知识】高端人才通行证计划，2022年12月推出。A类年收入250万；B类百强学士+3年经验；C类百强学士+经验不足3年。\n【任务】做一个30秒香港高才通A类申请条件视频 -> 结果:失败 -> 计划:[{'skill': 'tts', 'args': {'text': '2022年12月推出的高端人才通行证计划为A类申请人提供了机会。要符合A类申请条件，您需要满足年收入超过250万港元这一要求。', 'speed': 1.0}}, {'skill': 'image_slideshow', 'args': {'images': ['https://example.com/high_talent_passport.jpg', 'https://example.com/income.png'], 'duration': 5}}, {'skill': 'video_uploader', 'args': {'url': 'https://example.com/a_class_requirements.mp4'}}]",
+      "category": "workflow_outcome",
+      "timestamp": "2026-05-13T21:07:01.709848"
+    },
+    {
+      "id": "3250d5ad386c09beb57bf873447d1e21",
+      "fact": "目标:【背景知识】香港优秀人才入境计划，2006年推出，2024年改革后12项评核需满足6项。\n【任务】做一个30秒香港优才计划12项评核准则视频 -> 结果:失败 -> 计划:[{'skill': 'tts', 'args': {'text': '香港优秀人才入境计划自2006年推出以来，已经成为众多专业人士进入这个国际金融中心的桥梁。从2024年开始，评估标准将简化，只需满足12项评核中的6项即可。这其中包括：专业经验、学历、语言能力等核心指标。更多详情，请关注我们的官方网站。'}}, {'skill': 'image_slideshow', 'args': {'images': ['https://example.com/image1.jpg?context=HongKongTalentScheme', 'https://example.com/image2.jpg?context=highlySkilledProfessionals', 'https://example.com/image3.jpg?context=newEvaluationCriteria'], 'duration': 5}}, {'skill': 'video_uploader', 'args': {'filename': 'HK_TalentScheme_Overview.mp4'}}]",
+      "category": "workflow_outcome",
+      "timestamp": "2026-05-13T21:07:13.271415"
+    },
+    {
+      "id": "87f686d8e6ded7d55815371ffbbbaa4f",
+      "fact": "热门视频分析: 香港高才通A类申请条件 -> 结构: ['开场钩子', '政策解读', '申请条件', '案例/数据', '总结CTA']",
+      "category": "hot_patterns",
+      "timestamp": "2026-05-13T21:13:41.668114"
+    },
+    {
+      "id": "2cb290a55aef86b47303eca8203e1319",
+      "fact": "uploaded:GESG7xL6_xs|香港高才通续签率仅42%？真实情况揭秘|unlisted",
+      "category": "video_uploads",
+      "timestamp": "2026-05-13T22:48:57.508509"
+    },
+    {
+      "id": "6e5d4871db36bc1f46927c1cacbaf9b6",
+      "fact": "uploaded:jAT4TVPtiFY|高才通续签真相：仅一半获批，94%不在港|unlisted",
+      "category": "video_uploads",
+      "timestamp": "2026-05-14T00:09:56.962087"
+    },
+    {
+      "id": "e9413ed2a75704fc9a45a8754e8738ee",
+      "fact": "频道分析|2026-05-14T00:22:36.487965|订阅:0|总播放:15",
+      "category": "channel_stats",
+      "timestamp": "2026-05-14T00:22:36.488056"
+    },
+    {
+      "id": "002689459d4bef4cb9ad20ce621316a5",
+      "fact": "视频|香港优才计划 75分通关攻略 3个月上岸秘籍|播放:6|点赞:0",
+      "category": "video_performance",
+      "timestamp": "2026-05-14T00:22:36.504244"
+    },
+    {
+      "id": "bd76e9f42e9ed68fbd4bdf822782ad78",
+      "fact": "视频|香港优才计划：机遇与挑战详解 75分通关攻略 3个月速成|播放:9|点赞:0",
+      "category": "video_performance",
+      "timestamp": "2026-05-14T00:22:36.513628"
+    },
+    {
+      "id": "482c3f6891bff460a396d4179415412c",
+      "fact": "运营建议|解析失败",
+      "category": "operation_advice",
+      "timestamp": "2026-05-14T00:23:26.566616"
+    },
+    {
+      "id": "e31a62bbae46643c29c93c8d56750bde",
+      "fact": "频道分析|2026-05-14T00:24:35.881786|订阅:0|总播放:15",
+      "category": "channel_stats",
+      "timestamp": "2026-05-14T00:24:35.881815"
+    },
+    {
+      "id": "0b2391aa056407242eea797a52a817f4",
+      "fact": "频道分析|2026-05-14T00:26:56.549292|订阅:0|总播放:15",
+      "category": "channel_stats",
+      "timestamp": "2026-05-14T00:26:56.549364"
+    },
+    {
+      "id": "40d2c2da1eeee8034e0708df4e81f754",
+      "fact": "频道分析|2026-05-14T00:36:21.499498|订阅:0|总播放:15",
+      "category": "channel_stats",
+      "timestamp": "2026-05-14T00:36:21.499602"
+    },
+    {
+      "id": "8255fa187fbd83546913a2cf7f3db8b9",
+      "fact": "频道分析|2026-05-14T00:39:42.767394|订阅:0|总播放:15",
+      "category": "channel_stats",
+      "timestamp": "2026-05-14T00:39:42.767423"
+    },
+    {
+      "id": "e0bb9835b74b9b18e4d4ac1218de983e",
+      "fact": "频道分析|2026-05-14T00:40:36.870738|订阅:0|总播放:15",
+      "category": "channel_stats",
+      "timestamp": "2026-05-14T00:40:36.870778"
+    },
+    {
+      "id": "2ea9eadeba103dfbf700b6de8cab26f2",
+      "fact": "目标:【背景知识】高端人才通行证计划，2022年12月推出。A类年收入250万；B类百强学士+3年经验；C类百强学士+经验不足3年。\n【任务】做一个30秒香港高才通视频 -> 结果:失败",
+      "category": "workflow_outcome",
+      "timestamp": "2026-05-14T00:49:39.077450"
+    },
+    {
+      "id": "0380528b1f0c6a066bfd7eb3abf8cd85",
+      "fact": "目标:【历史经验】目标:【背景知识】高端人才通行证计划，2022年12月推出。A类年收入250万；B类百强学士+3年经验；C类百强学士+经验不足3年。\n【任务】做一个30秒香港高才通视频 -> 结果:失败\n -> 结果:失败",
+      "category": "workflow_outcome",
+      "timestamp": "2026-05-14T00:49:48.548064"
+    },
+    {
+      "id": "c5df1db6b0226935d690e82f4be92f0c",
+      "fact": "频道|2026-05-14T00:50:55.962579|订阅:0|总播放:15",
+      "category": "channel_stats",
+      "timestamp": "2026-05-14T00:50:55.962665"
+    },
+    {
+      "id": "d593765dea551bd0ede5dde2fd727c56",
+      "fact": "视频|高才通续签真相：仅一半获批，94%不在港|播放:0|点赞:0",
+      "category": "video_performance",
+      "timestamp": "2026-05-14T00:50:55.970400"
+    },
+    {
+      "id": "89d78ed73bce7754ccff614e78cbae84",
+      "fact": "视频|香港高才通续签率仅42%？真实情况揭秘|播放:0|点赞:0",
+      "category": "video_performance",
+      "timestamp": "2026-05-14T00:50:55.986844"
+    },
+    {
+      "id": "90ceba7ba8ff0abfff2869b68b6ec3dc",
+      "fact": "视频|香港高才通审批时间|播放:0|点赞:0",
+      "category": "video_performance",
+      "timestamp": "2026-05-14T00:50:56.002313"
+    },
+    {
+      "id": "03b0e72a44f6d24cde39252a0fa00446",
+      "fact": "视频|香港高才通B类工作经验|播放:0|点赞:0",
+      "category": "video_performance",
+      "timestamp": "2026-05-14T00:50:56.015744"
+    },
+    {
+      "id": "985dc7669e7ff61a7384284b18e9c546",
+      "fact": "视频|香港高才通A类收入要求|播放:0|点赞:0",
+      "category": "video_performance",
+      "timestamp": "2026-05-14T00:50:56.026104"
+    },
+    {
+      "id": "d6d9b27962505f84dccf77ef454bd838",
+      "fact": "视频|香港高才通申请条件|播放:0|点赞:0",
+      "category": "video_performance",
+      "timestamp": "2026-05-14T00:50:56.034801"
+    },
+    {
+      "id": "4f88fe7f2e5dbe46ba9e7e9ceaa803cf",
+      "fact": "视频|香港高才通计划申请攻略|播放:0|点赞:0",
+      "category": "video_performance",
+      "timestamp": "2026-05-14T00:50:56.043175"
+    },
+    {
+      "id": "faac38a0831b6e5218caaae23f9935d3",
+      "fact": "视频|香港优才计划75分通关攻略|播放:0|点赞:0",
+      "category": "video_performance",
+      "timestamp": "2026-05-14T00:50:56.051841"
+    },
+    {
+      "id": "ba5094c9433e5e5ed63a23b96a053b53",
+      "fact": "视频|Duplicate Test|播放:0|点赞:0",
+      "category": "video_performance",
+      "timestamp": "2026-05-14T00:50:56.061525"
+    },
+    {
+      "id": "690c710af947e7a8961555f6278154e1",
+      "fact": "视频|Hong Kong Talent Scheme 75 Points - AI Guide|播放:0|点赞:0",
+      "category": "video_performance",
+      "timestamp": "2026-05-14T00:50:56.071249"
+    },
+    {
+      "id": "0360231b6ead47c6e58e3614be99f7ff",
+      "fact": "频道|2026-05-14T00:52:01.940324|订阅:0|总播放:15",
+      "category": "channel_stats",
+      "timestamp": "2026-05-14T00:52:01.940353"
+    },
+    {
+      "id": "a80585d229c02bdcf665dfa8e964553a",
+      "fact": "频道|2026-05-14T00:52:26.580443|订阅:0|总播放:15",
+      "category": "channel_stats",
+      "timestamp": "2026-05-14T00:52:26.580538"
+    },
+    {
+      "id": "df4d3da7b3f77311f1604877cd8f5bf7",
+      "fact": "频道|2026-05-14T00:53:54.425770|订阅:0|总播放:15",
+      "category": "channel_stats",
+      "timestamp": "2026-05-14T00:53:54.425867"
+    },
+    {
+      "id": "fe10af578980354a5bca5acb1472d02b",
+      "fact": "频道|2026-05-14T06:27:42.164186|订阅:0|总播放:15",
+      "category": "channel_stats",
+      "timestamp": "2026-05-14T06:27:42.164214"
+    },
+    {
+      "id": "9d4239d897452bec8eeac4e2253af7ec",
+      "fact": "uploaded:GHJiaxW8rvI|解读高才通政策变化|unlisted",
+      "category": "video_uploads",
+      "timestamp": "2026-05-14T06:28:48.529611"
+    },
+    {
+      "id": "e44788db52e05888d3727d177120bab6",
+      "fact": "频道|2026-05-14T06:32:52.001889|订阅:0|总播放:15",
+      "category": "channel_stats",
+      "timestamp": "2026-05-14T06:32:52.001982"
+    },
+    {
+      "id": "dbf9ddadb17461c8f2d83671eb057e11",
+      "fact": "视频|解读高才通政策变化|播放:1|点赞:0",
+      "category": "video_performance",
+      "timestamp": "2026-05-14T06:32:52.022796"
+    },
+    {
+      "id": "05bc188a092c475173c09e95eca56f89",
+      "fact": "uploaded:hmEd-Uu5b9c|高才通政策解读|unlisted",
+      "category": "video_uploads",
+      "timestamp": "2026-05-14T06:33:20.010982"
+    },
+    {
+      "id": "e2a71ac385059756a8650251a60dc5d8",
+      "fact": "频道|2026-05-14T06:35:54.248772|订阅:0|总播放:15",
+      "category": "channel_stats",
+      "timestamp": "2026-05-14T06:35:54.248850"
+    },
+    {
+      "id": "b12ea009bf7cbcb5bfe3faac31a7139e",
+      "fact": "视频|高才通政策解读|播放:0|点赞:0",
+      "category": "video_performance",
+      "timestamp": "2026-05-14T06:35:54.255068"
+    },
+    {
+      "id": "258b275f7fc67278e94664cba984f68d",
+      "fact": "uploaded:ARi--f9oFlg|解读高才通政策|unlisted",
+      "category": "video_uploads",
+      "timestamp": "2026-05-14T06:36:18.525988"
+    },
+    {
+      "id": "40044fa14f44e88b64aa75e932ea0e59",
+      "fact": "频道|2026-05-14T06:43:22.790057|订阅:0|总播放:15",
+      "category": "channel_stats",
+      "timestamp": "2026-05-14T06:43:22.790087"
+    },
+    {
+      "id": "5f01f2c2122e2aedcd893f70329ddafa",
+      "fact": "视频|解读高才通政策|播放:0|点赞:0",
+      "category": "video_performance",
+      "timestamp": "2026-05-14T06:43:22.793167"
+    },
+    {
+      "id": "f16ceebdfb25b6e729b200c4eb3b4236",
+      "fact": "视频|解读高才通政策变化|播放:3|点赞:0",
+      "category": "video_performance",
+      "timestamp": "2026-05-14T06:43:22.811769"
+    },
+    {
+      "id": "0169e2c25418fc64a36bf20c65ebafd7",
+      "fact": "uploaded:RtABtjHiI6U|解读最新高才通政策变化|unlisted",
+      "category": "video_uploads",
+      "timestamp": "2026-05-14T06:44:18.641769"
+    },
+    {
+      "id": "3115b251b4bca213d562fdf54aa5b1f9",
+      "fact": "竞品描述|後悔拿香港身份！內地優才呻慘　力數4大問題：香港已不適合生存|【香港優才／專才／移居香港】來香港生活，未必人人如意。有透過「優秀人才入境計劃（優才）」來港生活並取得香港身份證半年的內地女，於小紅書發文力數來港生活4大問題。\n\n詳盡全文即撳 → https://www.hk01.com/article/60213258?utm_medium=Social&utm_source=yt&utm_campaign=mama\n\n喜歡這條影片嗎？訂閱我們的 Channe",
+      "category": "competitor_descriptions",
+      "timestamp": "2026-05-14T06:44:35.992819"
+    },
+    {
+      "id": "b8327173c920da079b378048b0ffeaac",
+      "fact": "竞品描述|優才計劃大騙局  中俄貿易洗黑錢|《港燦突發》\n優才計劃大騙局  中俄貿易洗黑錢\n主持：齊阿哥\n2024年6月11日\n\n如欲下載聲音檔案，敬請前往Patreon收費頻道： \nhttps://www.patreon.com/qiage\n\n主題曲： 《靜夜思港》          \n曲、詞、唱: 齊阿哥\n編曲、混音：強瓦仔\n鼓、結他、低音結他、Keyboard：強瓦仔\n錄音、顧問：路人甲\nhttps://youtu.be/z22gMI",
+      "category": "competitor_descriptions",
+      "timestamp": "2026-05-14T06:44:36.007303"
+    },
+    {
+      "id": "68fff629d959ee7a720df77f79120f8a",
+      "fact": "竞品描述|韭菜痛哭！小紅書狂插香港優才計劃是大騙局！大陸瘋傳赴港旅遊瞓|歡迎各位益友加入成為頻道會員，支持本台可持續發展：https://www.youtube.com/channel/UCzuzpkqcLSDmqnVpkksriow/join\n\n請加入本台Patreon，享用無廣告聲音檔、直播重溫及會員獨家影片：\nhttps://www.patreon.com/hklocaltv",
+      "category": "competitor_descriptions",
+      "timestamp": "2026-05-14T06:44:36.018689"
+    },
+    {
+      "id": "947ad76fd5108de4b683c5b61e850efe",
+      "fact": "竞品描述|香港优才计划获批后，如何顺利续签拿永居身份？三个续签技巧要掌|在这里M叔先恭喜最近成功获批的香港优才幸运儿，前些天香港入境处公布了优才计划第63次筛选的结果，一共有707人被筛选出来，创造了历史新高，这七百多人中，也包括不少M叔的客户朋友，很开心大家离落户香港又进了一步，接下来只要安心等待入境处的面试就好。拿到优才签证固然开心，但这只是万里长征的第一步，要转香港永居的话，还要撑过接下来7年的时间，这7年可不是那么容易就熬过去的，因为大部分人的优才签证是2年+",
+      "category": "competitor_descriptions",
+      "timestamp": "2026-05-14T06:44:36.027692"
+    },
+    {
+      "id": "044d0162ff2782a322b0a6a2c913de7f",
+      "fact": "竞品描述|20240227[李龍基。問世間情是何物］未婚妻優才計劃來港|虛移NordVPN 虛擬私人網絡\nhttps://nordvpn.com/samngx\n二年合約 最平港幣32元/月\n一個月免費 \n\n訂閱Patreon記住要更改私穩！！！\n\n周庭：我在監獄的日子\nhttps://youtu.be/Wp-Rr4tMHiU?si=QYyo738yW-EspWR4\n\nChannel 4 China in the UK\nhttps://youtu.be/X45MYatj",
+      "category": "competitor_descriptions",
+      "timestamp": "2026-05-14T06:44:36.036829"
+    },
+    {
+      "id": "c88bbd547126701796bdbec32f0a0661",
+      "fact": "描述分析|这些描述之所以有效，是因为它们直接面对目标受众的需求和担忧，同时提供了具体的解决方案。通过个人经历分享，增加了真实性和可信度，并通过情感化的语言引发了共鸣。此外，明确的行动号召鼓励观众参与进来。",
+      "category": "description_insights",
+      "timestamp": "2026-05-14T06:46:52.912572"
+    },
+    {
+      "id": "e2cff325e510cfdf446e3523bbaf9211",
+      "fact": "目标:制作一个关于小明来香港的漫剧 -> 结果:失败",
+      "category": "workflow_outcome",
+      "timestamp": "2026-05-14T09:04:22.348262"
+    },
+    {
+      "id": "345dc04351abbd78b101648edd151cf9",
+      "fact": "目标:建议使用 manju_maker 技能，一键生成漫剧视频。\n用户目标：制作一个小明来香港的漫剧 -> 结果:成功",
+      "category": "workflow_outcome",
+      "timestamp": "2026-05-14T09:06:19.908265"
+    },
+    {
+      "id": "2c4a85b73ba3b876c8330c26b1e81489",
+      "fact": "发布决策|REVIEW|得分:75",
+      "category": "release_decisions",
+      "timestamp": "2026-05-14T09:29:03.433594"
+    },
+    {
+      "id": "637a9289dbab2de6cae7c884c9613591",
+      "fact": "任务成功|香港高才通续签率|视频时长:150.7秒|脚本长度:739字|用户满意|决策:PUBLISH",
+      "category": "task_success_reference",
+      "timestamp": "2026-05-14T09:36:32.326367"
+    },
+    {
+      "id": "d5a42e0a5348797226537f388ab48bf0",
+      "fact": "成功参数|香港高才通话题|目标时长:60秒|实际时长:150秒|脚本长度:700-800字|场景:[hongkong_victoria_harbour, hongkong_office, hongkong_home]",
+      "category": "successful_params",
+      "timestamp": "2026-05-14T09:36:32.329324"
+    },
+    {
+      "id": "a8e94143a72bac9609686bdada6a1e14",
+      "fact": "脚本质量问题: script_length 不达标",
+      "category": "quality_issues",
+      "timestamp": "2026-05-14T09:37:21.464999"
+    },
+    {
+      "id": "12b20155685c03bdaad9882f3798512d",
+      "fact": "脚本成功|香港高才通续签率仅54%|长度:183",
+      "category": "quality_success",
+      "timestamp": "2026-05-14T09:37:29.618278"
+    },
+    {
+      "id": "22e40afc4067c27b6b7e8305b8f6d659",
+      "fact": "发布决策|REJECT|得分:50",
+      "category": "release_decisions",
+      "timestamp": "2026-05-14T09:39:25.537123"
+    },
+    {
+      "id": "86206d13f66362b5a851947016e1afb5",
+      "fact": "任务失败|香港高才通续签率仅54%|尝试次数:3",
+      "category": "task_failure",
+      "timestamp": "2026-05-14T09:42:19.638499"
+    },
+    {
+      "id": "3659c055dec31175511cd25cc285402d",
+      "fact": "用户反馈|字幕问题|字幕只出现在第一张图，后面全程无字幕",
+      "category": "user_feedback",
+      "timestamp": "2026-05-14T10:28:03.813370"
+    },
+    {
+      "id": "02d32eae821d9c2a98941d187983d9ff",
+      "fact": "用户反馈|头像问题|角色头像没有抠图，是方块形状",
+      "category": "user_feedback",
+      "timestamp": "2026-05-14T10:28:03.816213"
+    },
+    {
+      "id": "7ab71bf67e4952ad2e9788cfabceadfa",
+      "fact": "问题|字幕|字幕只出现在第一张图，后面全程无字幕，需要每句话对应时间轴",
+      "category": "quality_issue",
+      "timestamp": "2026-05-14T10:29:32.885134"
+    },
+    {
+      "id": "ed2f400508986244d1d7596fb20dad00",
+      "fact": "问题|头像|角色头像没有抠图，方块形状需要透明背景",
+      "category": "quality_issue",
+      "timestamp": "2026-05-14T10:29:32.888075"
+    },
+    {
+      "id": "93fd37dccea90cf7011367875456e936",
+      "fact": "解决方案|字幕问题|字幕只出现在第一张图|修复方法:按句子分割视频时长，每句分配时间轴",
+      "category": "solution",
+      "timestamp": "2026-05-14T10:33:46.446364"
+    },
+    {
+      "id": "48e1f7179f5e171a729e288e703e2388",
+      "fact": "解决方案|头像问题|角色头像方块|修复方法:需要抠图或使用圆形PNG",
+      "category": "solution",
+      "timestamp": "2026-05-14T10:33:46.449173"
+    },
+    {
+      "id": "07e3dbfa1eb9da93c9d4e043b38b6a9e",
+      "fact": "校准|香港高才通续签率|目标60s|实际117.072s|偏差95%|建议字数286",
+      "category": "calibration_log",
+      "timestamp": "2026-05-14T10:53:23.247631"
+    },
+    {
+      "id": "f524316c59817d269e80ab52f7800dbb",
+      "fact": "校准|香港高才通续签率|目标60s|实际43.512s|偏差-27%|建议字数275",
+      "category": "calibration_log",
+      "timestamp": "2026-05-14T10:53:42.355054"
+    },
+    {
+      "id": "b9def7a8ae0b122e533134298f7018b3",
+      "fact": "校准|香港高才通续签率|目标60s|实际87.24s|偏差45%|建议字数307",
+      "category": "calibration_log",
+      "timestamp": "2026-05-14T10:54:17.273489"
+    },
+    {
+      "id": "0c656ac59854f43091b494fda38b88c6",
+      "fact": "任务成功|香港高才通续签率|目标时长60秒|实际55.4秒|脚本307字目标|实际258字|达标",
+      "category": "task_success_reference",
+      "timestamp": "2026-05-14T11:10:02.035767"
+    },
+    {
+      "id": "63bffe75bcdd3422fbdcd59391f6b2d1",
+      "fact": "参数公式|香港高才通类话题|时长60秒对应脚本约250-300字",
+      "category": "parameter_formula",
+      "timestamp": "2026-05-14T11:10:02.038682"
+    },
+    {
+      "id": "a97d51e84b4df4390e692b48f2298753",
+      "fact": "用户反馈|香港高才通续签率视频|时长达标|脚本接近|整体可接受",
+      "category": "user_satisfaction",
+      "timestamp": "2026-05-14T11:10:02.056271"
+    },
+    {
+      "id": "0dd0dc60e2153568b7bee3ea7ec4a629",
+      "fact": "未知错误|ffmpeg: command not found",
+      "category": "unknown_errors",
+      "timestamp": "2026-05-14T15:57:21.774373"
+    },
+    {
+      "id": "02f4fde825e5adfecdefd8b4ae3555fa",
+      "fact": "未知错误|Address already in use: port 5002",
+      "category": "unknown_errors",
+      "timestamp": "2026-05-14T15:57:21.778584"
+    },
+    {
+      "id": "1161d89de99aa79abdb73c83b1d21293",
+      "fact": "未知错误|Permission denied: ./run.sh",
+      "category": "unknown_errors",
+      "timestamp": "2026-05-14T15:58:14.833261"
+    },
+    {
+      "id": "1909097153660c643df4a80267209da5",
+      "fact": "error_fix|ModuleNotFoundError|fix:pip install <module>|confidence:0.95",
+      "category": "error_knowledge",
+      "timestamp": "2026-05-14T16:08:52.382218"
+    },
+    {
+      "id": "ba5fa41c2b3cb14d0354c4ff87c75906",
+      "fact": "error_fix|No module named|fix:pip install <module>|confidence:0.95",
+      "category": "error_knowledge",
+      "timestamp": "2026-05-14T16:08:52.393941"
+    },
+    {
+      "id": "56483912dc172f2aa1d9aca132e51a79",
+      "fact": "error_fix|FileNotFoundError|fix:mkdir -p <path>|confidence:0.95",
+      "category": "error_knowledge",
+      "timestamp": "2026-05-14T16:08:52.403288"
+    },
+    {
+      "id": "41629c16a82f9cae1aa75fde9b7af3f1",
+      "fact": "error_fix|No such file or directory|fix:mkdir -p <path>|confidence:0.9",
+      "category": "error_knowledge",
+      "timestamp": "2026-05-14T16:08:52.412882"
+    },
+    {
+      "id": "13dd64f47c10f633f98be31905a47f04",
+      "fact": "error_fix|Connection refused|fix:ollama serve &|confidence:0.95",
+      "category": "error_knowledge",
+      "timestamp": "2026-05-14T16:08:52.422156"
+    },
+    {
+      "id": "e2e43106b7ca085195ea8e63cca9527b",
+      "fact": "error_fix|ffmpeg|fix:sudo apt install ffmpeg -y|confidence:0.95",
+      "category": "error_knowledge",
+      "timestamp": "2026-05-14T16:08:52.431048"
+    },
+    {
+      "id": "326e8c364e8f4e7b52179ee167f08ddf",
+      "fact": "error_fix|ffprobe|fix:sudo apt install ffmpeg -y|confidence:0.95",
+      "category": "error_knowledge",
+      "timestamp": "2026-05-14T16:08:52.440789"
+    },
+    {
+      "id": "52c97c2af58c4b6336592f5be9efeb1a",
+      "fact": "error_fix|Address already in use|fix:fuser -k <port>/tcp|confidence:0.95",
+      "category": "error_knowledge",
+      "timestamp": "2026-05-14T16:08:52.449511"
+    },
+    {
+      "id": "d60b0cdff1b97e39d1ae2501bba3ff00",
+      "fact": "error_fix|port is already in use|fix:fuser -k <port>/tcp|confidence:0.95",
+      "category": "error_knowledge",
+      "timestamp": "2026-05-14T16:08:52.458798"
+    },
+    {
+      "id": "e831c1faf7c30571448846180dfbf38d",
+      "fact": "error_fix|Permission denied|fix:chmod +x <file>|confidence:0.9",
+      "category": "error_knowledge",
+      "timestamp": "2026-05-14T16:08:52.467718"
+    },
+    {
+      "id": "32cbbd7281b48cacbdb35d17ac089436",
+      "fact": "error_fix|IndentationError|fix:检查代码缩进|confidence:0.85",
+      "category": "error_knowledge",
+      "timestamp": "2026-05-14T16:08:52.476567"
+    },
+    {
+      "id": "4ccf58200b224be863fe1b29f278b0fa",
+      "fact": "error_fix|JSONDecodeError|fix:检查 JSON 格式|confidence:0.85",
+      "category": "error_knowledge",
+      "timestamp": "2026-05-14T16:08:52.487733"
+    },
+    {
+      "id": "81c3abe726177fff62bb09ab506b6783",
+      "fact": "error_fix|video_file not found|fix:检查视频路径|confidence:0.85",
+      "category": "error_knowledge",
+      "timestamp": "2026-05-14T16:08:52.497603"
+    },
+    {
+      "id": "9173a422ab9ce017f638e45908b0ebc4",
+      "fact": "error_fix|audio_path 无效|fix:检查音频文件|confidence:0.85",
+      "category": "error_knowledge",
+      "timestamp": "2026-05-14T16:08:52.506727"
+    },
+    {
+      "id": "da7ef61fd18ca7a38b5acdb71f1daaa3",
+      "fact": "error_fix|UnknownError: something went wrong|fix:请检查日志文件以获取更多详细信息；确认所有依赖项是否正确安装且版本兼容；确保服务器或环境配置没有问题。|confidence:0.8",
+      "category": "error_knowledge",
+      "timestamp": "2026-05-14T16:13:03.985045"
+    },
+    {
+      "id": "da21778c0ec22fc540fbc22fc52d1c41",
+      "fact": "ai_learned|UnknownError: something went wrong|fix:请检查日志文件以获取更多详细信息；确认所有依赖项是否正确安装且版本兼容；确保服务器或环境配置没有问题。",
+      "category": "ai_learned",
+      "timestamp": "2026-05-14T16:13:03.989722"
+    },
+    {
+      "id": "9b12a2a3f008041bf103f33d18ea1396",
+      "fact": "self_review|ModuleNotFoundError: No module named flask|评分:80|等级:优秀|决策:可入库|原因:有修复方案,验证通过,模块安装类",
+      "category": "self_review_log",
+      "timestamp": "2026-05-14T16:20:38.402351"
+    },
+    {
+      "id": "6d09231f5712a54b057602fa2b45f750",
+      "fact": "self_review|Connection refused: 11434|评分:70|等级:优秀|决策:可入库|原因:有修复方案,验证通过",
+      "category": "self_review_log",
+      "timestamp": "2026-05-14T16:20:38.406929"
+    },
+    {
+      "id": "ebc2e6f462e5ee17f97dba03268f309a",
+      "fact": "self_review|Unknown error|评分:0|等级:不合格|决策:需人工审核|原因:无修复方案,验证失败",
+      "category": "self_review_log",
+      "timestamp": "2026-05-14T16:20:38.417766"
+    },
+    {
+      "id": "a4f872b20841c166a8d38cc388e4dd42",
+      "fact": "quality_gate|script|pass:False|msg:脚本太短",
+      "category": "quality_gate",
+      "timestamp": "2026-05-14T16:31:18.240001"
+    },
+    {
+      "id": "41ce96dd50f9474120de946d19ec98d0",
+      "fact": "监控器测试|系统健康|正常运行",
+      "category": "system_monitoring",
+      "timestamp": "2026-05-15T00:11:21.446040"
+    },
+    {
+      "id": "b4652e3ec0d53b6cdc5767e26cca4aad",
+      "fact": "决策执行|成功率29%|评估当前情况，可能需要重新制定策略或寻找新的机会。|行动:分析失败原因，学习并优化策略",
+      "category": "executed_decisions",
+      "timestamp": "2026-05-15T00:12:34.545088"
+    },
+    {
+      "id": "cdfe2d039d5a893a2a02d7d6e45ce0de",
+      "fact": "{\"timestamp\": \"2026-05-15T00:13:02.538405\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "category": "intelligence_analysis",
+      "timestamp": "2026-05-15T00:13:02.538448"
+    },
+    {
+      "id": "ed1710c8566ff7cce1f0be1e5ae65f14",
+      "fact": "{\"timestamp\": \"2026-05-15T00:18:02.546248\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "category": "intelligence_analysis",
+      "timestamp": "2026-05-15T00:18:02.549140"
+    },
+    {
+      "id": "36e2d4eaeff88d3276edf508f50235f1",
+      "fact": "{\"timestamp\": \"2026-05-15T00:23:02.556309\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "category": "intelligence_analysis",
+      "timestamp": "2026-05-15T00:23:02.556391"
+    },
+    {
+      "id": "03c4f221c7ece83f23740b4bb0d827f6",
+      "fact": "{\"timestamp\": \"2026-05-15T00:28:02.562600\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "category": "intelligence_analysis",
+      "timestamp": "2026-05-15T00:28:02.562689"
+    },
+    {
+      "id": "ae0c957d7a76360d6bb9185a00d79fee",
+      "fact": "{\"timestamp\": \"2026-05-15T00:33:02.569000\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "category": "intelligence_analysis",
+      "timestamp": "2026-05-15T00:33:02.569080"
+    },
+    {
+      "id": "04615137db094a10e4a239c014d562eb",
+      "fact": "{\"timestamp\": \"2026-05-15T00:38:02.574649\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "category": "intelligence_analysis",
+      "timestamp": "2026-05-15T00:38:02.574791"
+    },
+    {
+      "id": "01aa144996be0118b9f34d77242088dc",
+      "fact": "{\"timestamp\": \"2026-05-15T00:43:02.582727\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "category": "intelligence_analysis",
+      "timestamp": "2026-05-15T00:43:02.582855"
+    },
+    {
+      "id": "1a51c03d9fbfeda2891572bf1e5b64e2",
+      "fact": "{\"timestamp\": \"2026-05-15T00:48:02.589216\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "category": "intelligence_analysis",
+      "timestamp": "2026-05-15T00:48:02.589573"
+    },
+    {
+      "id": "9c765882f4fc992ee4335df9d3f5662f",
+      "fact": "{\"timestamp\": \"2026-05-15T00:53:02.623807\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "category": "intelligence_analysis",
+      "timestamp": "2026-05-15T00:53:02.623887"
+    },
+    {
+      "id": "abe5788bf9f3cd8fe7333c96bf837006",
+      "fact": "{\"timestamp\": \"2026-05-15T00:58:02.628883\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "category": "intelligence_analysis",
+      "timestamp": "2026-05-15T00:58:02.628962"
+    },
+    {
+      "id": "2848e9cba4ffbf702d43ecffb56d7eaf",
+      "fact": "{\"timestamp\": \"2026-05-15T01:03:02.634716\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "category": "intelligence_analysis",
+      "timestamp": "2026-05-15T01:03:02.636095"
+    }
+  ],
+  "categories": {
+    "workflow_outcome": [
+      "【摘要】目标：做一个30秒香港优才视频 -> 总结发现，成功的视频制作计划包括使用文本到语音合成(TTS)生成音频，并配合图片轮播展示，且每张图片的展示时间设定为5秒。具体而言，所有包含明确目标介绍（如便捷的签证流程、免税购物优惠以及一流的教育资源等）并结合多张吸引人的香港城市风光、购物及教育设施图片的视频均能成功制作完成。相反，如果缺少必要的参数设置（如未指定每张图片展示时间），则可能导致计划失败。从用户偏好来看，简洁明了的目标介绍配合视觉吸引力强的图像更能获得成功。",
+      "目标:【背景知识】高端人才通行证计划，2022年12月推出。A类年收入250万；B类百强学士+3年经验；C类百强学士+经验不足3年。\n【任务】做一个30秒香港高才通A类申请条件视频 -> 结果:失败 -> 计划:[{'skill': 'tts', 'args': {'text': '2022年12月推出的高端人才通行证计划为A类申请人提供了机会。要符合A类申请条件，您需要满足年收入超过250万港元这一要求。', 'speed': 1.0}}, {'skill': 'image_slideshow', 'args': {'images': ['https://example.com/high_talent_passport.jpg', 'https://example.com/income.png'], 'duration': 5}}, {'skill': 'video_uploader', 'args': {'url': 'https://example.com/a_class_requirements.mp4'}}]",
+      "目标:【背景知识】香港优秀人才入境计划，2006年推出，2024年改革后12项评核需满足6项。\n【任务】做一个30秒香港优才计划12项评核准则视频 -> 结果:失败 -> 计划:[{'skill': 'tts', 'args': {'text': '香港优秀人才入境计划自2006年推出以来，已经成为众多专业人士进入这个国际金融中心的桥梁。从2024年开始，评估标准将简化，只需满足12项评核中的6项即可。这其中包括：专业经验、学历、语言能力等核心指标。更多详情，请关注我们的官方网站。'}}, {'skill': 'image_slideshow', 'args': {'images': ['https://example.com/image1.jpg?context=HongKongTalentScheme', 'https://example.com/image2.jpg?context=highlySkilledProfessionals', 'https://example.com/image3.jpg?context=newEvaluationCriteria'], 'duration': 5}}, {'skill': 'video_uploader', 'args': {'filename': 'HK_TalentScheme_Overview.mp4'}}]",
+      "目标:【背景知识】高端人才通行证计划，2022年12月推出。A类年收入250万；B类百强学士+3年经验；C类百强学士+经验不足3年。\n【任务】做一个30秒香港高才通视频 -> 结果:失败",
+      "目标:【历史经验】目标:【背景知识】高端人才通行证计划，2022年12月推出。A类年收入250万；B类百强学士+3年经验；C类百强学士+经验不足3年。\n【任务】做一个30秒香港高才通视频 -> 结果:失败\n -> 结果:失败",
+      "目标:制作一个关于小明来香港的漫剧 -> 结果:失败",
+      "目标:建议使用 manju_maker 技能，一键生成漫剧视频。\n用户目标：制作一个小明来香港的漫剧 -> 结果:成功"
+    ],
+    "user_satisfaction": [
+      "目标：做一个30秒香港优才视频 -> 计划：[{'skill': 'tts', 'args': {'text': '欢迎来到香港...', 'output_path': 'audio.mp3'}}, {'skill': 'image_slideshow', 'args': {'audio_path': 'audio.mp3', 'images': ['hk_cityscape.jpg']}}] -> 满意度：5（用户公开视频）",
+      "用户反馈|香港高才通续签率视频|时长达标|脚本接近|整体可接受"
+    ],
+    "video_metadata": [
+      "video_meta:pending|title:Hong Kong Talent Scheme 75 Points - AI Guide|desc:Learn how to qualify for Hong Kong Talent Scheme with 75 points. Step by step guide for professionals.|tags:HongKong,TalentScheme,75points,AI",
+      "video_meta:pending|title:Hong Kong Talent Scheme 75 Points - AI Guide|desc:Step by step guide to qualify for Hong Kong Talent Scheme with 75 points.|tags:HongKong,TalentScheme,75points",
+      "video_meta:|title:Test Video|desc:This is a test\n\n[AI Generated] This video is created by AI technology.|tags:",
+      "video_meta:|title:香港优才计划75分通关攻略|desc:AI 生成的香港优才计划75分通关攻略视频，讲解75分通关攻略。\n\n[AI Generated] This video is created by AI technology.|tags:HongKong,TalentScheme,75points",
+      "video_meta:|title:香港高才通计划申请攻略|desc:AI 生成的高才通计划申请攻略，快速了解申请条件和流程。\n\n[AI Generated] This video is created by AI technology.|tags:HongKong,高才通,QualityMigrant",
+      "video_meta:|title:香港高才通申请条件|desc:AI 生成的香港高才通申请条件视频，快速了解高才通计划。\n\n[AI Generated] This video is created by AI technology.|tags:HongKong,高才通,TTPS",
+      "video_meta:|title:香港高才通A类收入要求|desc:AI 生成的香港高才通A类收入要求视频，快速了解高才通计划。\n\n[AI Generated] This video is created by AI technology.|tags:HongKong,高才通,TTPS",
+      "video_meta:|title:香港高才通B类工作经验|desc:AI 生成的香港高才通B类工作经验视频，快速了解高才通计划。\n\n[AI Generated] This video is created by AI technology.|tags:HongKong,高才通,TTPS",
+      "video_meta:|title:香港高才通审批时间|desc:AI 生成的香港高才通审批时间视频，快速了解高才通计划。\n\n[AI Generated] This video is created by AI technology.|tags:HongKong,高才通,TTPS"
+    ],
+    "video_uploads": [
+      "uploaded:wUfSM_X9AWE|Hong Kong Talent Scheme Test|unlisted",
+      "uploaded:rRz0tW9TAGc|Hong Kong Talent Scheme 75 Points - AI Guide|unlisted",
+      "uploaded:XKwGszwV39o|Duplicate Test|unlisted",
+      "uploaded:XAJ4HOkxzLI|香港优才计划75分通关攻略|unlisted",
+      "uploaded:Ol74KRq8X8c|香港高才通计划申请攻略|unlisted",
+      "uploaded:rgfedSl7eKo|香港高才通申请条件|unlisted",
+      "uploaded:NbLAnmBNXfI|香港高才通A类收入要求|unlisted",
+      "uploaded:LU0Qry_qMr4|香港高才通B类工作经验|unlisted",
+      "uploaded:ImAw0RKHmqg|香港高才通审批时间|unlisted",
+      "uploaded:GESG7xL6_xs|香港高才通续签率仅42%？真实情况揭秘|unlisted",
+      "uploaded:jAT4TVPtiFY|高才通续签真相：仅一半获批，94%不在港|unlisted",
+      "uploaded:GHJiaxW8rvI|解读高才通政策变化|unlisted",
+      "uploaded:hmEd-Uu5b9c|高才通政策解读|unlisted",
+      "uploaded:ARi--f9oFlg|解读高才通政策|unlisted",
+      "uploaded:RtABtjHiI6U|解读最新高才通政策变化|unlisted"
+    ],
+    "knowledge_immd": [
+      "优才计划: åªç§äººæå\n¥å¢è¨å | å\n¥å¢äºåè\nè·³è³ä¸»è¦å\n§å®¹\næåçæå\nåå°ä¸»é æåçæåç°½è­/é²å\n¥è¨±å¯åªç§äººæå\n¥å¢è¨ååªç§äººæå\n¥å¢è¨å\nå\n¥å¢ç°½è­ï¼é²å\n¥è¨±å¯ å³æç³è«\nå»¶é·éçæé å³æç³è«\nå\n¥å¢ç°½è­ï¼é²å\n¥è¨±å¯ å³æç³è«\nç³è«å ç³è«æçº ç³è«å¾\nç³è«å\nåªç§äººæå\n¥å¢è¨å\né¡¯ç¤ºå\n¨é¨\nééå\n¨é¨\næ¦è¦½\næ¬ç¶²é æ¨å¨çºæææ ¹æåªç§äººæå\n¥å¢è¨åï¼ä¸ç¨±ãæ¬è¨åãæãè¨åãï¼ç³è«åä¾ä¸­è"
+    ],
+    "hot_patterns": [
+      "热门视频分析: 香港高才通A类申请条件 -> 结构: ['开场钩子', '政策解读', '申请条件', '案例/数据', '总结CTA']"
+    ],
+    "channel_stats": [
+      "频道分析|2026-05-14T00:22:36.487965|订阅:0|总播放:15",
+      "频道分析|2026-05-14T00:24:35.881786|订阅:0|总播放:15",
+      "频道分析|2026-05-14T00:26:56.549292|订阅:0|总播放:15",
+      "频道分析|2026-05-14T00:36:21.499498|订阅:0|总播放:15",
+      "频道分析|2026-05-14T00:39:42.767394|订阅:0|总播放:15",
+      "频道分析|2026-05-14T00:40:36.870738|订阅:0|总播放:15",
+      "频道|2026-05-14T00:50:55.962579|订阅:0|总播放:15",
+      "频道|2026-05-14T00:52:01.940324|订阅:0|总播放:15",
+      "频道|2026-05-14T00:52:26.580443|订阅:0|总播放:15",
+      "频道|2026-05-14T00:53:54.425770|订阅:0|总播放:15",
+      "频道|2026-05-14T06:27:42.164186|订阅:0|总播放:15",
+      "频道|2026-05-14T06:32:52.001889|订阅:0|总播放:15",
+      "频道|2026-05-14T06:35:54.248772|订阅:0|总播放:15",
+      "频道|2026-05-14T06:43:22.790057|订阅:0|总播放:15"
+    ],
+    "video_performance": [
+      "视频|香港优才计划 75分通关攻略 3个月上岸秘籍|播放:6|点赞:0",
+      "视频|香港优才计划：机遇与挑战详解 75分通关攻略 3个月速成|播放:9|点赞:0",
+      "视频|高才通续签真相：仅一半获批，94%不在港|播放:0|点赞:0",
+      "视频|香港高才通续签率仅42%？真实情况揭秘|播放:0|点赞:0",
+      "视频|香港高才通审批时间|播放:0|点赞:0",
+      "视频|香港高才通B类工作经验|播放:0|点赞:0",
+      "视频|香港高才通A类收入要求|播放:0|点赞:0",
+      "视频|香港高才通申请条件|播放:0|点赞:0",
+      "视频|香港高才通计划申请攻略|播放:0|点赞:0",
+      "视频|香港优才计划75分通关攻略|播放:0|点赞:0",
+      "视频|Duplicate Test|播放:0|点赞:0",
+      "视频|Hong Kong Talent Scheme 75 Points - AI Guide|播放:0|点赞:0",
+      "视频|解读高才通政策变化|播放:1|点赞:0",
+      "视频|高才通政策解读|播放:0|点赞:0",
+      "视频|解读高才通政策|播放:0|点赞:0",
+      "视频|解读高才通政策变化|播放:3|点赞:0"
+    ],
+    "operation_advice": [
+      "运营建议|解析失败"
+    ],
+    "competitor_descriptions": [
+      "竞品描述|後悔拿香港身份！內地優才呻慘　力數4大問題：香港已不適合生存|【香港優才／專才／移居香港】來香港生活，未必人人如意。有透過「優秀人才入境計劃（優才）」來港生活並取得香港身份證半年的內地女，於小紅書發文力數來港生活4大問題。\n\n詳盡全文即撳 → https://www.hk01.com/article/60213258?utm_medium=Social&utm_source=yt&utm_campaign=mama\n\n喜歡這條影片嗎？訂閱我們的 Channe",
+      "竞品描述|優才計劃大騙局  中俄貿易洗黑錢|《港燦突發》\n優才計劃大騙局  中俄貿易洗黑錢\n主持：齊阿哥\n2024年6月11日\n\n如欲下載聲音檔案，敬請前往Patreon收費頻道： \nhttps://www.patreon.com/qiage\n\n主題曲： 《靜夜思港》          \n曲、詞、唱: 齊阿哥\n編曲、混音：強瓦仔\n鼓、結他、低音結他、Keyboard：強瓦仔\n錄音、顧問：路人甲\nhttps://youtu.be/z22gMI",
+      "竞品描述|韭菜痛哭！小紅書狂插香港優才計劃是大騙局！大陸瘋傳赴港旅遊瞓|歡迎各位益友加入成為頻道會員，支持本台可持續發展：https://www.youtube.com/channel/UCzuzpkqcLSDmqnVpkksriow/join\n\n請加入本台Patreon，享用無廣告聲音檔、直播重溫及會員獨家影片：\nhttps://www.patreon.com/hklocaltv",
+      "竞品描述|香港优才计划获批后，如何顺利续签拿永居身份？三个续签技巧要掌|在这里M叔先恭喜最近成功获批的香港优才幸运儿，前些天香港入境处公布了优才计划第63次筛选的结果，一共有707人被筛选出来，创造了历史新高，这七百多人中，也包括不少M叔的客户朋友，很开心大家离落户香港又进了一步，接下来只要安心等待入境处的面试就好。拿到优才签证固然开心，但这只是万里长征的第一步，要转香港永居的话，还要撑过接下来7年的时间，这7年可不是那么容易就熬过去的，因为大部分人的优才签证是2年+",
+      "竞品描述|20240227[李龍基。問世間情是何物］未婚妻優才計劃來港|虛移NordVPN 虛擬私人網絡\nhttps://nordvpn.com/samngx\n二年合約 最平港幣32元/月\n一個月免費 \n\n訂閱Patreon記住要更改私穩！！！\n\n周庭：我在監獄的日子\nhttps://youtu.be/Wp-Rr4tMHiU?si=QYyo738yW-EspWR4\n\nChannel 4 China in the UK\nhttps://youtu.be/X45MYatj"
+    ],
+    "description_insights": [
+      "描述分析|这些描述之所以有效，是因为它们直接面对目标受众的需求和担忧，同时提供了具体的解决方案。通过个人经历分享，增加了真实性和可信度，并通过情感化的语言引发了共鸣。此外，明确的行动号召鼓励观众参与进来。"
+    ],
+    "release_decisions": [
+      "发布决策|REVIEW|得分:75",
+      "发布决策|REJECT|得分:50"
+    ],
+    "task_success_reference": [
+      "任务成功|香港高才通续签率|视频时长:150.7秒|脚本长度:739字|用户满意|决策:PUBLISH",
+      "任务成功|香港高才通续签率|目标时长60秒|实际55.4秒|脚本307字目标|实际258字|达标"
+    ],
+    "successful_params": [
+      "成功参数|香港高才通话题|目标时长:60秒|实际时长:150秒|脚本长度:700-800字|场景:[hongkong_victoria_harbour, hongkong_office, hongkong_home]"
+    ],
+    "quality_issues": [
+      "脚本质量问题: script_length 不达标"
+    ],
+    "quality_success": [
+      "脚本成功|香港高才通续签率仅54%|长度:183"
+    ],
+    "task_failure": [
+      "任务失败|香港高才通续签率仅54%|尝试次数:3"
+    ],
+    "user_feedback": [
+      "用户反馈|字幕问题|字幕只出现在第一张图，后面全程无字幕",
+      "用户反馈|头像问题|角色头像没有抠图，是方块形状"
+    ],
+    "quality_issue": [
+      "问题|字幕|字幕只出现在第一张图，后面全程无字幕，需要每句话对应时间轴",
+      "问题|头像|角色头像没有抠图，方块形状需要透明背景"
+    ],
+    "solution": [
+      "解决方案|字幕问题|字幕只出现在第一张图|修复方法:按句子分割视频时长，每句分配时间轴",
+      "解决方案|头像问题|角色头像方块|修复方法:需要抠图或使用圆形PNG"
+    ],
+    "calibration_log": [
+      "校准|香港高才通续签率|目标60s|实际117.072s|偏差95%|建议字数286",
+      "校准|香港高才通续签率|目标60s|实际43.512s|偏差-27%|建议字数275",
+      "校准|香港高才通续签率|目标60s|实际87.24s|偏差45%|建议字数307"
+    ],
+    "parameter_formula": [
+      "参数公式|香港高才通类话题|时长60秒对应脚本约250-300字"
+    ],
+    "unknown_errors": [
+      "未知错误|ffmpeg: command not found",
+      "未知错误|Address already in use: port 5002",
+      "未知错误|Permission denied: ./run.sh"
+    ],
+    "error_knowledge": [
+      "error_fix|ModuleNotFoundError|fix:pip install <module>|confidence:0.95",
+      "error_fix|No module named|fix:pip install <module>|confidence:0.95",
+      "error_fix|FileNotFoundError|fix:mkdir -p <path>|confidence:0.95",
+      "error_fix|No such file or directory|fix:mkdir -p <path>|confidence:0.9",
+      "error_fix|Connection refused|fix:ollama serve &|confidence:0.95",
+      "error_fix|ffmpeg|fix:sudo apt install ffmpeg -y|confidence:0.95",
+      "error_fix|ffprobe|fix:sudo apt install ffmpeg -y|confidence:0.95",
+      "error_fix|Address already in use|fix:fuser -k <port>/tcp|confidence:0.95",
+      "error_fix|port is already in use|fix:fuser -k <port>/tcp|confidence:0.95",
+      "error_fix|Permission denied|fix:chmod +x <file>|confidence:0.9",
+      "error_fix|IndentationError|fix:检查代码缩进|confidence:0.85",
+      "error_fix|JSONDecodeError|fix:检查 JSON 格式|confidence:0.85",
+      "error_fix|video_file not found|fix:检查视频路径|confidence:0.85",
+      "error_fix|audio_path 无效|fix:检查音频文件|confidence:0.85",
+      "error_fix|UnknownError: something went wrong|fix:请检查日志文件以获取更多详细信息；确认所有依赖项是否正确安装且版本兼容；确保服务器或环境配置没有问题。|confidence:0.8"
+    ],
+    "ai_learned": [
+      "ai_learned|UnknownError: something went wrong|fix:请检查日志文件以获取更多详细信息；确认所有依赖项是否正确安装且版本兼容；确保服务器或环境配置没有问题。"
+    ],
+    "self_review_log": [
+      "self_review|ModuleNotFoundError: No module named flask|评分:80|等级:优秀|决策:可入库|原因:有修复方案,验证通过,模块安装类",
+      "self_review|Connection refused: 11434|评分:70|等级:优秀|决策:可入库|原因:有修复方案,验证通过",
+      "self_review|Unknown error|评分:0|等级:不合格|决策:需人工审核|原因:无修复方案,验证失败"
+    ],
+    "quality_gate": [
+      "quality_gate|script|pass:False|msg:脚本太短"
+    ],
+    "system_monitoring": [
+      "监控器测试|系统健康|正常运行"
+    ],
+    "executed_decisions": [
+      "决策执行|成功率29%|评估当前情况，可能需要重新制定策略或寻找新的机会。|行动:分析失败原因，学习并优化策略"
+    ],
+    "intelligence_analysis": [
+      "{\"timestamp\": \"2026-05-15T00:13:02.538405\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "{\"timestamp\": \"2026-05-15T00:18:02.546248\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "{\"timestamp\": \"2026-05-15T00:23:02.556309\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "{\"timestamp\": \"2026-05-15T00:28:02.562600\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "{\"timestamp\": \"2026-05-15T00:33:02.569000\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "{\"timestamp\": \"2026-05-15T00:38:02.574649\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "{\"timestamp\": \"2026-05-15T00:43:02.582727\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "{\"timestamp\": \"2026-05-15T00:48:02.589216\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "{\"timestamp\": \"2026-05-15T00:53:02.623807\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "{\"timestamp\": \"2026-05-15T00:58:02.628883\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "{\"timestamp\": \"2026-05-15T01:03:02.634716\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}"
+    ]
+  }
+}

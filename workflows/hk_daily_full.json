@@ -1,0 +1,10 @@
+{
+    "workflow_id": "hk_daily_series",
+    "name": "香港每日视频生产+发布",
+    "steps": [
+        {"name": "plan", "skill": "topic-planner", "params": {"category": "immigration"}},
+        {"name": "write", "skill": "content-writer", "params": {"topic": "{plan.topics[0]}"}},
+        {"name": "video", "skill": "promo", "params": {"city": "香港", "style": "人文"}},
+        {"name": "publish", "skill": "youtube_publisher", "params": {"title": "{plan.topics[0]}"}, "depends_on": ["video"]}
+    ]
+}

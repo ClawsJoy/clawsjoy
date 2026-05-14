@@ -1,0 +1,42 @@
+{
+  "code_agent": {
+    "name": "code_agent",
+    "capabilities": [
+      "code_generation",
+      "code_review"
+    ],
+    "skills": [
+      "code_agent_v7"
+    ],
+    "version": "1.0.0",
+    "status": "active",
+    "registered_at": "2026-05-15T00:48:07.871720"
+  },
+  "video_agent": {
+    "name": "video_agent",
+    "capabilities": [
+      "video_creation",
+      "video_upload"
+    ],
+    "skills": [
+      "manju_maker",
+      "video_uploader"
+    ],
+    "version": "1.0.0",
+    "status": "active",
+    "registered_at": "2026-05-15T00:48:07.874319"
+  },
+  "youtube_agent": {
+    "name": "youtube_agent",
+    "capabilities": [
+      "youtube_analyze",
+      "youtube_upload"
+    ],
+    "skills": [
+      "hot_analyzer"
+    ],
+    "version": "1.0.0",
+    "status": "active",
+    "registered_at": "2026-05-15T00:48:07.880526"
+  }
+}

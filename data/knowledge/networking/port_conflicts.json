@@ -1,0 +1,16 @@
+{
+  "topic": "端口冲突",
+  "symptoms": ["Address already in use", "port already in use", "bind failed"],
+  "causes": [
+    "服务重复启动",
+    "端口被其他进程占用",
+    "容器未正确关闭"
+  ],
+  "solutions": [
+    "sudo lsof -i :{port} && sudo kill -9 {pid}",
+    "docker-compose down && docker-compose up -d",
+    "修改 docker-compose.yml 中的端口映射"
+  ],
+  "prevention": "使用 PM2 管理进程，避免重复启动",
+  "learned_at": "2026-05-08"
+}

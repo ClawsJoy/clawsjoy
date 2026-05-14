@@ -1,0 +1,21 @@
+{
+  "version": "clawsjoy-native",
+  "tasks": [
+    {
+      "type": "collect",
+      "input": {
+        "url": "test"
+      },
+      "output": "content",
+      "success": true,
+      "duration": 2.5,
+      "time": "2026-05-06T07:05:25.840960"
+    }
+  ],
+  "preferences": {},
+  "learnings": [],
+  "stats": {
+    "total": 1,
+    "success": 1
+  }
+}

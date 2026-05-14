@@ -1,0 +1,16 @@
+{
+  "topic": "服务依赖",
+  "dependencies": {
+    "chat_api": ["ollama"],
+    "promo_api": ["ffmpeg", "redis"],
+    "web": ["clawsjoy"],
+    "joymate_api": ["redis"],
+    "tts": ["edge-tts"]
+  },
+  "start_order": ["redis", "ollama", "clawsjoy", "chat_api", "promo_api", "web"],
+  "health_checks": {
+    "ollama": "curl http://localhost:11434/api/tags",
+    "redis": "docker exec clawsjoy-redis redis-cli ping",
+    "ffmpeg": "ffmpeg -version"
+  }
+}

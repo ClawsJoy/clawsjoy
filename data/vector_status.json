@@ -1,0 +1,10 @@
+{
+  "initialized": true,
+  "total_vectors": 0,
+  "last_update": "2026-05-10T19:03:17.959616",
+  "embedding_model": "nomic-embed-text",
+  "cache_hits": 0,
+  "cache_misses": 0,
+  "last_optimized": "2026-05-10 19:17:36",
+  "optimize_count": 1
+}

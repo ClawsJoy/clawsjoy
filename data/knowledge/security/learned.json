@@ -1,0 +1,30 @@
+{
+  "learned_at": "2026-05-08T16:41:26.724614",
+  "knowledge": [
+    {
+      "type": "sensitive_pattern",
+      "name": "api_key",
+      "pattern": "api[_-]?key[\"\\s:=]+[\"\\']?([a-zA-Z0-9]{20,})",
+      "learned_at": 1778229686.7246046
+    },
+    {
+      "type": "sensitive_pattern",
+      "name": "token",
+      "pattern": "token[\"\\s:=]+[\"\\']?([a-zA-Z0-9]{20,})",
+      "learned_at": 1778229686.7246058
+    },
+    {
+      "type": "sensitive_pattern",
+      "name": "secret",
+      "pattern": "secret[\"\\s:=]+[\"\\']?([a-zA-Z0-9]{20,})",
+      "learned_at": 1778229686.7246063
+    },
+    {
+      "type": "sensitive_pattern",
+      "name": "password",
+      "pattern": "password[\"\\s:=]+[\"\\']?([^\\s\"\\']{4,})",
+      "learned_at": 1778229686.7246065
+    }
+  ],
+  "stats": {}
+}

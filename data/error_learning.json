@@ -1,0 +1,565 @@
+{
+  "learned_errors": [
+    {
+      "id": "859b089a401e",
+      "error": "Connection refused to port 8101",
+      "context": "\u6280\u80fd\u5931\u8d25: content_writer",
+      "solution": "\u68c0\u67e5\u670d\u52a1\u662f\u5426\u542f\u52a8\uff0c\u4f7f\u7528 docker ps \u67e5\u770b\u5bb9\u5668\u72b6\u6001",
+      "learned_at": "2026-05-09T19:39:21.411161"
+    },
+    {
+      "id": "8f8d9bcedd2f",
+      "error": "('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))",
+      "context": "\u6280\u80fd\u5931\u8d25: content_writer",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:39:21.424899"
+    },
+    {
+      "id": "c7a00f3a6451",
+      "error": "HTTPConnectionPool(host='localhost', port=8107): Max retries exceeded with url: /api/promo/make (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8107): Failed to establish a new co",
+      "context": "\u6280\u80fd\u5931\u8d25: promo",
+      "solution": "\u68c0\u67e5\u7aef\u53e3\u914d\u7f6e\uff0c\u4f7f\u7528 docker port \u67e5\u770b\u5b9e\u9645\u7aef\u53e3\u6620\u5c04",
+      "learned_at": "2026-05-09T19:39:21.440243"
+    },
+    {
+      "id": "923edf1e6052",
+      "error": "HTTPConnectionPool(host='localhost', port=8107): Max retries exceeded with url: /api/promo/make (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8107): Failed to establish a new co",
+      "context": "\u6280\u80fd\u5931\u8d25: promo",
+      "solution": "\u68c0\u67e5\u7aef\u53e3\u914d\u7f6e\uff0c\u4f7f\u7528 docker port \u67e5\u770b\u5b9e\u9645\u7aef\u53e3\u6620\u5c04",
+      "learned_at": "2026-05-09T19:39:21.455093"
+    },
+    {
+      "id": "8d71b8adbf23",
+      "error": "HTTPConnectionPool(host='localhost', port=8107): Max retries exceeded with url: /api/promo/make (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8107): Failed to establish a new co",
+      "context": "\u6280\u80fd\u5931\u8d25: promo",
+      "solution": "\u68c0\u67e5\u7aef\u53e3\u914d\u7f6e\uff0c\u4f7f\u7528 docker port \u67e5\u770b\u5b9e\u9645\u7aef\u53e3\u6620\u5c04",
+      "learned_at": "2026-05-09T19:39:21.469663"
+    },
+    {
+      "id": "382ab0666758",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:39:21.484779"
+    },
+    {
+      "id": "3dc019bfaf86",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:39:21.500360"
+    },
+    {
+      "id": "61abb0b83308",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:39:21.516434"
+    },
+    {
+      "id": "4cc72275616c",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:39:21.530154"
+    },
+    {
+      "id": "86e28bf7d315",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:39:21.543936"
+    },
+    {
+      "id": "e8e9156353e3",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:39:21.559126"
+    },
+    {
+      "id": "28b37682ae39",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:39:21.573199"
+    },
+    {
+      "id": "80a44f7e3de0",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:39:21.587684"
+    },
+    {
+      "id": "f9cee1055f05",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:39:21.602248"
+    },
+    {
+      "id": "a1dec669b8d5",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:39:21.618039"
+    },
+    {
+      "id": "aedce942fb92",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:39:21.633964"
+    },
+    {
+      "id": "2072771d261e",
+      "error": "Connection refused to port 8101",
+      "context": "\u6280\u80fd\u5931\u8d25: content_writer",
+      "solution": "\u68c0\u67e5\u670d\u52a1\u662f\u5426\u542f\u52a8\uff0c\u4f7f\u7528 docker ps \u67e5\u770b\u5bb9\u5668\u72b6\u6001",
+      "learned_at": "2026-05-09T19:41:20.566035"
+    },
+    {
+      "id": "4bac07143594",
+      "error": "('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))",
+      "context": "\u6280\u80fd\u5931\u8d25: content_writer",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:41:20.580343"
+    },
+    {
+      "id": "222ecd074503",
+      "error": "HTTPConnectionPool(host='localhost', port=8107): Max retries exceeded with url: /api/promo/make (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8107): Failed to establish a new co",
+      "context": "\u6280\u80fd\u5931\u8d25: promo",
+      "solution": "\u68c0\u67e5\u7aef\u53e3\u914d\u7f6e\uff0c\u4f7f\u7528 docker port \u67e5\u770b\u5b9e\u9645\u7aef\u53e3\u6620\u5c04",
+      "learned_at": "2026-05-09T19:41:20.595265"
+    },
+    {
+      "id": "ad5240a21223",
+      "error": "HTTPConnectionPool(host='localhost', port=8107): Max retries exceeded with url: /api/promo/make (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8107): Failed to establish a new co",
+      "context": "\u6280\u80fd\u5931\u8d25: promo",
+      "solution": "\u68c0\u67e5\u7aef\u53e3\u914d\u7f6e\uff0c\u4f7f\u7528 docker port \u67e5\u770b\u5b9e\u9645\u7aef\u53e3\u6620\u5c04",
+      "learned_at": "2026-05-09T19:41:20.610654"
+    },
+    {
+      "id": "b9b8aeeed166",
+      "error": "HTTPConnectionPool(host='localhost', port=8107): Max retries exceeded with url: /api/promo/make (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8107): Failed to establish a new co",
+      "context": "\u6280\u80fd\u5931\u8d25: promo",
+      "solution": "\u68c0\u67e5\u7aef\u53e3\u914d\u7f6e\uff0c\u4f7f\u7528 docker port \u67e5\u770b\u5b9e\u9645\u7aef\u53e3\u6620\u5c04",
+      "learned_at": "2026-05-09T19:41:20.625777"
+    },
+    {
+      "id": "c24087bb35ca",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:41:20.640107"
+    },
+    {
+      "id": "dd9aa99ca375",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:41:20.656182"
+    },
+    {
+      "id": "0e09e1477c81",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:41:20.672448"
+    },
+    {
+      "id": "b81c208e18bf",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:41:20.687076"
+    },
+    {
+      "id": "5c00dc94f704",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:41:20.701771"
+    },
+    {
+      "id": "1542215efc2a",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:41:20.716360"
+    },
+    {
+      "id": "1e4e9a4f8d16",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:41:20.731021"
+    },
+    {
+      "id": "8a9432b8c168",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:41:20.747059"
+    },
+    {
+      "id": "f88852dc50ef",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:41:20.762487"
+    },
+    {
+      "id": "7b2e29815dc3",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:41:20.777476"
+    },
+    {
+      "id": "035ad210a1c6",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:41:20.792545"
+    },
+    {
+      "id": "75612de299f6",
+      "error": "Connection refused to port 8101",
+      "context": "\u6280\u80fd\u5931\u8d25: content_writer",
+      "solution": "\u68c0\u67e5\u670d\u52a1\u662f\u5426\u542f\u52a8\uff0c\u4f7f\u7528 docker ps \u67e5\u770b\u5bb9\u5668\u72b6\u6001",
+      "learned_at": "2026-05-09T19:43:44.684232"
+    },
+    {
+      "id": "dff53c104c68",
+      "error": "('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))",
+      "context": "\u6280\u80fd\u5931\u8d25: content_writer",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:43:44.703543"
+    },
+    {
+      "id": "fca53042b353",
+      "error": "HTTPConnectionPool(host='localhost', port=8107): Max retries exceeded with url: /api/promo/make (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8107): Failed to establish a new co",
+      "context": "\u6280\u80fd\u5931\u8d25: promo",
+      "solution": "\u68c0\u67e5\u7aef\u53e3\u914d\u7f6e\uff0c\u4f7f\u7528 docker port \u67e5\u770b\u5b9e\u9645\u7aef\u53e3\u6620\u5c04",
+      "learned_at": "2026-05-09T19:43:44.722189"
+    },
+    {
+      "id": "3a57868f4007",
+      "error": "HTTPConnectionPool(host='localhost', port=8107): Max retries exceeded with url: /api/promo/make (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8107): Failed to establish a new co",
+      "context": "\u6280\u80fd\u5931\u8d25: promo",
+      "solution": "\u68c0\u67e5\u7aef\u53e3\u914d\u7f6e\uff0c\u4f7f\u7528 docker port \u67e5\u770b\u5b9e\u9645\u7aef\u53e3\u6620\u5c04",
+      "learned_at": "2026-05-09T19:43:44.740288"
+    },
+    {
+      "id": "7ee39ba0e0d6",
+      "error": "HTTPConnectionPool(host='localhost', port=8107): Max retries exceeded with url: /api/promo/make (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8107): Failed to establish a new co",
+      "context": "\u6280\u80fd\u5931\u8d25: promo",
+      "solution": "\u68c0\u67e5\u7aef\u53e3\u914d\u7f6e\uff0c\u4f7f\u7528 docker port \u67e5\u770b\u5b9e\u9645\u7aef\u53e3\u6620\u5c04",
+      "learned_at": "2026-05-09T19:43:44.758704"
+    },
+    {
+      "id": "e64758244134",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:43:44.777337"
+    },
+    {
+      "id": "7c48d53f6e2a",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:43:44.795771"
+    },
+    {
+      "id": "62cf7c2f0c44",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:43:44.815459"
+    },
+    {
+      "id": "4f9bebf6eac5",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:43:44.833548"
+    },
+    {
+      "id": "ff2787a20044",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:43:44.860665"
+    },
+    {
+      "id": "8875ed2c2ebf",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:43:44.883904"
+    },
+    {
+      "id": "081fae9ac196",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:43:44.905629"
+    },
+    {
+      "id": "3e1aaba9c65b",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:43:44.928369"
+    },
+    {
+      "id": "4a989293f4d1",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:43:44.948043"
+    },
+    {
+      "id": "a8121d14c2a0",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:43:44.966485"
+    },
+    {
+      "id": "37cc115e0014",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T19:43:44.985306"
+    },
+    {
+      "id": "296e0d8b8d52",
+      "error": "Connection refused to port 8101",
+      "context": "\u6280\u80fd\u5931\u8d25: content_writer",
+      "solution": "\u68c0\u67e5\u670d\u52a1\u662f\u5426\u542f\u52a8\uff0c\u4f7f\u7528 docker ps \u67e5\u770b\u5bb9\u5668\u72b6\u6001",
+      "learned_at": "2026-05-09T21:03:40.552451"
+    },
+    {
+      "id": "bd8e8db06594",
+      "error": "('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))",
+      "context": "\u6280\u80fd\u5931\u8d25: content_writer",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T21:03:40.574138"
+    },
+    {
+      "id": "219acc36c386",
+      "error": "HTTPConnectionPool(host='localhost', port=8107): Max retries exceeded with url: /api/promo/make (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8107): Failed to establish a new co",
+      "context": "\u6280\u80fd\u5931\u8d25: promo",
+      "solution": "\u68c0\u67e5\u7aef\u53e3\u914d\u7f6e\uff0c\u4f7f\u7528 docker port \u67e5\u770b\u5b9e\u9645\u7aef\u53e3\u6620\u5c04",
+      "learned_at": "2026-05-09T21:03:40.598638"
+    },
+    {
+      "id": "8022d1d20f2d",
+      "error": "HTTPConnectionPool(host='localhost', port=8107): Max retries exceeded with url: /api/promo/make (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8107): Failed to establish a new co",
+      "context": "\u6280\u80fd\u5931\u8d25: promo",
+      "solution": "\u68c0\u67e5\u7aef\u53e3\u914d\u7f6e\uff0c\u4f7f\u7528 docker port \u67e5\u770b\u5b9e\u9645\u7aef\u53e3\u6620\u5c04",
+      "learned_at": "2026-05-09T21:03:40.621757"
+    },
+    {
+      "id": "37d3719262f4",
+      "error": "HTTPConnectionPool(host='localhost', port=8107): Max retries exceeded with url: /api/promo/make (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8107): Failed to establish a new co",
+      "context": "\u6280\u80fd\u5931\u8d25: promo",
+      "solution": "\u68c0\u67e5\u7aef\u53e3\u914d\u7f6e\uff0c\u4f7f\u7528 docker port \u67e5\u770b\u5b9e\u9645\u7aef\u53e3\u6620\u5c04",
+      "learned_at": "2026-05-09T21:03:40.644093"
+    },
+    {
+      "id": "f03184df416f",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T21:03:40.666732"
+    },
+    {
+      "id": "b0b7685d8e75",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T21:03:40.687448"
+    },
+    {
+      "id": "b7478311c832",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T21:03:40.708482"
+    },
+    {
+      "id": "59b2cebe5bc5",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T21:03:40.741113"
+    },
+    {
+      "id": "b0d19a1817c8",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T21:03:40.764467"
+    },
+    {
+      "id": "685ca41a08e0",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T21:03:40.785330"
+    },
+    {
+      "id": "95d608f39a23",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T21:03:40.807203"
+    },
+    {
+      "id": "646755bef115",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T21:03:40.830408"
+    },
+    {
+      "id": "d614dc46281c",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T21:03:40.852573"
+    },
+    {
+      "id": "f737825d9e83",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T21:03:40.875462"
+    },
+    {
+      "id": "4fafc02e96fd",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T21:03:40.897852"
+    },
+    {
+      "id": "61481ca74ecf",
+      "error": "Connection refused to port 8101",
+      "context": "\u6280\u80fd\u5931\u8d25: content_writer",
+      "solution": "\u68c0\u67e5\u670d\u52a1\u662f\u5426\u542f\u52a8\uff0c\u4f7f\u7528 docker ps \u67e5\u770b\u5bb9\u5668\u72b6\u6001",
+      "learned_at": "2026-05-09T21:39:10.419394"
+    },
+    {
+      "id": "ce7aa1bc025d",
+      "error": "('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))",
+      "context": "\u6280\u80fd\u5931\u8d25: content_writer",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T21:39:10.440053"
+    },
+    {
+      "id": "e4c1e1736f22",
+      "error": "HTTPConnectionPool(host='localhost', port=8107): Max retries exceeded with url: /api/promo/make (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8107): Failed to establish a new co",
+      "context": "\u6280\u80fd\u5931\u8d25: promo",
+      "solution": "\u68c0\u67e5\u7aef\u53e3\u914d\u7f6e\uff0c\u4f7f\u7528 docker port \u67e5\u770b\u5b9e\u9645\u7aef\u53e3\u6620\u5c04",
+      "learned_at": "2026-05-09T21:39:10.459940"
+    },
+    {
+      "id": "8313ff801ea0",
+      "error": "HTTPConnectionPool(host='localhost', port=8107): Max retries exceeded with url: /api/promo/make (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8107): Failed to establish a new co",
+      "context": "\u6280\u80fd\u5931\u8d25: promo",
+      "solution": "\u68c0\u67e5\u7aef\u53e3\u914d\u7f6e\uff0c\u4f7f\u7528 docker port \u67e5\u770b\u5b9e\u9645\u7aef\u53e3\u6620\u5c04",
+      "learned_at": "2026-05-09T21:39:10.479636"
+    },
+    {
+      "id": "aacca29915e9",
+      "error": "HTTPConnectionPool(host='localhost', port=8107): Max retries exceeded with url: /api/promo/make (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8107): Failed to establish a new co",
+      "context": "\u6280\u80fd\u5931\u8d25: promo",
+      "solution": "\u68c0\u67e5\u7aef\u53e3\u914d\u7f6e\uff0c\u4f7f\u7528 docker port \u67e5\u770b\u5b9e\u9645\u7aef\u53e3\u6620\u5c04",
+      "learned_at": "2026-05-09T21:39:10.499609"
+    },
+    {
+      "id": "d0596d6ad057",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T21:39:10.520486"
+    },
+    {
+      "id": "7c569eb05b2a",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T21:39:10.541437"
+    },
+    {
+      "id": "cc24fcc17d66",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T21:39:10.562457"
+    },
+    {
+      "id": "4689b4864702",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T21:39:10.582539"
+    },
+    {
+      "id": "dcc7bdf20d7b",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T21:39:10.602976"
+    },
+    {
+      "id": "7340e3bd5dd8",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T21:39:10.624202"
+    },
+    {
+      "id": "4a92d9912a54",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T21:39:10.644746"
+    },
+    {
+      "id": "4a06f480f883",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T21:39:10.667123"
+    },
+    {
+      "id": "3dec22025928",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T21:39:10.689322"
+    },
+    {
+      "id": "106f18eb02b8",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T21:39:10.709813"
+    },
+    {
+      "id": "efefeef23fd6",
+      "error": "No video found",
+      "context": "\u6280\u80fd\u5931\u8d25: youtube_uploader",
+      "solution": "\u67e5\u770b\u65e5\u5fd7\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\uff0c\u5c1d\u8bd5\u91cd\u542f\u670d\u52a1",
+      "learned_at": "2026-05-09T21:39:10.731558"
+    }
+  ],
+  "corrections": []
+}

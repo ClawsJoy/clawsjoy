@@ -1,0 +1,22 @@
+{
+  "version": "1.0",
+  "created": "2026-05-12T21:02:07.374378",
+  "settings": {
+    "auto_backup": true,
+    "backup_interval_hours": 24,
+    "log_retention_days": 7,
+    "health_check_interval_seconds": 30,
+    "auto_heal": true,
+    "performance_alert_threshold": 80,
+    "learning_rate": 0.35,
+    "exploration_rate": 0.2
+  },
+  "history": [
+    {
+      "timestamp": "2026-05-12T21:02:07.681435",
+      "key": "learning_rate",
+      "old": 0.3,
+      "new": 0.35
+    }
+  ]
+}
