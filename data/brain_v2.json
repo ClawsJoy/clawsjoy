@@ -4512,6 +4512,23 @@
         "api",
         "down"
       ]
+    },
+    {
+      "id": "6b653994",
+      "agent": "intelligence",
+      "action": "handle_api_down",
+      "result": {
+        "success": true
+      },
+      "context": "cd /mnt/d/clawsjoy && python3 agent_gateway_web.py &",
+      "timestamp": "2026-05-15T01:40:23.139936",
+      "success": true,
+      "reward": 1.0,
+      "keywords": [
+        "handle",
+        "api",
+        "down"
+      ]
     }
   ],
   "best_practices": [
@@ -5120,9 +5137,10 @@
         "620d2039",
         "fe90f196",
         "b84bbf7b",
-        "4868d1f1"
+        "4868d1f1",
+        "6b653994"
       ],
-      "strength": 3.0000000000000004,
+      "strength": 3.2000000000000006,
       "success_count": 0,
       "created_at": "2026-05-12T21:23:28.223331"
     },
@@ -5390,9 +5408,10 @@
         "620d2039",
         "fe90f196",
         "b84bbf7b",
-        "4868d1f1"
+        "4868d1f1",
+        "6b653994"
       ],
-      "strength": 1.2999999999999998,
+      "strength": 1.4999999999999998,
       "success_count": 0,
       "created_at": "2026-05-12T21:40:24.176366"
     },
@@ -5979,9 +5998,10 @@
         "620d2039",
         "fe90f196",
         "b84bbf7b",
-        "4868d1f1"
+        "4868d1f1",
+        "6b653994"
       ],
-      "strength": 1.9999999999999998,
+      "strength": 2.1999999999999997,
       "success_count": 1,
       "created_at": "2026-05-14T16:32:47.787204"
     }
@@ -7048,13 +7068,19 @@
       "target": "67c35a5c",
       "similarity": 0.7,
       "created_at": "2026-05-15T00:37:16.470908"
+    },
+    {
+      "source": "6b653994",
+      "target": "67c35a5c",
+      "similarity": 0.7,
+      "created_at": "2026-05-15T01:40:23.140651"
     }
   ],
   "skill_embeddings": {},
   "transfer_matrix": {},
   "stats": {
-    "total_actions": 204,
-    "successful": 65,
+    "total_actions": 205,
+    "successful": 66,
     "failed": 139,
     "inferences": 3,
     "transfers": 2,

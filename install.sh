@@ -1,50 +1,55 @@
 #!/bin/bash
-# ClawsJoy 一键安装脚本
+# ClawsJoy 安装脚本
 
 set -e
 
-echo "🦞 ClawsJoy 一键安装"
-echo "===================="
+echo "=========================================="
+echo "ClawsJoy 3.0 安装程序"
+echo "=========================================="
 
-# 检查 Docker
-if ! command -v docker &> /dev/null; then
-    echo "❌ Docker 未安装，请先安装 Docker"
+# 检查 Python 版本
+echo ""
+echo "检查 Python 版本..."
+if ! command -v python3 &> /dev/null; then
+    echo "❌ Python3 未安装"
     exit 1
 fi
 
-# 检查 Docker Compose
-if ! command -v docker-compose &> /dev/null; then
-    echo "❌ Docker Compose 未安装"
-    exit 1
+PYTHON_VERSION=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
+echo "✅ Python $PYTHON_VERSION"
+
+# 安装依赖
+echo ""
+echo "安装 Python 依赖..."
+pip install -r requirements.txt -q 2>/dev/null || pip install -r requirements.txt
+
+# 创建配置文件
+echo ""
+echo "创建配置文件..."
+if [ ! -f .env ]; then
+    cp .env.example .env
+    echo "✅ 已创建 .env（请编辑配置）"
+else
+    echo "⚠️ .env 已存在"
 fi
 
-# 克隆仓库
-if [ ! -d "ClawsJoy" ]; then
-    echo "📦 克隆仓库..."
-    git clone https://github.com/ClawsJoy/ClawsJoy.git
+if [ ! -f config/config.yaml ]; then
+    cp config/config.yaml.example config/config.yaml
+    echo "✅ 已创建 config/config.yaml"
 fi
 
-cd ClawsJoy
-
-# 创建必要目录
-mkdir -p tenants/template/config
-mkdir -p data logs web/videos web/images web/audio
-
-# 启动服务
-echo "🚀 启动服务..."
-docker-compose up -d
-
-# 启动额外服务
-cd bin
-nohup python3 promo_api.py > /tmp/promo.log 2>&1 &
-nohup python3 chat_api_agent.py > /tmp/chat.log 2>&1 &
-nohup python3 agent_api.py > /tmp/agent.log 2>&1 &
-cd ..
+# 创建数据目录
+echo ""
+echo "创建数据目录..."
+mkdir -p data logs output
 
 echo ""
-echo "✅ 安装完成！"
+echo "=========================================="
+echo "✅ ClawsJoy 安装完成"
+echo "=========================================="
 echo ""
-echo "🌐 访问: http://localhost:18082/joymate/index.html?tenant=1"
-echo "📝 默认租户ID: 1"
+echo "下一步:"
+echo "  1. 编辑 .env 配置文件"
+echo "  2. 启动 Ollama: ollama serve"
+echo "  3. 启动服务: ./start_all.sh"
 echo ""
-echo "📖 文档: https://github.com/ClawsJoy/ClawsJoy"

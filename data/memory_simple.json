@@ -755,6 +755,216 @@
       "fact": "{\"timestamp\": \"2026-05-15T01:03:02.634716\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
       "category": "intelligence_analysis",
       "timestamp": "2026-05-15T01:03:02.636095"
+    },
+    {
+      "id": "c7aab6ca5e2c2d4e41177af5b5fe5466",
+      "fact": "{\"timestamp\": \"2026-05-15T01:08:02.647648\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "category": "intelligence_analysis",
+      "timestamp": "2026-05-15T01:08:02.648073"
+    },
+    {
+      "id": "59cc97b27c937ca3bafee20e774d09b2",
+      "fact": "{\"timestamp\": \"2026-05-15T01:13:02.677863\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "category": "intelligence_analysis",
+      "timestamp": "2026-05-15T01:13:02.677990"
+    },
+    {
+      "id": "3c82a7ccde88a3395937bf7832b66f35",
+      "fact": "{\"timestamp\": \"2026-05-15T01:18:02.690845\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "category": "intelligence_analysis",
+      "timestamp": "2026-05-15T01:18:02.690927"
+    },
+    {
+      "id": "a87bf42e5f9e3b4903456624a16ba22b",
+      "fact": "{\"timestamp\": \"2026-05-15T01:23:02.698877\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "category": "intelligence_analysis",
+      "timestamp": "2026-05-15T01:23:02.698955"
+    },
+    {
+      "id": "c2de3a015c32af497eaf26e8b033cafd",
+      "fact": "{\"timestamp\": \"2026-05-15T01:28:02.706317\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "category": "intelligence_analysis",
+      "timestamp": "2026-05-15T01:28:02.706402"
+    },
+    {
+      "id": "40ab261c280bdbe0496a1a2be5d352cc",
+      "fact": "{\"timestamp\": \"2026-05-15T01:33:02.713172\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "category": "intelligence_analysis",
+      "timestamp": "2026-05-15T01:33:02.713255"
+    },
+    {
+      "id": "f49d5fbd5130e1765d1f56a4eff27d0b",
+      "fact": "{\"timestamp\": \"2026-05-15T01:39:41.856459\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "category": "intelligence_analysis",
+      "timestamp": "2026-05-15T01:39:41.856533"
+    },
+    {
+      "id": "d169d78173221a83a79fbdbc70b454c9",
+      "fact": "参数优化|成功率:29%|新参数:{'target_duration': 30, 'script_length': 200, 'quality_threshold': 50, 'learning_rate': 0.08571428571428569}",
+      "category": "param_optimization",
+      "timestamp": "2026-05-15T02:00:01.986905"
+    },
+    {
+      "id": "9df77d86fb71feaa41a80d8ce8891f2f",
+      "fact": "分析报告|趋势:数据不足|预测:29%|时间:2026-05-15T02:00:46.752532",
+      "category": "advanced_analysis",
+      "timestamp": "2026-05-15T02:00:46.752557"
+    },
+    {
+      "id": "f5af031621a0230742cbae3cccc215a4",
+      "fact": "成功率监控|29%|等级:critical|时间:2026-05-15T02:30:02.000511",
+      "category": "success_monitoring",
+      "timestamp": "2026-05-15T02:30:02.000910"
+    },
+    {
+      "id": "d9652a7a7f3b6ae2ee3d925e15d2957e",
+      "fact": "成功率监控|29%|等级:critical|时间:2026-05-15T03:30:01.926929",
+      "category": "success_monitoring",
+      "timestamp": "2026-05-15T03:30:01.926953"
+    },
+    {
+      "id": "18dbf38a30fd57abab5f9943682220ed",
+      "fact": "成功率监控|29%|等级:critical|时间:2026-05-15T07:30:01.687282",
+      "category": "success_monitoring",
+      "timestamp": "2026-05-15T07:30:01.687312"
+    },
+    {
+      "id": "45d76186f46efa844537b57ecdb06a80",
+      "fact": "auto_tune|成功率:29%|建议:建议降低目标时长或放宽质量标准",
+      "category": "auto_tuning",
+      "timestamp": "2026-05-15T08:07:51.810144"
+    },
+    {
+      "id": "8c60275ac50d9a54ea7d1d3148186d2a",
+      "fact": "成功率监控|29%|等级:critical|时间:2026-05-15T08:30:01.990949",
+      "category": "success_monitoring",
+      "timestamp": "2026-05-15T08:30:01.990974"
+    },
+    {
+      "id": "35f60278849f91b47aee27cbf5c6ebd9",
+      "fact": "成功率监控|29%|等级:critical|时间:2026-05-15T09:00:01.150406",
+      "category": "success_monitoring",
+      "timestamp": "2026-05-15T09:00:01.150435"
+    },
+    {
+      "id": "75e19ca6485e2fcaaa6f6396a3eb414a",
+      "fact": "分析报告|趋势:数据不足|预测:29%|时间:2026-05-15T09:00:45.957146",
+      "category": "advanced_analysis",
+      "timestamp": "2026-05-15T09:00:45.957166"
+    },
+    {
+      "id": "f434602eae85218313678228d0679a8b",
+      "fact": "核心模块验证测试|通过",
+      "category": "test",
+      "timestamp": "2026-05-15T09:05:46.323035"
+    },
+    {
+      "id": "a5453369a7d86164b113c61d59a0bc6a",
+      "fact": "闭环测试|工作流数据|成功",
+      "category": "workflow_outcome",
+      "timestamp": "2026-05-15T09:14:43.075807"
+    },
+    {
+      "id": "7d8548b6253278112778ecaffc1f184a",
+      "fact": "error_fix|闭环测试|修复成功|confidence:0.9",
+      "category": "error_knowledge",
+      "timestamp": "2026-05-15T09:14:43.187938"
+    },
+    {
+      "id": "5957528934e63c3c94fa739f10f14840",
+      "fact": "决策|闭环测试|系统正常|继续监控",
+      "category": "executed_decisions",
+      "timestamp": "2026-05-15T09:14:43.247935"
+    },
+    {
+      "id": "5a082fe95f795ea92f31b5e200cfd88b",
+      "fact": "{\"timestamp\": \"2026-05-15T00:00:00\", \"total_tasks\": 10, \"success_rate\": 85.5, \"critical_issues\": [\"\\u6d4b\\u8bd5\\u95ee\\u9898\"]}",
+      "category": "intelligence_analysis",
+      "timestamp": "2026-05-15T09:14:43.520945"
+    },
+    {
+      "id": "61eb731d21a2bb2162ceb81e2710edd5",
+      "fact": "监控|服务状态|所有服务正常",
+      "category": "system_monitoring",
+      "timestamp": "2026-05-15T09:14:43.633505"
+    },
+    {
+      "id": "753c88f28e664e8ef812b3fb7d99a9fe",
+      "fact": "决策执行|成功率38%|分析当前情况，寻找提升成功率的方法|行动:制定提高成功率的策略并执行",
+      "category": "executed_decisions",
+      "timestamp": "2026-05-15T09:18:31.678512"
+    },
+    {
+      "id": "45351b586b57b04ffede5d65b488e9ea",
+      "fact": "实时决策|系统运行中，成功率85%，内存使用正常|分析当前情况，寻找提升成功率的方法",
+      "category": "executed_decisions",
+      "timestamp": "2026-05-15T09:18:31.683211"
+    },
+    {
+      "id": "67b3822b0595af6a0032f094c56597be",
+      "fact": "{\"timestamp\": \"2026-05-15\", \"metric\": \"success_rate\", \"history\": [85, 82, 78, 75, 72], \"prediction\": \"\\u4e0b\\u964d\\u8d8b\\u52bf\", \"suggested_action\": \"\\u68c0\\u67e5\\u6700\\u8fd1\\u53d8\\u66f4\\uff0c\\u589e\\u52a0\\u6d4b\\u8bd5\"}",
+      "category": "trend_analysis",
+      "timestamp": "2026-05-15T09:18:31.818327"
+    },
+    {
+      "id": "f252558e34bd0bd1f7ee833ccb7daf43",
+      "fact": "{\"timestamp\": \"2026-05-15T09:20:31.299681\", \"success_rate_prediction\": {\"prediction\": \"40.0%\", \"current_rate\": \"100%\", \"trend\": \"\\u7a33\\u5b9a\", \"confidence\": 0.4, \"next_expected\": \"\\u98ce\\u9669\"}, \"resource_prediction\": {\"predicted_memory_mb\": 626, \"predicted_cpu_percent\": 51.5, \"status\": \"\\u6b63\\u5e38\"}, \"overall_status\": \"\\u9700\\u5173\\u6ce8\", \"recommendations\": [\"\\u26a0\\ufe0f \\u6210\\u529f\\u7387\\u9884\\u6d4b\\u504f\\u4f4e\\uff0c\\u5efa\\u8bae\\u68c0\\u67e5\\u7cfb\\u7edf\", \"\\ud83d\\udcca \\u589e\\u52a0\\u6d4b\\u8bd5\\u6570\\u636e\", \"\\ud83d\\udd27 \\u4f18\\u5316\\u6280\\u80fd\\u53c2\\u6570\"]}",
+      "category": "performance_predictions",
+      "timestamp": "2026-05-15T09:20:31.299749"
+    },
+    {
+      "id": "470c9283df72618bf395813d9aa3876c",
+      "fact": "{\"timestamp\": \"2026-05-15T09:20:31.327116\", \"current_performance\": {\"success_rate\": 37.5, \"error_count\": 16, \"decision_count\": 4, \"skill_count\": 63, \"bottleneck\": \"成功率\"}, \"suggestions\": [{\"target\": \"success_rate\", \"action\": \"增加测试数据\", \"priority\": \"high\", \"expected_improvement\": \"10-20%\"}], \"auto_tune_enabled\": true}",
+      "category": "auto_tuning",
+      "timestamp": "2026-05-15T09:20:31.327172"
+    },
+    {
+      "id": "cb1ea50341fca2dac3ce41486c0c28b9",
+      "fact": "{\"type\": \"pre_analysis\", \"prediction\": {\"timestamp\": \"2026-05-15T09:20:31.299681\", \"success_rate_prediction\": {\"prediction\": \"40.0%\", \"current_rate\": \"100%\", \"trend\": \"\\u7a33\\u5b9a\", \"confidence\": 0.4, \"next_expected\": \"\\u98ce\\u9669\"}, \"resource_prediction\": {\"predicted_memory_mb\": 626, \"predicted_cpu_percent\": 51.5, \"status\": \"\\u6b63\\u5e38\"}, \"overall_status\": \"\\u9700\\u5173\\u6ce8\", \"recommendations\": [\"\\u26a0\\ufe0f \\u6210\\u529f\\u7387\\u9884\\u6d4b\\u504f\\u4f4e\\uff0c\\u5efa\\u8bae\\u68c0\\u67e5\\u7cfb\\u7edf\", \"\\ud83d\\udcca \\u589e\\u52a0\\u6d4b\\u8bd5\\u6570\\u636e\", \"\\ud83d\\udd27 \\u4f18\\u5316\\u6280\\u80fd\\u53c2\\u6570\"]}, \"optimization\": {\"timestamp\": \"2026-05-15T09:20:31.327116\", \"current_performance\": {\"success_rate\": 37.5, \"error_count\": 16, \"decision_count\": 4, \"skill_count\": 63, \"bottleneck\": \"\\u6210\\u529f\\u7387\"}, \"suggestions\": [{\"target\": \"success_rate\", \"action\": \"\\u589e\\u52a0\\u6d4b\\u8bd5\\u6570\\u636e\", \"priority\": \"high\", \"expected_improvement\": \"10-20%\"}], \"auto_tune_enabled\": true}, \"timestamp\": \"2026-05-15\"}",
+      "category": "pre_analysis",
+      "timestamp": "2026-05-15T09:20:31.331782"
+    },
+    {
+      "id": "a855a9ef3fac0ec3b3d57126b6df3318",
+      "fact": "{\"timestamp\": \"2026-05-15T09:21:02.898851\", \"success_rate_prediction\": {\"prediction\": \"40.0%\", \"current_rate\": \"100%\", \"trend\": \"\\u7a33\\u5b9a\", \"confidence\": 0.4, \"next_expected\": \"\\u98ce\\u9669\"}, \"resource_prediction\": {\"predicted_memory_mb\": 626, \"predicted_cpu_percent\": 51.5, \"status\": \"\\u6b63\\u5e38\"}, \"overall_status\": \"\\u9700\\u5173\\u6ce8\", \"recommendations\": [\"\\u26a0\\ufe0f \\u6210\\u529f\\u7387\\u9884\\u6d4b\\u504f\\u4f4e\\uff0c\\u5efa\\u8bae\\u68c0\\u67e5\\u7cfb\\u7edf\", \"\\ud83d\\udcca \\u589e\\u52a0\\u6d4b\\u8bd5\\u6570\\u636e\", \"\\ud83d\\udd27 \\u4f18\\u5316\\u6280\\u80fd\\u53c2\\u6570\"]}",
+      "category": "performance_predictions",
+      "timestamp": "2026-05-15T09:21:02.898978"
+    },
+    {
+      "id": "cc99a6a19c271e4c164a9a3878e792e4",
+      "fact": "{\"timestamp\": \"2026-05-15T09:21:02.920842\", \"current_performance\": {\"success_rate\": 37.5, \"error_count\": 16, \"decision_count\": 4, \"skill_count\": 63, \"bottleneck\": \"成功率\"}, \"suggestions\": [{\"target\": \"success_rate\", \"action\": \"增加测试数据\", \"priority\": \"high\", \"expected_improvement\": \"10-20%\"}], \"auto_tune_enabled\": true}",
+      "category": "auto_tuning",
+      "timestamp": "2026-05-15T09:21:02.920890"
+    },
+    {
+      "id": "5a895a028990e4621f6b429299921dcc",
+      "fact": "{\"type\": \"pre_analysis\", \"prediction\": {\"timestamp\": \"2026-05-15T09:21:02.898851\", \"success_rate_prediction\": {\"prediction\": \"40.0%\", \"current_rate\": \"100%\", \"trend\": \"\\u7a33\\u5b9a\", \"confidence\": 0.4, \"next_expected\": \"\\u98ce\\u9669\"}, \"resource_prediction\": {\"predicted_memory_mb\": 626, \"predicted_cpu_percent\": 51.5, \"status\": \"\\u6b63\\u5e38\"}, \"overall_status\": \"\\u9700\\u5173\\u6ce8\", \"recommendations\": [\"\\u26a0\\ufe0f \\u6210\\u529f\\u7387\\u9884\\u6d4b\\u504f\\u4f4e\\uff0c\\u5efa\\u8bae\\u68c0\\u67e5\\u7cfb\\u7edf\", \"\\ud83d\\udcca \\u589e\\u52a0\\u6d4b\\u8bd5\\u6570\\u636e\", \"\\ud83d\\udd27 \\u4f18\\u5316\\u6280\\u80fd\\u53c2\\u6570\"]}, \"optimization\": {\"timestamp\": \"2026-05-15T09:21:02.920842\", \"current_performance\": {\"success_rate\": 37.5, \"error_count\": 16, \"decision_count\": 4, \"skill_count\": 63, \"bottleneck\": \"\\u6210\\u529f\\u7387\"}, \"suggestions\": [{\"target\": \"success_rate\", \"action\": \"\\u589e\\u52a0\\u6d4b\\u8bd5\\u6570\\u636e\", \"priority\": \"high\", \"expected_improvement\": \"10-20%\"}], \"auto_tune_enabled\": true}, \"timestamp\": \"2026-05-15\"}",
+      "category": "pre_analysis",
+      "timestamp": "2026-05-15T09:21:02.925452"
+    },
+    {
+      "id": "ef8f56d9caedc3ff3f4643d359d04dc6",
+      "fact": "成功率监控|38%|等级:warning|时间:2026-05-15T09:30:01.191891",
+      "category": "success_monitoring",
+      "timestamp": "2026-05-15T09:30:01.191926"
+    },
+    {
+      "id": "a746725ae42492e2da03e7007bc79b98",
+      "fact": "成功率监控|38%|等级:warning|时间:2026-05-15T10:00:01.354857",
+      "category": "success_monitoring",
+      "timestamp": "2026-05-15T10:00:01.354908"
+    },
+    {
+      "id": "66de59def1ff5d56572bc7e9755c4b3d",
+      "fact": "参数优化|成功率:38%|新参数:{'target_duration': 30, 'script_length': 200, 'quality_threshold': 50, 'learning_rate': 0.175}",
+      "category": "param_optimization",
+      "timestamp": "2026-05-15T10:00:01.384469"
+    },
+    {
+      "id": "867fccf6606846bfadd9da85cd888b78",
+      "fact": "分析报告|趋势:数据不足|预测:38%|时间:2026-05-15T10:00:48.948072",
+      "category": "advanced_analysis",
+      "timestamp": "2026-05-15T10:00:48.948094"
     }
   ],
   "categories": {
@@ -765,7 +975,8 @@
       "目标:【背景知识】高端人才通行证计划，2022年12月推出。A类年收入250万；B类百强学士+3年经验；C类百强学士+经验不足3年。\n【任务】做一个30秒香港高才通视频 -> 结果:失败",
       "目标:【历史经验】目标:【背景知识】高端人才通行证计划，2022年12月推出。A类年收入250万；B类百强学士+3年经验；C类百强学士+经验不足3年。\n【任务】做一个30秒香港高才通视频 -> 结果:失败\n -> 结果:失败",
       "目标:制作一个关于小明来香港的漫剧 -> 结果:失败",
-      "目标:建议使用 manju_maker 技能，一键生成漫剧视频。\n用户目标：制作一个小明来香港的漫剧 -> 结果:成功"
+      "目标:建议使用 manju_maker 技能，一键生成漫剧视频。\n用户目标：制作一个小明来香港的漫剧 -> 结果:成功",
+      "闭环测试|工作流数据|成功"
     ],
     "user_satisfaction": [
       "目标：做一个30秒香港优才视频 -> 计划：[{'skill': 'tts', 'args': {'text': '欢迎来到香港...', 'output_path': 'audio.mp3'}}, {'skill': 'image_slideshow', 'args': {'audio_path': 'audio.mp3', 'images': ['hk_cityscape.jpg']}}] -> 满意度：5（用户公开视频）",
@@ -912,7 +1123,8 @@
       "error_fix|JSONDecodeError|fix:检查 JSON 格式|confidence:0.85",
       "error_fix|video_file not found|fix:检查视频路径|confidence:0.85",
       "error_fix|audio_path 无效|fix:检查音频文件|confidence:0.85",
-      "error_fix|UnknownError: something went wrong|fix:请检查日志文件以获取更多详细信息；确认所有依赖项是否正确安装且版本兼容；确保服务器或环境配置没有问题。|confidence:0.8"
+      "error_fix|UnknownError: something went wrong|fix:请检查日志文件以获取更多详细信息；确认所有依赖项是否正确安装且版本兼容；确保服务器或环境配置没有问题。|confidence:0.8",
+      "error_fix|闭环测试|修复成功|confidence:0.9"
     ],
     "ai_learned": [
       "ai_learned|UnknownError: something went wrong|fix:请检查日志文件以获取更多详细信息；确认所有依赖项是否正确安装且版本兼容；确保服务器或环境配置没有问题。"
@@ -926,10 +1138,14 @@
       "quality_gate|script|pass:False|msg:脚本太短"
     ],
     "system_monitoring": [
-      "监控器测试|系统健康|正常运行"
+      "监控器测试|系统健康|正常运行",
+      "监控|服务状态|所有服务正常"
     ],
     "executed_decisions": [
-      "决策执行|成功率29%|评估当前情况，可能需要重新制定策略或寻找新的机会。|行动:分析失败原因，学习并优化策略"
+      "决策执行|成功率29%|评估当前情况，可能需要重新制定策略或寻找新的机会。|行动:分析失败原因，学习并优化策略",
+      "决策|闭环测试|系统正常|继续监控",
+      "决策执行|成功率38%|分析当前情况，寻找提升成功率的方法|行动:制定提高成功率的策略并执行",
+      "实时决策|系统运行中，成功率85%，内存使用正常|分析当前情况，寻找提升成功率的方法"
     ],
     "intelligence_analysis": [
       "{\"timestamp\": \"2026-05-15T00:13:02.538405\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
@@ -942,7 +1158,52 @@
       "{\"timestamp\": \"2026-05-15T00:48:02.589216\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
       "{\"timestamp\": \"2026-05-15T00:53:02.623807\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
       "{\"timestamp\": \"2026-05-15T00:58:02.628883\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
-      "{\"timestamp\": \"2026-05-15T01:03:02.634716\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}"
+      "{\"timestamp\": \"2026-05-15T01:03:02.634716\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "{\"timestamp\": \"2026-05-15T01:08:02.647648\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "{\"timestamp\": \"2026-05-15T01:13:02.677863\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "{\"timestamp\": \"2026-05-15T01:18:02.690845\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "{\"timestamp\": \"2026-05-15T01:23:02.698877\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "{\"timestamp\": \"2026-05-15T01:28:02.706317\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "{\"timestamp\": \"2026-05-15T01:33:02.713172\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "{\"timestamp\": \"2026-05-15T01:39:41.856459\", \"total_tasks\": 7, \"success_count\": 2, \"success_rate\": 28.6, \"error_count\": 15, \"decision_count\": 1, \"user_feedback_count\": 2}",
+      "{\"timestamp\": \"2026-05-15T00:00:00\", \"total_tasks\": 10, \"success_rate\": 85.5, \"critical_issues\": [\"\\u6d4b\\u8bd5\\u95ee\\u9898\"]}"
+    ],
+    "param_optimization": [
+      "参数优化|成功率:29%|新参数:{'target_duration': 30, 'script_length': 200, 'quality_threshold': 50, 'learning_rate': 0.08571428571428569}",
+      "参数优化|成功率:38%|新参数:{'target_duration': 30, 'script_length': 200, 'quality_threshold': 50, 'learning_rate': 0.175}"
+    ],
+    "advanced_analysis": [
+      "分析报告|趋势:数据不足|预测:29%|时间:2026-05-15T02:00:46.752532",
+      "分析报告|趋势:数据不足|预测:29%|时间:2026-05-15T09:00:45.957146",
+      "分析报告|趋势:数据不足|预测:38%|时间:2026-05-15T10:00:48.948072"
+    ],
+    "success_monitoring": [
+      "成功率监控|29%|等级:critical|时间:2026-05-15T02:30:02.000511",
+      "成功率监控|29%|等级:critical|时间:2026-05-15T03:30:01.926929",
+      "成功率监控|29%|等级:critical|时间:2026-05-15T07:30:01.687282",
+      "成功率监控|29%|等级:critical|时间:2026-05-15T08:30:01.990949",
+      "成功率监控|29%|等级:critical|时间:2026-05-15T09:00:01.150406",
+      "成功率监控|38%|等级:warning|时间:2026-05-15T09:30:01.191891",
+      "成功率监控|38%|等级:warning|时间:2026-05-15T10:00:01.354857"
+    ],
+    "auto_tuning": [
+      "auto_tune|成功率:29%|建议:建议降低目标时长或放宽质量标准",
+      "{\"timestamp\": \"2026-05-15T09:20:31.327116\", \"current_performance\": {\"success_rate\": 37.5, \"error_count\": 16, \"decision_count\": 4, \"skill_count\": 63, \"bottleneck\": \"成功率\"}, \"suggestions\": [{\"target\": \"success_rate\", \"action\": \"增加测试数据\", \"priority\": \"high\", \"expected_improvement\": \"10-20%\"}], \"auto_tune_enabled\": true}",
+      "{\"timestamp\": \"2026-05-15T09:21:02.920842\", \"current_performance\": {\"success_rate\": 37.5, \"error_count\": 16, \"decision_count\": 4, \"skill_count\": 63, \"bottleneck\": \"成功率\"}, \"suggestions\": [{\"target\": \"success_rate\", \"action\": \"增加测试数据\", \"priority\": \"high\", \"expected_improvement\": \"10-20%\"}], \"auto_tune_enabled\": true}"
+    ],
+    "test": [
+      "核心模块验证测试|通过"
+    ],
+    "trend_analysis": [
+      "{\"timestamp\": \"2026-05-15\", \"metric\": \"success_rate\", \"history\": [85, 82, 78, 75, 72], \"prediction\": \"\\u4e0b\\u964d\\u8d8b\\u52bf\", \"suggested_action\": \"\\u68c0\\u67e5\\u6700\\u8fd1\\u53d8\\u66f4\\uff0c\\u589e\\u52a0\\u6d4b\\u8bd5\"}"
+    ],
+    "performance_predictions": [
+      "{\"timestamp\": \"2026-05-15T09:20:31.299681\", \"success_rate_prediction\": {\"prediction\": \"40.0%\", \"current_rate\": \"100%\", \"trend\": \"\\u7a33\\u5b9a\", \"confidence\": 0.4, \"next_expected\": \"\\u98ce\\u9669\"}, \"resource_prediction\": {\"predicted_memory_mb\": 626, \"predicted_cpu_percent\": 51.5, \"status\": \"\\u6b63\\u5e38\"}, \"overall_status\": \"\\u9700\\u5173\\u6ce8\", \"recommendations\": [\"\\u26a0\\ufe0f \\u6210\\u529f\\u7387\\u9884\\u6d4b\\u504f\\u4f4e\\uff0c\\u5efa\\u8bae\\u68c0\\u67e5\\u7cfb\\u7edf\", \"\\ud83d\\udcca \\u589e\\u52a0\\u6d4b\\u8bd5\\u6570\\u636e\", \"\\ud83d\\udd27 \\u4f18\\u5316\\u6280\\u80fd\\u53c2\\u6570\"]}",
+      "{\"timestamp\": \"2026-05-15T09:21:02.898851\", \"success_rate_prediction\": {\"prediction\": \"40.0%\", \"current_rate\": \"100%\", \"trend\": \"\\u7a33\\u5b9a\", \"confidence\": 0.4, \"next_expected\": \"\\u98ce\\u9669\"}, \"resource_prediction\": {\"predicted_memory_mb\": 626, \"predicted_cpu_percent\": 51.5, \"status\": \"\\u6b63\\u5e38\"}, \"overall_status\": \"\\u9700\\u5173\\u6ce8\", \"recommendations\": [\"\\u26a0\\ufe0f \\u6210\\u529f\\u7387\\u9884\\u6d4b\\u504f\\u4f4e\\uff0c\\u5efa\\u8bae\\u68c0\\u67e5\\u7cfb\\u7edf\", \"\\ud83d\\udcca \\u589e\\u52a0\\u6d4b\\u8bd5\\u6570\\u636e\", \"\\ud83d\\udd27 \\u4f18\\u5316\\u6280\\u80fd\\u53c2\\u6570\"]}"
+    ],
+    "pre_analysis": [
+      "{\"type\": \"pre_analysis\", \"prediction\": {\"timestamp\": \"2026-05-15T09:20:31.299681\", \"success_rate_prediction\": {\"prediction\": \"40.0%\", \"current_rate\": \"100%\", \"trend\": \"\\u7a33\\u5b9a\", \"confidence\": 0.4, \"next_expected\": \"\\u98ce\\u9669\"}, \"resource_prediction\": {\"predicted_memory_mb\": 626, \"predicted_cpu_percent\": 51.5, \"status\": \"\\u6b63\\u5e38\"}, \"overall_status\": \"\\u9700\\u5173\\u6ce8\", \"recommendations\": [\"\\u26a0\\ufe0f \\u6210\\u529f\\u7387\\u9884\\u6d4b\\u504f\\u4f4e\\uff0c\\u5efa\\u8bae\\u68c0\\u67e5\\u7cfb\\u7edf\", \"\\ud83d\\udcca \\u589e\\u52a0\\u6d4b\\u8bd5\\u6570\\u636e\", \"\\ud83d\\udd27 \\u4f18\\u5316\\u6280\\u80fd\\u53c2\\u6570\"]}, \"optimization\": {\"timestamp\": \"2026-05-15T09:20:31.327116\", \"current_performance\": {\"success_rate\": 37.5, \"error_count\": 16, \"decision_count\": 4, \"skill_count\": 63, \"bottleneck\": \"\\u6210\\u529f\\u7387\"}, \"suggestions\": [{\"target\": \"success_rate\", \"action\": \"\\u589e\\u52a0\\u6d4b\\u8bd5\\u6570\\u636e\", \"priority\": \"high\", \"expected_improvement\": \"10-20%\"}], \"auto_tune_enabled\": true}, \"timestamp\": \"2026-05-15\"}",
+      "{\"type\": \"pre_analysis\", \"prediction\": {\"timestamp\": \"2026-05-15T09:21:02.898851\", \"success_rate_prediction\": {\"prediction\": \"40.0%\", \"current_rate\": \"100%\", \"trend\": \"\\u7a33\\u5b9a\", \"confidence\": 0.4, \"next_expected\": \"\\u98ce\\u9669\"}, \"resource_prediction\": {\"predicted_memory_mb\": 626, \"predicted_cpu_percent\": 51.5, \"status\": \"\\u6b63\\u5e38\"}, \"overall_status\": \"\\u9700\\u5173\\u6ce8\", \"recommendations\": [\"\\u26a0\\ufe0f \\u6210\\u529f\\u7387\\u9884\\u6d4b\\u504f\\u4f4e\\uff0c\\u5efa\\u8bae\\u68c0\\u67e5\\u7cfb\\u7edf\", \"\\ud83d\\udcca \\u589e\\u52a0\\u6d4b\\u8bd5\\u6570\\u636e\", \"\\ud83d\\udd27 \\u4f18\\u5316\\u6280\\u80fd\\u53c2\\u6570\"]}, \"optimization\": {\"timestamp\": \"2026-05-15T09:21:02.920842\", \"current_performance\": {\"success_rate\": 37.5, \"error_count\": 16, \"decision_count\": 4, \"skill_count\": 63, \"bottleneck\": \"\\u6210\\u529f\\u7387\"}, \"suggestions\": [{\"target\": \"success_rate\", \"action\": \"\\u589e\\u52a0\\u6d4b\\u8bd5\\u6570\\u636e\", \"priority\": \"high\", \"expected_improvement\": \"10-20%\"}], \"auto_tune_enabled\": true}, \"timestamp\": \"2026-05-15\"}"
     ]
   }
 }

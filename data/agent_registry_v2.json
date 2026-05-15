@@ -9,8 +9,9 @@
       "code_agent_v7"
     ],
     "version": "1.0.0",
+    "description": "\u4ee3\u7801\u751f\u6210\u548c\u5ba1\u67e5 Agent",
     "status": "active",
-    "registered_at": "2026-05-15T00:48:07.871720"
+    "registered_at": "2026-05-15T09:53:45.627734"
   },
   "video_agent": {
     "name": "video_agent",
@@ -23,8 +24,9 @@
       "video_uploader"
     ],
     "version": "1.0.0",
+    "description": "\u89c6\u9891\u5236\u4f5c Agent",
     "status": "active",
-    "registered_at": "2026-05-15T00:48:07.874319"
+    "registered_at": "2026-05-15T09:53:45.631069"
   },
   "youtube_agent": {
     "name": "youtube_agent",
@@ -36,7 +38,107 @@
       "hot_analyzer"
     ],
     "version": "1.0.0",
+    "description": "YouTube \u8fd0\u8425 Agent",
     "status": "active",
-    "registered_at": "2026-05-15T00:48:07.880526"
+    "registered_at": "2026-05-15T09:53:45.638786"
+  },
+  "data_agent": {
+    "name": "data_agent",
+    "capabilities": [
+      "data_query",
+      "data_analysis",
+      "data_visualization"
+    ],
+    "skills": [
+      "json_parser",
+      "text_processor",
+      "search"
+    ],
+    "version": "1.0.0",
+    "description": "\u6570\u636e\u5206\u6790\u4e13\u5bb6",
+    "status": "active",
+    "registered_at": "2026-05-15T01:22:42.227244"
+  },
+  "content_agent": {
+    "name": "content_agent",
+    "capabilities": [
+      "content_generation",
+      "script_writing",
+      "copywriting"
+    ],
+    "skills": [
+      "hot_dual_script",
+      "text_processor",
+      "prompt_optimizer"
+    ],
+    "version": "1.0.0",
+    "description": "\u5185\u5bb9\u521b\u4f5c\u4e13\u5bb6",
+    "status": "active",
+    "registered_at": "2026-05-15T01:22:42.234033"
+  },
+  "crawler_agent": {
+    "name": "crawler_agent",
+    "capabilities": [
+      "web_crawling",
+      "data_extraction",
+      "api_integration"
+    ],
+    "skills": [
+      "spider",
+      "url_discovery",
+      "search",
+      "json_parser"
+    ],
+    "version": "1.0.0",
+    "description": "\u6570\u636e\u722c\u866b\u4e13\u5bb6",
+    "status": "active",
+    "registered_at": "2026-05-15T09:37:32.288963"
+  },
+  "testing_agent": {
+    "name": "testing_agent",
+    "capabilities": [
+      "automated_testing",
+      "regression_testing",
+      "performance_testing"
+    ],
+    "skills": [
+      "calibrated_executor",
+      "quality_gate",
+      "error_analyzer"
+    ],
+    "version": "1.0.0",
+    "description": "\u81ea\u52a8\u5316\u6d4b\u8bd5\u4e13\u5bb6",
+    "status": "active",
+    "registered_at": "2026-05-15T09:37:32.296982"
+  },
+  "monitoring_agent": {
+    "name": "monitoring_agent",
+    "capabilities": [
+      "system_monitoring",
+      "resource_usage",
+      "alerting",
+      "health_check"
+    ],
+    "skills": [
+      "calibrated_executor",
+      "quality_gate"
+    ],
+    "version": "1.0.0",
+    "description": "\u7cfb\u7edf\u76d1\u63a7\u4e13\u5bb6",
+    "status": "active",
+    "registered_at": "2026-05-15T09:53:45.282656"
+  },
+  "notification_agent": {
+    "name": "notification_agent",
+    "capabilities": [
+      "email_notification",
+      "webhook",
+      "desktop_notification"
+    ],
+    "skills": [],
+    "version": "1.0.0",
+    "description": "\u901a\u77e5\u4e13\u5bb6",
+    "status": "active",
+    "registered_at": "2026-05-15T09:53:45.290152"
   }
 }

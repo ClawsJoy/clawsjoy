@@ -4,90 +4,440 @@
     "category": "math",
     "version": "1.0.0",
     "enabled": true,
-    "created_at": "2026-05-15T00:48:07.761407"
+    "created_at": "2026-05-15T09:10:04.338862"
   },
   "multiply": {
     "name": "multiply",
     "category": "math",
     "version": "1.0.0",
     "enabled": true,
-    "created_at": "2026-05-15T00:48:07.763944"
+    "created_at": "2026-05-15T09:10:04.342433"
   },
   "divide": {
     "name": "divide",
     "category": "math",
     "version": "1.0.0",
     "enabled": true,
-    "created_at": "2026-05-15T00:48:07.771572"
+    "created_at": "2026-05-15T09:10:04.349967"
   },
   "math_enhanced": {
     "name": "math_enhanced",
     "category": "math",
     "version": "1.0.0",
     "enabled": true,
-    "created_at": "2026-05-15T00:48:07.777717"
+    "created_at": "2026-05-15T09:10:04.356866"
   },
   "remove_bg": {
     "name": "remove_bg",
     "category": "image",
     "version": "1.0.0",
     "enabled": true,
-    "created_at": "2026-05-15T00:48:07.783786"
+    "created_at": "2026-05-15T09:10:04.364653"
   },
   "spider": {
     "name": "spider",
     "category": "image",
     "version": "1.0.0",
     "enabled": true,
-    "created_at": "2026-05-15T00:48:07.789465"
+    "created_at": "2026-05-15T09:10:04.371534"
   },
   "image_slideshow": {
     "name": "image_slideshow",
     "category": "image",
     "version": "1.0.0",
     "enabled": true,
-    "created_at": "2026-05-15T00:48:07.795347"
+    "created_at": "2026-05-15T09:10:04.378444"
   },
   "manju_maker": {
     "name": "manju_maker",
     "category": "video",
     "version": "1.0.0",
     "enabled": true,
-    "created_at": "2026-05-15T00:48:07.801151"
+    "created_at": "2026-05-15T09:10:04.385176"
   },
   "video_uploader": {
     "name": "video_uploader",
     "category": "video",
     "version": "1.0.0",
     "enabled": true,
-    "created_at": "2026-05-15T00:48:07.806821"
+    "created_at": "2026-05-15T09:10:04.392186"
   },
   "add_subtitles": {
     "name": "add_subtitles",
     "category": "video",
     "version": "1.0.0",
     "enabled": true,
-    "created_at": "2026-05-15T00:48:07.812919"
+    "created_at": "2026-05-15T09:10:04.399042"
   },
   "do_anything": {
     "name": "do_anything",
     "category": "core",
     "version": "1.0.0",
     "enabled": true,
-    "created_at": "2026-05-15T00:48:07.818684"
+    "created_at": "2026-05-15T09:10:04.405929"
   },
   "calibrated_executor": {
     "name": "calibrated_executor",
     "category": "core",
     "version": "1.0.0",
     "enabled": true,
-    "created_at": "2026-05-15T00:48:07.825109"
+    "created_at": "2026-05-15T09:10:04.412822"
   },
   "quality_gate": {
     "name": "quality_gate",
     "category": "core",
     "version": "1.0.0",
     "enabled": true,
-    "created_at": "2026-05-15T00:48:07.831443"
+    "created_at": "2026-05-15T09:10:04.419680"
+  },
+  "closed_loop_executor": {
+    "name": "closed_loop_executor",
+    "category": "other",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.516498"
+  },
+  "design_executor": {
+    "name": "design_executor",
+    "category": "other",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.535585"
+  },
+  "user_task_executor": {
+    "name": "user_task_executor",
+    "category": "other",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.560592"
+  },
+  "ai_image": {
+    "name": "ai_image",
+    "category": "other",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.603786"
+  },
+  "character_designer": {
+    "name": "character_designer",
+    "category": "other",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.616025"
+  },
+  "ffmpeg_video": {
+    "name": "ffmpeg_video",
+    "category": "other",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.653894"
+  },
+  "hot_dual_script": {
+    "name": "hot_dual_script",
+    "category": "text",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.678236"
+  },
+  "json_parser": {
+    "name": "json_parser",
+    "category": "text",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.685038"
+  },
+  "prompt_optimizer": {
+    "name": "prompt_optimizer",
+    "category": "other",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.692970"
+  },
+  "text_processor": {
+    "name": "text_processor",
+    "category": "text",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.700313"
+  },
+  "whisper_transcribe": {
+    "name": "whisper_transcribe",
+    "category": "audio",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.708629"
+  },
+  "tts": {
+    "name": "tts",
+    "category": "audio",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.716395"
+  },
+  "youtube_publisher": {
+    "name": "youtube_publisher",
+    "category": "network",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.724160"
+  },
+  "youtube_uploader": {
+    "name": "youtube_uploader",
+    "category": "network",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.731602"
+  },
+  "execute": {
+    "name": "execute",
+    "category": "other",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.739139"
+  },
+  "manju_experience": {
+    "name": "manju_experience",
+    "category": "other",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.745819"
+  },
+  "memory_enhanced": {
+    "name": "memory_enhanced",
+    "category": "other",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.752963"
+  },
+  "error_analyzer": {
+    "name": "error_analyzer",
+    "category": "self_heal",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.760158"
+  },
+  "error_knowledge_base": {
+    "name": "error_knowledge_base",
+    "category": "self_heal",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.767145"
+  },
+  "fix_validator": {
+    "name": "fix_validator",
+    "category": "self_heal",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.774798"
+  },
+  "self_calibrator": {
+    "name": "self_calibrator",
+    "category": "self_heal",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.781602"
+  },
+  "self_debug": {
+    "name": "self_debug",
+    "category": "self_heal",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.791807"
+  },
+  "self_designer_v4": {
+    "name": "self_designer_v4",
+    "category": "other",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.800125"
+  },
+  "self_evaluator": {
+    "name": "self_evaluator",
+    "category": "other",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.807387"
+  },
+  "self_heal": {
+    "name": "self_heal",
+    "category": "self_heal",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.814219"
+  },
+  "self_healer": {
+    "name": "self_healer",
+    "category": "other",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.821707"
+  },
+  "self_reviewer": {
+    "name": "self_reviewer",
+    "category": "other",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.828657"
+  },
+  "file_processor": {
+    "name": "file_processor",
+    "category": "tools",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.836105"
+  },
+  "intent_parser": {
+    "name": "intent_parser",
+    "category": "tools",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.842985"
+  },
+  "requirement_analyzer": {
+    "name": "requirement_analyzer",
+    "category": "tools",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.852961"
+  },
+  "search": {
+    "name": "search",
+    "category": "tools",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.864199"
+  },
+  "state_manager": {
+    "name": "state_manager",
+    "category": "tools",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.873193"
+  },
+  "task_optimizer": {
+    "name": "task_optimizer",
+    "category": "other",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.882730"
+  },
+  "assemble_from_library": {
+    "name": "assemble_from_library",
+    "category": "other",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.891055"
+  },
+  "auto_operator": {
+    "name": "auto_operator",
+    "category": "other",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.899742"
+  },
+  "code_agent_v7": {
+    "name": "code_agent_v7",
+    "category": "wrappers",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.908294"
+  },
+  "doc_generator_skill": {
+    "name": "doc_generator_skill",
+    "category": "other",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.919242"
+  },
+  "hot_analyzer": {
+    "name": "hot_analyzer",
+    "category": "other",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.928541"
+  },
+  "hot_collector": {
+    "name": "hot_collector",
+    "category": "other",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.936797"
+  },
+  "hot_script": {
+    "name": "hot_script",
+    "category": "other",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.944572"
+  },
+  "hot_short_script": {
+    "name": "hot_short_script",
+    "category": "other",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.952151"
+  },
+  "quality_executor": {
+    "name": "quality_executor",
+    "category": "other",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.959795"
+  },
+  "queue": {
+    "name": "queue",
+    "category": "other",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.967305"
+  },
+  "release_decision": {
+    "name": "release_decision",
+    "category": "other",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.975027"
+  },
+  "router": {
+    "name": "router",
+    "category": "other",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.983050"
+  },
+  "satisfaction": {
+    "name": "satisfaction",
+    "category": "other",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.990995"
+  },
+  "skill_generator": {
+    "name": "skill_generator",
+    "category": "wrappers",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:04.998748"
+  },
+  "skill_generator_v2": {
+    "name": "skill_generator_v2",
+    "category": "other",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:05.006693"
+  },
+  "skill_interface": {
+    "name": "skill_interface",
+    "category": "other",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:05.014748"
+  },
+  "url_discovery": {
+    "name": "url_discovery",
+    "category": "other",
+    "version": "1.0.0",
+    "enabled": true,
+    "created_at": "2026-05-15T01:15:05.022354"
   }
 }

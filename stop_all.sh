@@ -1,15 +1,13 @@
 #!/bin/bash
-cd /mnt/d/clawsjoy
-
-echo "🛑 停止 ClawsJoy 服务"
-
-# 停止监控
-if [ -f logs/event_monitor.pid ]; then
-    kill $(cat logs/event_monitor.pid) 2>/dev/null
-    rm logs/event_monitor.pid
-fi
-
-# 停止网关
-pkill -f agent_gateway_web
-
+echo "🛑 停止 ClawsJoy 所有服务..."
+pkill -f "agent_gateway_web.py"
+pkill -f "file_service_complete.py"
+pkill -f "multi_agent_service_v2.py"
+pkill -f "doc_generator.py"
+pkill -f "agent_api.py"
+pkill -f "web_server.py"
+pkill -f "monitoring_api.py"
+pkill -f "registry_api.py"
+pkill -f "task_api.py"
+pkill -f "market_api.py"
 echo "✅ 所有服务已停止"

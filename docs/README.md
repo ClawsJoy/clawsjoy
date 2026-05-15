@@ -1,15 +1,19 @@
 # ClawsJoy 3.0
+🧠 ClawsJoy 智能系统
 
-原子技能 + 大脑调度 + 记忆驱动的智能体系统
+本地化 · 可扩展 · 自进化的智能任务自动化平台
+https://img.shields.io/badge/license-MIT-blue.svg
+https://img.shields.io/badge/python-3.11+-green.svg
+https://img.shields.io/badge/status-stable-brightgreen.svg
 
 ## 核心特性
 
-- 🧠 **大脑调度**：LLM 自主决策调用哪些技能
-- 💾 **记忆系统**：成功/失败经验存储，下次复用
-- 🎯 **自校准**：时长与字数自动换算调整
-- 🔧 **质量门**：逐环节独立检验
-- 🛡️ **自愈框架**：自动识别并修复常见问题
-- 🎬 **漫剧制作**：一键生成视频
+- 🧠 大脑调度 - LLM 驱动的任务规划与执行
+- 💾 记忆系统 - 经验积累 + 向量语义检索
+- 🎯 原子技能 - 63 个可组合的原子技能
+- 🔧 Web 仪表板 - 可视化监控和管理
+- 🛡️ 完整 API - Swagger 文档 + Prometheus 监控
+- 🎬 多智能体 - 5 个专业化 Agent 协作
 
 ## 快速开始
 
@@ -45,26 +49,31 @@ UNSPLASH_ACCESS_KEY=your_unsplash_key
 # 启动 Ollama
 ollama serve
 
-# 启动网关
-python3 agent_gateway_web.py
-核心模块
-模块	说明
-skills/	原子技能库 (120+)
-agent_core/	大脑核心
-lib/memory_simple.py	记忆系统
-skills/do_anything.py	LLM 调度器
-skills/manju_maker.py	漫剧制作
-skills/calibrated_executor.py	自校准执行器
-使用示例
-from skills.calibrated_executor import skill
+# # 启动服务
+./start_all.sh
 
-# 生成视频
-result = skill.execute({
-    'topic': '香港高才通续签率',
-    'target_duration': 60
-})
-print(result['video'])
-许可证
+# # 访问 Web Dashboard
+open http://localhost:5011
+#📚 文档
+部署指南
+
+开发指南
+
+API 文档
+
+#架构设计
+📡 服务端口
+服务	端口
+API Gateway	5002
+Web Dashboard	5011
+注册中心	5022
+定时任务	5023
+技能市场	5024
+
+#🤝 贡献
+欢迎提交 Issue 和 Pull Request！
+
+📄 许可证
 MIT License
 
 注意事项
@@ -74,5 +83,3 @@ OAuth token 本地生成，不共享
 
 首次使用需配置 YouTube API 授权
 
-贡献
-欢迎提交 Issue 和 Pull Request

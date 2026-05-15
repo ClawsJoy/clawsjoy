@@ -19,13 +19,20 @@ class AgentRegistryV2:
         with open(self.registry_file, 'w') as f:
             json.dump(self.agents, f, indent=2)
     
-    def register(self, name, capabilities, skills=None, version="1.0.0"):
+    def register(self, name, capabilities, skills=None, version="1.0.0", description=""):
+        """注册 Agent"""
         self.agents[name] = {
-            "name": name, "capabilities": capabilities, "skills": skills or [],
-            "version": version, "status": "active",
+            "name": name,
+            "capabilities": capabilities,
+            "skills": skills or [],
+            "version": version,
+            "description": description,
+            "status": "active",
             "registered_at": datetime.now().isoformat()
         }
         self._save()
+        print(f"✅ Agent 已注册: {name} v{version}")
+        return True
     
     def get(self, name):
         return self.agents.get(name)
@@ -47,6 +54,28 @@ class AgentRegistryV2:
 agent_registry = AgentRegistryV2()
 
 # 注册内置 Agent
-agent_registry.register("code_agent", ["code_generation", "code_review"], ["code_agent_v7"])
-agent_registry.register("video_agent", ["video_creation", "video_upload"], ["manju_maker", "video_uploader"])
-agent_registry.register("youtube_agent", ["youtube_analyze", "youtube_upload"], ["hot_analyzer"])
+agent_registry.register(
+    name='code_agent',
+    capabilities=['code_generation', 'code_review'],
+    skills=['code_agent_v7'],
+    version='1.0.0',
+    description='代码生成和审查 Agent'
+)
+
+agent_registry.register(
+    name='video_agent',
+    capabilities=['video_creation', 'video_upload'],
+    skills=['manju_maker', 'video_uploader'],
+    version='1.0.0',
+    description='视频制作 Agent'
+)
+
+agent_registry.register(
+    name='youtube_agent',
+    capabilities=['youtube_analyze', 'youtube_upload'],
+    skills=['hot_analyzer'],
+    version='1.0.0',
+    description='YouTube 运营 Agent'
+)
+
+print(f"✅ Agent 注册中心已初始化，共 {len(agent_registry.list_all())} 个 Agent")

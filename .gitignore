@@ -1,8 +1,7 @@
 # Python
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*.so
 .Python
 venv/
 .venv/
@@ -15,39 +14,58 @@ ENV/
 *.swp
 *.swo
 
+# 本地数据（不提交）
+data/*.json
+data/*.db
+data/*.sqlite
+data/users/
+data/uploads/
+data/vector_kb/
+data/qdrant/
+data/chroma_memory/
+data/meilisearch/
+data/n8n/
+
+# 输出文件
+output/
+output/bg/
+output/characters/
+
 # 日志
 logs/*.log
 logs/*.log.*
-
-# 数据
-data/uploads/*
-data/*.db
-data/*.sqlite
-
-# 输出
-output/*
-output/bg/*
-output/characters/*
 
 # 临时文件
 *.tmp
 *.bak
 *.backup
 *.old
+*.pid
 
 # 测试
 .pytest_cache/
 .coverage
 htmlcov/
 
-# 大型目录
-localmind/
-tenants/
-web/audio/
-web/videos/
-web/images/
+# 本地配置
+.env
+config/local.yaml
 
 # 备份
 backups/
 *.tar.gz
 *.zip
+
+# 大文件目录
+tenants/
+localmind/
+local-whisper/
+web/images/
+web/audio/
+web/videos/
+
+# 敏感信息
+*.pickle
+*.token
+*.key
+secrets.*
