@@ -1,0 +1,62 @@
+#!/bin/bash
+# 宣传片视频生成脚本
+
+SCRIPT_TEXT="$1"
+IMAGE_SOURCE="$2"
+OUTPUT_FILE="$3"
+TITLE="$4"
+TARGET_DURATION="${5:-15}"  # 默认15秒
+
+echo "🎬 开始制作宣传片..."
+echo "📝 标题: $TITLE"
+echo "⏱️  目标时长: ${TARGET_DURATION}秒"
+
+# 查找图片
+IMAGE_FILES=()
+if [ -d "$IMAGE_SOURCE" ]; then
+    while IFS= read -r img; do
+        IMAGE_FILES+=("$img")
+    done < <(find "$IMAGE_SOURCE" -maxdepth 1 -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" \) | head -10)
+fi
+
+# 如果没有找到图片，创建测试图片
+if [ ${#IMAGE_FILES[@]} -eq 0 ]; then
+    echo "⚠️ 未找到图片，创建测试图片..."
+    convert -size 1920x1080 xc:blue -font DejaVu-Sans -pointsize 50 -fill white -annotate +960+540 "$TITLE" /tmp/test_image.jpg 2>/dev/null
+    IMAGE_FILES=("/tmp/test_image.jpg")
+fi
+
+echo "📸 找到 ${#IMAGE_FILES[@]} 张图片"
+
+# 计算每张图片的显示时长
+PER_IMAGE_DURATION=$(echo "scale=2; $TARGET_DURATION / ${#IMAGE_FILES[@]}" | bc)
+PER_IMAGE_DURATION=$(printf "%.2f" $PER_IMAGE_DURATION)
+echo "⏱️  每张图片显示: ${PER_IMAGE_DURATION}秒"
+
+# 创建 concat 文件
+CONCAT_FILE="/tmp/concat_$$.txt"
+> "$CONCAT_FILE"
+
+for img in "${IMAGE_FILES[@]}"; do
+    echo "file '$img'" >> "$CONCAT_FILE"
+    echo "duration $PER_IMAGE_DURATION" >> "$CONCAT_FILE"
+done
+
+# 使用 ffmpeg 生成视频
+ffmpeg -y -f concat -safe 0 -i "$CONCAT_FILE" \
+    -c:v libx264 -preset fast -crf 23 \
+    -pix_fmt yuv420p \
+    -vf "scale=1920:1080:force_original_aspect_ratio=1,pad=1920:1080:(ow-iw)/2:(oh-ih)/2" \
+    "$OUTPUT_FILE" 2>/dev/null
+
+rm -f "$CONCAT_FILE"
+
+if [ -f "$OUTPUT_FILE" ]; then
+    ACTUAL_DURATION=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$OUTPUT_FILE" 2>/dev/null)
+    echo "✅ 视频生成成功！"
+    echo "📊 实际时长: ${ACTUAL_DURATION}秒"
+    echo "🎥 输出文件: $OUTPUT_FILE"
+else
+    echo "❌ 视频生成失败"
+    exit 1
+fi

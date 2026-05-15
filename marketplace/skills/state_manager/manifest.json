@@ -1,0 +1,12 @@
+{
+  "name": "state_manager",
+  "version": "1.0.0",
+  "description": "\u72b6\u6001\u7ba1\u7406\u5668",
+  "category": "system",
+  "price": 0.99,
+  "author": "ClawsJoy",
+  "tags": [
+    "system",
+    "state_manager"
+  ]
+}

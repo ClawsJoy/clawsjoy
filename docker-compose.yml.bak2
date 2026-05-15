@@ -1,0 +1,72 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: clawsjoy-redis
+    ports:
+      - "6380:6379"
+    restart: unless-stopped
+
+  clawsjoy:
+    build: .
+    container_name: clawsjoy
+    ports:
+      - "8080:8080"
+      - "8084:8084"
+      - "8085:8085"
+      - "8086:8086"
+      - "8087:8087"
+      - "8088:8088"
+      - "8089:8089"
+      - "8090:8090"
+      - "8091:8091"
+      - "8092:8092"
+      - "8093:8093"
+      - "8094:8094"
+      - "8101:8101"
+      - "8188:8188"
+    depends_on:
+      - redis
+    restart: unless-stopped
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+
+  joymate-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.joymate
+    container_name: clawsjoy-joymate
+    ports:
+      - "8095:8095"
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  tts:
+    build:
+      context: .
+      dockerfile: Dockerfile.tts
+    container_name: clawsjoy-tts
+    ports:
+      - "9000:9000"
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: clawsjoy-web
+    ports:
+      - "8082:8082"
+    depends_on:
+      - clawsjoy
+    restart: unless-stopped
+
+  promo-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.promo
+    container_name: clawsjoy-promo
+    ports:
+      - "8107:8107"
+    restart: unless-stopped

@@ -1,0 +1,12 @@
+{
+  "name": "spider",
+  "version": "1.0.0",
+  "description": "\u722c\u866b\u7ba1\u7406",
+  "category": "crawler",
+  "price": 0.99,
+  "author": "ClawsJoy",
+  "tags": [
+    "crawler",
+    "spider"
+  ]
+}

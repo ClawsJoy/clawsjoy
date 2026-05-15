@@ -1,0 +1,416 @@
+import requests
+#!/usr/bin/env python3
+"""ClawsJoy 网关 - 干净版"""
+
+import json
+from pathlib import Path
+from datetime import datetime
+from functools import wraps
+from flask import Flask, jsonify, request, send_from_directory
+from flask_cors import CORS
+import jwt
+import bcrypt
+import sys
+
+sys.path.insert(0, '/mnt/d/clawsjoy')
+
+app = Flask(__name__, static_folder='web')
+CORS(app)
+
+SECRET_KEY = "clawsjoy-secret-2026"
+
+def hash_password(pwd): return bcrypt.hashpw(pwd.encode(), bcrypt.gensalt()).decode()
+def verify_password(pwd, hashed): return bcrypt.checkpw(pwd.encode(), hashed.encode())
+
+def generate_token(user_id, tenant_id, role):
+    return jwt.encode({'user_id': user_id, 'tenant_id': tenant_id, 'role': role, 'exp': datetime.utcnow().timestamp() + 86400}, SECRET_KEY)
+
+def verify_token(token):
+    try: return jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+    except: return None
+
+def require_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.headers.get('Authorization', '')
+        if not auth.startswith('Bearer '):
+            return jsonify({'error': 'Missing token'}), 401
+        payload = verify_token(auth[7:])
+        if not payload:
+            return jsonify({'error': 'Invalid token'}), 401
+        request.user = payload
+        return f(*args, **kwargs)
+    return decorated
+
+users_dir = Path("data/users")
+users_dir.mkdir(parents=True, exist_ok=True)
+
+def get_user(tenant, username):
+    f = users_dir / f"{tenant}_{username}.json"
+    if f.exists():
+        with open(f, 'r') as fp: return json.load(fp)
+    return None
+
+def save_user(tenant, username, data):
+    with open(users_dir / f"{tenant}_{username}.json", 'w') as f:
+        json.dump(data, f, indent=2)
+
+# ========== 基础 API ==========
+@app.route('/')
+def index(): return send_from_directory('web', 'dashboard.html')
+
+@app.route('/<path:path>')
+def static_files(path): return send_from_directory('web', path)
+
+@app.route('/api/health', methods=['GET'])
+def health(): return jsonify({'status': 'ok'})
+
+@app.route('/api/auth/register', methods=['POST'])
+def register():
+    data = request.json
+    u = data.get('username')
+    if get_user('demo', u):
+        return jsonify({'success': False, 'error': 'User exists'})
+    save_user('demo', u, {
+        'username': u,
+        'password_hash': hash_password(data.get('password', '')),
+        'balance': 0,
+        'purchases': [],
+        'created_at': datetime.now().isoformat()
+    })
+    return jsonify({'success': True})
+
+@app.route('/api/auth/login', methods=['POST'])
+def login():
+    data = request.json
+    user = get_user('demo', data.get('username'))
+    if not user or not verify_password(data.get('password', ''), user['password_hash']):
+        return jsonify({'success': False, 'error': 'Invalid credentials'}), 401
+    token = generate_token(data.get('username'), 'demo', 'user')
+    return jsonify({'success': True, 'token': token, 'balance': user.get('balance', 0)})
+
+@app.route('/api/user/balance', methods=['GET'])
+@require_auth
+def balance():
+    user = get_user('demo', request.user['user_id'])
+    return jsonify({'balance': user.get('balance', 0) if user else 0})
+
+@app.route('/api/user/recharge', methods=['POST'])
+@require_auth
+def recharge():
+    amount = request.json.get('amount', 0)
+    user = get_user('demo', request.user['user_id'])
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    user['balance'] = user.get('balance', 0) + amount
+    save_user('demo', request.user['user_id'], user)
+    return jsonify({'success': True, 'balance': user['balance']})
+
+@app.route('/api/user/purchases', methods=['GET'])
+@require_auth
+def purchases():
+    user = get_user('demo', request.user['user_id'])
+    return jsonify({'purchases': user.get('purchases', []) if user else []})
+
+@app.route('/api/marketplace/list', methods=['GET'])
+def marketplace():
+    products = []
+    mp = Path("marketplace/skills")
+    if mp.exists():
+        for d in mp.iterdir():
+            mf = d / "manifest.json"
+            if mf.exists():
+                with open(mf, 'r') as f:
+                    products.append(json.load(f))
+    return jsonify({'products': products, 'total': len(products)})
+
+@app.route('/api/marketplace/purchase/<skill>', methods=['POST'])
+@require_auth
+def purchase(skill):
+    user = get_user('demo', request.user['user_id'])
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    if user.get('balance', 0) < 0.99:
+        return jsonify({'error': 'Insufficient balance'}), 402
+    user['balance'] -= 0.99
+    purchases_list = user.get('purchases', [])
+    purchases_list.append({'skill': skill, 'price': 0.99, 'time': datetime.now().isoformat()})
+    user['purchases'] = purchases_list
+    save_user('demo', request.user['user_id'], user)
+    return jsonify({'success': True, 'balance': user['balance']})
+
+# ========== 大脑 v2 API ==========
+from agent_core.brain_enhanced import brain
+
+@app.route('/api/brain/v2/stats', methods=['GET'])
+def brain_v2_stats():
+    return jsonify(brain.get_stats())
+
+@app.route('/api/brain/v2/infer', methods=['POST'])
+def brain_v2_infer():
+    data = request.json
+    result = brain.infer_solution(data.get('problem', ''))
+    return jsonify(result)
+
+@app.route('/api/brain/v2/transfer', methods=['POST'])
+def brain_v2_transfer():
+    data = request.json
+    result = brain.transfer_knowledge(data.get('source', ''), data.get('target', ''))
+    return jsonify(result)
+
+@app.route('/api/brain/v2/advice', methods=['POST'])
+def brain_v2_advice():
+    data = request.json
+    result = brain.get_advice(data.get('agent', 'gateway'), data.get('action', ''))
+    return jsonify(result or {"message": "无建议"})
+
+# ========== 测试 API ==========
+@app.route('/api/test', methods=['GET'])
+def test():
+    return jsonify({"status": "ok", "message": "test endpoint"})
+
+@app.route('/api/multi/run', methods=['POST'])
+@app.route('/api/multi/agents', methods=['GET'])
+@app.route('/api/multi/execute', methods=['POST'])
+# ========== 文件处理 API ==========from skills.file_processor import skill as file_skillfrom pathlib import Path@app.route('/api/file/list', methods=['GET'])def list_uploaded_files():    result = file_skill.list_files()    return jsonify(result)@app.route('/api/file/upload', methods=['POST'])def upload_file():    if 'file' not in request.files:        return jsonify({'error': 'No file'}), 400    file = request.files['file']    if file.filename == '':        return jsonify({'error': 'No filename'}), 400    upload_dir = Path("data/uploads")    upload_dir.mkdir(parents=True, exist_ok=True)    save_path = upload_dir / file.filename    file.save(save_path)    return jsonify({'success': True, 'filename': file.filename})@app.route('/api/file/read/<filename>', methods=['GET'])def read_uploaded_file(filename):    from pathlib import Path    file_path = Path("data/uploads") / filename    if not file_path.exists():        return jsonify({'error': 'File not found'}), 404    result = file_skill.read_file(str(file_path))    return jsonify(result)
+
+# ========== 多智能体协作 API ==========
+# 多智能体通过独立服务调用 (端口 5006)
+@app.route('/api/multi/agents', methods=['GET'])
+def multi_agents():
+    return jsonify({'agents': _multi_orch.list_agents()})
+
+@app.route('/api/multi/execute', methods=['POST'])
+def multi_execute():
+    data = request.json
+    goal = data.get('goal', '')
+    if not goal:
+        return jsonify({'error': 'Goal required'}), 400
+    result = _multi_orch.execute(goal)
+    return jsonify(result)
+
+
+if __name__ == '__main__':
+print('\n' + '='*50)
+    print('✅ ClawsJoy 网关启动')
+    print('='*50)
+    print('访问: http://localhost:5002')
+    print('='*50)
+    app.run(host='0.0.0.0', port=5002, debug=False)
+
+# ========== 安全护栏 ==========
+from agent_core.safety.guardrails import safety_guard
+
+@app.route('/api/chat/secure', methods=['POST'])
+def secure_chat():
+    import requests
+    """带安全护栏的对话"""
+    data = request.json
+    user_id = data.get('user_id', 'anonymous')
+    message = data.get('message', '')
+    
+    # 1. 输入安全检查
+    safe, category, response = safety_guard.check_input(message)
+    if not safe:
+        return jsonify({
+            'success': False,
+            'error': response,
+            'category': category,
+            'blocked': True
+        }), 403
+    
+    # 2. 正常处理
+    try:
+        resp = requests.post("http://localhost:11434/api/generate",
+            json={"model": "llama3.2:3b", "prompt": message, "stream": False},
+            timeout=60)
+        output = resp.json().get('response', '')
+        
+        # 3. 输出安全检查
+        safe_out, error_msg = safety_guard.check_output(output)
+        if not safe_out:
+            return jsonify({
+                'success': False,
+                'error': error_msg,
+                'blocked': True
+            }), 403
+        
+        # 记录正常对话
+        return jsonify({
+            'success': True,
+            'message': output,
+            'blocked': False
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/safety/stats', methods=['GET'])
+def safety_stats():
+    """获取安全统计"""
+    return jsonify(safety_guard.get_stats())
+
+# ========== 文件处理 API ==========
+from skills.file_processor import skill as file_skill
+
+def upload_file():
+    """上传文件"""
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No filename'}), 400
+    
+    # 保存文件
+    from pathlib import Path
+    upload_dir = Path("data/uploads")
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    save_path = upload_dir / file.filename
+    file.save(save_path)
+    
+    return jsonify({
+        'success': True,
+        'filename': file.filename,
+        'size': save_path.stat().st_size,
+        'path': str(save_path)
+    })
+
+def read_file(filename):
+    """读取上传的文件"""
+    from pathlib import Path
+    file_path = Path("data/uploads") / filename
+    result = file_skill.read_file(str(file_path))
+    return jsonify(result)
+
+def list_files():
+    """列出上传的文件"""
+    result = file_skill.list_files()
+    return jsonify(result)
+
+# ========== 文件处理 API ==========
+from skills.file_processor import skill as file_skill
+from pathlib import Path
+
+def list_uploaded_files():
+    """列出上传的文件"""
+    result = file_skill.list_files()
+    return jsonify(result)
+
+def upload_file():
+    """上传文件"""
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No filename'}), 400
+    
+    upload_dir = Path("data/uploads")
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    save_path = upload_dir / file.filename
+    file.save(save_path)
+    
+    return jsonify({
+        'success': True,
+        'filename': file.filename,
+        'size': save_path.stat().st_size,
+        'path': str(save_path)
+    })
+
+def read_uploaded_file(filename):
+    """读取上传的文件"""
+    file_path = Path("data/uploads") / filename
+    if not file_path.exists():
+        return jsonify({'error': 'File not found'}), 404
+    result = file_skill.read_file(str(file_path))
+    return jsonify(result)
+
+
+
+
+# ========== 多智能体协作 API ==========
+# 多智能体通过独立服务调用 (端口 5006)
+@app.route('/api/multi/agents', methods=['GET'])
+def multi_agents():
+    return jsonify({'agents': _multi_orch.list_agents()})
+
+@app.route('/api/multi/execute', methods=['POST'])
+def multi_execute():
+    data = request.json
+    goal = data.get('goal', '')
+    if not goal:
+        return jsonify({'error': 'Goal required'}), 400
+    result = _multi_orch.execute(goal)
+    return jsonify(result)
+
+
+if __name__ == '__main__':
+    print("\n" + "="*50)
+    print("✅ ClawsJoy 网关启动")
+    print("="*50)
+    print("访问: http://localhost:5002")
+    print("="*50)
+    app.run(host='0.0.0.0', port=5002, debug=False)
+
+# ========== 多智能体协作 API ==========
+# 多智能体通过独立服务调用 (端口 5006)
+def multi_agent_run():
+    """运行多智能体协作"""
+    data = request.json
+    goal = data.get('goal', '')
+    
+    if not goal:
+        return jsonify({'error': 'Goal required'}), 400
+    
+    result = orchestrator.run(goal)
+    return jsonify(result)
+
+def multi_agent_list():
+    """列出所有 Agent"""
+    return jsonify({'agents': orchestrator.registry.list_agents()})
+
+# ========== 多智能体协作 API ==========
+# 多智能体通过独立服务调用 (端口 5006)
+def multi_execute():
+    data = request.json
+    goal = data.get('goal', '')
+    if not goal:
+        return jsonify({'error': 'Goal required'}), 400
+    result = _multi_orch.execute(goal)
+    return jsonify(result)
+
+def multi_agents():
+    return jsonify({'agents': _multi_orch.list_agents()})
+
+# ========== 多智能体协作 ==========
+# 多智能体通过独立服务调用 (端口 5006)
+def multi_agents():
+    return jsonify({'agents': _multi_orch.list_agents()})
+
+def multi_execute():
+    data = request.json
+    goal = data.get('goal', '')
+    if not goal:
+        return jsonify({'error': 'Goal required'}), 400
+    result = _multi_orch.execute(goal)
+    return jsonify(result)
+
+# ========== 多智能体代理（调用独立服务）==========
+import requests
+
+@app.route('/api/multi/agents', methods=['GET'])
+def multi_agents_proxy():
+    try:
+        resp = requests.get('http://localhost:5006/agents', timeout=5)
+        return jsonify(resp.json())
+    except Exception as e:
+        return jsonify({'error': str(e), 'agents': []})
+
+@app.route('/api/multi/execute', methods=['POST'])
+def multi_execute_proxy():
+    try:
+        resp = requests.post('http://localhost:5006/execute', 
+                            json=request.json, timeout=30)
+        return jsonify(resp.json())
+    except Exception as e:
+        return jsonify({'error': str(e), 'results': {}})

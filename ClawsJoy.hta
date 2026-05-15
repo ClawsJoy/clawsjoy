@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ClawsJoy AI 助手</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        iframe { width: 100%; height: 100vh; border: none; }
+    </style>
+    <hta:application 
+        id="ClawsJoy"
+        applicationname="ClawsJoy"
+        border="thin"
+        borderstyle="normal"
+        caption="yes"
+        icon="http://localhost:5002/favicon.ico"
+        maximizebutton="yes"
+        minimizebutton="yes"
+        showintaskbar="yes"
+        singleinstance="yes"
+        sysmenu="yes"
+        version="1.0"
+        windowstate="maximize"
+    />
+</head>
+<body>
+    <iframe src="http://localhost:5002"></iframe>
+    <script>
+        // 自动启动后端
+        var shell = new ActiveXObject("WScript.Shell");
+        shell.Run("wsl -d Ubuntu -- cd /mnt/d/clawsjoy && ./start.sh", 0, false);
+        setTimeout(function() {
+            document.querySelector('iframe').src = 'http://localhost:5002';
+        }, 2000);
+    </script>
+</body>
+</html>

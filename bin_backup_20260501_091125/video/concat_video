@@ -1,0 +1,17 @@
+#!/bin/bash
+# 合并多个视频
+# 用法: concat_video <输出文件> <视频1> <视频2> [视频3...]
+
+OUTPUT="$1"
+shift
+
+# 创建 concat 列表
+LIST_FILE="/tmp/concat_list_$$.txt"
+for video in "$@"; do
+    echo "file '$video'" >> "$LIST_FILE"
+done
+
+ffmpeg -f concat -safe 0 -i "$LIST_FILE" -c copy -y "$OUTPUT" -loglevel error
+rm -f "$LIST_FILE"
+
+echo "✅ 合并完成: $OUTPUT (共 $# 个视频)"

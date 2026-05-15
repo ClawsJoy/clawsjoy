@@ -1,0 +1,8 @@
+{
+  "tenant_id": "tenant_1",
+  "alert_webhooks": {
+    "dingtalk": "https://oapi.dingtalk.com/robot/send?token=xxx"
+  },
+  "preferences": {},
+  "created_at": "2026-01-01T00:00:00"
+}

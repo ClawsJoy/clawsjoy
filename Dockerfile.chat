@@ -1,0 +1,14 @@
+FROM python:3.9-slim
+
+WORKDIR /app
+
+RUN pip install --no-cache-dir requests flask flask-cors -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+COPY bin/chat_api_agent.py /app/bin/
+COPY bin/error_utils.py /app/bin/
+
+WORKDIR /app/bin
+
+EXPOSE 8101
+
+CMD ["python3", "chat_api_agent.py"]

@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+venv/
+env/
+.venv/
+*.log
+*.pid
+*.pkl
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Data
+data/*.db
+data/*.db-journal
+logs/
+outbox/
+tenants/*/workspace/
+tenants/*/data/
+
+# Secrets
+config/.env
+config/webhook.json
+
+# 备份文件
+*.bak
+*.backup
+*.tar.gz
+bin_backup_*/
+skills_backup_*.tar.gz
+
+# 测试和覆盖率
+.coverage
+htmlcov/
+.pytest_cache/
+
+# 图片视频素材（不提交到 GitHub）
+web/images/
+web/videos/
+
+# 本地环境
+.env
+
+# 虚拟环境
+venv/
+
+# 临时文件
+*.tmp
+/tmp/

@@ -1,0 +1,25 @@
+# LLM 多模型配置
+default_provider: ollama
+
+providers:
+  ollama:
+    endpoint: http://127.0.0.1:11434
+    model: qwen2.5:7b
+    models:
+      - qwen2.5:7b
+      - qwen2.5:3b
+      - llama3.2:3b
+  
+  openai:
+    model: gpt-3.5-turbo
+    api_key: ${OPENAI_API_KEY}
+  
+  local:
+    endpoint: http://127.0.0.1:8000
+    model: local
+
+# 路由策略
+routing:
+  simple_tasks: ollama
+  complex_tasks: openai
+  fallback: ollama

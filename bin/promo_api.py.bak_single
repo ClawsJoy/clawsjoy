@@ -1,0 +1,183 @@
+#!/usr/bin/env python3
+"""Promo API - 完整版（集成图片处理）"""
+
+import json
+import os
+import uuid
+import time
+import requests
+import subprocess
+from pathlib import Path
+from http.server import HTTPServer, BaseHTTPRequestHandler
+
+# 配置
+UNSPLASH_KEY = "ijXPXhcaX2k5neNoQAzN1cw8DJl3i9gx8FlRnzspqKs"
+PORT = 8105
+BASE_DIR = Path("/mnt/d/clawsjoy")
+IMAGE_DIR = BASE_DIR / "web/images"
+VIDEO_DIR = BASE_DIR / "web/videos"
+AUDIO_DIR = BASE_DIR / "web/audio"
+
+# 创建目录
+IMAGE_DIR.mkdir(parents=True, exist_ok=True)
+VIDEO_DIR.mkdir(parents=True, exist_ok=True)
+AUDIO_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def process_image(image_path):
+    """使用 ImageMagick 优化图片"""
+    try:
+        cmd = f'convert "{image_path}" \
+            -resize 1920x1080^ -gravity center -extent 1920x1080 \
+            -contrast -sharpen 0x1 \
+            -modulate 100,120,100 \
+            "{image_path}" 2>/dev/null'
+        subprocess.run(cmd, shell=True)
+        return True
+    except Exception as e:
+        print(f"图片处理失败: {e}")
+        return False
+
+
+def fetch_images(keyword, count=8):
+    """从 Unsplash 采集图片并自动处理"""
+    headers = {"Authorization": f"Client-ID {UNSPLASH_KEY}"}
+    params = {"query": keyword, "per_page": count, "orientation": "landscape"}
+    
+    try:
+        resp = requests.get("https://api.unsplash.com/search/photos", 
+                           headers=headers, params=params, timeout=15)
+        if resp.status_code == 200:
+            images = []
+            for photo in resp.json().get('results', []):
+                img_url = photo['urls']['regular']
+                img_data = requests.get(img_url).content
+                img_name = f"{uuid.uuid4().hex}.jpg"
+                img_path = IMAGE_DIR / img_name
+                with open(img_path, 'wb') as f:
+                    f.write(img_data)
+                # 🔥 自动处理图片（修图）
+                process_image(str(img_path))
+                images.append(str(img_path))
+                print(f"✅ 已采集并处理: {img_name}")
+            return images
+    except Exception as e:
+        print(f"Unsplash 错误: {e}")
+    return []
+
+
+def generate_tts(text, output_path):
+    """生成配音"""
+    tts_url = "http://localhost:9000/api/tts"
+    try:
+        resp = requests.post(tts_url, json={"text": text}, timeout=30)
+        if resp.status_code == 200:
+            with open(output_path, 'wb') as f:
+                f.write(resp.content)
+            return True
+    except:
+        pass
+    return False
+
+
+class PromoHandler(BaseHTTPRequestHandler):
+    
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.end_headers()
+    
+    def do_POST(self):
+        if self.path == '/api/promo/make':
+            self._handle_promo()
+        else:
+            self.send_error(404)
+    
+    def _handle_promo(self):
+        try:
+            length = int(self.headers.get('Content-Length', 0))
+            data = json.loads(self.rfile.read(length))
+            
+            city = data.get('city', '香港')
+            style = data.get('style', '人文')
+            topic = data.get('topic', '')
+            user_script = data.get('script', '')
+            
+            print(f"🎬 生成视频: {city} {style}")
+            print(f"📝 话题: {topic}")
+            
+            # 确定关键词
+            keyword = topic[:30] if topic else f"{city} {style}"
+            
+            # 采集图片（自动处理）
+            images = fetch_images(keyword, 8)
+            if not images:
+                images = fetch_images(city, 6)
+            
+            if not images:
+                self.send_json({"success": False, "error": "No images available"})
+                return
+            
+            # 确定脚本
+            if user_script:
+                script = user_script
+            elif topic:
+                script = f"欢迎收看本期视频！今天我们来聊聊{topic}。"
+            else:
+                script = f"欢迎来到{city}！感受这里的{style}魅力。"
+            
+            # 生成配音
+            audio_file = AUDIO_DIR / f"narration_{int(time.time())}.mp3"
+            has_audio = generate_tts(script, audio_file)
+            
+            # 制作视频（单图+配音）
+            video_name = f"{city}_{int(time.time())}_quality.mp4"
+            video_path = VIDEO_DIR / video_name
+            
+            if has_audio and audio_file.exists():
+                cmd = f'ffmpeg -loop 1 -i "{images[0]}" -i "{audio_file}" -c:v libx264 -c:a aac -shortest -pix_fmt yuv420p -y "{video_path}"'
+            else:
+                cmd = f'ffmpeg -loop 1 -i "{images[0]}" -c:v libx264 -t 15 -pix_fmt yuv420p -y "{video_path}"'
+            
+            subprocess.run(cmd, shell=True, capture_output=True)
+            
+            # 生成封面
+            thumbnail_path = VIDEO_DIR / f"{video_path.stem}.jpg"
+            cmd_thumb = f'ffmpeg -i {video_path} -ss 00:00:01 -vframes 1 -q:v 2 {thumbnail_path} -y'
+            subprocess.run(cmd_thumb, shell=True, capture_output=True)
+            
+            # 清理临时文件
+            if audio_file.exists():
+                os.remove(audio_file)
+            
+            if video_path.exists():
+                self.send_json({
+                    "success": True,
+                    "video_url": f"/videos/{video_name}",
+                    "thumbnail_url": f"/videos/{thumbnail_path.name}",
+                    "message": f"{city}{style}宣传片已生成",
+                    "topic": topic,
+                    "has_narration": has_audio,
+                    "image_count": len(images),
+                    "image_processed": True
+                })
+            else:
+                self.send_json({"success": False, "error": "视频生成失败"})
+                
+        except Exception as e:
+            print(f"错误: {e}")
+            self.send_json({"success": False, "error": str(e)})
+    
+    def send_json(self, data, status=200):
+        self.send_response(status)
+        self.send_header('Content-Type', 'application/json')
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.end_headers()
+        self.wfile.write(json.dumps(data, ensure_ascii=False).encode())
+
+
+if __name__ == '__main__':
+    print(f"🎬 Promo API (图片处理已集成) on port {PORT}")
+    HTTPServer(('0.0.0.0', PORT), PromoHandler).serve_forever()

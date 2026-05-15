@@ -1,0 +1,12 @@
+{
+  "name": "text_to_image",
+  "version": "1.0.0",
+  "description": "\u6587\u672c\u8f6c\u56fe\u7247",
+  "category": "image",
+  "price": 0.99,
+  "author": "ClawsJoy",
+  "tags": [
+    "image",
+    "text_to_image"
+  ]
+}

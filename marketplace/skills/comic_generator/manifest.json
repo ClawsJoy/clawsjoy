@@ -1,0 +1,12 @@
+{
+  "name": "comic_generator",
+  "version": "1.0.0",
+  "description": "\u6f2b\u753b\u751f\u6210\u5668",
+  "category": "image",
+  "price": 0.99,
+  "author": "ClawsJoy",
+  "tags": [
+    "image",
+    "comic_generator"
+  ]
+}

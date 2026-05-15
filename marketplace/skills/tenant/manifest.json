@@ -1,0 +1,12 @@
+{
+  "name": "tenant",
+  "version": "1.0.0",
+  "description": "\u79df\u6237\u7ba1\u7406",
+  "category": "api",
+  "price": 0.99,
+  "author": "ClawsJoy",
+  "tags": [
+    "api",
+    "tenant"
+  ]
+}

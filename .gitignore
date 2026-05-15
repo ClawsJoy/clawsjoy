@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+
+# 本地数据
+data/
+logs/
+output/
+
+# 敏感文件
+.env
+*.pickle
+*.token
+*_token*
+secrets.json
+client_secrets.json
+*.pem
+*.key
+
+# 配置
+config/local.yaml
+
+# IDE
+.idea/
+.vscode/
+
+# 备份
+*.tar.gz
+*.bak

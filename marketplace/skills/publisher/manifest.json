@@ -1,0 +1,12 @@
+{
+  "name": "publisher",
+  "version": "1.0.0",
+  "description": "\u5185\u5bb9\u53d1\u5e03",
+  "category": "publish",
+  "price": 0.99,
+  "author": "ClawsJoy",
+  "tags": [
+    "publish",
+    "publisher"
+  ]
+}

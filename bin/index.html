@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="config.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Joy Mate</title>
+    <script>
+        // 动态获取 API 地址
+        (function() {
+            const host = window.location.hostname;
+            const isLocal = host === 'localhost' || host === '127.0.0.1';
+            const base = isLocal ? 'http://localhost' : `http://${host}`;
+            
+            window.API = {
+                tenant: `${base}:8088/api/tenants`,
+                libraryList: `${base}:8084/api/library/list?tenant_id=1`,
+                libraryUpload: `${base}:8084/api/library/upload`,
+                libraryFile: (id) => `${base}:8084/api/library/file/${id}?tenant_id=1`,
+                taskPromo: `${base}:8084/api/task/promo`,
+                agent: `${base}:8087/api/agent`,
+                coffee: `${base}:8085/api/coffee/shops`,
+                health: `${base}:8092/api/auth/health`
+            };
+            console.log('API 配置:', window.API);
+        })();
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0a0f;
+            color: #e0e0e0;
+            font-family: system-ui, -apple-system, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: radial-gradient(ellipse at 20% 30%, #0f0f1a, #050508);
+        }
+        .status-bar {
+            padding: 8px 16px;
+            background: rgba(10,10,20,0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0,255,255,0.2);
+            font-size: 12px;
+            font-family: monospace;
+        }
+        .broadcast-bar {
+            background: rgba(0,20,30,0.7);
+            padding: 8px 16px;
+            font-size: 12px;
+            color: #0ff;
+            text-align: center;
+            border-bottom: 1px solid #0ff3;
+        }
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .msg {
+            max-width: 80%;
+            padding: 10px 16px;
+            border-radius: 18px;
+            font-size: 14px;
+        }
+        .user {
+            background: linear-gradient(135deg, #0a2a3a, #0a1a2a);
+            border: 1px solid #0ff;
+            align-self: flex-end;
+        }
+        .bot {
+            background: rgba(20,20,40,0.8);
+            border: 1px solid #3a3a5a;
+            align-self: flex-start;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            padding: 12px 16px;
+            background: rgba(10,10,20,0.8);
+            border-top: 1px solid #0ff2;
+            border-bottom: 1px solid #0ff2;
+        }
+        .action-btn {
+            flex: 1;
+            background: #0f1a2a;
+            border: 1px solid #2a4a6a;
+            border-radius: 16px;
+            padding: 12px 8px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #0ff;
+            text-align: center;
+            cursor: pointer;
+        }
+        .action-btn:active { transform: scale(0.96); background: #1a3a5a; }
+        .input-row {
+            display: flex;
+            gap: 10px;
+            padding: 12px 16px;
+            background: rgba(10,10,20,0.8);
+        }
+        .input-row input {
+            flex: 1;
+            padding: 12px 16px;
+            background: #0f0f1a;
+            border: 1px solid #2a4a6a;
+            border-radius: 30px;
+            color: #0ff;
+        }
+        .input-row button {
+            padding: 12px 20px;
+            background: #0f2a3a;
+            border: 1px solid #0ff;
+            border-radius: 30px;
+            color: #0ff;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .bottom-toolbar {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 12px 20px;
+            background: rgba(10,10,20,0.9);
+            border-top: 1px solid #0ff3;
+        }
+        .tool-btn {
+            background: #0f1a2a;
+            border: 1px solid #2a4a6a;
+            border-radius: 50%;
+            width: 56px;
+            height: 56px;
+            font-size: 26px;
+            cursor: pointer;
+        }
+        .mic-btn {
+            width: 70px;
+            height: 70px;
+            font-size: 34px;
+            background: linear-gradient(135deg, #0f2a3a, #0a1a2a);
+            border: 2px solid #0ff;
+        }
+        .mic-btn.listening {
+            background: #3a0a2a;
+            border-color: #f0f;
+            animation: pulse 0.5s infinite;
+        }
+        @keyframes pulse {
+            0%,100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .library-modal {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10,10,20,0.95);
+            border-radius: 20px 20px 0 0;
+            z-index: 1000;
+            transform: translateY(100%);
+            transition: transform 0.3s;
+            max-height: 70vh;
+            display: flex;
+            flex-direction: column;
+            border-top: 2px solid #0ff;
+        }
+        .library-modal.open { transform: translateY(0); }
+        .library-header {
+            padding: 16px;
+            border-bottom: 1px solid #2a4a6a;
+            display: flex;
+            justify-content: space-between;
+            color: #0ff;
+        }
+        .library-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+        .file-item {
+            padding: 12px;
+            border-bottom: 1px solid #1a2a3a;
+            display: flex;
+            justify-content: space-between;
+        }
+        .upload-area {
+            padding: 16px;
+            display: flex;
+            gap: 12px;
+            border-bottom: 1px solid #2a4a6a;
+        }
+        .upload-area input { flex:1; background:#0f0f1a; border:1px solid #0ff; border-radius:8px; padding:8px; color:#0ff; }
+        .upload-area button { background:#0f2a3a; border:1px solid #0ff; border-radius:8px; padding:8px 16px; color:#0ff; cursor:pointer; }
+        .close-btn { background: none; border: none; color: #0ff; font-size: 24px; cursor: pointer; }
+    </style>
+</head>
+<body>
+<div class="app">
+    <div class="status-bar">⚡ CLAWSJOY AI READY</div>
+    <div class="broadcast-bar" id="broadcastBar">🎉 尊敬的会员，您的会员号是 1</div>
+    <div class="chat-area" id="chatArea"></div>
+    
+    <div class="action-buttons">
+        <button class="action-btn" id="promoBtn">🎬 宣传片</button>
+        <button class="action-btn" id="coffeeBtn">☕ 咖啡</button>
+        <button class="action-btn" id="orderBtn">📋 订单</button>
+    </div>
+    
+    <div class="input-row">
+        <input type="text" id="textInput" placeholder="输入消息..." onkeypress="if(event.keyCode===13)sendMsg()">
+        <button onclick="sendMsg()">发送</button>
+    </div>
+    
+    <div class="bottom-toolbar">
+        <button class="tool-btn" id="folderBtn">📁</button>
+        <button class="tool-btn mic-btn" id="micBtn">🎤</button>
+        <button class="tool-btn" id="speakBtn">🔊</button>
+    </div>
+</div>
+
+<div id="libraryModal" class="library-modal">
+    <div class="library-header"><span>📁 资料库</span><button class="close-btn" id="closeModalBtn">✕</button></div>
+    <div class="upload-area"><input type="file" id="uploadFile" multiple><button id="uploadBtn">上传</button></div>
+    <div class="library-content" id="fileList">📂 加载中...</div>
+</div>
+
+<script>
+// 全局变量
+let isSpeakingEnabled = true;
+let currentRecognition = null;
+
+function addMsg(role, text) {
+    const chat = document.getElementById('chatArea');
+    const div = document.createElement('div');
+    div.className = 'msg ' + role;
+    div.innerText = text;
+    chat.appendChild(div);
+    div.scrollIntoView({ behavior: 'smooth' });
+    
+    if (role === 'bot' && isSpeakingEnabled && text) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'zh-CN';
+        utterance.rate = 0.9;
+        speechSynthesis.cancel();
+        speechSynthesis.speak(utterance);
+    }
+}
+
+async function sendMsg() {
+    const input = document.getElementById('textInput');
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    addMsg('user', text);
+    addMsg('bot', '🤔 思考中...');
+    
+    try {
+        const res = await fetch(window.API.agent, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: text, tenant_id: '1' })
+        });
+        const data = await res.json();
+        const last = document.querySelectorAll('.msg.bot');
+        if (last.length) last[last.length-1].remove();
+        addMsg('bot', data.message || data.reply || '收到');
+    } catch(e) {
+        const last = document.querySelectorAll('.msg.bot');
+        if (last.length) last[last.length-1].remove();
+        addMsg('bot', '❌ 网络错误: ' + e.message);
+    }
+}
+
+// 宣传片
+document.getElementById('promoBtn').onclick = () => {
+    addMsg('user', '制作香港宣传片');
+    addMsg('bot', '🎬 生成中...');
+    fetch(window.API.taskPromo, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ city: '香港', tenant_id: '1' })
+    }).then(res => res.json()).then(data => {
+        const last = document.querySelectorAll('.msg.bot');
+        if (last.length) last[last.length-1].remove();
+        if (data.success) {
+            addMsg('bot', '✅ 宣传片已生成');
+            const videoDiv = document.createElement('div');
+            videoDiv.className = 'msg bot';
+            videoDiv.innerHTML = `<video controls style="max-width:100%; border-radius:8px" src="${data.video_url}"></video>`;
+            document.getElementById('chatArea').appendChild(videoDiv);
+        } else {
+            addMsg('bot', '❌ 生成失败');
+        }
+    }).catch(e => {
+        const last = document.querySelectorAll('.msg.bot');
+        if (last.length) last[last.length-1].remove();
+        addMsg('bot', '❌ 网络错误');
+    });
+};
+
+// 咖啡
+document.getElementById('coffeeBtn').onclick = () => {
+    addMsg('user', '咖啡');
+    addMsg('bot', '☕ 获取中...');
+    fetch(window.API.coffee).then(res => res.json()).then(data => {
+        const last = document.querySelectorAll('.msg.bot');
+        if (last.length) last[last.length-1].remove();
+        if (data.shops) {
+            addMsg('bot', `☕ ${data.shops.map(s => s.name).join('、')}`);
+        } else {
+            addMsg('bot', '☕ 暂无店铺');
+        }
+    }).catch(() => addMsg('bot', '❌ 网络错误'));
+};
+
+// 订单
+document.getElementById('orderBtn').onclick = () => addMsg('bot', '📋 订单功能开发中');
+
+// 语音开关
+document.getElementById('speakBtn').onclick = () => {
+    isSpeakingEnabled = !isSpeakingEnabled;
+    const btn = document.getElementById('speakBtn');
+    btn.style.opacity = isSpeakingEnabled ? '1' : '0.5';
+};
+
+// 语音识别（按住录音）
+const mic = document.getElementById('micBtn');
+let isRecording = false;
+
+mic.addEventListener('mousedown', startVoice);
+mic.addEventListener('touchstart', startVoice);
+mic.addEventListener('mouseup', stopVoice);
+mic.addEventListener('touchend', stopVoice);
+
+function startVoice(e) {
+    e.preventDefault();
+    if (isRecording) return;
+    isRecording = true;
+    mic.classList.add('listening');
+    addMsg('bot', '🎤 请说话...');
+    
+    if ('webkitSpeechRecognition' in window) {
+        currentRecognition = new webkitSpeechRecognition();
+        currentRecognition.lang = 'zh-CN';
+        currentRecognition.continuous = false;
+        currentRecognition.interimResults = false;
+        currentRecognition.onresult = (event) => {
+            const text = event.results[0][0].transcript;
+            document.getElementById('textInput').value = text;
+            sendMsg();
+        };
+        currentRecognition.onend = () => {
+            mic.classList.remove('listening');
+            isRecording = false;
+        };
+        currentRecognition.start();
+    } else {
+        alert('浏览器不支持语音识别');
+        mic.classList.remove('listening');
+        isRecording = false;
+    }
+}
+
+function stopVoice() {
+    if (currentRecognition) {
+        currentRecognition.stop();
+    }
+}
+
+// 资料库
+const modal = document.getElementById('libraryModal');
+document.getElementById('folderBtn').onclick = () => {
+    modal.classList.add('open');
+    loadFiles();
+};
+document.getElementById('closeModalBtn').onclick = () => modal.classList.remove('open');
+
+async function loadFiles() {
+    const container = document.getElementById('fileList');
+    container.innerHTML = '📂 加载中...';
+    try {
+        const res = await fetch(window.API.libraryList);
+        const data = await res.json();
+        if (!data.success || !data.files.length) {
+            container.innerHTML = '📭 暂无文件';
+            return;
+        }
+        container.innerHTML = data.files.map(f => `
+            <div class="file-item">
+                <span>📄 ${f.name}</span>
+                <button onclick="window.open('${window.API.libraryFile(f.id)}', '_blank')" style="background:transparent; border:1px solid #0ff; border-radius:6px; padding:4px 12px; color:#0ff;">预览</button>
+            </div>
+        `).join('');
+    } catch(e) {
+        container.innerHTML = '❌ 加载失败';
+    }
+}
+
+document.getElementById('uploadBtn').onclick = async () => {
+    const input = document.getElementById('uploadFile');
+    const files = input.files;
+    if (!files.length) return;
+    for (let f of files) {
+        const fd = new FormData();
+        fd.append('tenant_id', '1');
+        fd.append('file', f);
+        try {
+            const res = await fetch(window.API.libraryUpload, { method: 'POST', body: fd });
+            const data = await res.json();
+            if (data.success) alert(`✅ 上传成功: ${f.name}`);
+            else alert(`❌ 上传失败: ${f.name}`);
+        } catch(e) {
+            alert(`❌ 上传失败`);
+        }
+    }
+    input.value = '';
+    loadFiles();
+};
+
+// 租户ID显示
+const tid = new URLSearchParams(location.search).get('tenant') || '1';
+document.getElementById('broadcastBar').innerHTML = `🎉 尊敬的会员，您的会员号是 ${tid}`;
+
+console.log('✅ Joy Mate 已启动，API:', window.API);
+</script>
+</body>
+</html>

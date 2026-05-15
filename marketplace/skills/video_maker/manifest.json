@@ -1,0 +1,12 @@
+{
+  "name": "video_maker",
+  "version": "1.0.0",
+  "description": "\u6839\u636e\u811a\u672c\u751f\u6210\u89c6\u9891",
+  "category": "video",
+  "price": 0.99,
+  "author": "ClawsJoy",
+  "tags": [
+    "video",
+    "video_maker"
+  ]
+}
