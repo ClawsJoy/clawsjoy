@@ -31,3 +31,20 @@ config/local.yaml
 *.tar.gz
 *.bak
 .env
+config/youtube/
+data/youtube_token.pickle
+
+# YouTube 敏感配置
+config/youtube/
+data/youtube_token.pickle
+data/youtube_*.pickle
+*.pickle
+
+# 环境变量
+.env
+.env.local
+.env.*.local
+
+# OAuth 凭证
+*_secret*.json
+*client_secrets*.json
