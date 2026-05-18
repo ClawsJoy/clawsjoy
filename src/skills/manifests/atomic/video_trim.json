@@ -1,0 +1,8 @@
+{
+  "name": "video_trim",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "视频裁剪",
+  "category": "video",
+  "author": "ClawsJoy"
+}

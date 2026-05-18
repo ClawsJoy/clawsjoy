@@ -1,0 +1,10 @@
+{
+  "name": "科技蓝紫",
+  "colors": ["#1a1a2e", "#16213e", "#0f3460", "#e94560"],
+  "fonts": {"title": "思源黑体", "body": "思源黑体"},
+  "layouts": {
+    "title": {"align": "center", "size": 48},
+    "content": {"align": "left", "size": 22},
+    "code": {"font": "Consolas", "size": 16, "bg": "#1e1e2e"}
+  }
+}

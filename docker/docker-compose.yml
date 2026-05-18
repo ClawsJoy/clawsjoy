@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  clawsjoy:
+    build: .
+    container_name: clawsjoy
+    ports:
+      - "5002:5002"   # API Gateway
+      - "5003:5003"   # File Service
+      - "5005:5005"   # Multi-Agent
+      - "5008:5008"   # Doc Generator
+      - "5010:5010"   # Agent API
+      - "5011:5011"   # Web Dashboard
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./output:/app/output
+      - ./config:/app/config
+    environment:
+      - OLLAMA_ENABLED=${OLLAMA_ENABLED:-false}
+      - OLLAMA_HOST=${OLLAMA_HOST:-host.docker.internal}
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # 可选：本地 Ollama 服务
+  ollama:
+    image: ollama/ollama:latest
+    container_name: clawsjoy-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./ollama-data:/root/.ollama
+    restart: unless-stopped
+    profiles:
+      - with-ollama
+
+networks:
+  default:
+    name: clawsjoy-network

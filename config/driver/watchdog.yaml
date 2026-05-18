@@ -1,0 +1,14 @@
+# 看门狗配置 v1.0.0
+
+check_interval: 60           # 检查间隔（秒）
+heartbeat_timeout: 120       # 心跳超时（秒）
+startup_grace_period: 30     # 启动缓冲期（秒），期间不检查心跳
+auto_restart: true           # 是否自动重启
+max_restart_attempts: 5      # 最大重启次数
+restart_cooldown: 30         # 重启冷却（秒）
+
+monitored_agents:
+  - decision_agent
+  - chat_agent
+  - executor_agent
+  - collector_agent

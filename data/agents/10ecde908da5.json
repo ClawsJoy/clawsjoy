@@ -1,0 +1,12 @@
+{
+  "config": {
+    "name": "Python \u4e13\u5bb6",
+    "type": "code",
+    "description": "\u4e13\u6ce8 Python \u7f16\u7a0b\u3001\u6846\u67b6\u4f7f\u7528\u3001\u6027\u80fd\u4f18\u5316",
+    "system_prompt": "You are Python \u4e13\u5bb6, \u4e13\u6ce8 Python \u7f16\u7a0b\u3001\u6846\u67b6\u4f7f\u7528\u3001\u6027\u80fd\u4f18\u5316",
+    "model": "llama3.2:3b",
+    "created_at": "2026-05-11T15:30:54.793717"
+  },
+  "training_data": [],
+  "custom_knowledge": []
+}

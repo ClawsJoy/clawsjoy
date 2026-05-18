@@ -1,0 +1,94 @@
+{
+  "alerts": [
+    {
+      "type": "api_down",
+      "message": "API \u8fde\u7eed 3 \u6b21\u65e0\u54cd\u5e94",
+      "severity": "critical",
+      "timestamp": "2026-05-12T15:36:11.851526"
+    },
+    {
+      "type": "api_down",
+      "message": "API \u8fde\u7eed 3 \u6b21\u65e0\u54cd\u5e94",
+      "severity": "critical",
+      "timestamp": "2026-05-12T15:38:30.178817"
+    },
+    {
+      "type": "api_down",
+      "message": "API \u8fde\u7eed 3 \u6b21\u65e0\u54cd\u5e94",
+      "severity": "critical",
+      "timestamp": "2026-05-12T15:40:22.466224"
+    },
+    {
+      "type": "api_down",
+      "message": "API \u8fde\u7eed 3 \u6b21\u65e0\u54cd\u5e94",
+      "severity": "critical",
+      "timestamp": "2026-05-12T16:47:17.837714"
+    },
+    {
+      "type": "api_down",
+      "message": "API \u8fde\u7eed 3 \u6b21\u65e0\u54cd\u5e94",
+      "severity": "critical",
+      "timestamp": "2026-05-12T16:49:38.644269"
+    },
+    {
+      "type": "api_down",
+      "message": "API \u8fde\u7eed 3 \u6b21\u65e0\u54cd\u5e94",
+      "severity": "critical",
+      "timestamp": "2026-05-12T16:51:29.019215"
+    },
+    {
+      "type": "api_down",
+      "message": "API \u8fde\u7eed 3 \u6b21\u65e0\u54cd\u5e94",
+      "severity": "critical",
+      "timestamp": "2026-05-12T16:53:24.923676"
+    },
+    {
+      "type": "api_down",
+      "message": "API \u8fde\u7eed 3 \u6b21\u65e0\u54cd\u5e94",
+      "severity": "critical",
+      "timestamp": "2026-05-12T16:55:17.078565"
+    },
+    {
+      "type": "api_down",
+      "message": "API \u8fde\u7eed 3 \u6b21\u65e0\u54cd\u5e94",
+      "severity": "critical",
+      "timestamp": "2026-05-12T16:57:11.859334"
+    },
+    {
+      "type": "api_down",
+      "message": "API \u8fde\u7eed 3 \u6b21\u65e0\u54cd\u5e94",
+      "severity": "critical",
+      "timestamp": "2026-05-12T16:58:53.156420"
+    },
+    {
+      "type": "api_down",
+      "message": "API \u8fde\u7eed 3 \u6b21\u65e0\u54cd\u5e94",
+      "severity": "critical",
+      "timestamp": "2026-05-12T17:00:46.088338"
+    },
+    {
+      "type": "api_down",
+      "message": "API \u8fde\u7eed 3 \u6b21\u65e0\u54cd\u5e94",
+      "severity": "critical",
+      "timestamp": "2026-05-12T17:02:39.593014"
+    },
+    {
+      "type": "api_down",
+      "message": "API \u8fde\u7eed 3 \u6b21\u65e0\u54cd\u5e94",
+      "severity": "critical",
+      "timestamp": "2026-05-12T17:04:28.187300"
+    },
+    {
+      "type": "api_down",
+      "message": "API \u8fde\u7eed 3 \u6b21\u65e0\u54cd\u5e94",
+      "severity": "critical",
+      "timestamp": "2026-05-12T17:06:18.967304"
+    },
+    {
+      "type": "api_down",
+      "message": "API \u8fde\u7eed 3 \u6b21\u65e0\u54cd\u5e94",
+      "severity": "critical",
+      "timestamp": "2026-05-12T17:08:07.088088"
+    }
+  ]
+}

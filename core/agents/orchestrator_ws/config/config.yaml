@@ -1,0 +1,5 @@
+# orchestrator 工作区配置
+agent_id: orchestrator
+workspace: ./workspace
+memory: ./memory
+created: 2026-05-17T08:26:40+08:00

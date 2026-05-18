@@ -1,0 +1,12 @@
+{
+  "timestamp": "2026-05-12T20:59:27.307602",
+  "recommendations": [
+    {
+      "type": "learning",
+      "priority": "low",
+      "title": "\u79ef\u7d2f\u6700\u4f73\u5b9e\u8df5",
+      "description": "\u6700\u4f73\u5b9e\u8df5\u8f83\u5c11\uff0c\u7cfb\u7edf\u8fd8\u5728\u5b66\u4e60\u9636\u6bb5",
+      "action": "\u6301\u7eed\u4f7f\u7528\u7cfb\u7edf\u4f1a\u81ea\u52a8\u5b66\u4e60"
+    }
+  ]
+}

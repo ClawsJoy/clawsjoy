@@ -1,0 +1,26 @@
+{
+  "skills": {},
+  "patterns": [
+    {
+      "pattern": "生成一个中年男人的形象",
+      "skill": "unknown",
+      "learned_at": "2026-05-17T19:43:10.954638",
+      "success_rate": 0.25
+    },
+    {
+      "pattern": " 你好，我需要做漫剧人物设计，你可以帮我吗，",
+      "skill": "unknown",
+      "learned_at": "2026-05-17T19:44:01.126538",
+      "success_rate": 0.4
+    },
+    {
+      "pattern": "图片出来了吗",
+      "skill": "unknown",
+      "learned_at": "2026-05-17T20:06:11.612608",
+      "success_rate": 0.5714285714285714
+    }
+  ],
+  "learned_responses": {},
+  "intent_mappings": [],
+  "last_updated": "2026-05-17T20:06:11.612616"
+}

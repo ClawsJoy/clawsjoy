@@ -1,0 +1,13 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+RUN pip install --no-cache-dir edge-tts requests
+
+COPY bin/tts_server_stable.py /app/bin/
+
+WORKDIR /app/bin
+
+EXPOSE 9000
+
+CMD ["python3", "tts_server_stable.py"]

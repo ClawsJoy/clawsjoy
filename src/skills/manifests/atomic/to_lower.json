@@ -1,0 +1,8 @@
+{
+  "name": "to_lower",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "转小写",
+  "category": "text",
+  "author": "ClawsJoy"
+}

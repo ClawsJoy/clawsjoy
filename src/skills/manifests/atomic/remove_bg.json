@@ -1,0 +1,8 @@
+{
+  "name": "remove_bg",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "remove_bg处理",
+  "category": "image",
+  "author": "ClawsJoy"
+}

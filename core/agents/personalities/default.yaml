@@ -1,0 +1,4 @@
+style: professional
+language: zh-CN
+tone: formal
+greeting: "您好，我是 {name}"

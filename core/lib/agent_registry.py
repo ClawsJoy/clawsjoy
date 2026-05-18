@@ -1,0 +1,84 @@
+#!/usr/bin/env python3
+"""Agent 注册中心 - 修复版"""
+
+import json
+from pathlib import Path
+from datetime import datetime
+from typing import Dict, Any, Optional, List
+
+class AgentRegistry:
+    """Agent 注册中心"""
+    
+    VERSION = "1.0.0"
+    
+    def __init__(self, registry_file: str = "data/agent_registry.json"):
+        self.registry_file = Path(registry_file)
+        self.agents = self._load()
+    
+    def _load(self) -> Dict:
+        """加载注册表"""
+        if self.registry_file.exists():
+            with open(self.registry_file, 'r') as f:
+                data = json.load(f)
+                # 兼容不同格式
+                if isinstance(data, dict) and 'agents' in data:
+                    return data['agents']
+                return data if isinstance(data, dict) else {}
+        return {}
+    
+    def _save(self):
+        """保存注册表"""
+        self.registry_file.parent.mkdir(parents=True, exist_ok=True)
+        with open(self.registry_file, 'w') as f:
+            json.dump(self.agents, f, indent=2)
+    
+    def register(self, agent_id: str, agent_info: Dict) -> bool:
+        """注册 Agent"""
+        self.agents[agent_id] = {
+            **agent_info,
+            "registered_at": datetime.now().isoformat(),
+            "status": "active"
+        }
+        self._save()
+        return True
+    
+    def unregister(self, agent_id: str) -> bool:
+        """注销 Agent"""
+        if agent_id in self.agents:
+            self.agents[agent_id]["status"] = "inactive"
+            self.agents[agent_id]["unregistered_at"] = datetime.now().isoformat()
+            self._save()
+            return True
+        return False
+    
+    def get(self, agent_id: str) -> Optional[Dict]:
+        """获取 Agent 信息"""
+        return self.agents.get(agent_id)
+    
+    def list_all(self) -> Dict:
+        """列出所有 Agent"""
+        return self.agents
+    
+    def get_active(self) -> List[str]:
+        """获取活跃 Agent 列表"""
+        return [aid for aid, info in self.agents.items() if info.get("status") == "active"]
+    
+    def get_stats(self) -> Dict:
+        """获取统计"""
+        return {
+            "total": len(self.agents),
+            "active": len(self.get_active()),
+            "agents": list(self.agents.keys())
+        }
+
+
+agent_registry = AgentRegistry()
+
+
+if __name__ == "__main__":
+    print(f"Agent 注册中心 v{agent_registry.VERSION}")
+    
+    # 测试注册
+    agent_registry.register("test_agent", {"name": "测试Agent", "type": "test"})
+    print(f"已注册: {agent_registry.list_all()}")
+    print(f"统计: {agent_registry.get_stats()}")

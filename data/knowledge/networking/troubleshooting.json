@@ -1,0 +1,13 @@
+{
+  "\u8bca\u65ad\u6b65\u9aa4": [
+    "1. \u68c0\u67e5\u7aef\u53e3\u76d1\u542c: ss -tlnp | grep {port}",
+    "2. \u68c0\u67e5\u8fdb\u7a0b: ps aux | grep {service}",
+    "3. \u68c0\u67e5\u65e5\u5fd7: tail -50 logs/{service}.log",
+    "4. \u6d4b\u8bd5\u8fde\u901a\u6027: curl -v http://localhost:{port}"
+  ],
+  "\u5e38\u7528\u547d\u4ee4": {
+    "\u67e5\u770b\u7aef\u53e3": "sudo lsof -i :{port}",
+    "\u67e5\u770b\u8fdb\u7a0b\u6811": "pstree -p {pid}",
+    "\u67e5\u770b\u7f51\u7edc\u8fde\u63a5": "netstat -an | grep {port}"
+  }
+}

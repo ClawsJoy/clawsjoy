@@ -1,0 +1,8 @@
+{
+  "name": "youtube_uploader",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "上传视频到YouTube",
+  "category": "network",
+  "author": "ClawsJoy"
+}

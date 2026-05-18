@@ -1,0 +1,20 @@
+[
+  {
+    "amount": -0.99,
+    "reason": "\u8d2d\u4e70 weather",
+    "balance": 199.01,
+    "timestamp": "2026-05-12T09:27:20.375125"
+  },
+  {
+    "amount": -0.99,
+    "reason": "\u8d2d\u4e70 weather",
+    "balance": 198.01999999999998,
+    "timestamp": "2026-05-12T09:28:39.199872"
+  },
+  {
+    "amount": -0.99,
+    "reason": "\u8d2d\u4e70 weather",
+    "balance": 197.02999999999997,
+    "timestamp": "2026-05-12T09:33:24.590914"
+  }
+]

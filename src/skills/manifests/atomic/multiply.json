@@ -1,0 +1,13 @@
+{
+  "name": "multiply",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "multiply运算",
+  "category": "math",
+  "author": "ClawsJoy",
+  "input_schema": {
+    "a": {"type": "number", "required": true},
+    "b": {"type": "number", "required": true}
+  },
+  "output_schema": {"result": {"type": "number"}, "success": {"type": "boolean"}}
+}

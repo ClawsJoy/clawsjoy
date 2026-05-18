@@ -1,0 +1,51 @@
+# Agent 核心规范 v2.0.0
+# 所有 Agent 必须遵循此规范
+
+version: "2.0.0"
+
+# ========== Agent 基础定义 ==========
+agent:
+  id: ""                    # 唯一标识
+  name: ""                  # 显示名称
+  type: "core|custom"       # core:系统核心, custom:自定义
+  version: "1.0.0"
+  status: "active|inactive|deprecated"
+  
+# ========== 能力声明 ==========
+capabilities:
+  - name: ""                # 能力名称
+    description: ""         # 能力描述
+    skills: []              # 关联技能
+    examples: []            # 使用示例
+
+# ========== 生命周期 ==========
+lifecycle:
+  init:                     # 初始化
+    auto_start: true        # 是否自动启动
+    timeout: 30             # 初始化超时(秒)
+  runtime:                  # 运行时
+    max_concurrent: 1       # 最大并发
+    queue_size: 100         # 队列大小
+  shutdown:                 # 关闭
+    graceful_timeout: 10    # 优雅关闭超时
+
+# ========== 通信配置 ==========
+communication:
+  protocol: "http|local"
+  endpoint: ""              # API 端点
+  port: 0                   # 端口
+  health_path: "/health"    # 健康检查路径
+
+# ========== 记忆配置 ==========
+memory:
+  enabled: true
+  ttl_days: 30              # 记忆保留天数
+  max_items: 1000           # 最大记忆数
+  private_workspace: true   # 独立工作区
+
+# ========== 执行配置 ==========
+execution:
+  timeout: 60               # 任务超时(秒)
+  retry: 3                  # 重试次数
+  retry_delay: 5            # 重试延迟(秒)
+  fallback: "default"       # 降级策略

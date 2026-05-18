@@ -1,0 +1,14 @@
+{
+  "id": "20260518_064926_8ed79d32.json",
+  "from": "decision",
+  "to": "chat",
+  "action": "generate_response",
+  "data": {
+    "user_input": "\u6211\u60f3\u8981\u6f2b\u5267\u4eba\u7269",
+    "session_id": "session_1779058166",
+    "suggested_response": "\u8bf7\u95ee\u60a8\u60f3\u8981\u751f\u6210\u4ec0\u4e48\uff1f"
+  },
+  "priority": 1,
+  "timestamp": "2026-05-18T06:49:26.764902",
+  "status": "pending"
+}

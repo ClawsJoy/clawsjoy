@@ -1,0 +1,66 @@
+{
+  "pending": {
+    "SecureGuard_20260508_223249_0": {
+      "id": "SecureGuard_20260508_223249_0",
+      "agent": "SecureGuard",
+      "action": "\u5b89\u88c5GitHub CLI",
+      "permission": "execute",
+      "reason": "\u9700\u8981GitHub CLI\u6765\u7ba1\u7406Actions\u548cSecrets\uff0c\u81ea\u52a8\u4fee\u590dCI/CD\u95ee\u9898",
+      "auth_level": "SUDO",
+      "status": "pending",
+      "created_at": "2026-05-08T22:32:49.287525",
+      "expires_at": "2026-05-08T22:37:49.287526",
+      "retry_count": 0
+    },
+    "SecureGuard_20260508_223319_1": {
+      "id": "SecureGuard_20260508_223319_1",
+      "agent": "SecureGuard",
+      "action": "\u5b89\u88c5GitHub CLI",
+      "permission": "execute",
+      "reason": "\u9700\u8981GitHub CLI\u6765\u7ba1\u7406Actions\u548cSecrets\uff0c\u81ea\u52a8\u4fee\u590dCI/CD\u95ee\u9898",
+      "auth_level": "SUDO",
+      "status": "pending",
+      "created_at": "2026-05-08T22:33:19.321241",
+      "expires_at": "2026-05-08T22:38:19.321242",
+      "retry_count": 0
+    },
+    "SecureGuard_20260508_223349_2": {
+      "id": "SecureGuard_20260508_223349_2",
+      "agent": "SecureGuard",
+      "action": "\u5b89\u88c5GitHub CLI",
+      "permission": "execute",
+      "reason": "\u9700\u8981GitHub CLI\u6765\u7ba1\u7406Actions\u548cSecrets\uff0c\u81ea\u52a8\u4fee\u590dCI/CD\u95ee\u9898",
+      "auth_level": "SUDO",
+      "status": "pending",
+      "created_at": "2026-05-08T22:33:49.359737",
+      "expires_at": "2026-05-08T22:38:49.359738",
+      "retry_count": 0
+    },
+    "SecureGuard_20260508_223419_3": {
+      "id": "SecureGuard_20260508_223419_3",
+      "agent": "SecureGuard",
+      "action": "\u4fee\u590d\u6587\u4ef6\u6743\u9650",
+      "permission": "execute",
+      "reason": "\u90e8\u5206\u811a\u672c\u7f3a\u5c11\u6267\u884c\u6743\u9650\uff0c\u9700\u8981 chmod +x",
+      "auth_level": "USER",
+      "status": "pending",
+      "created_at": "2026-05-08T22:34:19.399434",
+      "expires_at": "2026-05-08T22:39:19.399435",
+      "retry_count": 0
+    },
+    "SecureGuard_20260508_223449_4": {
+      "id": "SecureGuard_20260508_223449_4",
+      "agent": "SecureGuard",
+      "action": "\u4fee\u590d\u6587\u4ef6\u6743\u9650",
+      "permission": "execute",
+      "reason": "\u90e8\u5206\u811a\u672c\u7f3a\u5c11\u6267\u884c\u6743\u9650\uff0c\u9700\u8981 chmod +x",
+      "auth_level": "USER",
+      "status": "pending",
+      "created_at": "2026-05-08T22:34:49.433997",
+      "expires_at": "2026-05-08T22:39:49.433998",
+      "retry_count": 0
+    }
+  },
+  "approved_tokens": {},
+  "failed_attempts": {}
+}

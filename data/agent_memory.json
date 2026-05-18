@@ -1,0 +1,28 @@
+{
+  "known_fixes": [
+    {
+      "problem": "agent-api errored",
+      "solution": "cd /mnt/d/clawsjoy/bin && pm2 delete agent-api && pm2 start agent_api.py --interpreter python3 --name agent-api -- --port 18103 && pm2 save",
+      "diagnosis": "检查 agent_api.py 是否存在，确保端口 18103 未被占用",
+      "learned_at": "2026-05-08"
+    },
+    {
+      "problem": "docker API 连接失败",
+      "solution": "sudo service docker start || sudo dockerd > /tmp/dockerd.log 2>&1 &",
+      "diagnosis": "Docker 守护进程未运行",
+      "learned_at": "2026-05-08"
+    },
+    {
+      "problem": "web service down",
+      "solution": "cd /mnt/d/clawsjoy && docker-compose up -d web",
+      "diagnosis": "web 容器未运行",
+      "learned_at": "2026-05-08"
+    },
+    {
+      "problem": "promo-api crash",
+      "solution": "cd /mnt/d/clawsjoy/bin && pm2 restart promo-api",
+      "diagnosis": "Promo API 进程异常",
+      "learned_at": "2026-05-08"
+    }
+  ]
+}

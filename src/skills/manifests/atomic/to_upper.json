@@ -1,0 +1,8 @@
+{
+  "name": "to_upper",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "转大写",
+  "category": "text",
+  "author": "ClawsJoy"
+}

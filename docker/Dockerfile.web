@@ -1,0 +1,12 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# 复制 web 目录
+COPY web/ ./web/
+
+# 暴露端口
+EXPOSE 8082
+
+# 启动 Web 服务器
+CMD ["python3", "-m", "http.server", "8082", "--directory", "web"]

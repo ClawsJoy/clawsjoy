@@ -1,0 +1,173 @@
+{
+  "script_generator": {
+    "name": "script_generator",
+    "type": "atomic",
+    "version": "1.0.0",
+    "description": "根据主题生成视频脚本",
+    "category": "text",
+    "author": "ClawsJoy",
+    "tags": [],
+    "input_schema": {},
+    "output_schema": {},
+    "steps": [],
+    "dependencies": [],
+    "created_at": "2026-05-15T14:42:57.847172",
+    "updated_at": "2026-05-15T14:42:57.847204",
+    "status": "active",
+    "success_rate": 0.0,
+    "execution_count": 0
+  },
+  "audio_generator": {
+    "name": "audio_generator",
+    "type": "atomic",
+    "version": "1.0.0",
+    "description": "将文本转换为音频",
+    "category": "audio",
+    "author": "ClawsJoy",
+    "tags": [],
+    "input_schema": {},
+    "output_schema": {},
+    "steps": [],
+    "dependencies": [],
+    "created_at": "2026-05-15T14:42:57.850086",
+    "updated_at": "2026-05-15T14:42:57.850093",
+    "status": "active",
+    "success_rate": 0.0,
+    "execution_count": 0
+  },
+  "video_composer": {
+    "name": "video_composer",
+    "type": "atomic",
+    "version": "1.0.0",
+    "description": "将图片和音频合成为视频",
+    "category": "video",
+    "author": "ClawsJoy",
+    "tags": [],
+    "input_schema": {},
+    "output_schema": {},
+    "steps": [],
+    "dependencies": [],
+    "created_at": "2026-05-15T14:42:57.858651",
+    "updated_at": "2026-05-15T14:42:57.858664",
+    "status": "active",
+    "success_rate": 0.0,
+    "execution_count": 0
+  },
+  "text_processor": {
+    "name": "text_processor",
+    "type": "atomic",
+    "version": "1.0.0",
+    "description": "文本处理和统计分析",
+    "category": "text",
+    "author": "ClawsJoy",
+    "tags": [],
+    "input_schema": {},
+    "output_schema": {},
+    "steps": [],
+    "dependencies": [],
+    "created_at": "2026-05-15T14:42:57.865226",
+    "updated_at": "2026-05-15T14:42:57.865240",
+    "status": "active",
+    "success_rate": 0.0,
+    "execution_count": 0
+  },
+  "json_parser": {
+    "name": "json_parser",
+    "type": "atomic",
+    "version": "1.0.0",
+    "description": "JSON 数据解析和处理",
+    "category": "data",
+    "author": "ClawsJoy",
+    "tags": [],
+    "input_schema": {},
+    "output_schema": {},
+    "steps": [],
+    "dependencies": [],
+    "created_at": "2026-05-15T14:42:57.873162",
+    "updated_at": "2026-05-15T14:42:57.873177",
+    "status": "active",
+    "success_rate": 0.0,
+    "execution_count": 0
+  },
+  "video_creation": {
+    "name": "video_creation",
+    "type": "workflow",
+    "version": "1.0.0",
+    "description": "完整的视频制作工作流：脚本→音频→视频",
+    "category": "workflow",
+    "author": "ClawsJoy",
+    "tags": [
+      "video",
+      "creation",
+      "automation"
+    ],
+    "input_schema": {},
+    "output_schema": {},
+    "steps": [
+      {
+        "skill": "script_generator",
+        "output_key": "script"
+      },
+      {
+        "skill": "audio_generator",
+        "params": {
+          "text": "{script}"
+        },
+        "output_key": "audio"
+      },
+      {
+        "skill": "video_composer",
+        "params": {
+          "audio_path": "{audio}"
+        },
+        "output_key": "video"
+      }
+    ],
+    "dependencies": [
+      "script_generator",
+      "audio_generator",
+      "video_composer"
+    ],
+    "created_at": "2026-05-15T14:42:57.948099",
+    "updated_at": "2026-05-15T14:42:57.948114",
+    "status": "active",
+    "success_rate": 0.0,
+    "execution_count": 0
+  },
+  "script_writing": {
+    "name": "script_writing",
+    "type": "workflow",
+    "version": "1.0.0",
+    "description": "脚本写作工作流",
+    "category": "workflow",
+    "author": "ClawsJoy",
+    "tags": [
+      "writing",
+      "script"
+    ],
+    "input_schema": {},
+    "output_schema": {},
+    "steps": [
+      {
+        "skill": "script_generator",
+        "output_key": "script"
+      },
+      {
+        "skill": "text_processor",
+        "params": {
+          "text": "{script}"
+        },
+        "output_key": "processed"
+      }
+    ],
+    "dependencies": [
+      "script_generator",
+      "text_processor"
+    ],
+    "created_at": "2026-05-15T14:42:57.950974",
+    "updated_at": "2026-05-15T14:42:57.950981",
+    "status": "active",
+    "success_rate": 0.0,
+    "execution_count": 0
+  }
+}

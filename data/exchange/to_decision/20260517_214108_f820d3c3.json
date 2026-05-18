@@ -1,0 +1,26 @@
+{
+  "id": "20260517_214108_f820d3c3.json",
+  "from": "executor",
+  "to": "decision",
+  "action": "task_complete",
+  "data": {
+    "task_id": "session_1779024349",
+    "result": {
+      "success": true,
+      "result": {
+        "prompt_id": "857ca8d6-60ac-479b-8ca9-63cccbdbc927",
+        "prompt": "\u6211\u60f3\u8981\u6f2b\u5267\u4eba\u7269",
+        "width": 512,
+        "height": 768,
+        "steps": 20,
+        "model": "v1-5-pruned-emaonly.safetensors",
+        "mode": "config-driven",
+        "message": "\u56fe\u50cf\u751f\u6210\u4efb\u52a1\u5df2\u63d0\u4ea4"
+      }
+    },
+    "skill": "ai-image-gen"
+  },
+  "priority": 1,
+  "timestamp": "2026-05-17T21:41:08.671101",
+  "status": "pending"
+}

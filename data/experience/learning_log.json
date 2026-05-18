@@ -1,0 +1,145 @@
+{
+  "version": "1.0.0",
+  "interactions": [
+    {
+      "timestamp": "2026-05-17T19:37:01.953988",
+      "user_input": "每天上午9点提醒我开会",
+      "skill": "unknown",
+      "params": {},
+      "success": false,
+      "response": "我能帮你生成图像、调度任务。试试说「生成一张图片」",
+      "llm_analyzed": false
+    },
+    {
+      "timestamp": "2026-05-17T19:37:32.509549",
+      "user_input": "生成一个科幻风格的机器人",
+      "skill": "ai-image-gen",
+      "params": {},
+      "success": true,
+      "response": "✅ 正在生成图像：生成一个科幻风格的机器人...",
+      "llm_analyzed": false
+    },
+    {
+      "timestamp": "2026-05-17T19:38:03.049724",
+      "user_input": "每天上午9点提醒我开会",
+      "skill": "unknown",
+      "params": {},
+      "success": false,
+      "response": "我能帮你生成图像、调度任务。试试说「生成一张图片」",
+      "llm_analyzed": false
+    },
+    {
+      "timestamp": "2026-05-17T19:38:33.589080",
+      "user_input": "每周一早上提醒我写周报",
+      "skill": "unknown",
+      "params": {},
+      "success": false,
+      "response": "我能帮你生成图像、调度任务。试试说「生成一张图片」",
+      "llm_analyzed": false
+    },
+    {
+      "timestamp": "2026-05-17T19:38:49.913566",
+      "user_input": "画一个卡通人物",
+      "skill": "ai-image-gen",
+      "params": {},
+      "success": true,
+      "response": "✅ 正在生成图像：画一个卡通人物...",
+      "llm_analyzed": false
+    },
+    {
+      "timestamp": "2026-05-17T19:38:50.437590",
+      "user_input": "帮我生成一张晚霞的图片",
+      "skill": "ai-image-gen",
+      "params": {},
+      "success": true,
+      "response": "✅ 正在生成图像：帮我生成一张晚霞的图片...",
+      "llm_analyzed": false
+    },
+    {
+      "timestamp": "2026-05-17T19:38:50.944171",
+      "user_input": "每天上午9点提醒我开会",
+      "skill": "unknown",
+      "params": {},
+      "success": false,
+      "response": "我能帮你生成图像、调度任务。试试说「生成一张图片」",
+      "llm_analyzed": false
+    },
+    {
+      "timestamp": "2026-05-17T19:38:51.451092",
+      "user_input": "每天晚上10点提醒我睡觉",
+      "skill": "unknown",
+      "params": {},
+      "success": false,
+      "response": "我能帮你生成图像、调度任务。试试说「生成一张图片」",
+      "llm_analyzed": false
+    },
+    {
+      "timestamp": "2026-05-17T19:39:21.985072",
+      "user_input": "每周一早上提醒我写周报",
+      "skill": "unknown",
+      "params": {},
+      "success": false,
+      "response": "我能帮你生成图像、调度任务。试试说「生成一张图片」",
+      "llm_analyzed": false
+    },
+    {
+      "timestamp": "2026-05-17T19:39:52.543969",
+      "user_input": "创建一张风景图片",
+      "skill": "ai-image-gen",
+      "params": {},
+      "success": true,
+      "response": "✅ 正在生成图像：创建一张风景图片...",
+      "llm_analyzed": false
+    },
+    {
+      "timestamp": "2026-05-17T19:40:23.082339",
+      "user_input": "创建一个古代侠客的形象",
+      "skill": "unknown",
+      "params": {},
+      "success": false,
+      "response": "我能帮你生成图像、调度任务。试试说「生成一张图片」",
+      "llm_analyzed": false
+    },
+    {
+      "timestamp": "2026-05-17T19:40:53.640838",
+      "user_input": "帮我生成一张晚霞的图片",
+      "skill": "ai-image-gen",
+      "params": {},
+      "success": true,
+      "response": "✅ 正在生成图像：帮我生成一张晚霞的图片...",
+      "llm_analyzed": false
+    },
+    {
+      "timestamp": "2026-05-17T19:41:24.186913",
+      "user_input": "画一幅山水画",
+      "skill": "ai-image-gen",
+      "params": {},
+      "success": true,
+      "response": "✅ 正在生成图像：画一幅山水画...",
+      "llm_analyzed": false
+    },
+    {
+      "timestamp": "2026-05-17T19:41:54.721572",
+      "user_input": "每天晚上10点提醒我睡觉",
+      "skill": "unknown",
+      "params": {},
+      "success": false,
+      "response": "我能帮你生成图像、调度任务。试试说「生成一张图片」",
+      "llm_analyzed": false
+    }
+  ],
+  "skills_performance": {
+    "unknown": {
+      "success": 0,
+      "fail": 8,
+      "total": 8
+    },
+    "ai-image-gen": {
+      "success": 6,
+      "fail": 0,
+      "total": 6
+    }
+  },
+  "user_preferences": {},
+  "last_updated": "2026-05-17T19:41:54.721588"
+}

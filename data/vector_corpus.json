@@ -1,0 +1,152 @@
+[
+  {
+    "id": 0,
+    "text": "香港优才计划2026年最新政策，分数降至75分，审批时间缩短至3个月",
+    "metadata": {
+      "category": "policy"
+    },
+    "added_at": "2026-05-09T17:40:26.939519"
+  },
+  {
+    "id": 1,
+    "text": "Docker容器重启命令：docker restart <容器名>",
+    "metadata": {
+      "category": "tech"
+    },
+    "added_at": "2026-05-09T17:40:26.945775"
+  },
+  {
+    "id": 2,
+    "text": "YouTube视频标题优化技巧：包含关键词、数字、情感词汇",
+    "metadata": {
+      "category": "youtube"
+    },
+    "added_at": "2026-05-09T17:40:26.953548"
+  },
+  {
+    "id": 3,
+    "text": "香港优才计划2026最新政策 相关政策信息。根据最新政策，申请人需满足一定条件，审批周期约3-6个月。",
+    "metadata": {
+      "source": "simulation",
+      "category": "policy"
+    },
+    "added_at": "2026-05-09T17:46:55.460514"
+  },
+  {
+    "id": 4,
+    "text": "优才计划分数降到多少了 相关政策信息。根据最新政策，申请人需满足一定条件，审批周期约3-6个月。",
+    "metadata": {
+      "source": "simulation",
+      "category": "policy"
+    },
+    "added_at": "2026-05-09T17:46:55.477085"
+  },
+  {
+    "id": 5,
+    "text": "香港高才通申请条件 相关政策信息。根据最新政策，申请人需满足一定条件，审批周期约3-6个月。",
+    "metadata": {
+      "source": "simulation",
+      "category": "policy"
+    },
+    "added_at": "2026-05-09T17:46:55.495388"
+  },
+  {
+    "id": 6,
+    "text": "香港身份有什么好处 相关政策信息。根据最新政策，申请人需满足一定条件，审批周期约3-6个月。",
+    "metadata": {
+      "source": "simulation",
+      "category": "policy"
+    },
+    "added_at": "2026-05-09T17:46:55.511261"
+  },
+  {
+    "id": 7,
+    "text": "帮我写一段香港旅游文案 的创作要点：明确主题、突出重点、语言流畅、吸引读者。",
+    "metadata": {
+      "source": "simulation",
+      "category": "content"
+    },
+    "added_at": "2026-05-09T17:46:55.525891"
+  },
+  {
+    "id": 8,
+    "text": "生成一个关于香港的视频脚本 的创作要点：明确主题、突出重点、语言流畅、吸引读者。",
+    "metadata": {
+      "source": "simulation",
+      "category": "content"
+    },
+    "added_at": "2026-05-09T17:46:55.540769"
+  },
+  {
+    "id": 9,
+    "text": "写一篇香港科技创新文章 的创作要点：明确主题、突出重点、语言流畅、吸引读者。",
+    "metadata": {
+      "source": "simulation",
+      "category": "content"
+    },
+    "added_at": "2026-05-09T17:46:55.556803"
+  },
+  {
+    "id": 10,
+    "text": "Docker容器怎么重启 操作指南：检查服务状态、查看日志、重启服务、验证恢复。",
+    "metadata": {
+      "source": "simulation",
+      "category": "ops"
+    },
+    "added_at": "2026-05-09T17:46:55.574199"
+  },
+  {
+    "id": 11,
+    "text": "服务挂了怎么办 操作指南：检查服务状态、查看日志、重启服务、验证恢复。",
+    "metadata": {
+      "source": "simulation",
+      "category": "ops"
+    },
+    "added_at": "2026-05-09T17:46:55.590547"
+  },
+  {
+    "id": 12,
+    "text": "PM2查看日志 操作指南：检查服务状态、查看日志、重启服务、验证恢复。",
+    "metadata": {
+      "source": "simulation",
+      "category": "ops"
+    },
+    "added_at": "2026-05-09T17:46:55.606281"
+  },
+  {
+    "id": 13,
+    "text": "YouTube怎么上传视频 技巧：标题优化、标签选择、描述撰写、封面设计。",
+    "metadata": {
+      "source": "simulation",
+      "category": "youtube"
+    },
+    "added_at": "2026-05-09T17:46:55.622503"
+  },
+  {
+    "id": 14,
+    "text": "视频标题怎么优化 技巧：标题优化、标签选择、描述撰写、封面设计。",
+    "metadata": {
+      "source": "simulation",
+      "category": "youtube"
+    },
+    "added_at": "2026-05-09T17:46:55.638870"
+  },
+  {
+    "id": 15,
+    "text": "采集香港图片 采集方法：确定关键词、选择数据源、过滤重复、保存结果。",
+    "metadata": {
+      "source": "simulation",
+      "category": "collect"
+    },
+    "added_at": "2026-05-09T17:46:55.655969"
+  },
+  {
+    "id": 16,
+    "text": "抓取香港新闻 采集方法：确定关键词、选择数据源、过滤重复、保存结果。",
+    "metadata": {
+      "source": "simulation",
+      "category": "collect"
+    },
+    "added_at": "2026-05-09T17:46:55.672189"
+  }
+]

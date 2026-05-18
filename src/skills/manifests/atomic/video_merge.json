@@ -1,0 +1,8 @@
+{
+  "name": "video_merge",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "视频合并",
+  "category": "video",
+  "author": "ClawsJoy"
+}

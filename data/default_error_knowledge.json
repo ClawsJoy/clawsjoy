@@ -1,0 +1,16 @@
+[
+  {"pattern": "ModuleNotFoundError", "fix": "pip install <module>", "confidence": 0.95},
+  {"pattern": "No module named", "fix": "pip install <module>", "confidence": 0.95},
+  {"pattern": "FileNotFoundError", "fix": "mkdir -p <path>", "confidence": 0.95},
+  {"pattern": "No such file or directory", "fix": "mkdir -p <path>", "confidence": 0.90},
+  {"pattern": "Connection refused", "fix": "ollama serve &", "confidence": 0.95},
+  {"pattern": "ffmpeg", "fix": "sudo apt install ffmpeg -y", "confidence": 0.95},
+  {"pattern": "ffprobe", "fix": "sudo apt install ffmpeg -y", "confidence": 0.95},
+  {"pattern": "Address already in use", "fix": "fuser -k <port>/tcp", "confidence": 0.95},
+  {"pattern": "port is already in use", "fix": "fuser -k <port>/tcp", "confidence": 0.95},
+  {"pattern": "Permission denied", "fix": "chmod +x <file>", "confidence": 0.90},
+  {"pattern": "IndentationError", "fix": "检查代码缩进", "confidence": 0.85},
+  {"pattern": "JSONDecodeError", "fix": "检查 JSON 格式", "confidence": 0.85},
+  {"pattern": "video_file not found", "fix": "检查视频路径", "confidence": 0.85},
+  {"pattern": "audio_path 无效", "fix": "检查音频文件", "confidence": 0.85}
+]

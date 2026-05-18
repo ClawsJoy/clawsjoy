@@ -1,0 +1,5 @@
+[
+  {"title": "ClawsJoy 自愈能力介绍", "content": "ClawsJoy 每3分钟自动检测服务状态，发现异常自动重启，实现服务自愈。"},
+  {"title": "ClawsJoy 智能问答原理", "content": "先向量检索知识库，找到相关内容后结合大模型生成回答，确保准确性。"},
+  {"title": "ClawsJoy 多模型支持", "content": "支持 qwen2.5、llama3.2 等多种本地模型，可根据需求实时切换。"}
+]

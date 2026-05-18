@@ -1,0 +1,12 @@
+{
+  "config": {
+    "name": "Code Assistant",
+    "type": "code",
+    "description": "Code writing and debugging helper",
+    "system_prompt": "You are Code Assistant, Code writing and debugging helper",
+    "model": "llama3.2:3b",
+    "created_at": "2026-05-11T14:40:44.884253"
+  },
+  "training_data": [],
+  "custom_knowledge": []
+}

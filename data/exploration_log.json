@@ -1,0 +1,40 @@
+{
+  "explorations": [
+    {
+      "timestamp": "2026-05-12T18:09:57.324081",
+      "action": "\u63a2\u7d22 \u5f02\u5e38\u5904\u7406 \u7684\u6700\u4f73\u5b9e\u8df5",
+      "result": "{'success': False, 'error': 'prompt is required'}",
+      "success": false
+    },
+    {
+      "timestamp": "2026-05-12T18:09:59.044916",
+      "action": "\u5982\u679c\u5728\u7a0b\u5e8f\u4e2d\u5408\u7406\u5730\u4f7f\u7528\u5f02\u5e38\u5904\u7406\u673a\u5236\u6765\u66ff\u4ee3\u9519\u8bef\u7801\u8fd4\u56de\u65b9\u5f0f\uff0c\u5e94\u7528\u7a0b\u5e8f\u7684\u53ef\u7ef4\u62a4\u6027\u548c\u5065\u58ee\u6027\u5c06\u4f1a\u63d0\u9ad8\u3002",
+      "result": "{'success': True, 'message': '\u5361\u901a\u56fe\u7247\u751f\u6210 \u6267\u884c\u6210\u529f', 'data': {'test': True}}",
+      "success": true
+    },
+    {
+      "timestamp": "2026-05-12T18:10:00.310829",
+      "action": "\u5982\u679c\u91c7\u7528\u5e76\u884c\u8ba1\u7b97\u6280\u672f\u5904\u7406\u5927\u89c4\u6a21\u6570\u636e\u96c6\u4efb\u52a1\uff0c\u6027\u80fd\u5c06\u4f1a\u5f97\u5230\u663e\u8457\u63d0\u5347\u3002",
+      "result": "{'success': True, 'message': '\u811a\u672c\u6e05\u7406\u5de5\u5177 v2 \u6267\u884c\u6210\u529f', 'data': {'test': True}}",
+      "success": true
+    },
+    {
+      "timestamp": "2026-05-12T19:10:04.803544",
+      "action": "\u63a2\u7d22 \u6027\u80fd\u63d0\u5347 \u7684\u6700\u4f73\u5b9e\u8df5",
+      "result": "{'error': 'Unknown action: None'}",
+      "success": false
+    },
+    {
+      "timestamp": "2026-05-12T19:11:04.876048",
+      "action": "\u63a2\u7d22 \u5de5\u4f5c\u6d41\u4f18\u5316 \u7684\u6700\u4f73\u5b9e\u8df5",
+      "result": "{'success': True, 'message': '\u6f2b\u753b\u751f\u6210\u5668 \u6267\u884c\u6210\u529f', 'data': {'test': True}}",
+      "success": true
+    },
+    {
+      "timestamp": "2026-05-12T19:11:36.663451",
+      "action": "\u5982\u679c\u91c7\u7528\u5e76\u884c\u8ba1\u7b97\u6280\u672f\u5904\u7406\u5927\u89c4\u6a21\u6570\u636e\u96c6\u4efb\u52a1\uff0c\u7cfb\u7edf\u7684\u5904\u7406\u901f\u5ea6\u5c06\u4f1a\u63d0\u534750%\u3002",
+      "result": "{'success': False, 'error': 'prompt is required'}",
+      "success": false
+    }
+  ]
+}

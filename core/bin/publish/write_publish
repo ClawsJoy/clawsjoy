@@ -1,0 +1,27 @@
+#!/bin/bash
+# Messenger 专用：提交发布任务
+
+TITLE="$1"
+CONTENT="$2"
+PLATFORM="$3"
+TIMESTAMP=$(date +%Y%m%d_%H%M%S_%N)
+OUTBOX_DIR="$HOME/clawsjoy/outbox"
+FILENAME="$OUTBOX_DIR/messenger_${TIMESTAMP}.publish.json"
+
+mkdir -p "$OUTBOX_DIR"
+
+cat > "$FILENAME" << JSON
+{
+  "title": "$TITLE",
+  "content": "$CONTENT",
+  "platform": "$PLATFORM",
+  "status": "pending_publish",
+  "created_at": "$(date -Iseconds)",
+  "submitter": "messenger",
+  "source": "messenger_tool"
+}
+JSON
+
+echo "✅ 已提交发布任务: $TITLE -> $PLATFORM"
+echo "📁 文件: $FILENAME"
+echo "📋 查看看板: http://localhost:8083/review/index.html"

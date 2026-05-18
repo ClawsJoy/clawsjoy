@@ -1,0 +1,12 @@
+{
+  "name": "skill_name",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "技能描述",
+  "category": "category",
+  "author": "ClawsJoy",
+  "compatible_with": ["openclaw", "clawsjoy"],
+  "input_schema": {},
+  "output_schema": {},
+  "examples": []
+}

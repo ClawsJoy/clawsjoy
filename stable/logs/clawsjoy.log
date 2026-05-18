@@ -1,0 +1,3 @@
+2026-05-05 07:45:10,209 - __main__ - INFO - 启动 ClawsJoy 任务调度器 v2.0
+2026-05-05 07:45:10,209 - __main__ - INFO - 端口: 8084
+2026-05-05 07:45:10,210 - __main__ - INFO - 日志: /mnt/d/clawsjoy/stable/logs/clawsjoy.log

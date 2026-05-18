@@ -1,0 +1,12 @@
+大脑，以下是第三集的生成结果：
+
+脚本文件: episode_3_script.txt
+音频文件: episode_3_audio.mp3
+视频文件: episode_3_video.mp4
+
+请你自己判断：
+1. 这个经验值得记录吗？
+2. 值得的话，调用 brain.record_experience 记录
+3. 记录什么字段由你自己决定
+
+这是你的学习过程，不是我的。

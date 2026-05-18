@@ -1,0 +1,7 @@
+FROM python:3.10-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+COPY . .
+EXPOSE 5002 8080 18103 18109 18105 8108
+CMD ["bash", "-c", "python3 agent_gateway.py & python3 -m http.server 8080 & pm2-runtime start ecosystem.config.js"]

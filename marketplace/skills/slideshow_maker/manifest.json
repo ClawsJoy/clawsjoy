@@ -1,0 +1,12 @@
+{
+  "name": "slideshow_maker",
+  "version": "1.0.0",
+  "description": "\u5236\u4f5c\u5b8c\u6574\u89c6\u9891\uff08\u56fe\u7247\u8f6e\u64ad + TTS\u914d\u97f3 + \u80cc\u666f\u97f3\u4e50 + \u5b57\u5e55\uff09",
+  "category": "video",
+  "price": 0.99,
+  "author": "ClawsJoy",
+  "tags": [
+    "video",
+    "slideshow_maker"
+  ]
+}

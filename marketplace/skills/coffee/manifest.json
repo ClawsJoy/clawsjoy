@@ -1,0 +1,12 @@
+{
+  "name": "coffee",
+  "version": "1.0.0",
+  "description": "\u5496\u5561\u8ba2\u8d2d\u548c\u5e97\u94fa\u67e5\u8be2",
+  "category": "api",
+  "price": 0.99,
+  "author": "ClawsJoy",
+  "tags": [
+    "api",
+    "coffee"
+  ]
+}

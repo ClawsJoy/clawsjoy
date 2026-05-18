@@ -1,0 +1,121 @@
+# ClawsJoy Agent 完整配置
+
+version: "2.0.0"
+
+agents:
+  orchestrator:
+    name: "任务编排器"
+    type: core
+    enabled: true
+    personality: professional
+    capabilities:
+      - task_planning
+      - skill_orchestration
+      - workflow_management
+    endpoint:
+      port: 5002
+      health_path: /api/health
+    health_check:
+      interval: 30
+      timeout: 5
+
+  code_agent:
+    name: "代码助手"
+    type: custom
+    enabled: true
+    personality: technical
+    capabilities:
+      - code_generation
+      - code_review
+      - code_debug
+    skills:
+      - code_agent_v7
+      - script_writer
+
+  video_agent:
+    name: "视频制作助手"
+    type: custom
+    enabled: true
+    personality: creative
+    capabilities:
+      - video_creation
+      - manju_maker
+      - subtitle_addition
+    skills:
+      - manju_maker
+      - add_subtitles
+
+  youtube_agent:
+    name: "YouTube助手"
+    type: custom
+    enabled: true
+    personality: professional
+    capabilities:
+      - video_upload
+      - channel_analysis
+      - trend_detection
+    skills:
+      - video_uploader
+      - hot_analyzer
+
+  security_agent:
+    name: "安全助手"
+    type: core
+    enabled: true
+    personality: professional
+    capabilities:
+      - security_check
+      - permission_verify
+      - audit_logging
+
+  memory_manager:
+    name: "记忆管理助手"
+    type: core
+    enabled: true
+    personality: professional
+    capabilities:
+      - memory_store
+      - memory_recall
+      - vector_search
+    skills:
+      - memory_query
+      - memory_enhanced
+
+  decision_agent:
+    name: "决策Agent"
+    type: core
+    enabled: true
+    personality: professional
+    description: "用户总管，负责任务调度和决策"
+
+  chat_agent:
+    name: "聊天Agent"
+    type: core
+    enabled: true
+    personality: friendly
+    description: "负责话术生成和用户沟通"
+
+  personal_butler:
+    name: "私人管家"
+    type: core
+    enabled: true
+    personality: warm
+    description: "用户的数字分身，1对1专属服务"
+
+  analysis_agent:
+    name: "数据分析师"
+    type: core
+    enabled: true
+    personality: analytical
+    description: "分析系统数据，提供优化建议"
+    capabilities:
+      - data_analysis
+      - optimization_suggestion
+      - health_assessment
+      - anomaly_detection
+
+global:
+  heartbeat_interval: 30
+  health_check_timeout: 5
+  message_retry: 3
+  log_level: INFO

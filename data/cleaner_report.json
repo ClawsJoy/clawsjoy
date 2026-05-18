@@ -1,0 +1,44 @@
+{
+  "timestamp": "2026-05-08T16:24:58.272449",
+  "disk": {
+    "used": 225164140544,
+    "free": 586948530176,
+    "percent": 27.725726818715284
+  },
+  "suggestions": [
+    {
+      "dir": "临时音频",
+      "count": 7,
+      "total_size_mb": 60.45417404174805,
+      "files": [
+        {
+          "name": "bgm.mp3",
+          "size_mb": 9.749327659606934,
+          "age_days": 2
+        },
+        {
+          "name": "bgm_1.mp3",
+          "size_mb": 8.530835151672363,
+          "age_days": 2
+        },
+        {
+          "name": "bgm_2.mp3",
+          "size_mb": 9.749327659606934,
+          "age_days": 2
+        },
+        {
+          "name": "bgm_3.mp3",
+          "size_mb": 7.875541687011719,
+          "age_days": 2
+        },
+        {
+          "name": "bgm_gentle.mp3",
+          "size_mb": 7.875541687011719,
+          "age_days": 2
+        }
+      ],
+      "action": "删除超过 1 天的文件"
+    }
+  ],
+  "requires_attention": false
+}

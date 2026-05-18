@@ -1,0 +1,189 @@
+{
+  "total_skills": 46,
+  "last_scan": "2026-05-10T19:03:17.998960",
+  "skills": [
+    {
+      "name": "ai_image_gen",
+      "functions": [
+        "generate_image",
+        "generate_hk_scenes"
+      ],
+      "has_docstring": true,
+      "size_kb": 1.97265625
+    },
+    {
+      "name": "angle_manager",
+      "functions": [
+        "load_used_angles",
+        "save_used_angle",
+        "get_available_angles"
+      ],
+      "has_docstring": true,
+      "size_kb": 1.8515625
+    },
+    {
+      "name": "assemble_from_library",
+      "functions": [
+        "load_library",
+        "get_random_topic",
+        "assemble_script"
+      ],
+      "has_docstring": true,
+      "size_kb": 1.3076171875
+    },
+    {
+      "name": "assemble_script",
+      "functions": [
+        "assemble_script"
+      ],
+      "has_docstring": true,
+      "size_kb": 1.3193359375
+    },
+    {
+      "name": "assemble_script_v2",
+      "functions": [
+        "assemble_script"
+      ],
+      "has_docstring": true,
+      "size_kb": 1.0673828125
+    },
+    {
+      "name": "base_skill",
+      "functions": [
+        "__init__",
+        "execute",
+        "_call_api"
+      ],
+      "has_docstring": true,
+      "size_kb": 2.263671875
+    },
+    {
+      "name": "base_skill_stateful",
+      "functions": [
+        "__init__",
+        "get_state",
+        "save_state"
+      ],
+      "has_docstring": true,
+      "size_kb": 2.904296875
+    },
+    {
+      "name": "cartoon_images",
+      "functions": [
+        "generate_cartoon"
+      ],
+      "has_docstring": true,
+      "size_kb": 1.3896484375
+    },
+    {
+      "name": "clean_script",
+      "functions": [
+        "clean"
+      ],
+      "has_docstring": false,
+      "size_kb": 0.517578125
+    },
+    {
+      "name": "clean_script_v2",
+      "functions": [
+        "deep_clean"
+      ],
+      "has_docstring": false,
+      "size_kb": 0.615234375
+    },
+    {
+      "name": "comic_generator",
+      "functions": [
+        "generate_comic_scene",
+        "generate_comic_series"
+      ],
+      "has_docstring": true,
+      "size_kb": 2.3359375
+    },
+    {
+      "name": "comic_video_maker",
+      "functions": [
+        "make_comic_video"
+      ],
+      "has_docstring": true,
+      "size_kb": 1.208984375
+    },
+    {
+      "name": "content_writer",
+      "functions": [
+        "execute"
+      ],
+      "has_docstring": true,
+      "size_kb": 1.0419921875
+    },
+    {
+      "name": "data_merger",
+      "functions": [
+        "execute"
+      ],
+      "has_docstring": true,
+      "size_kb": 1.4169921875
+    },
+    {
+      "name": "dual_script_writer",
+      "functions": [
+        "generate_dual_script",
+        "extract_voice_script",
+        "extract_storyboard"
+      ],
+      "has_docstring": true,
+      "size_kb": 1.701171875
+    },
+    {
+      "name": "expert_script_writer",
+      "functions": [
+        "load_expert_context",
+        "expert_analyze",
+        "expert_to_script"
+      ],
+      "has_docstring": true,
+      "size_kb": 3.6259765625
+    },
+    {
+      "name": "extract_content",
+      "functions": [
+        "extract_content"
+      ],
+      "has_docstring": true,
+      "size_kb": 1.173828125
+    },
+    {
+      "name": "extract_content_v2",
+      "functions": [
+        "extract_content"
+      ],
+      "has_docstring": true,
+      "size_kb": 1.5341796875
+    },
+    {
+      "name": "hot_reloader",
+      "functions": [
+        "__init__",
+        "_scan_skills",
+        "_load_skill"
+      ],
+      "has_docstring": true,
+      "size_kb": 2.615234375
+    },
+    {
+      "name": "image_scheduler",
+      "functions": [
+        "__init__",
+        "get_user_images",
+        "get_unsplash_images"
+      ],
+      "has_docstring": true,
+      "size_kb": 3.958984375
+    }
+  ],
+  "skill_chains": [
+    "workflow_engine",
+    "workflow_engine_v2",
+    "workflow_resumable"
+  ]
+}

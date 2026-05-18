@@ -1,0 +1,41 @@
+{
+  "tunings": [
+    {
+      "timestamp": "2026-05-12T18:46:13.243838",
+      "changes": [
+        {
+          "param": "model_temperature",
+          "old": 0.7,
+          "new": 0.9,
+          "reason": "\u6027\u80fd\u826f\u597d\uff0c\u589e\u52a0\u6e29\u5ea6\u63d0\u9ad8\u521b\u9020\u529b"
+        }
+      ],
+      "performance": {
+        "success_rate": 0.9607843137254902,
+        "response_time": 0.004408121109008789,
+        "system_load": "0.16, 0.14, 0.18",
+        "timestamp": "2026-05-12T18:46:13.253615"
+      }
+    },
+    {
+      "timestamp": "2026-05-12T18:47:36.401628",
+      "changes": [
+        {
+          "param": "model_temperature",
+          "old": 0.7,
+          "new": 0.9,
+          "reason": "\u6027\u80fd\u826f\u597d\uff0c\u589e\u52a0\u6e29\u5ea6\u63d0\u9ad8\u521b\u9020\u529b"
+        }
+      ],
+      "performance": {
+        "success_rate": 0.9615384615384616,
+        "response_time": 0.003592252731323242,
+        "system_load": "0.04, 0.10, 0.16",
+        "timestamp": "2026-05-12T18:47:36.411126"
+      }
+    }
+  ],
+  "current_params": {
+    "model_temperature": 0.9
+  }
+}

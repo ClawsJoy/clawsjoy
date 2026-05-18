@@ -1,0 +1,13 @@
+{
+    "immigration": [
+        {"name": "入境处", "url": "https://www.immd.gov.hk/hks/faq/", "type": "html"},
+        {"name": "优才计划", "url": "https://www.hkqf.gov.hk/", "type": "html"}
+    ],
+    "education": [
+        {"name": "港大", "url": "https://www.hku.hk/zh-cn/news", "type": "html"},
+        {"name": "中大", "url": "https://www.cuhk.edu.hk/chinese/news.html", "type": "html"}
+    ],
+    "news": [
+        {"name": "政府新闻", "url": "https://www.info.gov.hk/gia/general/today.htm", "type": "html"}
+    ]
+}

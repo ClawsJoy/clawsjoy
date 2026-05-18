@@ -1,0 +1,8 @@
+{
+  "name": "mod",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "取模运算",
+  "category": "math",
+  "author": "ClawsJoy"
+}

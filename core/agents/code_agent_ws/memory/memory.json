@@ -1,0 +1,9 @@
+{
+  "memories": [
+    {
+      "time": "now",
+      "content": "test"
+    }
+  ],
+  "agent": "code_agent"
+}

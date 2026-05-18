@@ -1,0 +1,85 @@
+<script>
+// 替换语音识别为后端 STT（支持 HTTP）
+let mediaRecorder = null;
+let audioChunks = [];
+let isRecording = false;
+
+function startVoice() {
+    if (isRecording) return;
+    isRecording = true;
+    document.getElementById('micBtn').classList.add('listening');
+    addMsg('bot', '🎤 录音中... 松手结束');
+    
+    navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(audioChunks, { type: 'audio/webm' });
+                const formData = new FormData();
+                formData.append('audio', blob);
+                
+                // 调用后端 STT 服务
+                const host = window.location.hostname;
+                fetch(`http://${host}:8096/api/stt`, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(data => {
+                    const last = document.querySelectorAll('.msg.bot');
+                    if (last.length) last[last.length-1].remove();
+                    if (data.text) {
+                        document.getElementById('textInput').value = data.text;
+                        sendMsg();
+                    } else {
+                        addMsg('bot', '⚠️ 未识别到语音，请重试');
+                    }
+                })
+                .catch(() => {
+                    const last = document.querySelectorAll('.msg.bot');
+                    if (last.length) last[last.length-1].remove();
+                    addMsg('bot', '❌ 语音识别失败');
+                })
+                .finally(() => {
+                    stream.getTracks().forEach(t => t.stop());
+                    document.getElementById('micBtn').classList.remove('listening');
+                    isRecording = false;
+                });
+            };
+            mediaRecorder.start();
+            
+            // 5秒后自动停止
+            setTimeout(() => {
+                if (mediaRecorder && mediaRecorder.state === 'recording') {
+                    mediaRecorder.stop();
+                }
+            }, 5000);
+        })
+        .catch(err => {
+            const last = document.querySelectorAll('.msg.bot');
+            if (last.length) last[last.length-1].remove();
+            addMsg('bot', '❌ 无法访问麦克风，请检查权限');
+            document.getElementById('micBtn').classList.remove('listening');
+            isRecording = false;
+        });
+}
+
+// 重新绑定 micBtn 的事件
+document.getElementById('micBtn').onmousedown = startVoice;
+document.getElementById('micBtn').ontouchstart = startVoice;
+</script>
+<script>
+function editImage(btn) {
+    const fileId = btn.getAttribute('data-id');
+    let fileUrl = btn.getAttribute('data-url');
+    // 构建编辑器 URL
+    const editorUrl = `/joymate/editor.html?id=${fileId}&url=${encodeURIComponent(fileUrl)}&tenant=${tenantId}`;
+    window.open(editorUrl, '_blank', 'width=1200,height=800');
+}
+function previewImage(btn) {
+    const fileUrl = btn.getAttribute('data-url');
+    window.open(fileUrl, '_blank');
+}
+</script>

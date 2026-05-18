@@ -1,0 +1,45 @@
+{
+  "items": [
+    {
+      "id": "kb_001",
+      "content": "Docker\u5bb9\u5668\u91cd\u542f\u547d\u4ee4: docker restart <\u5bb9\u5668\u540d>",
+      "metadata": {
+        "category": "docker"
+      }
+    },
+    {
+      "id": "kb_002",
+      "content": "PM2\u67e5\u770b\u65e5\u5fd7\u547d\u4ee4: pm2 logs <\u5e94\u7528\u540d>",
+      "metadata": {
+        "category": "pm2"
+      }
+    },
+    {
+      "id": "kb_003",
+      "content": "Python\u865a\u62df\u73af\u5883\u521b\u5efa: python -m venv venv",
+      "metadata": {
+        "category": "python"
+      }
+    },
+    {
+      "id": "kb_004",
+      "content": "Git\u63d0\u4ea4\u4ee3\u7801: git add . && git commit -m 'message' && git push",
+      "metadata": {
+        "category": "git"
+      }
+    },
+    {
+      "id": "kb_005",
+      "content": "Linux\u67e5\u770b\u8fdb\u7a0b: ps aux | grep <\u8fdb\u7a0b\u540d>",
+      "metadata": {
+        "category": "linux"
+      }
+    }
+  ],
+  "vectors": [],
+  "stats": {
+    "total": 0,
+    "last_updated": "",
+    "version": "2.0"
+  }
+}

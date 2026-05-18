@@ -1,0 +1,8 @@
+[
+    "ClawsJoy 七大核心：API网关、Agent系统、技能系统、记忆系统、大脑学习、向量知识库、Web界面",
+    "Code Agent 专门处理代码编写、调试和优化任务",
+    "Chat Agent 负责日常对话、问答和陪伴",
+    "Knowledge Agent 擅长知识检索和总结",
+    "记忆系统使用 OpenClaw 兼容架构，支持语义检索",
+    "大脑学习使用 Q-learning 强化学习，从经验中优化"
+]

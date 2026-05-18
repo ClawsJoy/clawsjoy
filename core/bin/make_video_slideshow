@@ -1,0 +1,36 @@
+#!/bin/bash
+# 使用多张图片制作 slideshow
+
+IMAGE_DIR="$1"
+OUTPUT_FILE="$2"
+DURATION="${3:-15}"
+
+# 找到所有图片
+mapfile -t IMAGES < <(find "$IMAGE_DIR" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" \) | sort)
+
+if [ ${#IMAGES[@]} -eq 0 ]; then
+    echo "❌ 未找到图片"
+    exit 1
+fi
+
+echo "📸 找到 ${#IMAGES[@]} 张图片"
+
+# 创建 concat 文件
+CONCAT_FILE="/tmp/concat_$$.txt"
+> "$CONCAT_FILE"
+
+PER_DURATION=$((DURATION / ${#IMAGES[@]}))
+if [ $PER_DURATION -lt 1 ]; then
+    PER_DURATION=1
+fi
+
+for img in "${IMAGES[@]}"; do
+    echo "file '$img'" >> "$CONCAT_FILE"
+    echo "duration $PER_DURATION" >> "$CONCAT_FILE"
+done
+
+# 使用 ffmpeg 生成视频
+ffmpeg -y -f concat -safe 0 -i "$CONCAT_FILE" -c:v libx264 -pix_fmt yuv420p -vf "scale=1920:1080:force_original_aspect_ratio=1,pad=1920:1080:(ow-iw)/2:(oh-ih)/2" "$OUTPUT_FILE" 2>/dev/null
+
+rm -f "$CONCAT_FILE"
+echo "✅ Slideshow 视频生成: $OUTPUT_FILE"

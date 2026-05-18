@@ -1,0 +1,89 @@
+{
+  "history": [
+    {
+      "timestamp": "2026-05-12T14:03:15.551950",
+      "best_score": 100,
+      "success_rate": 1.0
+    }
+  ],
+  "best_chain": {
+    "chain_name": "\u7cfb\u7edf\u6d4b\u8bd5\u4f18\u5316\u5de5\u5177\u94fe",
+    "total_score": 100,
+    "max_possible": 100,
+    "success_rate": 1.0,
+    "results": [
+      {
+        "step": 1,
+        "tool": "url_discovery",
+        "success": true,
+        "score": 10,
+        "output": "{'success': True, 'message': 'URL \u53d1\u73b0 \u6267\u884c\u6210\u529f', 'data': {}}"
+      },
+      {
+        "step": 2,
+        "tool": "webhook_notify",
+        "success": true,
+        "score": 10,
+        "output": "{'success': True, 'message': 'Webhook \u901a\u77e5 \u6267\u884c\u6210\u529f', 'data': {'urls': ['\u76ee\u6807URL']}}"
+      },
+      {
+        "step": 3,
+        "tool": "spider",
+        "success": true,
+        "score": 10,
+        "output": "{'success': True, 'output': '\u91c7\u96c6\u56fe\u7247: \u9999\u6e2f, \u6570\u91cf: 5\\nhttps://images.unsplash.com/photo-1536599018102-9f803c140fc1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5MzQyODV8MHwxfHNlYXJjaHwxfHwlRTklQTYlOTklRTYl"
+      },
+      {
+        "step": 4,
+        "tool": "extract_content_v2",
+        "success": true,
+        "score": 10,
+        "output": "{'success': True, 'message': '\u5185\u5bb9\u63d0\u53d6\u5668 v2 \u6267\u884c\u6210\u529f', 'data': {}}"
+      },
+      {
+        "step": 5,
+        "tool": "content_writer",
+        "success": true,
+        "score": 10,
+        "output": "{'success': True, 'message': '\u5185\u5bb9\u5199\u4f5c\u52a9\u624b \u6267\u884c\u6210\u529f', 'data': {'content': '\u63d0\u53d6\u5185\u5bb9'}}"
+      },
+      {
+        "step": 6,
+        "tool": "script_generator",
+        "success": true,
+        "score": 10,
+        "output": "{'success': True, 'script': '\u9999\u6e2f\u662f\u4e00\u5ea7\u7e41\u534e\u7684\u57ce\u5e02\uff0c\u662f\u4e1c\u65b9\u660e\u73e0\u7480\u74a8\u7684\u4e00\u9897\u3002\u4f5c\u4e3a\u56fd\u9645\u91d1\u878d\u4e2d\u5fc3\u548c\u5546\u4e1a\u67a2\u7ebd\uff0c\u9999\u6e2f\\x1b[K\\n\u6c47\u805a\u4e86\u6765\u81ea\u4e16\u754c\u5404\u5730\u7684\u7cbe\u82f1\uff0c\u5438\u5f15\u4e86\u65e0\u6570\u6295\u8d44\u8005\u7684\u76ee\u5149\u3002\u5728\u8fd9\u91cc\uff0c\u4f60\u53ef\u4ee5\u770b\u5230\u4e16\u754c\u7ea7\u7684\\x1b[K\\n\u9ad8\u697c\u5927\u53a6\u4e0e\u5b81\u9759\u7f8e\u4e3d\u7684\u7ef4\u591a\u5229\u4e9a\u6e2f\u548c\u8c10\u5171\u5b58\uff1b\u611f\u53d7\u4e2d\u897f\u6587\u5316\u7684\u4ea4\u6c47\u78b0\u649e\uff0c\u5728\u5c16\u6c99\u5480\u7684\u6d77\\x1b[K\\n\u65c1\u4eab\u53d7\u8d2d\u7269\u7684\u4e50\u8da3\u6216\u662f\u5728\u94dc\u9523\u6e7e\u63a2\u7d22\u7f8e\u98df\u7684\u4e16\u754c\u3002\u591c\u665a\u7684\u9999\u6e2f\u66f4\u662f\u522b\u6709\u4e00\u756a"
+      },
+      {
+        "step": 7,
+        "tool": "sequential_script",
+        "success": true,
+        "score": 10,
+        "output": "{'success': True, 'message': '\u987a\u5e8f\u811a\u672c\u751f\u6210 \u6267\u884c\u6210\u529f', 'data': {'context': {'script': '\u9999\u6e2f\u662f\u4e00\u5ea7\u7e41\u534e\u7684\u57ce\u5e02\uff0c\u662f\u4e1c\u65b9\u660e\u73e0\u7480\u74a8\u7684\u4e00\u9897\u3002\u4f5c\u4e3a\u56fd\u9645\u91d1\u878d\u4e2d\u5fc3\u548c\u5546\u4e1a\u67a2\u7ebd\uff0c\u9999\u6e2f\\x1b[K\\n\u6c47\u805a\u4e86\u6765\u81ea\u4e16\u754c\u5404\u5730\u7684\u7cbe\u82f1\uff0c\u5438\u5f15\u4e86\u65e0\u6570\u6295\u8d44\u8005\u7684\u76ee\u5149\u3002\u5728\u8fd9\u91cc\uff0c\u4f60\u53ef\u4ee5\u770b\u5230\u4e16\u754c\u7ea7\u7684\\x1b[K\\n\u9ad8\u697c\u5927\u53a6\u4e0e\u5b81\u9759\u7f8e\u4e3d\u7684\u7ef4\u591a\u5229\u4e9a\u6e2f\u548c\u8c10\u5171\u5b58\uff1b\u611f\u53d7\u4e2d\u897f\u6587\u5316\u7684\u4ea4\u6c47\u78b0\u649e\uff0c"
+      },
+      {
+        "step": 8,
+        "tool": "ops_skills",
+        "success": true,
+        "score": 10,
+        "output": "{'success': True, 'message': '\u8fd0\u7ef4\u64cd\u4f5c\u6280\u80fd \u6267\u884c\u6210\u529f', 'data': {'scripts': ['\u751f\u6210\u7684\u6d4b\u8bd5\u811a\u672c'], 'context': {'script': '\u9999\u6e2f\u662f\u4e00\u5ea7\u7e41\u534e\u7684\u57ce\u5e02\uff0c\u662f\u4e1c\u65b9\u660e\u73e0\u7480\u74a8\u7684\u4e00\u9897\u3002\u4f5c\u4e3a\u56fd\u9645\u91d1\u878d\u4e2d\u5fc3\u548c\u5546\u4e1a\u67a2\u7ebd\uff0c\u9999\u6e2f\\x1b[K\\n\u6c47\u805a\u4e86\u6765\u81ea\u4e16\u754c\u5404\u5730\u7684\u7cbe\u82f1\uff0c\u5438\u5f15\u4e86\u65e0\u6570\u6295\u8d44\u8005\u7684\u76ee\u5149\u3002\u5728\u8fd9\u91cc\uff0c\u4f60\u53ef\u4ee5\u770b\u5230\u4e16\u754c\u7ea7\u7684\\x1b[K\\n\u9ad8\u697c\u5927\u53a6\u4e0e\u5b81\u9759\u7f8e"
+      },
+      {
+        "step": 9,
+        "tool": "self_heal",
+        "success": true,
+        "score": 10,
+        "output": "{'success': True, 'output': '[Tue May 12 13:59:49 CST 2026] \u26a0\ufe0f agent-api \u5f02\u5e38\uff0c\u91cd\u542f...\\nUse --update-env to update environment variables\\n[Tue May 12 13:59:50 CST 2026] \u26a0\ufe0f chat-api \u5f02\u5e38\uff0c\u91cd\u542f...\\nUse --update-e"
+      },
+      {
+        "step": 10,
+        "tool": "memory_integration",
+        "success": true,
+        "score": 10,
+        "output": "{'success': True, 'message': '\u8bb0\u5fc6\u96c6\u6210 \u6267\u884c\u6210\u529f', 'data': {'context': {'script': '\u9999\u6e2f\u662f\u4e00\u5ea7\u7e41\u534e\u7684\u57ce\u5e02\uff0c\u662f\u4e1c\u65b9\u660e\u73e0\u7480\u74a8\u7684\u4e00\u9897\u3002\u4f5c\u4e3a\u56fd\u9645\u91d1\u878d\u4e2d\u5fc3\u548c\u5546\u4e1a\u67a2\u7ebd\uff0c\u9999\u6e2f\\x1b[K\\n\u6c47\u805a\u4e86\u6765\u81ea\u4e16\u754c\u5404\u5730\u7684\u7cbe\u82f1\uff0c\u5438\u5f15\u4e86\u65e0\u6570\u6295\u8d44\u8005\u7684\u76ee\u5149\u3002\u5728\u8fd9\u91cc\uff0c\u4f60\u53ef\u4ee5\u770b\u5230\u4e16\u754c\u7ea7\u7684\\x1b[K\\n\u9ad8\u697c\u5927\u53a6\u4e0e\u5b81\u9759\u7f8e\u4e3d\u7684\u7ef4\u591a\u5229\u4e9a\u6e2f\u548c\u8c10\u5171\u5b58\uff1b\u611f\u53d7\u4e2d\u897f\u6587\u5316\u7684\u4ea4\u6c47\u78b0\u649e\uff0c\u5728\u5c16"
+      }
+    ],
+    "timestamp": "2026-05-12T13:59:57.071499"
+  },
+  "success_rate": 1.0
+}

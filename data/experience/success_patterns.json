@@ -1,0 +1,27 @@
+{
+  "version": "1.0.0",
+  "patterns": [
+    {
+      "pattern": "生成.*形象|画.*人|创建.*角色",
+      "skill": "ai-image-gen",
+      "confidence": 0.9,
+      "usage_count": 0,
+      "success_rate": 0
+    },
+    {
+      "pattern": "生成.*猫咪|画.*猫|可爱.*猫",
+      "skill": "ai-image-gen",
+      "confidence": 0.85,
+      "usage_count": 0,
+      "success_rate": 0
+    },
+    {
+      "pattern": "每天.*执行|定时.*任务|周期.*提醒",
+      "skill": "scheduler",
+      "confidence": 0.9,
+      "usage_count": 0,
+      "success_rate": 0
+    }
+  ],
+  "last_updated": "2026-05-17"
+}

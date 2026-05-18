@@ -1,0 +1,332 @@
+{
+  "instructions": [
+    {
+      "name": "start_api",
+      "description": "启动 ClawsJoy API 网关服务",
+      "command": "cd /mnt/d/clawsjoy && python3 agent_gateway_web.py",
+      "path": "/mnt/d/clawsjoy/agent_gateway_web.py",
+      "check_command": "curl -s http://localhost:5002/api/health",
+      "category": "service",
+      "tags": [
+        "api",
+        "gateway",
+        "start",
+        "启动网关",
+        "开启API",
+        "运行API",
+        "启动服务"
+      ]
+    },
+    {
+      "name": "stop_api",
+      "description": "停止 API 网关服务",
+      "command": "pkill -f agent_gateway_web",
+      "path": null,
+      "check_command": "pgrep -f agent_gateway_web",
+      "category": "service",
+      "tags": [
+        "api",
+        "gateway",
+        "stop",
+        "停止API",
+        "关闭网关",
+        "停止服务"
+      ]
+    },
+    {
+      "name": "restart_api",
+      "description": "重启 API 网关",
+      "command": "cd /mnt/d/clawsjoy && pkill -f agent_gateway_web; sleep 2; python3 agent_gateway_web.py",
+      "path": "/mnt/d/clawsjoy/agent_gateway_web.py",
+      "check_command": "curl -s http://localhost:5002/api/health",
+      "category": "service",
+      "tags": [
+        "api",
+        "gateway",
+        "restart",
+        "重启API",
+        "重启网关",
+        "重启服务"
+      ]
+    },
+    {
+      "name": "start_ollama",
+      "description": "启动 Ollama 大模型服务",
+      "command": "ollama serve > /mnt/d/clawsjoy/logs/ollama.log 2>&1 &",
+      "path": "/usr/local/bin/ollama",
+      "check_command": "curl -s http://localhost:11434/api/tags",
+      "category": "service",
+      "tags": [
+        "ollama",
+        "llm",
+        "start",
+        "启动ollama",
+        "开启模型服务"
+      ]
+    },
+    {
+      "name": "stop_ollama",
+      "description": "停止 Ollama 服务",
+      "command": "pkill -f ollama",
+      "path": null,
+      "check_command": "pgrep -f ollama",
+      "category": "service",
+      "tags": [
+        "ollama",
+        "stop"
+      ]
+    },
+    {
+      "name": "restart_ollama",
+      "description": "重启 Ollama 服务",
+      "command": "pkill -f ollama; sleep 2; ollama serve > /mnt/d/clawsjoy/logs/ollama.log 2>&1 &",
+      "path": "/usr/local/bin/ollama",
+      "check_command": "curl -s http://localhost:11434/api/tags",
+      "category": "service",
+      "tags": [
+        "ollama",
+        "restart"
+      ]
+    },
+    {
+      "name": "check_api_status",
+      "description": "检查 API 服务状态",
+      "command": "curl -s -o /dev/null -w '%{http_code}' http://localhost:5002/api/health",
+      "path": null,
+      "category": "diagnostic",
+      "tags": [
+        "api",
+        "check",
+        "status",
+        "API状态",
+        "网关状态",
+        "服务状态"
+      ]
+    },
+    {
+      "name": "check_ollama_status",
+      "description": "检查 Ollama 服务状态",
+      "command": "curl -s http://localhost:11434/api/tags | python3 -c 'import sys,json; print(\"OK\" if json.load(sys.stdin).get(\"models\") else \"ERROR\")'",
+      "path": null,
+      "category": "diagnostic",
+      "tags": [
+        "ollama",
+        "check",
+        "status"
+      ]
+    },
+    {
+      "name": "check_disk_space",
+      "description": "检查磁盘空间使用率",
+      "command": "df -h / | tail -1 | awk '{print $5}'",
+      "path": null,
+      "category": "diagnostic",
+      "tags": [
+        "disk",
+        "check",
+        "space",
+        "磁盘空间",
+        "硬盘空间",
+        "查看磁盘"
+      ]
+    },
+    {
+      "name": "check_memory_usage",
+      "description": "检查内存使用情况",
+      "command": "free -h | grep Mem | awk '{print $3\"/\"$2}'",
+      "path": null,
+      "category": "diagnostic",
+      "tags": [
+        "memory",
+        "check"
+      ]
+    },
+    {
+      "name": "check_cpu_load",
+      "description": "检查 CPU 负载",
+      "command": "uptime | awk -F'load average:' '{print $2}'",
+      "path": null,
+      "category": "diagnostic",
+      "tags": [
+        "cpu",
+        "load"
+      ]
+    },
+    {
+      "name": "check_skills_count",
+      "description": "检查已注册技能数量",
+      "command": "cd /mnt/d/clawsjoy && python3 -c 'from skills.skill_interface import skill_registry; print(len(skill_registry.get_skill_names()))'",
+      "path": null,
+      "category": "diagnostic",
+      "tags": [
+        "skills",
+        "count"
+      ]
+    },
+    {
+      "name": "clean_logs",
+      "description": "清理7天前的日志文件",
+      "command": "find /mnt/d/clawsjoy/logs -name '*.log' -mtime +7 -delete",
+      "path": "/mnt/d/clawsjoy/logs",
+      "category": "maintenance",
+      "tags": [
+        "logs",
+        "clean",
+        "maintenance",
+        "清理日志",
+        "删除日志",
+        "清空日志",
+        "日志清理"
+      ]
+    },
+    {
+      "name": "clean_temp_files",
+      "description": "清理临时文件",
+      "command": "find /mnt/d/clawsjoy/tmp -type f -mtime +1 -delete 2>/dev/null; find /mnt/d/clawsjoy -name '*.pyc' -delete",
+      "path": "/mnt/d/clawsjoy/tmp",
+      "category": "maintenance",
+      "tags": [
+        "temp",
+        "clean"
+      ]
+    },
+    {
+      "name": "backup_users",
+      "description": "备份用户数据",
+      "command": "cd /mnt/d/clawsjoy && tar -czf backups/users_$(date +%Y%m%d_%H%M%S).tar.gz data/users/",
+      "path": "/mnt/d/clawsjoy/data/users",
+      "category": "backup",
+      "tags": [
+        "backup",
+        "users",
+        "备份用户",
+        "用户备份",
+        "备份数据"
+      ]
+    },
+    {
+      "name": "backup_brain",
+      "description": "备份大脑学习数据",
+      "command": "cd /mnt/d/clawsjoy && cp data/brain.json backups/brain_$(date +%Y%m%d_%H%M%S).json",
+      "path": "/mnt/d/clawsjoy/data/brain.json",
+      "category": "backup",
+      "tags": [
+        "backup",
+        "brain"
+      ]
+    },
+    {
+      "name": "backup_all",
+      "description": "完整备份所有数据",
+      "command": "cd /mnt/d/clawsjoy && tar -czf backups/full_backup_$(date +%Y%m%d_%H%M%S).tar.gz data/ marketplace/ skills/ agent_gateway_web.py",
+      "path": "/mnt/d/clawsjoy",
+      "category": "backup",
+      "tags": [
+        "backup",
+        "full"
+      ]
+    },
+    {
+      "name": "show_recent_logs",
+      "description": "显示最近50条错误日志",
+      "command": "tail -50 /mnt/d/clawsjoy/logs/gateway.log 2>/dev/null | grep -i error",
+      "path": "/mnt/d/clawsjoy/logs/gateway.log",
+      "category": "diagnostic",
+      "tags": [
+        "logs",
+        "error",
+        "tail",
+        "查看日志",
+        "显示日志",
+        "错误日志"
+      ]
+    },
+    {
+      "name": "show_system_info",
+      "description": "显示系统信息",
+      "command": "echo 'OS: ' && uname -a && echo 'Memory: ' && free -h && echo 'Disk: ' && df -h /",
+      "path": null,
+      "category": "diagnostic",
+      "tags": [
+        "system",
+        "info"
+      ]
+    },
+    {
+      "name": "register_new_skill",
+      "description": "重新注册所有技能",
+      "command": "cd /mnt/d/clawsjoy && python3 -c 'from skills.skill_interface import skill_registry; import importlib; importlib.reload(skill_registry.__class__); print(f\"Registered {len(skill_registry.get_skill_names())} skills\")'",
+      "path": null,
+      "category": "maintenance",
+      "tags": [
+        "skills",
+        "register"
+      ]
+    },
+    {
+      "name": "optimize_database",
+      "description": "优化数据库（VACUUM）",
+      "command": "cd /mnt/d/clawsjoy && for db in data/*.db; do sqlite3 $db 'VACUUM;'; done",
+      "path": "/mnt/d/clawsjoy/data",
+      "category": "maintenance",
+      "tags": [
+        "database",
+        "optimize",
+        "优化数据库",
+        "数据库优化",
+        "压缩数据库"
+      ]
+    },
+    {
+      "name": "check_ports",
+      "description": "检查关键端口状态",
+      "command": "netstat -tlnp 2>/dev/null | grep -E '5002|11434' | awk '{print $4}'",
+      "path": null,
+      "category": "diagnostic",
+      "tags": [
+        "ports",
+        "check"
+      ]
+    },
+    {
+      "name": "train_brain",
+      "description": "触发大脑训练",
+      "command": "cd /mnt/d/clawsjoy && python3 agent_core/brain_train.py",
+      "path": "/mnt/d/clawsjoy/agent_core/brain_train.py",
+      "category": "maintenance",
+      "tags": [
+        "brain",
+        "train"
+      ]
+    },
+    {
+      "name": "heal_system",
+      "description": "触发自愈 Agent",
+      "command": "cd /mnt/d/clawsjoy && python3 agents/llm_healer.py",
+      "path": "/mnt/d/clawsjoy/agents/llm_healer.py",
+      "category": "maintenance",
+      "tags": [
+        "heal",
+        "self"
+      ]
+    },
+    {
+      "name": "run_learning_cycle",
+      "description": "触发学习循环",
+      "command": "cd /mnt/d/clawsjoy && python3 agents/state_learning_loop.py",
+      "path": "/mnt/d/clawsjoy/agents/state_learning_loop.py",
+      "category": "maintenance",
+      "tags": [
+        "learn",
+        "cycle"
+      ]
+    }
+  ],
+  "categories": [
+    "service",
+    "diagnostic",
+    "maintenance",
+    "backup"
+  ],
+  "version": "2.0"
+}

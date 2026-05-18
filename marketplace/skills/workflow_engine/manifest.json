@@ -1,0 +1,12 @@
+{
+  "name": "workflow_engine",
+  "version": "1.0.0",
+  "description": "\u5de5\u4f5c\u6d41\u5f15\u64ce",
+  "category": "workflow",
+  "price": 0.99,
+  "author": "ClawsJoy",
+  "tags": [
+    "workflow",
+    "workflow_engine"
+  ]
+}

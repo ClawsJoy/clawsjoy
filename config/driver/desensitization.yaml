@@ -1,0 +1,120 @@
+# 脱敏规则配置 v1.1.0
+version: "1.1.0"
+
+# 敏感信息模式
+patterns:
+  # ===== 高敏感（必须脱敏）=====
+  phone:
+    regex: "1[3-9]\\d{9}"
+    replacement: "[手机号]"
+    level: "high"
+    
+  id_card:
+    regex: "\\d{17}[\\dXx]"
+    replacement: "[身份证]"
+    level: "high"
+    
+  email:
+    regex: "\\S+@\\S+\\.\\S+"
+    replacement: "[邮箱]"
+    level: "high"
+    
+  bank_card:
+    regex: "\\d{16,19}"
+    replacement: "[银行卡]"
+    level: "high"
+  
+  # ===== API 密钥类 =====
+  api_key:
+    regex: "(api[_-]?key|apikey)[:=]\\s*['\"]?[a-zA-Z0-9_\\-]{16,64}['\"]?"
+    replacement: "[API_KEY]"
+    level: "high"
+    
+  secret_key:
+    regex: "(secret[_-]?key|secretkey|app_secret)[:=]\\s*['\"]?[a-zA-Z0-9_\\-]{16,64}['\"]?"
+    replacement: "[SECRET_KEY]"
+    level: "high"
+    
+  access_key:
+    regex: "(access[_-]?key|accesskey)[:=]\\s*['\"]?[a-zA-Z0-9_\\-]{16,64}['\"]?"
+    replacement: "[ACCESS_KEY]"
+    level: "high"
+  
+  # ===== Token 类 =====
+  bearer_token:
+    regex: "Bearer\\s+[a-zA-Z0-9_\\-\\.]{20,200}"
+    replacement: "[BEARER_TOKEN]"
+    level: "high"
+    
+  jwt_token:
+    regex: "eyJ[a-zA-Z0-9_\\-]{10,}\\.eyJ[a-zA-Z0-9_\\-]{10,}\\.[a-zA-Z0-9_\\-]{10,}"
+    replacement: "[JWT_TOKEN]"
+    level: "high"
+    
+  access_token:
+    regex: "(access[_-]?token|accesstoken)[:=]\\s*['\"]?[a-zA-Z0-9_\\-]{20,100}['\"]?"
+    replacement: "[ACCESS_TOKEN]"
+    level: "high"
+    
+  refresh_token:
+    regex: "(refresh[_-]?token|refreshtoken)[:=]\\s*['\"]?[a-zA-Z0-9_\\-]{20,100}['\"]?"
+    replacement: "[REFRESH_TOKEN]"
+    level: "high"
+  
+  # ===== 密码类 =====
+  password:
+    regex: "(password|pwd|passwd)[:=]\\s*['\"]?\\S+['\"]?"
+    replacement: "[PASSWORD]"
+    level: "high"
+    
+  private_key:
+    regex: "-----BEGIN (RSA|DSA|EC|OPENSSH) PRIVATE KEY-----"
+    replacement: "[PRIVATE_KEY]"
+    level: "high"
+  
+  # ===== 中敏感 =====
+  address:
+    regex: "([\\u4e00-\\u9fa5]{2,}(省|市|区|县|镇|村|路|街|号))"
+    replacement: "[地址]"
+    level: "medium"
+    
+  name:
+    regex: "(姓名|名字|称呼|真实姓名)[:：]?\\s*[\\u4e00-\\u9fa5]{2,4}"
+    replacement: "[姓名]"
+    level: "medium"
+    
+  wechat:
+    regex: "(微信|wechat)[:=]\\s*[a-zA-Z][a-zA-Z0-9_-]{5,19}"
+    replacement: "[微信号]"
+    level: "medium"
+    
+  qq:
+    regex: "(QQ|qq)[:=]\\s*[1-9][0-9]{4,10}"
+    replacement: "[QQ号]"
+    level: "medium"
+  
+  # ===== 低敏感 =====
+  ip_address:
+    regex: "\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}"
+    replacement: "[IP地址]"
+    level: "low"
+    
+  mac_address:
+    regex: "([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})"
+    replacement: "[MAC地址]"
+    level: "low"
+
+# 脱敏级别
+levels:
+  high: ["phone", "id_card", "email", "bank_card", "api_key", "secret_key", "access_key", "bearer_token", "jwt_token", "access_token", "refresh_token", "password", "private_key"]
+  medium: ["address", "name", "wechat", "qq"]
+  low: ["ip_address", "mac_address"]
+
+# 是否启用
+enabled: true
+
+# 缓存时间（秒）
+cache_ttl: 3600
+
+# 是否记录脱敏日志
+log_enabled: true

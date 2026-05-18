@@ -1,0 +1,15 @@
+#!/bin/bash
+# 从 YouTube 下载视频
+# 用法: video_download <YouTube链接> [输出文件名]
+
+URL="$1"
+OUTPUT="${2:-video_$(date +%Y%m%d_%H%M%S)}"
+
+# 使用 yt-dlp 下载（需要安装）
+if command -v yt-dlp &> /dev/null; then
+    yt-dlp -o "$OUTPUT.%(ext)s" "$URL"
+    echo "✅ 下载完成: $(ls ${OUTPUT}.* 2>/dev/null)"
+else
+    echo "❌ yt-dlp 未安装"
+    echo "安装: pip install yt-dlp"
+fi

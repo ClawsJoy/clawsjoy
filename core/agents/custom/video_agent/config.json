@@ -1,0 +1,18 @@
+{
+    "name": "video_agent",
+    "version": "2.0.0",
+    "description": "video_agent 专用Agent",
+    "personality": {
+        "style": "creative",
+        "language": "zh-CN",
+        "response_format": "concise"
+    },
+    "skills": ["manju_maker", "add_subtitles"],
+    "memory": {
+        "enabled": true,
+        "max_items": 150,
+        "auto_summarize": true
+    },
+    "workspace": "./workspace",
+    "auto_backup": true
+}

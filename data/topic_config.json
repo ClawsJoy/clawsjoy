@@ -1,0 +1,5 @@
+{
+  "threshold": 3,
+  "top_k": 10,
+  "retention_days": 20
+}

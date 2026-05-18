@@ -1,0 +1,13 @@
+[Unit]
+Description=Ollama LLM Service
+After=network.target
+
+[Service]
+Type=simple
+User=flybo
+ExecStart=/usr/local/bin/ollama serve
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

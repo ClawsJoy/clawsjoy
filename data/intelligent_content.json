@@ -1,0 +1,133 @@
+{
+  "knowledge_base": [
+    {
+      "category": "clawsjoy",
+      "content": "ClawsJoy 是一个完整的 AI 智能体平台，具备七大核心能力：API网关、Agent系统、技能系统、记忆系统、大脑学习、向量知识库和Web管理界面。",
+      "importance": 0.9
+    },
+    {
+      "category": "clawsjoy",
+      "content": "ClawsJoy 的 Agent 系统包括 Code Agent（代码助手）、Chat Agent（对话助手）、Knowledge Agent（知识助手）、Data Agent（数据分析师）和 Ops Agent（运维专家）。",
+      "importance": 0.9
+    },
+    {
+      "category": "clawsjoy",
+      "content": "ClawsJoy 支持自定义 Agent，用户可以根据需求创建专属助手，并通过培训学习让 Agent 不断提升能力。",
+      "importance": 0.8
+    },
+    {
+      "category": "skills",
+      "content": "计算器技能：支持数学表达式计算，如 2+3*4、sqrt(16)、sin(30) 等。使用方法：调用 calculator 技能，传入 expression 参数。",
+      "importance": 0.8
+    },
+    {
+      "category": "skills",
+      "content": "随机数技能：生成指定范围内的随机整数。参数：start（起始值，默认1）、end（结束值，默认100）。",
+      "importance": 0.7
+    },
+    {
+      "category": "skills",
+      "content": "日期时间技能：获取当前时间。参数：format（full/date/time），返回对应格式的时间字符串。",
+      "importance": 0.7
+    },
+    {
+      "category": "skills",
+      "content": "Base64编解码技能：支持文本的 Base64 编码和解码。参数：text（要编码/解码的文本），operation（encode/decode）。",
+      "importance": 0.7
+    },
+    {
+      "category": "python",
+      "content": "Python 快速排序实现：def quick_sort(arr): if len(arr) <= 1: return arr; pivot = arr[len(arr)//2]; left = [x for x in arr if x < pivot]; middle = [x for x in arr if x == pivot]; right = [x for x in arr if x > pivot]; return quick_sort(left) + middle + quick_sort(right)",
+      "importance": 0.8
+    },
+    {
+      "category": "docker",
+      "content": "Docker 常用命令：docker ps（查看运行容器）、docker images（查看镜像）、docker pull（拉取镜像）、docker run（运行容器）、docker stop（停止容器）、docker rm（删除容器）、docker rmi（删除镜像）。",
+      "importance": 0.8
+    },
+    {
+      "category": "git",
+      "content": "Git 工作流：git add .（添加变更）、git commit -m 'message'（提交）、git push（推送）、git pull（拉取）、git branch（查看分支）、git checkout -b new_branch（创建切换分支）。",
+      "importance": 0.8
+    },
+    {
+      "category": "linux",
+      "content": "Linux 常用命令：ls（列出文件）、cd（切换目录）、pwd（当前路径）、mkdir（创建目录）、rm（删除）、cp（复制）、mv（移动）、grep（搜索）、ps（进程）、top（监控）、chmod（权限）。",
+      "importance": 0.7
+    },
+    {
+      "category": "ai",
+      "content": "机器学习三大类型：监督学习（有标签数据）、无监督学习（无标签数据）、强化学习（奖励机制）。ClawsJoy 使用 Q-learning 强化学习算法。",
+      "importance": 0.8
+    },
+    {
+      "category": "ai",
+      "content": "大语言模型（LLM）如 LLaMA、Qwen、GPT 等，通过大量文本训练，能够理解和生成自然语言。ClawsJoy 支持 Ollama 部署的多种模型。",
+      "importance": 0.8
+    },
+    {
+      "category": "vector",
+      "content": "向量数据库用于存储和检索向量嵌入，支持语义相似度搜索。ChromaDB 是常用的向量数据库，ClawsJoy 使用它作为向量知识库。",
+      "importance": 0.7
+    }
+  ],
+  "training_data": [
+    {
+      "question": "ClawsJoy 有哪些核心功能？",
+      "answer": "ClawsJoy 有七大核心：API网关、Agent系统（5+2个Agent）、技能系统（7个技能）、记忆系统、大脑学习（Q-learning）、向量知识库（26+条）和Web管理界面。"
+    },
+    {
+      "question": "如何创建自定义 Agent？",
+      "answer": "通过 POST /api/agents/custom/create 接口，传入 name 和 description 即可创建自定义 Agent。创建后可以通过培训学习来训练它。"
+    },
+    {
+      "question": "怎么使用计算器技能？",
+      "answer": "调用 POST /api/skills/execute，参数 {\"skill\":\"calculator\", \"params\":{\"expression\":\"2+3*4\"}}，会返回计算结果。"
+    },
+    {
+      "question": "如何添加记忆？",
+      "answer": "调用 POST /api/memory/add，参数 {\"content\":\"要记住的内容\", \"importance\":0.8}，系统会自动存储并可用于后续检索。"
+    },
+    {
+      "question": "怎么让 Agent 学习？",
+      "answer": "通过 POST /api/agents/custom/{agent_id}/training 添加问答对，Agent 会从训练数据中学习，未来相似问题会参考历史回答。"
+    },
+    {
+      "question": "Docker 容器如何重启？",
+      "answer": "使用 docker restart <容器名> 命令重启容器。也可以先 docker stop 再 docker start。"
+    },
+    {
+      "question": "Python 快速排序怎么写？",
+      "answer": "def quick_sort(arr): if len(arr) <= 1: return arr; pivot = arr[len(arr)//2]; left = [x for x in arr if x < pivot]; middle = [x for x in arr if x == pivot]; right = [x for x in arr if x > pivot]; return quick_sort(left) + middle + quick_sort(right)"
+    },
+    {
+      "question": "Git 提交代码的流程是什么？",
+      "answer": "1. git add . 添加变更；2. git commit -m '描述' 提交；3. git push 推送到远程仓库。"
+    },
+    {
+      "question": "如何查看 ClawsJoy 服务状态？",
+      "answer": "访问 GET /api/health 接口，返回 {\"status\":\"ok\"} 表示服务正常。也可以访问 /api/brain/stats 查看学习统计。"
+    },
+    {
+      "question": "ClawsJoy 使用什么学习算法？",
+      "answer": "ClawsJoy 使用 Q-learning 强化学习算法，通过记录经验、计算奖励、更新 Q 表来不断优化回答质量。"
+    }
+  ],
+  "agents": [
+    {
+      "name": "Python 专家",
+      "description": "专注 Python 编程、框架使用、性能优化",
+      "type": "code"
+    },
+    {
+      "name": "运维助手",
+      "description": "Docker、K8s、Linux 系统管理专家",
+      "type": "ops"
+    },
+    {
+      "name": "数据分析师",
+      "description": "数据清洗、统计分析、可视化报告",
+      "type": "data"
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+#!/bin/bash
+# 添加水印（图片或文字）
+# 用法: add_watermark <输入视频> <水印图片/文字> [位置] [输出文件]
+
+INPUT="$1"
+WATERMARK="$2"
+POSITION="${3:-bottom-right}"
+OUTPUT="${4:-${INPUT%.*}_watermarked.mp4}"
+
+# 位置映射
+case $POSITION in
+    top-left)      X="10"; Y="10";;
+    top-right)     X="main_w-overlay_w-10"; Y="10";;
+    bottom-left)   X="10"; Y="main_h-overlay_h-10";;
+    bottom-right)  X="main_w-overlay_w-10"; Y="main_h-overlay_h-10";;
+    center)        X="(main_w-overlay_w)/2"; Y="(main_h-overlay_h)/2";;
+    *)             X="10"; Y="10";;
+esac
+
+if [ -f "$WATERMARK" ]; then
+    # 图片水印
+    ffmpeg -i "$INPUT" -i "$WATERMARK" \
+           -filter_complex "overlay=$X:$Y" \
+           -c:a copy -y "$OUTPUT" -loglevel error
+else
+    # 文字水印
+    ffmpeg -i "$INPUT" \
+           -vf "drawtext=text='$WATERMARK':fontfile=/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc:fontsize=20:fontcolor=white@0.6:x=$X:y=$Y:box=1:boxcolor=black@0.4:boxborderw=5" \
+           -c:a copy -y "$OUTPUT" -loglevel error
+fi
+
+echo "✅ 水印已添加: $OUTPUT"

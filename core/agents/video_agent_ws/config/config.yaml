@@ -1,0 +1,5 @@
+# video_agent 工作区配置
+agent_id: video_agent
+workspace: ./workspace
+memory: ./memory
+created: 2026-05-17T08:26:40+08:00

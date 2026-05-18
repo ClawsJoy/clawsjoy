@@ -1,0 +1,401 @@
+{
+  "skills": {
+    "audio_generator": {
+      "name": "audio_generator",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/audio/audio_generator.py",
+      "category": "audio",
+      "hash": "9776de2c",
+      "registered_at": "2026-05-15T15:54:33.525699",
+      "last_modified": "2026-05-15T15:54:33.525717"
+    },
+    "json_parser": {
+      "name": "json_parser",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/data/json_parser.py",
+      "category": "data",
+      "hash": "32a46d8c",
+      "registered_at": "2026-05-15T15:54:33.550524",
+      "last_modified": "2026-05-15T15:54:33.550536"
+    },
+    "compress": {
+      "name": "compress",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/image/compress.py",
+      "category": "image",
+      "hash": "f8451cf7",
+      "registered_at": "2026-05-15T15:54:33.631101",
+      "last_modified": "2026-05-15T15:54:33.631131"
+    },
+    "image_filter": {
+      "name": "image_filter",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/image/image_filter.py",
+      "category": "image",
+      "hash": "e0913434",
+      "registered_at": "2026-05-15T15:54:33.639971",
+      "last_modified": "2026-05-15T15:54:33.639985"
+    },
+    "image_resize": {
+      "name": "image_resize",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/image/image_resize.py",
+      "category": "image",
+      "hash": "1c5159ca",
+      "registered_at": "2026-05-15T15:54:33.649040",
+      "last_modified": "2026-05-15T15:54:33.649056"
+    },
+    "image_rotate": {
+      "name": "image_rotate",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/image/image_rotate.py",
+      "category": "image",
+      "hash": "fac5de94",
+      "registered_at": "2026-05-15T15:54:33.657907",
+      "last_modified": "2026-05-15T15:54:33.657920"
+    },
+    "remove_bg": {
+      "name": "remove_bg",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/image/remove_bg.py",
+      "category": "image",
+      "hash": "a7b8ca91",
+      "registered_at": "2026-05-15T15:54:33.667742",
+      "last_modified": "2026-05-15T15:54:33.667759"
+    },
+    "spider": {
+      "name": "spider",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/image/spider.py",
+      "category": "image",
+      "hash": "9a6ba825",
+      "registered_at": "2026-05-15T15:54:33.676474",
+      "last_modified": "2026-05-15T15:54:33.676487"
+    },
+    "abs": {
+      "name": "abs",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/math/abs.py",
+      "category": "math",
+      "hash": "6c284298",
+      "registered_at": "2026-05-15T15:54:33.689621",
+      "last_modified": "2026-05-15T15:54:33.689633"
+    },
+    "add": {
+      "name": "add",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/math/add.py",
+      "category": "math",
+      "hash": "b2952739",
+      "registered_at": "2026-05-15T15:54:33.698410",
+      "last_modified": "2026-05-15T15:54:33.698424"
+    },
+    "divide": {
+      "name": "divide",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/math/divide.py",
+      "category": "math",
+      "hash": "07e7fbed",
+      "registered_at": "2026-05-15T15:54:33.706578",
+      "last_modified": "2026-05-15T15:54:33.706590"
+    },
+    "mod": {
+      "name": "mod",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/math/mod.py",
+      "category": "math",
+      "hash": "c6af448b",
+      "registered_at": "2026-05-15T15:54:33.716070",
+      "last_modified": "2026-05-15T15:54:33.716085"
+    },
+    "multiply": {
+      "name": "multiply",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/math/multiply.py",
+      "category": "math",
+      "hash": "15511ca5",
+      "registered_at": "2026-05-15T15:54:33.724696",
+      "last_modified": "2026-05-15T15:54:33.724726"
+    },
+    "power": {
+      "name": "power",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/math/power.py",
+      "category": "math",
+      "hash": "9c5fa013",
+      "registered_at": "2026-05-15T15:54:33.733874",
+      "last_modified": "2026-05-15T15:54:33.733887"
+    },
+    "sqrt": {
+      "name": "sqrt",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/math/sqrt.py",
+      "category": "math",
+      "hash": "6b7463bf",
+      "registered_at": "2026-05-15T15:54:33.743369",
+      "last_modified": "2026-05-15T15:54:33.743383"
+    },
+    "subtract": {
+      "name": "subtract",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/math/subtract.py",
+      "category": "math",
+      "hash": "87e1ba9f",
+      "registered_at": "2026-05-15T15:54:33.753248",
+      "last_modified": "2026-05-15T15:54:33.753264"
+    },
+    "download_file": {
+      "name": "download_file",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/network/download_file.py",
+      "category": "network",
+      "hash": "888d7cec",
+      "registered_at": "2026-05-15T15:54:33.766977",
+      "last_modified": "2026-05-15T15:54:33.767009"
+    },
+    "http_get": {
+      "name": "http_get",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/network/http_get.py",
+      "category": "network",
+      "hash": "4ab78973",
+      "registered_at": "2026-05-15T15:54:33.775554",
+      "last_modified": "2026-05-15T15:54:33.775566"
+    },
+    "http_post": {
+      "name": "http_post",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/network/http_post.py",
+      "category": "network",
+      "hash": "bcde3cb7",
+      "registered_at": "2026-05-15T15:54:33.785192",
+      "last_modified": "2026-05-15T15:54:33.785235"
+    },
+    "youtube_uploader": {
+      "name": "youtube_uploader",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/network/youtube_uploader.py",
+      "category": "network",
+      "hash": "01f81fb0",
+      "registered_at": "2026-05-15T15:54:33.794465",
+      "last_modified": "2026-05-15T15:54:33.794479"
+    },
+    "keyword_extractor": {
+      "name": "keyword_extractor",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/text/keyword_extractor.py",
+      "category": "text",
+      "hash": "d2d482d1",
+      "registered_at": "2026-05-15T15:54:33.807526",
+      "last_modified": "2026-05-15T15:54:33.807539"
+    },
+    "reverse": {
+      "name": "reverse",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/text/reverse.py",
+      "category": "text",
+      "hash": "548c70f6",
+      "registered_at": "2026-05-15T15:54:33.816281",
+      "last_modified": "2026-05-15T15:54:33.816297"
+    },
+    "script_generator": {
+      "name": "script_generator",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/text/script_generator.py",
+      "category": "text",
+      "hash": "accd0330",
+      "registered_at": "2026-05-15T15:54:33.824795",
+      "last_modified": "2026-05-15T15:54:33.824809"
+    },
+    "text_summarizer": {
+      "name": "text_summarizer",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/text/text_summarizer.py",
+      "category": "text",
+      "hash": "a31a7e1a",
+      "registered_at": "2026-05-15T15:54:33.834433",
+      "last_modified": "2026-05-15T15:54:33.834448"
+    },
+    "to_lower": {
+      "name": "to_lower",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/text/to_lower.py",
+      "category": "text",
+      "hash": "2ad7d135",
+      "registered_at": "2026-05-15T15:54:33.842922",
+      "last_modified": "2026-05-15T15:54:33.842940"
+    },
+    "to_upper": {
+      "name": "to_upper",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/text/to_upper.py",
+      "category": "text",
+      "hash": "490d1c5b",
+      "registered_at": "2026-05-15T15:54:33.851564",
+      "last_modified": "2026-05-15T15:54:33.851578"
+    },
+    "translate": {
+      "name": "translate",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/text/translate.py",
+      "category": "text",
+      "hash": "7bd29dfc",
+      "registered_at": "2026-05-15T15:54:33.860200",
+      "last_modified": "2026-05-15T15:54:33.860222"
+    },
+    "trim": {
+      "name": "trim",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/text/trim.py",
+      "category": "text",
+      "hash": "3defffce",
+      "registered_at": "2026-05-15T15:54:33.868416",
+      "last_modified": "2026-05-15T15:54:33.868428"
+    },
+    "add_subtitles": {
+      "name": "add_subtitles",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/video/add_subtitles.py",
+      "category": "video",
+      "hash": "dbb31496",
+      "registered_at": "2026-05-15T15:54:33.917939",
+      "last_modified": "2026-05-15T15:54:33.917953"
+    },
+    "video_composer": {
+      "name": "video_composer",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/video/video_composer.py",
+      "category": "video",
+      "hash": "e5470ce6",
+      "registered_at": "2026-05-15T15:54:33.927235",
+      "last_modified": "2026-05-15T15:54:33.927250"
+    },
+    "video_info": {
+      "name": "video_info",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/video/video_info.py",
+      "category": "video",
+      "hash": "27870db1",
+      "registered_at": "2026-05-15T15:54:33.935721",
+      "last_modified": "2026-05-15T15:54:33.935736"
+    },
+    "video_merge": {
+      "name": "video_merge",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/video/video_merge.py",
+      "category": "video",
+      "hash": "2d380756",
+      "registered_at": "2026-05-15T15:54:33.945519",
+      "last_modified": "2026-05-15T15:54:33.945533"
+    },
+    "video_trim": {
+      "name": "video_trim",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/video/video_trim.py",
+      "category": "video",
+      "hash": "dafac513",
+      "registered_at": "2026-05-15T15:54:33.955837",
+      "last_modified": "2026-05-15T15:54:33.955853"
+    },
+    "video_uploader": {
+      "name": "video_uploader",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/video/video_uploader.py",
+      "category": "video",
+      "hash": "544dd6dc",
+      "registered_at": "2026-05-15T15:54:33.965602",
+      "last_modified": "2026-05-15T15:54:33.965616"
+    },
+    "hex_to_rgb": {
+      "name": "hex_to_rgb",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/color/hex_to_rgb.py",
+      "category": "color",
+      "hash": "545431ba",
+      "registered_at": "2026-05-15T15:54:33.538455",
+      "last_modified": "2026-05-15T15:54:33.538469"
+    },
+    "date_diff": {
+      "name": "date_diff",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/datetime/date_diff.py",
+      "category": "datetime",
+      "hash": "e74094c8",
+      "registered_at": "2026-05-15T15:54:33.563924",
+      "last_modified": "2026-05-15T15:54:33.563936"
+    },
+    "get_time": {
+      "name": "get_time",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/datetime/get_time.py",
+      "category": "datetime",
+      "hash": "4ae22d74",
+      "registered_at": "2026-05-15T15:54:33.573428",
+      "last_modified": "2026-05-15T15:54:33.573446"
+    },
+    "base64_decode": {
+      "name": "base64_decode",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/encode/base64_decode.py",
+      "category": "encode",
+      "hash": "7af5172f",
+      "registered_at": "2026-05-15T15:54:33.586764",
+      "last_modified": "2026-05-15T15:54:33.586778"
+    },
+    "base64_encode": {
+      "name": "base64_encode",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/encode/base64_encode.py",
+      "category": "encode",
+      "hash": "bf224583",
+      "registered_at": "2026-05-15T15:54:33.595002",
+      "last_modified": "2026-05-15T15:54:33.595015"
+    },
+    "md5": {
+      "name": "md5",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/hash/md5.py",
+      "category": "hash",
+      "hash": "4cfa4353",
+      "registered_at": "2026-05-15T15:54:33.608507",
+      "last_modified": "2026-05-15T15:54:33.608519"
+    },
+    "sha256": {
+      "name": "sha256",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/hash/sha256.py",
+      "category": "hash",
+      "hash": "d317aba1",
+      "registered_at": "2026-05-15T15:54:33.618126",
+      "last_modified": "2026-05-15T15:54:33.618140"
+    },
+    "temperature": {
+      "name": "temperature",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/unit/temperature.py",
+      "category": "unit",
+      "hash": "af8a8f23",
+      "registered_at": "2026-05-15T15:54:33.882323",
+      "last_modified": "2026-05-15T15:54:33.882336"
+    },
+    "random_gen": {
+      "name": "random_gen",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/utils/random_gen.py",
+      "category": "utils",
+      "hash": "74879cdf",
+      "registered_at": "2026-05-15T15:54:33.896046",
+      "last_modified": "2026-05-15T15:54:33.896059"
+    },
+    "uuid_gen": {
+      "name": "uuid_gen",
+      "version": "1.0.0",
+      "file": "src/skills/atomic/utils/uuid_gen.py",
+      "category": "utils",
+      "hash": "e6767b3f",
+      "registered_at": "2026-05-15T15:54:33.904474",
+      "last_modified": "2026-05-15T15:54:33.904488"
+    }
+  },
+  "last_update": "2026-05-15T15:54:33.965621"
+}

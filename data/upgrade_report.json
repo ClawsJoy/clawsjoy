@@ -1,0 +1,14 @@
+{
+  "upgrade_time": "2026-05-10T18:57:42.021675",
+  "total_keywords": 945,
+  "fields_added": {
+    "threshold": 945,
+    "confidence": 945,
+    "last_used": 945
+  },
+  "coverage": {
+    "threshold": "100.0%",
+    "confidence": "100.0%",
+    "last_used": "100.0%"
+  }
+}

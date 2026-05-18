@@ -1,0 +1,42 @@
+# Agent 通信规范 v1.0.0
+
+message:
+  # 消息格式
+  format:
+    version: "1.0"
+    fields:
+      - name: message_id
+        type: string
+        required: true
+      - name: type
+        type: string
+        enum: ["request", "response", "event", "error"]
+      - name: from
+        type: string
+      - name: to
+        type: string
+      - name: payload
+        type: object
+      - name: timestamp
+        type: string
+  
+  # 消息类型
+  types:
+    request:
+      description: "请求消息"
+      expects_response: true
+    response:
+      description: "响应消息"
+      expects_response: false
+    event:
+      description: "事件通知"
+      expects_response: false
+    error:
+      description: "错误消息"
+      expects_response: false
+
+  # 通信模式
+  patterns:
+    - request_response
+    - publish_subscribe
+    - broadcast

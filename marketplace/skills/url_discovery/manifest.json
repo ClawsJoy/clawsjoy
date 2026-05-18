@@ -1,0 +1,12 @@
+{
+  "name": "url_discovery",
+  "version": "1.0.0",
+  "description": "URL \u53d1\u73b0",
+  "category": "crawler",
+  "price": 0.99,
+  "author": "ClawsJoy",
+  "tags": [
+    "crawler",
+    "url_discovery"
+  ]
+}

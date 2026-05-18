@@ -1,0 +1,8 @@
+{
+  "name": "reverse",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "字符串反转",
+  "category": "text",
+  "author": "ClawsJoy"
+}

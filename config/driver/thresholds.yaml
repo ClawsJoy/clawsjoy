@@ -1,0 +1,12 @@
+# 阈值配置 v1.0.01
+quality_min_score: 0.5          # 质量预评分最低阈值
+max_retry_same_error: 3         # 同一错误最大重试次数
+success_rate_warning: 50        # 成功率告警阈值 (%)
+success_rate_critical: 30       # 成功率紧急阈值 (%)
+cpu_threshold: 80               # CPU 告警阈值 (%)
+memory_threshold: 85            # 内存告警阈值 (%)
+disk_threshold: 90              # 磁盘告警阈值 (%)
+high_priority_rate: 0.8         # 高优先级任务成功率阈值
+low_priority_rate: 0.3          # 低优先级任务成功率阈值
+confidence_threshold: 0.7       # 预测置信度阈值
+task_timeout: 300               # 任务超时时间（秒）

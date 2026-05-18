@@ -1,0 +1,9 @@
+{
+  "name": "avatar_maker",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "制作卡通头像",
+  "category": "image",
+  "author": "Community",
+  "source": "https://github.com/ClawsJoy/community-skills"
+}

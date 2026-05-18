@@ -1,0 +1,12 @@
+{
+  "name": "webhook_notify",
+  "version": "1.0.0",
+  "description": "Webhook \u901a\u77e5",
+  "category": "system",
+  "price": 0.99,
+  "author": "ClawsJoy",
+  "tags": [
+    "system",
+    "webhook_notify"
+  ]
+}

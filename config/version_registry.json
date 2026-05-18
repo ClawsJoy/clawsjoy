@@ -1,0 +1,41 @@
+{
+  "modules": {
+    "success_monitor": {
+      "path": "intelligence/success_monitor_v1.0.01_20260517.py",
+      "type": "monitor",
+      "version": "v1.0.01_20260517",
+      "registered_at": "2026-05-17T13:21:48.763139",
+      "status": "active"
+    },
+    "version_manager": {
+      "path": "lib/version_manager_v1.0.01_20260517.py",
+      "type": "core",
+      "version": "v1.0.01_20260517",
+      "registered_at": "2026-05-17T13:21:48.843949",
+      "status": "active"
+    },
+    "memory_writer": {
+      "path": "lib/memory_writer_v1.0.01_20260517.py",
+      "type": "core",
+      "version": "v1.0.01_20260517",
+      "registered_at": "2026-05-17T13:21:48.922490",
+      "status": "active"
+    },
+    "active_runner": {
+      "path": "bin/active_runner.py",
+      "type": "core",
+      "version": "v0.0.00_unknown",
+      "registered_at": "2026-05-17T13:21:49.002808",
+      "status": "active"
+    },
+    "web_dashboard": {
+      "path": "web_dashboard.py",
+      "type": "web",
+      "version": "v0.0.00_20260517_nogit",
+      "registered_at": "2026-05-17T13:21:49.295985",
+      "status": "active"
+    }
+  },
+  "last_updated": "2026-05-17T13:21:49.295995",
+  "system_version": "3.0.0"
+}

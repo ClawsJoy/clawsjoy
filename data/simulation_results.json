@@ -1,0 +1,86 @@
+[
+  {
+    "query": "\u9999\u6e2f\u4f18\u624d\u8ba1\u52122026\u6700\u65b0\u653f\u7b56",
+    "success": true,
+    "vector_hits": 0,
+    "category": "policy"
+  },
+  {
+    "query": "\u4f18\u624d\u8ba1\u5212\u5206\u6570\u964d\u5230\u591a\u5c11\u4e86",
+    "success": true,
+    "vector_hits": 0,
+    "category": "policy"
+  },
+  {
+    "query": "\u9999\u6e2f\u9ad8\u624d\u901a\u7533\u8bf7\u6761\u4ef6",
+    "success": true,
+    "vector_hits": 0,
+    "category": "policy"
+  },
+  {
+    "query": "\u9999\u6e2f\u8eab\u4efd\u6709\u4ec0\u4e48\u597d\u5904",
+    "success": true,
+    "vector_hits": 0,
+    "category": "policy"
+  },
+  {
+    "query": "\u5e2e\u6211\u5199\u4e00\u6bb5\u9999\u6e2f\u65c5\u6e38\u6587\u6848",
+    "success": true,
+    "vector_hits": 0,
+    "category": "content"
+  },
+  {
+    "query": "\u751f\u6210\u4e00\u4e2a\u5173\u4e8e\u9999\u6e2f\u7684\u89c6\u9891\u811a\u672c",
+    "success": true,
+    "vector_hits": 0,
+    "category": "content"
+  },
+  {
+    "query": "\u5199\u4e00\u7bc7\u9999\u6e2f\u79d1\u6280\u521b\u65b0\u6587\u7ae0",
+    "success": true,
+    "vector_hits": 0,
+    "category": "content"
+  },
+  {
+    "query": "Docker\u5bb9\u5668\u600e\u4e48\u91cd\u542f",
+    "success": true,
+    "vector_hits": 0,
+    "category": "ops"
+  },
+  {
+    "query": "\u670d\u52a1\u6302\u4e86\u600e\u4e48\u529e",
+    "success": true,
+    "vector_hits": 0,
+    "category": "ops"
+  },
+  {
+    "query": "PM2\u67e5\u770b\u65e5\u5fd7",
+    "success": true,
+    "vector_hits": 0,
+    "category": "ops"
+  },
+  {
+    "query": "YouTube\u600e\u4e48\u4e0a\u4f20\u89c6\u9891",
+    "success": true,
+    "vector_hits": 0,
+    "category": "youtube"
+  },
+  {
+    "query": "\u89c6\u9891\u6807\u9898\u600e\u4e48\u4f18\u5316",
+    "success": true,
+    "vector_hits": 0,
+    "category": "youtube"
+  },
+  {
+    "query": "\u91c7\u96c6\u9999\u6e2f\u56fe\u7247",
+    "success": true,
+    "vector_hits": 0,
+    "category": "collect"
+  },
+  {
+    "query": "\u6293\u53d6\u9999\u6e2f\u65b0\u95fb",
+    "success": true,
+    "vector_hits": 0,
+    "category": "collect"
+  }
+]

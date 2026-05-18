@@ -1,0 +1,184 @@
+{
+  "timestamp": "2026-05-06T06:27:25.081725",
+  "gitignore": {
+    "exists": true,
+    "issues": [
+      "缺少忽略规则: config/youtube/client_secrets.json, *.mp3, *.mp4, *.jpg"
+    ],
+    "missing_entries": [
+      "config/youtube/client_secrets.json",
+      "*.mp3",
+      "*.mp4",
+      "*.jpg"
+    ],
+    "passed": false
+  },
+  "sensitive_data": {
+    "sensitive_found": 13,
+    "sensitive_files": [
+      {
+        "file": "/mnt/d/clawsjoy/backups/backup_20260505_150041/bin_backup/auth_api.py",
+        "pattern": "password",
+        "matches": [
+          [
+            "pwd",
+            "hash_password("
+          ],
+          [
+            "password",
+            "data.get("
+          ],
+          [
+            "password",
+            "? WHERE email=?"
+          ]
+        ]
+      },
+      {
+        "file": "/mnt/d/clawsjoy/backups/final_20260506_023818/bin/auth_api.py",
+        "pattern": "password",
+        "matches": [
+          [
+            "pwd",
+            "hash_password("
+          ],
+          [
+            "password",
+            "data.get("
+          ],
+          [
+            "password",
+            "? WHERE email=?"
+          ]
+        ]
+      },
+      {
+        "file": "/mnt/d/clawsjoy/bin/auth_api.py",
+        "pattern": "password",
+        "matches": [
+          [
+            "pwd",
+            "hash_password("
+          ],
+          [
+            "password",
+            "data.get("
+          ],
+          [
+            "password",
+            "? WHERE email=?"
+          ]
+        ]
+      },
+      {
+        "file": "/mnt/d/clawsjoy/bin_backup_20260501_091125/auth_api.py",
+        "pattern": "password",
+        "matches": [
+          [
+            "pwd",
+            "hash_password("
+          ],
+          [
+            "password",
+            "data.get("
+          ],
+          [
+            "password",
+            "? WHERE email=?"
+          ]
+        ]
+      },
+      {
+        "file": "/mnt/d/clawsjoy/stable/bin/clawsjoy_server.py",
+        "pattern": "password",
+        "matches": [
+          [
+            "password",
+            "data.get("
+          ]
+        ]
+      },
+      {
+        "file": "/mnt/d/clawsjoy/tests/unit/test_auth.py",
+        "pattern": "password",
+        "matches": [
+          [
+            "password",
+            "test123"
+          ]
+        ]
+      },
+      {
+        "file": "/mnt/d/clawsjoy/backups/final_20260506_023818/youtube/client_secrets.json",
+        "pattern": "client_secret",
+        "matches": [
+          "发现敏感信息"
+        ]
+      },
+      {
+        "file": "/mnt/d/clawsjoy/config/youtube/client_secrets.json",
+        "pattern": "client_secret",
+        "matches": [
+          "发现敏感信息"
+        ]
+      },
+      {
+        "file": "/mnt/d/clawsjoy/agents/security_agent.py",
+        "pattern": "unsplash_key",
+        "matches": [
+          "ijXPXhcaX2k5neNoQAzN1cw8DJl3i9gx8FlRnzspqKs",
+          "ijXPXhcaX2k5neNoQAzN1cw8DJl3i9gx8FlRnzspqKs"
+        ]
+      },
+      {
+        "file": "/mnt/d/clawsjoy/backups/final_20260506_023818/bin/promo_api.py",
+        "pattern": "unsplash_key",
+        "matches": [
+          "ijXPXhcaX2k5neNoQAzN1cw8DJl3i9gx8FlRnzspqKs"
+        ]
+      }
+    ],
+    "hardcoded_keys": [
+      {
+        "file": "/mnt/d/clawsjoy/agents/security_agent.py",
+        "type": "Unsplash Key"
+      },
+      {
+        "file": "/mnt/d/clawsjoy/backups/final_20260506_023818/bin/promo_api.py",
+        "type": "Unsplash Key"
+      },
+      {
+        "file": "/mnt/d/clawsjoy/backups/final_20260506_023818/bin/promo_api_backup.py",
+        "type": "Unsplash Key"
+      },
+      {
+        "file": "/mnt/d/clawsjoy/bin/promo_api.py",
+        "type": "Unsplash Key"
+      },
+      {
+        "file": "/mnt/d/clawsjoy/bin/promo_api_backup.py",
+        "type": "Unsplash Key"
+      }
+    ],
+    "risk_level": "high"
+  },
+  "dependencies": {
+    "total_packages": 11,
+    "dangerous": [],
+    "passed": true
+  },
+  "permissions": {
+    "issues": [
+      "config/youtube/client_secrets.json 权限不安全: 0o100777",
+      ".env 权限不安全: 0o100777",
+      ".git/config 权限不安全: 0o100777"
+    ],
+    "passed": false
+  },
+  "overall_risk": "high",
+  "recommendations": [
+    "修复 .gitignore 配置",
+    "移除硬编码的敏感信息",
+    "收紧敏感文件权限"
+  ]
+}

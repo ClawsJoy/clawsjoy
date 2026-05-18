@@ -1,0 +1,50 @@
+{
+  "verified": [
+    "youtube_publisher",
+    "youtube_uploader",
+    "queue",
+    "spider",
+    "auth",
+    "daily_scheduler",
+    "coffee",
+    "tenant",
+    "promo",
+    "router",
+    "content_writer",
+    "hk_producer",
+    "memory",
+    "publisher",
+    "billing",
+    "url_collector",
+    "fix_agent_api",
+    "fix_chat_api",
+    "fix_promo_api",
+    "fix_web",
+    "restart_all"
+  ],
+  "failed": [
+    "fix_promo_api",
+    "fix_chat_api",
+    "topic_planner",
+    "fix_agent_api",
+    "restart_all",
+    "tts",
+    "writer",
+    "fix_web"
+  ],
+  "total": 24,
+  "last_scan": "2026-05-09T15:17:20.897580",
+  "last_correction": "2026-05-09T15:40:48.051959",
+  "ops_skills": [
+    "fix_agent_api",
+    "fix_chat_api",
+    "fix_promo_api",
+    "fix_web",
+    "restart_all"
+  ],
+  "truly_failed": [
+    "tts",
+    "writer",
+    "topic_planner"
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "experiences": [
+    {
+      "time": "2026-05-08T19:34:48.793081",
+      "problem": "agent-api.errored",
+      "success": true
+    },
+    {
+      "time": "2026-05-08T19:34:51.053326",
+      "problem": "chat-api.errored",
+      "success": true
+    },
+    {
+      "time": "2026-05-08T19:34:53.516769",
+      "problem": "promo-api.errored",
+      "success": true
+    },
+    {
+      "time": "2026-05-08T19:35:10.709208",
+      "problem": "agent-api.errored",
+      "success": true
+    },
+    {
+      "time": "2026-05-08T19:35:12.959282",
+      "problem": "chat-api.errored",
+      "success": true
+    },
+    {
+      "time": "2026-05-08T19:35:15.422683",
+      "problem": "promo-api.errored",
+      "success": true
+    },
+    {
+      "time": "2026-05-08T19:35:20.095443",
+      "problem": "agent-api.errored",
+      "success": true
+    },
+    {
+      "time": "2026-05-08T19:35:22.346583",
+      "problem": "chat-api.errored",
+      "success": true
+    },
+    {
+      "time": "2026-05-08T19:35:24.808147",
+      "problem": "promo-api.errored",
+      "success": true
+    },
+    {
+      "time": "2026-05-08T19:35:29.480355",
+      "problem": "agent-api.errored",
+      "success": true
+    },
+    {
+      "time": "2026-05-08T19:35:31.723117",
+      "problem": "chat-api.errored",
+      "success": true
+    },
+    {
+      "time": "2026-05-08T19:35:34.196680",
+      "problem": "promo-api.errored",
+      "success": true
+    }
+  ],
+  "skills_performance": {
+    "agent-api": {
+      "total": 4,
+      "success": 4
+    },
+    "chat-api": {
+      "total": 4,
+      "success": 4
+    },
+    "promo-api": {
+      "total": 4,
+      "success": 4
+    }
+  },
+  "learned_patterns": []
+}

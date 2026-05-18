@@ -1,0 +1,22 @@
+{
+  "43ece322465b253c926757832a35c4a0": {
+    "file": "PHASE_4_REPORT.md",
+    "category": "report"
+  },
+  "60892fc90f576a3472b649145296ed97": {
+    "file": "user_guide_v4.md",
+    "category": "user_guide"
+  },
+  "b96a1eb42f44032fc6f5d9d167418ca0": {
+    "file": "admin_guide_v4.md",
+    "category": "admin_guide"
+  },
+  "c558cebfe18cdac625339745b38674fe": {
+    "file": "architect_guide_v4.md",
+    "category": "architect_guide"
+  },
+  "8532d2479f165d7ed2b218b9a020bc1f": {
+    "file": "agent_handbook_v4.md",
+    "category": "agent_handbook"
+  }
+}

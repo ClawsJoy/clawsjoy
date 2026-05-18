@@ -1,0 +1,8 @@
+{
+  "name": "video_info",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "视频信息",
+  "category": "video",
+  "author": "ClawsJoy"
+}

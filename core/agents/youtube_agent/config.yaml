@@ -1,0 +1,20 @@
+name: youtube_agent
+description: YouTube 频道内容生成与管理
+
+workspace: /mnt/d/clawsjoy/agents/youtube_agent/workspace
+
+skills:
+  - whisper_transcribe
+  - tts
+  - script_writer
+  - video_maker
+
+memory:
+  long_term: MEMORY.md
+  daily: memory/*.md
+
+rules:
+  - 生成视频前，先读取 MEMORY.md 中的偏好
+  - 每次执行后，追加日志到当日 memory 文件
+  - 用户公开视频 → 存入正面样本
+  - 用户删除视频 → 存入负面样本

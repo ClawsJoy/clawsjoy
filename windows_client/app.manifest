@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
+  <assemblyIdentity version="1.0.0.0" name="ClawsJoy"/>
+  <applicationRequestMinimum>
+    <defaultAssemblyRequest permissionSetReference="Custom"/>
+    <PermissionSet class="System.Security.PermissionSet" version="1" Unrestricted="true"/>
+  </applicationRequestMinimum>
+  <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
+    <application>
+      <supportedOS Id="{8e0f7a12-bfb8-4fe8-8bf2-6a3e8e6c7f9a}"/>
+    </application>
+  </compatibility>
+</assembly>

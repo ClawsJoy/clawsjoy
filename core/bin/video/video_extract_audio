@@ -1,0 +1,3 @@
+#!/bin/bash
+# 提取音频
+ffmpeg -i "$1" -vn -acodec mp3 "${1%.*}.mp3"

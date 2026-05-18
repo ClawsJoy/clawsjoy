@@ -1,0 +1,16 @@
+{
+  "keywords": [],
+  "errors": [
+    {
+      "error": "关键词学习失败: Expecting value: line 1 column 1 (char 0)",
+      "count": 4,
+      "last_seen": "Fri May  8 18:54:52 CST 2026"
+    },
+    {
+      "error": "(HTTPConnectionPool(h)",
+      "count": 15,
+      "last_seen": "Fri May  8 18:54:52 CST 2026"
+    }
+  ],
+  "tips": []
+}

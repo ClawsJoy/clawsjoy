@@ -1,0 +1,146 @@
+{
+  "orchestrator": {
+    "name": "\u4efb\u52a1\u7f16\u6392\u5668",
+    "type": "core",
+    "enabled": true,
+    "personality": "professional",
+    "capabilities": [
+      "task_planning",
+      "skill_orchestration",
+      "workflow_management"
+    ],
+    "endpoint": {
+      "port": 5002,
+      "health_path": "/api/health"
+    },
+    "health_check": {
+      "interval": 30,
+      "timeout": 5
+    },
+    "registered_at": "2026-05-18T15:02:20.299091",
+    "status": "active"
+  },
+  "code_agent": {
+    "name": "\u4ee3\u7801\u52a9\u624b",
+    "type": "custom",
+    "enabled": true,
+    "personality": "technical",
+    "capabilities": [
+      "code_generation",
+      "code_review",
+      "code_debug"
+    ],
+    "skills": [
+      "code_agent_v7",
+      "script_writer"
+    ],
+    "registered_at": "2026-05-18T15:02:20.302048",
+    "status": "active"
+  },
+  "video_agent": {
+    "name": "\u89c6\u9891\u5236\u4f5c\u52a9\u624b",
+    "type": "custom",
+    "enabled": true,
+    "personality": "creative",
+    "capabilities": [
+      "video_creation",
+      "manju_maker",
+      "subtitle_addition"
+    ],
+    "skills": [
+      "manju_maker",
+      "add_subtitles"
+    ],
+    "registered_at": "2026-05-18T15:02:20.319882",
+    "status": "active"
+  },
+  "youtube_agent": {
+    "name": "YouTube\u52a9\u624b",
+    "type": "custom",
+    "enabled": true,
+    "personality": "professional",
+    "capabilities": [
+      "video_upload",
+      "channel_analysis",
+      "trend_detection"
+    ],
+    "skills": [
+      "video_uploader",
+      "hot_analyzer"
+    ],
+    "registered_at": "2026-05-18T15:02:20.326203",
+    "status": "active"
+  },
+  "security_agent": {
+    "name": "\u5b89\u5168\u52a9\u624b",
+    "type": "core",
+    "enabled": true,
+    "personality": "professional",
+    "capabilities": [
+      "security_check",
+      "permission_verify",
+      "audit_logging"
+    ],
+    "registered_at": "2026-05-18T15:02:20.332529",
+    "status": "active"
+  },
+  "memory_manager": {
+    "name": "\u8bb0\u5fc6\u7ba1\u7406\u52a9\u624b",
+    "type": "core",
+    "enabled": true,
+    "personality": "professional",
+    "capabilities": [
+      "memory_store",
+      "memory_recall",
+      "vector_search"
+    ],
+    "skills": [
+      "memory_query",
+      "memory_enhanced"
+    ],
+    "registered_at": "2026-05-18T15:02:20.338823",
+    "status": "active"
+  },
+  "decision_agent": {
+    "name": "\u51b3\u7b56Agent",
+    "type": "core",
+    "enabled": true,
+    "personality": "professional",
+    "description": "\u7528\u6237\u603b\u7ba1\uff0c\u8d1f\u8d23\u4efb\u52a1\u8c03\u5ea6\u548c\u51b3\u7b56",
+    "registered_at": "2026-05-18T15:02:20.345072",
+    "status": "active"
+  },
+  "chat_agent": {
+    "name": "\u804a\u5929Agent",
+    "type": "core",
+    "enabled": true,
+    "personality": "friendly",
+    "description": "\u8d1f\u8d23\u8bdd\u672f\u751f\u6210\u548c\u7528\u6237\u6c9f\u901a",
+    "registered_at": "2026-05-18T15:02:20.351643",
+    "status": "active"
+  },
+  "personal_butler": {
+    "name": "\u79c1\u4eba\u7ba1\u5bb6",
+    "type": "core",
+    "enabled": true,
+    "personality": "warm",
+    "description": "\u7528\u6237\u7684\u6570\u5b57\u5206\u8eab\uff0c1\u5bf91\u4e13\u5c5e\u670d\u52a1",
+    "registered_at": "2026-05-18T15:02:20.357790",
+    "status": "active"
+  },
+  "analysis_agent": {
+    "name": "\u6570\u636e\u5206\u6790\u5e08",
+    "type": "core",
+    "enabled": true,
+    "personality": "analytical",
+    "description": "\u5206\u6790\u7cfb\u7edf\u6570\u636e\uff0c\u63d0\u4f9b\u4f18\u5316\u5efa\u8bae",
+    "capabilities": [
+      "data_analysis",
+      "optimization_suggestion",
+      "health_assessment",
+      "anomaly_detection"
+    ],
+    "registered_at": "2026-05-18T15:02:20.365137",
+    "status": "active"
+  }
+}

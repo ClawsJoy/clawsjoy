@@ -1,0 +1,12 @@
+{
+  "name": "ai_image_gen",
+  "version": "1.0.0",
+  "description": "AI \u56fe\u7247\u751f\u6210\uff08\u652f\u6301 Pollinations API\uff09",
+  "category": "image",
+  "price": 0.99,
+  "author": "ClawsJoy",
+  "tags": [
+    "image",
+    "ai_image_gen"
+  ]
+}

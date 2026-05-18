@@ -1,0 +1,109 @@
+{
+  "perceptions": [
+    {
+      "system": {
+        "type": "system",
+        "cpu": "0.4",
+        "memory": "1563/15868",
+        "disk": "4%",
+        "processes": 36,
+        "timestamp": "2026-05-12T18:19:38.557770"
+      },
+      "network": {
+        "type": "network",
+        "services": {
+          "ollama": "up",
+          "gateway": "up",
+          "fileservice": "up",
+          "multiagent": "up"
+        },
+        "timestamp": "2026-05-12T18:19:38.691815"
+      },
+      "timestamp": "2026-05-12T18:19:38.691845"
+    },
+    {
+      "system": {
+        "type": "system",
+        "cpu": "0.0",
+        "memory": "1577/15868",
+        "disk": "4%",
+        "processes": 36,
+        "timestamp": "2026-05-12T18:44:10.870480"
+      },
+      "network": {
+        "type": "network",
+        "services": {
+          "ollama": "up",
+          "gateway": "up",
+          "fileservice": "up",
+          "multiagent": "up"
+        },
+        "timestamp": "2026-05-12T18:44:11.000601"
+      },
+      "timestamp": "2026-05-12T18:44:11.000630"
+    },
+    {
+      "system": {
+        "type": "system",
+        "cpu": "0.0",
+        "memory": "1578/15868",
+        "disk": "4%",
+        "processes": 36,
+        "timestamp": "2026-05-12T18:53:25.245743"
+      },
+      "network": {
+        "type": "network",
+        "services": {
+          "ollama": "up",
+          "gateway": "up",
+          "fileservice": "up",
+          "multiagent": "up"
+        },
+        "timestamp": "2026-05-12T18:53:25.379992"
+      },
+      "timestamp": "2026-05-12T18:53:25.380020"
+    },
+    {
+      "system": {
+        "type": "system",
+        "cpu": "0.8",
+        "memory": "1581/15868",
+        "disk": "4%",
+        "processes": 36,
+        "timestamp": "2026-05-12T18:53:25.555339"
+      },
+      "network": {
+        "type": "network",
+        "services": {
+          "ollama": "up",
+          "gateway": "up",
+          "fileservice": "up",
+          "multiagent": "up"
+        },
+        "timestamp": "2026-05-12T18:53:25.687173"
+      },
+      "timestamp": "2026-05-12T18:53:25.687296"
+    },
+    {
+      "system": {
+        "type": "system",
+        "cpu": "0.0",
+        "memory": "1596/15868",
+        "disk": "4%",
+        "processes": 37,
+        "timestamp": "2026-05-12T18:56:22.490899"
+      },
+      "network": {
+        "type": "network",
+        "services": {
+          "ollama": "up",
+          "gateway": "up",
+          "fileservice": "up",
+          "multiagent": "up"
+        },
+        "timestamp": "2026-05-12T18:56:22.627452"
+      },
+      "timestamp": "2026-05-12T18:56:22.627481"
+    }
+  ]
+}

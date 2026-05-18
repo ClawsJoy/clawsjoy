@@ -1,0 +1,53 @@
+{
+  "local": [
+    {
+      "name": "test_skill",
+      "author": "ClawsJoy",
+      "description": "\u6d4b\u8bd5\u6280\u80fd",
+      "version": "1.0.0",
+      "published_at": "2026-05-15T01:22:47.338289",
+      "downloads": 0
+    },
+    {
+      "name": "verify_skill",
+      "author": "ClawsJoy",
+      "description": "\u9a8c\u8bc1\u6d4b\u8bd5\u6280\u80fd",
+      "version": "1.0.0",
+      "published_at": "2026-05-15T09:08:01.914220",
+      "downloads": 0
+    },
+    {
+      "name": "web_search",
+      "author": "ClawsJoy",
+      "description": "\u7f51\u9875\u641c\u7d22\u6280\u80fd\uff0c\u641c\u7d22\u4e92\u8054\u7f51\u4fe1\u606f",
+      "version": "1.0.0",
+      "published_at": "2026-05-15T09:38:14.930284",
+      "downloads": 0
+    },
+    {
+      "name": "email_sender",
+      "author": "ClawsJoy",
+      "description": "\u90ae\u4ef6\u53d1\u9001\u6280\u80fd\uff0c\u53d1\u9001\u7535\u5b50\u90ae\u4ef6",
+      "version": "1.0.0",
+      "published_at": "2026-05-15T09:38:14.932263",
+      "downloads": 0
+    },
+    {
+      "name": "weather",
+      "author": "ClawsJoy",
+      "description": "\u5929\u6c14\u67e5\u8be2\u6280\u80fd\uff0c\u83b7\u53d6\u5b9e\u65f6\u5929\u6c14",
+      "version": "1.0.0",
+      "published_at": "2026-05-15T09:38:14.941024",
+      "downloads": 0
+    },
+    {
+      "name": "news_reader",
+      "author": "ClawsJoy",
+      "description": "\u65b0\u95fb\u9605\u8bfb\u6280\u80fd\uff0c\u83b7\u53d6\u6700\u65b0\u65b0\u95fb",
+      "version": "1.0.0",
+      "published_at": "2026-05-15T09:38:14.949802",
+      "downloads": 0
+    }
+  ],
+  "remote": []
+}

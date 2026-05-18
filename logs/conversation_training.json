@@ -1,0 +1,106 @@
+[
+  {
+    "timestamp": "2026-05-12T22:05:07.922312",
+    "user_input": "# \u6d4b\u8bd5",
+    "assistant_response": "\u52a9\u624b\u54cd\u5e94",
+    "intent": "unknown",
+    "commands": [],
+    "errors": []
+  },
+  {
+    "timestamp": "2026-05-12T22:05:07.941019",
+    "user_input": "print(\"\\n\u6d4b\u8bd5\u610f\u56fe\u8bc6\u522b:\")",
+    "assistant_response": "\u52a9\u624b\u54cd\u5e94",
+    "intent": "unknown",
+    "commands": [],
+    "errors": []
+  },
+  {
+    "timestamp": "2026-05-12T22:05:07.959541",
+    "user_input": "test_inputs = [",
+    "assistant_response": "\u52a9\u624b\u54cd\u5e94",
+    "intent": "unknown",
+    "commands": [],
+    "errors": []
+  },
+  {
+    "timestamp": "2026-05-12T22:05:07.977428",
+    "user_input": "\"\u7aef\u53e35002\u88ab\u5360\u7528\u4e86\uff0c\u600e\u4e48\u529e\",",
+    "assistant_response": "\u52a9\u624b\u54cd\u5e94",
+    "intent": "fix_port",
+    "commands": [],
+    "errors": []
+  },
+  {
+    "timestamp": "2026-05-12T22:05:07.995457",
+    "user_input": "\"\u5e2e\u6211\u91cd\u542f\u7f51\u5173\u670d\u52a1\",",
+    "assistant_response": "\u52a9\u624b\u54cd\u5e94",
+    "intent": "restart_service",
+    "commands": [],
+    "errors": []
+  },
+  {
+    "timestamp": "2026-05-12T22:05:08.013719",
+    "user_input": "\"\u67e5\u770b\u4e00\u4e0b\u65e5\u5fd7\",",
+    "assistant_response": "\u52a9\u624b\u54cd\u5e94",
+    "intent": "view_logs",
+    "commands": [],
+    "errors": []
+  },
+  {
+    "timestamp": "2026-05-12T22:05:08.032126",
+    "user_input": "\"\u4ee3\u7801\u6709bug\u9700\u8981\u8c03\u8bd5\"",
+    "assistant_response": "\u52a9\u624b\u54cd\u5e94",
+    "intent": "debug",
+    "commands": [],
+    "errors": []
+  },
+  {
+    "timestamp": "2026-05-12T22:05:08.047229",
+    "user_input": "]",
+    "assistant_response": "\u52a9\u624b\u54cd\u5e94",
+    "intent": "unknown",
+    "commands": [],
+    "errors": []
+  },
+  {
+    "timestamp": "2026-05-12T22:05:08.067467",
+    "user_input": "for inp in test_inputs:",
+    "assistant_response": "\u52a9\u624b\u54cd\u5e94",
+    "intent": "unknown",
+    "commands": [],
+    "errors": []
+  },
+  {
+    "timestamp": "2026-05-12T22:05:08.085684",
+    "user_input": "intent = trainer.predict_intent(inp)",
+    "assistant_response": "\u52a9\u624b\u54cd\u5e94",
+    "intent": "unknown",
+    "commands": [],
+    "errors": []
+  },
+  {
+    "timestamp": "2026-05-12T22:05:08.102945",
+    "user_input": "print(f\"\\n\u8f93\u5165: {inp}\")",
+    "assistant_response": "\u52a9\u624b\u54cd\u5e94",
+    "intent": "unknown",
+    "commands": [],
+    "errors": []
+  },
+  {
+    "timestamp": "2026-05-12T22:05:08.121408",
+    "user_input": "print(f\"\u610f\u56fe: {intent['intent']} (\u7f6e\u4fe1\u5ea6 {intent['confidence']:.0%})\")",
+    "assistant_response": "\u52a9\u624b\u54cd\u5e94",
+    "intent": "unknown",
+    "commands": [],
+    "errors": []
+  },
+  {
+    "timestamp": "2026-05-12T22:06:16.112244",
+    "user_input": "print(f\"\u5efa\u8bae: {intent['suggested_action']}\")",
+    "assistant_response": "\u52a9\u624b\u54cd\u5e94",
+    "intent": "unknown",
+    "commands": [],
+    "errors": []
+  }
+]

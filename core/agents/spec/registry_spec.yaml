@@ -1,0 +1,22 @@
+# Agent 注册规范 v1.0.0
+
+registration:
+  # 注册中心配置
+  center:
+    enabled: true
+    url: "http://localhost:5022"
+    heartbeat_interval: 30
+  
+  # 发现机制
+  discovery:
+    mode: "auto|manual"     # 自动发现/手动注册
+    scan_paths:
+      - "agents/custom/*.py"
+      - "agents/core/*.py"
+  
+  # 健康检查
+  health:
+    check_interval: 60
+    timeout: 5
+    failure_threshold: 3
+    recovery_threshold: 2

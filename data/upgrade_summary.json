@@ -1,0 +1,37 @@
+{
+  "timestamp": "2026-05-10T19:03:18.015443",
+  "brain": {
+    "experiences_created": 10,
+    "categories": [
+      "关键词管理",
+      "智能问答",
+      "系统运维",
+      "技能执行",
+      "知识检索",
+      "错误处理"
+    ]
+  },
+  "vector": {
+    "config_created": true,
+    "tracking_enabled": true
+  },
+  "skills": {
+    "analyzed": 20,
+    "index_created": true
+  },
+  "config": {
+    "unified_config": true,
+    "components": 5
+  },
+  "templates": {
+    "created": 3,
+    "locations": [
+      "templates",
+      "web/templates"
+    ]
+  },
+  "coordination": {
+    "sync_script": true,
+    "brain_keyword_link": true
+  }
+}

@@ -1,0 +1,44 @@
+# ClawsJoy 生产环境配置
+
+# 服务配置
+server:
+  host: "0.0.0.0"
+  workers: 4
+  max_connections: 100
+
+# 数据库配置
+database:
+  type: "sqlite"
+  path: "data/production.db"
+  pool_size: 10
+
+# 日志配置
+logging:
+  level: "WARNING"
+  file: "logs/production.log"
+  max_size: 100  # MB
+  backup_count: 10
+
+# 监控配置
+monitoring:
+  enabled: true
+  interval: 60
+  alert_webhook: ""  # 钉钉/飞书 webhook
+
+# 安全配置
+security:
+  jwt_expires_hours: 24
+  rate_limit: 100  # 每分钟请求数
+  max_file_size: 50  # MB
+
+# LLM 配置
+llm:
+  model: "qwen2.5:7b"
+  timeout: 60
+  max_retries: 3
+
+# 缓存配置
+cache:
+  enabled: true
+  ttl: 3600  # 秒
+  max_size: 1000

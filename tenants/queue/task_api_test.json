@@ -1,0 +1,5 @@
+{
+  "type": "api_test",
+  "tenant_id": 1,
+  "action": "hello_world"
+}

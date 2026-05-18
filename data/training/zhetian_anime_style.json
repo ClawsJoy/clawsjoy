@@ -1,0 +1,73 @@
+{
+  "style_name": "腾讯动画《遮天》年番风格",
+  "source": "腾讯视频年番，UE5制作",
+  
+  "character_templates": {
+    "male_lead": {
+      "name": "叶凡",
+      "traits": ["冷静", "果断", "智勇双全"],
+      "appearance": "剑眉星目，少年/青年外形",
+      "costume": "修仙者装束"
+    },
+    "mysterious_female": {
+      "name": "狠人大帝",
+      "traits": ["神秘", "强大", "冷漠"],
+      "appearance": "鬼脸面具，白衣",
+      "signature": "吞天魔功"
+    },
+    "companion": {
+      "name": "庞博",
+      "traits": ["豪爽", "忠诚", "讲义气"],
+      "type": "战士型"
+    },
+    "comic_relief": {
+      "name": "黑皇",
+      "traits": ["毒舌", "腹黑", "贪财"],
+      "type": "宠物/坐骑"
+    }
+  },
+  
+  "scene_templates": {
+    "opening": {
+      "name": "九龙拉棺",
+      "description": "九龙拉棺开篇，从现代穿越到修仙世界",
+      "visual": "九条黑龙拉青铜棺穿越星空"
+    },
+    "training_ground": {
+      "name": "荒古禁地",
+      "description": "新手村，主角获取圣果，觉醒荒古圣体",
+      "visual": "神秘丛林，古老遗迹"
+    },
+    "main_map": {
+      "name": "北斗星域",
+      "description": "主世界，分为东荒、北原等区域",
+      "visual": "浩瀚星域，修仙圣地"
+    }
+  },
+  
+  "visual_guidelines": {
+    "color_palette": ["仙气白", "神秘紫", "暗黑金", "青绿色"],
+    "camera_angles": ["宏大远景", "战斗特写", "慢动作", "俯视"],
+    "special_effects": ["剑气", "阵法符文", "能量爆发", "空间撕裂"]
+  },
+  
+  "script_guidelines": {
+    "opening_lines": "九龙拉棺，异象降临...",
+    "dialogue_style": "古风现代结合，富有哲理",
+    "climax_format": "战斗 + 反转 + 领悟"
+  },
+  
+  "production_notes": {
+    "quality_standards": [
+      "角色建模精细",
+      "场景细节丰富",
+      "动作流畅自然",
+      "特效匹配设定"
+    ],
+    "common_pitfalls": [
+      "前期节奏偏慢",
+      "部分配角建模粗糙",
+      "战斗有时拖时长"
+    ]
+  }
+}

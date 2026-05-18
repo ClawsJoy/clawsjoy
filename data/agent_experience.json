@@ -1,0 +1,93 @@
+{
+  "interactions": [
+    {
+      "timestamp": "2026-05-17T19:42:25.511893",
+      "user_input": "生成一个中年男人的形象",
+      "skill": null,
+      "params": null,
+      "success": false,
+      "response": "❌ 执行失败: No module named 'lib'"
+    },
+    {
+      "timestamp": "2026-05-17T19:42:26.947982",
+      "user_input": "画一只可爱的猫咪",
+      "skill": null,
+      "params": null,
+      "success": false,
+      "response": "❌ 执行失败: No module named 'lib'"
+    },
+    {
+      "timestamp": "2026-05-17T19:42:28.382649",
+      "user_input": "你好",
+      "skill": null,
+      "params": null,
+      "success": false,
+      "response": "❌ 执行失败: No module named 'lib'"
+    },
+    {
+      "timestamp": "2026-05-17T19:43:10.954625",
+      "user_input": "生成一个中年男人的形象",
+      "skill": null,
+      "params": null,
+      "success": true,
+      "response": "✅ 图像生成任务已提交"
+    },
+    {
+      "timestamp": "2026-05-17T19:44:01.126523",
+      "user_input": " 你好，我需要做漫剧人物设计，你可以帮我吗，",
+      "skill": null,
+      "params": null,
+      "success": true,
+      "response": "✅ 图像生成任务已提交"
+    },
+    {
+      "timestamp": "2026-05-17T20:05:36.529674",
+      "user_input": "生成一个中年男人的形象",
+      "skill": null,
+      "params": null,
+      "success": true,
+      "response": "✅ 图像生成任务已提交"
+    },
+    {
+      "timestamp": "2026-05-17T20:06:11.612594",
+      "user_input": "图片出来了吗",
+      "skill": null,
+      "params": null,
+      "success": true,
+      "response": "✅ 图像生成任务已提交"
+    },
+    {
+      "timestamp": "2026-05-17T20:07:03.241046",
+      "user_input": "生成一个中年男人的形象",
+      "skill": null,
+      "params": null,
+      "success": false,
+      "response": "❌ 执行失败: No module named 'lib'"
+    },
+    {
+      "timestamp": "2026-05-17T20:07:04.514025",
+      "user_input": "画一只可爱的猫咪",
+      "skill": null,
+      "params": null,
+      "success": false,
+      "response": "❌ 执行失败: No module named 'lib'"
+    },
+    {
+      "timestamp": "2026-05-17T20:07:05.846999",
+      "user_input": "你好",
+      "skill": null,
+      "params": null,
+      "success": false,
+      "response": "❌ 执行失败: No module named 'lib'"
+    }
+  ],
+  "success_count": 4,
+  "fail_count": 6,
+  "skill_stats": {
+    "unknown": {
+      "success": 4,
+      "fail": 6
+    }
+  },
+  "last_updated": "2026-05-17T20:07:05.847012"
+}

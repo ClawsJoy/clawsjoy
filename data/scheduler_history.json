@@ -1,0 +1,26 @@
+{
+  "daily_reports": [
+    {
+      "date": "2026-05-09T11:47:34.742182",
+      "total_tasks": 57,
+      "errors_count": 5
+    },
+    {
+      "date": "2026-05-09T11:48:27.997545",
+      "total_tasks": 57,
+      "errors_count": 5
+    },
+    {
+      "date": "2026-05-09T11:49:08.412949",
+      "total_tasks": 57,
+      "errors_count": 5
+    },
+    {
+      "date": "2026-05-09T11:51:06.724544",
+      "total_tasks": 57,
+      "errors_count": 5
+    }
+  ],
+  "alerts": [],
+  "task_stats": {}
+}

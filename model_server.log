@@ -1,0 +1,30 @@
+nohup: ignoring input
+加载模型...
+Loading pipeline components...:   0%|          | 0/7 [00:00<?, ?it/s]
+Loading weights:   0%|          | 0/517 [00:00<?, ?it/s][A
+Loading weights:  12%|█▏        | 61/517 [00:00<00:00, 608.08it/s][A
+Loading weights:  25%|██▍       | 127/517 [00:00<00:00, 637.68it/s][A
+Loading weights:  38%|███▊      | 195/517 [00:00<00:00, 653.12it/s][ALoading weights: 100%|██████████| 517/517 [00:00<00:00, 1430.88it/s]
+Loading pipeline components...:  14%|█▍        | 1/7 [00:00<00:03,  1.74it/s]Loading pipeline components...:  29%|██▊       | 2/7 [00:01<00:04,  1.14it/s]Loading pipeline components...:  57%|█████▋    | 4/7 [00:01<00:01,  2.65it/s]
+Loading weights:   0%|          | 0/196 [00:00<?, ?it/s][A
+Loading weights:  30%|███       | 59/196 [00:00<00:00, 584.32it/s][ALoading weights: 100%|██████████| 196/196 [00:00<00:00, 1329.37it/s]
+Loading pipeline components...:  71%|███████▏  | 5/7 [00:02<00:00,  3.02it/s]Loading pipeline components...:  86%|████████▌ | 6/7 [00:02<00:00,  3.79it/s]Loading pipeline components...: 100%|██████████| 7/7 [00:03<00:00,  1.97it/s]Loading pipeline components...: 100%|██████████| 7/7 [00:03<00:00,  2.17it/s]
+✅ 模型加载完成
+启动API服务...
+ * Serving Flask app 'model_server'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.3.11:5000
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [16/May/2026 23:23:47] "[33mGET / HTTP/1.1[0m" 404 -
+127.0.0.1 - - [16/May/2026 23:23:47] "GET /health HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 23:23:47] "[33mGET /api/skills HTTP/1.1[0m" 404 -
+127.0.0.1 - - [16/May/2026 23:24:11] "[33mGET /api/generate HTTP/1.1[0m" 404 -
+127.0.0.1 - - [16/May/2026 23:24:11] "[33mGET /api/execute HTTP/1.1[0m" 404 -
+127.0.0.1 - - [16/May/2026 23:27:12] "GET /health HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 23:28:36] "GET /health HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 23:28:36] "[33mGET /api/skills HTTP/1.1[0m" 404 -
+127.0.0.1 - - [16/May/2026 23:29:14] "[33mPOST /api/execute HTTP/1.1[0m" 404 -
+127.0.0.1 - - [16/May/2026 23:30:20] "[33mGET /api/skills HTTP/1.1[0m" 404 -

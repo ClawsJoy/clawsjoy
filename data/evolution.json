@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "mutations": [
+    {
+      "timestamp": "2026-05-12T20:36:16.302169",
+      "changes": [
+        {
+          "gene": "decision_threshold",
+          "old": 0.7,
+          "new": 0.7986747579283163
+        },
+        {
+          "gene": "learning_rate",
+          "old": 0.3,
+          "new": 0.41180700823103994
+        }
+      ],
+      "generation": 1
+    }
+  ],
+  "successful_patterns": [],
+  "failed_patterns": [],
+  "genome": {
+    "decision_threshold": 0.7986747579283163,
+    "learning_rate": 0.41180700823103994,
+    "exploration_rate": 0.2,
+    "memory_retention": 100
+  }
+}

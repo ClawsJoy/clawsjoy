@@ -1,0 +1,412 @@
+//! Configuration loader — reads TOML, overlays env vars, resolves paths.
+
+use anyhow::{Context, Result};
+use serde::{Deserialize, Serialize};
+use std::path::{Path, PathBuf};
+
+/// Baked-in default config. Used when no local.toml / XDG config /
+/// ./config/config.example.toml exists on disk — keeps `llm` running for
+/// fresh curl-installed users whose cwd is unrelated to the repo. Also
+/// seeded into the user-scope config file when the preflight prompt
+/// converts a "no config at all" state into a persisted choice.
+pub(crate) const EMBEDDED_DEFAULT_CONFIG: &str = include_str!("../config/config.example.toml");
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Config {
+    pub ollama: OllamaConfig,
+    pub memory: MemoryConfig,
+    pub tools: ToolsConfig,
+    pub web: WebConfig,
+    pub repl: ReplConfig,
+    #[serde(default)]
+    pub updates: UpdatesConfig,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OllamaConfig {
+    pub host: String,
+    pub chat_model: String,
+    pub vision_model: String,
+    pub embed_model: String,
+    /// Optional fast-path model. When set, the agent routes trivial / short /
+    /// conversational turns here and only escalates to `chat_model` for code,
+    /// long prompts, or explicit tool-implicit requests. Empty string means
+    /// "no cascading — always use chat_model" (keeps existing behaviour for
+    /// users who don't care). Users can also force either direction with
+    /// `/fast <msg>` / `/big <msg>` / `/retry-big` in the REPL.
+    #[serde(default)]
+    pub fast_model: String,
+    #[serde(default = "default_timeout")]
+    pub timeout_secs: u64,
+    #[serde(default = "default_ctx")]
+    pub num_ctx: u32,
+    /// How long Ollama holds the model in memory after the last request.
+    /// Passed straight through on `/api/chat` and `/api/embed` so the model
+    /// stays resident between turns — the default "5m" on Ollama pays a
+    /// cold-load penalty on any idle gap longer than that.
+    #[serde(default = "default_keep_alive")]
+    pub keep_alive: String,
+    /// Sampling temperature. Lower (~0.2) is tight/deterministic and
+    /// suits strict coding models; reasoning MoEs typically do better
+    /// around 0.6. Default 0.3 is a compromise that works acceptably
+    /// for both.
+    #[serde(default = "default_temperature")]
+    pub temperature: f32,
+    /// Nucleus sampling. 0.95 is the Ollama default and a good all-rounder.
+    #[serde(default = "default_top_p")]
+    pub top_p: f32,
+    /// Auto-compact the in-session message history when it exceeds this
+    /// fraction of `num_ctx`. A summariser LLM call replaces the oldest
+    /// middle messages with a single system message; the system prompt
+    /// and the last `compact_keep_tail` messages are preserved verbatim.
+    /// Fires only between turns, never mid-tool-loop. Set to 0.0 to
+    /// disable auto-compaction (the `/compact` slash command still works).
+    #[serde(default = "default_auto_compact_at")]
+    pub auto_compact_at: f32,
+    /// Messages preserved verbatim at the tail during compaction. Larger
+    /// = safer but less context reclaimed.
+    #[serde(default = "default_compact_keep_tail")]
+    pub compact_keep_tail: usize,
+    /// How many messages to pull from the previous session when `llm`
+    /// launches in a directory with recent activity. Small values keep
+    /// short-term continuity without letting stale prior-session style
+    /// anchor the model's behaviour on the new turn. Set to 0 to
+    /// disable auto-resume entirely.
+    #[serde(default = "default_resume_messages")]
+    pub resume_messages: usize,
+}
+fn default_timeout() -> u64 {
+    600
+}
+fn default_ctx() -> u32 {
+    8192
+}
+fn default_keep_alive() -> String {
+    "30m".into()
+}
+fn default_temperature() -> f32 {
+    0.3
+}
+fn default_top_p() -> f32 {
+    0.95
+}
+fn default_auto_compact_at() -> f32 {
+    0.75
+}
+fn default_compact_keep_tail() -> usize {
+    8
+}
+fn default_resume_messages() -> usize {
+    8
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MemoryConfig {
+    pub db_path: String,
+    #[serde(default = "default_top_k")]
+    pub top_k: usize,
+    /// Legacy score-fusion weights. Kept for backwards compat but ignored
+    /// when fusion is RRF (the default) — RRF is rank-based and
+    /// parameter-free, removing the tuning cliff.
+    #[serde(default = "default_bm25_weight")]
+    pub bm25_weight: f32,
+    #[serde(default = "default_vector_weight")]
+    pub vector_weight: f32,
+    #[serde(default = "default_half_life")]
+    pub temporal_half_life_days: f32,
+    #[serde(default)]
+    pub auto_persist: bool,
+    #[serde(default = "default_expansion")]
+    pub expansion_variants: usize,
+    /// When true, hybrid_search asks Ollama for an embedding of the query
+    /// and runs vector ANN. When false, recall is pure BM25 (sub-millisecond,
+    /// no model round-trip — ~10× faster on a fresh Ollama).
+    #[serde(default = "default_vector_search")]
+    pub vector_search: bool,
+    /// Contextual Retrieval — before embedding a stored memory, ask the
+    /// LLM for a one-sentence context line and prepend it. Improves recall
+    /// on short/ambiguous notes at the cost of one extra call per insert
+    /// on the background embedding worker. Off by default.
+    #[serde(default)]
+    pub contextual_embed: bool,
+    /// Entity extraction — ask the LLM for entities + relationships in
+    /// each stored memory and populate `kg_entities` / `kg_edges` /
+    /// `kg_entity_memories`. One extra chat call per insert on the
+    /// background worker. Required to unlock graph-based retrieval.
+    /// Off by default.
+    #[serde(default)]
+    pub entity_extraction: bool,
+    /// Graph-based retrieval. When true, hybrid_search runs
+    /// Personalized PageRank over the entity graph seeded from query
+    /// entities, aggregates per-memory, and fuses the result with BM25
+    /// + vector via RRF. Requires `entity_extraction = true` to have
+    /// useful content in the graph; harmless (returns empty) otherwise.
+    /// `hippo_rag` accepted as an alias for backwards compat.
+    #[serde(default, alias = "hippo_rag")]
+    pub graph_search: bool,
+    /// LLM-as-judge reranker. When set, after hybrid_search returns its
+    /// top-N, this model rescores (query, doc) pairs and the final top_k
+    /// is taken from that reranked list. Recommended: a small/fast model
+    /// distinct from chat_model. Empty string disables reranking entirely.
+    #[serde(default)]
+    pub rerank_model: String,
+    /// Pool size fed to the reranker. Hybrid search returns this many
+    /// candidates; reranker picks top_k from them. Larger = better recall,
+    /// slower. Ignored when rerank_model is empty.
+    #[serde(default = "default_rerank_fetch_k")]
+    pub rerank_fetch_k: usize,
+}
+fn default_top_k() -> usize {
+    12
+}
+fn default_bm25_weight() -> f32 {
+    0.4
+}
+fn default_vector_weight() -> f32 {
+    0.6
+}
+fn default_half_life() -> f32 {
+    30.0
+}
+// Default 0 — query expansion costs an extra Ollama round-trip per recall
+// for marginal quality gain. Opt in by raising this.
+fn default_expansion() -> usize {
+    0
+}
+fn default_vector_search() -> bool {
+    true
+}
+fn default_rerank_fetch_k() -> usize {
+    50
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ToolsConfig {
+    #[serde(default)]
+    pub workspace_root: String,
+    #[serde(default)]
+    pub deny_globs: Vec<String>,
+    #[serde(default)]
+    pub shell_allow_regex: String,
+    /// Default session permission mode.
+    /// One of: read-only | workspace-write (default) | unrestricted.
+    #[serde(default = "default_mode")]
+    pub mode: String,
+    /// Permission rules. Each entry is `tool(matcher)` or a bare `tool`.
+    /// Matchers support `*` for prefix/suffix/contains.
+    #[serde(default)]
+    pub allow_rules: Vec<String>,
+    #[serde(default)]
+    pub deny_rules: Vec<String>,
+    /// Ask rules always prompt — even when an allow-rule or "always this
+    /// session" would otherwise auto-approve. Use for sensitive ops like
+    /// `web_fetch(*)` or `shell(git push*)`.
+    #[serde(default)]
+    pub ask_rules: Vec<String>,
+}
+fn default_mode() -> String {
+    "workspace-write".into()
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WebConfig {
+    #[serde(default)]
+    pub brave_api_key: String,
+    #[serde(default = "default_brave_endpoint")]
+    pub brave_endpoint: String,
+    #[serde(default = "default_web_max")]
+    pub max_results: usize,
+    /// Refuse outbound HTTP/WHOIS connections to private, loopback,
+    /// link-local (incl. cloud-metadata 169.254.169.254), and multicast
+    /// addresses. Defaults to true so prompt injection can't trick the
+    /// agent into fetching internal services. Set to false on trusted
+    /// networks where you legitimately need internal HTTP access.
+    #[serde(default = "default_block_private")]
+    pub block_private_addrs: bool,
+}
+fn default_brave_endpoint() -> String {
+    "https://api.search.brave.com/res/v1/web/search".into()
+}
+fn default_web_max() -> usize {
+    8
+}
+fn default_block_private() -> bool {
+    true
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReplConfig {
+    /// Off by default — the `· tool_name` noise clutters the chat
+    /// transcript for interactive use. Tool calls are always recorded
+    /// in the audit log regardless; flip this on in local.toml for
+    /// debugging or to see what the model is reaching for.
+    #[serde(default)]
+    pub show_tool_calls: bool,
+    #[serde(default = "default_true")]
+    pub confirm_writes: bool,
+    #[serde(default = "default_true")]
+    pub color: bool,
+}
+fn default_true() -> bool {
+    true
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdatesConfig {
+    /// Periodically check GitHub releases for a newer binary. Results are
+    /// cached in <data_dir>/update-check.json for `check_interval_hours`;
+    /// the HTTP call is fire-and-forget and never blocks startup.
+    #[serde(default = "default_true")]
+    pub check: bool,
+    #[serde(default = "default_update_interval")]
+    pub check_interval_hours: u64,
+}
+fn default_update_interval() -> u64 {
+    24
+}
+impl Default for UpdatesConfig {
+    fn default() -> Self {
+        Self {
+            check: true,
+            check_interval_hours: 24,
+        }
+    }
+}
+
+impl Config {
+    /// Find and load the config file. Precedence:
+    ///   1. --config <path>
+    ///   2. ./config/local.toml
+    ///   3. $XDG_CONFIG_HOME/localmind/config.toml (or platform equivalent)
+    ///   4. ./config/config.example.toml (as a last-resort default)
+    /// Then env vars prefixed LOCALMIND_ override.
+    /// Resolve the same path Config::load would read from, without parsing.
+    /// Used by `llm models` so it can write changes back to the right file.
+    pub fn source_path(explicit: Option<&Path>) -> Option<PathBuf> {
+        if let Some(p) = explicit {
+            return Some(PathBuf::from(p));
+        }
+        let local = PathBuf::from("config/local.toml");
+        if local.exists() {
+            return Some(local);
+        }
+        if let Some(d) = directories::ProjectDirs::from("com", "calligoit", "localmind") {
+            let p = d.config_dir().join("config.toml");
+            if p.exists() {
+                return Some(p);
+            }
+        }
+        let example = PathBuf::from("config/config.example.toml");
+        if example.exists() {
+            return Some(example);
+        }
+        None
+    }
+
+    /// Return a config-file path we can read AND write to. Preferred order
+    /// matches `source_path`; if nothing exists, creates a user-scope
+    /// config at the platform config dir seeded from the embedded default
+    /// template. Used by `llm models` (which needs somewhere to persist
+    /// changes) and by the preflight switch prompt.
+    pub fn ensure_writable_path(explicit: Option<&Path>) -> Result<PathBuf> {
+        if let Some(p) = Self::source_path(explicit) {
+            if p.exists() {
+                return Ok(p);
+            }
+        }
+        let dir = directories::ProjectDirs::from("com", "calligoit", "localmind")
+            .map(|p| p.config_dir().to_path_buf())
+            .context("no platform config dir available")?;
+        std::fs::create_dir_all(&dir).with_context(|| format!("creating {}", dir.display()))?;
+        let p = dir.join("config.toml");
+        if !p.exists() {
+            std::fs::write(&p, EMBEDDED_DEFAULT_CONFIG)
+                .with_context(|| format!("seeding {}", p.display()))?;
+        }
+        Ok(p)
+    }
+
+    pub fn load(explicit: Option<&Path>) -> Result<Self> {
+        let path = Self::source_path(explicit);
+        let raw = match path {
+            Some(p) => {
+                std::fs::read_to_string(&p).with_context(|| format!("reading {}", p.display()))?
+            }
+            // No config file anywhere on disk — fall back to the example
+            // config baked into the binary. Fresh curl-installed users don't
+            // have a repo checkout handy, so this makes `llm` work out of
+            // the box. Any explicit config file still takes precedence.
+            None => EMBEDDED_DEFAULT_CONFIG.to_string(),
+        };
+
+        let mut cfg: Config = toml::from_str(&raw).context("parsing TOML")?;
+        cfg.apply_env_overrides();
+        Ok(cfg)
+    }
+
+    fn apply_env_overrides(&mut self) {
+        if let Ok(v) = std::env::var("LOCALMIND_OLLAMA_HOST") {
+            self.ollama.host = v;
+        }
+        if let Ok(v) = std::env::var("LOCALMIND_CHAT_MODEL") {
+            self.ollama.chat_model = v;
+        }
+        if let Ok(v) = std::env::var("LOCALMIND_VISION_MODEL") {
+            self.ollama.vision_model = v;
+        }
+        if let Ok(v) = std::env::var("LOCALMIND_EMBED_MODEL") {
+            self.ollama.embed_model = v;
+        }
+        if let Ok(v) = std::env::var("LOCALMIND_DB_PATH") {
+            self.memory.db_path = v;
+        }
+        if let Ok(v) = std::env::var("BRAVE_API_KEY") {
+            self.web.brave_api_key = v;
+        }
+        if let Ok(v) = std::env::var("LOCALMIND_BRAVE_API_KEY") {
+            self.web.brave_api_key = v;
+        }
+        if let Ok(v) = std::env::var("LOCALMIND_WORKSPACE_ROOT") {
+            self.tools.workspace_root = v;
+        }
+        if let Ok(v) = std::env::var("LOCALMIND_MODE") {
+            self.tools.mode = v;
+        }
+    }
+
+    pub fn pretty(&self) -> Result<String> {
+        Ok(toml::to_string_pretty(self)?)
+    }
+
+    pub fn summary(&self) -> String {
+        format!(
+            "ollama={} chat={} embed={} db={}",
+            self.ollama.host,
+            self.ollama.chat_model,
+            self.ollama.embed_model,
+            self.memory.db_path_resolved().display()
+        )
+    }
+}
+
+impl MemoryConfig {
+    /// Expand the %DATA% token to the platform data directory and return an
+    /// absolute path. Ensures the parent directory exists.
+    pub fn db_path_resolved(&self) -> PathBuf {
+        let expanded = if self.db_path.contains("%DATA%") {
+            let data_dir = directories::ProjectDirs::from("com", "calligoit", "localmind")
+                .map(|p| p.data_dir().to_path_buf())
+                .unwrap_or_else(|| PathBuf::from("./data"));
+            PathBuf::from(
+                self.db_path
+                    .replace("%DATA%", data_dir.to_str().unwrap_or(".")),
+            )
+        } else {
+            PathBuf::from(&self.db_path)
+        };
+        if let Some(parent) = expanded.parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
+        expanded
+    }
+}

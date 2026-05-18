@@ -1,0 +1,954 @@
+{
+  "experiences": [
+    {
+      "id": "5bcdb7df",
+      "agent": "gateway",
+      "action": "\u56de\u7b54\u7528\u6237\u95ee\u9898",
+      "result": {
+        "success": true,
+        "quality": 0.9,
+        "speed": 0.8
+      },
+      "context": "\u7528\u6237\u8be2\u95eePython\u95ee\u9898",
+      "timestamp": "2026-05-11T11:46:20.637282",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "2bd0886b",
+      "agent": "gateway",
+      "action": "\u6267\u884c\u5371\u9669\u547d\u4ee4",
+      "result": {
+        "success": false,
+        "error": "\u6743\u9650\u4e0d\u8db3"
+      },
+      "context": "\u7528\u6237\u5c1d\u8bd5\u5220\u9664\u6587\u4ef6",
+      "timestamp": "2026-05-11T11:46:20.639845",
+      "success": false,
+      "reward": -1.0
+    },
+    {
+      "id": "cc8883e7",
+      "agent": "importer",
+      "action": "\u5bfc\u5165\u77e5\u8bc6: Docker\u5bb9\u5668\u91cd\u542f: docker restart <\u5bb9\u5668",
+      "result": {
+        "success": true,
+        "quality": 0.9
+      },
+      "context": "auto_import",
+      "timestamp": "2026-05-11T12:00:00.094736",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "a6bc2b84",
+      "agent": "importer",
+      "action": "\u5bfc\u5165\u77e5\u8bc6: PM2\u65e5\u5fd7\u67e5\u770b: pm2 logs <\u5e94\u7528\u540d>",
+      "result": {
+        "success": true,
+        "quality": 0.9
+      },
+      "context": "auto_import",
+      "timestamp": "2026-05-11T12:00:00.226760",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "8be129dd",
+      "agent": "importer",
+      "action": "\u5bfc\u5165\u77e5\u8bc6: Python\u865a\u62df\u73af\u5883: python -m venv ven",
+      "result": {
+        "success": true,
+        "quality": 0.9
+      },
+      "context": "auto_import",
+      "timestamp": "2026-05-11T12:00:00.372752",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "0a856df6",
+      "agent": "importer",
+      "action": "\u5bfc\u5165\u77e5\u8bc6: Git\u63d0\u4ea4: git add . && git commit",
+      "result": {
+        "success": true,
+        "quality": 0.9
+      },
+      "context": "auto_import",
+      "timestamp": "2026-05-11T12:00:00.513836",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "dd2f5783",
+      "agent": "importer",
+      "action": "\u5bfc\u5165\u77e5\u8bc6: Linux\u67e5\u770b\u8fdb\u7a0b: ps aux | grep <\u8fdb\u7a0b\u540d>",
+      "result": {
+        "success": true,
+        "quality": 0.9
+      },
+      "context": "auto_import",
+      "timestamp": "2026-05-11T12:00:00.650418",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "4d34130f",
+      "agent": "importer",
+      "action": "\u5bfc\u5165\u77e5\u8bc6: Flask\u5f00\u53d1: flask run --host=0.0.",
+      "result": {
+        "success": true,
+        "quality": 0.9
+      },
+      "context": "auto_import",
+      "timestamp": "2026-05-11T12:00:00.792551",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "a28c7d27",
+      "agent": "importer",
+      "action": "\u5bfc\u5165\u77e5\u8bc6: ClawsJoy\u5065\u5eb7\u68c0\u67e5: GET /api/health",
+      "result": {
+        "success": true,
+        "quality": 0.9
+      },
+      "context": "auto_import",
+      "timestamp": "2026-05-11T12:00:02.727622",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "c04a9115",
+      "agent": "importer",
+      "action": "\u5bfc\u5165\u77e5\u8bc6: Ollama\u6a21\u578b\u5217\u8868: ollama list",
+      "result": {
+        "success": true,
+        "quality": 0.9
+      },
+      "context": "auto_import",
+      "timestamp": "2026-05-11T12:00:04.634323",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "5ef5ace4",
+      "agent": "importer",
+      "action": "\u5bfc\u5165\u77e5\u8bc6: \u5411\u91cf\u68c0\u7d22: ChromaDB\u8bed\u4e49\u641c\u7d22",
+      "result": {
+        "success": true,
+        "quality": 0.9
+      },
+      "context": "auto_import",
+      "timestamp": "2026-05-11T12:00:04.754179",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "7f2eabc8",
+      "agent": "auto_importer",
+      "action": "ClawsJoy \u6709\u54ea\u4e9b\u6838\u5fc3\u529f\u80fd\uff1f",
+      "result": {
+        "success": true,
+        "answer": "ClawsJoy \u6709\u4e03\u5927\u6838\u5fc3\uff1aAPI\u7f51\u5173\u3001Agent\u7cfb\u7edf\uff085+2\u4e2aAgent\uff09\u3001\u6280\u80fd\u7cfb\u7edf\uff087\u4e2a\u6280\u80fd\uff09\u3001\u8bb0\u5fc6\u7cfb\u7edf\u3001\u5927\u8111\u5b66\u4e60\uff08Q-learning\uff09\u3001\u5411\u91cf\u77e5\u8bc6\u5e93\uff0826+\u6761\uff09\u548cWeb\u7ba1\u7406\u754c\u9762\u3002"
+      },
+      "context": "training_import",
+      "timestamp": "2026-05-11T15:30:54.710773",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "24c1e48b",
+      "agent": "auto_importer",
+      "action": "\u5982\u4f55\u521b\u5efa\u81ea\u5b9a\u4e49 Agent\uff1f",
+      "result": {
+        "success": true,
+        "answer": "\u901a\u8fc7 POST /api/agents/custom/create \u63a5\u53e3\uff0c\u4f20\u5165 name \u548c description \u5373\u53ef\u521b\u5efa\u81ea\u5b9a\u4e49 Agent\u3002\u521b\u5efa\u540e\u53ef\u4ee5\u901a\u8fc7\u57f9\u8bad\u5b66\u4e60\u6765\u8bad\u7ec3\u5b83\u3002"
+      },
+      "context": "training_import",
+      "timestamp": "2026-05-11T15:30:54.713061",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "45b6347f",
+      "agent": "auto_importer",
+      "action": "\u600e\u4e48\u4f7f\u7528\u8ba1\u7b97\u5668\u6280\u80fd\uff1f",
+      "result": {
+        "success": true,
+        "answer": "\u8c03\u7528 POST /api/skills/execute\uff0c\u53c2\u6570 {\"skill\":\"calculator\", \"params\":{\"expression\":\"2+3*4\"}}\uff0c\u4f1a\u8fd4\u56de\u8ba1\u7b97\u7ed3\u679c\u3002"
+      },
+      "context": "training_import",
+      "timestamp": "2026-05-11T15:30:54.720688",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "8420c37d",
+      "agent": "auto_importer",
+      "action": "\u5982\u4f55\u6dfb\u52a0\u8bb0\u5fc6\uff1f",
+      "result": {
+        "success": true,
+        "answer": "\u8c03\u7528 POST /api/memory/add\uff0c\u53c2\u6570 {\"content\":\"\u8981\u8bb0\u4f4f\u7684\u5185\u5bb9\", \"importance\":0.8}\uff0c\u7cfb\u7edf\u4f1a\u81ea\u52a8\u5b58\u50a8\u5e76\u53ef\u7528\u4e8e\u540e\u7eed\u68c0\u7d22\u3002"
+      },
+      "context": "training_import",
+      "timestamp": "2026-05-11T15:30:54.729543",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "b2ab7d05",
+      "agent": "auto_importer",
+      "action": "\u600e\u4e48\u8ba9 Agent \u5b66\u4e60\uff1f",
+      "result": {
+        "success": true,
+        "answer": "\u901a\u8fc7 POST /api/agents/custom/{agent_id}/training \u6dfb\u52a0\u95ee\u7b54\u5bf9\uff0cAgent \u4f1a\u4ece\u8bad\u7ec3\u6570\u636e\u4e2d\u5b66\u4e60\uff0c\u672a\u6765\u76f8\u4f3c\u95ee\u9898\u4f1a\u53c2\u8003\u5386\u53f2\u56de\u7b54\u3002"
+      },
+      "context": "training_import",
+      "timestamp": "2026-05-11T15:30:54.738348",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "ec3270f6",
+      "agent": "auto_importer",
+      "action": "Docker \u5bb9\u5668\u5982\u4f55\u91cd\u542f\uff1f",
+      "result": {
+        "success": true,
+        "answer": "\u4f7f\u7528 docker restart <\u5bb9\u5668\u540d> \u547d\u4ee4\u91cd\u542f\u5bb9\u5668\u3002\u4e5f\u53ef\u4ee5\u5148 docker stop \u518d docker start\u3002"
+      },
+      "context": "training_import",
+      "timestamp": "2026-05-11T15:30:54.746990",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "d6c7ea60",
+      "agent": "auto_importer",
+      "action": "Python \u5feb\u901f\u6392\u5e8f\u600e\u4e48\u5199\uff1f",
+      "result": {
+        "success": true,
+        "answer": "def quick_sort(arr): if len(arr) <= 1: return arr; pivot = arr[len(arr)//2]; left = [x for x in arr "
+      },
+      "context": "training_import",
+      "timestamp": "2026-05-11T15:30:54.755813",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "6f6c8a7d",
+      "agent": "auto_importer",
+      "action": "Git \u63d0\u4ea4\u4ee3\u7801\u7684\u6d41\u7a0b\u662f\u4ec0\u4e48\uff1f",
+      "result": {
+        "success": true,
+        "answer": "1. git add . \u6dfb\u52a0\u53d8\u66f4\uff1b2. git commit -m '\u63cf\u8ff0' \u63d0\u4ea4\uff1b3. git push \u63a8\u9001\u5230\u8fdc\u7a0b\u4ed3\u5e93\u3002"
+      },
+      "context": "training_import",
+      "timestamp": "2026-05-11T15:30:54.764879",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "10747e78",
+      "agent": "auto_importer",
+      "action": "\u5982\u4f55\u67e5\u770b ClawsJoy \u670d\u52a1\u72b6\u6001\uff1f",
+      "result": {
+        "success": true,
+        "answer": "\u8bbf\u95ee GET /api/health \u63a5\u53e3\uff0c\u8fd4\u56de {\"status\":\"ok\"} \u8868\u793a\u670d\u52a1\u6b63\u5e38\u3002\u4e5f\u53ef\u4ee5\u8bbf\u95ee /api/brain/stats \u67e5\u770b\u5b66\u4e60\u7edf\u8ba1\u3002"
+      },
+      "context": "training_import",
+      "timestamp": "2026-05-11T15:30:54.774845",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "e6ab297e",
+      "agent": "auto_importer",
+      "action": "ClawsJoy \u4f7f\u7528\u4ec0\u4e48\u5b66\u4e60\u7b97\u6cd5\uff1f",
+      "result": {
+        "success": true,
+        "answer": "ClawsJoy \u4f7f\u7528 Q-learning \u5f3a\u5316\u5b66\u4e60\u7b97\u6cd5\uff0c\u901a\u8fc7\u8bb0\u5f55\u7ecf\u9a8c\u3001\u8ba1\u7b97\u5956\u52b1\u3001\u66f4\u65b0 Q \u8868\u6765\u4e0d\u65ad\u4f18\u5316\u56de\u7b54\u8d28\u91cf\u3002"
+      },
+      "context": "training_import",
+      "timestamp": "2026-05-11T15:30:54.784351",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "86345804",
+      "agent": "mega_importer",
+      "action": "Python \u88c5\u9970\u5668\u662f\u4ec0\u4e48\uff1f",
+      "result": {
+        "success": true,
+        "answer": "\u88c5\u9970\u5668\u662f Python \u7684\u9ad8\u9636\u51fd\u6570\uff0c\u53ef\u4ee5\u5728\u4e0d\u4fee\u6539\u539f\u51fd\u6570\u4ee3\u7801\u7684\u60c5\u51b5\u4e0b\u6269\u5c55\u529f\u80fd\u3002\u4f7f\u7528 @decorator \u8bed\u6cd5\uff0c\u5e38\u7528\u4e8e\u65e5\u5fd7\u3001\u8ba1\u65f6\u3001\u6743\u9650\u68c0\u67e5\u7b49\u573a\u666f\u3002"
+      },
+      "context": "extensive_training",
+      "timestamp": "2026-05-11T15:33:42.492938",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "86008770",
+      "agent": "mega_importer",
+      "action": "Python \u865a\u62df\u73af\u5883\u600e\u4e48\u7528\uff1f",
+      "result": {
+        "success": true,
+        "answer": "\u521b\u5efa\uff1apython -m venv venv\uff1b\u6fc0\u6d3b\uff1aLinux/Mac: source venv/bin/activate\uff0cWindows: venv\\Scripts\\activate\uff1b\u9000\u51fa\uff1adeactivate\uff1b\u5bfc\u51fa\u4f9d\u8d56\uff1apip freeze > requirements.txt\uff1b\u5b89\u88c5\u4f9d\u8d56\uff1apip"
+      },
+      "context": "extensive_training",
+      "timestamp": "2026-05-11T15:33:42.495537",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "b84ad5e0",
+      "agent": "mega_importer",
+      "action": "Dockerfile \u5e38\u7528\u6307\u4ee4\u6709\u54ea\u4e9b\uff1f",
+      "result": {
+        "success": true,
+        "answer": "FROM\uff08\u57fa\u7840\u955c\u50cf\uff09\u3001RUN\uff08\u6267\u884c\u547d\u4ee4\uff09\u3001COPY/ADD\uff08\u590d\u5236\u6587\u4ef6\uff09\u3001WORKDIR\uff08\u5de5\u4f5c\u76ee\u5f55\uff09\u3001EXPOSE\uff08\u66b4\u9732\u7aef\u53e3\uff09\u3001CMD/ENTRYPOINT\uff08\u542f\u52a8\u547d\u4ee4\uff09\u3001ENV\uff08\u73af\u5883\u53d8\u91cf\uff09\u3001ARG\uff08\u6784\u5efa\u53c2\u6570\uff09\u3002"
+      },
+      "context": "extensive_training",
+      "timestamp": "2026-05-11T15:33:42.504065",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "eb7ea671",
+      "agent": "mega_importer",
+      "action": "Docker Compose \u662f\u4ec0\u4e48\uff1f",
+      "result": {
+        "success": true,
+        "answer": "Docker Compose \u662f\u591a\u5bb9\u5668\u7f16\u6392\u5de5\u5177\uff0c\u901a\u8fc7 docker-compose.yml \u5b9a\u4e49\u591a\u4e2a\u670d\u52a1\u7684\u5173\u7cfb\uff0c\u7528 docker-compose up -d \u4e00\u952e\u542f\u52a8\u6240\u6709\u670d\u52a1\uff0c\u9002\u5408\u5f00\u53d1\u73af\u5883\u548c\u5fae\u670d\u52a1\u90e8\u7f72\u3002"
+      },
+      "context": "extensive_training",
+      "timestamp": "2026-05-11T15:33:42.512317",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "a9e0fccc",
+      "agent": "mega_importer",
+      "action": "K8s \u6838\u5fc3\u7ec4\u4ef6\u6709\u54ea\u4e9b\uff1f",
+      "result": {
+        "success": true,
+        "answer": "kube-apiserver\uff08API\u7f51\u5173\uff09\u3001etcd\uff08\u5b58\u50a8\uff09\u3001kube-scheduler\uff08\u8c03\u5ea6\uff09\u3001kube-controller-manager\uff08\u63a7\u5236\u5668\uff09\u3001kubelet\uff08\u8282\u70b9\u4ee3\u7406\uff09\u3001kube-proxy\uff08\u7f51\u7edc\u4ee3\u7406\uff09\u3002"
+      },
+      "context": "extensive_training",
+      "timestamp": "2026-05-11T15:33:42.520692",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "be459702",
+      "agent": "mega_importer",
+      "action": "Git \u5206\u652f\u7b56\u7565\u63a8\u8350\uff1f",
+      "result": {
+        "success": true,
+        "answer": "Git Flow\uff1amain\uff08\u751f\u4ea7\uff09\u3001develop\uff08\u5f00\u53d1\uff09\u3001feature/*\uff08\u65b0\u529f\u80fd\uff09\u3001release/*\uff08\u53d1\u5e03\u51c6\u5907\uff09\u3001hotfix/*\uff08\u7d27\u6025\u4fee\u590d\uff09\u3002GitHub Flow\uff1amain + feature branches\u3002"
+      },
+      "context": "extensive_training",
+      "timestamp": "2026-05-11T15:33:42.528748",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "3d5b0502",
+      "agent": "mega_importer",
+      "action": "Linux \u5982\u4f55\u67e5\u770b\u8fdb\u7a0b\uff1f",
+      "result": {
+        "success": true,
+        "answer": "ps aux \u67e5\u770b\u6240\u6709\u8fdb\u7a0b\uff0ctop/htop \u5b9e\u65f6\u76d1\u63a7\uff0clsof -i :\u7aef\u53e3 \u67e5\u770b\u7aef\u53e3\u5360\u7528\uff0ckill -9 PID \u5f3a\u5236\u7ec8\u6b62\uff0cpgrep \u6309\u540d\u79f0\u67e5\u627e\u3002"
+      },
+      "context": "extensive_training",
+      "timestamp": "2026-05-11T15:33:42.537047",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "baaa9f0c",
+      "agent": "mega_importer",
+      "action": "SQL \u67e5\u8be2\u4f18\u5316\u6280\u5de7\uff1f",
+      "result": {
+        "success": true,
+        "answer": "\u4f7f\u7528\u7d22\u5f15\u3001\u907f\u514d SELECT *\u3001\u51cf\u5c11 JOIN \u6570\u91cf\u3001\u4f7f\u7528 EXPLAIN \u5206\u6790\u3001\u5206\u9875\u67e5\u8be2\u3001\u907f\u514d\u5b50\u67e5\u8be2\u7528 JOIN \u4ee3\u66ff\u3001\u4f7f\u7528\u67e5\u8be2\u7f13\u5b58\u3001\u8bfb\u5199\u5206\u79bb\u3002"
+      },
+      "context": "extensive_training",
+      "timestamp": "2026-05-11T15:33:42.545038",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "5aa821f5",
+      "agent": "mega_importer",
+      "action": "Redis \u652f\u6301\u54ea\u4e9b\u6570\u636e\u7c7b\u578b\uff1f",
+      "result": {
+        "success": true,
+        "answer": "String\uff08\u5b57\u7b26\u4e32\uff09\u3001Hash\uff08\u54c8\u5e0c\u8868\uff09\u3001List\uff08\u5217\u8868\uff09\u3001Set\uff08\u96c6\u5408\uff09\u3001Sorted Set\uff08\u6709\u5e8f\u96c6\u5408\uff09\u3001Bitmap\uff08\u4f4d\u56fe\uff09\u3001HyperLogLog\uff08\u57fa\u6570\u7edf\u8ba1\uff09\u3001Geospatial\uff08\u5730\u7406\u4f4d\u7f6e\uff09\u3002"
+      },
+      "context": "extensive_training",
+      "timestamp": "2026-05-11T15:33:42.553202",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "6de80927",
+      "agent": "mega_importer",
+      "action": "RESTful API \u8bbe\u8ba1\u89c4\u8303\uff1f",
+      "result": {
+        "success": true,
+        "answer": "\u4f7f\u7528\u540d\u8bcd\u8868\u793a\u8d44\u6e90\u3001HTTP\u65b9\u6cd5\u8868\u64cd\u4f5c\uff08GET/POST/PUT/DELETE\uff09\u3001\u72b6\u6001\u7801\u6807\u51c6\uff08200/201/400/401/403/404/500\uff09\u3001\u7248\u672c\u63a7\u5236\uff08/v1/\uff09\u3001\u4f7f\u7528 JSON \u683c\u5f0f\u3002"
+      },
+      "context": "extensive_training",
+      "timestamp": "2026-05-11T15:33:42.561230",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "85b69b3e",
+      "agent": "mega_importer",
+      "action": "FastAPI \u6709\u4ec0\u4e48\u4f18\u52bf\uff1f",
+      "result": {
+        "success": true,
+        "answer": "\u9ad8\u6027\u80fd\uff08\u4e0e NodeJS/Go \u76f8\u5f53\uff09\u3001\u81ea\u52a8\u751f\u6210 API \u6587\u6863\uff08Swagger/ReDoc\uff09\u3001\u7c7b\u578b\u63d0\u793a\u9a8c\u8bc1\u3001\u5f02\u6b65\u652f\u6301\u3001\u4f9d\u8d56\u6ce8\u5165\u7cfb\u7edf\u3001\u57fa\u4e8e Starlette + Pydantic\u3002"
+      },
+      "context": "extensive_training",
+      "timestamp": "2026-05-11T15:33:42.569710",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "a956d59b",
+      "agent": "mega_importer",
+      "action": "CI/CD \u6d41\u7a0b\u662f\u4ec0\u4e48\uff1f",
+      "result": {
+        "success": true,
+        "answer": "\u6301\u7eed\u96c6\u6210\uff1a\u4ee3\u7801\u63d0\u4ea4 \u2192 \u81ea\u52a8\u6784\u5efa \u2192 \u81ea\u52a8\u6d4b\u8bd5 \u2192 \u9759\u6001\u5206\u6790 \u2192 \u751f\u6210\u62a5\u544a\u3002\u6301\u7eed\u90e8\u7f72\uff1a\u6d4b\u8bd5\u901a\u8fc7 \u2192 \u6784\u5efa\u955c\u50cf \u2192 \u90e8\u7f72\u5230\u6d4b\u8bd5\u73af\u5883 \u2192 \u96c6\u6210\u6d4b\u8bd5 \u2192 \u90e8\u7f72\u5230\u751f\u4ea7\u3002"
+      },
+      "context": "extensive_training",
+      "timestamp": "2026-05-11T15:33:42.577822",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "0df1af8a",
+      "agent": "mega_importer",
+      "action": "ClawsJoy \u6709\u54ea\u4e9b API \u7aef\u70b9\uff1f",
+      "result": {
+        "success": true,
+        "answer": "\u5065\u5eb7\u68c0\u67e5\uff1a/api/health\uff1b\u5bf9\u8bdd\uff1a/api/chat\uff1bAgent\uff1a/api/agents/list\uff1b\u6280\u80fd\uff1a/api/skills/list\uff1b\u8bb0\u5fc6\uff1a/api/memory/add\u3001/api/memory/recall\uff1b\u5927\u8111\uff1a/api/brain/stats\uff1b\u5411\u91cf\uff1a/api/vector/sear"
+      },
+      "context": "extensive_training",
+      "timestamp": "2026-05-11T15:33:42.587023",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "880a1f22",
+      "agent": "mega_importer",
+      "action": "\u5982\u4f55\u8ba9 ClawsJoy \u5b66\u4e60\u65b0\u77e5\u8bc6\uff1f",
+      "result": {
+        "success": true,
+        "answer": "\u65b9\u5f0f1\uff1a\u901a\u8fc7\u8bb0\u5fc6\u7cfb\u7edf\u6dfb\u52a0\uff08POST /api/memory/add\uff09\uff1b\u65b9\u5f0f2\uff1a\u901a\u8fc7\u57f9\u8bad\u6570\u636e\u8bad\u7ec3\uff08POST /api/agents/custom/{id}/training\uff09\uff1b\u65b9\u5f0f3\uff1a\u6dfb\u52a0\u5411\u91cf\u77e5\u8bc6\uff08/api/vector/search \u81ea\u52a8\u68c0\u7d22\uff09\u3002"
+      },
+      "context": "extensive_training",
+      "timestamp": "2026-05-11T15:33:42.595312",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "3688f39e",
+      "agent": "mega_importer",
+      "action": "ClawsJoy \u652f\u6301\u54ea\u4e9b\u6a21\u578b\uff1f",
+      "result": {
+        "success": true,
+        "answer": "ClawsJoy \u901a\u8fc7 Ollama \u652f\u6301\u591a\u79cd\u6a21\u578b\uff1allama3.2:3b\uff08\u5bf9\u8bdd\uff09\u3001qwen2.5:7b\uff08\u4ee3\u7801\uff09\u3001qwen2.5:3b\uff08\u77e5\u8bc6\uff09\u3001\u4ee5\u53ca\u5176\u4ed6 Ollama \u652f\u6301\u7684\u5f00\u6e90\u6a21\u578b\u3002"
+      },
+      "context": "extensive_training",
+      "timestamp": "2026-05-11T15:33:42.604190",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "a79594e4",
+      "agent": "skill_image_collector",
+      "action": "\u6267\u884c: image_collector - \u5236\u4f5c\u9999\u6e2f\u65c5\u6e38\u89c6\u9891",
+      "result": {
+        "success": true,
+        "output": ""
+      },
+      "context": "auto_execute",
+      "timestamp": "2026-05-11T21:51:25.593581",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "23eef090",
+      "agent": "skill_script_generator",
+      "action": "\u6267\u884c: script_generator - \u5236\u4f5c\u9999\u6e2f\u65c5\u6e38\u89c6\u9891",
+      "result": {
+        "success": true,
+        "output": "\u9999\u6e2f\uff0c\u8fd9\u5ea7\u7e41\u534e\u7684\u57ce\u5e02\uff0c\u662f\u4e00\u5ea7\u4e2d\u897f\u6587\u5316\u4ea4\u878d\u4e4b\u5730\uff0c\u4e5f\u662f\u4e9a\u6d32\u6700\u5177\u6d3b\u529b\u548c\u9b45\u529b\u7684\u5730\u65b9\u4e4b\u001b[K\n\u4e00\u3002\u7ef4\u591a\u5229\u4e9a\u6e2f\u7684\u58ee\u4e3d\u666f\u8272\uff0c\u91d1\u8272\u6c99\u6ee9\u4e0a\u7684\u60a0\u95f2\u65f6\u5149\uff0c\u4ee5\u53ca\u90a3\u7433\u7405\u6ee1\u76ee\u7684\u8d2d\u7269\u8857\u8ba9\u4f60\u5e94\u001b[K\n\u63a5\u4e0d\u6687\u3002\u5b83\u662f\u5168\u7403\u6700\u5927\u7684\u91d1\u878d\u4e2d\u5fc3\u4e4b"
+      },
+      "context": "auto_execute",
+      "timestamp": "2026-05-11T21:52:13.407324",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "e221d1c6",
+      "agent": "skill_slideshow_maker",
+      "action": "\u6267\u884c: slideshow_maker - \u5236\u4f5c\u9999\u6e2f\u65c5\u6e38\u89c6\u9891",
+      "result": {
+        "success": true,
+        "output": "/mnt/d/clawsjoy/output/videos/video_20260511_215216.mp4"
+      },
+      "context": "auto_execute",
+      "timestamp": "2026-05-11T21:52:51.185111",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "dc31a21c",
+      "agent": "skill_image_collector",
+      "action": "\u6267\u884c: image_collector - \u5236\u4f5c\u9999\u6e2f\u65c5\u6e38\u5ba3\u4f20\u89c6\u9891",
+      "result": {
+        "success": true,
+        "output": ""
+      },
+      "context": "auto_execute",
+      "timestamp": "2026-05-11T22:03:04.484746",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "8dc60e4d",
+      "agent": "skill_script_generator",
+      "action": "\u6267\u884c: script_generator - \u5236\u4f5c\u9999\u6e2f\u65c5\u6e38\u5ba3\u4f20\u89c6\u9891",
+      "result": {
+        "success": true,
+        "output": "\u9999\u6e2f\uff0c\u4e00\u4e2a\u5145\u6ee1\u6d3b\u529b\u4e0e\u673a\u9047\u7684\u5730\u65b9\uff01\u8fd9\u91cc\u6709\u4e1c\u65b9\u4e4b\u73e0\u7684\u7f8e\u8a89\uff0c\u662f\u4e16\u754c\u8457\u540d\u7684\u56fd\u9645\u5927\u90fd\u4f1a\u001b[K\n\u3002\u5728\u8fd9\u91cc\uff0c\u4f60\u53ef\u4ee5\u6f2b\u6b65\u5728\u7ef4\u591a\u5229\u4e9a\u6e2f\u7554\uff0c\u6b23\u8d4f\u8ff7\u4eba\u7684\u6d77\u666f\uff1b\u4e5f\u53ef\u4ee5\u767b\u4e0a\u592a\u5e73\u5c71\u9876\uff0c\u5c06\u6574\u001b[K\n\u4e2a\u57ce\u5e02\u7684\u7e41\u534e\u5c3d\u6536\u773c\u5e95\u3002\u8d2d\u7269\u5929\u5802\u7684"
+      },
+      "context": "auto_execute",
+      "timestamp": "2026-05-11T22:03:47.570026",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "87cee9ac",
+      "agent": "skill_image_collector",
+      "action": "\u6267\u884c: image_collector - \u5236\u4f5c\u9999\u6e2f\u65c5\u6e38\u89c6\u9891",
+      "result": {
+        "success": true,
+        "output": ""
+      },
+      "context": "auto_execute",
+      "timestamp": "2026-05-11T22:10:30.697197",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "e0d1ac18",
+      "agent": "skill_script_generator",
+      "action": "\u6267\u884c: script_generator - \u5236\u4f5c\u9999\u6e2f\u65c5\u6e38\u89c6\u9891",
+      "result": {
+        "success": true,
+        "output": "\u9999\u6e2f\uff0c\u4e00\u4e2a\u5145\u6ee1\u9b45\u529b\u7684\u57ce\u5e02\uff0c\u5750\u843d\u4e8e\u4e2d\u56fd\u7684\u4e1c\u5357\u7aef\uff0c\u80cc\u9760\u5927\u9646\uff0c\u9762\u5411\u6d77\u6d0b\u3002\u5b83\u662f\u56fd\u9645\u91d1\u001b[K\n\u878d\u4e2d\u5fc3\u4e4b\u4e00\uff0c\u62e5\u6709\u4e16\u754c\u7ea7\u7684\u6e2f\u53e3\u548c\u673a\u573a\uff0c\u662f\u4e9a\u6d32\u6700\u5177\u6d3b\u529b\u7684\u5730\u65b9\u4e4b\u4e00\u3002\u6f2b\u6b65\u5728\u7ef4\u591a\u5229\u4e9a\u001b[K\n\u6e2f\u7554\uff0c\u4f60\u53ef\u4ee5\u611f\u53d7\u5230\u6d77\u98ce\u8f7b\u62c2\u3001\u591c\u666f"
+      },
+      "context": "auto_execute",
+      "timestamp": "2026-05-11T22:11:14.770318",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "b98f6bc1",
+      "agent": "skill_slideshow_maker",
+      "action": "\u6267\u884c: slideshow_maker - \u5236\u4f5c\u9999\u6e2f\u65c5\u6e38\u89c6\u9891",
+      "result": {
+        "success": false,
+        "output": ""
+      },
+      "context": "auto_execute",
+      "timestamp": "2026-05-11T22:11:52.886468",
+      "success": false,
+      "reward": -1.0
+    },
+    {
+      "id": "f6b0e513",
+      "agent": "skill_script_generator",
+      "action": "\u6267\u884c: script_generator - \u5236\u4f5c\u9999\u6e2f\u65c5\u6e38\u5ba3\u4f20\u89c6\u9891",
+      "result": {
+        "success": true,
+        "output": "\u9999\u6e2f\uff0c\u4e00\u4e2a\u5145\u6ee1\u9b45\u529b\u4e0e\u6d3b\u529b\u7684\u57ce\u5e02\uff0c\u662f\u4e1c\u65b9\u7684\u7480\u74a8\u660e\u73e0\u3002\u8fd9\u91cc\u4e0d\u4ec5\u6709\u7740\u4e16\u754c\u7ea7\u7684\u5546\u4e1a\u73af\u001b[K\n\u5883\u548c\u91d1\u878d\u4e2d\u5fc3\u7684\u5730\u4f4d\uff0c\u8fd8\u6709\u7740\u591a\u5143\u6587\u5316\u7684\u4ea4\u878d\u3002\u6f2b\u6b65\u5728\u7ef4\u6e2f\u4e4b\u7554\uff0c\u4f60\u4e0d\u4ec5\u53ef\u4ee5\u6b23\u8d4f\u5230\u5168\u001b[K\n\u7403\u6700\u957f\u7684\u53cc\u5c42\u6d77\u5e95\u96a7\u9053\u2014\u2014\u7ef4\u6e2f\u96a7\u9053"
+      },
+      "context": "auto_execute",
+      "timestamp": "2026-05-11T22:33:40.746546",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "232fe469",
+      "agent": "skill_image_collector",
+      "action": "\u6267\u884c: image_collector - \u5236\u4f5c\u9999\u6e2f\u65c5\u6e38\u5ba3\u4f20\u89c6\u9891",
+      "result": {
+        "success": true,
+        "output": ""
+      },
+      "context": "auto_execute",
+      "timestamp": "2026-05-11T22:33:44.269118",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "7f0e045e",
+      "agent": "skill_slideshow_maker",
+      "action": "\u6267\u884c: slideshow_maker - \u5236\u4f5c\u9999\u6e2f\u65c5\u6e38\u5ba3\u4f20\u89c6\u9891",
+      "result": {
+        "success": true,
+        "output": "/mnt/d/clawsjoy/output/videos/video_20260511_223344.mp4"
+      },
+      "context": "auto_execute",
+      "timestamp": "2026-05-11T22:34:18.769562",
+      "success": true,
+      "reward": 1.0
+    },
+    {
+      "id": "5d90a2cf",
+      "agent": "web_chat",
+      "action": "\u4f60\u597d\uff0c\u6211\u662f\u65b0\u7528\u6237",
+      "result": {
+        "success": true,
+        "user": "test"
+      },
+      "context": "security_chat",
+      "timestamp": "2026-05-12T00:48:32.913629",
+      "success": true,
+      "reward": 1.0
+    }
+  ],
+  "best_practices": [],
+  "failures": [
+    {
+      "id": "2bd0886b",
+      "agent": "gateway",
+      "action": "\u6267\u884c\u5371\u9669\u547d\u4ee4",
+      "error": "\u6743\u9650\u4e0d\u8db3",
+      "timestamp": "2026-05-11T11:46:20.639845",
+      "avoid_count": 0
+    },
+    {
+      "id": "b98f6bc1",
+      "agent": "skill_slideshow_maker",
+      "action": "\u6267\u884c: slideshow_maker - \u5236\u4f5c\u9999\u6e2f\u65c5\u6e38\u89c6\u9891",
+      "error": "unknown",
+      "timestamp": "2026-05-11T22:11:52.886468",
+      "avoid_count": 0
+    }
+  ],
+  "patterns": {
+    "gateway_154c3d01": {
+      "action_pattern": "\u56de\u7b54\u7528\u6237\u95ee\u9898",
+      "agent": "gateway",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "importer_8842821b": {
+      "action_pattern": "\u5bfc\u5165\u77e5\u8bc6: Docker\u5bb9\u5668\u91cd\u542f: docker restart <\u5bb9\u5668",
+      "agent": "importer",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "importer_99b4f955": {
+      "action_pattern": "\u5bfc\u5165\u77e5\u8bc6: PM2\u65e5\u5fd7\u67e5\u770b: pm2 logs <\u5e94\u7528\u540d>",
+      "agent": "importer",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "importer_3ecb56c5": {
+      "action_pattern": "\u5bfc\u5165\u77e5\u8bc6: Python\u865a\u62df\u73af\u5883: python -m venv ven",
+      "agent": "importer",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "importer_ee3c626f": {
+      "action_pattern": "\u5bfc\u5165\u77e5\u8bc6: Git\u63d0\u4ea4: git add . && git commit",
+      "agent": "importer",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "importer_18b16686": {
+      "action_pattern": "\u5bfc\u5165\u77e5\u8bc6: Linux\u67e5\u770b\u8fdb\u7a0b: ps aux | grep <\u8fdb\u7a0b\u540d>",
+      "agent": "importer",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "importer_76cb56d6": {
+      "action_pattern": "\u5bfc\u5165\u77e5\u8bc6: Flask\u5f00\u53d1: flask run --host=0.0.",
+      "agent": "importer",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "importer_d76fc1de": {
+      "action_pattern": "\u5bfc\u5165\u77e5\u8bc6: ClawsJoy\u5065\u5eb7\u68c0\u67e5: GET /api/health",
+      "agent": "importer",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "importer_cb4313e3": {
+      "action_pattern": "\u5bfc\u5165\u77e5\u8bc6: Ollama\u6a21\u578b\u5217\u8868: ollama list",
+      "agent": "importer",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "importer_ee4291dd": {
+      "action_pattern": "\u5bfc\u5165\u77e5\u8bc6: \u5411\u91cf\u68c0\u7d22: ChromaDB\u8bed\u4e49\u641c\u7d22",
+      "agent": "importer",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "auto_importer_6983205f": {
+      "action_pattern": "ClawsJoy \u6709\u54ea\u4e9b\u6838\u5fc3\u529f\u80fd\uff1f",
+      "agent": "auto_importer",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "auto_importer_0a2eadd7": {
+      "action_pattern": "\u5982\u4f55\u521b\u5efa\u81ea\u5b9a\u4e49 Agent\uff1f",
+      "agent": "auto_importer",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "auto_importer_ca0adcc1": {
+      "action_pattern": "\u600e\u4e48\u4f7f\u7528\u8ba1\u7b97\u5668\u6280\u80fd\uff1f",
+      "agent": "auto_importer",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "auto_importer_efe4f079": {
+      "action_pattern": "\u5982\u4f55\u6dfb\u52a0\u8bb0\u5fc6\uff1f",
+      "agent": "auto_importer",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "auto_importer_a3375960": {
+      "action_pattern": "\u600e\u4e48\u8ba9 Agent \u5b66\u4e60\uff1f",
+      "agent": "auto_importer",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "auto_importer_267a85d9": {
+      "action_pattern": "Docker \u5bb9\u5668\u5982\u4f55\u91cd\u542f\uff1f",
+      "agent": "auto_importer",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "auto_importer_9f00a6f7": {
+      "action_pattern": "Python \u5feb\u901f\u6392\u5e8f\u600e\u4e48\u5199\uff1f",
+      "agent": "auto_importer",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "auto_importer_edfc7991": {
+      "action_pattern": "Git \u63d0\u4ea4\u4ee3\u7801\u7684\u6d41\u7a0b\u662f\u4ec0\u4e48\uff1f",
+      "agent": "auto_importer",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "auto_importer_7180a99b": {
+      "action_pattern": "\u5982\u4f55\u67e5\u770b ClawsJoy \u670d\u52a1\u72b6\u6001\uff1f",
+      "agent": "auto_importer",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "auto_importer_9d58bdf5": {
+      "action_pattern": "ClawsJoy \u4f7f\u7528\u4ec0\u4e48\u5b66\u4e60\u7b97\u6cd5\uff1f",
+      "agent": "auto_importer",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "mega_importer_507767fa": {
+      "action_pattern": "Python \u88c5\u9970\u5668\u662f\u4ec0\u4e48\uff1f",
+      "agent": "mega_importer",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "mega_importer_bbaf0bbf": {
+      "action_pattern": "Python \u865a\u62df\u73af\u5883\u600e\u4e48\u7528\uff1f",
+      "agent": "mega_importer",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "mega_importer_c837f043": {
+      "action_pattern": "Dockerfile \u5e38\u7528\u6307\u4ee4\u6709\u54ea\u4e9b\uff1f",
+      "agent": "mega_importer",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "mega_importer_ef094e00": {
+      "action_pattern": "Docker Compose \u662f\u4ec0\u4e48\uff1f",
+      "agent": "mega_importer",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "mega_importer_9341ed10": {
+      "action_pattern": "K8s \u6838\u5fc3\u7ec4\u4ef6\u6709\u54ea\u4e9b\uff1f",
+      "agent": "mega_importer",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "mega_importer_ac8e5820": {
+      "action_pattern": "Git \u5206\u652f\u7b56\u7565\u63a8\u8350\uff1f",
+      "agent": "mega_importer",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "mega_importer_49d985c1": {
+      "action_pattern": "Linux \u5982\u4f55\u67e5\u770b\u8fdb\u7a0b\uff1f",
+      "agent": "mega_importer",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "mega_importer_7ea338d5": {
+      "action_pattern": "SQL \u67e5\u8be2\u4f18\u5316\u6280\u5de7\uff1f",
+      "agent": "mega_importer",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "mega_importer_fc834740": {
+      "action_pattern": "Redis \u652f\u6301\u54ea\u4e9b\u6570\u636e\u7c7b\u578b\uff1f",
+      "agent": "mega_importer",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "mega_importer_f9532736": {
+      "action_pattern": "RESTful API \u8bbe\u8ba1\u89c4\u8303\uff1f",
+      "agent": "mega_importer",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "mega_importer_ecc26a62": {
+      "action_pattern": "FastAPI \u6709\u4ec0\u4e48\u4f18\u52bf\uff1f",
+      "agent": "mega_importer",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "mega_importer_d2045034": {
+      "action_pattern": "CI/CD \u6d41\u7a0b\u662f\u4ec0\u4e48\uff1f",
+      "agent": "mega_importer",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "mega_importer_011d8575": {
+      "action_pattern": "ClawsJoy \u6709\u54ea\u4e9b API \u7aef\u70b9\uff1f",
+      "agent": "mega_importer",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "mega_importer_b4394b57": {
+      "action_pattern": "\u5982\u4f55\u8ba9 ClawsJoy \u5b66\u4e60\u65b0\u77e5\u8bc6\uff1f",
+      "agent": "mega_importer",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "mega_importer_d8e2ec8a": {
+      "action_pattern": "ClawsJoy \u652f\u6301\u54ea\u4e9b\u6a21\u578b\uff1f",
+      "agent": "mega_importer",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "skill_image_collector_12db5266": {
+      "action_pattern": "\u6267\u884c: image_collector - \u5236\u4f5c\u9999\u6e2f\u65c5\u6e38\u89c6\u9891",
+      "agent": "skill_image_collector",
+      "success_count": 2,
+      "confidence": 0.2
+    },
+    "skill_script_generator_b48e9688": {
+      "action_pattern": "\u6267\u884c: script_generator - \u5236\u4f5c\u9999\u6e2f\u65c5\u6e38\u89c6\u9891",
+      "agent": "skill_script_generator",
+      "success_count": 2,
+      "confidence": 0.2
+    },
+    "skill_slideshow_maker_4bbbf6f9": {
+      "action_pattern": "\u6267\u884c: slideshow_maker - \u5236\u4f5c\u9999\u6e2f\u65c5\u6e38\u89c6\u9891",
+      "agent": "skill_slideshow_maker",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "skill_image_collector_149e795e": {
+      "action_pattern": "\u6267\u884c: image_collector - \u5236\u4f5c\u9999\u6e2f\u65c5\u6e38\u5ba3\u4f20\u89c6\u9891",
+      "agent": "skill_image_collector",
+      "success_count": 2,
+      "confidence": 0.2
+    },
+    "skill_script_generator_aff7b326": {
+      "action_pattern": "\u6267\u884c: script_generator - \u5236\u4f5c\u9999\u6e2f\u65c5\u6e38\u5ba3\u4f20\u89c6\u9891",
+      "agent": "skill_script_generator",
+      "success_count": 2,
+      "confidence": 0.2
+    },
+    "skill_slideshow_maker_82294476": {
+      "action_pattern": "\u6267\u884c: slideshow_maker - \u5236\u4f5c\u9999\u6e2f\u65c5\u6e38\u5ba3\u4f20\u89c6\u9891",
+      "agent": "skill_slideshow_maker",
+      "success_count": 1,
+      "confidence": 0.1
+    },
+    "web_chat_166a23fa": {
+      "action_pattern": "\u4f60\u597d\uff0c\u6211\u662f\u65b0\u7528\u6237",
+      "agent": "web_chat",
+      "success_count": 1,
+      "confidence": 0.1
+    }
+  },
+  "stats": {
+    "total_actions": 48,
+    "successful": 46,
+    "failed": 2,
+    "last_learning": null,
+    "learning_epochs": 0
+  },
+  "q_table": {
+    "gateway_154c3d01": 0.1,
+    "gateway_8be83031": -0.1,
+    "importer_8842821b": 0.1,
+    "importer_99b4f955": 0.1,
+    "importer_3ecb56c5": 0.1,
+    "importer_ee3c626f": 0.1,
+    "importer_18b16686": 0.1,
+    "importer_76cb56d6": 0.1,
+    "importer_d76fc1de": 0.1,
+    "importer_cb4313e3": 0.1,
+    "importer_ee4291dd": 0.1,
+    "auto_importer_6983205f": 0.1,
+    "auto_importer_0a2eadd7": 0.1,
+    "auto_importer_ca0adcc1": 0.1,
+    "auto_importer_efe4f079": 0.1,
+    "auto_importer_a3375960": 0.1,
+    "auto_importer_267a85d9": 0.1,
+    "auto_importer_9f00a6f7": 0.1,
+    "auto_importer_edfc7991": 0.1,
+    "auto_importer_7180a99b": 0.1,
+    "auto_importer_9d58bdf5": 0.1,
+    "mega_importer_507767fa": 0.1,
+    "mega_importer_bbaf0bbf": 0.1,
+    "mega_importer_c837f043": 0.1,
+    "mega_importer_ef094e00": 0.1,
+    "mega_importer_9341ed10": 0.1,
+    "mega_importer_ac8e5820": 0.1,
+    "mega_importer_49d985c1": 0.1,
+    "mega_importer_7ea338d5": 0.1,
+    "mega_importer_fc834740": 0.1,
+    "mega_importer_f9532736": 0.1,
+    "mega_importer_ecc26a62": 0.1,
+    "mega_importer_d2045034": 0.1,
+    "mega_importer_011d8575": 0.1,
+    "mega_importer_b4394b57": 0.1,
+    "mega_importer_d8e2ec8a": 0.1,
+    "skill_image_collector_12db5266": 0.19,
+    "skill_script_generator_b48e9688": 0.19,
+    "skill_slideshow_maker_4bbbf6f9": -0.010000000000000009,
+    "skill_image_collector_149e795e": 0.19,
+    "skill_script_generator_aff7b326": 0.19,
+    "skill_slideshow_maker_82294476": 0.1,
+    "web_chat_166a23fa": 0.1
+  }
+}
