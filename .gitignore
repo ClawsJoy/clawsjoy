@@ -70,3 +70,8 @@ patches/
 # 归档（如果不想提交）
 core/agents/archive/
 core/lib/archive/
+models/
+tools/
+localmind/src/tools/
+src/skills/atomic/tools/
+tenants/template/
