@@ -15,6 +15,27 @@ agent:
       - "generate_code"
       - "review_code"
 
+  # 新增 LLM 配置
+  llm:
+    provider: "ollama"
+    model: "deepseek-coder:6.7b"
+    temperature: 0.2
+    max_tokens: 2048
+    timeout: 120
+
+  # 新增能力声明
+  capabilities:
+    - write_code
+    - debug_code
+    - explain_code
+    - refactor_code
+
 memory:
   enabled: true
   path: memory/
+
+  llm:
+    provider: ollama
+    model: deepseek-coder:6.7b
+    temperature: 0.2
+    max_tokens: 2048

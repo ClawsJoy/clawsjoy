@@ -74,7 +74,7 @@ class AuditorAgent(SmartAgent):
         today = datetime.now().strftime("%Y-%m-%d")
         today_ops = [op for op in self.records["vector_operations"] 
                      if op["timestamp"].startswith(today)]
-        
+
         anomalies_today = [a for a in self.records["anomalies"]
                           if a["timestamp"].startswith(today)]
 

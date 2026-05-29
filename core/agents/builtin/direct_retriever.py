@@ -20,17 +20,17 @@ class DirectRetriever:
     def search(self, query: str) -> str:
         """直接搜索并返回内容"""
         results = vector_memory.search(query, n=5)
-        
+
         if not results:
             return "没有找到相关信息"
-        
+
         output = []
         for r in results:
             text = r.get('text', '')
             score = r.get('similarity', 0)
             if score > 0.3 and len(text) > 50:
                 output.append(f"[相似度: {score:.2f}]\n{text[:500]}")
-        
+
         if output:
             return "\n\n---\n\n".join(output)
         return "没有找到匹配的内容"

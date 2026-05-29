@@ -136,3 +136,59 @@ class SmartAgent(CommunicableAgent):
     def has_capability(self, capability: str) -> bool:
         """检查是否有特定能力"""
         return capability in self.capabilities
+
+    def load_llm_config(self):
+        """从工作区加载 LLM 配置"""
+        import yaml
+        from pathlib import Path
+        
+        self.llm_model = "qwen2.5:3b"
+        self.llm_temperature = 0.7
+        self.llm_max_tokens = 1024
+        
+        config_path = Path(f"agents/{self.name}/config.yaml")
+        if config_path.exists():
+            try:
+                with open(config_path, 'r') as f:
+                    config = yaml.safe_load(f)
+                    agent_cfg = config.get('agent', {})
+                    llm_cfg = agent_cfg.get('llm', {})
+                    self.llm_model = llm_cfg.get('model', self.llm_model)
+                    self.llm_temperature = llm_cfg.get('temperature', self.llm_temperature)
+                    self.llm_max_tokens = llm_cfg.get('max_tokens', self.llm_max_tokens)
+                    print(f"[{self.name}] 使用模型: {self.llm_model}")
+            except Exception as e:
+                print(f"[{self.name}] 加载配置失败: {e}")
+
+    def _load_agent_config(self):
+        """加载 Agent 工作区配置（在 __init__ 中调用）"""
+        import yaml
+        from pathlib import Path
+        
+        # 默认值
+        self.llm_model = "qwen2.5:3b"
+        self.llm_temperature = 0.7
+        self.llm_max_tokens = 1024
+        self.agent_role = None
+        self.capabilities = []
+        
+        config_path = Path(f"agents/{self.name}/config.yaml")
+        if config_path.exists():
+            try:
+                with open(config_path, 'r') as f:
+                    config = yaml.safe_load(f)
+                    agent_cfg = config.get('agent', {})
+                    
+                    # 加载角色信息
+                    self.agent_role = agent_cfg.get('role', {})
+                    self.capabilities = self.agent_role.get('responsibilities', [])
+                    
+                    # 加载 LLM 配置
+                    llm_cfg = agent_cfg.get('llm', {})
+                    self.llm_model = llm_cfg.get('model', self.llm_model)
+                    self.llm_temperature = llm_cfg.get('temperature', self.llm_temperature)
+                    self.llm_max_tokens = llm_cfg.get('max_tokens', self.llm_max_tokens)
+                    
+                    print(f"[{self.name}] 使用模型: {self.llm_model}")
+            except Exception as e:
+                print(f"[{self.name}] 加载配置失败: {e}")

@@ -6,6 +6,30 @@ agent:
   role:
     title: "决策师"
     alias: "指挥官"
+    level: 3
+    responsibilities:
+      - "分析复杂问题"
+      - "评估多个方案"
+      - "做出最优决策"
+      - "风险分析"
+    permissions:
+      - "read_all_data"
+      - "delegate_tasks"
+
+  # LLM 配置 - 决策需要强推理能力
+  llm:
+    provider: ollama
+    model: qwen2.5:7b
+    temperature: 0.2
+    max_tokens: 2048
+    timeout: 90
+
+  # 能力声明
+  capabilities:
+    - decision_making
+    - risk_analysis
+    - option_evaluation
+    - strategic_planning
 
 routing:
   rules:
@@ -18,6 +42,8 @@ routing:
     - patterns: ["代码", "编程", "写"]
       action: "delegate"
       target: "code_agent"
+    - patterns: ["决策", "选择", "哪个更好", "建议", "方案"]
+      action: "respond"
   default_action: "respond"
   default_response: "我可以帮您分析问题和提供建议。"
 

@@ -27,3 +27,10 @@ decomposition:
 memory:
   enabled: true
   path: memory/
+
+  llm:
+    provider: ollama
+    model: qwen2.5:3b
+    temperature: 0.3
+    max_tokens: 2048
+    timeout: 60

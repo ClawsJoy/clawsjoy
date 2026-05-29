@@ -25,7 +25,7 @@ class LearningAgent:
     def execute_task(self, task: str, params: dict = None) -> dict:
         """执行具体任务"""
         params = params or {}
-        
+
         if task == 'list_agents':
             return self._list_agents()
         elif task == 'list_skills':
@@ -57,14 +57,14 @@ class LearningAgent:
     
     def process(self, user_input: str) -> dict:
         """处理用户输入（带学习）"""
-        
+
         # 1. 理解意图（学习优先）
         understanding = intent_handler.understand(user_input)
-        
+
         # 2. 执行任务
         if understanding.get('task') != 'unknown':
             result = self.execute_task(understanding['task'])
-            
+
             # 3. 记录学习（成功时）
             if result.get('success'):
                 intent_handler.record_feedback(
@@ -73,14 +73,14 @@ class LearningAgent:
                     True,
                     str(result.get('data', result.get('file_path', '')))[:200]
                 )
-            
+
             return {
                 "success": True,
                 "understanding": understanding,
                 "result": result,
                 "learned": understanding.get('source') == 'learned'
             }
-        
+
         return {
             "success": False,
             "message": "未能理解您的需求",
@@ -118,7 +118,7 @@ if __name__ == "__main__":
         """组合已有技能满足需求"""
         from core.lib.smart_adapter import smart_adapter
         from pathlib import Path
-        
+
         # 加载已有技能
         import json
         skills_file = Path(f"{get_data_root()}/skill_registry_v2.json")
@@ -127,19 +127,19 @@ if __name__ == "__main__":
                 skills = json.load(f)
         else:
             skills = {}
-        
+
         # 检索相关技能
         relevant = []
         for name, info in skills.items():
             if any(kw in name.lower() for kw in requirement.lower().split()[:3]):
                 relevant.append(name)
-        
+
         prompt = f"""需求：{requirement}
 可用技能：{relevant[:10]}
 请组合这些技能生成解决方案。"""
-        
+
         solution = smart_adapter.generate(prompt, auto_select=True)
-        
+
         return {
             "requirement": requirement,
             "skills_used": relevant[:5],
@@ -150,7 +150,7 @@ if __name__ == "__main__":
         """组合已有技能满足需求"""
         from core.lib.smart_adapter import smart_adapter
         from pathlib import Path
-        
+
         # 加载已有技能
         import json
         skills_file = Path(f"{get_data_root()}/skill_registry_v2.json")
@@ -159,19 +159,19 @@ if __name__ == "__main__":
                 skills = json.load(f)
         else:
             skills = {}
-        
+
         # 检索相关技能
         relevant = []
         for name, info in skills.items():
             if any(kw in name.lower() for kw in requirement.lower().split()[:3]):
                 relevant.append(name)
-        
+
         prompt = f"""需求：{requirement}
 可用技能：{relevant[:10]}
 请组合这些技能生成解决方案。"""
-        
+
         solution = smart_adapter.generate(prompt, auto_select=True)
-        
+
         return {
             "requirement": requirement,
             "skills_used": relevant[:5],

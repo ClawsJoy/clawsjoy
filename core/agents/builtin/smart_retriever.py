@@ -45,7 +45,7 @@ class SmartRetriever:
 - chat: 其他
 
 返回格式：{{"intent": "意图", "query": "搜索关键词（如果是search）"}}"""
-        
+
         try:
             resp = requests.post(
                 f"{self.ollama_url}/api/generate",
@@ -60,7 +60,7 @@ class SmartRetriever:
                     return json.loads(match.group())
         except Exception as e:
             print(f"意图理解失败: {e}")
-        
+
         return {"intent": "chat"}
     
     def _search_vector(self, query: str) -> str:
@@ -81,7 +81,7 @@ class SmartRetriever:
     def _answer_with_context(self, user_input: str, context: str) -> str:
         """基于上下文回答"""
         name = self.memory.recall().get("name", "")
-        
+
         prompt = f"""你是 ClawsJoy 智能助手。
 
 {f'用户叫{name}。' if name else ''}
@@ -91,7 +91,7 @@ class SmartRetriever:
 
 请根据找到的资料回答用户。如果没有找到，告知用户没找到并建议换个关键词。
 回复要简洁有用。"""
-        
+
         try:
             resp = requests.post(
                 f"{self.ollama_url}/api/generate",
@@ -102,14 +102,14 @@ class SmartRetriever:
                 return resp.json().get('response', '').strip()
         except Exception as e:
             print(f"回答生成失败: {e}")
-        
+
         return "让我想想..."
     
     def process(self, user_input: str) -> Dict:
         self.interaction_count += 1
         lower = user_input.lower()
         name = self.memory.recall().get("name")
-        
+
         # 规则快速响应（不调用 LLM 理解）
         if any(g in lower for g in ['你好', 'hi']):
             response = f"你好{f'，{name}' if name else ''}！我是 ClawsJoy"
@@ -124,7 +124,7 @@ class SmartRetriever:
         else:
             # 复杂任务：LLM 理解意图
             intent = self._understand_intent(user_input)
-            
+
             if intent.get('intent') == 'search':
                 query = intent.get('query', user_input)
                 print(f"   🔍 搜索: {query}")
@@ -132,12 +132,12 @@ class SmartRetriever:
                 response = self._answer_with_context(user_input, context)
             else:
                 response = self._answer_with_context(user_input, "")
-        
+
         self.memory.record_interaction(user_input, response, "chat")
-        
+
         if self.interaction_count % 10 == 0:
             print(f"   💭 梦境循环 #{self.interaction_count // 10}")
-        
+
         return {"response": response, "task": "chat"}
 
 

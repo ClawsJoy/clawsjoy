@@ -32,19 +32,19 @@ class LifeCycleConfigDriven:
         self.config = self._load_config()
         self.memory = CrossSessionMemory(user_id)
         self.metacognition = Metacognition(f"agent_{user_id}")
-        
+
         self.dreaming_data = {"short_term": [], "long_term": [], "cycles": 0}
-        
+
         self.ollama_url = "config_loader.get_ollama_url()"
         self.model = model_config.get_fast_model()
-        
+
         self.reflection_interval = self.config["reflection"]["interval"]
         self.dreaming_interval = self.config["dreaming"]["interval"]
         self.short_term_max = self.config["dreaming"]["short_term_max"]
         self.long_term_max = self.config["dreaming"]["long_term_max"]
         self.quality_excellent = self.config["reflection"]["quality_thresholds"]["excellent"]
         self.quality_good = self.config["reflection"]["quality_thresholds"]["good"]
-        
+
         user_info = self.memory.recall()
         print(f"🧠 配置驱动生命闭环 v{self.VERSION}")
         print(f"📝 用户: {user_info.get('name', '新用户')}")
@@ -62,7 +62,7 @@ class LifeCycleConfigDriven:
     
     def _perceive(self, text: str) -> Dict:
         excluded = self.config["perception"]["excluded_words"]
-        
+
         # 名字提取
         name_match = re.search(r'^[我][叫][\s]*([^\s，。]{2,4})$', text.strip())
         if name_match:
@@ -70,7 +70,7 @@ class LifeCycleConfigDriven:
             if name not in excluded:
                 self.memory.remember("name", name)
                 return {"type": "self_intro", "value": name}
-        
+
         # 偏好提取
         pref_match = re.search(r'喜欢[\s]*([^，。]{2,8})$', text)
         if pref_match:
@@ -78,7 +78,7 @@ class LifeCycleConfigDriven:
             if pref not in excluded:
                 self.memory.remember("preference", pref)
                 return {"type": "preference", "value": pref}
-        
+
         lower = text.lower()
         if any(g in lower for g in ['你好', 'hi']):
             return {"type": "greeting"}
@@ -88,7 +88,7 @@ class LifeCycleConfigDriven:
             return {"type": "ask_preference"}
         if 'agent' in lower and ('有哪些' in lower or '列表' in lower):
             return {"type": "list_agents"}
-        
+
         return {"type": "chat", "text": text}
     
     def _act(self, perception: Dict) -> Tuple[str, str]:
@@ -96,7 +96,7 @@ class LifeCycleConfigDriven:
         user_info = self.memory.recall()
         name = user_info.get("name")
         prefs = user_info.get("preferences", [])
-        
+
         # 定义系统身份
         if ptype == "greeting":
             return (f"你好{f'，{name}' if name else ''}！我是 ClawsJoy 智能助手，有什么可以帮你的？", "greeting")
@@ -117,7 +117,7 @@ class LifeCycleConfigDriven:
     def _record(self, user_input: str, response: str):
         self.memory.record_interaction(user_input, response, "")
         self.dreaming_data["short_term"].append({"user": user_input[:100], "response": response[:100], "time": datetime.now().isoformat()})
-        
+
         if len(self.dreaming_data["short_term"]) > self.short_term_max:
             self.dreaming_data["short_term"] = self.dreaming_data["short_term"][-self.short_term_max:]
     
@@ -126,18 +126,18 @@ class LifeCycleConfigDriven:
         perception = self._perceive(user_input)
         response, task = self._act(perception)
         self._record(user_input, response)
-        
+
         total = self.memory.recall().get("total_interactions", 0)
-        
+
         if total % self.reflection_interval == 0 and total > 0:
             print(f"   💭 反思: 已处理 {total} 次交互")
-        
+
         if total % self.dreaming_interval == 0 and total > 0:
             self.dreaming_data["cycles"] += 1
             print(f"   💭 梦境循环 #{self.dreaming_data['cycles']}")
-        
+
         elapsed = (time.time() - start) * 1000
-        
+
         return {"response": response, "task": task, "time_ms": round(elapsed, 2), "perception": perception["type"]}
 
 

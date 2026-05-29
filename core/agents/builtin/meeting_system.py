@@ -37,7 +37,7 @@ class MeetingSystem:
                     self.meetings = data
         else:
             self.meetings = {"meetings": [], "resolutions": []}
-        
+
         # 确保 meetings 字段存在
         if "meetings" not in self.meetings:
             self.meetings["meetings"] = []
@@ -53,7 +53,7 @@ class MeetingSystem:
     def trigger_meeting(self, issue: Dict, level: MeetingLevel) -> Dict:
         """触发会议"""
         meeting_id = f"meeting_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        
+
         meeting = {
             "id": meeting_id,
             "level": level.value,
@@ -64,7 +64,7 @@ class MeetingSystem:
             "discussions": [],
             "resolutions": []
         }
-        
+
         # 根据问题类型决定参与者
         if issue.get("type") == "vector_mismatch":
             meeting["participants"] = ["auditor", "analyst", "decision_maker", "translator"]
@@ -84,15 +84,15 @@ class MeetingSystem:
         else:
             meeting["participants"] = ["analyst", "decision_maker"]
             meeting["agenda"] = ["1. 分析问题", "2. 制定方案"]
-        
+
         self.meetings["meetings"].append(meeting)
         self._save_meetings()
-        
+
         print(f"\n📞 会议已触发 [{level.value.upper()}]")
         print(f"   会议ID: {meeting_id}")
         print(f"   参与者: {', '.join(meeting['participants'])}")
         print(f"   议程: {meeting['agenda']}")
-        
+
         return meeting
     
     def record_discussion(self, meeting_id: str, speaker: str, content: str):
@@ -115,17 +115,17 @@ class MeetingSystem:
                 meeting["closed_at"] = datetime.now().isoformat()
                 meeting["resolution"] = resolution
                 break
-        
+
         self.meetings["resolutions"].append({
             "meeting_id": meeting_id,
             "resolution": resolution,
             "resolved_at": datetime.now().isoformat()
         })
         self._save_meetings()
-        
+
         print(f"\n✅ 会议 {meeting_id} 已结束")
         print(f"   决议: {resolution.get('action', 'unknown')}")
-        
+
         return resolution
     
     def get_meeting_history(self, limit: int = 10) -> List[Dict]:

@@ -24,11 +24,11 @@ class AgentManager:
         # 加载 Agent 配置
         self.config_file = Path("config/agents/registry/agents.yaml")
         self.agents = self._load_agents()
-        
+
         # 注册到注册中心
         for agent_id, info in self.agents.items():
             agent_registry.register(agent_id, info)
-        
+
         print(f"✅ Agent 管理器初始化完成，共 {len(self.agents)} 个 Agent")
     
     def _load_agents(self):

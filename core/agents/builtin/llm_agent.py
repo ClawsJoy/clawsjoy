@@ -41,7 +41,7 @@ class LLMAgent:
     
     def understand_intent(self, user_input: str) -> dict:
         """让 LLM 理解意图（真正的语义理解）"""
-        
+
         prompt = f"""分析用户意图，返回 JSON。
 
 用户说："{user_input}"
@@ -58,9 +58,9 @@ class LLMAgent:
 返回格式：{{"task": "任务名", "entity": "实体名（如有）", "confidence": 0.0-1.0}}
 
 只返回 JSON，不要解释。"""
-        
+
         response = self._call_llm(prompt)
-        
+
         try:
             # 提取 JSON
             import re
@@ -71,15 +71,15 @@ class LLMAgent:
             logger = logging.getLogger(__name__)
             logger.error(f"Unexpected error: {e}", exc_info=True)
             pass
-        
+
         return {"task": "unknown", "confidence": 0.3}
     
     def execute(self, task: str, entity: str = None) -> str:
         """执行任务"""
-        
+
         if task == "greeting":
             return "你好！我是 ClawsJoy 智能助手，有什么可以帮你的？"
-        
+
         if task == "system_intro":
             return """ClawsJoy 是一个智能体操作系统，核心功能：
 • 10个专业Agent协同工作
@@ -87,11 +87,11 @@ class LLMAgent:
 • 四层记忆系统（L0-L4）
 • HTTPS + JWT 安全通信
 • 用户数字分身和隐私保护"""
-        
+
         if task == "list_agents":
             agents = ["决策Agent", "聊天Agent", "执行Agent", "采集Agent", "安全Agent", "分析Agent", "私人管家"]
             return f"共有 {len(agents)} 个专业 Agent：{', '.join(agents)}"
-        
+
         if task == "agent_detail":
             details = {
                 "决策Agent": "决策Agent：用户总管，负责任务调度、技能编排、决策拍板",
@@ -99,12 +99,12 @@ class LLMAgent:
                 "执行Agent": "执行Agent：负责技能执行、任务运行、结果处理",
             }
             return details.get(entity, f"{entity}：负责相关工作")
-        
+
         if task == "list_skills":
             skills_dir = Path("unified_config.ROOT/skills")
             skills = [d.name for d in skills_dir.iterdir() if d.is_dir() and not d.name.startswith('_')]
             return f"共有 {len(skills)} 个原子技能：{', '.join(skills[:10])}" + (" 等" if len(skills) > 10 else "")
-        
+
         if task == "generate_chart":
             from core.lib.education.retrieval_generator import RetrievalGenerator
             gen = RetrievalGenerator()
@@ -113,20 +113,20 @@ class LLMAgent:
             file_path = Path("unified_config.ROOT/output") / filename
             file_path.write_text(svg, encoding='utf-8')
             return f"已生成架构图：{file_path}"
-        
+
         return "抱歉，我没理解您的意思。试试问：ClawsJoy 是什么？、有哪些 Agent？"
     
     def process(self, user_input: str) -> dict:
         start = time.time()
-        
+
         # 1. LLM 理解意图（真正智能）
         intent = self.understand_intent(user_input)
         task = intent.get("task", "unknown")
         entity = intent.get("entity")
-        
+
         # 2. 执行任务
         response = self.execute(task, entity)
-        
+
         # 3. 记录对话（用于上下文）
         self.conversation_history.append({
             "user": user_input,
@@ -135,9 +135,9 @@ class LLMAgent:
         })
         if len(self.conversation_history) > 10:
             self.conversation_history.pop(0)
-        
+
         elapsed = (time.time() - start) * 1000
-        
+
         return {
             "response": response,
             "intent": task,

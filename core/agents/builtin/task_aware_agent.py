@@ -36,7 +36,7 @@ class TaskAwareAgent:
     def _classify_task(self, user_input: str) -> Tuple[str, str]:
         """识别任务类型，提取关键词"""
         lower = user_input.lower()
-        
+
         # 1. 搜索任务
         search_keywords = ["找", "搜索", "查找", "查一下", "帮我找", "有没有", "在哪", "资料", "文档", "总结", "报告"]
         if any(kw in user_input for kw in search_keywords):
@@ -46,19 +46,19 @@ class TaskAwareAgent:
                 query = query.replace(kw, "")
             query = query.strip().strip("，。？！")
             return "search", query if query else user_input
-        
+
         # 2. 问候任务
         if any(g in user_input for g in ["你好", "hi", "hello"]):
             return "greeting", ""
-        
+
         # 3. 自我介绍
         if re.match(r'^[我][叫][\s]*', user_input):
             return "self_intro", user_input
-        
+
         # 4. 问身份
         if "你是谁" in user_input or "你叫什么" in user_input:
             return "ask_who", ""
-        
+
         # 5. 默认聊天
         return "chat", user_input
     
@@ -67,25 +67,25 @@ class TaskAwareAgent:
         """增强检索：多策略召回"""
         if not query:
             return ""
-        
+
         results = []
-        
+
         # 策略1：原文搜索
         direct = vector_memory.search(query, n=5)
         results.extend(direct)
-        
+
         # 策略2：关键词扩展
         # 将用户输入拆分为关键词
         keywords = re.findall(r'[\u4e00-\u9fa5a-zA-Z]+', query)
         for kw in keywords[:3]:
             kw_results = vector_memory.search(kw, n=2)
             results.extend(kw_results)
-        
+
         # 策略3：语义相近词（如果查询太短）
         if len(query) < 10:
             semantic = vector_memory.search(query + " 总结", n=3)
             results.extend(semantic)
-        
+
         # 去重、排序
         seen = set()
         unique_results = []
@@ -94,20 +94,20 @@ class TaskAwareAgent:
             if text and text not in seen:
                 seen.add(text)
                 unique_results.append(r)
-        
+
         # 返回最相关的前3条
         if unique_results:
             return "\n\n---\n\n".join([r.get('text', '')[:800] for r in unique_results[:3]])
-        
+
         return ""
     
     # ========== 任务执行 ==========
     def _execute_search(self, query: str) -> str:
         """执行搜索任务"""
         print(f"   🔍 执行检索: '{query}'")
-        
+
         results = self._search(query)
-        
+
         if results:
             # 有结果，直接返回
             return f"找到了相关资料：\n\n{results[:1500]}"
@@ -132,13 +132,13 @@ class TaskAwareAgent:
     def _execute_chat(self, user_input: str) -> str:
         """聊天任务 - 调用 LLM"""
         name = self.memory.recall().get("name", "")
-        
+
         prompt = f"""你是 ClawsJoy 智能助手。
 {f'用户叫{name}。' if name else ''}
 用户说："{user_input}"
 
 请友好回复。"""
-        
+
         try:
             resp = requests.post(
                 f"{self.ollama_url}/api/generate",
@@ -157,9 +157,9 @@ class TaskAwareAgent:
     def process(self, user_input: str) -> Dict:
         # 1. 识别任务
         task_type, task_param = self._classify_task(user_input)
-        
+
         print(f"   🎯 任务识别: {task_type} -> '{task_param[:30]}'")
-        
+
         # 2. 执行任务
         if task_type == "search":
             response = self._execute_search(task_param)
@@ -171,10 +171,10 @@ class TaskAwareAgent:
             response = self._execute_ask_who()
         else:
             response = self._execute_chat(user_input)
-        
+
         # 3. 记录
         self.memory.record_interaction(user_input, response, task_type)
-        
+
         return {"response": response, "task": task_type}
 
 

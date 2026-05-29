@@ -54,7 +54,7 @@ class CollectorAgent(SmartAgent):
             self.skill_templates = {}
             self.collection_config = {}
             self.prefs_config = {}
-        
+
         self.log(f"加载技能模板: {len(self.skill_templates)} 个")
     
     def _load_preferences(self) -> Dict:
@@ -82,12 +82,12 @@ class CollectorAgent(SmartAgent):
         if not template:
             self.log(f"技能 {skill} 无参数模板")
             return None
-        
+
         required = template.get("required_params", [])
-        
+
         # 从用户偏好预填
         prefs = self.user_preferences.get(user_id, {}).get(skill, {})
-        
+
         self.sessions[session_id] = {
             "skill": skill,
             "user_id": user_id,
@@ -97,7 +97,7 @@ class CollectorAgent(SmartAgent):
             "started_at": datetime.now().isoformat(),
             "status": "collecting"
         }
-        
+
         self.log(f"开始会话 {session_id}, 技能: {skill}")
         return self._get_next_question(session_id)
     
@@ -106,9 +106,9 @@ class CollectorAgent(SmartAgent):
         session = self.sessions.get(session_id)
         if not session:
             return None
-        
+
         collected = session["collected"]
-        
+
         for param in session["template"]:
             name = param["name"]
             if name not in collected:
@@ -118,7 +118,7 @@ class CollectorAgent(SmartAgent):
                     "options": param.get("options", []),
                     "examples": param.get("examples", [])
                 }
-        
+
         session["status"] = "complete"
         session["completed_at"] = datetime.now().isoformat()
         return None
@@ -128,9 +128,9 @@ class CollectorAgent(SmartAgent):
         session = self.sessions.get(session_id)
         if not session:
             return {"error": "会话不存在", "status": "error"}
-        
+
         session["collected"][param_name] = value
-        
+
         # 保存到用户偏好
         user_id = session["user_id"]
         skill = session["skill"]
@@ -140,10 +140,10 @@ class CollectorAgent(SmartAgent):
             self.user_preferences[user_id][skill] = {}
         self.user_preferences[user_id][skill][param_name] = value
         self._save_preferences()
-        
+
         # 获取下一个问题
         next_q = self._get_next_question(session_id)
-        
+
         if next_q is None:
             return {
                 "status": "complete",

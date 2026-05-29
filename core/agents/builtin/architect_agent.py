@@ -27,7 +27,7 @@ class ArchitectAgent:
     def think(self, question: str, context: str = "") -> str:
         """像架构师一样思考"""
         prompt = get_architect_prompt(question, context)
-        
+
         try:
             resp = requests.post(
                 f"{self.ollama_url}/api/generate",
@@ -38,14 +38,14 @@ class ArchitectAgent:
                 return resp.json().get('response', '')
         except Exception as e:
             return f"思考失败: {e}"
-        
+
         return "无法分析"
     
     def answer(self, question: str) -> dict:
         start = time.time()
         response = self.think(question)
         elapsed = (time.time() - start) * 1000
-        
+
         return {
             "question": question,
             "answer": response,

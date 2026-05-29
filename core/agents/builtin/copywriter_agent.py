@@ -18,7 +18,7 @@ class CopywriterAgent(SmartAgent):
     def process(self, user_input: str, context: Optional[Dict] = None) -> Dict:
         """处理用户请求"""
         self._update_stats()
-        
+
         # 简单响应
         if "广告语" in user_input or "slogan" in user_input.lower():
             response = self._generate_slogan(user_input)
@@ -28,9 +28,9 @@ class CopywriterAgent(SmartAgent):
             response = self._generate_social_post(user_input)
         else:
             response = self._help_message()
-        
+
         self.record_interaction(user_input, response)
-        
+
         return {
             "success": True,
             "response": response,
@@ -44,15 +44,15 @@ class CopywriterAgent(SmartAgent):
             "{product}，{feature}之选",
             "让{product}，成就{value}"
         ]
-        
+
         product = "产品"
         if "产品是" in user_input:
             product = user_input.split("产品是")[-1].strip()[:20]
-        
+
         benefit = "美好"
         feature = "智能"
         value = "不凡"
-        
+
         template = random.choice(templates)
         return template.format(product=product, benefit=benefit, feature=feature, value=value)
 
@@ -62,11 +62,11 @@ class CopywriterAgent(SmartAgent):
             "全新{product}，采用{tech}技术，带来{benefit}的体验。",
             "{product}，{feature}升级，{benefit}触手可及。"
         ]
-        
+
         product = "产品"
         if "产品是" in user_input:
             product = user_input.split("产品是")[-1].strip()[:20]
-        
+
         template = random.choice(templates)
         return template.format(product=product, tech="AI", feature="智能", benefit="卓越")
 
@@ -76,11 +76,11 @@ class CopywriterAgent(SmartAgent):
             "🔥 新品来袭！{product}，{feature}体验\n#好物分享",
             "💡 推荐一款好物：{product}\n{benefit}，值得拥有！"
         ]
-        
+
         product = "好物"
         if "产品是" in user_input:
             product = user_input.split("产品是")[-1].strip()[:20]
-        
+
         template = random.choice(templates)
         return template.format(product=product, feature="智能", benefit="品质生活")
 

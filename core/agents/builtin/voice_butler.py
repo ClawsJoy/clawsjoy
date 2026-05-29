@@ -102,7 +102,7 @@ class VoiceButler:
     def start_listening(self):
         """开始持续监听"""
         from core.lib.microphone_listener import MicrophoneListener
-        
+
         self.is_listening = True
         self.listener = MicrophoneListener(callback=self._on_audio_received)
         self.listener.start()

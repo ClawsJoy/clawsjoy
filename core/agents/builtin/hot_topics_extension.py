@@ -14,7 +14,7 @@ class HotTopicsExtension:
     def get_analytics() -> Dict:
         """获取热门话题分析"""
         result = {"hot_signals": [], "summary": {"total": 0, "top_keywords": []}}
-        
+
         signals_file = Path(f"{get_data_root()}/hot_db/hot_signals.json")
         if signals_file.exists():
             try:
@@ -36,7 +36,7 @@ class HotTopicsExtension:
                     result["summary"]["top_keywords"] = [{"keyword": k, "heat": v} for k, v in top]
             except Exception as e:
                 print(f"读取热门话题失败: {e}")
-        
+
         return result
 
 

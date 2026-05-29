@@ -47,26 +47,26 @@ class TrialAgent:
     def execute(self, goal: str, context: Dict = None) -> Dict:
         """执行任务（试错循环）"""
         print(f"\n🤖 [试错智能体] 开始处理: {goal[:80]}")
-        
+
         for attempt in range(1, self.max_attempts + 1):
             print(f"\n📌 尝试 #{attempt}")
-            
+
             # 1. 分析拆解
             analysis = self._analyze(goal, attempt)
             if not analysis.get("success"):
                 continue
-            
+
             # 2. 制定计划
             plan = self._plan(analysis, attempt)
             if not plan.get("steps"):
                 continue
-            
+
             # 3. 执行计划
             result = self._execute_plan(plan, goal, attempt)
-            
+
             # 4. 评估结果
             evaluation = self._evaluate(result, goal)
-            
+
             if evaluation.get("satisfactory"):
                 # 成功！记录经验
                 self._learn(goal, plan, result, attempt)
@@ -81,7 +81,7 @@ class TrialAgent:
                 # 失败，调整策略
                 print(f"⚠️ 尝试 #{attempt} 失败: {evaluation.get('reason')}")
                 self._adjust_strategy(goal, plan, result, attempt)
-        
+
         return {
             "success": False,
             "error": f"经过 {self.max_attempts} 次尝试仍未成功",
@@ -92,7 +92,7 @@ class TrialAgent:
         """分析任务"""
         # 从经验中查找相似任务
         similar = self._find_similar_experience(goal)
-        
+
         prompt = f"""分析以下用户目标，拆解为子任务。
 
 用户目标: {goal}
@@ -117,10 +117,10 @@ class TrialAgent:
     def _plan(self, analysis: Dict, attempt: int) -> Dict:
         """制定执行计划"""
         required_skills = analysis.get("required_skills", [])
-        
+
         # 获取可用技能
         available_skills = skill_loader.list_skills()
-        
+
         # 匹配技能
         matched_skills = []
         for req in required_skills:
@@ -128,11 +128,11 @@ class TrialAgent:
                 if req.lower() in skill.lower() or skill.lower() in req.lower():
                     matched_skills.append(skill)
                     break
-        
+
         if not matched_skills:
             # 没有匹配的技能，使用通用执行器
             matched_skills = ["llm"]
-        
+
         plan = {
             "steps": [
                 {"skill": s, "params": {"goal": analysis.get("original_goal", "")}} 
@@ -140,30 +140,30 @@ class TrialAgent:
             ],
             "attempt": attempt
         }
-        
+
         return plan
     
     def _execute_plan(self, plan: Dict, goal: str, attempt: int) -> Dict:
         """执行计划"""
         steps = plan.get("steps", [])
         results = []
-        
+
         for i, step in enumerate(steps):
             skill_name = step.get("skill")
             params = step.get("params", {})
-            
+
             print(f"  执行步骤 {i+1}: {skill_name}")
-            
+
             result = skill_loader.execute(skill_name, params)
             results.append(result)
-            
+
             if not result.get("success"):
                 return {"success": False, "failed_step": i+1, "partial_results": results}
-            
+
             time.sleep(0.5)  # 避免过载
-        
+
         final_output = results[-1].get("result", results[-1]) if results else None
-        
+
         return {
             "success": True,
             "results": results,
@@ -175,9 +175,9 @@ class TrialAgent:
         """评估执行结果"""
         if not result.get("success"):
             return {"satisfactory": False, "reason": "执行失败"}
-        
+
         final_output = result.get("final_output", "")
-        
+
         prompt = f"""评估以下结果是否满足用户需求。
 
 用户需求: {goal}
@@ -195,7 +195,7 @@ class TrialAgent:
         match = re.search(r'\{.*\}', response, re.DOTALL)
         if match:
             return json.loads(match.group())
-        
+
         return {"satisfactory": len(str(final_output)) > 50, "score": 60}
     
     def _adjust_strategy(self, goal: str, plan: Dict, result: Dict, attempt: int):
@@ -219,12 +219,12 @@ class TrialAgent:
             "attempts": attempt,
             "timestamp": datetime.now().isoformat()
         }
-        
+
         self.experiences["successful_plans"].append(experience)
         # 保留最近100条
         self.experiences["successful_plans"] = self.experiences["successful_plans"][-100:]
         self._save_experiences()
-        
+
         print(f"📚 学习成功经验: {experience['goal'][:50]}...")
 
 

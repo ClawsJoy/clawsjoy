@@ -56,14 +56,14 @@ class MemoryManagerAgent(SmartAgent):
     
     def execute(self, params):
         action = params.get("action", "")
-        
+
         if action == "recall":
             query = params.get("query", "")
             results = memory.recall(query, n=5)
             return {"success": True, "results": results}
         elif action == "stats":
             return {"success": True, "stats": memory.get_stats()}
-        
+
         return {"success": False, "error": f"未知操作: {action}"}
 
 # memory_manager = MemoryManagerAgent()  # 注释：改为按需创建

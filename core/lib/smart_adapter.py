@@ -54,8 +54,19 @@ class SmartAdapter:
         }
 
     def generate(self, prompt: str, auto_select: bool = True, **kwargs) -> str:
-        """生成响应（同步）"""
-        if auto_select:
+        """生成响应（同步）
+        
+        优先级: kwargs中的model > Agent配置的model > 任务类型检测的model
+        """
+        # 优先使用 kwargs 中指定的模型
+        if 'model' in kwargs:
+            model = kwargs['model']
+            provider = kwargs.get('provider', self.default_provider)
+            temperature = kwargs.get('temperature', 0.7)
+            max_tokens = kwargs.get('max_tokens', 2000)
+            timeout = kwargs.get('timeout', self.default_timeout)
+            task_type = 'custom'
+        elif auto_select:
             task_type = self.detect_task_type(prompt)
             config = self._get_task_config(task_type)
             model = config['model']

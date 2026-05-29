@@ -51,19 +51,19 @@ class PersonalButlerV2(SmartAgent):
     def process(self, user_input: str, context: Optional[Dict] = None) -> Dict:
         """处理用户请求"""
         print(f"[管家] 收到: {user_input}")
-        
+
         # 更新上下文
         if context:
             self.user_context.update(context)
             self._save_user_data()
-        
+
         # 调用决策 Agent
         result = self.http_call("decision_agent", user_input)
         print(f"[管家] 返回: {result}")
-        
+
         # 记录交互到俱乐部
         self._record_interaction()
-        
+
         return result
 
     def get_user_context(self) -> Dict:

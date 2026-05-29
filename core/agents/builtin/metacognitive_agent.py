@@ -68,10 +68,10 @@ class MetacognitiveAgent:
         """获取反思洞察"""
         if not self.reflections:
             return {"message": "暂无反思记录"}
-        
+
         good = sum(1 for r in self.reflections if r['self_assessment'] == 'good')
         total = len(self.reflections)
-        
+
         return {
             "total_reflections": total,
             "good_rate": round(good / total * 100, 1),

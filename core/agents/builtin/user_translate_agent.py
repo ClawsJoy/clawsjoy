@@ -22,7 +22,7 @@ class UserTranslateAgent:
         self.user_id = user_id
         self.user_dir = Path(funified_config.get("paths.users_dir", f"{get_data_root()}/users/") + "/{user_id}/translate_agent")
         self.user_dir.mkdir(parents=True, exist_ok=True)
-        
+
         self._load_user_memory()
         print(f"🔤 用户语言大师已创建: {user_id}")
         print(f"   📚 自定义词汇: {len(self.custom_vocab)} 条")
@@ -63,13 +63,13 @@ class UserTranslateAgent:
         """翻译查询（使用用户自己的词汇）"""
         # 先使用基础翻译
         result = base_translator.translate_query(query)
-        
+
         # 应用用户自定义词汇覆盖
         for cn, en in self.custom_vocab.items():
             if cn in query:
                 if en not in result['keywords']:
                     result['keywords'].append(en)
-        
+
         # 记录历史
         self.translation_history.append({
             "query": query,
@@ -77,7 +77,7 @@ class UserTranslateAgent:
             "timestamp": datetime.now().isoformat()
         })
         self._save_memory()
-        
+
         return {
             "user_id": self.user_id,
             "original": query,

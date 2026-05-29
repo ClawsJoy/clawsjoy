@@ -19,7 +19,7 @@ class PrivateManager:
         self.user_id = user_id
         self.user_dir = Path(funified_config.get("paths.users_dir", f"{get_data_root()}/users/") + "/{user_id}/private")
         self.user_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # 加载用户专属密钥
         self._load_key()
         self._load_vault()
