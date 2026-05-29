@@ -1,26 +1,72 @@
-models/
-tools/
-__pycache__/
-*.pyc
-data/users/
-data/*.db
-logs/*.log
-output/
-*.tar.gz
+# 敏感配置
 .env
+.env.local
+.env.*.local
 *.key
 *.pem
-*.token
-.ssl/
-.idea/
+*.crt
+*.p12
+secrets.*
+**/secrets.json
+**/secret*.yaml
+
+# SSL 证书
+ssl/
+*.cert
+*.crt
+
+# 用户数据（包含个人信息）
+data/users/
+data/tenants/
+data/*.db
+data/*.json
+data/vector_memory/
+data.vector_kb/
+
+# 日志（可能包含敏感信息）
+logs/
+*.log
+
+# 备份文件
+*.bak
+*.backup
+*.old
+*.tmp
+*~
+*.swp
+*.swo
+
+# Python 缓存
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE
 .vscode/
-.archive/
-.version_backup/
-tenants/*/data/
-tenants/*/config/youtube/
-# YouTube 敏感文件（本地保留，不提交）
-tenants/*/config/youtube/token.pickle
-data/youtube_token.pickle
-tenants/*/config/youtube/client_secrets.json
-scripts/save_youtube_token.py
-scripts/save_youtube_token_correct.py
+.idea/
+*.swp
+
+# 输出文件（可能包含生成内容）
+output/
+outbox/
+dreamshaper_outputs/
+*.mp4
+*.png
+*.jpg
+
+# 模型文件（太大）
+models/*.bin
+models/*.safetensors
+models/*.ckpt
+
+# 临时文件
+temp/
+tmp/
+*.tmp
+
+# 本地 Git
+patches/
+
+# 归档（如果不想提交）
+core/agents/archive/
+core/lib/archive/
