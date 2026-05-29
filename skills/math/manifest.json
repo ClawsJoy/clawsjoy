@@ -1,0 +1,19 @@
+{
+  "name": "multiply",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "math skill collection Use when:\u9700\u8981\u4f7f\u7528 math \u76f8\u5173\u529f\u80fd NOT for: \u4e0d\u9002\u7528\u573a\u666f\n",
+  "category": "math",
+  "author": "ClawsJoy",
+  "compatible_with": [
+    "openclaw",
+    "clawsjoy"
+  ],
+  "tags": [
+    "math"
+  ],
+  "input_schema": {},
+  "output_schema": {},
+  "examples": [],
+  "use_when": "\u6570\u5b66\u8ba1\u7b97, \u6570\u503c\u8fd0\u7b97"
+}

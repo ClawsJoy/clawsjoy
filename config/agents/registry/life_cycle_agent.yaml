@@ -1,0 +1,29 @@
+name: life_cycle_agent
+display_name: "生命周期管家"
+version: "2.0.0"
+type: "core"
+enabled: true
+description: "6/6 闭环生命周期管理"
+implementation:
+  module: "core.agents.life_cycle_agent"
+  class: "LifeCycleAgent"
+capabilities:
+  - name: "perception"
+    description: "感知阶段"
+  - name: "decision"
+    description: "决策阶段"
+  - name: "action"
+    description: "执行阶段"
+  - name: "monitor"
+    description: "监控阶段"
+  - name: "learning"
+    description: "学习阶段"
+  - name: "memory"
+    description: "记忆阶段"
+permissions:
+  - read_system_state
+  - write_lifecycle_data
+config:
+  heartbeat_interval: 30
+  auto_heal: true
+  learning_rate: 0.8

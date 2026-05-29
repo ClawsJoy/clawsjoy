@@ -1,0 +1,10 @@
+{
+  "name": "商务简约",
+  "colors": ["#1a365d", "#2b6cb0", "#3182ce", "#63b3ed"],
+  "fonts": {"title": "微软雅黑", "body": "微软雅黑"},
+  "layouts": {
+    "title": {"align": "center", "size": 44},
+    "content": {"align": "left", "size": 24},
+    "bullet": {"indent": 0.5, "space_before": 12}
+  }
+}

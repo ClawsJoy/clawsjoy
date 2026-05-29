@@ -1,0 +1,3 @@
+#!/bin/bash
+# 合并多个视频
+ffmpeg -f concat -safe 0 -i <(for f in ${@:2}; do echo "file '$f'"; done) -c copy "$1"

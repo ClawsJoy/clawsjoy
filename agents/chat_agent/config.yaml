@@ -1,0 +1,20 @@
+agent:
+  name: chat_agent
+  display_name: 聊天助手
+  type: builtin
+  enabled: true
+  role:
+    title: "聊天助手"
+    alias: "对话员"
+    level: 1
+    responsibilities:
+      - "日常对话"
+      - "问题解答"
+      - "情感陪伴"
+    permissions:
+      - "chat"
+      - "qa"
+
+memory:
+  enabled: true
+  path: memory/

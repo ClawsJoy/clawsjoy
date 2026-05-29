@@ -1,0 +1,23 @@
+#!/bin/bash
+# 从视频提取音频
+# 用法: extract_audio <输入视频> [输出音频] [格式]
+
+INPUT="$1"
+OUTPUT="${2:-${INPUT%.*}.mp3}"
+FORMAT="${3:-mp3}"
+
+case $FORMAT in
+    mp3)  CODEC="libmp3lame"; EXT="mp3";;
+    aac)  CODEC="aac"; EXT="m4a";;
+    wav)  CODEC="pcm_s16le"; EXT="wav";;
+    *)    CODEC="libmp3lame"; EXT="mp3";;
+esac
+
+if [ "$FORMAT" != "mp3" ]; then
+    OUTPUT="${INPUT%.*}.$EXT"
+fi
+
+ffmpeg -i "$INPUT" -vn -c:a $CODEC -y "$OUTPUT" -loglevel error
+
+echo "✅ 音频已提取: $OUTPUT"
+ls -lh "$OUTPUT"

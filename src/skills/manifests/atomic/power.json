@@ -1,0 +1,8 @@
+{
+  "name": "power",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "幂运算",
+  "category": "math",
+  "author": "ClawsJoy"
+}

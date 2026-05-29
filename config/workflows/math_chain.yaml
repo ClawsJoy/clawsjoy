@@ -1,0 +1,17 @@
+name: math_chain
+description: 数学运算链
+
+steps:
+  - skill: add
+    params:
+      a: "{a}"
+      b: "{b}"
+    output: add_result
+
+  - skill: multiply
+    params:
+      a: "{add_result.result}"
+      b: 2
+    output: final_result
+
+output: "{final_result.result}"

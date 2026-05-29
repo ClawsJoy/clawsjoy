@@ -1,0 +1,5 @@
+稳定版本: 20260523_062717
+- personal_butler_v2.py: 改名持久化正常
+- route_handlers.py: 路由正常
+- routes.yaml: 配置正常
+- 测试通过: 改名响应 + 持久化验证

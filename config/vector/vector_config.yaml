@@ -1,0 +1,35 @@
+# 向量知识中心配置
+version: "2.0.0"
+
+vector_memory:
+  enabled: true
+  
+  # 存储配置
+  storage:
+    persist_dir: "data.vector_kb"
+    collection_name: "memory_vectors"
+    
+  # 检索配置
+  retrieval:
+    default_top_k: 5
+    similarity_threshold: 0.7
+    
+  # 分类配置
+  categories:
+    conversation:
+      enabled: true
+      ttl: 86400
+    preference:
+      enabled: true
+      ttl: 2592000
+    fact:
+      enabled: true
+      ttl: 7776000
+    skill:
+      enabled: true
+      ttl: -1
+      
+  # 性能配置
+  performance:
+    batch_size: 100
+    cache_size: 1000

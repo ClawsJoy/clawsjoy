@@ -1,0 +1,15 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+RUN pip install --no-cache-dir requests
+
+COPY bin/joymate_api.py /app/bin/
+COPY bin/settings.py /app/bin/
+COPY bin/py_logging.py /app/bin/
+
+WORKDIR /app/bin
+
+EXPOSE 8093
+
+CMD ["python3", "joymate_api.py"]

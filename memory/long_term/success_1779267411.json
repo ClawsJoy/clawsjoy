@@ -1,0 +1,10 @@
+{
+  "timestamp": "2026-05-20T16:56:51.400083",
+  "scenario": "greeting",
+  "user_input": "\u4eca\u5929\u600e\u4e48\u6837",
+  "response": "\u4eca\u5929\u7684\u5929\u6c14\u4e0d\u9519\uff0c\u9633\u5149\u660e\u5a9a\u3002\u6211\u5df2\u7ecf\u51c6\u5907\u597d\u5e2e\u52a9\u60a8\u4e86\uff0c\u6709\u4ec0\u4e48\u53ef\u4ee5\u4e3a\u60a8\u670d\u52a1\u7684\u5417\uff1f",
+  "tags": [
+    "learned",
+    "greeting"
+  ]
+}

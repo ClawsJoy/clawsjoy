@@ -1,0 +1,8 @@
+{
+  "name": "image_resize",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "图片缩放",
+  "category": "image",
+  "author": "ClawsJoy"
+}

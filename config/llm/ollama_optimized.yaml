@@ -1,0 +1,31 @@
+# Ollama 优化配置
+ollama:
+  host: "127.0.0.1"
+  port: 11434
+  
+  # 并发配置
+  concurrency:
+    max_parallel_requests: 4      # 最大并行请求数
+    max_loaded_models: 4           # 最大加载模型数
+    keep_alive: "5m"               # 模型缓存时间
+  
+  # 模型配置
+  models:
+    qwen2.5:7b:
+      context_size: 8192
+      num_predict: 512
+      temperature: 0.7
+    qwen2.5:3b:
+      context_size: 4096
+      num_predict: 256
+      temperature: 0.5
+    deepseek-coder:6.7b:
+      context_size: 8192
+      num_predict: 1024
+      temperature: 0.3
+
+  # 负载均衡
+  load_balancing:
+    enabled: true
+    strategy: "least_busy"  # least_busy, round_robin, random
+    health_check_interval: 30

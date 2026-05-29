@@ -1,0 +1,572 @@
+knowledge:
+- description: 语义搜索知识
+  handler: knowledge_search
+  method: GET
+  path: /api/v5/knowledge/search
+- description: 添加知识条目
+  handler: knowledge_add
+  method: GET
+  path: /api/v5/knowledge/add
+- description: 知识库统计
+  handler: knowledge_stats
+  method: GET
+  path: /api/v5/knowledge/stats
+
+routes:
+- description: 检查服务健康状态，返回服务是否正常运行
+  enabled: true
+  handler: health
+  method: GET
+  path: /api/health
+- description: 获取系统中所有可用技能的列表
+  enabled: true
+  handler: list_skills
+  method: GET
+  path: /api/skills
+- description: 执行指定的技能，传入参数获取结果
+  enabled: true
+  handler: execute_skill
+  method: GET
+  path: /api/skills/execute
+- path: /api/hot_reload_skills
+  method: GET
+  handler: hot_reload_skills
+  enabled: true
+  description: 热重载技能
+- path: /api/v5/skill/match
+  method: GET
+  handler: match_skill
+  enabled: true
+  description: 技能语义匹配
+- path: /api/auth/register
+  method: GET
+  handler: auth_register
+  enabled: true
+  description: 用户注册
+- path: /api/auth/login
+  method: GET
+  handler: auth_login
+  enabled: true
+  description: 用户登录
+- path: /api/auth/verify
+  method: GET
+  handler: auth_verify
+  enabled: true
+  description: 验证 Token
+- path: /api/agents/list
+  method: GET
+  handler: list_agents
+  enabled: true
+  description: Agent列表
+- path: /api/agents/health
+  method: GET
+  handler: agents_health
+  enabled: true
+  description: Agent健康检查
+- path: /api/chat
+  method: GET
+  handler: chat
+  enabled: true
+  description: 通用聊天
+- path: /api/vector/search
+  method: GET
+  handler: vector_search
+  enabled: true
+  description: 向量搜索
+- path: /api/vector/add
+  method: GET
+  handler: vector_add
+  enabled: true
+  description: 添加向量
+- path: /api/marketplace/list
+  method: GET
+  handler: marketplace_list_products
+  enabled: true
+  description: 市场产品列表
+- path: /api/butler/club/stats
+  method: GET
+  handler: club_stats
+  enabled: true
+  description: 俱乐部统计
+- path: /api/butler/club/member
+  method: GET
+  handler: club_member
+  enabled: true
+  description: 俱乐部成员
+- path: /api/butler/club/leaderboard
+  method: GET
+  handler: club_leaderboard
+  enabled: true
+  description: 俱乐部排行
+- path: /api/skills/recommend
+  method: GET
+  handler: recommend_skills
+  enabled: true
+  description: 技能推荐
+- path: /api/butler/chat
+  method: GET
+  handler: butler_chat
+  enabled: true
+  description: 私人管家对话
+- path: /api/butler/rename
+  method: GET
+  handler: butler_rename
+  enabled: true
+  description: 管家改名
+- path: /api/butler/todo
+  method: GET
+  handler: butler_todo
+  enabled: true
+  description: 获取待办
+- path: /api/butler/todo
+  method: GET
+  handler: butler_todo
+  enabled: true
+  description: 添加待办
+- path: /api/butler/memory
+  method: GET
+  handler: butler_memory
+  enabled: true
+  description: 管家记忆
+- path: /api/v5/knowledge/stats
+  method: GET
+  handler: knowledge_stats
+  enabled: true
+  description: 知识库统计
+- path: /api/v5/knowledge/search
+  method: GET
+  handler: knowledge_search
+  enabled: true
+  description: 语义搜索知识
+- path: /api/v5/knowledge/add
+  method: GET
+  handler: knowledge_add
+  enabled: true
+  description: 添加知识条目
+- path: /api/workflow/status
+  method: GET
+  handler: workflow_status
+  enabled: true
+  description: 工作流状态
+- path: /api/workflow/execute
+  method: GET
+  handler: execute_workflow
+  enabled: true
+  description: 执行工作流
+- path: /api/workflow/auto
+  method: GET
+  handler: auto_workflow
+  enabled: true
+  description: 自动工作流
+- path: /api/meeting/create
+  method: GET
+  handler: meeting_create
+  enabled: true
+  description: 创建会议
+- path: /api/meeting/list
+  method: GET
+  handler: meeting_list
+  enabled: true
+  description: 会议列表
+- path: /api/meeting/close
+  method: GET
+  handler: meeting_close
+  enabled: true
+  description: 关闭会议
+- path: /api/collaboration/start
+  method: GET
+  handler: collaboration_start
+  enabled: true
+  description: 开始协作
+- path: /api/collaboration/message
+  method: GET
+  handler: collaboration_message
+  enabled: true
+  description: 协作消息
+- path: /api/collaboration/decision
+  method: GET
+  handler: collaboration_decision
+  enabled: true
+  description: 协作决策
+- path: /api/closed_loop/run
+  method: GET
+  handler: closed_loop_run
+  enabled: true
+  description: 执行闭环
+- path: /api/closed_loop/status
+  method: GET
+  handler: closed_loop_status
+  enabled: true
+  description: 闭环状态
+- path: /api/analyst/status
+  method: GET
+  handler: analyst_status
+  enabled: true
+  description: 分析师状态
+- path: /api/analyst/report
+  handler: analyst_report
+  method: GET
+  enabled: true
+  description: 分析师报告
+- path: /api/frontend/page_view
+  method: GET
+  handler: frontend_page_view
+  enabled: true
+  description: 页面访问
+- path: /api/frontend/error
+  method: GET
+  handler: frontend_error
+  enabled: true
+  description: 前端错误
+- path: /api/frontend/behavior
+  method: GET
+  handler: frontend_behavior
+  enabled: true
+  description: 用户行为
+- path: /api/translate/query
+  method: GET
+  handler: translate_query
+  enabled: true
+  description: 翻译查询
+- path: /api/translate/search
+  method: GET
+  handler: translate_search
+  enabled: true
+  description: 翻译搜索
+- path: /api/translate/index
+  method: GET
+  handler: translate_index
+  enabled: true
+  description: 翻译索引
+- path: /api/marketplace/upload
+  handler: marketplace_upload
+  method: GET
+  enabled: true
+  description: 上传技能到市场
+- path: /api/marketplace/review
+  handler: marketplace_review
+  method: GET
+  enabled: true
+  description: 审核技能
+- path: /api/user/data/request
+  method: GET
+  handler: user_data_request
+  enabled: true
+  description: 用户数据申请
+- path: /api/user/data/request/list
+  method: GET
+  handler: user_data_request_list
+  enabled: true
+  description: 申请列表
+- path: /api/user/data/request/approve
+  method: GET
+  handler: user_data_request_approve
+  enabled: true
+  description: 审核申请
+- path: /api/workflow/template/list
+  method: GET
+  handler: workflow_template_list
+  enabled: true
+  description: 工作流模板列表
+- path: /api/workflow/template/upload
+  method: GET
+  handler: workflow_template_upload
+  enabled: true
+  description: 上传工作流模板
+- path: /api/workflow/template/review
+  method: GET
+  handler: workflow_template_review
+  enabled: true
+  description: 审核工作流模板
+- path: /api/chat
+  method: GET
+  handler: chat
+  enabled: true
+  description: 系统聊天（游客接待）
+- path: /api/chat
+  method: GET
+  handler: chat
+  enabled: true
+  description: 系统聊天（游客接待）
+- path: /api/guest/token
+  method: GET
+  handler: guest_token
+  enabled: true
+  description: 获取/刷新游客 token
+- path: /api/chat/token
+  method: GET
+  handler: chat_with_token
+  enabled: true
+  description: 带 token 的聊天（游客使用）
+- path: /api/hot_reload/routes
+  method: GET
+  handler: hot_reload_routes
+  enabled: true
+  description: 热重载路由配置
+- path: /api/hot_reload/config
+  method: GET
+  handler: hot_reload_config
+  enabled: true
+  description: 热重载配置文件
+
+
+# ========== 技能市场路由 ==========
+- path: /api/marketplace/upload
+  method: GET
+  handler: marketplace_upload
+  enabled: true
+  description: 上传技能到市场（开发者）
+
+- path: /api/marketplace/review
+  method: GET
+  handler: marketplace_review
+  enabled: true
+  description: 审核技能（管理员）
+
+- path: /api/marketplace/list
+  method: GET
+  handler: marketplace_list
+  enabled: true
+  description: 市场技能列表
+
+# ========== 管理路由 ==========
+- path: /api/admin/agents
+  method: GET
+  handler: admin_list_agents
+  enabled: true
+  description: 管理员 - 列出所有 Agent
+
+- path: /api/admin/agents/toggle
+  method: GET
+  handler: admin_toggle_agent
+  enabled: true
+  description: 管理员 - 启用/禁用 Agent
+
+- path: /api/admin/reload
+  method: GET
+  handler: admin_reload_config
+  enabled: true
+  description: 管理员 - 热重载配置
+
+# ========== 学习路由 ==========
+- path: /api/learning/stats
+  method: GET
+  handler: learning_stats
+  enabled: true
+  description: 学习统计
+
+- path: /api/learning/trigger
+  method: GET
+  handler: learning_trigger
+  enabled: true
+  description: 触发学习
+
+# ========== 反馈路由 ==========
+- path: /api/feedback/submit
+  method: GET
+  handler: feedback_submit
+  enabled: true
+  description: 提交反馈
+
+- path: /api/feedback/stats
+  method: GET
+  handler: feedback_stats
+  enabled: true
+  description: 反馈统计
+
+# ========== 申请类型说明（文档） ==========
+# 申请 type 支持的值:
+# - export: 数据导出
+# - delete: 数据删除
+# - migrate: 数据迁移
+# - developer_apply: 开发者角色申请
+# - skill_upload: 技能上传权限申请
+# - api_key: API Key 申请
+- path: /api/agents/send
+  method: GET
+  handler: agent_message
+  enabled: true
+  description: 发送消息到 Agent
+
+# ========== 主动服务路由 ==========
+- path: /api/proactive/status
+  method: GET
+  handler: proactive_status
+  enabled: true
+  description: 主动服务状态
+
+- path: /api/proactive/trigger_meeting
+  method: GET
+  handler: trigger_meeting
+  enabled: true
+  description: 触发会议（闭环）
+
+# ========== 开发者 API ==========
+- path: /api/developer/register
+  method: GET
+  handler: developer_register
+  enabled: true
+  description: 开发者注册
+
+- path: /api/developer/upload
+  method: GET
+  handler: developer_upload
+  enabled: true
+  description: 开发者上传Agent
+
+- path: /api/admin/pending
+  method: GET
+  handler: admin_pending
+  enabled: true
+  description: 管理员-待审核列表
+
+- path: /api/admin/approve
+  method: GET
+  handler: admin_approve
+  enabled: true
+  description: 管理员-审核通过
+
+- path: /api/admin/reject
+  method: GET
+  handler: admin_reject
+  enabled: true
+  description: 管理员-审核拒绝
+
+# ========== Agent 自检路由 ==========
+- path: /api/agent/self_check
+  method: GET
+  handler: agent_self_check
+  enabled: true
+  description: Agent 自检
+
+- path: /api/agent/skill_search
+  method: POST
+  handler: agent_skill_search
+  enabled: true
+  description: 语义搜索技能
+
+- path: /api/agent/knowledge_search
+  method: GET
+  handler: agent_knowledge_search
+  enabled: true
+  description: 语义搜索知识
+
+# ========== 向量搜索 ==========
+- path: /api/vector/search
+  method: GET
+  handler: vector_search
+  enabled: true
+  description: 向量搜索
+
+# ========== 闭环管理 ==========
+- path: /api/closed_loop/status
+  method: GET
+  handler: closed_loop_status
+  enabled: true
+  description: 闭环状态
+
+- path: /api/closed_loop/run
+  method: GET
+  handler: closed_loop_run
+  enabled: true
+  description: 运行闭环
+
+# ========== 用户数据申请 ==========
+- path: /api/user/data/request
+  method: GET
+  handler: user_data_request
+  enabled: true
+  description: 用户数据申请
+
+- path: /api/user/data/request/list
+  method: GET
+  handler: user_data_request_list
+  enabled: true
+  description: 申请列表
+
+- path: /api/user/data/request/approve
+  method: GET
+  handler: user_data_request_approve
+  enabled: true
+  description: 审核申请
+
+# ========== 工作流模板 ==========
+- path: /api/workflow/template/list
+  method: GET
+  handler: workflow_template_list
+  enabled: true
+  description: 工作流模板列表
+
+- path: /api/workflow/template/upload
+  method: GET
+  handler: workflow_template_upload
+  enabled: true
+  description: 上传工作流模板
+
+- path: /api/workflow/template/review
+  method: GET
+  handler: workflow_template_review
+  enabled: true
+  description: 审核工作流模板
+
+# ========== 游客 API ==========
+- path: /api/guest/token
+  method: GET
+  handler: guest_token
+  enabled: true
+  description: 获取游客Token
+
+- path: /api/chat/token
+  method: GET
+  handler: chat_with_token
+  enabled: true
+  description: 带Token聊天
+
+# ========== 开发者管理 ==========
+- path: /api/developer/upload
+  method: GET
+  handler: developer_upload
+  enabled: true
+  description: 开发者上传Agent
+
+- path: /api/admin/pending
+  method: GET
+  handler: admin_pending
+  enabled: true
+  description: 待审核列表
+
+- path: /api/admin/approve
+  method: GET
+  handler: admin_approve
+  enabled: true
+  description: 审核通过
+
+- path: /api/agent/skill_search_get
+  method: GET
+  handler: skill_search
+  enabled: true
+  description: 技能搜索(GET)
+  - path: /api/agent/messages
+    method: POST
+    handler: get_messages
+    enabled: true
+    description: 获取Agent消息
+
+# ========== Agent 通信 API ==========
+- path: /api/agent/subscribe
+  method: POST
+  handler: subscribe_agent
+  enabled: true
+  description: Agent订阅主题
+
+- path: /api/agent/broadcast
+  method: POST
+  handler: broadcast_message
+  enabled: true
+  description: 广播消息
+
+- path: /api/agent/messages
+  method: POST
+  handler: get_messages
+  enabled: true
+  description: 获取Agent消息

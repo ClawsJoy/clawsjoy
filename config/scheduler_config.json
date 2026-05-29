@@ -1,0 +1,9 @@
+{
+  "admin_email": "flyboy_qu@163.com",
+  "report_hour": 9,
+  "alert_thresholds": {
+    "cpu_percent": 80,
+    "memory_percent": 80,
+    "disk_percent": 85
+  }
+}

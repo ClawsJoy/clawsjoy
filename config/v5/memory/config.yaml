@@ -1,0 +1,24 @@
+# 记忆配置
+version: "1.0"
+
+levels:
+  l0_session:
+    max_size: 50
+    ttl: 3600
+    compression_target: "l1_daily"
+  l1_daily:
+    max_size: 100
+    compression_target: "l2_long"
+  l2_long:
+    max_size: 500
+  l3_vector:
+    enabled: false
+  l4_index:
+    enabled: true
+
+auto_compress: true
+user_isolation: true
+
+storage:
+  path: "data/v5/users/{user_id}/memory"
+  format: "json"

@@ -1,0 +1,8 @@
+{
+  "name": "image_rotate",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "图片旋转",
+  "category": "image",
+  "author": "ClawsJoy"
+}

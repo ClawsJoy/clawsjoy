@@ -1,0 +1,13 @@
+{
+  "name": "video_creation",
+  "type": "workflow",
+  "version": "1.0.0",
+  "description": "视频制作工作流",
+  "category": "workflow",
+  "author": "ClawsJoy",
+  "steps": [
+    {"skill": "script_generator", "params": {"topic": "{input.topic}"}, "output": "script"},
+    {"skill": "audio_generator", "params": {"text": "{steps.script.output.script}"}, "output": "audio"}
+  ],
+  "dependencies": ["script_generator", "audio_generator"]
+}

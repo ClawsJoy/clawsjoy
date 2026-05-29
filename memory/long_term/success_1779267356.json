@@ -1,0 +1,10 @@
+{
+  "timestamp": "2026-05-20T16:55:56.075037",
+  "scenario": "info_query",
+  "user_input": "\u6709\u591a\u5c11\u4e2a\u6280\u80fd\u53ef\u4ee5\u7528\uff1f",
+  "response": "\u76ee\u524d\u670912\u4e2a\u6280\u80fd\u53ef\u7528\u3002",
+  "tags": [
+    "learned",
+    "info_query"
+  ]
+}

@@ -1,0 +1,4 @@
+# JWT 统一配置
+secret: "clawsjoy-production-secret-key-2024"
+algorithm: "HS256"
+expire_hours: 24

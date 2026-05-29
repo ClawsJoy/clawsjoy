@@ -1,0 +1,17 @@
+{
+  "name": "audio_generator",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "将文本转换为音频",
+  "category": "audio",
+  "author": "ClawsJoy",
+  "tags": ["tts", "audio"],
+  "compatible_with": ["openclaw", "clawsjoy"],
+  "input_schema": {
+    "text": {"type": "string", "required": true, "description": "要转换的文本"}
+  },
+  "output_schema": {
+    "audio_path": {"type": "string"},
+    "duration": {"type": "number"}
+  }
+}

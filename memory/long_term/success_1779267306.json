@@ -1,0 +1,10 @@
+{
+  "timestamp": "2026-05-20T16:55:06.440784",
+  "scenario": "skill_execute",
+  "user_input": "\u6267\u884cadd",
+  "response": "\u597d\u7684\uff0c\u6267\u884c\u6dfb\u52a0\u64cd\u4f5c\u3002\u8bf7\u544a\u8bc9\u6211\u5177\u4f53\u9700\u8981\u6dfb\u52a0\u4ec0\u4e48\uff1f",
+  "tags": [
+    "learned",
+    "skill_execute"
+  ]
+}

@@ -1,0 +1,79 @@
+# Agent 注册清单
+# 所有 Agent 在此声明，由系统统一管理
+
+agents:
+  # 核心 Agent
+  personal_butler_v2:
+    name: "私人管家"
+    module: "core.agents.personal_butler_v2"
+    class: "PersonalButlerV2"
+    enabled: true
+    type: "core"
+    
+  chat_agent:
+    name: "聊天助手"
+    module: "core.agents.chat_agent"
+    class: "ChatAgent"
+    enabled: true
+    type: "core"
+    
+  code_agent:
+    name: "代码助手"
+    module: "core.agents.code_agent"
+    class: "CodeAgent"
+    enabled: true
+    type: "core"
+    
+  decision_agent:
+    name: "决策助手"
+    module: "core.agents.decision_agent"
+    class: "DecisionAgent"
+    enabled: true
+    type: "core"
+    
+  analysis_agent:
+    name: "数据分析师"
+    module: "core.agents.analysis_agent"
+    class: "AnalysisAgent"
+    enabled: true
+    type: "core"
+    
+  orchestrator:
+    name: "任务编排器"
+    module: "core.agents.orchestrator"
+    class: "OrchestratorAgent"
+    enabled: true
+    type: "core"
+    
+  copywriter_agent:
+    name: "文案专家"
+    module: "core.agents.copywriter_agent"
+    class: "CopywriterAgent"
+    enabled: true
+    type: "core"
+    capabilities:
+      - slogan_generation
+      - product_description
+      - social_media_copy
+      
+  # 用户可安装的 Agent
+  code_assistant:
+    name: "代码助手专业版"
+    module: "marketplace.agents.code_assistant"
+    class: "CodeAssistant"
+    enabled: false
+    type: "marketplace"
+    price: "free"
+
+  hermes_agent:
+    name: "Hermes智能体"
+    module: "core.agents.hermes_agent"
+    class: "HermesAgent"
+    enabled: true
+    type: "core"
+    capabilities:
+      - task_decomposition
+      - tool_use
+      - self_reflection
+      - iterative_improvement
+      - experience_learning

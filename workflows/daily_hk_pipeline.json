@@ -1,0 +1,36 @@
+{
+    "name": "每日香港内容流水线",
+    "parallel": false,
+    "steps": [
+        {
+            "name": "spider_news",
+            "skill": "spider",
+            "params": {"source": "hk_news", "limit": 10}
+        },
+        {
+            "name": "spider_policy",
+            "skill": "spider",
+            "params": {"source": "immd", "limit": 5}
+        },
+        {
+            "name": "merge_data",
+            "skill": "data_merger",
+            "depends_on": ["spider_news", "spider_policy"]
+        },
+        {
+            "name": "generate_script",
+            "skill": "content_writer",
+            "depends_on": ["merge_data"]
+        },
+        {
+            "name": "make_video",
+            "skill": "promo",
+            "depends_on": ["generate_script"]
+        },
+        {
+            "name": "upload_youtube",
+            "skill": "youtube_uploader",
+            "depends_on": ["make_video"]
+        }
+    ]
+}

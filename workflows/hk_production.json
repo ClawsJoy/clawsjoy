@@ -1,0 +1,25 @@
+{
+    "name": "香港内容生产流水线",
+    "steps": [
+        {
+            "name": "采集资料",
+            "skill": "spider",
+            "params": {"keyword": "香港优才计划", "count": 5}
+        },
+        {
+            "name": "生成脚本",
+            "skill": "content_writer",
+            "params": {"topic": "香港优才计划", "style": "专业"}
+        },
+        {
+            "name": "制作视频",
+            "skill": "promo",
+            "params": {"city": "香港", "style": "人文"}
+        },
+        {
+            "name": "上传YouTube",
+            "skill": "youtube_uploader",
+            "params": {"privacy": "unlisted"}
+        }
+    ]
+}

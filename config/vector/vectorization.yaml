@@ -1,0 +1,38 @@
+# 向量化统一配置
+version: "1.0.0"
+
+# 全局开关
+enabled: true
+
+# 向量化类型
+types:
+  skills:
+    enabled: true
+    auto_index: true
+    collection: "tenant_skills"
+    
+  routes:
+    enabled: true
+    auto_index: true
+    collection: "tenant_routes"
+    
+  knowledge:
+    enabled: true
+    auto_index: true
+    collection: "knowledge_base"
+    
+  memories:
+    enabled: true
+    auto_index: true
+    collection: "memory_vectors"
+
+# 推荐配置
+recommendation:
+  default_top_k: 5
+  min_similarity: 0.3
+  rerank: true
+
+# 租户隔离
+tenant_isolation:
+  enabled: true
+  separate_collections: true

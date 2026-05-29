@@ -1,0 +1,29 @@
+#!/bin/bash
+# Spider 采集辅助脚本
+
+case "$1" in
+  fetch)
+    URL="$2"
+    echo "=== 采集: $URL ==="
+    curl -s "$URL" | grep -E "<title>|<h1>|<h2>|<p>" | head -30
+    ;;
+  fetch-full)
+    URL="$2"
+    echo "=== 完整采集: $URL ==="
+    curl -s "$URL" | sed 's/></>\n</g' | grep -E "<title>|<h1>|<h2>|<p>|<li>" | head -50
+    ;;
+  submit)
+    TITLE="$2"
+    CONTENT="$3"
+    URL="$4"
+    ~/clawsjoy/bin/write_data "$TITLE" "$CONTENT" "$URL"
+    ;;
+  *)
+    echo "Spider 采集辅助脚本"
+    echo ""
+    echo "用法:"
+    echo "  spider_helper fetch <URL>       采集网页（简洁版）"
+    echo "  spider_helper fetch-full <URL>  采集网页（完整版）"
+    echo "  spider_helper submit <标题> <内容> <URL>  提交采集数据"
+    ;;
+esac

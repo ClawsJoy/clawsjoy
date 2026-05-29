@@ -1,0 +1,8 @@
+{
+  "name": "video_uploader",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "video_uploader处理",
+  "category": "video",
+  "author": "ClawsJoy"
+}

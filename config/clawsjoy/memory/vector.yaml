@@ -1,0 +1,19 @@
+# 向量记忆配置
+collection: "memory_vectors"
+embedding_model: "nomic-embed-text"
+dedup_threshold: 0.99
+auto_archive_days: 30
+
+# 管家专用配置
+butler:
+  top_k: 3
+  history_window: 3
+  categories:
+    - conversation
+    - preference
+
+# 管家专用配置（无需修改代码）
+butler:
+  top_k: 3
+  history_window: 3
+  vector_memory_enabled: true

@@ -1,0 +1,23 @@
+{
+  "name": "vision",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "图像识别技能，使用 llava:7b 模型识别图片内容",
+  "category": "image",
+  "author": "ClawsJoy",
+  "input_schema": {
+    "image_path": {"type": "string", "required": true, "description": "图片文件路径"},
+    "prompt": {"type": "string", "required": false, "description": "识别提示词，默认为描述图片"}
+  },
+  "output_schema": {
+    "success": {"type": "boolean"},
+    "result": {"type": "string", "description": "图像描述"},
+    "image": {"type": "string"}
+  },
+  "test_cases": [
+    {
+      "input": {"image_path": "/tmp/test.jpg", "prompt": "描述这张图片"},
+      "expected": {"success": true}
+    }
+  ]
+}

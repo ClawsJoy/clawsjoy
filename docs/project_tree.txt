@@ -1,0 +1,707 @@
+/
+    /archive
+        20260517
+        cleanup_20260517
+        reports_20260517_180519
+        root_cleanup_20260517
+    /skill_template
+        assets
+            configs
+            templates
+        scripts
+    /version_backup
+        v3/0.00_20260515
+        v3/0.00_20260517
+        v3/0.01_20260517
+        v3/0.02_20260517
+    __pycache__
+    clawsjoy
+        /github
+            workflows
+        data
+            tenants
+            workflow_states
+    client
+    config
+        __init__/py
+        driver
+        intelligence
+        skills
+            workflows
+        version
+            v1/0.01_20260517
+        youtube
+    core
+        __init__/py
+        agent
+            __pycache__
+        agent_core
+            __pycache__
+            auth
+            billing
+            interaction
+            monitor
+            ops
+            perception
+            safety
+            security
+        agents
+            ChatAgent_ws
+            __pycache__
+            analysis_agent_ws
+            backup
+            code_agent_ws
+            core
+            custom
+            marketplace
+            memory_manager_ws
+            multi
+            orchestrator_ws
+            personalities
+            rag
+            security_agent_ws
+            spec
+            templates
+            tools
+            video_agent_ws
+            youtube_agent
+            youtube_agent_ws
+        bin
+            __pycache__
+            archive
+            content
+            data
+            deploy
+            design
+            learners
+            publish
+            utils
+            video
+        intelligence
+            __pycache__
+            core
+            decisions
+            feedback
+            patterns
+        lib
+            __pycache__
+            education
+    data
+        agent_memory
+        agents
+            agent_john
+            agent_john_config
+            agent_john_fixed
+            life_agent
+            life_agent_2
+            life_fixed
+            test_fix
+            user_demo
+        billing
+        content
+            raw
+        exchange
+            done
+            incoming
+            processing
+            to_chat
+            to_decision
+            to_executor
+            urgent
+        experience
+        founder
+        hot_db
+        images
+            hongkong
+            shanghai
+            unsplash
+        knowledge
+            crawling
+            engineering
+            networking
+            security
+            semantic
+            system
+        learning
+        marketplace
+        memory
+            tenant_1
+        purchases
+        scripts
+        security_vault
+            alice
+            default
+        tenants
+            system
+        topics
+        training
+        uploads
+        urls
+        users
+            John
+            demo_user
+            john_config
+            john_fixed
+            test_user
+            user1
+            user2
+            user3
+            user_demo
+        vector_kb
+            8d947638-7dca-4e8b-89be-cc80224f0d53
+            9a16afd0-d9d3-422a-85ff-2a86b1a0e537
+            data
+        vectors
+    demo
+    deprecated
+        promo_scripts
+    docker
+    docs
+        ARCHITECTURE
+        analysis
+        founder
+        reference
+        reports
+        standards
+    dreamshaper_outputs
+    experiments
+        youtube_series
+            workspace
+    installers
+    knowledge
+        clawsjoy
+        docker
+        network
+        ops
+        pm2
+        python
+        systemd
+    localmind
+        /github
+            workflows
+        config
+        docs
+        migrations
+        scripts
+        src
+            agent
+            llm
+            memory
+            repl
+            tools
+        tests
+            common
+    logs
+        health
+        scheduler
+    manifests
+        atomic
+        workflow
+    marketplace
+        skills
+            _template
+            ai_image_gen
+            angle_manager
+            assemble_from_library
+            assemble_script
+            assemble_script_v2
+            auth
+            base_skill
+            billing
+            calculator
+            cartoon_images
+            clean_script
+            clean_script_v2
+            coffee
+            comic_generator
+            content_collector
+            content_workflow
+            content_writer
+            data_merger
+            dual_script_writer
+            example_skill
+            expert_script_writer
+            extract_content
+            extract_content_v2
+            image_collector
+            image_scheduler
+            long_script_gen
+            long_voice_writer
+            memory
+            memory_integration
+            ops_skills
+            pro_script_3min
+            pro_script_writer
+            promo
+            publisher
+            queue
+            router
+            script_from_data
+            script_generator
+            script_writer
+            sd_image_gen
+            self_heal
+            sequential_script
+            series_manager
+            simple_script
+            slideshow_maker
+            spider
+            state_manager
+            storyteller
+            tenant
+            text_to_image
+            url_discovery
+            video_maker
+            voice_script_writer
+            weather
+            weather_skill
+            webhook_notify
+            workflow_engine
+            workflow_engine_v2
+            youtube_publisher
+            youtube_uploader
+    memory
+        __init__/py
+        daily
+        long_term
+    models
+        dreamshaper
+            scheduler
+            text_encoder
+            text_encoder_2
+            tokenizer
+            tokenizer_2
+            unet
+            vae
+        hidream-dev
+            /cache
+        hidream-full-nf4
+            /cache
+            scheduler
+            text_encoder
+            text_encoder_2
+            text_encoder_3
+            tokenizer
+            tokenizer_2
+            tokenizer_3
+            transformer
+            vae
+        sd15
+            /cache
+            feature_extractor
+            safety_checker
+            scheduler
+            text_encoder
+            tokenizer
+            unet
+            vae
+    outbox
+    output
+        audio
+        bg
+        characters
+    outputs
+    scheduler
+    scripts
+        legacy
+    skills
+        __pycache__
+        ai-image-gen
+            assets
+            scripts
+        audio
+            scripts
+        check_video_status
+            assets
+            scripts
+        core
+            __pycache__
+            scripts
+        data
+            scripts
+        doc
+            scripts
+        file_service_skill
+            assets
+            scripts
+        image
+            __pycache__
+            scripts
+        improve_executor
+            assets
+            scripts
+        math
+            __pycache__
+            scripts
+        memory
+            __pycache__
+            scripts
+        network
+            __pycache__
+            scripts
+        scheduler
+            assets
+            scripts
+        self_heal
+            __pycache__
+            scripts
+        svg_generator
+            __pycache__
+            scripts
+        text
+            scripts
+        tools
+            scripts
+        video
+            __pycache__
+            scripts
+        video_description
+            assets
+            scripts
+        video_public
+            assets
+            scripts
+        wrappers
+            scripts
+    spiders
+        sources
+    src
+        api
+        config
+        lib
+            security
+            vector
+        skills
+            atomic
+            manifests
+            workflow
+        training
+    ssl
+    stable
+        bin
+        config
+        logs
+        web
+            joymate
+    tasks
+    templates
+        ppt
+    tenants
+        done
+        queue
+        template
+            config
+        tenant_1
+            agents
+            config
+            library
+            videos
+        tenant_100
+        tenant_2
+            agents
+        tenant_3
+            agents
+        tenant_4
+            agents
+        tenant_5
+            agents
+    tests
+        __init__/py
+        legacy
+        unit
+    tools
+        ComfyUI
+            /ci
+            /git
+            /github
+            alembic_db
+            api_server
+            app
+            blueprints
+            comfy
+            comfy_api
+            comfy_api_nodes
+            comfy_config
+            comfy_execution
+            comfy_extras
+            custom_nodes
+            input
+            middleware
+            models
+            output
+            script_examples
+            tests
+            tests-unit
+            user
+            utils
+        KubeezCut
+            /git
+            /github
+            /husky
+            docs
+            node_modules
+            public
+            scripts
+            src
+        LightX2V
+            /claude
+            /git
+            /github
+            app
+            assets
+            configs
+            dockerfiles
+            docs
+            examples
+            lightx2v
+            lightx2v/egg-info
+            lightx2v_kernel
+            lightx2v_kernel_xpu
+            lightx2v_platform
+            lightx2v_train
+            save_results
+            scripts
+            test_cases
+            tools
+        iris/c
+            /git
+            debug
+            images
+            jpg_test
+            models
+            test_vectors
+        lingji-cut
+            /git
+            /github
+            build
+            docs
+            electron
+            images
+            node_modules
+            pics
+            scripts
+            src
+            tests
+            动画
+    topics
+    web
+        __init__/py
+        __pycache__
+        images
+        joymate
+        joymate/backup_original
+    windows_client
+    workflows
+
+-rwxrwxrwx 1 flybo flybo 158 May 15 12:24 requirements.txt./.archive/20260517/decision_engine_old.py
+./.skill_template/scripts/main.py
+./.version_backup/v3.0.00_20260515/web_dashboard_v3.0.00_20260515.py
+./.version_backup/v3.0.00_20260517/active_runner_v3.0.00_20260517.py
+./.version_backup/v3.0.00_20260517/memory_layers_v3.0.00_20260517.py
+./.version_backup/v3.0.00_20260517/task_generator_v3.0.00_20260517.py
+./.version_backup/v3.0.00_20260517/task_queue_v3.0.00_20260517.py
+./.version_backup/v3.0.00_20260517/web_dashboard_v3.0.00_20260517.py
+./.version_backup/v3.0.01_20260517/active_runner_v3.0.01_20260517.py
+./.version_backup/v3.0.01_20260517/task_generator_v3.0.01_20260517.py
+./.version_backup/v3.0.01_20260517/task_queue_v3.0.01_20260517.py
+./.version_backup/v3.0.02_20260517/active_runner_v3.0.02_20260517.py
+./agent_gateway_web.py
+./app_v4.py
+./auth_service.py
+./clawsjoy.py
+./clawsjoy_simple.py
+./clawsjoy_v5.py
+./core/agent/base.py
+./core/agent/config_llm_agent.py
+-rwxrwxrwx 1 flybo flybo  5788 May 17 09:07 agent_gateway_web.py
+lrwxrwxrwx 1 flybo flybo     9 May 17 16:49 app.py -> app_v4.py
+-rwxrwxrwx 1 flybo flybo   909 May 17 16:48 app_v4.py
+-rwxrwxrwx 1 flybo flybo  4655 May 18 09:12 auth_service.py
+-rwxrwxrwx 1 flybo flybo  1690 May 18 23:55 clawsjoy.py
+-rwxrwxrwx 1 flybo flybo  3074 May 19 00:02 clawsjoy_simple.py
+-rwxrwxrwx 1 flybo flybo  1751 May 19 00:11 clawsjoy_v5.py
+-rwxrwxrwx 1 flybo flybo  1325 May 18 05:20 driver_service.py
+-rwxrwxrwx 1 flybo flybo  1072 May 18 05:47 driver_service_https.py
+-rwxrwxrwx 1 flybo flybo  4586 May 17 19:15 llm_service.py
+-rwxrwxrwx 1 flybo flybo   256 May 18 05:18 test_app.py
+-rwxrwxrwx 1 flybo flybo   183 May 18 09:03 test_http.py
+-rwxrwxrwx 1 flybo flybo  3866 May 17 19:31 unified_service.py
+-rwxrwxrwx 1 flybo flybo  1094 May 18 05:48 user1_admin.py
+-rwxrwxrwx 1 flybo flybo  2495 May 18 09:10 user_preference_service.py
+-rwxrwxrwx 1 flybo flybo 12831 May 17 23:23 web_dashboard.py
+-rwxrwxrwx 1 flybo flybo  4409 May 18 07:39 web_dashboard_secure.py
+-rwxrwxrwx 1 flybo flybo  2927 May 17 19:42 web_learner.py
+./app.py
+./auth_service.py:SECRET_KEY = os.environ.get('JWT_SECRET', 'clawsjoy-secret-key-change-in-production')
+./auth_service.py:        "password_hash": hashlib.sha256("admin123".encode()).hexdigest(),
+./auth_service.py:        "password_hash": hashlib.sha256("user123".encode()).hexdigest(),
+./auth_service.py:        "password_hash": hashlib.sha256("user123".encode()).hexdigest(),
+./auth_service.py:    password = data.get('password')
+./auth_service.py:    password_hash = hashlib.sha256(password.encode()).hexdigest()
+./auth_service.py:    if USERS[user_id]['password_hash'] != password_hash:
+./auth_service.py:    token = jwt.encode({
+./auth_service.py:    }, SECRET_KEY, algorithm='HS256')
+./auth_service.py:    (user_dir / "secrets").mkdir(exist_ok=True)
+./auth_service.py:        "token": token,
+./auth_service.py:    token = request.headers.get('Authorization', '').replace('Bearer ', '')
+./auth_service.py:    if not token:
+./auth_service.py:        return jsonify({"error": "No token"}), 401
+./auth_service.py:        payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+./auth_service.py:        return jsonify({"error": "Token expired"}), 401
+./auth_service.py:    except jwt.InvalidTokenError:
+./auth_service.py:        return jsonify({"error": "Invalid token"}), 401
+./auth_service.py:    token = request.headers.get('Authorization', '').replace('Bearer ', '')
+./auth_service.py:        payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+./auth_service.py:        return jsonify({"error": "无效 token"}), 401
+./auth_service.py:    password = data.get('password')
+./auth_service.py:        "password_hash": hashlib.sha256(password.encode()).hexdigest(),
+./config/driver/analyzer.yaml:  max_tokens: 2000
+./config/driver/desensitization.yaml:  api_key:
+./config/driver/desensitization.yaml:    replacement: "[API_KEY]"
+./config/driver/desensitization.yaml:  secret_key:
+./config/driver/desensitization.yaml:    regex: "(secret[_-]?key|secretkey|app_secret)[:=]\\s*['\"]?[a-zA-Z0-9_\\-]{16,64}['\"]?"
+./config/driver/desensitization.yaml:    replacement: "[SECRET_KEY]"
+./config/driver/desensitization.yaml:  # ===== Token 类 =====
+flask>=2.0.0
+flask-cors>=4.0.0
+requests>=2.28.0
+pyyaml>=6.0
+python-dotenv>=1.0.0
+pillow>=9.0.0
+rembg>=2.0.0
+onnxruntime>=1.14.0
+chromadb>=0.4.0
+openai>=1.0.0
+-rwxrwxrwx 1 flybo flybo 348 May 18 09:58 .env.example
+450 directories, 3779 files
+total 12597
+drwxrwxrwx 1 flybo flybo     512 May 18 06:47 .
+drwxrwxrwx 1 flybo flybo     512 May 19 05:21 ..
+-rwxrwxrwx 1 flybo flybo     448 May 15 12:24 active_learning.log
+-rwxrwxrwx 1 flybo flybo    2476 May 17 16:14 active_runner.log
+-rwxrwxrwx 1 flybo flybo      47 May 15 12:24 adaptation.log
+-rwxrwxrwx 1 flybo flybo     742 May 15 12:24 adaptive.log
+-rwxrwxrwx 1 flybo flybo    9721 May 15 12:24 advanced_analysis.log
+-rwxrwxrwx 1 flybo flybo 1108065 May 19 05:27 agent.log
+-rwxrwxrwx 1 flybo flybo     922 May 17 08:52 agent_api.log
+-rwxrwxrwx 1 flybo flybo     273 May 15 12:24 agent_fixes.log
+-rwxrwxrwx 1 flybo flybo  560750 May 19 05:27 alerter.log
+-rwxrwxrwx 1 flybo flybo    6522 May 15 12:24 alerts.log
+-rwxrwxrwx 1 flybo flybo     404 May 18 09:00 analyst_report.log
+-rwxrwxrwx 1 flybo flybo   24653 May 18 19:24 analyzer.log
+-rwxrwxrwx 1 flybo flybo   24653 May 18 19:48 analyzer_daemon.log
+-rwxrwxrwx 1 flybo flybo      32 May 15 12:24 anomaly.log
+-rwxrwxrwx 1 flybo flybo     869 May 17 19:13 app_v4.log
+-rwxrwxrwx 1 flybo flybo     175 May 15 12:24 audit.log
+-rwxrwxrwx 1 flybo flybo     817 May 18 09:08 auth.log
+-rwxrwxrwx 1 flybo flybo    1583 May 15 12:24 auto_heal.log
+-rwxrwxrwx 1 flybo flybo     859 May 15 12:24 auto_train.log
+-rwxrwxrwx 1 flybo flybo      34 May 15 12:24 auto_tune.log
+-rwxrwxrwx 1 flybo flybo     626 May 15 12:24 backup.log
+-rwxrwxrwx 1 flybo flybo      27 May 15 12:24 brain_daemon.log
+-rwxrwxrwx 1 flybo flybo    1383 May 15 12:24 butler.log
+-rwxrwxrwx 1 flybo flybo      43 May 15 12:24 cleaner_actions.log
+-rwxrwxrwx 1 flybo flybo   38045 May 15 12:24 collect.log
+-rwxrwxrwx 1 flybo flybo    3494 May 16 05:47 comfyui.log
+-rwxrwxrwx 1 flybo flybo    3065 May 15 12:24 conversation_training.json
+-rwxrwxrwx 1 flybo flybo      22 May 15 12:24 creator_learn.log
+-rwxrwxrwx 1 flybo flybo    1468 May 18 08:00 daily_report.log
+-rwxrwxrwx 1 flybo flybo     766 May 15 13:48 decision.log
+-rwxrwxrwx 1 flybo flybo      22 May 15 12:24 decision_engine.log
+-rwxrwxrwx 1 flybo flybo    1176 May 15 12:24 doc.log
+-rwxrwxrwx 1 flybo flybo 1107292 May 19 05:27 doc_generator.log
+-rwxrwxrwx 1 flybo flybo    1243 May 18 09:15 driver.log
+-rwxrwxrwx 1 flybo flybo      22 May 15 12:24 engineer_learn.log
+-rwxrwxrwx 1 flybo flybo     155 May 15 12:24 engineer_learner.log
+-rwxrwxrwx 1 flybo flybo     428 May 18 20:00 enhanced_analysis.log
+-rwxrwxrwx 1 flybo flybo       0 May 15 12:24 event_monitor.log
+-rwxrwxrwx 1 flybo flybo       6 May 15 12:24 event_monitor.pid
+-rwxrwxrwx 1 flybo flybo    1178 May 15 12:24 file.log
+-rwxrwxrwx 1 flybo flybo 1107419 May 19 05:27 file_service.log
+-rwxrwxrwx 1 flybo flybo 1065552 May 19 05:27 gateway.log
+-rwxrwxrwx 1 flybo flybo     393 May 16 23:31 gateway_5002.log
+-rwxrwxrwx 1 flybo flybo     393 May 16 23:30 gateway_full.log
+-rwxrwxrwx 1 flybo flybo   23022 May 15 12:24 gpu_scheduler.log
+-rwxrwxrwx 1 flybo flybo   29232 May 15 12:24 guard.log
+-rwxrwxrwx 1 flybo flybo       0 May 15 12:24 healer.log
+drwxrwxrwx 1 flybo flybo     512 May 15 12:24 health
+-rwxrwxrwx 1 flybo flybo    5350 May 15 12:24 health.log
+-rwxrwxrwx 1 flybo flybo     635 May 15 12:24 health_check.log
+-rwxrwxrwx 1 flybo flybo  139425 May 19 05:00 health_monitor.log
+-rwxrwxrwx 1 flybo flybo     499 May 15 12:24 health_report.log
+-rwxrwxrwx 1 flybo flybo    2691 May 15 12:24 intelligence.log
+-rwxrwxrwx 1 flybo flybo 5747690 May 15 12:24 keepalive.log
+-rwxrwxrwx 1 flybo flybo    1247 May 15 12:24 learning.log
+-rwxrwxrwx 1 flybo flybo    9447 May 19 05:00 learning_loop.log
+-rwxrwxrwx 1 flybo flybo    2110 May 17 19:15 llm_service.log
+-rwxrwxrwx 1 flybo flybo      22 May 15 12:24 main_loop.log
+-rwxrwxrwx 1 flybo flybo     687 May 15 12:24 market_api.log
+-rwxrwxrwx 1 flybo flybo      22 May 15 12:24 memory_learn.log
+-rwxrwxrwx 1 flybo flybo    2751 May 15 12:24 memory_optimization.log
+-rwxrwxrwx 1 flybo flybo    2415 May 15 12:24 metrics.log
+-rwxrwxrwx 1 flybo flybo     509 May 17 08:44 monitor.log
+-rwxrwxrwx 1 flybo flybo   37630 May 15 12:24 monitoring_api.log
+-rwxrwxrwx 1 flybo flybo    1355 May 15 12:24 multi.log
+-rwxrwxrwx 1 flybo flybo     953 May 16 23:48 multi_agent.log
+-rwxrwxrwx 1 flybo flybo     984 May 15 15:30 new_gateway.log
+-rwxrwxrwx 1 flybo flybo      96 May 15 12:24 night.log
+-rwxrwxrwx 1 flybo flybo     384 May 15 12:24 notifications.log
+-rwxrwxrwx 1 flybo flybo  104863 May 15 12:24 ollama.log
+-rwxrwxrwx 1 flybo flybo     758 May 17 11:21 ops_report_20260508.md
+-rwxrwxrwx 1 flybo flybo      22 May 15 12:24 orchestrator_learn.log
+-rwxrwxrwx 1 flybo flybo     968 May 15 12:24 performance.log
+-rwxrwxrwx 1 flybo flybo  593246 May 19 05:27 performance_monitor.log
+-rwxrwxrwx 1 flybo flybo     671 May 18 09:08 preference.log
+-rwxrwxrwx 1 flybo flybo    1486 May 15 12:24 publish.log
+-rwxrwxrwx 1 flybo flybo   90541 May 15 12:24 registry_api.log
+-rwxrwxrwx 1 flybo flybo     980 May 17 11:58 registry_center.log
+-rwxrwxrwx 1 flybo flybo     147 May 15 12:24 rotate.log
+drwxrwxrwx 1 flybo flybo     512 May 15 12:24 scheduler
+-rwxrwxrwx 1 flybo flybo      22 May 16 23:17 scheduler.log
+-rwxrwxrwx 1 flybo flybo   39327 May 15 12:24 script.log
+-rwxrwxrwx 1 flybo flybo     246 May 15 16:46 security.log
+-rwxrwxrwx 1 flybo flybo     182 May 15 12:24 security_alerts.log
+-rwxrwxrwx 1 flybo flybo    1708 May 15 12:24 security_audit.log
+-rwxrwxrwx 1 flybo flybo      22 May 15 12:24 security_learn.log
+-rwxrwxrwx 1 flybo flybo      22 May 15 12:24 self_inc.log
+-rwxrwxrwx 1 flybo flybo    2241 May 15 12:24 service_guard.log
+-rwxrwxrwx 1 flybo flybo      22 May 15 12:24 simple_decision.log
+-rwxrwxrwx 1 flybo flybo       0 May 15 16:37 skill_calls.log
+-rwxrwxrwx 1 flybo flybo     886 May 15 16:20 skill_test_report.json
+-rwxrwxrwx 1 flybo flybo      46 May 15 15:40 skill_test_results.json
+-rwxrwxrwx 1 flybo flybo   46064 May 15 12:24 smart_core.log
+-rwxrwxrwx 1 flybo flybo      22 May 15 12:24 smart_core_v2.log
+-rwxrwxrwx 1 flybo flybo      22 May 15 12:24 spider_learn.log
+-rwxrwxrwx 1 flybo flybo     151 May 15 12:24 spider_learner.log
+-rwxrwxrwx 1 flybo flybo  116214 May 19 05:25 success_monitor.log
+-rwxrwxrwx 1 flybo flybo   13617 May 15 12:24 system.log
+-rwxrwxrwx 1 flybo flybo    1069 May 15 12:24 system_tasks.log
+-rwxrwxrwx 1 flybo flybo     818 May 15 12:24 task_api.log
+-rwxrwxrwx 1 flybo flybo   73276 May 19 02:00 topic_sync.log
+-rwxrwxrwx 1 flybo flybo     284 May 15 12:24 true4_api.log
+-rwxrwxrwx 1 flybo flybo    2240 May 17 19:37 unified_service.log
+-rwxrwxrwx 1 flybo flybo  123314 May 18 14:59 watchdog.log
+-rwxrwxrwx 1 flybo flybo    1368 May 15 12:24 web.log
+-rwxrwxrwx 1 flybo flybo  172899 May 19 05:27 web_dashboard.log
+-rwxrwxrwx 1 flybo flybo   12003 May 18 19:45 web_secure.log
+-rwxrwxrwx 1 flybo flybo      22 May 15 12:24 youtube_learn.log
+./core/bin/test_agent_comm.py
+./core/bin/test_skill.py
+./core/bin/test_webhook.py
+./scripts/test_agent_communication.py
+./scripts/test_all_skills.py
+./scripts/test_config.py
+./scripts/test_context.py
+./scripts/test_error_learning.py
+./scripts/test_llm_integration.py
+./scripts/test_memory_system.py
+./scripts/test_migrated_skills.py
+./scripts/test_optimization_loop.py
+./scripts/test_skill_standards.py
+./skills/test_fail_skill_v1.0.00_20260517.py
+./tests/legacy/test_dreamshaper.py
+./tests/legacy/test_loader.py
+./tests/test_core.py
+./tests/test_loader.py
+./tests/test_math.py
+./tests/unit/test_auth.py

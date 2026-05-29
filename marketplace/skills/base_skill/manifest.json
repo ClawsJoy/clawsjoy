@@ -1,0 +1,12 @@
+{
+  "name": "base_skill",
+  "version": "1.0.0",
+  "description": "",
+  "category": "general",
+  "price": 0.99,
+  "author": "ClawsJoy",
+  "tags": [
+    "general",
+    "base_skill"
+  ]
+}

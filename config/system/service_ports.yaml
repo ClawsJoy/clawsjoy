@@ -1,0 +1,15 @@
+# 服务端口配置 - 统一管理
+version: "1.0.0"
+
+services:
+  gateway: 5002
+  file_service: 5003
+  multi_agent: 5005
+  doc_generator: 5008
+  agent_api: 5010
+  model_server: 5000
+  registry_center: 5022
+  web_dashboard: 8080
+
+# 主机配置
+host: "0.0.0.0"

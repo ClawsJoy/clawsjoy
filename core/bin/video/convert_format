@@ -1,0 +1,3 @@
+#!/bin/bash
+# 转换格式
+ffmpeg -i "$1" -c:v libx264 -c:a aac "${1%.*}.mp4"

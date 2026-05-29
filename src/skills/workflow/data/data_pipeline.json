@@ -1,0 +1,11 @@
+{
+  "name": "data_pipeline",
+  "type": "workflow",
+  "version": "1.0.0",
+  "description": "数据处理工作流：解析JSON → 处理 → 输出",
+  "steps": [
+    {"skill": "json_parser", "params": {"data": "{input.data}", "operation": "parse"}, "output": "parsed"},
+    {"skill": "text_summarizer", "params": {"text": "{parsed}"}, "output": "summary"}
+  ],
+  "dependencies": ["json_parser", "text_summarizer"]
+}

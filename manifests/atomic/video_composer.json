@@ -1,0 +1,17 @@
+{
+  "name": "video_composer",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "将图片和音频合成为视频",
+  "category": "video",
+  "author": "ClawsJoy",
+  "tags": ["video", "composition", "ffmpeg"],
+  "input_schema": {
+    "audio_path": {"type": "string", "required": false, "description": "音频文件路径"},
+    "image_path": {"type": "string", "required": false, "description": "图片文件路径"},
+    "duration": {"type": "integer", "required": false, "default": 30, "description": "视频时长"}
+  },
+  "output_schema": {
+    "video_path": {"type": "string", "description": "生成的视频文件路径"}
+  }
+}

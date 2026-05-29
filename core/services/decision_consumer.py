@@ -1,0 +1,116 @@
+"""决策师消费者 - 自动处理 + 主动推送"""
+
+import threading
+import time
+import json
+import shutil
+import requests
+from pathlib import Path
+from datetime import datetime
+
+
+class DecisionConsumer:
+    def __init__(self):
+        self.running = False
+        self.thread = None
+        self.task_dir = Path("data/exchange/to_decision/decision_agent")
+        self.processing_dir = Path("data/exchange/processing")
+        self.response_dir = Path("data/exchange/to_chat/butler")
+        self.completed_dir = Path("data/exchange")
+
+        self.task_dir.mkdir(parents=True, exist_ok=True)
+        self.processing_dir.mkdir(parents=True, exist_ok=True)
+        self.response_dir.mkdir(parents=True, exist_ok=True)
+
+    def start(self):
+        if self.running:
+            return
+        self.running = True
+        self.thread = threading.Thread(target=self._consume_loop, daemon=True)
+        self.thread.start()
+        print("🧠 决策师消费者已启动")
+
+    def _push_notification(self, user_id: str, response: str, task_id: str):
+        """主动推送结果"""
+        try:
+            from core.services.sse_service import sse_service
+            sse_service.push(user_id, {
+                "type": "task_completed",
+                "task_id": task_id,
+                "response": response,
+                "timestamp": datetime.now().isoformat()
+            })
+            print(f"📡 主动推送: user={user_id}, response={response[:50]}")
+        except Exception as e:
+            print(f"推送失败: {e}")
+
+    def _consume_loop(self):
+        while self.running:
+            self._process_one_task()
+            time.sleep(1)
+
+    def _process_one_task(self):
+        task_files = list(self.task_dir.glob("*.json"))
+        if not task_files:
+            return
+
+        task_file = task_files[0]
+        try:
+            with open(task_file, 'r') as f:
+                task = json.load(f)
+        except Exception as e:
+            print(f"读取失败: {e}")
+            return
+
+        processing_path = self.processing_dir / task_file.name
+        shutil.move(str(task_file), str(processing_path))
+
+        message = task.get("message", {}).get("message", "")
+        user_id = task.get("message", {}).get("user_id", "")
+
+        print(f"[消费者] 处理: {message}")
+
+        try:
+            resp = requests.post(
+                "http://localhost:5002/api/agent/decision_agent/message",
+                json={"message": message, "user_id": user_id},
+                timeout=30
+            )
+            result = resp.json() if resp.status_code == 200 else {"error": f"HTTP {resp.status_code}"}
+        except Exception as e:
+            result = {"error": str(e)}
+
+        response_text = result.get("response", result.get("error", "处理失败"))
+
+        # 保存响应
+        response_task = {
+            "id": f"response_{task_file.stem}.json",
+            "from": "decision_agent",
+            "to": "butler",
+            "user_id": user_id,
+            "response": response_text,
+            "original_task": task,
+            "timestamp": datetime.now().isoformat()
+        }
+
+        response_file = self.response_dir / response_task["id"]
+        with open(response_file, 'w') as f:
+            json.dump(response_task, f, indent=2)
+
+        # 主动推送
+        self._push_notification(user_id, response_text, task_file.stem)
+
+        # 标记完成
+        task["status"] = "completed"
+        task["result"] = result
+        task["completed_at"] = datetime.now().isoformat()
+
+        completed_file = self.completed_dir / task_file.name
+        with open(completed_file, 'w') as f:
+            json.dump(task, f, indent=2)
+
+        processing_path.unlink()
+        print(f"[消费者] 完成: {message} -> {response_text[:50]}")
+
+
+decision_consumer = DecisionConsumer()

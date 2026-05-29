@@ -1,0 +1,8 @@
+{
+  "name": "sqrt",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "平方根",
+  "category": "math",
+  "author": "ClawsJoy"
+}

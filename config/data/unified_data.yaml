@@ -1,0 +1,8 @@
+data_root: "data"
+sync:
+  enabled: true
+  realtime: true
+backup:
+  enabled: true
+  interval: 3600
+  retention: 30

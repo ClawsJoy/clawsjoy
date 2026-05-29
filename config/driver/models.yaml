@@ -1,0 +1,20 @@
+# 模型配置 v1.0.0
+
+image_models:
+  sd15:
+    name: "v1-5-pruned-emaonly.safetensors"
+    path: "models/sd15/"
+    default: true
+  
+  dreamshaper:
+    name: "dreamshaper_8.safetensors"
+    path: "models/dreamshaper/"
+    default: false
+
+generation:
+  default_width: 512
+  default_height: 768
+  default_steps: 20
+  default_cfg: 7
+  default_sampler: "euler"
+  default_scheduler: "normal"

@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  clawsjoy-v5:
+    build:
+      context: .
+      dockerfile: Dockerfile.v5
+    ports:
+      - "5003:5003"
+    volumes:
+      - ./data/v5:/app/data/v5
+      - ./logs/v5:/app/logs/v5
+    environment:
+      - OLLAMA_URL=http://ollama:11434
+    depends_on:
+      - ollama
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5003/api/v5/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./data/ollama:/root/.ollama
+    restart: unless-stopped

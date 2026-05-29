@@ -1,0 +1,19 @@
+#!/bin/bash
+TITLE="$1"
+VIDEO_URL="$2"
+SUBMITTER="${3:-video-maker}"
+TIMESTAMP=$(date +%Y%m%d_%H%M%S_%N)
+FILENAME="/home/flybo/clawsjoy/outbox/${SUBMITTER}_${TIMESTAMP}.video.json"
+mkdir -p /home/flybo/clawsjoy/outbox
+cat > "$FILENAME" << JSON
+{
+  "title": "$TITLE",
+  "content": "$VIDEO_URL",
+  "submitter": "$SUBMITTER",
+  "created_at": "$(date -Iseconds)",
+  "status": "pending"
+}
+JSON
+echo "✅ 已提交视频: $TITLE"
+echo "🎬 链接: $VIDEO_URL"
+echo "📁 文件: $FILENAME"

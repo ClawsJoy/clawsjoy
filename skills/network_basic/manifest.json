@@ -1,0 +1,18 @@
+{
+  "name": "download_file",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "network_basic \u6280\u80fd",
+  "category": "network_basic",
+  "author": "ClawsJoy",
+  "compatible_with": [
+    "openclaw",
+    "clawsjoy"
+  ],
+  "tags": [
+    "network_basic"
+  ],
+  "input_schema": {},
+  "output_schema": {},
+  "examples": []
+}

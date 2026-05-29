@@ -1,0 +1,8 @@
+{
+  "name": "abs",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "绝对值",
+  "category": "math",
+  "author": "ClawsJoy"
+}

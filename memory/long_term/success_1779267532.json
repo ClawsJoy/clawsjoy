@@ -1,0 +1,10 @@
+{
+  "timestamp": "2026-05-20T16:58:52.715190",
+  "scenario": "skill_query",
+  "user_input": "\u6709\u6ca1\u6709add\u7684\u529f\u80fd",
+  "response": "ClawsMail \u652f\u6301\u6dfb\u52a0\u90ae\u4ef6\u8d26\u53f7\u529f\u80fd\uff0c\u5e2e\u52a9\u4f60\u8f7b\u677e\u63a5\u6536\u548c\u53d1\u9001\u90ae\u4ef6\u3002\u9700\u8981\u6307\u5bfc\u5982\u4f55\u8bbe\u7f6e\u5417\uff1f",
+  "tags": [
+    "learned",
+    "skill_query"
+  ]
+}

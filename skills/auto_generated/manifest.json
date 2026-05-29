@@ -1,0 +1,26 @@
+{
+  "name": "auto_视频制作",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "auto_generated 技能",
+  "category": "auto_generated",
+  "author": "ClawsJoy",
+  "compatible_with": [
+    "openclaw",
+    "clawsjoy"
+  ],
+  "tags": [
+    "auto_generated"
+  ],
+  "input_schema": {},
+  "output_schema": {},
+  "examples": [],
+  "auto_vision_combo": {
+    "name": "auto_vision_combo",
+    "version": "1.0.0",
+    "description": "自动组合技能: vision → translate",
+    "category": "auto_generated",
+    "type": "atomic",
+    "created": "2026-05-28T18:29:32.167655"
+  }
+}

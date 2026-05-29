@@ -1,0 +1,22 @@
+{
+  "name": "script_writing",
+  "type": "workflow",
+  "version": "1.0.0",
+  "description": "脚本写作工作流",
+  "category": "workflow",
+  "author": "ClawsJoy",
+  "tags": ["writing", "script"],
+  "steps": [
+    {
+      "skill": "script_generator",
+      "params": {"topic": "{topic}"},
+      "output_key": "script"
+    },
+    {
+      "skill": "text_processor",
+      "params": {"text": "{script}", "operation": "summary"},
+      "output_key": "summary"
+    }
+  ],
+  "dependencies": ["script_generator", "text_processor"]
+}

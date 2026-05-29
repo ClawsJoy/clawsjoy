@@ -1,0 +1,18 @@
+{
+  "name": "price_compare",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "shopping \u6280\u80fd",
+  "category": "shopping",
+  "author": "ClawsJoy",
+  "compatible_with": [
+    "openclaw",
+    "clawsjoy"
+  ],
+  "tags": [
+    "shopping"
+  ],
+  "input_schema": {},
+  "output_schema": {},
+  "examples": []
+}

@@ -1,0 +1,50 @@
+# LLM 优化配置 - 基于原设计增强
+version: "2.0.0"
+
+# 模型分层
+models:
+  tiny: "qwen2.5:1b"      # 极速响应
+  fast: "qwen2.5:3b"      # 快速响应
+  balanced: "qwen2.5:7b"  # 平衡
+  powerful: "qwen2.5:14b" # 强大
+
+# 路由策略（增强）
+routing:
+  math:
+    model: "fast"
+    max_tokens: 256
+    temperature: 0.1
+  code:
+    model: "balanced"
+    max_tokens: 2048
+    temperature: 0.3
+  qa:
+    model: "balanced"
+    max_tokens: 512
+    temperature: 0.5
+  creative:
+    model: "balanced"
+    max_tokens: 1500
+    temperature: 0.8
+  analyze:
+    model: "powerful"
+    max_tokens: 2000
+    temperature: 0.4
+
+# 稳定性配置
+stability:
+  retry:
+    max_attempts: 3
+    backoff: 2
+  cache:
+    enabled: true
+    ttl: 3600
+    max_size: 1000
+  rate_limit:
+    enabled: true
+    requests_per_minute: 60
+
+# GPU 显存阈值 (MB)
+gpu:
+  low_memory: 2000   # <2GB 用小模型
+  medium_memory: 4000 # <4GB 用中模型

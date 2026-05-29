@@ -1,0 +1,18 @@
+{
+  "name": "homework_check",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "tutoring \u6280\u80fd",
+  "category": "tutoring",
+  "author": "ClawsJoy",
+  "compatible_with": [
+    "openclaw",
+    "clawsjoy"
+  ],
+  "tags": [
+    "tutoring"
+  ],
+  "input_schema": {},
+  "output_schema": {},
+  "examples": []
+}

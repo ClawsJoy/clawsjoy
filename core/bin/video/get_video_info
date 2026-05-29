@@ -1,0 +1,43 @@
+#!/bin/bash
+# 获取视频详细信息
+# 用法: get_video_info <视频文件>
+
+INPUT="$1"
+
+if [ ! -f "$INPUT" ]; then
+    echo "❌ 文件不存在: $INPUT"
+    exit 1
+fi
+
+echo "📹 视频信息: $INPUT"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# 基础信息
+ffprobe -v error -show_entries format=size,duration,bit_rate -of default=noprint_wrappers=1 "$INPUT" | while IFS= read -r line; do
+    case "$line" in
+        size*)      echo "📦 文件大小: $(numfmt --to=iec ${line#size=})";;
+        duration*)  echo "⏱️  时长: ${line#duration=} 秒";;
+        bit_rate*)  echo "📊 总码率: $((${line#bit_rate=} / 1000)) kbps";;
+    esac
+done
+
+echo ""
+echo "🎬 视频流:"
+ffprobe -v error -select_streams v:0 -show_entries stream=codec_name,width,height,bit_rate,r_frame_rate -of default=noprint_wrappers=1 "$INPUT" | while IFS= read -r line; do
+    case "$line" in
+        codec_name*) echo "   编码: ${line#codec_name=}";;
+        width*)      echo "   分辨率: ${line#width=} x $(ffprobe -v error -select_streams v:0 -show_entries stream=height -of default=noprint_wrappers=1 "$INPUT")";;
+        bit_rate*)   echo "   视频码率: $((${line#bit_rate=} / 1000)) kbps";;
+        r_frame_rate*) echo "   帧率: ${line#r_frame_rate=} fps";;
+    esac
+done | head -4
+
+echo ""
+echo "🔊 音频流:"
+ffprobe -v error -select_streams a:0 -show_entries stream=codec_name,bit_rate,sample_rate -of default=noprint_wrappers=1 "$INPUT" | while IFS= read -r line; do
+    case "$line" in
+        codec_name*) echo "   编码: ${line#codec_name=}";;
+        bit_rate*)   echo "   音频码率: $((${line#bit_rate=} / 1000)) kbps";;
+        sample_rate*) echo "   采样率: ${line#sample_rate=} Hz";;
+    esac
+done

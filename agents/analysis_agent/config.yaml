@@ -1,0 +1,12 @@
+agent:
+  name: analysis_agent
+  role:
+    title: "分析师"
+    alias: "情报官"
+    responsibilities:
+      - "收集所有数据源"
+      - "分析用户意图"
+      - "撰写分析报告"
+    permissions:
+      - "read_all_data"
+      - "write_report"

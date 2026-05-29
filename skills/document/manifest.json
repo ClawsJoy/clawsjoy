@@ -1,0 +1,18 @@
+{
+  "name": "search_doc",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "document \u6280\u80fd",
+  "category": "document",
+  "author": "ClawsJoy",
+  "compatible_with": [
+    "openclaw",
+    "clawsjoy"
+  ],
+  "tags": [
+    "document"
+  ],
+  "input_schema": {},
+  "output_schema": {},
+  "examples": []
+}

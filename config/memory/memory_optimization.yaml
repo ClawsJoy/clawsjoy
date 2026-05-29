@@ -1,0 +1,104 @@
+# 智能记忆优化配置
+# 所有参数可通过配置调整，无需修改代码
+
+version: "1.0.0"
+
+# 去重配置
+deduplication:
+  enabled: true                    # 是否启用去重
+  threshold: 0.99                  # 相似度阈值 (0-1)
+  action: "skip"                   # duplicate时动作: skip, update, notify
+  log_duplicates: true             # 是否记录重复日志
+
+# 自动标签配置
+auto_tag:
+  enabled: true
+  max_tags: 5                      # 最多标签数
+  keywords:                        # 预定义关键词
+    - "ClawsJoy"
+    - "Agent"  
+    - "记忆"
+    - "技能"
+    - "配置"
+    - "API"
+    - "LLM"
+    - "向量"
+  dynamic_tags: true               # 是否动态生成新标签
+
+# 自动整理配置
+auto_organize:
+  enabled: false                   # 默认关闭，需手动触发
+  schedule: "weekly"               # daily, weekly, monthly
+  merge_threshold: 0.85            # 合并相似度阈值
+  max_merge_batch: 100             # 单次最大合并数量
+
+# 自动摘要配置
+auto_summarize:
+  enabled: false
+  trigger_days: 30                 # 多少天前的记忆触发摘要
+  min_count: 10                    # 最少多少条才触发
+  max_summary_length: 200          # 摘要最大长度
+  use_llm: true                    # 是否使用LLM生成摘要
+
+# 自动归档配置
+auto_archive:
+  enabled: true
+  expire_days: 90                  # 过期天数
+  archive_category: "archive"      # 归档类别名
+  keep_important: true             # 保留重要记忆
+
+# 智能遗忘配置
+auto_forget:
+  enabled: false
+  unused_days: 30                  # 未访问天数
+  max_importance: 0.3              # 最大重要性阈值(低于此值遗忘)
+  dry_run: true                    # 是否只分析不删除
+
+# 记忆巩固配置
+consolidation:
+  enabled: true
+  min_access_count: 5              # 最少访问次数
+  min_importance: 0.7              # 最低重要性
+  boost_factor: 1.5                # 重要性提升系数
+
+# 洞察分析配置
+insight:
+  enabled: true
+  min_samples: 10                  # 最少样本数
+  auto_suggest: true               # 自动生成建议
+  report_format: "json"            # 报告格式: json, text, markdown
+
+# Agent 生命周期配置
+agent_lifecycle:
+  self_check_on_start: true        # 启动时自检
+  save_state_on_exit: true         # 退出时保存状态
+  max_context_history: 20          # 最大上下文历史
+  health_check_interval: 300       # 健康检查间隔(秒)
+
+# 查询配置
+query:
+  default_n: 10                    # 默认返回数量
+  max_n: 100                       # 最大返回数量
+  default_sort: "relevance"        # 默认排序: relevance, importance, recency
+  cache_enabled: true              # 是否缓存查询结果
+  cache_ttl: 3600                  # 缓存过期时间(秒)
+
+# 日志配置
+logging:
+  level: "INFO"                    # DEBUG, INFO, WARNING, ERROR
+  log_operations: true             # 记录操作日志
+  log_performance: false           # 记录性能日志
+
+# ID 配置
+id_management:
+  store_in_metadata: true          # 是否在 metadata 中存储 ID
+  return_id_in_search: true        # search 是否返回 ID
+  id_field_name: "doc_id"          # metadata 中 ID 字段名
+
+# 记忆容量管理
+capacity_management:
+  enabled: true
+  max_total: 5000              # 最大记忆总数
+  warn_threshold: 0.8          # 80% 时告警
+  auto_compress: true          # 自动压缩
+  compress_ratio: 0.5          # 压缩到 50%

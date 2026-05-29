@@ -1,0 +1,26 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# 安装依赖
+COPY requirements-v5.txt .
+RUN pip install --no-cache-dir -r requirements-v5.txt
+
+# 复制代码
+COPY core/v5 ./core/v5
+COPY api/v5 ./api/v5
+COPY config/v5 ./config/v5
+COPY web/v5 ./web/v5
+
+# 创建数据目录
+RUN mkdir -p data/v5 logs/v5
+
+# 环境变量
+ENV PYTHONPATH=/app
+ENV OLLAMA_URL=http://host.docker.internal:11434
+
+# 暴露端口
+EXPOSE 5003
+
+# 启动命令
+CMD ["python", "-m", "api.v5.app"]

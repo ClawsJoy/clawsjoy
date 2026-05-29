@@ -1,0 +1,12 @@
+{
+  "name": "queue",
+  "version": "1.0.0",
+  "description": "\u961f\u5217\u7ba1\u7406",
+  "category": "system",
+  "price": 0.99,
+  "author": "ClawsJoy",
+  "tags": [
+    "system",
+    "queue"
+  ]
+}

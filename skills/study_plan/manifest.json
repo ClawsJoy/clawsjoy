@@ -1,0 +1,18 @@
+{
+  "name": "track_progress",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "study_plan \u6280\u80fd",
+  "category": "study_plan",
+  "author": "ClawsJoy",
+  "compatible_with": [
+    "openclaw",
+    "clawsjoy"
+  ],
+  "tags": [
+    "study_plan"
+  ],
+  "input_schema": {},
+  "output_schema": {},
+  "examples": []
+}

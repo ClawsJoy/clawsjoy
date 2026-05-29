@@ -1,0 +1,18 @@
+{
+  "name": "generate_uuid",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "random \u6280\u80fd",
+  "category": "random",
+  "author": "ClawsJoy",
+  "compatible_with": [
+    "openclaw",
+    "clawsjoy"
+  ],
+  "tags": [
+    "random"
+  ],
+  "input_schema": {},
+  "output_schema": {},
+  "examples": []
+}

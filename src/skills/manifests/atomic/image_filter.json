@@ -1,0 +1,8 @@
+{
+  "name": "image_filter",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "图片滤镜",
+  "category": "image",
+  "author": "ClawsJoy"
+}

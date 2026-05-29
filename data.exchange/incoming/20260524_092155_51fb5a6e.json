@@ -1,0 +1,11 @@
+{
+  "from": "unified_analyzer",
+  "type": "analysis_report",
+  "timestamp": "2026-05-24T09:21:55.964145",
+  "health_score": 85,
+  "suggestions": [],
+  "summary": {
+    "health_score": 85,
+    "total_items": 0
+  }
+}

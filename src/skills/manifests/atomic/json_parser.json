@@ -1,0 +1,8 @@
+{
+  "name": "json_parser",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "JSON解析",
+  "category": "data",
+  "author": "ClawsJoy"
+}

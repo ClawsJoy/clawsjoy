@@ -1,0 +1,18 @@
+{
+  "name": "unit",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "convert \u6280\u80fd",
+  "category": "convert",
+  "author": "ClawsJoy",
+  "compatible_with": [
+    "openclaw",
+    "clawsjoy"
+  ],
+  "tags": [
+    "convert"
+  ],
+  "input_schema": {},
+  "output_schema": {},
+  "examples": []
+}

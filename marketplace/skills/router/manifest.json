@@ -1,0 +1,12 @@
+{
+  "name": "router",
+  "version": "1.0.0",
+  "description": "\u8def\u7531\u7ba1\u7406",
+  "category": "system",
+  "price": 0.99,
+  "author": "ClawsJoy",
+  "tags": [
+    "system",
+    "router"
+  ]
+}

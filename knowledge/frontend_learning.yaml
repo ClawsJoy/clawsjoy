@@ -1,0 +1,69 @@
+# 前端开发学习知识库
+
+html:
+  basic:
+    - "<!DOCTYPE html> 声明"
+    - "html, head, body 结构"
+    - "meta charset, viewport 配置"
+  semantic:
+    - "header, nav, main, section, article, footer"
+    - "h1-h6 标题层级"
+
+css:
+  layout:
+    - "Flexbox: display flex, justify-content, align-items"
+    - "Grid: display grid, grid-template-columns, gap"
+    - "Position: relative, absolute, fixed, sticky"
+  effects:
+    - "渐变: linear-gradient, radial-gradient"
+    - "阴影: box-shadow, text-shadow"
+    - "动画: transition, keyframes"
+  responsive:
+    - "媒体查询: media (max-width: 768px)"
+    - "视口单位: vw, vh, vmin, vmax"
+
+javascript:
+  es6:
+    - "箭头函数: () => {}"
+    - "解构赋值: const { a, b } = obj"
+    - "展开运算符: ...arr"
+    - "模板字符串: 反引号"
+    - "async/await 异步处理"
+  dom:
+    - "querySelector 选择元素"
+    - "addEventListener 事件监听"
+    - "classList 类名操作"
+
+vue3:
+  composition:
+    - "ref 基本类型响应式"
+    - "reactive 对象响应式"
+    - "computed 计算属性"
+    - "watch 侦听器"
+    - "onMounted 生命周期"
+  template:
+    - "v-if, v-else 条件渲染"
+    - "v-for 列表渲染"
+    - "v-model 双向绑定"
+    - "props 父传子, emit 子传父"
+
+react:
+  hooks:
+    - "useState 状态管理"
+    - "useEffect 副作用"
+    - "useContext 跨组件通信"
+    - "useRef DOM 引用"
+  jsx:
+    - "条件渲染: && 和三元表达式"
+    - "列表渲染: map 方法"
+
+performance:
+  - "图片懒加载: loading=lazy"
+  - "代码分割: dynamic import"
+  - "防抖 debounce"
+  - "节流 throttle"
+
+security:
+  - "XSS 防护: textContent 替代 innerHTML"
+  - "CSRF Token 防护"
+  - "CSP 策略"

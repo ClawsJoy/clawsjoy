@@ -1,0 +1,128 @@
+from core.lib.config_helper import get_data_root, get_llm_endpoint, get_llm_model, get_embedding_model, get_gateway_port, get_timeout
+"""认证中心 - JWT Token 管理"""
+
+import jwt
+import hashlib
+import json
+from datetime import datetime, timedelta
+from pathlib import Path
+from functools import wraps
+from flask import request, jsonify
+import yaml
+
+# 加载 JWT 配置
+CONFIG_FILE = Path(__file__).parent.parent / "config/jwt.yaml"
+if CONFIG_FILE.exists():
+    with open(CONFIG_FILE, 'r') as f:
+        jwt_config = yaml.safe_load(f)
+        JWT_SECRET = jwt_config.get('secret', 'clawsjoy-default-secret')
+        JWT_ALGORITHM = jwt_config.get('algorithm', 'HS256')
+        JWT_EXPIRY_HOURS = jwt_config.get('expire_hours', 24)
+else:
+    JWT_SECRET = "clawsjoy-production-secret-key-2024"
+    JWT_ALGORITHM = "HS256"
+    JWT_EXPIRY_HOURS = 24
+
+# 用户数据存储
+USER_DB = Path(f"{get_data_root()}/users.db.json")
+USER_DB.parent.mkdir(parents=True, exist_ok=True)
+
+
+class AuthManager:
+    """认证管理器"""
+
+    def __init__(self):
+        self._load_users()
+
+    def _load_users(self):
+        if USER_DB.exists():
+            with open(USER_DB, 'r') as f:
+                self.users = json.load(f)
+        else:
+            self.users = {}
+
+    def _save_users(self):
+        with open(USER_DB, 'w') as f:
+            json.dump(self.users, f, indent=2)
+
+    def _hash_password(self, password: str) -> str:
+        return hashlib.sha256(password.encode()).hexdigest()
+
+    def _generate_token(self, user_id: str, username: str, role: str = "user") -> str:
+        payload = {
+            "user_id": user_id,
+            "username": username,
+            "role": role,
+            "exp": datetime.utcnow() + timedelta(hours=JWT_EXPIRY_HOURS)
+        }
+        return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+    def register(self, username: str, password: str, role: str = "user") -> dict:
+        if username in self.users:
+            return {"success": False, "error": "用户名已存在"}
+
+        if not username or not password:
+            return {"success": False, "error": "用户名和密码不能为空"}
+
+        user_id = hashlib.md5(f"{username}_{datetime.now().isoformat()}".encode()).hexdigest()[:16]
+
+        self.users[username] = {
+            "user_id": user_id,
+            "username": username,
+            "password_hash": self._hash_password(password),
+            "role": role,
+            "created_at": datetime.now().isoformat(),
+            "last_login": None,
+            "status": "active"
+        }
+
+        # 创建租户目录
+        tenant_dir = Path(f"{get_data_root()}/tenants/{user_id}")
+        tenant_dir.mkdir(parents=True, exist_ok=True)
+
+        self._save_users()
+        token = self._generate_token(user_id, username, role)
+
+        return {
+            "success": True,
+            "user_id": user_id,
+            "username": username,
+            "role": role,
+            "token": token
+        }
+
+    def login(self, username: str, password: str) -> dict:
+        if username not in self.users:
+            return {"success": False, "error": "用户不存在"}
+
+        user = self.users[username]
+        if user["password_hash"] != self._hash_password(password):
+            return {"success": False, "error": "密码错误"}
+
+        if user["status"] != "active":
+            return {"success": False, "error": "账户已禁用"}
+
+        user["last_login"] = datetime.now().isoformat()
+        self._save_users()
+
+        token = self._generate_token(user["user_id"], username, user["role"])
+
+        return {
+            "success": True,
+            "user_id": user["user_id"],
+            "username": username,
+            "role": user["role"],
+            "token": token
+        }
+
+    def verify_token(self, token: str) -> dict:
+        try:
+            payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+            return payload
+        except jwt.ExpiredSignatureError:
+            return None
+        except jwt.InvalidTokenError:
+            return None
+
+
+auth_manager = AuthManager()

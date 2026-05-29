@@ -1,0 +1,16 @@
+name: text_process
+description: 文本处理链
+
+steps:
+  - skill: translate
+    params:
+      text: "{input_text}"
+      target: "en"
+    output: translated
+
+  - skill: count_words
+    params:
+      text: "{translated.translated}"
+    output: word_count
+
+output: "原文: {input_text}\n英文: {translated.translated}\n词数: {word_count.count}"

@@ -1,0 +1,20 @@
+agent:
+  name: code_agent
+  display_name: 代码助手
+  type: builtin
+  enabled: true
+  role:
+    title: "代码工程师"
+    alias: "程序员"
+    level: 2
+    responsibilities:
+      - "生成代码"
+      - "代码审查"
+      - "调试帮助"
+    permissions:
+      - "generate_code"
+      - "review_code"
+
+memory:
+  enabled: true
+  path: memory/

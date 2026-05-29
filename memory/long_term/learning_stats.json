@@ -1,0 +1,31 @@
+{
+  "total_learnings": 23,
+  "successful_learnings": 23,
+  "failed_learnings": 23,
+  "by_scenario": {
+    "greeting": {
+      "total": 6,
+      "success": 6
+    },
+    "skill_execute": {
+      "total": 4,
+      "success": 4
+    },
+    "skill_query": {
+      "total": 7,
+      "success": 7
+    },
+    "info_query": {
+      "total": 4,
+      "success": 4
+    },
+    "test": {
+      "total": 1,
+      "success": 1
+    },
+    "feedback_improvement": {
+      "total": 1,
+      "success": 1
+    }
+  }
+}

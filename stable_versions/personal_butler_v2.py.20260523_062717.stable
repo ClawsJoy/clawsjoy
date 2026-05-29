@@ -1,0 +1,473 @@
+"""私人管家 v2.0 - 智能主动版"""
+import json
+import re
+import time
+from pathlib import Path
+from datetime import datetime
+from typing import Dict, Optional, List
+
+from lib.smart_adapter import smart_adapter
+from lib.memory_vector import vector_memory
+from lib.closed_loop_config import closed_loop_config
+from lib.event_bus import event_bus
+from lib.smart_active_service import smart_service
+
+
+class PersonalButlerV2:
+    """私人管家 - 智能主动版"""
+    
+    VERSION = "2.0.0"
+    
+    def __init__(self, user_id: str = "default"):
+        self.user_id = user_id
+        self.user_dir = Path(f"data/users/{user_id}/butler_v2")
+        self.user_dir.mkdir(parents=True, exist_ok=True)
+        
+        # 加载用户数据
+        self.memory_file = self.user_dir / "memory.json"
+        self.patterns_file = self.user_dir / "patterns.json"
+        self._load_data()
+        
+        # 注册事件
+        self._register_events()
+        
+        print(f"👤 私人管家 v{self.VERSION} 已启动 (用户: {user_id})")
+        self._init_soul()
+    
+    def _load_data(self):
+        """加载用户数据"""
+        if self.memory_file.exists():
+            with open(self.memory_file, 'r') as f:
+                self.memory = json.load(f)
+        else:
+            self.memory = {
+                "user": {"name": None, "first_meet": datetime.now().isoformat()},
+                "preferences": {},
+                "habits": {},
+                "todos": [],
+                "history": [],
+                "stats": {"total_interactions": 0, "last_active": None}
+            }
+        
+        if self.patterns_file.exists():
+            with open(self.patterns_file, 'r') as f:
+                self.patterns = json.load(f)
+        else:
+            self.patterns = {"learned": [], "rules": []}
+    
+    def _save_data(self):
+        """保存用户数据"""
+        with open(self.memory_file, 'w') as f:
+            json.dump(self.memory, f, indent=2, ensure_ascii=False)
+        with open(self.patterns_file, 'w') as f:
+            json.dump(self.patterns, f, indent=2)
+    
+    def _register_events(self):
+        """注册事件监听 - 已迁移到 config/hooks.yaml"""
+        # 事件钩子现在由配置驱动，不再硬编码
+        pass
+
+
+    def _on_user_active(self, data):
+        """用户活跃时触发"""
+        self._update_active_time()
+        self._check_todo_reminder()
+    
+    def _on_task_completed(self, data):
+        """任务完成时触发"""
+        task = data.get('task', '')
+        self._record_completion(task)
+        self._suggest_next(task)
+    
+    def _on_error(self, data):
+        """错误发生时触发"""
+        error = data.get('error', '')
+        self._record_error(error)
+        self._offer_help(error)
+    
+    # ========== 主动服务 ==========
+    
+    def _check_todo_reminder(self):
+        """检查待办提醒"""
+        todos = [t for t in self.memory.get('todos', []) if not t.get('done')]
+        if todos and self._should_remind():
+            return f"📋 您有 {len(todos)} 个待办事项，需要处理吗？"
+        return None
+    
+    def _should_remind(self) -> bool:
+        """智能判断是否应该提醒"""
+        # 不打扰模式
+        if self.memory.get('do_not_disturb'):
+            return False
+        # 根据用户习惯判断
+        hour = datetime.now().hour
+        if 22 <= hour or hour <= 8:  # 夜间不打扰
+            return False
+        return True
+    
+    def _suggest_next(self, completed_task: str):
+        """建议下一步"""
+        # 根据完成的任务推荐相关任务
+        suggestions = []
+        for todo in self.memory.get('todos', []):
+            if not todo.get('done') and todo.get('related_to') == completed_task:
+                suggestions.append(todo.get('task'))
+        if suggestions:
+            return f"💡 接下来可以处理: {suggestions[0]}"
+        return None
+    
+    def _offer_help(self, error: str):
+        """主动提供帮助"""
+        return f"🆘 遇到问题了？我可以帮您分析: {error[:50]}..."
+    
+    # ========== 意图理解 ==========
+    
+    def understand_intent(self, user_input: str) -> Dict:
+        """理解用户意图"""
+        lower = user_input.lower()
+        
+        # 记忆提取
+        if ('我叫' in lower or '我是' in lower) and '什么' not in lower and '谁' not in lower:
+            name = self._extract_name(user_input)
+            if name:
+                self.memory['user']['name'] = name
+                self._save_data()
+                return {"intent": "introduce", "response": f"你好，{name}！很高兴认识你"}
+        
+        # 待办添加
+        if any(kw in lower for kw in ['记住', '提醒', 'todo', '待办']):
+            task = self._extract_task(user_input)
+            if task:
+                self.memory['todos'].append({"task": task, "done": False, "created_at": datetime.now().isoformat()})
+                self._save_data()
+                return {"intent": "add_todo", "response": f"✅ 已记住: {task}"}
+        
+        # 待办查询
+        if any(kw in lower for kw in ['待办', 'todo', '任务', '做什么']):
+            todos = [t for t in self.memory['todos'] if not t.get('done')]
+            if todos:
+                return {"intent": "list_todo", "response": f"📋 待办事项: {', '.join([t['task'] for t in todos[:5]])}"}
+            return {"intent": "list_todo", "response": "📋 暂无待办事项"}
+        
+        # 偏好学习
+        if '喜欢' in lower or '偏好' in lower:
+            pref = self._extract_preference(user_input)
+            if pref:
+                self.memory['preferences'][pref['key']] = pref['value']
+                self._save_data()
+                return {"intent": "learn_preference", "response": f"好的，我记住了您的偏好"}
+        
+        # 查询个人信息
+        if '我叫什么' in lower or '我是谁' in lower:
+            name = self.memory['user'].get('name')
+            if name:
+                return {"intent": "query_name", "response": f"您叫 {name}"}
+            return {"intent": "query_name", "response": "您还没告诉我名字呢"}
+        
+        return {"intent": "unknown", "response": None}
+    
+    # ========== 辅助方法 ==========
+    
+    def _extract_name(self, text: str):
+        """从配置读取规则提取名字"""
+        config = closed_loop_config.get('name_extraction', {})
+        patterns = config.get('patterns', [])
+        exclude_patterns = config.get('exclude_patterns', [])
+        exclude_words = config.get('exclude_words', [])
+        
+        # 排除疑问句
+        for ep in exclude_patterns:
+            if ep in text:
+                return None
+        
+        import re
+        for p in patterns:
+            pattern = p.get('regex', '')
+            if pattern:
+                match = re.search(pattern, text)
+                if match:
+                    name = match.group(1)
+                    if name in exclude_words:
+                        return None
+                    return name
+        return None
+    def _extract_task(self, text: str) -> Optional[str]:
+        for prefix in ['记住', '提醒', 'todo', '待办']:
+            if prefix in text:
+                task = text.split(prefix, 1)[-1].strip()
+                if task:
+                    return task[:100]
+        return None
+    
+    def _extract_preference(self, text: str) -> Optional[Dict]:
+        match = re.search(r'喜欢\s*([^\s，。]+)', text)
+        if match:
+            return {"key": match.group(1), "value": True}
+        return None
+    
+    def _update_active_time(self):
+        self.memory['stats']['last_active'] = datetime.now().isoformat()
+        self.memory['stats']['total_interactions'] += 1
+        self._save_data()
+    
+    def _record_completion(self, task: str):
+        for todo in self.memory['todos']:
+            if todo.get('task') == task:
+                todo['done'] = True
+                todo['completed_at'] = datetime.now().isoformat()
+                self._save_data()
+                break
+    
+    def _record_error(self, error: str):
+        self.memory['history'].append({"type": "error", "content": error, "time": datetime.now().isoformat()})
+        if len(self.memory['history']) > 100:
+            self.memory['history'] = self.memory['history'][-100:]
+        self._save_data()
+    
+    # ========== 对话处理 ==========
+    
+    def process(self, user_input: str) -> Dict:
+        """处理用户输入"""
+        # ========== 优先处理改名请求 ==========
+        rename_result = self._handle_rename(user_input)
+        if rename_result:
+            if rename_result.get('name_changed'):
+                self._save_data()
+                return {
+                    "success": True,
+                    "response": rename_result['response'],
+                    "user_id": self.user_id
+                }
+            elif rename_result.get('need_name'):
+                return {
+                    "success": True,
+                    "response": rename_result['response'],
+                    "user_id": self.user_id
+                }
+        
+        # 更新活跃时间
+        self._update_active_time()
+        
+        # 理解意图
+        intent_result = self.understand_intent(user_input)
+        
+        if intent_result['response']:
+            return {
+                "success": True,
+                "response": intent_result['response'],
+                "intent": intent_result['intent'],
+                "user_id": self.user_id
+            }
+        
+        # 默认：调用 LLM
+        response = self._call_llm(user_input)
+        
+        # 存储历史
+        self.memory['history'].append({
+            "user": user_input,
+            "assistant": response,
+            "timestamp": datetime.now().isoformat()
+        })
+        if len(self.memory['history']) > 50:
+            self.memory['history'] = self.memory['history'][-50:]
+        self._save_data()
+        
+        return {
+            "success": True,
+            "response": response,
+            "intent": "chat",
+            "user_id": self.user_id
+        }
+    
+    def _call_llm(self, user_input: str) -> str:
+        """调用 LLM（使用 Soul 系统提示词）"""
+        try:
+            butler_name = self._get_butler_name()
+            system_prompt = self.soul.get_system_prompt_with_name(butler_name)
+            context = self._build_context()
+            prompt = f"{system_prompt}\n\n{context}\n用户: {user_input}\n{butler_name}:"
+            response = smart_adapter.generate(prompt, auto_select=True)
+            return response
+        except Exception as e:
+            return f"抱歉，我遇到了问题: {e}"
+    
+    def _build_context(self) -> str:
+        """构建上下文"""
+        context = []
+        name = self.memory['user'].get('name')
+        if name:
+            context.append(f"用户名字: {name}")
+        
+        preferences = self.memory.get('preferences', {})
+        if preferences:
+            context.append(f"用户偏好: {preferences}")
+        
+        recent = self.memory['history'][-3:] if self.memory['history'] else []
+        for h in recent:
+            context.append(f"历史: 用户说 '{h['user']}'，我回答 '{h['assistant']}'")
+        
+        return "\n".join(context) if context else ""
+    
+    def get_active_message(self) -> Optional[str]:
+        """获取主动消息"""
+        # 问候
+        hour = datetime.now().hour
+        if hour == 9 and not self.memory.get('greeted_today'):
+            self.memory['greeted_today'] = True
+            return "🌅 早安！今天有什么我可以帮您的吗？"
+        
+        # 待办提醒
+        reminder = self._check_todo_reminder()
+        if reminder:
+            return reminder
+        
+        return None
+    
+    def get_status(self) -> Dict:
+        """获取状态"""
+        return {
+            "name": "personal_butler",
+            "version": self.VERSION,
+            "user_id": self.user_id,
+            "interactions": self.memory['stats']['total_interactions'],
+            "todos_pending": len([t for t in self.memory.get('todos', []) if not t.get('done')]),
+            "preferences": len(self.memory.get('preferences', {}))
+        }
+
+
+# 全局实例
+    # ========== 钩子集成 ==========
+    def _save_with_hooks(self):
+        """使用钩子保存数据"""
+        from lib.hook_manager import hook_manager
+        
+        context = {
+            'user_id': self.user_id,
+            'data': self.memory,
+            'file_path': str(self.memory_file)
+        }
+        
+        # 触发 before_save 钩子
+        context = hook_manager.trigger("data:before_save", context)
+        
+        # 保存数据
+        with open(self.memory_file, 'w') as f:
+            json.dump(context['data'], f, indent=2, ensure_ascii=False)
+        
+        print(f"💾 用户数据已保存 (加密钩子已应用)")
+    
+    def _load_with_hooks(self):
+        """使用钩子加载数据"""
+        from lib.hook_manager import hook_manager
+        
+        context = {
+            'user_id': self.user_id,
+            'file_path': str(self.memory_file)
+        }
+        
+        if self.memory_file.exists():
+            with open(self.memory_file, 'r') as f:
+                context['data'] = json.load(f)
+        else:
+            context['data'] = self._get_default_data()
+        
+        # 触发 after_load 钩子
+        context = hook_manager.trigger("data:after_load", context)
+        
+        self.memory = context['data']
+        print(f"📂 用户数据已加载 (解密钩子已应用)")
+
+    # ========== Soul 集成 ==========
+    def _init_soul(self):
+        """初始化灵魂"""
+        from lib.agent_soul import get_agent_soul
+        self.soul = get_agent_soul("personal_butler")
+        print(f"💜 {self.soul.get_greeting()}")
+        print(f"   人格: {', '.join(self.soul.get_personality_traits())}")
+        print(f"   座右铭: {self.soul.get_motto()}")
+    
+    def _enhance_with_soul(self, prompt: str) -> str:
+        """用灵魂增强提示词"""
+        return self.soul.enhance_prompt(prompt)
+    
+    def get_soul_info(self) -> Dict:
+        """获取灵魂信息"""
+        return self.soul.get_soul_summary()
+
+    def _handle_rename(self, user_input: str) -> Dict:
+        """处理改名请求"""
+        import re
+        
+        # 从 Soul 获取改名模式
+        patterns = self.soul.get_rename_patterns()
+        
+        for pattern in patterns:
+            # 将 {name} 转换为正则捕获组
+            regex_pattern = pattern.replace('{name}', '(.+?)')
+            regex_pattern = regex_pattern.replace('(', '\\(').replace(')', '\\)')
+            regex_pattern = regex_pattern.replace('{name}', '(.+?)')
+            # 简化：直接使用字符串匹配
+            if '{name}' in pattern:
+                template = pattern
+                # 提取 {name} 的位置
+                parts = pattern.split('{name}')
+                if len(parts) == 2 and user_input.startswith(parts[0]):
+                    name_part = user_input[len(parts[0]):]
+                    if parts[1]:
+                        name_part = name_part.split(parts[1])[0]
+                    new_name = name_part.strip()
+                    if new_name:
+                        print(f"[DEBUG] 匹配成功！新名字: {new_name}")
+                        return self._apply_rename(new_name)
+            else:
+                # 精确匹配
+                if user_input == pattern:
+                    # 需要用户提供名字，询问
+                    return {"need_name": True, "response": "请告诉我您想叫我什么名字？"}
+        
+        return None
+    
+    def _apply_rename(self, new_name: str) -> Dict:
+        """应用新名字"""
+        # 验证名称
+        is_valid, error = self.soul.validate_custom_name(new_name)
+        if not is_valid:
+            return {"response": f"名字无效：{error}", "success": False}
+        
+        # 保存到用户记忆
+        if 'butler' not in self.memory:
+            self.memory['butler'] = {}
+        self.memory['butler']['name'] = new_name
+        self.memory['butler']['name_changed_at'] = datetime.now().isoformat()
+        self._save_data()
+        
+        # 获取回复模板
+        response_template = self.soul.get_rename_response()
+        response = response_template.format(new_name=new_name)
+        
+        return {"response": response, "name_changed": True, "new_name": new_name}
+    
+    def _get_butler_name(self) -> str:
+        """获取当前管家名称"""
+        # 优先使用用户自定义的名称
+        if 'butler' in self.memory and 'name' in self.memory['butler']:
+            return self.memory['butler']['name']
+        # 否则使用 Soul 配置的默认名称
+        return self.soul.soul_config.get('name', '小管')
+    
+    def _enhance_with_soul(self, prompt: str) -> str:
+        """用 Soul 增强提示词（包含动态名称）"""
+        butler_name = self._get_butler_name()
+        system_prompt = self.soul.get_system_prompt_with_name(butler_name)
+        
+        # 检查是否是改名请求
+        rename_result = self._handle_rename(prompt)
+        if rename_result:
+            if rename_result.get('name_changed'):
+                # 改名成功，返回响应
+                return rename_result['response']
+            elif rename_result.get('need_name'):
+                return rename_result['response']
+        
+        # 正常对话，注入系统提示词
+        return f"{system_prompt}\n\n用户: {prompt}\n{butler_name}:"

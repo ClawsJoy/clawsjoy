@@ -1,0 +1,8 @@
+{
+  "name": "http_post",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "HTTP POST请求",
+  "category": "network",
+  "author": "ClawsJoy"
+}

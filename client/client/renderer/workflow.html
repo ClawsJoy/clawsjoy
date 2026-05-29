@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ClawsJoy - 工作流编辑器</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', monospace;
+            background: #1a1a2e;
+            color: #e0e0ff;
+            overflow: hidden;
+        }
+        .title-bar {
+            -webkit-app-region: drag;
+            height: 32px;
+            background: #0f0f1a;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            border-bottom: 1px solid #00f3ff33;
+        }
+        .title-bar-buttons {
+            -webkit-app-region: no-drag;
+            margin-left: auto;
+        }
+        .title-bar-buttons button {
+            background: none;
+            border: none;
+            color: #e0e0ff;
+            cursor: pointer;
+            padding: 0 10px;
+        }
+        .container {
+            display: flex;
+            height: calc(100vh - 32px);
+        }
+        .node-panel {
+            width: 260px;
+            background: #0f0f1a;
+            border-right: 1px solid #00f3ff33;
+            padding: 15px;
+            overflow-y: auto;
+        }
+        .node-panel h3 { color: #00f3ff; margin-bottom: 15px; }
+        .node-category { margin-bottom: 20px; }
+        .node-category h4 { color: #b000ff; margin-bottom: 10px; }
+        .node-item {
+            background: #1a1a2e;
+            border: 1px solid #00f3ff33;
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin: 5px 0;
+            cursor: grab;
+        }
+        .node-item:hover { background: #00f3ff22; border-color: #00f3ff; }
+        .canvas {
+            flex: 1;
+            position: relative;
+            background: #0a0a1a;
+            background-image: linear-gradient(rgba(0,243,255,0.05) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(0,243,255,0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+            overflow: auto;
+        }
+        #flowCanvas { width: 2000px; height: 2000px; position: relative; }
+        .workflow-node {
+            position: absolute;
+            min-width: 160px;
+            background: #1a1a2e;
+            border: 2px solid #00f3ff;
+            border-radius: 8px;
+            cursor: move;
+        }
+        .workflow-node.selected { border-color: #b000ff; }
+        .node-header {
+            background: #00f3ff22;
+            padding: 8px;
+            border-radius: 6px 6px 0 0;
+            font-weight: bold;
+        }
+        .node-body { padding: 8px; font-size: 12px; color: #aaa; }
+        .property-panel {
+            width: 280px;
+            background: #0f0f1a;
+            border-left: 1px solid #00f3ff33;
+            padding: 15px;
+            overflow-y: auto;
+        }
+        button {
+            background: linear-gradient(135deg, #00f3ff, #b000ff);
+            border: none;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .toolbar {
+            position: fixed;
+            bottom: 20px;
+            left: 280px;
+            background: #0f0f1a;
+            padding: 8px 16px;
+            border-radius: 30px;
+            border: 1px solid #00f3ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="title-bar">
+        <span>🎨 ClawsJoy 工作流编辑器</span>
+        <div class="title-bar-buttons">
+            <button onclick="window.close()">✕</button>
+        </div>
+    </div>
+    <div class="container">
+        <div class="node-panel">
+            <h3>🔧 节点库</h3>
+            <div class="node-category"><h4>🎬 Agent</h4>
+                <div class="node-item" draggable="true" data-agent="video_agent">🎥 视频制作</div>
+                <div class="node-item" draggable="true" data-agent="code_agent">💻 代码生成</div>
+                <div class="node-item" draggable="true" data-agent="analysis_agent">📊 数据分析</div>
+            </div>
+            <div class="node-category"><h4>⚡ 技能</h4>
+                <div class="node-item" draggable="true" data-skill="manju_maker">🎬 馒头视频</div>
+                <div class="node-item" draggable="true" data-skill="add_subtitles">📝 添加字幕</div>
+                <div class="node-item" draggable="true" data-skill="get_stock">📈 股票查询</div>
+            </div>
+        </div>
+        <div class="canvas" id="canvas"><div id="flowCanvas"></div></div>
+        <div class="property-panel">
+            <h3>📋 属性</h3>
+            <div id="propertyContent"><p style="color:#888;">点击节点编辑</p></div>
+        </div>
+    </div>
+    <div class="toolbar">
+        <button onclick="saveWorkflow()">💾 保存</button>
+        <button onclick="executeWorkflow()">🚀 执行</button>
+        <button onclick="clearCanvas()">🗑️ 清空</button>
+    </div>
+    <script>
+        let nodes = [], selectedNode = null;
+        document.querySelectorAll('.node-item').forEach(item => {
+            item.addEventListener('dragstart', e => e.dataTransfer.setData('text/plain', JSON.stringify({label: item.innerText.trim(), agent: item.dataset.agent, skill: item.dataset.skill})));
+        });
+        const canvas = document.getElementById('canvas'), flowCanvas = document.getElementById('flowCanvas');
+        canvas.addEventListener('dragover', e => e.preventDefault());
+        canvas.addEventListener('drop', e => {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+            nodes.push({id: Date.now(), label: data.label, x: e.clientX - rect.left + canvas.scrollLeft - 80, y: e.clientY - rect.top + canvas.scrollTop - 40, config: {agent: data.agent, skill: data.skill}});
+            render();
+        });
+        function render() {
+            flowCanvas.innerHTML = '';
+            nodes.forEach(node => {
+                const div = document.createElement('div');
+                div.className = 'workflow-node' + (selectedNode === node.id ? ' selected' : '');
+                div.style.left = node.x + 'px';
+                div.style.top = node.y + 'px';
+                div.innerHTML = `<div class="node-header">${node.label}</div><div class="node-body">${node.config.agent ? 'Agent: ' + node.config.agent : 'Skill: ' + node.config.skill}</div>`;
+                div.onclick = () => selectNode(node.id);
+                flowCanvas.appendChild(div);
+            });
+        }
+        function selectNode(id) { selectedNode = id; render(); }
+        function saveWorkflow() { const name = prompt('工作流名称'); if(name) { localStorage.setItem(`wf_${name}`, JSON.stringify(nodes)); alert('已保存'); } }
+        async function executeWorkflow() {
+            const steps = nodes.map((n,i) => ({step: i+1, agent: n.config.agent || 'skill', action: n.label}));
+            const res = await fetch('http://localhost:5002/api/workflow/execute', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({workflow: 'custom', input: {steps}})});
+            const result = await res.json();
+            alert('工作流已启动: ' + result.workflow_id);
+        }
+        function clearCanvas() { if(confirm('清空？')) { nodes = []; render(); } }
+        render();
+    </script>
+</body>
+</html>

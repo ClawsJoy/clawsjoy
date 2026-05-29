@@ -1,0 +1,20 @@
+agent:
+  name: executor_agent
+  display_name: 执行器
+  type: builtin
+  enabled: true
+  role:
+    title: "执行器"
+    alias: "执行者"
+    level: 1
+    responsibilities:
+      - "执行具体技能"
+      - "调用底层工具"
+      - "返回执行结果"
+    permissions:
+      - "execute_skill"
+      - "call_tool"
+
+memory:
+  enabled: true
+  path: memory/

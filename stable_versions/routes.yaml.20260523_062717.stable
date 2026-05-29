@@ -1,0 +1,613 @@
+# 路由配置 v3.0 - 完整版
+routes:
+  # ========== Web 前端路由 ==========
+  - path: "/"
+    method: "GET"
+    handler: "web_index"
+    enabled: true
+    description: "科幻风格主页面"
+
+  - path: "/web/<path:filename>"
+    method: "GET"
+    handler: "web_static"
+    enabled: true
+    description: "静态文件服务"
+
+  # ========== 系统路由 ==========
+  - path: "/api/health"
+    method: "GET"
+    handler: "health"
+    enabled: true
+    description: "健康检查"
+
+  - path: "/api/admin/health"
+    method: "GET"
+    handler: "admin_health"
+    enabled: true
+    description: "管理员健康检查"
+
+  # ========== 技能路由 ==========
+  - path: "/api/skills"
+    method: "GET"
+    handler: "list_skills"
+    enabled: true
+    description: "技能列表"
+
+  - path: "/api/skills/execute"
+    method: "POST"
+    handler: "execute_skill"
+    enabled: true
+    description: "执行技能"
+
+  - path: "/api/agent/v3/do_anything"
+    method: "POST"
+    handler: "do_anything"
+    enabled: true
+    description: "大脑执行任务"
+
+  - path: "/api/skills/search"
+    method: "GET"
+    handler: "skill_search"
+    enabled: true
+    description: "技能向量搜索"
+
+  # ========== Agent 路由 ==========
+  - path: "/api/agents/list"
+    method: "GET"
+    handler: "list_agents"
+    enabled: true
+    description: "Agent列表"
+
+  - path: "/api/agents/health"
+    method: "GET"
+    handler: "agents_health"
+    enabled: true
+    description: "Agent健康检查"
+
+  - path: "/api/agents/info"
+    method: "GET"
+    handler: "agents_info"
+    enabled: true
+    description: "Agent详细信息"
+
+  - path: "/api/agents/send"
+    method: "POST"
+    handler: "send_agent_message"
+    enabled: true
+    description: "发送消息到Agent"
+
+  - path: "/api/agents/messages"
+    method: "GET"
+    handler: "get_agent_messages"
+    enabled: true
+    description: "Agent消息历史"
+
+  - path: "/api/agents/broadcast"
+    method: "POST"
+    handler: "broadcast_message"
+    enabled: true
+    description: "广播消息"
+
+  - path: "/api/agents/subscribe"
+    method: "POST"
+    handler: "subscribe_agent"
+    enabled: true
+    description: "订阅事件"
+
+  # ========== 日志路由 ==========
+  - path: "/api/logs"
+    method: "GET"
+    handler: "get_logs"
+    enabled: true
+    description: "获取日志"
+
+  - path: "/api/logs/search"
+    method: "GET"
+    handler: "search_logs"
+    enabled: true
+    description: "搜索日志"
+
+  - path: "/api/logs/errors"
+    method: "GET"
+    handler: "get_errors"
+    enabled: true
+    description: "获取错误日志"
+
+  # ========== 服务路由 ==========
+  - path: "/api/services"
+    method: "GET"
+    handler: "list_services"
+    enabled: true
+    description: "服务列表"
+
+  - path: "/metrics"
+    method: "GET"
+    handler: "metrics"
+    enabled: true
+    description: "监控指标"
+
+  - path: "/api/chat"
+    method: "POST"
+    handler: "chat"
+    enabled: true
+    description: "聊天接口"
+
+  # ========== CODE Agent 路由 ==========
+  - path: "/api/code/generate"
+    method: "POST"
+    handler: "code_generate"
+    enabled: true
+    description: "CODE Agent 生成代码"
+
+  - path: "/api/code/modify"
+    method: "POST"
+    handler: "code_modify"
+    enabled: true
+    description: "CODE Agent 修改代码"
+
+  - path: "/api/code/accept"
+    method: "POST"
+    handler: "code_accept"
+    enabled: true
+    description: "CODE Agent 接受代码"
+
+  - path: "/api/code/feedback"
+    method: "POST"
+    handler: "code_feedback"
+    enabled: true
+    description: "CODE Agent 反馈学习"
+
+  - path: "/api/code/status"
+    method: "GET"
+    handler: "code_status"
+    enabled: true
+    description: "CODE Agent 状态查询"
+
+  - path: "/api/code/review"
+    method: "POST"
+    handler: "code_review"
+    enabled: true
+    description: "CODE Agent 代码审查"
+
+  - path: "/api/code/execute"
+    method: "POST"
+    handler: "code_execute"
+    enabled: true
+    description: "CODE Agent 执行代码"
+
+  # ========== 统一搜索路由 ==========
+  - path: "/api/search"
+    method: "GET"
+    handler: "unified_search"
+    enabled: true
+    description: "统一知识搜索"
+
+  # ========== Agent Soul 路由 ==========
+  - path: "/api/agent/soul"
+    method: "GET"
+    handler: "agent_soul"
+    enabled: true
+    description: "获取 Agent 灵魂信息"
+
+  - path: "/api/agent/souls"
+    method: "GET"
+    handler: "agent_souls"
+    enabled: true
+    description: "获取所有 Agent 灵魂信息"
+
+  # ========== 向量知识中心路由 ==========
+  - path: "/api/knowledge/search"
+    method: "GET"
+    handler: "knowledge_search"
+    enabled: true
+    description: "向量知识搜索"
+
+  - path: "/api/knowledge/stats"
+    method: "GET"
+    handler: "knowledge_stats"
+    enabled: true
+    description: "知识中心统计"
+
+  - path: "/api/knowledge/sync"
+    method: "POST"
+    handler: "knowledge_sync"
+    enabled: true
+    description: "同步知识到向量中心"
+
+  # ========== 语言大师路由 ==========
+  - path: "/api/translate/query"
+    method: "POST"
+    handler: "translate_query"
+    enabled: true
+    description: "语言大师 - 翻译查询"
+
+  - path: "/api/translate/search"
+    method: "GET"
+    handler: "translate_search"
+    enabled: true
+    description: "语言大师 - 搜索L4记忆"
+
+  - path: "/api/translate/index"
+    method: "POST"
+    handler: "translate_index"
+    enabled: true
+    description: "语言大师 - 索引文档"
+
+  # ========== 用户语言大师路由 ==========
+  - path: "/api/user/translate"
+    method: "POST"
+    handler: "user_translate"
+    enabled: true
+    description: "用户语言大师 - 翻译"
+
+  - path: "/api/user/translate/add_word"
+    method: "POST"
+    handler: "user_translate_add_word"
+    enabled: true
+    description: "用户语言大师 - 添加自定义词汇"
+
+  - path: "/api/user/translate/stats"
+    method: "GET"
+    handler: "user_translate_stats"
+    enabled: true
+    description: "用户语言大师 - 统计"
+
+  - path: "/api/user/translate/create"
+    method: "POST"
+    handler: "user_translate_create"
+    enabled: true
+    description: "创建用户语言大师实例"
+
+  # ========== 用户商店路由 ==========
+  - path: "/api/marketplace/list"
+    method: "GET"
+    handler: "marketplace_list"
+    enabled: true
+    description: "商店 - 列出可安装包"
+
+  - path: "/api/marketplace/install"
+    method: "POST"
+    handler: "marketplace_install"
+    enabled: true
+    description: "商店 - 一键安装"
+
+  - path: "/api/marketplace/installed"
+    method: "GET"
+    handler: "marketplace_installed"
+    enabled: true
+    description: "商店 - 已安装列表"
+
+  - path: "/api/marketplace/uninstall"
+    method: "POST"
+    handler: "marketplace_uninstall"
+    enabled: true
+    description: "商店 - 卸载"
+
+  # ========== 用户配置路由 ==========
+  - path: "/api/user/config"
+    method: "GET"
+    handler: "user_config_get"
+    enabled: true
+    description: "获取用户配置"
+
+  - path: "/api/user/config"
+    method: "POST"
+    handler: "user_config_set"
+    enabled: true
+    description: "设置用户配置"
+
+  - path: "/api/user/skill/config"
+    method: "GET"
+    handler: "user_skill_config"
+    enabled: true
+    description: "获取技能配置"
+
+  - path: "/api/user/skill/config"
+    method: "POST"
+    handler: "user_skill_config"
+    enabled: true
+    description: "更新技能配置"
+
+  # ========== 用户配置 V2 路由 ==========
+  - path: "/api/user/config_v2/get"
+    method: "GET"
+    handler: "user_config_v2_get"
+    enabled: true
+    description: "获取用户分层配置"
+
+  - path: "/api/user/config_v2/reset"
+    method: "POST"
+    handler: "user_config_v2_reset"
+    enabled: true
+    description: "重置用户自定义配置"
+
+  - path: "/api/user/config_v2/clear_memory"
+    method: "POST"
+    handler: "user_config_v2_clear_memory"
+    enabled: true
+    description: "清除用户私有记忆"
+
+  - path: "/api/user/config_v2/export"
+    method: "GET"
+    handler: "user_config_v2_export"
+    enabled: true
+    description: "导出用户自定义配置"
+
+  # ========== 商品购买和皮肤 ==========
+  - path: "/api/marketplace/buy"
+    method: "POST"
+    handler: "marketplace_buy"
+    enabled: true
+    description: "购买 Agent/技能/皮肤"
+
+  - path: "/api/user/set_skin"
+    method: "POST"
+    handler: "user_set_skin"
+    enabled: true
+    description: "设置 Agent 皮肤"
+
+  - path: "/api/user/get_skin"
+    method: "GET"
+    handler: "user_get_skin"
+    enabled: true
+    description: "获取当前皮肤"
+
+  # ========== Agent 皮肤系统 ==========
+  - path: "/api/agent/skins"
+    method: "GET"
+    handler: "agent_skins"
+    enabled: true
+    description: "获取 Agent 可用皮肤"
+
+  - path: "/api/agent/skin/css"
+    method: "GET"
+    handler: "agent_skin_css"
+    enabled: true
+    description: "获取皮肤 CSS"
+
+  - path: "/api/marketplace/buy_skin"
+    method: "POST"
+    handler: "marketplace_buy_skin"
+    enabled: true
+    description: "购买皮肤"
+
+  - path: "/api/user/equip_skin"
+    method: "POST"
+    handler: "user_equip_skin"
+    enabled: true
+    description: "装备皮肤"
+
+  # ========== Agent 市场 ==========
+  - path: "/api/marketplace/list"
+    method: "GET"
+    handler: "marketplace_list_products"
+    enabled: true
+    description: "列出可购买的商品"
+
+  - path: "/api/marketplace/install"
+    method: "POST"
+    handler: "marketplace_install_agent"
+    enabled: true
+    description: "安装 Agent 商品"
+
+  - path: "/api/marketplace/installed"
+    method: "GET"
+    handler: "marketplace_my_agents"
+    enabled: true
+    description: "我的已安装"
+
+  - path: "/api/agent/demo"
+    method: "GET"
+    handler: "agent_demo"
+    enabled: true
+    description: "Agent 演示"
+
+  # ========== 用户 Agent 调用 ==========
+  - path: "/api/user/agent/call"
+    method: "POST"
+    handler: "user_agent_call"
+    enabled: true
+    description: "调用已安装的 Agent"
+
+  - path: "/api/user/agent/chat"
+    method: "POST"
+    handler: "user_agent_chat"
+    enabled: true
+    description: "与 Agent 对话"
+
+  # ========== 私密管理 ==========
+  - path: "/api/private/password/add"
+    method: "POST"
+    handler: "private_add_password"
+    enabled: true
+
+  - path: "/api/private/password/get"
+    method: "GET"
+    handler: "private_get_password"
+    enabled: true
+
+  - path: "/api/private/note/add"
+    method: "POST"
+    handler: "private_add_note"
+    enabled: true
+
+  - path: "/api/private/note/list"
+    method: "GET"
+    handler: "private_list_notes"
+    enabled: true
+
+  - path: "/api/private/note/get"
+    method: "GET"
+    handler: "private_get_note"
+    enabled: true
+
+  # ========== 用户个性化配置 ==========
+  - path: "/api/user/preference/get"
+    method: "GET"
+    handler: "user_preference_get"
+    enabled: true
+
+  - path: "/api/user/preference/set"
+    method: "POST"
+    handler: "user_preference_set"
+    enabled: true
+
+  # ========== 智能执行路由 ==========
+  - path: "/api/smart/execute"
+    method: "POST"
+    handler: "smart_execute"
+    enabled: true
+    description: "智能执行 - 自动组合技能"
+
+  - path: "/api/smart/parallel"
+    method: "POST"
+    handler: "smart_parallel"
+    enabled: true
+    description: "并行智能执行"
+
+  - path: "/api/output/<filename>"
+    method: "GET"
+    handler: "output_file"
+    enabled: true
+    description: "下载输出文件"
+
+  # ========== 知识库路由 ==========
+  - path: "/api/knowledge/sync"
+    method: "POST"
+    handler: "knowledge_sync"
+    enabled: true
+    description: "同步知识库"
+
+  - path: "/api/knowledge/stats"
+    method: "GET"
+    handler: "knowledge_stats"
+    enabled: true
+    description: "知识库统计"
+
+  - path: "/api/agent/<agent_name>/message"
+    method: "POST"
+    handler: "agent_message"
+    enabled: true
+    description: "发送消息到指定 Agent"
+
+  # ========== 工作流路由 ==========
+  - path: "/api/workflow/execute"
+    method: "POST"
+    handler: "execute_workflow"
+    enabled: true
+    description: "执行工作流"
+
+  - path: "/api/workflow/auto"
+    method: "POST"
+    handler: "auto_workflow"
+    enabled: true
+    description: "自动匹配并执行工作流"
+
+  - path: "/api/workflow/status"
+    method: "GET"
+    handler: "workflow_status"
+    enabled: true
+    description: "获取工作流状态"
+
+  - path: "/workflow/editor"
+    method: "GET"
+    handler: "workflow_editor"
+    enabled: true
+    description: "工作流可视化编辑器"
+
+  # ========== 私人管家 API ==========
+  - path: "/api/butler/chat"
+    method: "POST"
+    handler: "butler_chat"
+    enabled: true
+    description: "管家对话"
+
+  - path: "/api/butler/memory"
+    method: "GET"
+    handler: "butler_memory"
+    enabled: true
+    description: "获取管家记忆"
+
+  - path: "/api/butler/todo"
+    method: "POST"
+    handler: "butler_todo"
+    enabled: true
+    description: "待办管理"
+
+  - path: "/api/butler/preferences"
+    method: "GET"
+    handler: "butler_preferences"
+    enabled: true
+    description: "获取偏好"
+
+  - path: "/api/butler/voice/start"
+    method: "POST"
+    handler: "butler_voice_start"
+    enabled: true
+    description: "开始语音监听"
+
+  - path: "/api/butler/voice/stop"
+    method: "POST"
+    handler: "butler_voice_stop"
+    enabled: true
+    description: "停止语音监听"
+
+  - path: "/api/auth/logout"
+    method: "POST"
+    handler: "auth_logout"
+    enabled: true
+    description: "用户登出"
+
+  # ========== 租户管理路由 ==========
+  - path: "/api/tenant/info"
+    method: "GET"
+    handler: "tenant_info"
+    enabled: true
+    description: "获取当前租户信息"
+
+  - path: "/api/tenant/switch"
+    method: "POST"
+    handler: "tenant_switch"
+    enabled: true
+    description: "切换租户"
+
+  - path: "/api/tenant/stats"
+    method: "GET"
+    handler: "tenant_stats"
+    enabled: true
+    description: "租户统计信息"
+
+  # ========== 管家管理中心 ==========
+    method: "GET"
+    enabled: true
+    description: "管家管理中心统计"
+
+  # ========== 租户管理 API ==========
+  - path: "/api/tenants"
+    method: "GET"
+    handler: "list_tenants"
+    enabled: true
+    description: "列出所有租户"
+
+  - path: "/api/tenants"
+    method: "POST"
+    handler: "create_tenant"
+
+# 管家管理中心
+
+  # ========== 管家管理中心 ==========
+    method: "GET"
+    enabled: true
+    description: "管家管理中心统计"
+
+  # ========== 管家管理中心 ==========
+    method: "GET"
+    enabled: true
+
+  
+  
+  
+  
+
+
+# ========== 私人管家俱乐部 API ==========

@@ -1,0 +1,30 @@
+name: auto_fix_llm
+type: atomic
+version: 1.0.0
+description: "自动生成的 llm 修复技能"
+category: auto_generated
+author: ClawsJoy Auto
+compatible_with:
+  - openclaw
+  - clawsjoy
+source: pitfalls_extracted
+generated_at: "2026-05-19T12:35:27.069777"
+
+input_schema:
+  action:
+    type: string
+    enum: [check, fix, status]
+    default: check
+    description: 操作类型
+
+output_schema:
+  success:
+    type: boolean
+  status:
+    type: string
+  message:
+    type: string
+
+execution:
+  runtime: python3
+  entry: skills/auto_generated/auto_fix_llm.py

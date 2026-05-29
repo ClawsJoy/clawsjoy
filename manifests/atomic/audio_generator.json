@@ -1,0 +1,17 @@
+{
+  "name": "audio_generator",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "将文本转换为音频",
+  "category": "audio",
+  "author": "ClawsJoy",
+  "tags": ["tts", "audio", "voice"],
+  "input_schema": {
+    "text": {"type": "string", "required": true, "description": "要转换的文本"},
+    "voice": {"type": "string", "required": false, "default": "zh-CN-XiaoxiaoNeural", "description": "语音类型"}
+  },
+  "output_schema": {
+    "audio_path": {"type": "string", "description": "生成的音频文件路径"},
+    "duration": {"type": "number", "description": "音频时长(秒)"}
+  }
+}

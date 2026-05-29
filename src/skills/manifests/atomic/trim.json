@@ -1,0 +1,8 @@
+{
+  "name": "trim",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "去除空格",
+  "category": "text",
+  "author": "ClawsJoy"
+}

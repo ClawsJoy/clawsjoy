@@ -1,0 +1,18 @@
+{
+  "name": "calculate_attendance",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "hr \u6280\u80fd",
+  "category": "hr",
+  "author": "ClawsJoy",
+  "compatible_with": [
+    "openclaw",
+    "clawsjoy"
+  ],
+  "tags": [
+    "hr"
+  ],
+  "input_schema": {},
+  "output_schema": {},
+  "examples": []
+}

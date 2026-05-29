@@ -1,0 +1,10 @@
+{
+  "timestamp": "2026-05-20T16:58:17.420984",
+  "scenario": "greeting",
+  "user_input": "\u665a\u4e0a\u597d",
+  "response": "\u665a\u4e0a\u597d\uff01",
+  "tags": [
+    "learned",
+    "greeting"
+  ]
+}

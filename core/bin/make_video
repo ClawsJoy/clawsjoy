@@ -1,0 +1,11 @@
+#!/bin/bash
+SCRIPT="$1"
+IMAGE_DIR="$2"
+OUTPUT="$3"
+TITLE="$4"
+echo "制作视频: $TITLE"
+echo "脚本: $SCRIPT"
+echo "图片目录: $IMAGE_DIR"
+curl -s -X POST http://localhost:8105/api/promo/make \
+  -H "Content-Type: application/json" \
+  -d "{\"city\":\"香港\",\"style\":\"人文\"}"

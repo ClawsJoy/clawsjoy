@@ -1,0 +1,19 @@
+{
+  "name": "to_upper",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "text skill collection Use when:\u9700\u8981\u4f7f\u7528 text \u76f8\u5173\u529f\u80fd NOT for: \u4e0d\u9002\u7528\u573a\u666f\n",
+  "category": "text",
+  "author": "ClawsJoy",
+  "compatible_with": [
+    "openclaw",
+    "clawsjoy"
+  ],
+  "tags": [
+    "text"
+  ],
+  "input_schema": {},
+  "output_schema": {},
+  "examples": [],
+  "use_when": "\u6587\u672c\u5904\u7406, \u5b57\u7b26\u4e32\u64cd\u4f5c"
+}

@@ -1,0 +1,26 @@
+models/
+tools/
+__pycache__/
+*.pyc
+data/users/
+data/*.db
+logs/*.log
+output/
+*.tar.gz
+.env
+*.key
+*.pem
+*.token
+.ssl/
+.idea/
+.vscode/
+.archive/
+.version_backup/
+tenants/*/data/
+tenants/*/config/youtube/
+# YouTube 敏感文件（本地保留，不提交）
+tenants/*/config/youtube/token.pickle
+data/youtube_token.pickle
+tenants/*/config/youtube/client_secrets.json
+scripts/save_youtube_token.py
+scripts/save_youtube_token_correct.py

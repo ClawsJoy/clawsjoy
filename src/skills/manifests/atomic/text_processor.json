@@ -1,0 +1,23 @@
+{
+  "name": "text_processor",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "\u6587\u672c\u5904\u7406",
+  "category": "text",
+  "author": "ClawsJoy",
+  "compatible_with": [
+    "openclaw",
+    "clawsjoy"
+  ],
+  "input_schema": {
+    "text": {
+      "type": "string",
+      "required": true
+    }
+  },
+  "output_schema": {
+    "success": {
+      "type": "boolean"
+    }
+  }
+}

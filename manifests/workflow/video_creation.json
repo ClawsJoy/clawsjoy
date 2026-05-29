@@ -1,0 +1,27 @@
+{
+  "name": "video_creation",
+  "type": "workflow",
+  "version": "1.0.0",
+  "description": "完整的视频制作工作流：脚本生成 → 音频生成 → 视频合成",
+  "category": "workflow",
+  "author": "ClawsJoy",
+  "tags": ["video", "automation", "workflow"],
+  "steps": [
+    {
+      "skill": "script_generator",
+      "params": {"topic": "{topic}"},
+      "output_key": "script"
+    },
+    {
+      "skill": "audio_generator",
+      "params": {"text": "{script}"},
+      "output_key": "audio"
+    },
+    {
+      "skill": "video_composer",
+      "params": {"audio_path": "{audio}", "duration": 30},
+      "output_key": "video"
+    }
+  ],
+  "dependencies": ["script_generator", "audio_generator", "video_composer"]
+}

@@ -1,0 +1,88 @@
+# 前端开发知识库 - 供 CODE Agent 学习
+
+# HTML 知识
+html:
+  best_practices:
+    - "使用语义化标签 (header, nav, main, section, article, footer)"
+    - "确保 accessibility (alt属性, aria标签)"
+    - "响应式设计 viewport meta"
+    - "SEO 优化 (title, description, canonical)"
+  common_patterns:
+    - "骨架屏加载"
+    - "无限滚动"
+    - "模态框组件"
+    - "轮播图组件"
+
+# CSS 知识  
+css:
+  layouts:
+    - "Flexbox: 一维布局，适合导航栏、卡片列表"
+    - "Grid: 二维布局，适合整体页面结构"
+    - "Position: 绝对/相对定位，适合浮动元素"
+  animations:
+    - "transition: 简单过渡效果"
+    - "keyframes: 复杂动画"
+    - "transform: 平移/旋转/缩放"
+  responsive:
+    - "mobile-first: 优先设计移动端"
+    - "breakpoints: 768px(平板), 1024px(桌面)"
+    - "clamp(): 响应式字体"
+    - "vw/vh: 视口单位"
+
+# JavaScript 知识
+javascript:
+  modern_features:
+    - "ES6+: 箭头函数、解构、展开运算符"
+    - "async/await: 异步处理"
+    - "Promise: 链式调用"
+    - "模块化: import/export"
+  frameworks:
+    vue:
+      - "组合式 API (Composition API)"
+      - "响应式数据 (ref, reactive)"
+      - "生命周期 (onMounted, onUpdated)"
+      - "组件通信 (props, emit, provide/inject)"
+    react:
+      - "Hooks (useState, useEffect, useContext)"
+      - "组件化思维"
+      - "状态管理 (Redux, Zustand)"
+  performance:
+    - "防抖 (debounce): 输入框搜索"
+    - "节流 (throttle): 滚动事件"
+    - "懒加载 (lazy loading): 图片、组件"
+    - "代码分割 (code splitting)"
+
+# 前端工程化
+engineering:
+  build_tools:
+    - "Vite: 快速开发服务器"
+    - "Webpack: 模块打包"
+    - "Rollup: 库打包"
+  package_managers:
+    - "npm: 最常用"
+    - "yarn: 速度快"
+    - "pnpm: 节省磁盘"
+  linting:
+    - "ESLint: 代码规范"
+    - "Prettier: 代码格式化"
+    - "Stylelint: CSS规范"
+
+# UI 组件库
+ui_libraries:
+  tailwind:
+    - "实用优先 (utility-first)"
+    - "自定义配置 tailwind.config.js"
+    - "深色模式支持"
+  element_plus:
+    - "企业级组件库"
+    - "适合后台管理系统"
+  ant_design:
+    - "React 生态"
+    - "设计规范完善"
+
+# 前端安全
+security:
+  xss: "使用 textContent 而非 innerHTML，或进行转义"
+  csrf: "使用 CSRF Token"
+  sql_injection: "参数化查询"
+  sensitive_data: "不在前端存储密码、token"

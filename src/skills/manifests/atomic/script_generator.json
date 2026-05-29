@@ -1,0 +1,18 @@
+{
+  "name": "script_generator",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "根据主题生成短视频脚本",
+  "category": "text",
+  "author": "ClawsJoy",
+  "tags": ["script", "generation"],
+  "compatible_with": ["openclaw", "clawsjoy"],
+  "input_schema": {
+    "topic": {"type": "string", "required": true, "description": "视频主题"},
+    "duration": {"type": "integer", "required": false, "default": 30}
+  },
+  "output_schema": {
+    "script": {"type": "string"},
+    "success": {"type": "boolean"}
+  }
+}

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ClawsJoy 智能助手</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', monospace;
+            background: #0a0a1a;
+            color: #e0e0ff;
+            overflow: hidden;
+        }
+        /* 标题栏 */
+        .title-bar {
+            -webkit-app-region: drag;
+            height: 48px;
+            background: #0f0f1a;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            border-bottom: 1px solid #00f3ff33;
+        }
+        .title-bar h1 {
+            font-size: 18px;
+            background: linear-gradient(135deg, #00f3ff, #b000ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .title-bar-buttons {
+            -webkit-app-region: no-drag;
+            margin-left: auto;
+        }
+        .title-bar-buttons button {
+            background: none;
+            border: none;
+            color: #e0e0ff;
+            cursor: pointer;
+            padding: 0 12px;
+            font-size: 16px;
+        }
+        .title-bar-buttons button:hover { color: #00f3ff; }
+        /* 侧边栏 */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 48px;
+            bottom: 0;
+            width: 260px;
+            background: #0f0f1a;
+            border-right: 1px solid #00f3ff33;
+            padding: 20px;
+        }
+        .nav-item {
+            padding: 12px 16px;
+            margin: 8px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .nav-item:hover { background: #1a1a2e; }
+        .nav-item.active { background: linear-gradient(135deg, #00f3ff22, #b000ff22); border-left: 3px solid #00f3ff; }
+        .nav-icon { font-size: 20px; }
+        /* 主内容区 */
+        .main-content {
+            margin-left: 260px;
+            margin-top: 48px;
+            padding: 20px;
+            height: calc(100vh - 48px);
+            overflow-y: auto;
+        }
+        /* 卡片样式 */
+        .card {
+            background: #1a1a2e;
+            border: 1px solid #00f3ff33;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .card h3 { color: #00f3ff; margin-bottom: 15px; }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #00f3ff22;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #00f3ff;
+        }
+        button {
+            background: linear-gradient(135deg, #00f3ff, #b000ff);
+            border: none;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .stat-card {
+            background: #0f0f1a;
+            border: 1px solid #00f3ff33;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        .stat-value { font-size: 32px; color: #00f3ff; }
+        .stat-label { font-size: 12px; color: #888; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <div class="title-bar">
+        <h1>🐾 ClawsJoy 智能体AI系统</h1>
+        <div class="title-bar-buttons">
+            <button onclick="window.close()">✕</button>
+        </div>
+    </div>
+    
+    <div class="sidebar">
+        <div class="nav-item active" onclick="showPage('dashboard')">
+            <span class="nav-icon">📊</span> 仪表板
+        </div>
+        <div class="nav-item" onclick="openWorkflow()">
+            <span class="nav-icon">🎨</span> 工作流编辑器
+        </div>
+        <div class="nav-item" onclick="openCodeReview()">
+            <span class="nav-icon">🔍</span> 代码审核
+        </div>
+        <div class="nav-item" onclick="showPage('agents')">
+            <span class="nav-icon">🤖</span> Agent 管理
+        </div>
+        <div class="nav-item" onclick="showPage('skills')">
+            <span class="nav-icon">⚡</span> 技能库
+        </div>
+        <div class="nav-item" onclick="showPage('settings')">
+            <span class="nav-icon">⚙️</span> 设置
+        </div>
+    </div>
+    
+    <div class="main-content" id="mainContent">
+        <!-- 仪表板内容 -->
+        <div id="dashboardPage">
+            <div class="card">
+                <h3>🚀 系统状态</h3>
+                <p>ClawsJoy v4.0.0 智能体AI系统</p>
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-value" id="skillCount">135</div><div class="stat-label">技能总数</div></div>
+                    <div class="stat-card"><div class="stat-value" id="agentCount">12</div><div class="stat-label">Agent 数量</div></div>
+                    <div class="stat-card"><div class="stat-value" id="workflowCount">3</div><div class="stat-label">工作流</div></div>
+                </div>
+                <button onclick="checkHealth()">🏥 健康检查</button>
+                <div id="healthStatus" style="margin-top: 15px;"></div>
+            </div>
+        </div>
+        <div id="agentsPage" style="display:none;">
+            <div class="card"><h3>🤖 Agent 列表</h3><div id="agentsList">加载中...</div></div>
+        </div>
+        <div id="skillsPage" style="display:none;">
+            <div class="card"><h3>⚡ 技能库</h3><div id="skillsList">加载中...</div></div>
+        </div>
+        <div id="settingsPage" style="display:none;">
+            <div class="card"><h3>⚙️ 系统设置</h3><p>服务器: http://localhost:5002</p><p>版本: 4.0.0</p></div>
+        </div>
+    </div>
+    
+    <script>
+        const API = 'http://localhost:5002';
+        
+        function showPage(page) {
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            event.target.closest('.nav-item').classList.add('active');
+            document.getElementById('dashboardPage').style.display = 'none';
+            document.getElementById('agentsPage').style.display = 'none';
+            document.getElementById('skillsPage').style.display = 'none';
+            document.getElementById('settingsPage').style.display = 'none';
+            document.getElementById(`${page}Page`).style.display = 'block';
+            if(page === 'agents') loadAgents();
+            if(page === 'skills') loadSkills();
+        }
+        
+        function openWorkflow() {
+            const { shell } = require('electron');
+            const win = new (require('electron').BrowserWindow)({
+                width: 1200, height: 800, frame: false, titleBarStyle: 'hidden',
+                webPreferences: { nodeIntegration: true, contextIsolation: false }
+            });
+            win.loadFile('renderer/workflow.html');
+            win.show();
+        }
+        
+        function openCodeReview() {
+            const { shell } = require('electron');
+            const win = new (require('electron').BrowserWindow)({
+                width: 1000, height: 700, frame: false, titleBarStyle: 'hidden',
+                webPreferences: { nodeIntegration: true, contextIsolation: false }
+            });
+            win.loadFile('renderer/code_review.html');
+            win.show();
+        }
+        
+        async function checkHealth() {
+            try {
+                const res = await fetch(`${API}/api/health`);
+                const data = await res.json();
+                document.getElementById('healthStatus').innerHTML = `<span class="status-badge">✅ 服务正常: ${data.status}</span>`;
+            } catch(e) {
+                document.getElementById('healthStatus').innerHTML = `<span style="color:#ff4444;">❌ 连接失败: ${e.message}</span>`;
+            }
+        }
+        
+        async function loadAgents() {
+            try {
+                const res = await fetch(`${API}/api/agents/list`);
+                const data = await res.json();
+                const agents = data.agents || [];
+                document.getElementById('agentsList').innerHTML = agents.map(a => 
+                    `<div style="padding:8px; border-bottom:1px solid #00f3ff33;">🤖 ${a.name || a}</div>`
+                ).join('');
+            } catch(e) { document.getElementById('agentsList').innerHTML = '<p>加载失败</p>'; }
+        }
+        
+        async function loadSkills() {
+            try {
+                const res = await fetch(`${API}/api/skills`);
+                const data = await res.json();
+                const skills = data.skills || [];
+                document.getElementById('skillsList').innerHTML = `<p>共 ${skills.length} 个技能</p><div style="display:flex;flex-wrap:wrap;gap:8px;">` +
+                    skills.slice(0,30).map(s => `<span style="background:#1a1a2e;padding:4px 12px;border-radius:20px;">⚡ ${s}</span>`).join('') +
+                    (skills.length > 30 ? `<span>... 共 ${skills.length} 个</span>` : '') + '</div>';
+            } catch(e) { document.getElementById('skillsList').innerHTML = '<p>加载失败</p>'; }
+        }
+        
+        // 加载统计
+        fetch(`${API}/api/skills`).then(r=>r.json()).then(d=>document.getElementById('skillCount').innerText=d.total||135).catch(e=>console.log(e));
+        fetch(`${API}/api/agents/list`).then(r=>r.json()).then(d=>document.getElementById('agentCount').innerText=d.agents?.length||12).catch(e=>console.log(e));
+        checkHealth();
+    </script>
+</body>
+</html>

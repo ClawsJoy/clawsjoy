@@ -1,0 +1,19 @@
+{
+  "name": "ffmpeg_video",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "video skill collection Use when:\u9700\u8981\u4f7f\u7528 video \u76f8\u5173\u529f\u80fd NOT for: \u4e0d\u9002\u7528\u573a\u666f\n",
+  "category": "video",
+  "author": "ClawsJoy",
+  "compatible_with": [
+    "openclaw",
+    "clawsjoy"
+  ],
+  "tags": [
+    "video"
+  ],
+  "input_schema": {},
+  "output_schema": {},
+  "examples": [],
+  "use_when": "\u89c6\u9891\u5904\u7406, \u89c6\u9891\u7f16\u8f91"
+}

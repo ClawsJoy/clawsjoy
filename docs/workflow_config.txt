@@ -1,0 +1,15 @@
+=== ClawsJoy 工作流配置 ===
+服务端口:
+  Chat API: 8101
+  Promo API: 8105
+  Web: 8082
+  JoyMate API: 8093
+
+Unsplash Key: ijXPXhcaX2k5neNoQAzN1cw8DJl3i9gx8FlRnzspqKs
+
+目录结构:
+  图片目录: /mnt/d/clawsjoy/web/images
+  视频目录: /mnt/d/clawsjoy/web/videos
+  租户目录: /mnt/d/clawsjoy/tenants
+
+Ollama 模型: qwen2.5-coder:7b, qwen2.5:3b

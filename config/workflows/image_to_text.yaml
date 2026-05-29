@@ -1,0 +1,17 @@
+name: image_to_text
+description: 图片识别并翻译
+
+steps:
+  - skill: vision
+    params:
+      image_path: "{input_image}"
+      prompt: "描述这张图片"
+    output: description
+
+  - skill: translate
+    params:
+      text: "{description.result}"
+      target: "zh"
+    output: translated
+
+output: "{translated.translated}"

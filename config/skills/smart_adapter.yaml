@@ -1,0 +1,167 @@
+# 智能适配器配置 v2.0 - 本地模型优化版
+version: "2.0.0"
+
+# 全局默认
+default:
+  provider: "ollama"
+  model: "qwen2.5:3b"
+  temperature: 0.3
+  max_tokens: 2000
+  stream: false
+
+# 模型能力映射
+models:
+  qwen2.5:7b:
+    description: "最强推理"
+    use_cases: ["复杂推理", "多轮对话", "创意写作"]
+    temperature_range: [0.1, 0.8]
+    max_tokens: 4000
+    priority: 10
+    
+  qwen2.5:7b:
+    description: "平衡性能"
+    use_cases: ["日常对话", "问答", "分析"]
+    temperature_range: [0.2, 0.7]
+    max_tokens: 2000
+    priority: 8
+    
+  qwen2.5:3b:
+    description: "快速响应"
+    use_cases: ["简单问答", "分类", "提取"]
+    temperature_range: [0.1, 0.5]
+    max_tokens: 1000
+    priority: 6
+    
+  deepseek-coder:6.7b:
+    description: "专业代码"
+    use_cases: ["代码生成", "代码审查", "调试"]
+    temperature_range: [0.1, 0.3]
+    max_tokens: 3000
+    priority: 9
+    
+  llama3.2:3b:
+    description: "英文优化"
+    use_cases: ["英文对话", "翻译"]
+    temperature_range: [0.2, 0.7]
+    max_tokens: 2000
+    priority: 5
+
+# 任务类型配置
+task_types:
+  code:
+    model: "deepseek-coder:6.7b"
+    temperature: 0.2
+    max_tokens: 2000
+    system_prompt: |
+      你是专业的代码助手。只输出高质量、可执行的代码。
+      使用 ```语言 标记代码块，包含必要的注释。
+      
+  math:
+    model: "qwen2.5:3b"
+    temperature: 0.1
+    max_tokens: 500
+    system_prompt: "只输出数字结果，不要解释，一步一步计算。"
+    
+  reasoning:
+    model: "qwen2.5:3b"
+    temperature: 0.3
+    max_tokens: 1500
+    system_prompt: "请逐步推理，输出结构化分析。"
+    
+  creative:
+    model: "qwen2.5:3b"
+    temperature: 0.8
+    max_tokens: 2000
+    system_prompt: "发挥想象力，创作有趣的内容。"
+    
+  qa:
+    model: "qwen2.5:3b"
+    temperature: 0.5
+    max_tokens: 800
+    system_prompt: "简短回答，准确清晰。"
+    
+  english:
+    model: "llama3.2:3b"
+    temperature: 0.5
+    max_tokens: 800
+    system_prompt: "Respond in English naturally."
+    
+  embedding:
+    model: "nomic-embed-text"
+    type: "embedding"
+    dimension: 768
+
+# Agent 专属配置
+agents:
+  code_agent:
+    model: "deepseek-coder:6.7b"
+    temperature: 0.2
+    max_tokens: 2000
+    
+  analysis_agent:
+    model: "qwen2.5:3b"
+    temperature: 0.2
+    max_tokens: 1500
+    output_format: "json"
+    
+  chat_agent:
+    model: "qwen2.5:3b"
+    temperature: 0.7
+    max_tokens: 1000
+    
+  butler:
+    model: "qwen2.5:3b"
+    temperature: 0.6
+    max_tokens: 800
+    system_prompt: "你是私人管家小管，回答亲切、温暖、有帮助。"
+
+# 性能优化
+performance:
+  concurrent_requests: 4
+  cache_ttl: 3600
+  batch_size: 5
+  timeout: 60
+
+# 私人管家配置
+butler:
+  default_name: "小管"
+  allow_rename: true
+  
+  # 名称变更时的回复模板
+  rename_response: "好的，以后请叫我 {new_name}"
+  name_reminder: "我是 {name}，随时为您服务"
+
+# ========== 任务分解配置 ==========
+decomposition:
+  enabled: true
+  max_subtasks: 5
+  use_task_types: true
+  prompt_template: |
+    将以下任务分解为子任务列表：
+    任务: {task}
+    
+    可用任务类型: {task_types}
+    
+    输出JSON格式，只输出数组：
+    ["子任务1", "子任务2", "子任务3"]
+
+# ========== 偏好学习配置 ==========
+preference_learning:
+  enabled: true
+  trigger_keywords:
+    - "喜欢"
+    - "偏好"
+    - "不喜欢"
+    - "讨厌"
+    - "习惯"
+  categories:
+    - "preference"
+    - "habit"
+  auto_apply: true
+  retrieve_count: 5
+
+# ========== 上下文配置 ==========
+context:
+  enabled: true
+  max_window: 10
+  vector_retrieve: 3

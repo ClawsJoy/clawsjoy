@@ -1,0 +1,12 @@
+{
+  "name": "weather_skill",
+  "version": "1.0.0",
+  "description": "\u67e5\u8be2\u5929\u6c14",
+  "category": "utility",
+  "price": 0.99,
+  "author": "ClawsJoy",
+  "tags": [
+    "utility",
+    "weather_skill"
+  ]
+}

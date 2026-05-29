@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的资料库</title>
+    <style>
+        body { font-family: system-ui; background: #0a0a14; color: #fff; padding: 20px; }
+        h1 { margin-bottom: 20px; }
+        .file { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #2a2a3e; }
+        .file:last-child { border-bottom: none; }
+        .file-info { flex: 1; }
+        .file-name { font-size: 14px; margin-bottom: 4px; }
+        .file-size { font-size: 11px; color: #888; }
+        .preview { color: #667eea; text-decoration: none; }
+        .loading { text-align: center; padding: 40px; color: #888; }
+    </style>
+</head>
+<body>
+    <h1>📁 我的资料库</h1>
+    <div id="files" class="loading">加载中...</div>
+    <script>
+        const tenantId = new URLSearchParams(location.search).get('tenant') || '1';
+        const API = `http://localhost:8084`;
+        
+        async function load() {
+            const container = document.getElementById('files');
+            try {
+                const res = await fetch(`${API}/api/library/list?tenant_id=${tenantId}`);
+                const data = await res.json();
+                if (!data.files || data.files.length === 0) {
+                    container.innerHTML = '<div class="loading">暂无文件</div>';
+                    return;
+                }
+                container.innerHTML = data.files.map(f => `
+                    <div class="file">
+                        <div class="file-info">
+                            <div class="file-name">${f.name}</div>
+                            <div class="file-size">${(f.size/1024).toFixed(1)} KB</div>
+                        </div>
+                        <a href="${API}${f.url}" target="_blank" class="preview">预览</a>
+                    </div>
+                `).join('');
+            } catch(e) {
+                container.innerHTML = '<div class="loading">加载失败: ' + e.message + '</div>';
+            }
+        }
+        load();
+    </script>
+</body>
+</html>

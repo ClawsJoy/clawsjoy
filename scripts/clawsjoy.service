@@ -1,0 +1,18 @@
+[Unit]
+Description=ClawsJoy 4.0 Intelligent Agent System
+After=network.target ollama.service
+Wants=ollama.service
+
+[Service]
+Type=forking
+User=flybo
+WorkingDirectory=/home/flybo/clawsjoy_clean
+ExecStart=/usr/bin/bash /home/flybo/clawsjoy_clean/start_all.sh
+ExecStop=/usr/bin/bash /home/flybo/clawsjoy_clean/stop_all.sh
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

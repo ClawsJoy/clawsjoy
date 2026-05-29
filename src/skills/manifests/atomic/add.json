@@ -1,0 +1,17 @@
+{
+  "name": "add",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "两数相加",
+  "category": "math",
+  "author": "ClawsJoy",
+  "tags": ["math", "add"],
+  "input_schema": {
+    "a": {"type": "number", "required": true},
+    "b": {"type": "number", "required": true}
+  },
+  "output_schema": {
+    "result": {"type": "number"},
+    "success": {"type": "boolean"}
+  }
+}

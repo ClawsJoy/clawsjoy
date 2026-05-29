@@ -1,0 +1,51 @@
+#!/bin/bash
+# Messenger 智能发布：按评分优先发布高质量内容
+
+API_URL="http://localhost:5005/api/admin"
+
+echo "=== 📊 获取已审核通过的内容（按评分排序）==="
+
+# 获取所有已通过的任务，按评分排序
+curl -s $API_URL/tasks | python3 -c "
+import sys,json
+
+tasks = json.load(sys.stdin)
+# 筛选已通过且有评分的任务
+approved = [t for t in tasks if t.get('status') == 'approved' and t.get('score')]
+# 按评分排序（高分在前）
+approved.sort(key=lambda x: x.get('score', 0), reverse=True)
+
+if not approved:
+    print('暂无已审核通过的内容')
+    sys.exit(0)
+
+print(f'共 {len(approved)} 条已通过内容\n')
+print('评分排序（高分优先）:')
+print('-' * 50)
+for t in approved:
+    score = t.get('score', 0)
+    stars = '⭐' * (score // 10) if score >= 60 else '⭐' * 3
+    print(f'  [{score:3d}] {stars} {t[\"title\"][:40]}')
+    print(f'        ID: {t[\"id\"]} | 提交者: {t[\"submitter\"]}')
+    print()
+"
+
+# 获取最高分内容
+echo "=== 🏆 推荐优先发布（最高分）==="
+curl -s $API_URL/tasks | python3 -c "
+import sys,json
+
+tasks = json.load(sys.stdin)
+approved = [t for t in tasks if t.get('status') == 'approved' and t.get('score')]
+if approved:
+    best = max(approved, key=lambda x: x.get('score', 0))
+    score = best.get('score', 0)
+    print(f'标题: {best[\"title\"]}')
+    print(f'评分: {score}/100')
+    print(f'提交者: {best[\"submitter\"]}')
+    print(f'内容预览: {best[\"content\"][:100]}...')
+    print()
+    print('建议发布到: 微信公众号、小红书')
+else:
+    print('暂无高分内容，请先让 Reviewer 完成审核评分')
+"

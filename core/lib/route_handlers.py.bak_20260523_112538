@@ -1,0 +1,273 @@
+"""路由处理器注册中心 - ClawsJoy 配置驱动"""
+
+from flask import jsonify, request, send_from_directory
+from lib.skill_loader_v3 import skill_loader
+from lib.agent_registry import agent_registry
+from lib.agent_communication import agent_comm
+from lib.log_aggregator import log_aggregator
+import os
+
+# 处理器注册表
+HANDLERS = {}
+
+def register(name):
+    """装饰器：注册处理器"""
+    def decorator(func):
+        HANDLERS[name] = func
+        return func
+    return decorator
+
+
+# ========== Web 路由 ==========
+@register("web_index")
+def web_index():
+    return send_from_directory('../renderer', 'index_root.html')
+
+@register("web_static")
+def web_static(filename):
+    return send_from_directory('../renderer', filename)
+
+
+# ========== 系统路由 ==========
+@register("health")
+def health():
+    return jsonify({"service": "gateway", "status": "ok", "version": "4.0.0"})
+
+
+# ========== 技能路由 ==========
+@register("list_skills")
+def list_skills():
+    skills = skill_loader.list_skills()
+    return jsonify({"skills": skills, "total": len(skills)})
+
+@register("execute_skill")
+def execute_skill():
+    data = request.json
+    result = skill_loader.execute(data.get('skill'), data.get('params', {}))
+    return jsonify(result)
+
+@register("do_anything")
+def do_anything():
+    from skills.core.do_anything import skill
+    data = request.json
+    result = skill.execute({"goal": data.get('goal', '')})
+    return jsonify(result)
+
+@register("skill_search")
+def skill_search():
+    keyword = request.args.get('q', '')
+    skills = skill_loader.search_skills(keyword)
+    return jsonify({"skills": skills, "total": len(skills)})
+
+
+# ========== Agent 路由 ==========
+@register("list_agents")
+def list_agents():
+    agents = agent_registry.list_all()
+    return jsonify({"agents": agents, "total": len(agents)})
+
+@register("agents_health")
+def agents_health():
+    # 简化实现，实际可遍历 Agent 状态
+    return jsonify({})
+
+@register("agents_info")
+def agents_info():
+    return jsonify({"info": "agent info"})
+
+@register("get_agent_messages")
+def get_agent_messages():
+    return jsonify({"messages": []})
+
+@register("send_agent_message")
+def send_agent_message():
+    return jsonify({"success": True})
+
+@register("broadcast_message")
+def broadcast_message():
+    return jsonify({"success": True})
+
+@register("subscribe_agent")
+def subscribe_agent():
+    return jsonify({"success": True})
+
+
+# ========== 聊天路由 ==========
+@register("chat")
+def chat():
+    from core.agents.personal_butler_v2 import PersonalButlerV2
+    from core.agents.chat_agent import chat_agent
+    
+    data = request.get_json()
+    user_id = data.get('user_id', 'default')
+    message = data.get('message', '')
+    user_role = data.get('user_role', 'guest')
+    session_id = data.get('session_id', None)
+
+    if not message:
+        return jsonify({"error": "消息为空", "success": False}), 400
+
+    if user_role == 'guest':
+        result = chat_agent.process(message, session_id)
+    else:
+        butler = PersonalButlerV2(user_id=user_id)
+        result = butler.process(message)
+
+    return jsonify({
+        "response": result.get('response', ''),
+        "success": result.get('success', True),
+        "session_id": result.get('session_id')
+    })
+
+
+# ========== 日志路由 ==========
+@register("get_logs")
+def get_logs():
+    service = request.args.get('service')
+    lines = int(request.args.get('lines', 50))
+    logs = log_aggregator.get_logs(service, lines)
+    return jsonify({"logs": logs})
+
+@register("search_logs")
+def search_logs():
+    keyword = request.args.get('q', '')
+    service = request.args.get('service')
+    lines = int(request.args.get('lines', 20))
+    results = log_aggregator.search_logs(keyword, service, lines)
+    return jsonify({"results": results})
+
+@register("get_errors")
+def get_errors():
+    service = request.args.get('service')
+    lines = int(request.args.get('lines', 50))
+    errors = log_aggregator.get_errors(service, lines)
+    return jsonify({"errors": errors})
+
+
+# ========== 服务路由 ==========
+@register("list_services")
+def list_services():
+    return jsonify({"services": []})
+
+@register("metrics")
+def metrics():
+    return jsonify({"metrics": {}})
+
+
+# ========== Agent 消息 API ==========
+@register("agent_message")
+def agent_message(agent_name):
+    return jsonify({"message": f"Received by {agent_name}"})
+
+
+# ========== 知识库路由 ==========
+@register("knowledge_search")
+def knowledge_search():
+    return jsonify({"results": []})
+
+@register("knowledge_stats")
+def knowledge_stats():
+    return jsonify({"stats": {}})
+
+@register("knowledge_sync")
+def knowledge_sync():
+    return jsonify({"success": True})
+
+
+# ========== 翻译路由 ==========
+@register("translate_query")
+def translate_query():
+    return jsonify({"translated": "mock"})
+
+
+# ========== 用户路由 ==========
+@register("user_config_get")
+def user_config_get():
+    user_id = request.args.get('user_id', 'default')
+    return jsonify({"config": {}, "user_id": user_id})
+
+@register("user_config_set")
+def user_config_set():
+    return jsonify({"success": True})
+
+@register("user_agent_call")
+def user_agent_call():
+    return jsonify({"success": True, "result": "mock"})
+
+@register("user_agent_chat")
+def user_agent_chat():
+    return jsonify({"success": True, "response": "mock"})
+
+
+# ========== 工作流路由 ==========
+@register("execute_workflow")
+def execute_workflow():
+    return jsonify({"success": True})
+
+@register("auto_workflow")
+def auto_workflow():
+    return jsonify({"success": True})
+
+@register("workflow_status")
+def workflow_status():
+    return jsonify({"status": "idle"})
+
+
+# ========== 认证路由 ==========
+@register("auth_register")
+def auth_register():
+    from lib.auth_api import auth_manager
+    data = request.json
+    result = auth_manager.register(
+        username=data.get('username', ''),
+        password=data.get('password', ''),
+        role=data.get('role', 'user')
+    )
+    return jsonify(result)
+
+@register("auth_login")
+def auth_login():
+    from lib.auth_api import auth_manager
+    data = request.json
+    result = auth_manager.login(
+        username=data.get('username', ''),
+        password=data.get('password', '')
+    )
+    return jsonify(result)
+
+@register("auth_logout")
+def auth_logout():
+    return jsonify({"success": True})
+
+
+# ========== CODE Agent 路由 ==========
+@register("code_generate")
+def code_generate():
+    return jsonify({"code": "print('hello')"})
+
+@register("code_review")
+def code_review():
+    return jsonify({"review": "Looks good"})
+
+@register("code_modify")
+def code_modify():
+    return jsonify({"success": True})
+
+@register("code_accept")
+def code_accept():
+    return jsonify({"success": True})
+
+@register("code_feedback")
+def code_feedback():
+    return jsonify({"success": True})
+
+@register("code_status")
+def code_status():
+    return jsonify({"status": "idle"})
+
+@register("code_execute")
+def code_execute():
+    return jsonify({"output": "executed"})
+
+
+print(f"✅ 路由处理器已加载: {len(HANDLERS)} 个")

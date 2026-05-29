@@ -1,0 +1,18 @@
+{
+  "name": "check_status",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "website \u6280\u80fd",
+  "category": "website",
+  "author": "ClawsJoy",
+  "compatible_with": [
+    "openclaw",
+    "clawsjoy"
+  ],
+  "tags": [
+    "website"
+  ],
+  "input_schema": {},
+  "output_schema": {},
+  "examples": []
+}

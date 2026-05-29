@@ -1,0 +1,72 @@
+name: deduplicate
+type: atomic
+version: 1.0.0
+description: 向量去重技能 - 清理重复记忆
+category: memory
+author: ClawsJoy
+compatible_with:
+  - openclaw
+  - clawsjoy
+
+input_schema:
+  threshold:
+    type: number
+    required: false
+    default: 0.99
+    description: 相似度阈值 (0-1)
+  category:
+    type: string
+    required: false
+    default: null
+    description: 指定类别，不指定则全部
+  dry_run:
+    type: boolean
+    required: false
+    default: false
+    description: 仅分析不删除
+
+output_schema:
+  success:
+    type: boolean
+  total:
+    type: integer
+    description: 总向量数
+  duplicates:
+    type: integer
+    description: 发现的重复数
+  deleted:
+    type: integer
+    description: 实际删除数
+  dry_run:
+    type: boolean
+
+execution:
+  runtime: python3
+  entry: skills/memory/deduplicate.py
+  command_template: "python3 {entry} --params '{input.params}'"
+
+examples:
+  - input:
+      dry_run: true
+    description: 分析重复，不删除
+  - input:
+      threshold: 0.95
+      dry_run: false
+    description: 删除相似度>0.95的重复
+
+documentation: |
+  ## 使用示例
+  
+  ### 分析重复（不删除）
+  ```bash
+  curl -X POST http://localhost:5002/api/skills/execute \
+    -H "Content-Type: application/json" \
+    -d '{"skill": "deduplicate", "params": {"dry_run": true}}'
+删除重复
+curl -X POST http://localhost:5002/api/skills/execute \
+  -H "Content-Type: application/json" \
+  -d '{"skill": "deduplicate", "params": {"dry_run": false, "threshold": 0.99}}'
+指定类别
+curl -X POST http://localhost:5002/api/skills/execute \
+  -H "Content-Type: application/json" \
+  -d '{"skill": "deduplicate", "params": {"category": "experience", "dry_run": true}}'

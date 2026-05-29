@@ -1,0 +1,149 @@
+"""旧版系统向量记忆 - 使用 NumPy，无 ChromaDB 依赖"""
+
+import json
+import numpy as np
+import requests
+from pathlib import Path
+from typing import List, Dict, Optional
+import uuid
+import time
+
+
+class VectorMemory:
+    """为旧版系统提供的向量记忆"""
+    
+    def __init__(self, user_id: str):
+        self.user_id = user_id
+        self.base_path = Path(f"data/vectors/{user_id}")
+        self.base_path.mkdir(parents=True, exist_ok=True)
+        self.documents = []
+        self.embeddings = []
+        self._load()
+    
+    def _load(self):
+        file_path = self.base_path / "memory.json"
+        if file_path.exists():
+            try:
+                with open(file_path, 'r') as f:
+                    data = json.load(f)
+                    self.documents = data.get('documents', [])
+                    self.embeddings = [np.array(e) for e in data.get('embeddings', [])]
+            except:
+                pass
+    
+    def _save(self):
+        with open(self.base_path / "memory.json", 'w') as f:
+            json.dump({
+                'documents': self.documents,
+                'embeddings': [e.tolist() for e in self.embeddings]
+            }, f, indent=2)
+    
+    def _get_embedding(self, text: str) -> np.ndarray:
+        """使用 Ollama 获取 embedding"""
+        try:
+            response = requests.post(
+                "http://localhost:11434/api/embeddings",
+                json={"model": "nomic-embed-text", "prompt": text},
+                timeout=30
+            )
+            if response.status_code == 200:
+                embedding = response.json().get('embedding', [])
+                return np.array(embedding)
+        except Exception as e:
+            print(f"   ⚠️ Embedding 失败: {e}")
+        
+        # 降级：随机向量
+        return np.random.randn(768) * 0.01
+    
+    def add(self, text: str, metadata: Dict = None) -> str:
+        """添加记忆"""
+        doc_id = str(uuid.uuid4())[:8]
+        embedding = self._get_embedding(text)
+        
+        self.documents.append({
+            "id": doc_id,
+            "text": text,
+            "metadata": metadata or {},
+            "timestamp": time.time()
+        })
+        self.embeddings.append(embedding)
+        
+        # 限制数量
+        if len(self.documents) > 500:
+            self.documents = self.documents[-500:]
+            self.embeddings = self.embeddings[-500:]
+        
+        self._save()
+        return doc_id
+    
+    def search(self, query: str, limit: int = 3) -> List[Dict]:
+        """语义搜索"""
+        if not self.embeddings:
+            return []
+        
+        query_vec = self._get_embedding(query)
+        
+        similarities = []
+        for i, doc_vec in enumerate(self.embeddings):
+            min_len = min(len(query_vec), len(doc_vec))
+            qv = query_vec[:min_len]
+            dv = doc_vec[:min_len]
+            
+            norm_q = np.linalg.norm(qv)
+            norm_d = np.linalg.norm(dv)
+            if norm_q > 0 and norm_d > 0:
+                sim = np.dot(qv, dv) / (norm_q * norm_d)
+            else:
+                sim = 0
+            similarities.append((sim, i))
+        
+        similarities.sort(key=lambda x: x[0], reverse=True)
+        
+        results = []
+        for sim, idx in similarities[:limit]:
+            if sim > 0.2:
+                results.append({
+                    "text": self.documents[idx]["text"],
+                    "similarity": round(sim, 4),
+                    "metadata": self.documents[idx]["metadata"]
+                })
+        
+        return results
+    
+    def search_weighted(self, query: str, limit: int = 5) -> List[Dict]:
+        """加权搜索 - 对名称类记忆提权"""
+        results = self.search(query, limit=limit*2)
+        
+        boost_keywords = ["叫", "名字", "称呼", "name", "called"]
+        for r in results:
+            text = r.get("text", "").lower()
+            sim = r.get("similarity", 0)
+            if hasattr(sim, "item"):
+                sim = sim.item()
+            for kw in boost_keywords:
+                if kw in text:
+                    sim = sim * 1.5
+                    break
+            r["similarity"] = min(sim, 1.0)
+        
+        results.sort(key=lambda x: x.get("similarity", 0), reverse=True)
+        return results[:limit]
+
+    def search_weighted(self, query: str, limit: int = 5):
+        """加权搜索 - 对名称类记忆提权"""
+        results = self.search(query, limit=limit*2)
+        boost_keywords = ["叫", "名字", "称呼", "name", "called"]
+        for r in results:
+            text = r.get("text", "").lower()
+            sim = r.get("similarity", 0)
+            if hasattr(sim, "item"):
+                sim = sim.item()
+            for kw in boost_keywords:
+                if kw in text:
+                    sim = sim * 1.5
+                    break
+            r["similarity"] = min(sim, 1.0)
+        results.sort(key=lambda x: x.get("similarity", 0), reverse=True)
+        return results[:limit]
+
+    def get_stats(self) -> Dict:

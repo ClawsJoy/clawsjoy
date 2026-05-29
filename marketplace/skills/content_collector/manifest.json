@@ -1,0 +1,12 @@
+{
+  "name": "content_collector",
+  "version": "1.0.0",
+  "description": "\u4ece\u4e92\u8054\u7f51\u91c7\u96c6\u65b0\u95fb\u3001\u70ed\u70b9\u548c\u5185\u5bb9",
+  "category": "content",
+  "price": 0.99,
+  "author": "ClawsJoy",
+  "tags": [
+    "content",
+    "content_collector"
+  ]
+}

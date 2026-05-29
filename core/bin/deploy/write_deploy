@@ -1,0 +1,59 @@
+#!/bin/bash
+# Engineer 提交部署任务
+
+TITLE="$1"
+COMMAND="$2"
+DESCRIPTION="$3"
+
+if [ -z "$TITLE" ] || [ -z "$COMMAND" ]; then
+    echo "用法: write_deploy <标题> <命令> [描述]"
+    exit 1
+fi
+
+TIMESTAMP=$(date +%Y%m%d_%H%M%S_%N)
+PREVIEW_FILE="$HOME/.openclaw/web/preview/deploy_${TIMESTAMP}.html"
+JSON_FILE="$HOME/clawsjoy/outbox/engineer_${TIMESTAMP}.deploy.json"
+
+mkdir -p "$HOME/.openclaw/web/preview"
+mkdir -p "$HOME/clawsjoy/outbox"
+
+# 生成预览页面
+cat > "$PREVIEW_FILE" << HTML
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>部署预览: $TITLE</title>
+<style>
+body{font-family:monospace;padding:30px;background:#1a1a2e;color:#fff;}
+.cmd{background:#0d0d1a;padding:20px;border-radius:12px;border-left:4px solid #10b981;color:#50fa7b;font-size:14px;white-space:pre-wrap;}
+.info{background:rgba(255,255,255,0.1);padding:15px;border-radius:8px;margin:20px 0;}
+.btn{background:#667eea;border:none;padding:10px 20px;border-radius:8px;color:#fff;cursor:pointer;}
+</style>
+</head>
+<body>
+<h1>🔧 部署任务预览</h1>
+<div class="info">📋 任务: $TITLE</div>
+<div class="cmd">$ $COMMAND</div>
+<div class="info">📝 描述: ${DESCRIPTION:-无}</div>
+<hr>
+<p style="color:#aaa;">⚠️ 此页面为临时预览，审核通过后将自动执行</p>
+</body>
+</html>
+HTML
+
+# 生成审核任务
+cat > "$JSON_FILE" << JSON
+{
+  "title": "$TITLE",
+  "content": "预览地址: http://localhost:8083/preview/deploy_${TIMESTAMP}.html\n命令: $COMMAND\n描述: ${DESCRIPTION:-无}",
+  "preview_url": "http://localhost:8083/preview/deploy_${TIMESTAMP}.html",
+  "command": "$COMMAND",
+  "description": "$DESCRIPTION",
+  "submitter": "engineer",
+  "created_at": "$(date -Iseconds)",
+  "status": "pending"
+}
+JSON
+
+echo "✅ 已提交部署任务: $TITLE"
+echo "🔗 预览页面: http://localhost:8083/preview/deploy_${TIMESTAMP}.html"
+echo "📋 查看看板: http://localhost:8083/review/index.html"

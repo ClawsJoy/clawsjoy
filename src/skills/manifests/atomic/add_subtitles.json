@@ -1,0 +1,8 @@
+{
+  "name": "add_subtitles",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "add_subtitles处理",
+  "category": "video",
+  "author": "ClawsJoy"
+}

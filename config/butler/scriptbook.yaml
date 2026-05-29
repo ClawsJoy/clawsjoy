@@ -1,0 +1,101 @@
+# 私人管家话本与规则 v2.0
+version: "2.0.0"
+
+# ========== 话本（对话模板） ==========
+intents:
+  - keywords: ["你好", "您好", "hi", "hello", "在吗", "嗨"]
+    response: "greeting"
+
+  - keywords: ["谢谢", "感谢", "多谢", "thanks"]
+    response: "thanks"
+
+  - keywords: ["再见", "拜拜", "bye", "see you"]
+    response: "farewell"
+
+  - keywords: ["名字", "叫你什么", "改名", "rename"]
+    response: "rename_guide"
+
+  - keywords: ["待办", "todo", "提醒", "记住", "任务"]
+    response: "todo_guide"
+
+  - keywords: ["不开心", "难过", "郁闷", "烦"]
+    response: "comfort"
+
+  - keywords: ["开心", "高兴", "棒", "太好了"]
+    response: "celebrate"
+
+  - keywords: ["能力", "能做什么", "功能", "help"]
+    response: "capabilities"
+
+templates:
+  greeting: |
+    {{name}}随时在您身边~ 🌟
+    今天有什么可以帮您的吗？
+
+  thanks: |
+    不客气，能帮到您我很开心！✨
+    还有什么需要我做的吗？
+
+  farewell: |
+    好的，{{name}}随时待命。👋
+    有需要随时叫我，祝您一天愉快！
+
+  rename_guide: |
+    您可以直接对我说"以后叫我XX"来给我改名哦~
+    比如："以后叫我小智"
+    我会记住您给我的名字！
+
+  todo_guide: |
+    您可以这样使用待办功能：
+    📝 "提醒我买牛奶"
+    ✅ "完成买牛奶"
+    📋 "查看待办"
+    我会帮您记住并提醒！
+
+  comfort: |
+    抱抱~ 我在这里陪着您。💝
+    需要聊聊天，还是帮您做点什么？
+    一切都会好起来的！
+
+  celebrate: |
+    太棒了！🎉 为您感到高兴！
+    今天的阳光都更灿烂了呢~
+
+  capabilities: |
+    我能为您做这些事：
+    💬 陪您聊天解闷
+    📝 记录待办事项
+    🏷️ 记住您的喜好
+    👤 您可以给我改名
+    💾 记住咱们的对话
+
+  default: |
+    {{name}}收到了：{user_input}
+    我会用心记下您说的每句话。
+    需要我做点什么吗？💫
+
+# ========== 规则（行为规则） ==========
+rules:
+  - name: "repeat_question"
+    description: "重复提问时主动帮助"
+    condition:
+      type: "same_question_count"
+      threshold: 3
+    action: "proactive_help"
+    message: "您似乎对这个问题很关注，需要我详细解释一下吗？"
+
+  - name: "long_absence"
+    description: "长时间未交互时问候"
+    condition:
+      type: "idle_time"
+      threshold: 28800  # 8小时
+    action: "greeting"
+    message: "好久不见！最近怎么样？"
+
+  - name: "positive_sentiment"
+    description: "检测到积极情绪时强化"
+    condition:
+      type: "sentiment"
+      value: "positive"
+    action: "reinforce"
+    message: "看到您这么开心，我也很高兴！🎉"

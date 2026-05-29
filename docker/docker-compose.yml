@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  clawsjoy-core:
+    build: .
+    container_name: clawsjoy-core
+    ports:
+      - "5002:5002"   # Gateway
+      - "5003:5003"   # File Service
+      - "5005:5005"   # Multi Agent
+      - "5008:5008"   # Doc Generator
+      - "5010:5010"   # Agent API
+      - "5011:5011"   # Web Dashboard
+      - "5443:5443"   # HTTPS Driver
+      - "5444:5444"   # HTTPS Auth
+      - "5445:5445"   # HTTPS Preference
+      - "5446:5446"   # HTTPS Web
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - ./output:/app/output
+      - ./ssl:/app/ssl
+    environment:
+      - CLAWSJOY_HOST=0.0.0.0
+      - OLLAMA_ENDPOINT=http://ollama:11434
+      - COMFYUI_ENDPOINT=http://comfyui:8188
+    restart: unless-stopped
+    networks:
+      - clawsjoy-net
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: clawsjoy-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./ollama_models:/root/.ollama
+    restart: unless-stopped
+    networks:
+      - clawsjoy-net
+
+  comfyui:
+    image: pytorch/pytorch:latest
+    container_name: clawsjoy-comfyui
+    ports:
+      - "8188:8188"
+    volumes:
+      - ./ComfyUI:/workspace/ComfyUI
+    command: python main.py --listen 0.0.0.0 --port 8188
+    restart: unless-stopped
+    networks:
+      - clawsjoy-net
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+networks:
+  clawsjoy-net:
+    driver: bridge

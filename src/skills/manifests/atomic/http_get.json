@@ -1,0 +1,8 @@
+{
+  "name": "http_get",
+  "type": "atomic",
+  "version": "1.0.0",
+  "description": "HTTP GET请求",
+  "category": "network",
+  "author": "ClawsJoy"
+}
