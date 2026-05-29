@@ -27,7 +27,7 @@ class LLMManager:
         self.default_model = unified_config.get("llm", {}).get("default_model", unified_config.get("llm", {}).get("default_model", unified_config.get("llm", {}).get("default_model", unified_config.get("llm.default_model", get_llm_model()))))
         self.providers = {'ollama': {'endpoint': self.endpoint}}
 
-    def generate(self, prompt, model=None, provider=None, system=None):
+    def generate(self, prompt, model=None, provider=None, system=None, temperature=0.7, max_tokens=2000, timeout=60):
         """生成回复，支持 system prompt"""
         model = model or self.default_model
         try:
@@ -41,16 +41,74 @@ class LLMManager:
                     ],
                     "stream": False
                 }
-                resp = self.session.post(f"{self.endpoint}/api/chat", json=payload, timeout=get_timeout("llm"))
+                resp = self.session.post(f"{self.endpoint}/api/chat", json=payload, timeout=timeout)
                 data = resp.json()
                 return data.get('message', {}).get('content', '')
             else:
                 # 使用 generate 端点
-                payload = {"model": model, "prompt": prompt, "stream": False}
-                resp = self.session.post(f"{self.endpoint}/api/generate", json=payload, timeout=get_timeout("llm"))
+                payload = {"model": model, "prompt": prompt, "stream": False, "options": {"temperature": temperature, "num_predict": max_tokens}}
+                resp = self.session.post(f"{self.endpoint}/api/generate", json=payload, timeout=timeout)
                 data = resp.json()
                 return data.get('response', '')
         except Exception as e:
             print(f"LLM调用错误: {e}")
             return ""
+
+    def generate_stream(self, prompt, model=None, provider=None, system=None, timeout=120):
+        """流式生成回复，支持 system prompt"""
+        import json
+        model = model or self.default_model
+        
+        try:
+            if system:
+                payload = {
+                    "model": model,
+                    "messages": [
+                        {"role": "system", "content": system},
+                        {"role": "user", "content": prompt}
+                    ],
+                    "stream": True
+                }
+                resp = self.session.post(f"{self.endpoint}/api/chat", json=payload, stream=True, timeout=timeout)
+                for line in resp.iter_lines():
+                    if line:
+                        try:
+                            data = json.loads(line)
+                            if 'message' in data and 'content' in data['message']:
+                                yield data['message']['content']
+                            if data.get('done'):
+                                break
+                        except json.JSONDecodeError:
+                            continue
+            else:
+                payload = {"model": model, "prompt": prompt, "stream": True}
+                resp = self.session.post(f"{self.endpoint}/api/generate", json=payload, stream=True, timeout=timeout)
+                for line in resp.iter_lines():
+                    if line:
+                        try:
+                            data = json.loads(line)
+                            if 'response' in data:
+                                yield data['response']
+                            if data.get('done'):
+                                break
+                        except json.JSONDecodeError:
+                            continue
+        except Exception as e:
+            print(f"流式生成错误: {e}")
+            yield f"错误: {e}"
+
+    def generate_async(self, prompt, model=None, provider=None, system=None, timeout=120, callback=None):
+        """异步生成（后台线程）"""
+        import threading
+        
+        def _generate():
+            result = self.generate(prompt, model, provider, system, timeout)
+            if callback:
+                callback(result)
+            return result
+        
+        thread = threading.Thread(target=_generate, daemon=True)
+        thread.start()
+        return thread
+
 llm_manager = LLMManager()
