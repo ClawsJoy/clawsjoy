@@ -1,84 +1,97 @@
-"""协作 Agent - 多 Agent 协作"""
+"""协作 Agent - 协调多个 Agent 完成任务"""
 
 import time
 import requests
-import json
-from datetime import datetime
-from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, List, Optional, Any
 from core.agents.base.smart_agent import SmartAgent
-from core.lib.workspace_manager import workspace_manager
 
 
 class CollaborationAgent(SmartAgent):
-    """协作Agent"""
+    """协作 Agent - 多 Agent 协作"""
 
     name = "collaboration_agent"
-    description = "多Agent协作"
-    type = "core"
+    description = "多 Agent 协作协调器"
+    version = "2.0.0"
 
     def __init__(self, user_id: str = "default"):
         super().__init__(user_id=user_id)
-        self.behavior = workspace_manager.get_behavior_config("collaboration_agent")
-        print(f"🤝 协作Agent 初始化完成")
+        self.collaborations: Dict[str, Dict] = {}
+        self.records: List[Dict] = []
+        self.default_target = "orchestrator"
 
-    def _save_record(self, to_agent: str, request: str, response: dict, duration_ms: float):
-        """保存通信记录"""
-        record = {
-            "timestamp": datetime.now().isoformat(),
-            "from": self.name,
-            "to": to_agent,
-            "request": request,
-            "response": response,
-            "duration_ms": duration_ms,
-            "user_id": self.user_id
-        }
-        log_dir = Path("data/exchange")
-        log_dir.mkdir(parents=True, exist_ok=True)
-        filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}.json"
-        with open(log_dir / filename, 'w') as f:
-            json.dump(record, f, indent=2)
-
-    def process(self, user_input: str, context=None) -> Dict:
-        print(f"[协作] 收到: {user_input}")
-
-        routing = self.behavior.get('routing', {}) if self.behavior else {}
-        rules = routing.get('rules', [])
-        default_target = routing.get('default_target', 'chat_agent')
-
-        target = default_target
-        for rule in rules:
-            for intent in rule.get('intent', []):
-                if intent in user_input:
-                    target = rule.get('target', default_target)
-                    break
-            if target != default_target:
-                break
-
+    def route_to_intelligent(self, user_input: str, previous_agents: List[str] = None) -> Dict:
+        """智能路由到合适的 Agent"""
+        previous_agents = previous_agents or []
+        
+        # 简单的路由逻辑
+        target = self.default_target
+        
+        if "分析" in user_input or "统计" in user_input:
+            target = "analysis_agent"
+        elif "代码" in user_input or "编程" in user_input:
+            target = "code_agent"
+        elif "聊天" in user_input or "对话" in user_input:
+            target = "chat_agent"
+        elif "执行" in user_input or "运行" in user_input:
+            target = "executor_agent"
+        elif "决策" in user_input:
+            target = "decision_agent"
+        
+        # 避免循环调用
+        if target in previous_agents:
+            target = self.default_target
+        
         print(f"[协作] 转发到: {target}")
-
+        
         start = time.time()
-        resp = requests.post(
-            f"http://localhost:5002/api/agent/{target}/message",
-            json={"message": user_input, "user_id": self.user_id},
-            timeout=10
-        )
-        duration_ms = (time.time() - start) * 1000
-        result = resp.json() if resp.status_code == 200 else {"error": f"HTTP {resp.status_code}"}
+        try:
+            resp = requests.post(
+                f"http://localhost:5002/api/agent/{target}/message",
+                json={"message": user_input, "user_id": self.user_id},
+                timeout=10
+            )
+            duration_ms = (time.time() - start) * 1000
+            result = resp.json() if resp.status_code == 200 else {"error": f"HTTP {resp.status_code}"}
+            
+            self._save_record(target, user_input, result, duration_ms)
+            return result
+        except Exception as e:
+            return {"error": str(e), "target": target}
 
-        self._save_record(target, user_input, result, duration_ms)
-
-        return result
-
-
-collaboration_agent = CollaborationAgent()
+    def _save_record(self, target: str, user_input: str, result: Any, duration_ms: float):
+        """保存调用记录"""
+        self.records.append({
+            "target": target,
+            "input": user_input[:100],
+            "duration_ms": duration_ms,
+            "timestamp": time.time()
+        })
+        # 保留最近 100 条
+        if len(self.records) > 100:
+            self.records = self.records[-100:]
 
     def broadcast_task(self, task: str, data: Dict):
         """广播任务给所有订阅者"""
-        from core.lib.agent_bus import get_bus
-        bus = get_bus()
-        bus.publish(self.name, "collaboration.task", {
-            "task": task,
-            "data": data,
-            "from": self.name
-        })
+        try:
+            from core.lib.agent_bus import get_bus
+            bus = get_bus()
+            bus.publish(self.name, "collaboration.task", {
+                "task": task,
+                "data": data,
+                "from": self.name
+            })
+        except Exception as e:
+            print(f"[协作] 广播失败: {e}")
+
+    def get_stats(self) -> Dict:
+        """获取统计信息"""
+        return {
+            "name": self.name,
+            "version": self.version,
+            "records_count": len(self.records),
+            "user_id": self.user_id
+        }
+
+
+# 全局实例
+collaboration_agent = CollaborationAgent()

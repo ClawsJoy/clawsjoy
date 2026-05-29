@@ -61,3 +61,16 @@ class CommunicableAgent(BaseAgent):
     def comm_broadcast(self, event_type: str, data: dict) -> str:
         """Agent Communication 广播"""
         return agent_comm.send_broadcast(self.name, event_type, data)
+
+    def send(self, target: str, message: str, timeout: int = 30) -> dict:
+        """发送消息到指定 Agent"""
+        return self.http_call(target, message, timeout)
+
+    def receive(self, message: dict) -> dict:
+        """接收消息（子类可覆盖）"""
+        return {"status": "received", "message": message}
+
+    def broadcast(self, topic: str, data: dict):
+        """广播消息"""
+        bus = get_bus()
+        bus.publish(self.name, topic, data)

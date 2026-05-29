@@ -1,29 +1,25 @@
-"""Hermes 智能 Agent"""
+"""Hermes Agent - 消息传递和通信"""
 
 from typing import Dict, Optional
 from core.agents.base.smart_agent import SmartAgent
-from core.lib.smart_adapter import smart_adapter
 
 
 class HermesAgent(SmartAgent):
-        import requests
+    """消息传递 Agent"""
+
     name = "hermes_agent"
-    description = "Hermes智能体"
-    type = "core"
+    description = "消息传递和通信"
+    version = "1.0.0"
 
     def __init__(self, user_id: str = "default"):
         super().__init__(user_id=user_id)
-        print(f"🧠 HermesAgent 初始化完成")
 
-    def process(self, user_input: str, context: Optional[Dict] = None) -> Dict:
-        prompt = f"作为智能助手，请处理以下任务：{user_input}"
-        response = smart_adapter.generate(prompt, auto_select=True)
-        return {
-            "success": True,
-            "response": response,
-            "agent": self.name,
-            "user_id": self.user_id
-        }
+    def send_message(self, to: str, message: str) -> Dict:
+        """发送消息"""
+        return {"to": to, "message": message[:50], "status": "sent"}
+
+    def get_stats(self) -> Dict:
+        return {"name": self.name, "version": self.version}
 
 
 hermes_agent = HermesAgent()

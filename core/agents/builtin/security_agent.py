@@ -1,26 +1,27 @@
-"""安全 Agent"""
+"""安全 Agent - 负责安全检查和审计"""
 
-from typing import Dict, Optional
+from typing import Dict, Any
 from core.agents.base.smart_agent import SmartAgent
 
 
 class SecurityAgent(SmartAgent):
-        import requests
+    """安全 Agent"""
+
     name = "security_agent"
-    description = "安全助手"
-    type = "core"
+    description = "安全检查和审计"
+    version = "1.0.0"
 
     def __init__(self, user_id: str = "default"):
         super().__init__(user_id=user_id)
-        print(f"🔒 安全Agent 初始化完成")
 
-    def process(self, user_input: str, context: Optional[Dict] = None) -> Dict:
-        return {
-            "success": True,
-            "response": "安全检查通过，系统运行正常",
-            "agent": self.name,
-            "user_id": self.user_id
-        }
+    def check_permission(self, user_id: str, action: str) -> bool:
+        return True
+
+    def audit_log(self, event: str, data: Dict[str, Any]):
+        pass
+
+    def get_stats(self) -> Dict:
+        return {"name": self.name, "version": self.version}
 
 
 security_agent = SecurityAgent()

@@ -19,9 +19,26 @@ class EventBus:
     
     def on(self, event: str, handler: Callable):
         """订阅事件"""
+        if event not in self._handlers:
+            self._handlers[event] = []
+        self._handlers[event].append(handler)
+
+    def subscribe(self, event: str, handler: Callable):
+        """订阅事件（on 的别名）"""
+        self.on(event, handler)
+        """订阅事件"""
         self._handlers[event].append(handler)
     
     def emit(self, event: str, data: Dict = None):
+        """触发事件"""
+        if event not in self._handlers:
+            return
+        for handler in self._handlers[event]:
+            handler(event, data)
+
+    def publish(self, event: str, data: Dict = None):
+        """发布事件（emit 的别名）"""
+        self.emit(event, data)
         """发布事件"""
         for handler in self._handlers.get(event, []):
             try:
@@ -55,9 +72,26 @@ class EventBus:
     
     def on(self, event: str, handler: Callable):
         """订阅事件"""
+        if event not in self._handlers:
+            self._handlers[event] = []
+        self._handlers[event].append(handler)
+
+    def subscribe(self, event: str, handler: Callable):
+        """订阅事件（on 的别名）"""
+        self.on(event, handler)
+        """订阅事件"""
         self._handlers[event].append(handler)
     
     def emit(self, event: str, data: Dict = None):
+        """触发事件"""
+        if event not in self._handlers:
+            return
+        for handler in self._handlers[event]:
+            handler(event, data)
+
+    def publish(self, event: str, data: Dict = None):
+        """发布事件（emit 的别名）"""
+        self.emit(event, data)
         """发布事件"""
         for handler in self._handlers.get(event, []):
             try:

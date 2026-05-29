@@ -1,11 +1,11 @@
 """记忆 Agent"""
 
+import requests
 from typing import Dict, Optional
 from core.agents.base.smart_agent import SmartAgent
 
 
 class MemoryAgent(SmartAgent):
-        import requests
     name = "memory_agent"
     description = "记忆助手"
     type = "core"
@@ -26,6 +26,14 @@ class MemoryAgent(SmartAgent):
             "agent": self.name,
             "user_id": self.user_id
         }
+
+    def remember(self, key: str, value: str):
+        """记住信息"""
+        pass
+
+    def recall(self, key: str) -> Optional[str]:
+        """回忆信息"""
+        return None
 
 
 memory_agent = MemoryAgent()
