@@ -31,3 +31,9 @@ memory:
     temperature: 0.1
     max_tokens: 512
     timeout: 30
+
+  capabilities:
+    - "任务执行"
+    - "命令运行"
+    - "操作执行"
+    - "技能调用"

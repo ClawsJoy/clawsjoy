@@ -30,7 +30,14 @@ memory:
 
   llm:
     provider: ollama
-    model: qwen2.5:3b
-    temperature: 0.3
-    max_tokens: 2048
+    model: qwen2.5:7b
+    temperature: 0.2
+    max_tokens: 4096
     timeout: 60
+
+  # 能力声明
+  capabilities:
+    - intelligent_routing
+    - workflow_orchestration
+    - task_decomposition
+    - error_handling

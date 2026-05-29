@@ -26,3 +26,17 @@ routing:
 memory:
   enabled: true
   path: memory/
+
+  # LLM 配置 - 协作需要较强推理
+  llm:
+    provider: ollama
+    model: qwen2.5:7b
+    temperature: 0.3
+    max_tokens: 2048
+    timeout: 90
+
+  # 能力声明
+  capabilities:
+    - task_decomposition
+    - multi_agent_coordination
+    - result_aggregation

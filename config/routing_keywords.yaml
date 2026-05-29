@@ -1,0 +1,81 @@
+# Agent 路由关键词配置
+# 格式: agent_name: [关键词列表]
+routing_keywords:
+  translate_agent:
+    - "翻译"
+    - "译成"
+    - "translate"
+  memory_agent:
+    - "记住"
+    - "忘记"
+    - "回忆"
+    - "记得"
+    - "之前说过"
+  video_agent:
+    - "剪辑"
+    - "裁剪"
+    - "拼接"
+    - "字幕"
+    - "转码"
+  youtube_agent:
+    - "youtube"
+    - "油管"
+    - "上传视频"
+    - "频道"
+  dialect_agent:
+    - "粤语"
+    - "方言"
+    - "闽南语"
+    - "四川话"
+    - "东北话"
+  writer_agent:
+    - "写文章"
+    - "写故事"
+    - "写小说"
+    - "文案"
+    - "润色"
+  director_agent:
+    - "导演"
+    - "策划"
+    - "剧本"
+    - "分镜"
+    - "漫剧"
+  analysis_agent:
+    - "分析"
+    - "统计"
+    - "趋势"
+    - "报告"
+    - "总结"
+    - "数据"
+  code_agent:
+    - "代码"
+    - "编程"
+    - "python"
+    - "函数"
+    - "算法"
+    - "写代码"
+  decision_agent:
+    - "决策"
+    - "选择"
+    - "判断"
+    - "哪个更好"
+    - "建议"
+  executor_agent:
+    - "执行"
+    - "运行"
+    - "启动"
+    - "部署"
+    - "执行任务"
+  collaboration_agent:
+    - "协作"
+    - "合作"
+    - "一起"
+    - "多个任务"
+    - "协同"
+  chat_agent:
+    - "聊天"
+    - "对话"
+    - "闲聊"
+    - "你好"
+    - "hello"
+    - "hi"
