@@ -24,7 +24,7 @@ class OrchestratorAgent(SmartAgent):
         print(f"[Orchestrator] 初始化完成")
 
     def smart_route(self, user_input: str) -> str:
-        """智能路由：根据用户输入选择最合适的 Agent"""
+        """关键词路由（降级方案）"""
         user_lower = user_input.lower()
         
         routing_rules = {
@@ -47,6 +47,29 @@ class OrchestratorAgent(SmartAgent):
         
         return best_match
 
+    def vector_route(self, user_input: str) -> str:
+        """基于向量的智能路由（排除自身）"""
+        try:
+            from core.lib.vector_knowledge_center import vector_knowledge_center
+            
+            # 检索最匹配的 Agent（排除 orchestrator）
+            results = vector_knowledge_center.find_best_agent_exclude_self(
+                query=user_input,
+                exclude_agent=self.name,
+                user_id=self.user_id,
+                top_k=3
+            )
+            
+            if results:
+                best_agent = results[0].get('agent_name')
+                print(f"[向量路由] '{user_input[:30]}...' → {best_agent} (相似度: {results[0].get('score', 0):.2f})")
+                return best_agent
+        except Exception as e:
+            print(f"[向量路由] 失败: {e}")
+        
+        # 降级到关键词路由
+        return self.smart_route(user_input)
+
     def auto_dispatch(self, user_input: str) -> dict:
         """自动路由并执行"""
         target = self.vector_route(user_input)
@@ -58,7 +81,6 @@ class OrchestratorAgent(SmartAgent):
             module_path = f"core.agents.builtin.{target_agent}"
             module = __import__(module_path, fromlist=[target_agent])
             
-            # 获取类名
             base_name = target_agent.replace('_agent', '')
             class_name = base_name[0].upper() + base_name[1:] + "Agent"
             agent_class = getattr(module, class_name)

@@ -45,6 +45,20 @@ class AgentRegistry:
             "status": "active"
         }
         self._save()
+        
+        # 注册到向量库（用于智能路由）
+        try:
+            from core.lib.vector_knowledge_center import vector_knowledge_center
+            capability_desc = f"Agent: {agent_id}\n类型: {agent_info.get('type', 'custom')}\n描述: {agent_info.get('description', '')}\n能力: {agent_info.get('capabilities', [])}"
+            vector_knowledge_center.add_agent_capability(
+                agent_name=agent_id,
+                capability_desc=capability_desc,
+                user_id=agent_info.get('user_id', 'system')
+            )
+            print(f"✅ 向量注册: {agent_id}")
+        except Exception as e:
+            print(f"⚠️ 向量注册失败: {e}")
+        
         return True
     
     def unregister(self, agent_id: str) -> bool:
@@ -77,9 +91,6 @@ class AgentRegistry:
         }
 
 
-agent_registry = AgentRegistry()
-
-
 if __name__ == "__main__":
     print(f"Agent 注册中心 v{agent_registry.VERSION}")
     
@@ -87,3 +98,5 @@ if __name__ == "__main__":
     agent_registry.register("test_agent", {"name": "测试Agent", "type": "test"})
     print(f"已注册: {agent_registry.list_all()}")
     print(f"统计: {agent_registry.get_stats()}")
+
+agent_registry = AgentRegistry()
