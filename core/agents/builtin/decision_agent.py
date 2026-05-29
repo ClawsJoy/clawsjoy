@@ -108,4 +108,3 @@ class DecisionAgent(SmartAgent):
         self._criteria = criteria
         return True
 
-decision_agent = DecisionAgent()

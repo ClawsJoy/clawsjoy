@@ -158,18 +158,86 @@ class OrchestratorAgent(SmartAgent):
             "status": "scheduled"
         }
 
-    def dispatch(self, task: str, target_agent: str) -> dict:
-        """分发任务到指定 Agent"""
-        return {
-            "task": task,
-            "target": target_agent,
-            "status": "dispatched"
-        }
-
+    def dispatch(self, task: str, target_agent: str, params: dict = None) -> dict:
+        """分发任务到指定 Agent 并真正执行（单例模式：直接实例化类）"""
+        try:
+            # 动态导入目标 Agent 模块
+            module_path = f"core.agents.builtin.{target_agent}"
+            module = __import__(module_path, fromlist=[target_agent])
+            
+            # 构造类名（首字母大写 + Agent）
+            class_name = target_agent[0].upper() + target_agent[1:] + "Agent"
+            
+            if hasattr(module, class_name):
+                agent_class = getattr(module, class_name)
+                agent = agent_class(self.user_id)
+            else:
+                # 如果按规则找不到类，尝试遍历模块找 Agent 类
+                agent_class = None
+                for attr_name in dir(module):
+                    if attr_name.endswith('Agent') and not attr_name.startswith('_'):
+                        agent_class = getattr(module, attr_name)
+                        break
+                if agent_class is None:
+                    raise AttributeError(f"找不到 Agent 类: {target_agent}")
+                agent = agent_class(self.user_id)
+            
+            # 执行任务
+            if params and 'action' in params:
+                method = getattr(agent, params['action'], None)
+                if method:
+                    result = method(**{k: v for k, v in params.items() if k != 'action'})
+                else:
+                    result = agent.process(task)
+            else:
+                result = agent.process(task)
+            
+            return {
+                "success": True,
+                "task": task,
+                "target": target_agent,
+                "result": result
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "task": task,
+                "target": target_agent,
+                "error": str(e)
+            }
     def get_agents(self) -> list:
         """获取所有可用 Agent"""
         return self.available_agents if hasattr(self, 'available_agents') else []
 
 
-# 全局实例
+    def smart_route(self, user_input: str) -> str:
+        """智能路由：根据用户输入选择最合适的 Agent"""
+        user_lower = user_input.lower()
+        
+        routing_rules = {
+            "code_agent": ["代码", "编程", "python", "函数", "写一个"],
+            "analysis_agent": ["分析", "统计", "趋势", "报告", "总结"],
+            "decision_agent": ["决策", "选择", "哪个更好", "建议"],
+            "chat_agent": ["聊天", "对话", "闲聊", "你好"],
+            "executor_agent": ["执行", "运行", "启动", "部署"],
+            "collaboration_agent": ["协作", "一起", "多个任务"],
+        }
+        
+        best_match = "chat_agent"
+        best_score = 0
+        
+        for agent, keywords in routing_rules.items():
+            score = sum(1 for kw in keywords if kw in user_lower)
+            if score > best_score:
+                best_score = score
+                best_match = agent
+        
+        return best_match
+
+    def auto_dispatch(self, user_input: str) -> dict:
+        """自动路由并执行"""
+        target = self.smart_route(user_input)
+        return self.dispatch(user_input, target)
+
+    # 全局实例
 orchestrator_agent = OrchestratorAgent()

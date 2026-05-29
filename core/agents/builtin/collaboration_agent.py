@@ -22,10 +22,10 @@ class CollaborationAgent(SmartAgent):
     def route_to_intelligent(self, user_input: str, previous_agents: List[str] = None) -> Dict:
         """智能路由到合适的 Agent"""
         previous_agents = previous_agents or []
-        
+
         # 简单的路由逻辑
         target = self.default_target
-        
+
         if "分析" in user_input or "统计" in user_input:
             target = "analysis_agent"
         elif "代码" in user_input or "编程" in user_input:
@@ -36,13 +36,13 @@ class CollaborationAgent(SmartAgent):
             target = "executor_agent"
         elif "决策" in user_input:
             target = "decision_agent"
-        
+
         # 避免循环调用
         if target in previous_agents:
             target = self.default_target
-        
+
         print(f"[协作] 转发到: {target}")
-        
+
         start = time.time()
         try:
             resp = requests.post(
@@ -52,7 +52,7 @@ class CollaborationAgent(SmartAgent):
             )
             duration_ms = (time.time() - start) * 1000
             result = resp.json() if resp.status_code == 200 else {"error": f"HTTP {resp.status_code}"}
-            
+
             self._save_record(target, user_input, result, duration_ms)
             return result
         except Exception as e:
@@ -82,6 +82,15 @@ class CollaborationAgent(SmartAgent):
             })
         except Exception as e:
             print(f"[协作] 广播失败: {e}")
+
+
+
+    def process(self, user_input: str, context: Optional[Dict] = None) -> Dict:
+        """处理协作请求"""
+        # 默认协作逻辑：路由到 orchestrator
+        from core.agents.builtin.orchestrator import OrchestratorAgent
+        orch = OrchestratorAgent(self.user_id)
+        return orch.dispatch(user_input, "orchestrator")
 
     def get_stats(self) -> Dict:
         """获取统计信息"""

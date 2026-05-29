@@ -21,7 +21,7 @@ class SmartAgent(CommunicableAgent):
     type = "core"
     version = "2.0.0"
 
-    def __init__(self, user_id: str = "default"):
+    def __init__(self, user_id: str = "default") -> None:
         super().__init__(user_id=user_id)
         self.birth_time = datetime.now()
         self.stats = {
@@ -36,7 +36,7 @@ class SmartAgent(CommunicableAgent):
         self.behavior = workspace_manager.get_behavior_config(self.name)
         print(f"[{self.name}] 智能体初始化完成 v{self.version}")
 
-    def _load_smart_config(self) -> dict:
+    def _load_smart_config(self) -> None:
         import yaml
         from pathlib import Path
         config_file = Path("config/smart_agent.yaml")
@@ -49,7 +49,7 @@ class SmartAgent(CommunicableAgent):
             "llm": {"enabled": True, "model": "qwen2.5:3b"}
         }
 
-    def get_life_status(self) -> Dict:
+    def get_life_status(self) -> Any:
         """获取生命状态"""
         return {
             "name": self.name,
@@ -59,7 +59,7 @@ class SmartAgent(CommunicableAgent):
             "status": "active"
         }
 
-    def record_experience(self, experience: Dict):
+    def record_experience(self, experience: Dict) -> Any:
         """记录经验"""
         experience["timestamp"] = datetime.now().isoformat()
         self.experiences.append(experience)
@@ -90,5 +90,49 @@ class SmartAgent(CommunicableAgent):
         except Exception as e:
             return {"error": str(e)}
 
+    def handle(self, user_input: str, context: dict = None) -> dict:
+        """处理用户输入（默认实现）"""
+        return self.process(user_input, context)
 
-smart_agent = SmartAgent()
+    def learn(self, feedback: dict) -> None:
+        """学习反馈（默认实现）"""
+        self.stats["learning_count"] += 1
+        return True
+
+    def get_memory(self, key: str, default=None) -> Any:
+        """获取记忆"""
+        return self._memory.get(key, default)
+
+    def set_memory(self, key: str, value) -> Any:
+        """设置记忆"""
+        self._memory[key] = value
+        self._save_memory()
+
+    def get_stats(self) -> None:
+        """获取统计信息"""
+        return {
+            "name": self.name,
+            "version": self.version,
+            "tasks_handled": self.stats.get("tasks_handled", 0),
+            "success_count": self.stats.get("success_count", 0),
+            "learning_count": self.stats.get("learning_count", 0)
+        }
+
+    def _save_memory(self) -> None:
+        """保存记忆到文件"""
+        import json
+        from pathlib import Path
+        memory_file = Path(self.memory_dir) / "memory.json"
+        try:
+            with open(memory_file, 'w') as f:
+                json.dump(self._memory, f, indent=2)
+        except Exception as e:
+            print(f"保存记忆失败: {e}")
+
+    def get_skill(self, skill_name: str) -> None:
+        """获取技能"""
+        return self.skills.get(skill_name, {})
+
+    def has_capability(self, capability: str) -> bool:
+        """检查是否有特定能力"""
+        return capability in self.capabilities
