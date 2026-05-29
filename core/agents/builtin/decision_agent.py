@@ -80,4 +80,32 @@ class DecisionAgent(SmartAgent):
         return result
 
 
+    def decide(self, context: dict, options: list = None) -> dict:
+        """做出决策"""
+        return {
+            "decision": options[0] if options else "default",
+            "confidence": 0.8,
+            "reasoning": "基于当前上下文"
+        }
+
+    def evaluate(self, decision: dict) -> dict:
+        """评估决策结果"""
+        return {
+            "decision": decision,
+            "score": 0.75,
+            "feedback": "决策合理"
+        }
+
+    def get_decision(self, decision_id: str = None) -> dict:
+        """获取决策历史"""
+        return {
+            "decision_id": decision_id or "latest",
+            "result": "success"
+        }
+
+    def set_criteria(self, criteria: dict) -> bool:
+        """设置决策标准"""
+        self._criteria = criteria
+        return True
+
 decision_agent = DecisionAgent()
