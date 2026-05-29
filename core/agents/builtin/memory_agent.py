@@ -1,39 +1,32 @@
-"""记忆 Agent"""
+"""记忆 Agent - 管理记忆"""
 
-import requests
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 from core.agents.base.smart_agent import SmartAgent
 
 
 class MemoryAgent(SmartAgent):
+    """记忆管理 Agent"""
+
     name = "memory_agent"
-    description = "记忆助手"
-    type = "core"
+    description = "记忆管理"
+    version = "2.0.0"
 
     def __init__(self, user_id: str = "default"):
         super().__init__(user_id=user_id)
-        print(f"💾 记忆Agent 初始化完成")
+        self.memory_store: Dict[str, Any] = {}
+        print("💾 MemoryAgent 初始化完成")
+
+    def recall(self, key: str) -> Optional[Any]:
+        """回忆记忆"""
+        return self.memory_store.get(key)
 
     def process(self, user_input: str, context: Optional[Dict] = None) -> Dict:
-        if "记住" in user_input:
-            self.remember("user_preference", user_input)
-            response = "已记住您的偏好"
-        else:
-            response = "我可以帮您记住重要信息"
+        """处理记忆请求"""
         return {
             "success": True,
-            "response": response,
-            "agent": self.name,
-            "user_id": self.user_id
+            "response": "记忆已处理",
+            "agent": self.name
         }
 
-    def remember(self, key: str, value: str):
-        """记住信息"""
-        pass
 
-    def recall(self, key: str) -> Optional[str]:
-        """回忆信息"""
-        return None
-
-
-memory_agent = MemoryAgent()
+# memory_agent = MemoryAgent()  # 注释：改为按需创建

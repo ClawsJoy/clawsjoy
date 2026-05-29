@@ -44,4 +44,4 @@ class TranslateAgent(SmartAgent):
         return self.translate(user_input)
 
 
-translate_agent = TranslateAgent()
+# translate_agent = TranslateAgent()  # 注释：改为按需创建

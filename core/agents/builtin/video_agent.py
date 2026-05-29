@@ -23,4 +23,4 @@ class VideoAgent(SmartAgent):
         }
 
 
-video_agent = VideoAgent()
+# video_agent = VideoAgent()  # 注释：改为按需创建

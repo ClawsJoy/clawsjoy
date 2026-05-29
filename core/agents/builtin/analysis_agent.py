@@ -99,4 +99,4 @@ class AnalysisAgent(SmartAgent):
             return {"success": False, "error": str(e)}
 
 
-analysis_agent = AnalysisAgent()
+# analysis_agent = AnalysisAgent()  # 注释：改为按需创建

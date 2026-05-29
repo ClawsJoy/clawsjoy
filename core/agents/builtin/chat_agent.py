@@ -37,4 +37,4 @@ class ChatAgent(SmartAgent):
         }
 
 
-chat_agent = ChatAgent()
+# chat_agent = ChatAgent()  # 注释：改为按需创建

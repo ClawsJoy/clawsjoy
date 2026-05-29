@@ -39,4 +39,4 @@ class AnalystAgent(SmartAgent):
         }
 
 
-analyst_agent = AnalystAgent()
+# analyst_agent = AnalystAgent()  # 注释：改为按需创建

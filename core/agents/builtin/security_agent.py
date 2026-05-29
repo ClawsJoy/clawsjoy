@@ -24,4 +24,4 @@ class SecurityAgent(SmartAgent):
         return {"name": self.name, "version": self.version}
 
 
-security_agent = SecurityAgent()
+# security_agent = SecurityAgent()  # 注释：改为按需创建

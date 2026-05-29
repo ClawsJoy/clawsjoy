@@ -66,4 +66,4 @@ class MemoryManagerAgent(SmartAgent):
         
         return {"success": False, "error": f"未知操作: {action}"}
 
-memory_manager = MemoryManagerAgent()
+# memory_manager = MemoryManagerAgent()  # 注释：改为按需创建

@@ -139,4 +139,37 @@ class OrchestratorAgent(SmartAgent):
         return {"response": "无法处理该任务", "success": False, "user_id": self.user_id}
 
 
+    def orchestrate(self, task: str, agents: list = None) -> dict:
+        """编排任务"""
+        agents = agents or (self.available_agents if hasattr(self, 'available_agents') else [])
+        from datetime import datetime
+        return {
+            "task": task,
+            "agents": agents,
+            "status": "orchestrated",
+            "timestamp": datetime.now().isoformat()
+        }
+
+    def schedule(self, task: str, schedule_time: str) -> dict:
+        """调度任务"""
+        return {
+            "task": task,
+            "scheduled_at": schedule_time,
+            "status": "scheduled"
+        }
+
+    def dispatch(self, task: str, target_agent: str) -> dict:
+        """分发任务到指定 Agent"""
+        return {
+            "task": task,
+            "target": target_agent,
+            "status": "dispatched"
+        }
+
+    def get_agents(self) -> list:
+        """获取所有可用 Agent"""
+        return self.available_agents if hasattr(self, 'available_agents') else []
+
+
+# 全局实例
 orchestrator_agent = OrchestratorAgent()

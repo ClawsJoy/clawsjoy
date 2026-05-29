@@ -88,7 +88,7 @@ class LearningAgent:
         }
 
 
-learning_agent = LearningAgent()
+# learning_agent = LearningAgent()  # 注释：改为按需创建
 
 
 if __name__ == "__main__":

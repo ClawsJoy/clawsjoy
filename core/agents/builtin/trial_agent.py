@@ -228,4 +228,4 @@ class TrialAgent:
         print(f"📚 学习成功经验: {experience['goal'][:50]}...")
 
 
-trial_agent = TrialAgent()
+# trial_agent = TrialAgent()  # 注释：改为按需创建

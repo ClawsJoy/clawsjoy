@@ -23,4 +23,4 @@ class YouTubeAgent(SmartAgent):
         }
 
 
-youtube_agent = YouTubeAgent()
+# youtube_agent = YouTubeAgent()  # 注释：改为按需创建

@@ -188,7 +188,7 @@ class CollectorAgent(SmartAgent):
         return None
 
 
-collector_agent = CollectorAgent()
+# collector_agent = CollectorAgent()  # 注释：改为按需创建
 
 
 if __name__ == "__main__":

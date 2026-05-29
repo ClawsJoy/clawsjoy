@@ -41,4 +41,4 @@ class CodeAgent(SmartAgent):
         }
 
 
-code_agent = CodeAgent()
+# code_agent = CodeAgent()  # 注释：改为按需创建

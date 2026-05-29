@@ -22,4 +22,4 @@ class HermesAgent(SmartAgent):
         return {"name": self.name, "version": self.version}
 
 
-hermes_agent = HermesAgent()
+# hermes_agent = HermesAgent()  # 注释：改为按需创建

@@ -20,7 +20,7 @@ class FrontendAgent(SmartAgent):
         return {"success": True, "type": data_type}
 
 
-frontend_agent = FrontendAgent()
+# frontend_agent = FrontendAgent()  # 注释：改为按需创建
 agent_registry.register("frontend_agent", {
     "name": "前端采集Agent",
     "type": "data_collector",

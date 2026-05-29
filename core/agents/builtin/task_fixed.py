@@ -35,4 +35,4 @@ class TaskFixedAgent:
         return f"处理完成: {user_input[:50]}"
 
 
-task_fixed = TaskFixedAgent()
+# task_fixed = TaskFixedAgent()  # 注释：改为按需创建

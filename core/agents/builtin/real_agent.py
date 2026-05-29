@@ -136,7 +136,7 @@ class RealAgent:
         }
 
 
-real_agent = RealAgent()
+# real_agent = RealAgent()  # 注释：改为按需创建
 
 
 if __name__ == "__main__":

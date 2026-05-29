@@ -94,4 +94,4 @@ class CollaborationAgent(SmartAgent):
 
 
 # 全局实例
-collaboration_agent = CollaborationAgent()
+# collaboration_agent = CollaborationAgent()  # 注释：改为按需创建

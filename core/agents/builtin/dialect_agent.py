@@ -27,4 +27,4 @@ class DialectAgent(SmartAgent):
         return {"name": self.name, "version": self.version, "supported_dialects": len(self.dialects)}
 
 
-dialect_agent = DialectAgent()
+# dialect_agent = DialectAgent()  # 注释：改为按需创建

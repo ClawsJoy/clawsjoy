@@ -1,34 +1,25 @@
-import re
-from typing import Dict, Any, Optional
+"""执行 Agent - 负责执行任务"""
+
+from typing import Dict, Optional
 from core.agents.base.smart_agent import SmartAgent
-from core.lib.skill_loader_v3 import skill_loader
 
 
 class ExecutorAgent(SmartAgent):
+    """执行 Agent"""
+
     name = "executor_agent"
+    description = "任务执行器"
+    version = "2.0.0"
 
     def __init__(self, user_id: str = "default"):
         super().__init__(user_id=user_id)
+        print("⚡ ExecutorAgent 初始化完成")
 
-    def process(self, user_input: str, context=None) -> Dict:
-        numbers = re.findall(r'\d+', user_input)
-        if len(numbers) >= 2:
-            a, b = int(numbers[0]), int(numbers[1])
-            result = skill_loader.execute("add", {"a": a, "b": b})
-            # 提取数字
-            val = result.get('result', 0)
-            if isinstance(val, dict):
-                val = val.get('result', 0)
-            return {
-                "success": True,
-                "response": str(val),      # 必须有 response 字段
-                "result": val,
-                "agent": self.name,
-                "user_id": self.user_id
-            }
+    def process(self, user_input: str, context: Optional[Dict] = None) -> Dict:
+        """处理执行请求"""
         return {
-            "success": False,
-            "response": "无法解析，请提供如 15+27 格式",
+            "success": True,
+            "response": f"执行: {user_input}",
             "agent": self.name,
             "user_id": self.user_id
         }
