@@ -25,7 +25,7 @@ patterns:
     level: "high"
   
   # ===== API 密钥类 =====
-  api_key:
+  api_key: "your-api-key"
     regex: "(api[_-]?key|apikey)[:=]\\s*['\"]?[a-zA-Z0-9_\\-]{16,64}['\"]?"
     replacement: "[API_KEY]"
     level: "high"
@@ -62,7 +62,7 @@ patterns:
     level: "high"
   
   # ===== 密码类 =====
-  password:
+  password: "your-password"
     regex: "(password|pwd|passwd)[:=]\\s*['\"]?\\S+['\"]?"
     replacement: "[PASSWORD]"
     level: "high"

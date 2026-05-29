@@ -4,7 +4,7 @@ email:
   smtp_server: "smtp.qq.com"
   smtp_port: 587
   sender: "your_email@qq.com"
-  password: "your_auth_code"
+  password: "your-password"
   receivers:
     - "admin@clawsjoy.com"
 

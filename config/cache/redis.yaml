@@ -4,7 +4,7 @@ redis:
   host: "localhost"
   port: 6379
   db: 0
-  password: ""
+  password: "your-password"
   # 会话配置
   session_ttl: 300           # 5分钟
   max_sessions: 10000
