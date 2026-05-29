@@ -109,4 +109,8 @@ class PersonalButlerV2(SmartAgent):
         }
 
 
+    def get_preference(self, key: str, default=None):
+        """获取单个偏好"""
+        return self.preferences.get(key, default)
+
 personal_butler = PersonalButlerV2()
