@@ -1,4 +1,11 @@
-"""Agent 记忆自检模块 - 让 Agent 主动检查自己的记忆"""
+#!/usr/bin/env python3
+"""Agent Memory Self Check - Agent Memory Self Check 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import json
 from pathlib import Path

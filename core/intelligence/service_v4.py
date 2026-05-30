@@ -1,4 +1,11 @@
-"""统一智能服务 v4.0.0 - 整合所有智能能力"""
+#!/usr/bin/env python3
+"""Service V4 - Service V4 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import sys
 from pathlib import Path

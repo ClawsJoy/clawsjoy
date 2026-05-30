@@ -1,4 +1,11 @@
-"""多Agent协作模块"""
+#!/usr/bin/env python3
+"""Init - Init 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from .orchestrator import CollaborationOrchestrator
 from .session import CollaborationSession
 

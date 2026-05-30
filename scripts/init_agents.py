@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""初始化 Agent 注册（启动时执行一次）"""
+#!/usr/bin/env python3
+"""Init Agents - Init Agents 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
 
 import sys
 sys.path.insert(0, '.')

@@ -1,4 +1,11 @@
-"""多模态支持 - 图像理解"""
+#!/usr/bin/env python3
+"""Image - Image 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import base64
 from pathlib import Path

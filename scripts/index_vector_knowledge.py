@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""自动索引技能和 Agent 到向量知识中心"""
+#!/usr/bin/env python3
+"""Index Vector Knowledge - Index Vector Knowledge 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
 
 import sys
 sys.path.insert(0, '.')

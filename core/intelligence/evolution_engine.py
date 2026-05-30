@@ -1,4 +1,11 @@
-"""自我进化引擎 - 从经验中学习并改进自身"""
+#!/usr/bin/env python3
+"""Evolution Engine - Evolution Engine 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import json
 import hashlib
 from pathlib import Path

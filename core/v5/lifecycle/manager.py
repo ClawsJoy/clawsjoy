@@ -1,4 +1,11 @@
-"""生命周期管理器 - 6/6 闭环"""
+#!/usr/bin/env python3
+"""Manager - Manager 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from enum import Enum
 from typing import Dict, List

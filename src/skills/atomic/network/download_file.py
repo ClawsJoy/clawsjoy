@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Download File - Download File 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from lib.smart_config import smart_config
 """下载文件技能"""
 class Download_fileSkill:

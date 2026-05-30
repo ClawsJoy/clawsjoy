@@ -1,4 +1,11 @@
-"""完全自主 Agent - 自己设定目标、自己执行、自己学习"""
+#!/usr/bin/env python3
+"""Autonomous Agent - Autonomous Agent 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import time
 import json

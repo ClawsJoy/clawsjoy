@@ -1,4 +1,11 @@
-"""智能执行 - 自动选择和组合技能"""
+#!/usr/bin/env python3
+"""Smart Execute - Smart Execute 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 class SmartExecuteSkill:
     def execute(self, params):

@@ -1,4 +1,11 @@
-"""统一向量入口 API"""
+#!/usr/bin/env python3
+"""Unified Vector Api - Unified Vector Api 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from flask import Blueprint, request, jsonify
 from pathlib import Path

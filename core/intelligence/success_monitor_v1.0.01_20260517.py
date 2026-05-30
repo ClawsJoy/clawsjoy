@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Success Monitor V1.0.01 20260517 - Success Monitor V1.0.01 20260517 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from core.lib.constants import PROJECT_ROOT
 #!/usr/bin/env python3
 """成功率监控器 v1.0.01 - 配置驱动，从日志读取真实数据"""

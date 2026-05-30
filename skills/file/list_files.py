@@ -1,4 +1,11 @@
-"""列出文件"""
+#!/usr/bin/env python3
+"""List Files - List Files 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from pathlib import Path
 class ListFilesSkill:
     def execute(self, params):

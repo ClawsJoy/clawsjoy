@@ -1,4 +1,11 @@
-"""向量技能匹配 - 语义理解"""
+#!/usr/bin/env python3
+"""Vector Skill Matcher - Vector Skill Matcher 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from core.lib.vector_knowledge_center import vector_knowledge_center
 

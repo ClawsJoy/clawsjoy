@@ -1,4 +1,11 @@
-"""代码 Agent"""
+#!/usr/bin/env python3
+"""Code - Code 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from core.v5.agent.base import BaseAgent
 from core.v5.llm.client import llm
 from typing import Dict

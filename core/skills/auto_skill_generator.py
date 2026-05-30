@@ -1,4 +1,11 @@
-"""原子技能自生成器 - OpenClaw 规范 + 标准化参数传递"""
+#!/usr/bin/env python3
+"""Auto Skill Generator - Auto Skill Generator 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import json
 from pathlib import Path

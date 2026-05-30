@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Base Skill - Base Skill 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from lib.smart_config import smart_config
 """原子技能基类"""
 from abc import ABC, abstractmethod

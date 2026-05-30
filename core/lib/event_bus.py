@@ -1,4 +1,11 @@
-"""事件总线 - 事件驱动架构"""
+#!/usr/bin/env python3
+"""Event Bus - Event Bus 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from typing import Dict, List, Callable, Any
 from collections import defaultdict
 

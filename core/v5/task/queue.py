@@ -1,4 +1,11 @@
-"""任务队列 - 异步任务处理"""
+#!/usr/bin/env python3
+"""Queue - Queue 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import threading
 import queue

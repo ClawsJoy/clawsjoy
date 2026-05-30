@@ -1,4 +1,11 @@
-"""绘画指导"""
+#!/usr/bin/env python3
+"""Drawing - Drawing 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class DrawingSkill:
     def execute(self, params):
         subject = params.get('subject', 'cat')

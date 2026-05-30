@@ -1,4 +1,11 @@
-"""知识问答 - 基于向量检索的知识问答"""
+#!/usr/bin/env python3
+"""Knowledge Qa - Knowledge Qa 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import sys
 from lib.smart_config import smart_config
 sys.path.insert(0, 'str(smart_config.ROOT)')

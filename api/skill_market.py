@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Skill Market - Skill Market 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from lib.route_handlers import register
 """技能市场 API"""
 

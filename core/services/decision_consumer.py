@@ -1,4 +1,11 @@
-"""决策师消费者 - 自动处理 + 主动推送"""
+#!/usr/bin/env python3
+"""Decision Consumer - Decision Consumer 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import threading
 import time

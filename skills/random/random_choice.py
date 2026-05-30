@@ -1,4 +1,11 @@
-"""随机选择"""
+#!/usr/bin/env python3
+"""Random Choice - Random Choice 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import random
 class RandomChoiceSkill:
     def execute(self, params):

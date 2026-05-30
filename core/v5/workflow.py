@@ -1,4 +1,11 @@
-"""工作流引擎 - 节点式编排（类似 ComfyUI）"""
+#!/usr/bin/env python3
+"""Workflow - Workflow 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import json
 import time

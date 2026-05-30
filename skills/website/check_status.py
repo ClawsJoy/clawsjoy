@@ -1,4 +1,11 @@
-"""检查网站状态"""
+#!/usr/bin/env python3
+"""Check Status - Check Status 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import requests
 class CheckWebsiteSkill:
     def execute(self, params):

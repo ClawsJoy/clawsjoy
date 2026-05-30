@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""计算器执行脚本"""
+#!/usr/bin/env python3
+"""Execute - Execute 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
 
 def execute(expression: str) -> dict:
     """执行计算"""

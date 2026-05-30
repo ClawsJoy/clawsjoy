@@ -1,4 +1,11 @@
-"""原子技能 - 秒级响应，不调用 LLM"""
+#!/usr/bin/env python3
+"""Atomic Skills - Atomic Skills 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import random
 import datetime

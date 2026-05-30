@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""简化决策引擎 - 每小时记录一次"""
+#!/usr/bin/env python3
+"""Simple Decision - Simple Decision 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
 import sys
 from core.lib.unified_config import unified_config
 sys.path.insert(0, smart_config.ROOT)

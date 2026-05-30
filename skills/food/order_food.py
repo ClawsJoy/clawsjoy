@@ -1,4 +1,11 @@
-"""点外卖"""
+#!/usr/bin/env python3
+"""Order Food - Order Food 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class OrderFoodSkill:
     def execute(self, params):
         items = params.get('items', [])

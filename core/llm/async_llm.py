@@ -1,4 +1,11 @@
-"""异步 LLM 客户端 - 支持连接池和超时"""
+#!/usr/bin/env python3
+"""Async Llm - Async Llm 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import asyncio
 import aiohttp

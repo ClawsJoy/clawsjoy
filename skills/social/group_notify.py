@@ -1,4 +1,11 @@
-"""群发通知"""
+#!/usr/bin/env python3
+"""Group Notify - Group Notify 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class GroupNotifySkill:
     def execute(self, params):
         group = params.get('group', '')

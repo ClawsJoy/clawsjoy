@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Task Quality Scorer V1 0 01 20260517 - Task Quality Scorer V1 0 01 20260517 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from core.lib.unified_config import unified_config
 
 from core.lib.unified_config import unified_config

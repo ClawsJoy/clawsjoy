@@ -1,4 +1,11 @@
-"""代码 Agent - 专注代码生成"""
+#!/usr/bin/env python3
+"""Code Agent - Code Agent 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from typing import Dict, Optional
 from core.agents.base.smart_agent import SmartAgent

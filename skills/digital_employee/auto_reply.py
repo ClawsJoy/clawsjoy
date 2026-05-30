@@ -1,4 +1,11 @@
-"""自动回复"""
+#!/usr/bin/env python3
+"""Auto Reply - Auto Reply 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class AutoReplySkill:
     def execute(self, params):
         message = params.get('message', '')

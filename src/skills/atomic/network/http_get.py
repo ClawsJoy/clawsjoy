@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Http Get - Http Get 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from lib.smart_config import smart_config
 """HTTP GET请求技能"""
 class Http_getSkill:

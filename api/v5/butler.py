@@ -1,4 +1,11 @@
-"""私人管家 v5.0 API"""
+#!/usr/bin/env python3
+"""Butler - Butler 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from flask import Blueprint, request, jsonify
 from core.v5.agent.butler import create_butler
 

@@ -1,4 +1,11 @@
-"""多 Agent 协作编排器 - 借鉴旧版 orchestrator"""
+#!/usr/bin/env python3
+"""Orchestrator - Orchestrator 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from typing import Dict, List, Any
 import threading

@@ -1,4 +1,11 @@
-"""写入文件"""
+#!/usr/bin/env python3
+"""Write File - Write File 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class WriteFileSkill:
     def execute(self, params):
         path = params.get('path', '')

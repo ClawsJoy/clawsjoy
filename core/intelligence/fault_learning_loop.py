@@ -1,4 +1,11 @@
-"""故障学习循环"""
+#!/usr/bin/env python3
+"""Fault Learning Loop - Fault Learning Loop 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import requests
 from datetime import datetime

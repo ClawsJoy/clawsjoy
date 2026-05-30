@@ -1,4 +1,11 @@
-"""并行执行器 - 同时执行多个独立目标"""
+#!/usr/bin/env python3
+"""Parallel Executor - Parallel Executor 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import threading
 import time

@@ -1,4 +1,11 @@
-"""智能爬虫 - 种子URL自动扩展"""
+#!/usr/bin/env python3
+"""Smart Crawler - Smart Crawler 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import sys
 from lib.smart_config import smart_config
 sys.path.insert(0, 'str(smart_config.ROOT)')

@@ -1,4 +1,11 @@
-"""统一向量管理器 - 配置驱动的向量操作入口"""
+#!/usr/bin/env python3
+"""Unified Vector - Unified Vector 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from core.lib.unified_config import unified_config
 from core.tenant.tenant_vector_index import tenant_index_manager

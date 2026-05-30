@@ -1,4 +1,11 @@
-"""闭环流程配置 - unified_config 代理"""
+#!/usr/bin/env python3
+"""Closed Loop Config - Closed Loop Config 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from core.lib.unified_config import unified_config
 
 

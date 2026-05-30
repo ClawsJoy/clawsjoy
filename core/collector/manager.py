@@ -1,4 +1,11 @@
-"""采集管理器 - 统一采集入口"""
+#!/usr/bin/env python3
+"""Manager - Manager 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import time
 import requests
 from pathlib import Path

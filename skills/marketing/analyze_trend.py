@@ -1,4 +1,11 @@
-"""分析市场趋势"""
+#!/usr/bin/env python3
+"""Analyze Trend - Analyze Trend 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class AnalyzeTrendSkill:
     def execute(self, params):
         industry = params.get('industry', '')

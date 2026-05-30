@@ -1,4 +1,11 @@
-"""导航规划"""
+#!/usr/bin/env python3
+"""Navigation - Navigation 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class NavigationSkill:
     def execute(self, params):
         origin = params.get('origin', '')

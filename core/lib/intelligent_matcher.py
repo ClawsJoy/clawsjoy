@@ -1,4 +1,11 @@
-"""智能匹配器 - 统一语义发现入口"""
+#!/usr/bin/env python3
+"""Intelligent Matcher - Intelligent Matcher 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from core.tenant.tenant_vector_index import tenant_index_manager
 from core.lib.unified_config import unified_config

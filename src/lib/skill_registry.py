@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Skill Registry - Skill Registry 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from lib.smart_config import smart_config
 """技能注册器 - 符合 OpenClaw 规范"""
 import json

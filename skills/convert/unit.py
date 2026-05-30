@@ -1,4 +1,11 @@
-"""单位换算"""
+#!/usr/bin/env python3
+"""Unit - Unit 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class UnitConvertSkill:
     def execute(self, params):
         value = params.get('value', 0)

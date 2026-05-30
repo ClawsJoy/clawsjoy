@@ -1,4 +1,11 @@
-"""热门话题采集技能 - 支持多平台"""
+#!/usr/bin/env python3
+"""Hot Topic Crawler - Hot Topic Crawler 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import requests
 import re
 from datetime import datetime, timedelta

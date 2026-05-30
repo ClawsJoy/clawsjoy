@@ -1,4 +1,11 @@
-"""管理员 API - 统一管理接口"""
+#!/usr/bin/env python3
+"""Admin Api - Admin Api 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from flask import Blueprint, request, jsonify
 from core.agents.agent_manager import agent_manager

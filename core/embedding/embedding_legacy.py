@@ -1,4 +1,11 @@
-"""兼容 ChromaDB 0.4.22 的 Embedding 函数"""
+#!/usr/bin/env python3
+"""Embedding Legacy - Embedding Legacy 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import requests
 from typing import List

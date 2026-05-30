@@ -1,4 +1,11 @@
-"""本地向量存储 - 使用 Ollama embedding"""
+#!/usr/bin/env python3
+"""Vector Store Local - Vector Store Local 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import json
 import numpy as np

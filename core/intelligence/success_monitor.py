@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""成功率监控 - 实时监控并预警"""
+#!/usr/bin/env python3
+"""Success Monitor - Success Monitor 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
 import sys
 from core.lib.unified_config import unified_config
 sys.path.insert(0, smart_config.ROOT)

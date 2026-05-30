@@ -1,4 +1,11 @@
-"""知识自增长器 - 从交互中学习新知识"""
+#!/usr/bin/env python3
+"""Knowledge Grower - Knowledge Grower 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import json
 import re

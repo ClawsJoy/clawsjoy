@@ -1,9 +1,11 @@
-"""
-to_upper 技能 - 字符串转大写
+#!/usr/bin/env python3
+"""To Upper - To Upper 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
 """
 
-class ToUpperSkill:
-    """转大写技能"""
     
     def __init__(self):
         self.name = "to_upper"

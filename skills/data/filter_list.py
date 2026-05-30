@@ -1,4 +1,11 @@
-"""列表过滤"""
+#!/usr/bin/env python3
+"""Filter List - Filter List 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class FilterListSkill:
     def execute(self, params):
         items = params.get('items', [])

@@ -1,4 +1,11 @@
-"""获取天气信息"""
+#!/usr/bin/env python3
+"""Get Weather - Get Weather 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class GetWeatherSkill:
     def execute(self, params):
         city = params.get('city', '上海')

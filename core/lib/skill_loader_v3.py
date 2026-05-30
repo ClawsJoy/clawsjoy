@@ -1,4 +1,11 @@
-"""统一技能加载器 - 直接扫描 skills 目录"""
+#!/usr/bin/env python3
+"""Skill Loader V3 - Skill Loader V3 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from pathlib import Path
 from typing import Dict, List, Optional

@@ -1,4 +1,11 @@
-"""Agent 通信系统初始化模块"""
+#!/usr/bin/env python3
+"""Agent Communication Init - Agent Communication Init 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import threading
 from typing import Dict, Any
 

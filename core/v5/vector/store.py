@@ -1,4 +1,11 @@
-"""向量存储 - 语义搜索"""
+#!/usr/bin/env python3
+"""Store - Store 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import json
 import numpy as np

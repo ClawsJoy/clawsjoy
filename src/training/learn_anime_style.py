@@ -1,4 +1,11 @@
-"""学习动画版《遮天》风格"""
+#!/usr/bin/env python3
+"""Learn Anime Style - Learn Anime Style 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import json
 import sys
 from lib.smart_config import smart_config

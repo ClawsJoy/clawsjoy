@@ -1,4 +1,11 @@
-"""SVG 图表生成器"""
+#!/usr/bin/env python3
+"""Init - Init 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from .generate import execute
 
 __all__ = ['execute']

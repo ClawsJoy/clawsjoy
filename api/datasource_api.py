@@ -1,4 +1,11 @@
-"""数据源管理API - 分析师/决策Agent数据权限"""
+#!/usr/bin/env python3
+"""Datasource Api - Datasource Api 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from flask import Blueprint, request, jsonify
 import yaml
 from pathlib import Path

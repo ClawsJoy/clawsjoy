@@ -1,4 +1,11 @@
-"""采集管理中心 - 安全合规采集"""
+#!/usr/bin/env python3
+"""Init - Init 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from .manager import CollectorManager
 from .safety import SafetyChecker
 

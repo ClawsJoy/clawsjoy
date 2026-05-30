@@ -1,4 +1,11 @@
-"""Agent 类型定义"""
+#!/usr/bin/env python3
+"""Types - Types 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from typing import TypedDict, List, Optional
 from datetime import datetime

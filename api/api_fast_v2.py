@@ -1,4 +1,11 @@
-"""FastAPI 版本 - 新版 ChromaDB"""
+#!/usr/bin/env python3
+"""Api Fast V2 - Api Fast V2 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware

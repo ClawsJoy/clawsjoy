@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""ClawsJoy 简化版 - 不依赖复杂记忆"""
+#!/usr/bin/env python3
+"""Clawsjoy Simple - Clawsjoy Simple 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
 
 import sys
 import re

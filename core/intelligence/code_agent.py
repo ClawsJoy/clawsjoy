@@ -1,4 +1,11 @@
-"""Code Agent - 智能命令行助手"""
+#!/usr/bin/env python3
+"""Code Agent - Code Agent 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import readline
 import sys
 from pathlib import Path

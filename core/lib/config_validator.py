@@ -1,4 +1,11 @@
-"""配置校验器 - 防止配置错误"""
+#!/usr/bin/env python3
+"""Config Validator - Config Validator 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import yaml
 from pathlib import Path
 from typing import List, Dict, Any

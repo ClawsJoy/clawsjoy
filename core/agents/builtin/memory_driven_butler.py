@@ -1,4 +1,11 @@
-"""记忆驱动管家 - 基于记忆的管家服务"""
+#!/usr/bin/env python3
+"""Memory Driven Butler - Memory Driven Butler 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from typing import Dict, Optional, Any
 from core.agents.base.smart_agent import SmartAgent

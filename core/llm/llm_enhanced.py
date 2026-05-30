@@ -1,4 +1,11 @@
-"""增强版 LLM 客户端 - 支持缓存、重试、降级"""
+#!/usr/bin/env python3
+"""Llm Enhanced - Llm Enhanced 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import requests
 import time

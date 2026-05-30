@@ -1,4 +1,11 @@
-"""预订会议室"""
+#!/usr/bin/env python3
+"""Book Room - Book Room 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class BookRoomSkill:
     def execute(self, params):
         room = params.get('room', 'A101')

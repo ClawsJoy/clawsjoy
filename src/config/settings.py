@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Settings - Settings 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from lib.smart_config import smart_config
 """统一配置 - 消除硬编码"""
 import os

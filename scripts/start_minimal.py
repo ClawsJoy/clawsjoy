@@ -1,4 +1,11 @@
-"""最小化启动 - 仅测试核心功能"""
+#!/usr/bin/env python3
+"""Start Minimal - Start Minimal 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from flask import Flask, jsonify, request
 
 app = Flask(__name__)

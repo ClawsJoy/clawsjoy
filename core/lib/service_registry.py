@@ -1,4 +1,11 @@
-"""服务注册与发现 - 轻量级实现"""
+#!/usr/bin/env python3
+"""Service Registry - Service Registry 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import json
 import requests

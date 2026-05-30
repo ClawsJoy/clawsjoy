@@ -1,4 +1,11 @@
-"""工作流执行器 - 配置驱动"""
+#!/usr/bin/env python3
+"""Workflow Executor - Workflow Executor 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import sys
 import re

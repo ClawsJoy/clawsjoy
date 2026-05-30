@@ -1,4 +1,11 @@
-"""线程池监控工具"""
+#!/usr/bin/env python3
+"""Thread Monitor - Thread Monitor 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import threading
 import time

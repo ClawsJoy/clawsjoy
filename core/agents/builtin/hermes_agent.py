@@ -1,4 +1,11 @@
-"""Hermes Agent - 消息传递和通信"""
+#!/usr/bin/env python3
+"""Hermes Agent - Hermes Agent 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from typing import Dict, Optional
 from core.agents.base.smart_agent import SmartAgent

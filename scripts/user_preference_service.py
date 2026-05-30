@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""用户偏好存储服务 - 加密存储"""
+#!/usr/bin/env python3
+"""User Preference Service - User Preference Service 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS

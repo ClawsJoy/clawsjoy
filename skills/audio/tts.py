@@ -1,4 +1,11 @@
-"""文本转语音技能"""
+#!/usr/bin/env python3
+"""Tts - Tts 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 class TTSSkill:
     name = "tts"

@@ -1,4 +1,11 @@
-"""服务注册中心 V2 - 支持心跳保活、版本管理、自动剔除"""
+#!/usr/bin/env python3
+"""Service Registry V2 - Service Registry V2 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import json
 import time
 import threading

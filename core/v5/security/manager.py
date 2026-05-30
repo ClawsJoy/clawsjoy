@@ -1,4 +1,11 @@
-"""安全模块 - 权限管理、输入验证"""
+#!/usr/bin/env python3
+"""Manager - Manager 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import re
 from typing import Dict, List, Optional

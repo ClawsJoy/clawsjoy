@@ -1,4 +1,11 @@
-"""LLM 客户端 - v5 独立"""
+#!/usr/bin/env python3
+"""Client - Client 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import requests
 import time
 import yaml

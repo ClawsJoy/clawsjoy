@@ -1,4 +1,11 @@
-"""技能自生成器 - 从成功组合中学习并生成新技能"""
+#!/usr/bin/env python3
+"""Skill Generator - Skill Generator 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import json
 import re

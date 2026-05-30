@@ -1,4 +1,11 @@
-"""Chat Agent - 通用对话助手"""
+#!/usr/bin/env python3
+"""Chat Agent - Chat Agent 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from typing import Dict, Optional
 import random

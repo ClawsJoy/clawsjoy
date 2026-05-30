@@ -1,4 +1,11 @@
-"""使用 ChromaDB 官方支持的 embedding 方式"""
+#!/usr/bin/env python3
+"""Embedding Official - Embedding Official 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from sentence_transformers import SentenceTransformer
 from typing import List

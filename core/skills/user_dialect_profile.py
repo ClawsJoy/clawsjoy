@@ -1,4 +1,11 @@
-"""用户方言画像 - 学习每个用户的方法"""
+#!/usr/bin/env python3
+"""User Dialect Profile - User Dialect Profile 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import json
 from pathlib import Path

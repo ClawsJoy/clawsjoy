@@ -1,4 +1,11 @@
-"""比价"""
+#!/usr/bin/env python3
+"""Price Compare - Price Compare 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class PriceCompareSkill:
     def execute(self, params):
         product = params.get('product', '')

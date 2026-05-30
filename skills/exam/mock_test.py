@@ -1,4 +1,11 @@
-"""模拟考试"""
+#!/usr/bin/env python3
+"""Mock Test - Mock Test 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class MockTestSkill:
     def execute(self, params):
         subject = params.get('subject', 'math')

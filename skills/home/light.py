@@ -1,4 +1,11 @@
-"""灯光控制"""
+#!/usr/bin/env python3
+"""Light - Light 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class LightSkill:
     def execute(self, params):
         room = params.get('room', 'living_room')

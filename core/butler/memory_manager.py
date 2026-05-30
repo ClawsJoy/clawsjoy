@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Memory Manager - Memory Manager 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from core.lib.config_helper import get_data_root
 """智能记忆管理器 - L0-L4 渐进式记忆"""
 import json

@@ -1,4 +1,11 @@
-"""相似度优化器 - 保持原始相似度"""
+#!/usr/bin/env python3
+"""Similarity Optimizer - Similarity Optimizer 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from typing import List, Dict
 

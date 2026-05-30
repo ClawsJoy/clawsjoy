@@ -1,4 +1,11 @@
-"""智能决策执行器 - 大脑完全自主决策"""
+#!/usr/bin/env python3
+"""Decision Executor - Decision Executor 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import json
 import requests
 import subprocess

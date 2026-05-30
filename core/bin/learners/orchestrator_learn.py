@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Orchestrator Learn - Orchestrator Learn 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from core.lib.unified_config import unified_config
 #!/usr/bin/env python3
 """编排 Agent 学习 - 学习任务执行模式"""

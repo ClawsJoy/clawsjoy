@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Create Background - Create Background 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from lib.smart_config import smart_config
 """创建背景图"""
 import os

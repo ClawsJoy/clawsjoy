@@ -1,4 +1,11 @@
-"""任务分配器"""
+#!/usr/bin/env python3
+"""Task Allocator - Task Allocator 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import requests
 from collections import defaultdict

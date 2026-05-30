@@ -1,4 +1,11 @@
-"""除法技能"""
+#!/usr/bin/env python3
+"""Divide - Divide 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class DivideSkill:
     def execute(self, params):
         b = params.get('b', 1)

@@ -1,4 +1,11 @@
-"""闭环控制器 v4.0.0 - 6/6完整闭环"""
+#!/usr/bin/env python3
+"""Closed Loop - Closed Loop 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from datetime import datetime
 import time

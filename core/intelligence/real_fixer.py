@@ -1,4 +1,11 @@
-"""真正的修复器 - 针对你环境的真实故障"""
+#!/usr/bin/env python3
+"""Real Fixer - Real Fixer 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import time
 import requests
 import subprocess

@@ -1,4 +1,11 @@
-"""发送邮件"""
+#!/usr/bin/env python3
+"""Send Email - Send Email 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class SendEmailSkill:
     def execute(self, params):
         to = params.get('to', '')

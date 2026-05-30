@@ -1,4 +1,11 @@
-"""smart_config - 全局配置对象（兼容性层）"""
+#!/usr/bin/env python3
+"""Smart Config - Smart Config 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from pathlib import Path
 from core.lib.unified_config import unified_config

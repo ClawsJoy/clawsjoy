@@ -1,4 +1,11 @@
-"""阅读计时"""
+#!/usr/bin/env python3
+"""Reading Timer - Reading Timer 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class ReadingTimerSkill:
     def execute(self, params):
         action = params.get('action', 'start')

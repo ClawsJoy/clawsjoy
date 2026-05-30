@@ -1,4 +1,11 @@
-"""新员工入职流程"""
+#!/usr/bin/env python3
+"""Onboarding - Onboarding 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class OnboardingSkill:
     def execute(self, params):
         name = params.get('name', '')

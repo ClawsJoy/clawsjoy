@@ -1,4 +1,11 @@
-"""LLM 驱动的自主决策 - 修复版"""
+#!/usr/bin/env python3
+"""Llm Decision - Llm Decision 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import json
 import requests

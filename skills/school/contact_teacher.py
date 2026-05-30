@@ -1,4 +1,11 @@
-"""联系老师"""
+#!/usr/bin/env python3
+"""Contact Teacher - Contact Teacher 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class ContactTeacherSkill:
     def execute(self, params):
         subject = params.get('subject', '')

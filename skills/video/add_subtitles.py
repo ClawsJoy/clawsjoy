@@ -1,4 +1,11 @@
-"""添加字幕 - 真实文件生成"""
+#!/usr/bin/env python3
+"""Add Subtitles - Add Subtitles 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from lib.file_utils import file_utils
 
 class AddSubtitlesSkill:

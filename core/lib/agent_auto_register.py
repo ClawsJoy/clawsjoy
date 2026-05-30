@@ -1,4 +1,11 @@
-"""Agent 自动注册器 - 配置驱动，开发者只需创建配置文件"""
+#!/usr/bin/env python3
+"""Agent Auto Register - Agent Auto Register 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import yaml
 from pathlib import Path

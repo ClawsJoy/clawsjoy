@@ -1,4 +1,11 @@
-"""真智能大脑 - 事件驱动，无定时任务"""
+#!/usr/bin/env python3
+"""True Brain - True Brain 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import threading
 import time
 import queue

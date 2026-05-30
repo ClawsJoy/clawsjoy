@@ -1,4 +1,11 @@
-"""安全合规检查器 - 规避法律风险"""
+#!/usr/bin/env python3
+"""Safety - Safety 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import re
 from pathlib import Path
 from urllib.parse import urlparse

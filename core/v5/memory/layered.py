@@ -1,4 +1,11 @@
-"""L0-L4 分层记忆系统 - 借鉴旧版 memory_layers.py"""
+#!/usr/bin/env python3
+"""Layered - Layered 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import json
 import time

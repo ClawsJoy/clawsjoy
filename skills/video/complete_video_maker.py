@@ -1,4 +1,11 @@
-"""完整视频制作 - 真正调用 FFmpeg"""
+#!/usr/bin/env python3
+"""Complete Video Maker - Complete Video Maker 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import subprocess
 import os

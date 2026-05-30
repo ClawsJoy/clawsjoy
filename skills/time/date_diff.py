@@ -1,4 +1,11 @@
-"""日期差计算"""
+#!/usr/bin/env python3
+"""Date Diff - Date Diff 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from datetime import datetime
 class DateDiffSkill:
     def execute(self, params):

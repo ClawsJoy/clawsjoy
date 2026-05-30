@@ -1,4 +1,11 @@
-"""发送会议邀请"""
+#!/usr/bin/env python3
+"""Send Invite - Send Invite 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class SendInviteSkill:
     def execute(self, params):
         title = params.get('title', '')

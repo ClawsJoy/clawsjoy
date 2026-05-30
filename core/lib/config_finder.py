@@ -1,4 +1,11 @@
-"""配置文件查找工具 - 统一多路径查找"""
+#!/usr/bin/env python3
+"""Config Finder - Config Finder 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from pathlib import Path
 from typing import List, Optional

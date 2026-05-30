@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Swagger Config - Swagger Config 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from lib.smart_config import smart_config
 """Swagger API 文档配置"""
 swagger_config = {

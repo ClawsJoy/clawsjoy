@@ -1,4 +1,11 @@
-"""考试成绩分析"""
+#!/usr/bin/env python3
+"""Score Analysis - Score Analysis 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class ScoreAnalysisSkill:
     def execute(self, params):
         scores = params.get('scores', {})

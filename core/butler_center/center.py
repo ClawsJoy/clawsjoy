@@ -1,4 +1,11 @@
-"""管家中心 - 调度和管理所有管家服务"""
+#!/usr/bin/env python3
+"""Center - Center 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from typing import Dict, Optional, List
 from pathlib import Path

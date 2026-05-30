@@ -1,4 +1,11 @@
-"""自主决策引擎 - 真正的智能决策"""
+#!/usr/bin/env python3
+"""Decision Engine - Decision Engine 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import json
 from typing import Dict, List, Any, Optional

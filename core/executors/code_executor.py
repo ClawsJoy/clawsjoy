@@ -1,4 +1,11 @@
-"""代码执行器 - 动态生成并执行 Python 代码"""
+#!/usr/bin/env python3
+"""Code Executor - Code Executor 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import subprocess
 import tempfile

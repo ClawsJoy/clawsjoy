@@ -1,4 +1,11 @@
-"""JSON格式化"""
+#!/usr/bin/env python3
+"""Format Json - Format Json 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import json
 class FormatJsonSkill:
     def execute(self, params):

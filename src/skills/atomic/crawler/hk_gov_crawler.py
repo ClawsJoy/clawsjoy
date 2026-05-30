@@ -1,4 +1,11 @@
-"""香港政府网站专用爬虫 - 入境处、一站通等"""
+#!/usr/bin/env python3
+"""Hk Gov Crawler - Hk Gov Crawler 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import requests
 from bs4 import BeautifulSoup
 import re

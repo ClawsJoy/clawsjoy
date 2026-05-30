@@ -1,4 +1,11 @@
-"""燃气报警"""
+#!/usr/bin/env python3
+"""Gas Sensor - Gas Sensor 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class GasSensorSkill:
     def execute(self, params):
         level = params.get('level', 0)

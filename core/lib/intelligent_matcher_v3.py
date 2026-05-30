@@ -1,4 +1,11 @@
-"""智能匹配器 V3 - 名称优先匹配"""
+#!/usr/bin/env python3
+"""Intelligent Matcher V3 - Intelligent Matcher V3 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from core.tenant.tenant_vector_index import tenant_index_manager
 

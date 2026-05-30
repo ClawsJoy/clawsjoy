@@ -1,4 +1,11 @@
-"""游戏推荐"""
+#!/usr/bin/env python3
+"""Recommend Game - Recommend Game 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class RecommendGameSkill:
     def execute(self, params):
         platform = params.get('platform', 'mobile')

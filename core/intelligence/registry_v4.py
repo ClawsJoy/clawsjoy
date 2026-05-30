@@ -1,4 +1,11 @@
-"""智能模块注册中心 v4.0.0 - 修复版"""
+#!/usr/bin/env python3
+"""Registry V4 - Registry V4 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import importlib.util
 from pathlib import Path

@@ -1,4 +1,11 @@
-"""智能报告生成器"""
+#!/usr/bin/env python3
+"""Report Generator - Report Generator 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import json
 from datetime import datetime
 import sys

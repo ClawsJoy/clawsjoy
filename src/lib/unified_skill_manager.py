@@ -1,4 +1,11 @@
-"""统一技能管理器 - 融合新旧架构的所有技能"""
+#!/usr/bin/env python3
+"""Unified Skill Manager - Unified Skill Manager 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import sys
 from lib.smart_config import smart_config
 sys.path.insert(0, 'str(smart_config.ROOT)')

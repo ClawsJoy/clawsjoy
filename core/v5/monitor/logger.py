@@ -1,4 +1,11 @@
-"""监控和日志模块"""
+#!/usr/bin/env python3
+"""Logger - Logger 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import time
 from datetime import datetime

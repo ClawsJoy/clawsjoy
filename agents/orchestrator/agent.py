@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Agent - Agent 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import logging
 
 """编排器 Agent - 真正任务分解和分发"""

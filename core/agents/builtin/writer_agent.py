@@ -1,4 +1,11 @@
-"""作家 Agent - 文章创作和文案"""
+#!/usr/bin/env python3
+"""Writer Agent - Writer Agent 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from typing import Dict, Optional
 from core.agents.base.smart_agent import SmartAgent

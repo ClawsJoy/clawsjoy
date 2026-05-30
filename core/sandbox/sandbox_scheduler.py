@@ -1,4 +1,11 @@
-"""沙箱调度器 - 管理云端Agent容器实例"""
+#!/usr/bin/env python3
+"""Sandbox Scheduler - Sandbox Scheduler 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import docker
 import uuid
 import yaml

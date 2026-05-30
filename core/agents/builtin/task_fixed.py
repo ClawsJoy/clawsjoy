@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""任务修复版 Agent - 强化任务识别"""
+#!/usr/bin/env python3
+"""Task Fixed - Task Fixed 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
 
 import sys
 import re

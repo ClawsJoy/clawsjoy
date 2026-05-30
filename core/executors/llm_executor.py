@@ -1,4 +1,11 @@
-"""LLM 智能执行器 - 兜底方案"""
+#!/usr/bin/env python3
+"""Llm Executor - Llm Executor 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from core.lib.smart_adapter import smart_adapter
 

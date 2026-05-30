@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Memory Learn - Memory Learn 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from core.lib.unified_config import unified_config
 #!/usr/bin/env python3
 """记忆 Agent 学习 - 学习用户偏好和模式"""

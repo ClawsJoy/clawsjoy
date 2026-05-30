@@ -1,4 +1,11 @@
-"""固定管家 Agent - 稳定版管家服务"""
+#!/usr/bin/env python3
+"""Fixed Butler - Fixed Butler 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from typing import Dict, Optional
 from core.agents.base.smart_agent import SmartAgent

@@ -1,4 +1,11 @@
-"""安全 Agent - 负责安全检查和审计"""
+#!/usr/bin/env python3
+"""Security Agent - Security Agent 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from typing import Dict, Any
 from core.agents.base.smart_agent import SmartAgent

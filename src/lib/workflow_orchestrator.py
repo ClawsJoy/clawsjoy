@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Workflow Orchestrator - Workflow Orchestrator 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from lib.smart_config import smart_config
 """工作流编排器 - 支持复杂多步操作"""
 import json

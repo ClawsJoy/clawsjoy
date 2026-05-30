@@ -1,4 +1,11 @@
-"""Agent 协作执行器 - 多 Agent 协同"""
+#!/usr/bin/env python3
+"""Agent Executor - Agent Executor 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from core.lib.agent_bus import get_bus
 

@@ -1,4 +1,11 @@
-"""讲故事"""
+#!/usr/bin/env python3
+"""Story - Story 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class StorySkill:
     def execute(self, params):
         age = params.get('age', 5)

@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""用户1 管理员工具"""
+#!/usr/bin/env python3
+"""User1 Admin - User1 Admin 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
 
 import requests
 import json

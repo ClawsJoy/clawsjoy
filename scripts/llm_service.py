@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""LLM 对话服务 - 让 LLM 真正干活"""
+#!/usr/bin/env python3
+"""Llm Service - Llm Service 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
 
 import sys
 import json

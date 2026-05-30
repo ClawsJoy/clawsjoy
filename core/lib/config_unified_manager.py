@@ -1,4 +1,11 @@
-"""配置统一管理器 - 解决配置重复和热重载"""
+#!/usr/bin/env python3
+"""Config Unified Manager - Config Unified Manager 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import yaml
 import json

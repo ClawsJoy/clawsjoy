@@ -1,4 +1,11 @@
-"""配置驱动的智能匹配器 - 支持热重载"""
+#!/usr/bin/env python3
+"""Config Driven Matcher - Config Driven Matcher 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import yaml
 import sys

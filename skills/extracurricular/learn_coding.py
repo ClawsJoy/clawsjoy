@@ -1,4 +1,11 @@
-"""编程入门"""
+#!/usr/bin/env python3
+"""Learn Coding - Learn Coding 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class LearnCodingSkill:
     def execute(self, params):
         language = params.get('language', 'python')

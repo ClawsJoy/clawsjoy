@@ -1,4 +1,11 @@
-"""统一自主决策模块 - 整合所有决策能力"""
+#!/usr/bin/env python3
+"""Unified Decision - Unified Decision 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import json
 import requests

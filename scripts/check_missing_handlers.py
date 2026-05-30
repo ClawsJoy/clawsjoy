@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Check Missing Handlers - Check Missing Handlers 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import yaml
 import re
 from pathlib import Path

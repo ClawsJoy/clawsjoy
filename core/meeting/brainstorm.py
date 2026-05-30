@@ -1,4 +1,11 @@
-"""头脑风暴引擎 - 多Agent会议"""
+#!/usr/bin/env python3
+"""Brainstorm - Brainstorm 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import json
 from datetime import datetime
 from typing import Dict, List

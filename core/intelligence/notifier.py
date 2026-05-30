@@ -1,4 +1,11 @@
-"""智能通知器 - 重要事件通知"""
+#!/usr/bin/env python3
+"""Notifier - Notifier 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from datetime import datetime
 from pathlib import Path
 import sys

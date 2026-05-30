@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Monitoring Api - Monitoring Api 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from lib.smart_config import smart_config
 """监控数据 API - 为 Dashboard 提供实时数据"""
 import sys

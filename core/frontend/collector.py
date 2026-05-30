@@ -1,4 +1,11 @@
-"""前端数据采集器"""
+#!/usr/bin/env python3
+"""Collector - Collector 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import json
 from pathlib import Path
 from datetime import datetime

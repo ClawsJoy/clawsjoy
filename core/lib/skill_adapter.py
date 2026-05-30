@@ -1,4 +1,11 @@
-"""技能系统适配器 - 保持原有接口，兼容缺失方法"""
+#!/usr/bin/env python3
+"""Skill Adapter - Skill Adapter 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from core.lib.skill_loader_v3 import skill_loader as _original_loader
 

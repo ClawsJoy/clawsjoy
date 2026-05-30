@@ -1,4 +1,11 @@
-"""运动计划"""
+#!/usr/bin/env python3
+"""Workout Plan - Workout Plan 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class WorkoutPlanSkill:
     def execute(self, params):
         goal = params.get('goal', 'fitness')  # fitness/weight_loss/muscle

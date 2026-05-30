@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Manju Workflow - Manju Workflow 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from lib.smart_config import smart_config
 """漫剧制作工作流 - 带超时处理"""
 import time

@@ -1,4 +1,11 @@
-"""Agent 成熟度增强 Mixin - 可选继承，不破坏现有代码"""
+#!/usr/bin/env python3
+"""Agent Maturity Mixin - Agent Maturity Mixin 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import logging
 import time

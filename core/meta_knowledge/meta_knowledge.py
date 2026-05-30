@@ -1,4 +1,11 @@
-"""元知识管理 - 系统自知能力"""
+#!/usr/bin/env python3
+"""Meta Knowledge - Meta Knowledge 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import json
 from pathlib import Path

@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Skill Installer - Skill Installer 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from lib.smart_config import smart_config
 """技能安装安全检测器 - 自动检测并拒绝不安全技能"""
 import re

@@ -1,4 +1,11 @@
-"""智能适配器 - 配置驱动，支持多模型、流式输出、安全防护"""
+#!/usr/bin/env python3
+"""Smart Adapter - Smart Adapter 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import yaml
 import time

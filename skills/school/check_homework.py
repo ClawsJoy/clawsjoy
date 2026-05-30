@@ -1,4 +1,11 @@
-"""查看作业"""
+#!/usr/bin/env python3
+"""Check Homework - Check Homework 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class CheckHomeworkSkill:
     def execute(self, params):
         date = params.get('date', 'today')

@@ -1,4 +1,11 @@
-"""健康检查和 metrics 端点"""
+#!/usr/bin/env python3
+"""Health - Health 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from flask import Blueprint, jsonify
 import psutil

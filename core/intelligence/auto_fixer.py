@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Auto Fixer - Auto Fixer 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from core.lib.unified_config import unified_config
 """自动修复器 - 包装 real_fixer"""
 from intelligence.real_fixer import RealFixer

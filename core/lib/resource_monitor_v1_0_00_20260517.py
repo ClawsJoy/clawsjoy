@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Resource Monitor V1 0 00 20260517 - Resource Monitor V1 0 00 20260517 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from core.lib.unified_config import unified_config
 
 from core.lib.unified_config import unified_config

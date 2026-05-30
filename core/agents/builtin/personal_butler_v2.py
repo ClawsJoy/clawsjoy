@@ -1,4 +1,11 @@
-"""私人管家 v2.0 - 用户入口"""
+#!/usr/bin/env python3
+"""Personal Butler V2 - Personal Butler V2 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from typing import Dict, Optional, Any
 from pathlib import Path

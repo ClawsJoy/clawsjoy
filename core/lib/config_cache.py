@@ -1,4 +1,11 @@
-"""配置缓存管理器 - 解决性能问题"""
+#!/usr/bin/env python3
+"""Config Cache - Config Cache 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import hashlib
 import json
 from pathlib import Path

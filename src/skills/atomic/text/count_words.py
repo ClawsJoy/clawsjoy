@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Count Words - Count Words 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from lib.smart_config import smart_config
 """字数统计"""
 class CountWordsSkill:

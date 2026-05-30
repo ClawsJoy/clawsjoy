@@ -1,4 +1,11 @@
-"""Agent 灵魂配置管理 - 支持多路径"""
+#!/usr/bin/env python3
+"""Agent Soul - Agent Soul 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import yaml
 from pathlib import Path

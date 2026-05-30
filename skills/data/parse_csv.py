@@ -1,4 +1,11 @@
-"""CSV解析"""
+#!/usr/bin/env python3
+"""Parse Csv - Parse Csv 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class ParseCsvSkill:
     def execute(self, params):
         csv_text = params.get('csv', '')

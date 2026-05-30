@@ -1,4 +1,11 @@
-"""用药提醒"""
+#!/usr/bin/env python3
+"""Medication Reminder - Medication Reminder 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class MedicationReminderSkill:
     def execute(self, params):
         name = params.get('name', '')

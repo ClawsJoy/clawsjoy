@@ -1,4 +1,11 @@
-"""文件队列 - 持久化通信"""
+#!/usr/bin/env python3
+"""File Queue - File Queue 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import json
 import time

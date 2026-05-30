@@ -1,4 +1,11 @@
-"""工作流引擎 - 可视化流程编排"""
+#!/usr/bin/env python3
+"""Engine - Engine 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from typing import Dict, List, Any, Callable
 from dataclasses import dataclass, field

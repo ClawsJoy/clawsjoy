@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Youtube Learn - Youtube Learn 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from core.lib.unified_config import unified_config
 #!/usr/bin/env python3
 """YouTube Agent 学习 - 学习上传和发布模式"""

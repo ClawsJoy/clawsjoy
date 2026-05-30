@@ -1,4 +1,11 @@
-"""向量记忆 - 语义搜索"""
+#!/usr/bin/env python3
+"""Vector Memory - Vector Memory 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import json
 import hashlib

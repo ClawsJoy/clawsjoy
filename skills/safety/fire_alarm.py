@@ -1,4 +1,11 @@
-"""火灾报警"""
+#!/usr/bin/env python3
+"""Fire Alarm - Fire Alarm 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class FireAlarmSkill:
     def execute(self, params):
         status = params.get('status', 'normal')

@@ -1,4 +1,11 @@
-"""使用 ChromaDB 官方的 OllamaEmbeddingFunction"""
+#!/usr/bin/env python3
+"""Embedding Fixed - Embedding Fixed 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from chromadb.utils.embedding_functions import OllamaEmbeddingFunction as _OfficialOllama
 from typing import List

@@ -1,4 +1,11 @@
-"""方言 Agent - 方言识别和转换"""
+#!/usr/bin/env python3
+"""Dialect Agent - Dialect Agent 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from typing import Dict, Optional
 from core.agents.base.smart_agent import SmartAgent

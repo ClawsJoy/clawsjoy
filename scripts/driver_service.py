@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""独立驱动服务"""
+#!/usr/bin/env python3
+"""Driver Service - Driver Service 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
 
 from flask import Flask, jsonify
 from flask_cors import CORS

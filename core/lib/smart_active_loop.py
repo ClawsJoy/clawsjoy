@@ -1,4 +1,11 @@
-"""智能主动服务循环 - 定期检查和执行"""
+#!/usr/bin/env python3
+"""Smart Active Loop - Smart Active Loop 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import threading
 import time
 from datetime import datetime

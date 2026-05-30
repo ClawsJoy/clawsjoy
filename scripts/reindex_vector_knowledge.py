@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""重新索引技能和 Agent 到向量知识中心（适配新目录结构）"""
+#!/usr/bin/env python3
+"""Reindex Vector Knowledge - Reindex Vector Knowledge 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
 
 import sys
 sys.path.insert(0, '.')

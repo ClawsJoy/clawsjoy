@@ -1,4 +1,11 @@
-"""学习进度跟踪"""
+#!/usr/bin/env python3
+"""Track Progress - Track Progress 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class TrackProgressSkill:
     def execute(self, params):
         subject = params.get('subject', 'math')

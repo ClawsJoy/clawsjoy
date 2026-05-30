@@ -1,4 +1,11 @@
-"""知识图谱 - 知识关联和推理"""
+#!/usr/bin/env python3
+"""Graph - Graph 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import json
 from pathlib import Path

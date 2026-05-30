@@ -1,4 +1,11 @@
-"""真实热点爬虫 - 可爬取的免费源"""
+#!/usr/bin/env python3
+"""Real Hot Crawler - Real Hot Crawler 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import requests
 import re
 import json

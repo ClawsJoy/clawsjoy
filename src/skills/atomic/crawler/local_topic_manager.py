@@ -1,4 +1,11 @@
-"""本地话题管理器 - 不依赖外部API"""
+#!/usr/bin/env python3
+"""Local Topic Manager - Local Topic Manager 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import json
 import random
 from datetime import datetime

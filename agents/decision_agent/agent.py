@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Agent - Agent 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import logging
 
 """决策师 Agent - LLM 驱动的智能决策"""

@@ -1,4 +1,11 @@
-"""自动组合技能: vision → translate"""
+#!/usr/bin/env python3
+"""Auto Vision Combo - Auto Vision Combo 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from lib.skill_loader_v3 import skill_loader
 

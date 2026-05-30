@@ -1,4 +1,11 @@
-"""管家数字资产管理器 - 用户专属资产"""
+#!/usr/bin/env python3
+"""Butler Asset - Butler Asset 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import json
 from pathlib import Path

@@ -1,4 +1,11 @@
-"""智能驱动 - 配置驱动的动态执行"""
+#!/usr/bin/env python3
+"""Intelligent Driver - Intelligent Driver 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import os
 from typing import Dict, Any

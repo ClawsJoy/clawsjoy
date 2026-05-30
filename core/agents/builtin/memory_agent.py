@@ -1,4 +1,11 @@
-"""记忆 Agent - 管理记忆"""
+#!/usr/bin/env python3
+"""Memory Agent - Memory Agent 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from typing import Dict, Optional, Any
 from core.agents.base.smart_agent import SmartAgent

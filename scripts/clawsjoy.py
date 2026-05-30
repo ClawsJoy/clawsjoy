@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""ClawsJoy 5.0 统一入口"""
+#!/usr/bin/env python3
+"""Clawsjoy - Clawsjoy 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
 
 import sys
 from pathlib import Path; import sys; sys.path.insert(0, str(Path(__file__).parent))

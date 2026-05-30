@@ -1,4 +1,11 @@
-"""完整的 Ollama Embedding 函数 - 支持 ChromaDB"""
+#!/usr/bin/env python3
+"""Embedding Complete - Embedding Complete 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import requests
 from typing import List

@@ -1,4 +1,11 @@
-"""FFmpeg 视频处理 - 真实执行"""
+#!/usr/bin/env python3
+"""Ffmpeg Video - Ffmpeg Video 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import subprocess
 import os
 from pathlib import Path

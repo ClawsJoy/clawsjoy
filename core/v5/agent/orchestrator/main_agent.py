@@ -1,4 +1,11 @@
-"""主智能体 - 完整版"""
+#!/usr/bin/env python3
+"""Main Agent - Main Agent 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from core.v5.agent.base import BaseAgent
 from core.v5.llm.client import llm

@@ -1,4 +1,11 @@
-"""自适应学习器"""
+#!/usr/bin/env python3
+"""Adaptive Learner - Adaptive Learner 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import json
 from pathlib import Path
 from collections import deque

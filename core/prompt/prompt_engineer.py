@@ -1,4 +1,11 @@
-"""提示词工程 - 提升响应质量"""
+#!/usr/bin/env python3
+"""Prompt Engineer - Prompt Engineer 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 
 class PromptEngineer:

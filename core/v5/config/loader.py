@@ -1,4 +1,11 @@
-"""配置加载器 - v5 独立"""
+#!/usr/bin/env python3
+"""Loader - Loader 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import yaml
 from pathlib import Path
 from typing import Dict, Any

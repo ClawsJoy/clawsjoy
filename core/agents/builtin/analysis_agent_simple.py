@@ -1,4 +1,11 @@
-"""简化版数据分析 Agent"""
+#!/usr/bin/env python3
+"""Analysis Agent Simple - Analysis Agent Simple 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from typing import Dict, Optional
 
 class AnalysisAgent:

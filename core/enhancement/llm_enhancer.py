@@ -1,4 +1,11 @@
-"""LLM 增强模块 - 为旧版 Agent 添加 LLM 能力"""
+#!/usr/bin/env python3
+"""Llm Enhancer - Llm Enhancer 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import requests
 from core.lib.unified_config import unified_config

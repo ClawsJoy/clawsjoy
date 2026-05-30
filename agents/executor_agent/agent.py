@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Agent - Agent 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import re
 from typing import Dict, Any, Optional
 from core.agents.base.smart_agent import SmartAgent

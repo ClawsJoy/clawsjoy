@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Set Config - Set Config 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from lib.smart_config import smart_config
 """配置管理技能 - 设置阈值和清理参数"""
 import json

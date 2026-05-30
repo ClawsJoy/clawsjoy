@@ -1,4 +1,11 @@
-"""舆情分析"""
+#!/usr/bin/env python3
+"""Sentiment - Sentiment 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class SentimentSkill:
     def execute(self, params):
         keyword = params.get('keyword', '')

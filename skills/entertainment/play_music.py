@@ -1,4 +1,11 @@
-"""播放音乐"""
+#!/usr/bin/env python3
+"""Play Music - Play Music 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class PlayMusicSkill:
     def execute(self, params):
         song = params.get('song', '摇篮曲')

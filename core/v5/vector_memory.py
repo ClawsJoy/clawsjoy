@@ -1,4 +1,11 @@
-"""向量记忆系统 - 真语义搜索（使用 TF-IDF + 余弦相似度）"""
+#!/usr/bin/env python3
+"""Vector Memory - Vector Memory 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import hashlib
 import json

@@ -1,4 +1,11 @@
-"""定时话题采集调度器"""
+#!/usr/bin/env python3
+"""Topic Scheduler - Topic Scheduler 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import schedule
 import time
 import threading

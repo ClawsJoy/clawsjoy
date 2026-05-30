@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""FastAPI 服务 - 使用修复版 ChromaDB"""
+#!/usr/bin/env python3
+"""Api Final Fixed - Api Final Fixed 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware

@@ -1,4 +1,11 @@
-"""安全审计员 - 审计所有操作，检测风险"""
+#!/usr/bin/env python3
+"""Auditor - Auditor 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import json
 import hashlib
 from pathlib import Path

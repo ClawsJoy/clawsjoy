@@ -1,4 +1,11 @@
-"""真实闭环系统"""
+#!/usr/bin/env python3
+"""Real Closed Loop - Real Closed Loop 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import time
 import requests

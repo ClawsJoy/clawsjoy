@@ -1,4 +1,11 @@
-"""技能链执行器 - 支持多步骤组合"""
+#!/usr/bin/env python3
+"""Skill Chain - Skill Chain 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from typing import List, Dict
 

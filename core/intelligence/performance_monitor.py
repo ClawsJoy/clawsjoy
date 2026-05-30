@@ -1,4 +1,11 @@
-"""性能监控器 - 监控系统性能指标"""
+#!/usr/bin/env python3
+"""Performance Monitor - Performance Monitor 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import time
 import psutil
 import json

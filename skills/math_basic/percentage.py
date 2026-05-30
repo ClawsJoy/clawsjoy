@@ -1,4 +1,11 @@
-"""百分比计算"""
+#!/usr/bin/env python3
+"""Percentage - Percentage 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class PercentageSkill:
     def execute(self, params):
         part = params.get('part', 0)

@@ -1,4 +1,11 @@
-"""白噪音/背景音"""
+#!/usr/bin/env python3
+"""White Noise - White Noise 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class WhiteNoiseSkill:
     def execute(self, params):
         sound = params.get('sound', 'rain')

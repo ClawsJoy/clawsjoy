@@ -1,4 +1,11 @@
-"""文案专家 Agent - 创作各类文案"""
+#!/usr/bin/env python3
+"""Copywriter Agent - Copywriter Agent 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from typing import Dict, Optional
 from core.agents.base.smart_agent import SmartAgent
 import random

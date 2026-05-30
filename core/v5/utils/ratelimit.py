@@ -1,4 +1,11 @@
-"""限流和熔断器"""
+#!/usr/bin/env python3
+"""Ratelimit - Ratelimit 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import time
 from collections import deque

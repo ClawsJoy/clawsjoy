@@ -1,4 +1,11 @@
-"""Agent API"""
+#!/usr/bin/env python3
+"""Agents - Agents 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from flask import Blueprint, request, jsonify
 from core.v5.agent.decision import DecisionAgent
 from core.v5.agent.chat import ChatAgent

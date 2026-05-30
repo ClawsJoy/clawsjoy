@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Image Resize - Image Resize 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from lib.smart_config import smart_config
 """图片缩放技能"""
 class Image_resizeSkill:

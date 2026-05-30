@@ -1,4 +1,11 @@
-"""番茄钟学习法"""
+#!/usr/bin/env python3
+"""Pomodoro - Pomodoro 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class PomodoroSkill:
     def execute(self, params):
         action = params.get('action', 'start')

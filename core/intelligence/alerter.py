@@ -1,4 +1,11 @@
-"""智能告警器 - 基于历史动态调整阈值"""
+#!/usr/bin/env python3
+"""Alerter - Alerter 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import json
 from pathlib import Path
 from datetime import datetime

@@ -1,4 +1,11 @@
-"""菜谱推荐"""
+#!/usr/bin/env python3
+"""Recipe - Recipe 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class RecipeSkill:
     def execute(self, params):
         dish = params.get('dish', '')

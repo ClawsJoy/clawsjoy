@@ -1,4 +1,11 @@
-"""skills 目录热重载监听器"""
+#!/usr/bin/env python3
+"""Skill Watcher - Skill Watcher 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import os
 import time

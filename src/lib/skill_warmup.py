@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Skill Warmup - Skill Warmup 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from lib.smart_config import smart_config
 """技能预热 - 预加载常用技能"""
 import importlib

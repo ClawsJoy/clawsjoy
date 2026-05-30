@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Connection Pool - Connection Pool 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from lib.smart_config import smart_config
 """连接池 - 复用 HTTP 连接"""
 import requests

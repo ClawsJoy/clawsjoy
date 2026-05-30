@@ -1,4 +1,11 @@
-"""心率监测"""
+#!/usr/bin/env python3
+"""Heart Rate - Heart Rate 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class HeartRateSkill:
     def execute(self, params):
         rate = params.get('rate', 75)

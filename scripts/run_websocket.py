@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""WebSocket 服务启动脚本"""
+#!/usr/bin/env python3
+"""Run Websocket - Run Websocket 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
 
 import sys
 from pathlib import Path

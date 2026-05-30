@@ -1,4 +1,11 @@
-"""数学学习"""
+#!/usr/bin/env python3
+"""Learn Math - Learn Math 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class LearnMathSkill:
     def execute(self, params):
         grade = params.get('grade', 3)

@@ -1,4 +1,11 @@
-"""添加待办事项"""
+#!/usr/bin/env python3
+"""Add Todo - Add Todo 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class AddTodoSkill:
     def execute(self, params):
         task = params.get('task', '')

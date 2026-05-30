@@ -1,4 +1,11 @@
-"""环境变量操作"""
+#!/usr/bin/env python3
+"""Env Var - Env Var 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import os
 class EnvVarSkill:
     def execute(self, params):

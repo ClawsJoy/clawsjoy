@@ -1,4 +1,11 @@
-"""加密钩子 - 用户数据加密/解密"""
+#!/usr/bin/env python3
+"""Encryption Hook - Encryption Hook 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import json
 import base64

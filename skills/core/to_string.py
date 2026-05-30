@@ -1,4 +1,11 @@
-"""转换为字符串技能"""
+#!/usr/bin/env python3
+"""To String - To String 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 class ToStringSkill:
     name = "to_string"

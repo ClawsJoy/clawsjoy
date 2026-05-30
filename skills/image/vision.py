@@ -1,4 +1,11 @@
-"""图像识别技能 - 使用 moondream 轻量模型"""
+#!/usr/bin/env python3
+"""Vision - Vision 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import base64
 import requests

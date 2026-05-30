@@ -1,4 +1,11 @@
-"""自愈系统 - 自动修复常见问题"""
+#!/usr/bin/env python3
+"""Self Healer - Self Healer 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import subprocess
 import re
 from pathlib import Path

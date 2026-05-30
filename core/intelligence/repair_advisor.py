@@ -1,4 +1,11 @@
-"""智能修复建议器 - 根据错误提供修复建议"""
+#!/usr/bin/env python3
+"""Repair Advisor - Repair Advisor 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import json
 from pathlib import Path
 from collections import defaultdict

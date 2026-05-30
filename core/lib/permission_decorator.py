@@ -1,4 +1,11 @@
-"""权限装饰器 - 扩展现有路由"""
+#!/usr/bin/env python3
+"""Permission Decorator - Permission Decorator 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from functools import wraps
 from flask import request, jsonify, g

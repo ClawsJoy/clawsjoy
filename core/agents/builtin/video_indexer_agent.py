@@ -1,4 +1,11 @@
-"""视频索引 Agent - 提取关键帧并生成描述"""
+#!/usr/bin/env python3
+"""Video Indexer Agent - Video Indexer Agent 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import subprocess
 import tempfile

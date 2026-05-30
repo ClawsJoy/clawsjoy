@@ -1,4 +1,11 @@
-"""用户私人管家数据管理 - 动态用户数据"""
+#!/usr/bin/env python3
+"""User Butler Data - User Butler Data 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import yaml
 import json

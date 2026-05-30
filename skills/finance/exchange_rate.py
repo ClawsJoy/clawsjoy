@@ -1,4 +1,11 @@
-"""汇率查询"""
+#!/usr/bin/env python3
+"""Exchange Rate - Exchange Rate 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class ExchangeRateSkill:
     def execute(self, params):
         from_currency = params.get('from', 'CNY')

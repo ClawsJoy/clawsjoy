@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Keyword Extractor - Keyword Extractor 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from lib.smart_config import smart_config
 """关键词提取器"""
 import re

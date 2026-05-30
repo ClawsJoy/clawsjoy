@@ -1,4 +1,11 @@
-"""通用音频处理技能 - 语音识别、格式转换、音频分析"""
+#!/usr/bin/env python3
+"""Audio Processor - Audio Processor 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import json
 import os

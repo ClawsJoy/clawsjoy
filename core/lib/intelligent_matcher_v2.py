@@ -1,4 +1,11 @@
-"""智能匹配器 V2 - 使用原始相似度"""
+#!/usr/bin/env python3
+"""Intelligent Matcher V2 - Intelligent Matcher V2 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from core.tenant.tenant_vector_index import tenant_index_manager
 from core.similarity_optimizer import similarity_optimizer

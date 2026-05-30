@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+#!/usr/bin/env python3
+"""Ws Vosk Server - Ws Vosk Server 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
 import asyncio
 import json
 import numpy as np

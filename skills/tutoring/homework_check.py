@@ -1,4 +1,11 @@
-"""作业检查"""
+#!/usr/bin/env python3
+"""Homework Check - Homework Check 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class HomeworkCheckSkill:
     def execute(self, params):
         subject = params.get('subject', 'math')

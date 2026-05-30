@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Brain Network - Brain Network 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from core.lib.unified_config import unified_config
 """ClawsJoy 大脑神经网络 - 不依赖LLM的核心决策"""
 import json

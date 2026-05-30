@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Async Skill - Async Skill 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from lib.smart_config import smart_config
 """异步技能执行器 - 长耗时任务异步执行"""
 import threading

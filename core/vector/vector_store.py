@@ -1,4 +1,11 @@
-"""向量存储 - 语义搜索（使用 sentence-transformers）"""
+#!/usr/bin/env python3
+"""Vector Store - Vector Store 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import numpy as np
 import json

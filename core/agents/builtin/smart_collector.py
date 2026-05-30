@@ -1,4 +1,11 @@
-"""智能收集器 - 数据收集"""
+#!/usr/bin/env python3
+"""Smart Collector - Smart Collector 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from typing import Dict, List
 from core.agents.base.smart_agent import SmartAgent

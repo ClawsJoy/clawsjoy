@@ -1,4 +1,11 @@
-"""游客 Token 管理器 - 自动生成和管理游客会话，关联数据采集"""
+#!/usr/bin/env python3
+"""Guest Token Manager - Guest Token Manager 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import hashlib
 import time

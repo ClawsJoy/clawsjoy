@@ -1,4 +1,11 @@
-"""执行 Agent - 任务执行"""
+#!/usr/bin/env python3
+"""Executor Agent - Executor Agent 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from typing import Dict, Optional
 from core.agents.base.smart_agent import SmartAgent

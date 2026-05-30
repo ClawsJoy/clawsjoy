@@ -1,4 +1,11 @@
-"""自我反思 - 持续改进"""
+#!/usr/bin/env python3
+"""Self Reflection - Self Reflection 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import json
 import requests

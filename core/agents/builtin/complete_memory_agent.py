@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Complete Memory Agent - Complete Memory Agent 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import logging
 
 from core.lib.config_helper import get_data_root, get_llm_endpoint, get_llm_model, get_embedding_model, get_gateway_port, get_timeout

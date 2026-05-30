@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Vector Knowledge Center - Vector Knowledge Center 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from typing import List, Dict, Optional
 from core.lib.config_helper import get_data_root, get_llm_endpoint, get_llm_model, get_embedding_model, get_gateway_port, get_timeout
 from core.lib.unified_config import unified_config

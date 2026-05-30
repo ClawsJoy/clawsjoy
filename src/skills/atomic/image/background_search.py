@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Background Search - Background Search 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from lib.smart_config import smart_config
 """背景搜索器 - 搜索相关背景图"""
 import requests

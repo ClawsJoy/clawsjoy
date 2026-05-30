@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Driver Manager - Driver Manager 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from core.lib.unified_config import unified_config
 """智能驱动管理器 - 统一管理所有配置驱动"""
 

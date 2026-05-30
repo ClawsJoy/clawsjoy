@@ -1,4 +1,11 @@
-"""生成随机密码"""
+#!/usr/bin/env python3
+"""Gen Password - Gen Password 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import random
 import string
 

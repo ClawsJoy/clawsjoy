@@ -1,4 +1,11 @@
-"""添加客户"""
+#!/usr/bin/env python3
+"""Add Customer - Add Customer 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class AddCustomerSkill:
     def execute(self, params):
         name = params.get('name', '')

@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Character Designer - Character Designer 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from lib.smart_config import smart_config
 """角色设计器 - 描述和设计角色形象"""
 class CharacterDesignerSkill:

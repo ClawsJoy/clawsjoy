@@ -1,4 +1,11 @@
-"""响应缓存 - 提升性能"""
+#!/usr/bin/env python3
+"""Cache - Cache 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import hashlib
 import time

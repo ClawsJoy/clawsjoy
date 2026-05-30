@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""统一服务 - 支持多种交互方式"""
+#!/usr/bin/env python3
+"""Unified Service - Unified Service 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
 
 import sys
 import json

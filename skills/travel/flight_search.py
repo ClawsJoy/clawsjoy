@@ -1,4 +1,11 @@
-"""机票搜索"""
+#!/usr/bin/env python3
+"""Flight Search - Flight Search 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class FlightSearchSkill:
     def execute(self, params):
         from_city = params.get('from', '')

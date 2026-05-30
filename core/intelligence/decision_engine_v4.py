@@ -1,4 +1,11 @@
-"""决策引擎 v4.0.0 - 配置驱动版"""
+#!/usr/bin/env python3
+"""Decision Engine V4 - Decision Engine V4 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import json
 from pathlib import Path

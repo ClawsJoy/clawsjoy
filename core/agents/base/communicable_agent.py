@@ -1,4 +1,11 @@
-"""具备四种通信能力的 Agent 基类"""
+#!/usr/bin/env python3
+"""Communicable Agent - Communicable Agent 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from typing import Dict, Optional
 from core.agents.base.base_agent import BaseAgent

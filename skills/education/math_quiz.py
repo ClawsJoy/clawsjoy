@@ -1,4 +1,11 @@
-"""数学问答"""
+#!/usr/bin/env python3
+"""Math Quiz - Math Quiz 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import random
 class MathQuizSkill:
     def execute(self, params):

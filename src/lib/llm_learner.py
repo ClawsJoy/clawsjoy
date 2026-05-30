@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Llm Learner - Llm Learner 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from lib.smart_config import smart_config
 """LLM 学习器 - 自动识别组合模式"""
 import re

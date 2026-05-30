@@ -1,4 +1,11 @@
-"""3D 场景生成技能"""
+#!/usr/bin/env python3
+"""Init - Init 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from .threejs import execute
 
 __all__ = ['execute']

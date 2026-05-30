@@ -1,4 +1,11 @@
-"""SSE 主动推送服务"""
+#!/usr/bin/env python3
+"""Sse Service - Sse Service 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import threading
 import json

@@ -1,4 +1,11 @@
-"""进化大脑 - 自主决策和进化"""
+#!/usr/bin/env python3
+"""Evolutionary Brain - Evolutionary Brain 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import time
 import requests

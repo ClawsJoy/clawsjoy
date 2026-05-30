@@ -1,4 +1,11 @@
-"""Agent生命周期配置 - unified_config 代理"""
+#!/usr/bin/env python3
+"""Agent Lifecycle Config - Agent Lifecycle Config 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from core.lib.unified_config import unified_config
 
 

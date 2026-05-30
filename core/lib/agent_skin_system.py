@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Agent Skin System - Agent Skin System 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from core.lib.unified_config import unified_config
 
 from core.lib.unified_config import unified_config

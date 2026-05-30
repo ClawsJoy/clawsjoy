@@ -1,4 +1,11 @@
-"""自适应调优器 V2 - 自动优化系统参数"""
+#!/usr/bin/env python3
+"""Adaptive Tuner V2 - Adaptive Tuner V2 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import sys
 from core.lib.unified_config import unified_config
 sys.path.insert(0, smart_config.ROOT)

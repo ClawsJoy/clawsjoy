@@ -1,4 +1,11 @@
-"""配置继承系统 - 减少重复配置"""
+#!/usr/bin/env python3
+"""Config Inherit - Config Inherit 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from pathlib import Path
 from typing import Dict, Any
 import yaml

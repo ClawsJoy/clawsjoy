@@ -1,4 +1,11 @@
-"""利息计算"""
+#!/usr/bin/env python3
+"""Calculate Interest - Calculate Interest 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class CalculateInterestSkill:
     def execute(self, params):
         principal = params.get('principal', 10000)

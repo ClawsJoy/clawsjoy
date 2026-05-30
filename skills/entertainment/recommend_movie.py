@@ -1,4 +1,11 @@
-"""电影推荐"""
+#!/usr/bin/env python3
+"""Recommend Movie - Recommend Movie 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class RecommendMovieSkill:
     def execute(self, params):
         genre = params.get('genre', 'comedy')

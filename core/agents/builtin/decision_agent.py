@@ -1,4 +1,11 @@
-"""决策师 - 决定学习哪些内容"""
+#!/usr/bin/env python3
+"""Decision Agent - Decision Agent 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from typing import Dict
 from core.agents.base.smart_agent import SmartAgent

@@ -1,4 +1,11 @@
-"""统一智能仪表盘"""
+#!/usr/bin/env python3
+"""Dashboard - Dashboard 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import json
 from datetime import datetime
 import sys

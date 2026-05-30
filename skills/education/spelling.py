@@ -1,4 +1,11 @@
-"""拼写练习"""
+#!/usr/bin/env python3
+"""Spelling - Spelling 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class SpellingSkill:
     def execute(self, params):
         word = params.get('word', 'apple')

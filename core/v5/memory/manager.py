@@ -1,4 +1,11 @@
-"""记忆管理器 - 完整版"""
+#!/usr/bin/env python3
+"""Manager - Manager 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import json
 from pathlib import Path

@@ -1,4 +1,11 @@
-"""查询股票信息"""
+#!/usr/bin/env python3
+"""Get Stock - Get Stock 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class GetStockSkill:
     def execute(self, params):
         code = params.get('code', '')

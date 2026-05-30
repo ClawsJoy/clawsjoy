@@ -1,4 +1,11 @@
-"""尿布记录"""
+#!/usr/bin/env python3
+"""Diaper - Diaper 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class DiaperSkill:
     def execute(self, params):
         time = params.get('time', '')

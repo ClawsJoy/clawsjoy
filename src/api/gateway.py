@@ -1,4 +1,11 @@
-"""ClawsJoy 统一 API 网关"""
+#!/usr/bin/env python3
+"""Gateway - Gateway 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import sys
 from pathlib import Path
 

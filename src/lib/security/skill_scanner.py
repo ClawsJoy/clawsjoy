@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Skill Scanner - Skill Scanner 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from lib.smart_config import smart_config
 """技能安全扫描器 - 检测社区技能的合法性"""
 import re

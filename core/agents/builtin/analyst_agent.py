@@ -1,4 +1,11 @@
-"""分析师 - 分析用户问题，给出学习建议"""
+#!/usr/bin/env python3
+"""Analyst Agent - Analyst Agent 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from typing import Dict, List
 from pathlib import Path

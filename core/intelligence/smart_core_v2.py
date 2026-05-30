@@ -1,4 +1,11 @@
-"""智能核心 V2 - 整合所有智能模块"""
+#!/usr/bin/env python3
+"""Smart Core V2 - Smart Core V2 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import threading
 import time
 import json

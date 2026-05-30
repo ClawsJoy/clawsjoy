@@ -1,4 +1,11 @@
-"""睡眠追踪"""
+#!/usr/bin/env python3
+"""Sleep Tracker - Sleep Tracker 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class SleepTrackerSkill:
     def execute(self, params):
         duration = params.get('duration', 8)

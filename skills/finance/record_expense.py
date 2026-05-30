@@ -1,4 +1,11 @@
-"""记录支出"""
+#!/usr/bin/env python3
+"""Record Expense - Record Expense 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class RecordExpenseSkill:
     def execute(self, params):
         amount = params.get('amount', 0)

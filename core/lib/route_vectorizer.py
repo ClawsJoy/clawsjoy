@@ -1,4 +1,11 @@
-"""路由向量化 - 动态意图路由"""
+#!/usr/bin/env python3
+"""Route Vectorizer - Route Vectorizer 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from core.tenant.tenant_vector_index import tenant_index_manager
 from core.lib.route_registry import route_registry

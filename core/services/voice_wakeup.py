@@ -1,4 +1,11 @@
-"""语音唤醒服务 - 简易版"""
+#!/usr/bin/env python3
+"""Voice Wakeup - Voice Wakeup 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import threading
 import time

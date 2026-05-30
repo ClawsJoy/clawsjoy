@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Hex To Rgb - Hex To Rgb 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from lib.smart_config import smart_config
 """十六进制颜色转RGB"""
 

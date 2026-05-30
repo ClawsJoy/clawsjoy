@@ -1,4 +1,11 @@
-"""智能体基类 - 集成通信能力"""
+#!/usr/bin/env python3
+"""Smart Agent - Smart Agent 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from typing import Dict, Optional, List, Any
 from datetime import datetime

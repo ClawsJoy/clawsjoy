@@ -1,4 +1,11 @@
-"""移动端 API 路由"""
+#!/usr/bin/env python3
+"""Api - Api 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from flask import Blueprint, request, jsonify
 from core.agents.builtin.orchestrator import OrchestratorAgent

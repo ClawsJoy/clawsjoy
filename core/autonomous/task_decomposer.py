@@ -1,4 +1,11 @@
-"""任务分解器 - 优化版"""
+#!/usr/bin/env python3
+"""Task Decomposer - Task Decomposer 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import requests
 import json

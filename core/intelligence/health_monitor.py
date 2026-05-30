@@ -1,4 +1,11 @@
-"""健康监控器 - 实时监控服务健康状态"""
+#!/usr/bin/env python3
+"""Health Monitor - Health Monitor 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import time
 import requests
 import json

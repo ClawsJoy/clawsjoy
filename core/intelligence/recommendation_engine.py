@@ -1,4 +1,11 @@
-"""智能推荐引擎 - 根据系统状态推荐优化措施"""
+#!/usr/bin/env python3
+"""Recommendation Engine - Recommendation Engine 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import json
 from pathlib import Path
 from datetime import datetime

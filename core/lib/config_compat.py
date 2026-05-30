@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Config Compat - Config Compat 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from core.lib.config_helper import get_data_root, get_llm_endpoint, get_llm_model, get_embedding_model, get_gateway_port, get_timeout
 """配置兼容层 - 保持原有代码正常工作"""
 

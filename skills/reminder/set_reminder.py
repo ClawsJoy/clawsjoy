@@ -1,4 +1,11 @@
-"""设置提醒"""
+#!/usr/bin/env python3
+"""Set Reminder - Set Reminder 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class SetReminderSkill:
     def execute(self, params):
         content = params.get('content', '')

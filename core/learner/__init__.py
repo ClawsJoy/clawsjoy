@@ -1,4 +1,11 @@
-"""自我学习模块 - 利用现有 L0-L4 记忆层和知识库"""
+#!/usr/bin/env python3
+"""Init - Init 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from .self_learning_coordinator import SelfLearningCoordinator
 
 __all__ = ['SelfLearningCoordinator']

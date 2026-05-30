@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Zhetian Script - Zhetian Script 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from lib.smart_config import smart_config
 """《遮天》风格剧本生成器"""
 import json

@@ -1,4 +1,11 @@
-"""跨区学习模块 - Agent 间知识共享"""
+#!/usr/bin/env python3
+"""Cross Learning - Cross Learning 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import json
 from pathlib import Path
 from typing import Dict, Any

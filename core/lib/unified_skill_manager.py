@@ -1,4 +1,11 @@
-"""统一技能管理器 - 合并 skill_loader 和 skill_registry_v2"""
+#!/usr/bin/env python3
+"""Unified Skill Manager - Unified Skill Manager 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from typing import List, Dict, Optional
 from core.lib.skill_loader_v3 import skill_loader

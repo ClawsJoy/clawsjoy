@@ -1,4 +1,11 @@
-"""配置辅助函数 - 统一从 system_unified.yaml 读取"""
+#!/usr/bin/env python3
+"""Config Helper - Config Helper 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from core.lib.unified_config import unified_config
 

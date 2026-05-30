@@ -1,4 +1,11 @@
-"""网络爬虫 - 抓取网页内容"""
+#!/usr/bin/env python3
+"""Web Crawler - Web Crawler 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import requests
 from bs4 import BeautifulSoup
 import re

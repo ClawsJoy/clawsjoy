@@ -1,4 +1,11 @@
-"""完全兼容 ChromaDB 的 Ollama Embedding 函数"""
+#!/usr/bin/env python3
+"""Embedding Full - Embedding Full 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import requests
 from typing import List

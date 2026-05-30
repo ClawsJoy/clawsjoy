@@ -1,4 +1,11 @@
-"""代码助手技能 - 帮助编写、审查、调试代码"""
+#!/usr/bin/env python3
+"""Code Agent - Code Agent 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 class CodeAgentSkill:
     name = "code_agent"

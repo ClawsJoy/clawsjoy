@@ -1,4 +1,11 @@
-"""本地 Embedding - 使用 Ollama nomic-embed-text"""
+#!/usr/bin/env python3
+"""Local Embedding - Local Embedding 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import requests
 import numpy as np

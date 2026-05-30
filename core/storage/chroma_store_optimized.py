@@ -1,4 +1,11 @@
-"""ChromaDB 向量存储 - 优化版"""
+#!/usr/bin/env python3
+"""Chroma Store Optimized - Chroma Store Optimized 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import chromadb
 from chromadb.utils import embedding_functions

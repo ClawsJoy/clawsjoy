@@ -1,4 +1,11 @@
-"""传承架构 - 数据模型"""
+#!/usr/bin/env python3
+"""Models - Models 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Any
 from datetime import datetime

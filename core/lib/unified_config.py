@@ -1,4 +1,11 @@
-"""统一配置管理器 - 支持多路径查找"""
+#!/usr/bin/env python3
+"""Unified Config - Unified Config 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import yaml
 import os

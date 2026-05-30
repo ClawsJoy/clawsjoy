@@ -1,4 +1,11 @@
-"""配置加载器 - 兼容性模块"""
+#!/usr/bin/env python3
+"""Config Loader - Config Loader 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import os
 from pathlib import Path

@@ -1,4 +1,11 @@
-"""获取书籍摘要"""
+#!/usr/bin/env python3
+"""Get Summary - Get Summary 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class GetSummarySkill:
     def execute(self, params):
         book = params.get('book', '')

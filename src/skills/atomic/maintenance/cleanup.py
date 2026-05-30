@@ -1,4 +1,11 @@
-"""数据清理技能 - 自动清理过期数据"""
+#!/usr/bin/env python3
+"""Cleanup - Cleanup 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import sys
 from lib.smart_config import smart_config
 sys.path.insert(0, 'str(smart_config.ROOT)')

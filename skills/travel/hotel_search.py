@@ -1,4 +1,11 @@
-"""酒店搜索"""
+#!/usr/bin/env python3
+"""Hotel Search - Hotel Search 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class HotelSearchSkill:
     def execute(self, params):
         city = params.get('city', '')

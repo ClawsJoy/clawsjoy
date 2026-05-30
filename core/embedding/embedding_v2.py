@@ -1,4 +1,11 @@
-"""符合 ChromaDB 0.4.16+ 的 Embedding 函数"""
+#!/usr/bin/env python3
+"""Embedding V2 - Embedding V2 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import requests
 from typing import List

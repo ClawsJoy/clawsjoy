@@ -1,4 +1,11 @@
-"""ChromaDB 存储 - 使用完整 Embedding 函数"""
+#!/usr/bin/env python3
+"""Chroma Complete - Chroma Complete 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import chromadb
 from pathlib import Path

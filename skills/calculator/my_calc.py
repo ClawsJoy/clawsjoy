@@ -1,4 +1,11 @@
-"""我的计算器技能"""
+#!/usr/bin/env python3
+"""My Calc - My Calc 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 description = "my_calc 自定义计算器 加法 减法 乘法 除法 数学运算"
 

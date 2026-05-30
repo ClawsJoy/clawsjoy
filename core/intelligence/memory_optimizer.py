@@ -1,4 +1,11 @@
-"""智能记忆优化器 - 自动整理和优化记忆"""
+#!/usr/bin/env python3
+"""Memory Optimizer - Memory Optimizer 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import json
 from pathlib import Path
 from datetime import datetime

@@ -1,4 +1,11 @@
-"""安全自主 Agent - 有边界的自主"""
+#!/usr/bin/env python3
+"""Safe Autonomous - Safe Autonomous 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import json
 import subprocess

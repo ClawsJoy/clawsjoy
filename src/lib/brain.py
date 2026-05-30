@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Brain - Brain 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from lib.smart_config import smart_config
 """智能大脑 - 集成记忆、LLM学习、工作流编排"""
 import re

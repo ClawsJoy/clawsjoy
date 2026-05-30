@@ -1,4 +1,11 @@
-"""技能链执行器 - 真正执行多步骤技能组合"""
+#!/usr/bin/env python3
+"""Skill Chain Executor - Skill Chain Executor 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import yaml
 from pathlib import Path

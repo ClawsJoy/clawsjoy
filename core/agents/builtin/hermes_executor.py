@@ -1,4 +1,11 @@
-"""Hermes 执行器 - 消息执行引擎"""
+#!/usr/bin/env python3
+"""Hermes Executor - Hermes Executor 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from typing import Dict, Optional
 from core.agents.base.smart_agent import SmartAgent

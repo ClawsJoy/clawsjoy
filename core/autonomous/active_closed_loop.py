@@ -1,4 +1,11 @@
-"""主动闭环智能体 - 整合感知、分析、决策、执行、学习"""
+#!/usr/bin/env python3
+"""Active Closed Loop - Active Closed Loop 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import time
 import threading

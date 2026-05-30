@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""插件分发 API"""
+#!/usr/bin/env python3
+"""Plugin Api - Plugin Api 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
 
 from flask import Blueprint, jsonify, send_file
 from io import BytesIO

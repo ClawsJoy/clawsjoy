@@ -1,4 +1,11 @@
-"""智能主动服务 - 事件驱动 + 条件触发"""
+#!/usr/bin/env python3
+"""Active Service - Active Service 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import threading
 import time

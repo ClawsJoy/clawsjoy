@@ -1,4 +1,11 @@
-"""向量检索 Agent"""
+#!/usr/bin/env python3
+"""Vector Retriever - Vector Retriever 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from typing import Dict, List, Optional
 from core.agents.base.smart_agent import SmartAgent

@@ -1,4 +1,11 @@
-"""Agent 健康检查模块 - 简化版"""
+#!/usr/bin/env python3
+"""Agent Health - Agent Health 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from datetime import datetime
 from typing import Dict, List

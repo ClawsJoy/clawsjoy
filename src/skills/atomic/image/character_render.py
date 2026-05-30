@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Character Render - Character Render 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from lib.smart_config import smart_config
 """角色渲染器 - 每次生成新文件"""
 import os

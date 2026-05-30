@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Version Registry V1.0.05 20260524 - Version Registry V1.0.05 20260524 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from core.lib.unified_config import unified_config
 
 """版本注册中心 v1.0.05 - 配置驱动改造完成版"""

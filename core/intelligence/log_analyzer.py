@@ -1,4 +1,11 @@
-"""智能日志分析器 - 自动分析日志发现异常模式"""
+#!/usr/bin/env python3
+"""Log Analyzer - Log Analyzer 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import re
 import json
 from pathlib import Path

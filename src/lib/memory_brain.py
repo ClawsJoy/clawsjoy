@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Memory Brain - Memory Brain 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from lib.smart_config import smart_config
 """智能记忆 - 记录和复用成功模式"""
 import json

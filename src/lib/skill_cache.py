@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Skill Cache - Skill Cache 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from lib.smart_config import smart_config
 """技能缓存 - 提升性能"""
 from functools import lru_cache

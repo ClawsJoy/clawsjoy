@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""修复记忆 API 脚本"""
+#!/usr/bin/env python3
+"""Fix Memory Api - Fix Memory Api 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
 
 import requests
 import json

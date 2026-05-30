@@ -1,4 +1,11 @@
-"""自动配置监听器 - 扫描并监听所有配置文件"""
+#!/usr/bin/env python3
+"""Config Auto Watcher - Config Auto Watcher 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from pathlib import Path
 from core.lib.config_watcher import config_watcher

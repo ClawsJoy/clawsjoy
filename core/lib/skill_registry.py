@@ -1,4 +1,11 @@
-"""技能生成记录 - 追踪所有自动生成的技能"""
+#!/usr/bin/env python3
+"""Skill Registry - Skill Registry 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import json
 from pathlib import Path
 from datetime import datetime

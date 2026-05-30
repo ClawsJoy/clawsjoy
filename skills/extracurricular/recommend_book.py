@@ -1,4 +1,11 @@
-"""推荐课外读物"""
+#!/usr/bin/env python3
+"""Recommend Book - Recommend Book 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class RecommendBookSkill:
     def execute(self, params):
         age = params.get('age', 10)

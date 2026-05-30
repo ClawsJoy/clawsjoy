@@ -1,4 +1,11 @@
-"""试错智能体 - 迭代执行、自我修正、持续学习"""
+#!/usr/bin/env python3
+"""Trial Agent - Trial Agent 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import json
 import time

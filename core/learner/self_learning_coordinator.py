@@ -1,4 +1,11 @@
-"""自我学习协调器 - 打通现有记忆层、知识库、技能注册中心"""
+#!/usr/bin/env python3
+"""Self Learning Coordinator - Self Learning Coordinator 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))

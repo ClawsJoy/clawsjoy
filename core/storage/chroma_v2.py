@@ -1,4 +1,11 @@
-"""新版 ChromaDB 存储 - 符合 0.4.16+ 接口"""
+#!/usr/bin/env python3
+"""Chroma V2 - Chroma V2 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import chromadb
 from pathlib import Path

@@ -1,4 +1,11 @@
-"""Agent 通信混入类 - 为 Agent 提供 Bus 通信能力"""
+#!/usr/bin/env python3
+"""Communication Mixin - Communication Mixin 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from core.lib.agent_bus import get_bus
 

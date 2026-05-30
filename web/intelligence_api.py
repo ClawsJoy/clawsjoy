@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""智能化 API - 提供预测和优化接口"""
+#!/usr/bin/env python3
+"""Intelligence Api - Intelligence Api 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
 
 from flask import Blueprint, jsonify
 from lib.success_predictor import success_predictor

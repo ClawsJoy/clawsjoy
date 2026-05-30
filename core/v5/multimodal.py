@@ -1,4 +1,11 @@
-"""多模态支持 - 图像识别、语音处理"""
+#!/usr/bin/env python3
+"""Multimodal - Multimodal 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import base64
 from pathlib import Path

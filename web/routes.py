@@ -1,4 +1,11 @@
-"""Web 路由"""
+#!/usr/bin/env python3
+"""Routes - Routes 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from flask import Blueprint, send_from_directory, render_template_string
 from pathlib import Path

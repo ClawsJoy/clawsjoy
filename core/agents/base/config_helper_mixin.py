@@ -1,4 +1,11 @@
-"""配置读取辅助 Mixin"""
+#!/usr/bin/env python3
+"""Config Helper Mixin - Config Helper Mixin 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from core.lib.unified_config import unified_config
 

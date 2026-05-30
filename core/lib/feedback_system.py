@@ -1,4 +1,11 @@
-"""反馈系统 - 成功/失败 + 用户满意度（滞后统计）"""
+#!/usr/bin/env python3
+"""Feedback System - Feedback System 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import json
 from pathlib import Path

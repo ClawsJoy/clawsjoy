@@ -1,4 +1,11 @@
-"""ClawsJoy 最终版 API"""
+#!/usr/bin/env python3
+"""Api Final - Api Final 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware

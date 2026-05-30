@@ -1,4 +1,11 @@
-"""API 语义发现 - 基于向量检索的 API 发现"""
+#!/usr/bin/env python3
+"""Api Discovery - Api Discovery 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from core.tenant.tenant_vector_index import tenant_index_manager
 from core.lib.route_registry import route_registry

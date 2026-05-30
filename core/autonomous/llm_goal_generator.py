@@ -1,4 +1,11 @@
-"""LLM 驱动的目标生成器"""
+#!/usr/bin/env python3
+"""Llm Goal Generator - Llm Goal Generator 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import json
 import requests

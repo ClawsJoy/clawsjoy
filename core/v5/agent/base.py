@@ -1,4 +1,11 @@
-"""Agent 基类 - v5 独立简化版"""
+#!/usr/bin/env python3
+"""Base - Base 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import json
 from pathlib import Path
 from datetime import datetime

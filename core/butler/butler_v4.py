@@ -1,4 +1,11 @@
-"""私人管家 v4.0 - 全新智能化设计"""
+#!/usr/bin/env python3
+"""Butler V4 - Butler V4 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import yaml
 from pathlib import Path
 from datetime import datetime

@@ -1,4 +1,11 @@
-"""前端数据采集Agent - 通过注册中心注册"""
+#!/usr/bin/env python3
+"""Frontend Agent - Frontend Agent 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from core.agents.base.smart_agent import SmartAgent
 from core.lib.agent_registry import agent_registry
 

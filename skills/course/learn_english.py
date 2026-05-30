@@ -1,4 +1,11 @@
-"""英语学习"""
+#!/usr/bin/env python3
+"""Learn English - Learn English 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class LearnEnglishSkill:
     def execute(self, params):
         level = params.get('level', 'primary')  # primary/middle/high

@@ -1,4 +1,11 @@
-"""协作 Agent - 协调多个 Agent 完成任务"""
+#!/usr/bin/env python3
+"""Collaboration Agent - Collaboration Agent 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import time
 import requests

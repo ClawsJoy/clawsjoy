@@ -1,4 +1,11 @@
-"""简单对话记忆 - 游客版"""
+#!/usr/bin/env python3
+"""Conversation Memory - Conversation Memory 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from collections import defaultdict
 from typing import Dict, Optional

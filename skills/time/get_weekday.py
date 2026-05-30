@@ -1,4 +1,11 @@
-"""获取星期"""
+#!/usr/bin/env python3
+"""Get Weekday - Get Weekday 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from datetime import datetime
 class GetWeekdaySkill:
     def execute(self, params):

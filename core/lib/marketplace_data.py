@@ -1,4 +1,11 @@
-"""市场数据管理"""
+#!/usr/bin/env python3
+"""Marketplace Data - Marketplace Data 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import json
 from pathlib import Path

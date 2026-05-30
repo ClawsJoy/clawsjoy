@@ -1,4 +1,11 @@
-"""制定学习计划"""
+#!/usr/bin/env python3
+"""Create Plan - Create Plan 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class CreateStudyPlanSkill:
     def execute(self, params):
         subject = params.get('subject', 'math')

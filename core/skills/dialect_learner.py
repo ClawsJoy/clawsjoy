@@ -1,4 +1,11 @@
-"""方言学习器 - 自动学习用户方言映射"""
+#!/usr/bin/env python3
+"""Dialect Learner - Dialect Learner 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import json
 from pathlib import Path

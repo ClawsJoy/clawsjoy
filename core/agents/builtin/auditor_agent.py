@@ -1,4 +1,11 @@
-"""审计师 Agent - 核对数据数量，发现异常"""
+#!/usr/bin/env python3
+"""Auditor Agent - Auditor Agent 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import json
 from pathlib import Path

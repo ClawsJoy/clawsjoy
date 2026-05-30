@@ -1,4 +1,11 @@
-"""阿里云 PAI 集成"""
+#!/usr/bin/env python3
+"""Aliyun Pai - Aliyun Pai 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import requests
 from core.lib.unified_config import unified_config

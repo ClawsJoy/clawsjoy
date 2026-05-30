@@ -1,4 +1,11 @@
-"""题目解析"""
+#!/usr/bin/env python3
+"""Explain Problem - Explain Problem 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class ExplainProblemSkill:
     def execute(self, params):
         problem = params.get('problem', '')

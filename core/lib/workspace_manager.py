@@ -1,4 +1,11 @@
-"""Agent 工作区管理器 - 管理独立 Agent 工作区"""
+#!/usr/bin/env python3
+"""Workspace Manager - Workspace Manager 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import yaml
 from pathlib import Path

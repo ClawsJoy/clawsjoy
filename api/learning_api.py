@@ -1,4 +1,11 @@
-"""学习 API - 集成到主网关"""
+#!/usr/bin/env python3
+"""Learning Api - Learning Api 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from flask import Blueprint, request, jsonify
 from pathlib import Path

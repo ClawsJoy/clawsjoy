@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Security Learn - Security Learn 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from core.lib.unified_config import unified_config
 #!/usr/bin/env python3
 """安全 Agent 学习 - 学习新的敏感信息模式"""

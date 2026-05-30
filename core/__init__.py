@@ -1,4 +1,11 @@
-"""ClawsJoy Core Module - 智能驱动配置"""
+#!/usr/bin/env python3
+"""Init - Init 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from core.tenant.tenant_vector_index import tenant_index_manager
 from core.lib.unified_config import unified_config

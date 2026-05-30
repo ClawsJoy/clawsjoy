@@ -1,4 +1,11 @@
-"""会议系统 - 多 Agent 协作会议"""
+#!/usr/bin/env python3
+"""Meeting - Meeting 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from typing import Dict, List
 import uuid

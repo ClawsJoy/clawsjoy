@@ -1,4 +1,11 @@
-"""分析 Agent - 数据分析和报告生成"""
+#!/usr/bin/env python3
+"""Analysis Agent - Analysis Agent 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from typing import Dict, Optional
 from core.agents.base.smart_agent import SmartAgent

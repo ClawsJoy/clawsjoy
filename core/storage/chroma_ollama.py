@@ -1,4 +1,11 @@
-"""ChromaDB 存储 - 修复 metadata 问题"""
+#!/usr/bin/env python3
+"""Chroma Ollama - Chroma Ollama 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import chromadb
 import requests

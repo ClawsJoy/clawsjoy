@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Image Quality Check - Image Quality Check 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from lib.smart_config import smart_config
 """图片质量检查器"""
 from pathlib import Path

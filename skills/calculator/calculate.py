@@ -1,4 +1,11 @@
-"""计算器技能 - 执行数学运算"""
+#!/usr/bin/env python3
+"""Calculate - Calculate 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 description = "计算 加法 减法 乘法 除法 数学运算 算术 算数 计算器 数值计算 公式计算"
 

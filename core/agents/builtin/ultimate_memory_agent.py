@@ -1,4 +1,11 @@
-"""终极记忆 Agent - 增强记忆能力"""
+#!/usr/bin/env python3
+"""Ultimate Memory Agent - Ultimate Memory Agent 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from typing import Dict, Optional, Any
 from core.agents.base.smart_agent import SmartAgent

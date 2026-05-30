@@ -1,4 +1,11 @@
-"""真实大脑 - 服务健康管理"""
+#!/usr/bin/env python3
+"""Real Brain - Real Brain 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import time
 import requests

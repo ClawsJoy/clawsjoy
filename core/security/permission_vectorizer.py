@@ -1,4 +1,11 @@
-"""权限向量化 - 基于配置的权限规则"""
+#!/usr/bin/env python3
+"""Permission Vectorizer - Permission Vectorizer 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from core.tenant.tenant_vector_index import tenant_index_manager
 from core.lib.unified_config import unified_config

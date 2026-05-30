@@ -1,4 +1,11 @@
-"""餐厅搜索"""
+#!/usr/bin/env python3
+"""Restaurant Search - Restaurant Search 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class RestaurantSearchSkill:
     def execute(self, params):
         cuisine = params.get('cuisine', '')

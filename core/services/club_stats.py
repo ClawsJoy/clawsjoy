@@ -1,4 +1,11 @@
-"""俱乐部数据收集服务 - 脱敏统计"""
+#!/usr/bin/env python3
+"""Club Stats - Club Stats 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import json
 from pathlib import Path

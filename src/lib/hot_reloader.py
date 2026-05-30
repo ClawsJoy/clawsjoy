@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Hot Reloader - Hot Reloader 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from lib.smart_config import smart_config
 """技能热加载器 - 修复字典更新"""
 import importlib

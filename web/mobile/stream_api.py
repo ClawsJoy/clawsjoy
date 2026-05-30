@@ -1,4 +1,11 @@
-"""流式 API - SSE 支持"""
+#!/usr/bin/env python3
+"""Stream Api - Stream Api 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from flask import Blueprint, Response, request, jsonify
 from core.agents.builtin.orchestrator import OrchestratorAgent

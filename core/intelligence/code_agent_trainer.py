@@ -1,4 +1,11 @@
-"""Code Agent 培养系统 - 从我们的对话中学习"""
+#!/usr/bin/env python3
+"""Code Agent Trainer - Code Agent Trainer 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import json
 import re
 from pathlib import Path

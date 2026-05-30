@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Developer Api - Developer Api 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from core.lib.config_helper import get_data_root, get_llm_endpoint, get_llm_model, get_embedding_model, get_gateway_port, get_timeout
 """开发者API - 管理开发者Agent的上架、审核、发布"""
 import json

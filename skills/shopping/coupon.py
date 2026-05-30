@@ -1,4 +1,11 @@
-"""优惠券查询"""
+#!/usr/bin/env python3
+"""Coupon - Coupon 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class CouponSkill:
     def execute(self, params):
         store = params.get('store', '')

@@ -1,4 +1,11 @@
-"""知识问答游戏"""
+#!/usr/bin/env python3
+"""Play Quiz - Play Quiz 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 class QuizGameSkill:
     def execute(self, params):
         category = params.get('category', 'general')

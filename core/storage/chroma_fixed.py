@@ -1,4 +1,11 @@
-"""修复版 ChromaDB - 使用官方 OllamaEmbeddingFunction"""
+#!/usr/bin/env python3
+"""Chroma Fixed - Chroma Fixed 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import chromadb
 from pathlib import Path

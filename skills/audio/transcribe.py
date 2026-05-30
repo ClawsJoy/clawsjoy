@@ -1,4 +1,11 @@
-"""音频转录技能 - 使用 Vosk"""
+#!/usr/bin/env python3
+"""Transcribe - Transcribe 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import json
 import wave

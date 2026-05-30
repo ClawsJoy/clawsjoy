@@ -1,4 +1,11 @@
-"""智能主动服务 - 自动索引、清理、优化"""
+#!/usr/bin/env python3
+"""Smart Active Service - Smart Active Service 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import time
 import threading

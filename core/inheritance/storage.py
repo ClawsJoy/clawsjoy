@@ -1,4 +1,11 @@
-"""经验存储器 - 持久化经验数据"""
+#!/usr/bin/env python3
+"""Storage - Storage 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import json
 import yaml
 from pathlib import Path

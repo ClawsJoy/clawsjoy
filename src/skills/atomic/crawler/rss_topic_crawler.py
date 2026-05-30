@@ -1,4 +1,11 @@
-"""RSS 话题采集器 - 优化版"""
+#!/usr/bin/env python3
+"""Rss Topic Crawler - Rss Topic Crawler 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 import feedparser
 from collections import Counter
 from datetime import datetime

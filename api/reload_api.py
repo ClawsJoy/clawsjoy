@@ -1,4 +1,11 @@
-"""热重载 API"""
+#!/usr/bin/env python3
+"""Reload Api - Reload Api 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from flask import Blueprint, jsonify
 from lib.route_registry import route_registry

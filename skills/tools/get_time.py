@@ -1,11 +1,11 @@
-"""
-get_time 技能 - 获取当前时间
+#!/usr/bin/env python3
+"""Get Time - Get Time 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
 """
 
-from datetime import datetime
-
-class GetTimeSkill:
-    """获取时间技能"""
     
     def __init__(self):
         self.name = "get_time"

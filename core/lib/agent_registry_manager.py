@@ -1,4 +1,11 @@
-"""Agent 注册管理器 - 支持用户自定义 Agent 自动注册"""
+#!/usr/bin/env python3
+"""Agent Registry Manager - Agent Registry Manager 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import yaml
 from pathlib import Path

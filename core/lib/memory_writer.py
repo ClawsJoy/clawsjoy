@@ -1,4 +1,11 @@
-"""记忆写入器 - 兼容层，重定向到 memory_vector"""
+#!/usr/bin/env python3
+"""Memory Writer - Memory Writer 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 # 兼容旧代码导入
 from core.lib.memory_vector import vector_memory as memory

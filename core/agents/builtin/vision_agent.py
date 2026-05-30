@@ -1,4 +1,11 @@
-"""视觉 Agent - 图片识别和描述生成"""
+#!/usr/bin/env python3
+"""Vision Agent - Vision Agent 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 from typing import Dict, Optional
 from core.agents.base.smart_agent import SmartAgent

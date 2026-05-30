@@ -1,4 +1,11 @@
-"""ChromaDB 存储 - 官方 embedding 方式"""
+#!/usr/bin/env python3
+"""Chroma Official - Chroma Official 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import chromadb
 from pathlib import Path

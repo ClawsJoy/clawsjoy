@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Auto Tuner - Auto Tuner 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from core.lib.unified_config import unified_config
 
 """自适应调优模块"""

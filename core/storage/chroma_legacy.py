@@ -1,4 +1,11 @@
-"""ChromaDB 存储 - 兼容旧版接口"""
+#!/usr/bin/env python3
+"""Chroma Legacy - Chroma Legacy 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 
 import chromadb
 from pathlib import Path

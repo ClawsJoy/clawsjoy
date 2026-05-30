@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Add Subtitles - Add Subtitles 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from lib.smart_config import smart_config
 """add_subtitles技能"""
 class Add_subtitlesSkill:

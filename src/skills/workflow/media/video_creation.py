@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Video Creation - Video Creation 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from lib.smart_config import smart_config
 """视频制作工作流 - 组合原子技能"""
 from src.lib.base_skill import BaseWorkflowSkill

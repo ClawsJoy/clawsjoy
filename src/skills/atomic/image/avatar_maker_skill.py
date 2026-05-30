@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Avatar Maker Skill - Avatar Maker Skill 模块
+
+@version: 5.0.0
+@author: ClawsJoy
+@date: 2026-05-31
+"""
+
 from lib.smart_config import smart_config
 """头像制作技能 - 从社区下载"""
 from PIL import Image, ImageDraw, ImageFont
