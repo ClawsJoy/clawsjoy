@@ -204,3 +204,78 @@ __pycache__/
 
 # 配置文件备份
 *.json.bak
+
+# 租户数据（敏感）
+tenants/
+clawsjoy/data/tenants/
+
+# 所有备份文件
+*.bak
+*.bak2
+*.bak3
+*.backup
+*.old
+*.tmp
+*~
+
+# 客户端构建产物
+client/dist/
+client/node_modules/
+
+# 语音模型
+vosk-model-*/
+piper/
+*.wav
+*.mp3
+
+# 临时测试文件
+test_*.py
+test_*.sh
+add_*.py
+check_*.py
+fix_*.py
+voice_*.py
+tts_*.py
+vosk_*.py
+
+# 日志和运行时文件
+*.log
+nohup.out
+gateway.log
+gunicorn.log
+
+# Python 缓存
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# 本地配置
+.env.local
+.env.*.local
+
+# 归档目录
+core/agents/archive/
+core/lib/archive/
+config/agents/archive/
+config/driver/backup/
+
+# 未使用的旧版本
+simple_mobile_*.py
+!simple_mobile_final_v7_espeak.py
+agent_gateway_enhanced_*.py
+!agent_gateway_enhanced_complete.py
+!agent_gateway_enhanced_learning.py
+
+# 交换文件
+data/exchange/*.json
+data/exchange/2026*.json
+
+# 临时用户数据
+data/butler_club/members/test_*/
+data/butler_club/members/*_test/
+data/butler_club/members/verify_user/
