@@ -44,18 +44,18 @@ class DecisionEvaluator:
         """评估建议 - 完全配置驱动"""
         risk_level, risk_keyword = self._detect_risk(suggestion)
         risk_config = self.config['risk']['levels'].get(risk_level, {})
-        
+
         # 查找相似历史
         similar = self._find_similar(suggestion)
         success_rate = sum(1 for s in similar if s.get('success')) / max(1, len(similar))
-        
+
         # 决策
         action = risk_config.get('action', 'allow')
         require_confirm = risk_config.get('require_confirm', False)
-        
+
         auto_levels = self.config['execution'].get('auto_execute_levels', ['low'])
         should_execute = risk_level in auto_levels
-        
+
         return {
             "suggestion": suggestion,
             "risk_level": risk_level,
@@ -71,12 +71,12 @@ class DecisionEvaluator:
     def _detect_risk(self, suggestion: str) -> Tuple[str, str]:
         """检测风险等级"""
         suggestion_lower = suggestion.lower()
-        
+
         for level, config in self.config['risk']['levels'].items():
             for keyword in config.get('keywords', []):
                 if keyword in suggestion_lower:
                     return level, keyword
-        
+
         return 'low', ''
     
     def _find_similar(self, suggestion: str, limit: int = 10) -> List[Dict]:
@@ -97,7 +97,7 @@ class DecisionEvaluator:
         self.history['stats']['total'] += 1
         if result.get('success'):
             self.history['stats']['success'] += 1
-        
+
         max_size = self.config.get('learning', {}).get('history_size', 500)
         if len(self.history['decisions']) > max_size:
             self.history['decisions'] = self.history['decisions'][-max_size:]

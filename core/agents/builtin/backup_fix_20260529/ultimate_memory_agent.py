@@ -27,11 +27,11 @@ class UltimateMemoryAgent:
         self.user_id = user_id
         self.user_dir = Path(funified_config.get("paths.users_dir", f"{get_data_root()}/users/") + "/{user_id}")
         self.user_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # 短期记忆（文件）
         self.short_term_file = self.user_dir / "short_term.json"
         self.short_term = self._load_short_term()
-        
+
         self.ollama_url = "config_loader.get_ollama_url()"
         self.model = config_manager.get_model()
     
@@ -53,7 +53,7 @@ class UltimateMemoryAgent:
             match = re.search(r'[我叫我是][\s]*([^\s，。]+)', user_input)
             if match:
                 self.short_term["name"] = match.group(1)
-        
+
         # 提取偏好
         if "喜欢" in user_input:
             import re
@@ -61,7 +61,7 @@ class UltimateMemoryAgent:
             if match:
                 pref = match.group(1).strip()
                 self.short_term["preferences"][pref] = True
-        
+
         # 记录历史
         self.short_term["history"].append({
             "user": user_input[:200],
@@ -75,24 +75,24 @@ class UltimateMemoryAgent:
                 f"用户{self.user_id}说: {old['user']}\n回复: {old['response']}",
                 category=f"user_{self.user_id}_history"
             )
-        
+
         self._save_short_term()
     
     def _get_context(self) -> str:
         """获取上下文（短期+长期）"""
         ctx = []
-        
+
         # 短期记忆
         if self.short_term.get("name"):
             ctx.append(f"用户名字: {self.short_term['name']}")
         if self.short_term.get("preferences"):
             ctx.append(f"用户偏好: {', '.join(self.short_term['preferences'].keys())}")
-        
+
         # 最近对话
         recent = self.short_term.get("history", [])[-3:]
         for h in recent:
             ctx.append(f"之前: {h['user'][:40]} → {h['response'][:40]}")
-        
+
         # 长期记忆检索相关
         if len(self.short_term.get("history", [])) > 0:
             last_msg = self.short_term["history"][-1]["user"] if self.short_term["history"] else ""
@@ -100,30 +100,30 @@ class UltimateMemoryAgent:
                 long_mem = vector_memory.search(f"用户{self.user_id} {last_msg}", n=2)
                 for mem in long_mem:
                     ctx.append(f"历史相关: {mem.get('text', '')[:80]}")
-        
+
         return '\n'.join(ctx)
     
     def process(self, user_input: str) -> Dict:
         start = time.time()
-        
+
         # 快速规则
         lower = user_input.lower()
-        
+
         if 'agent' in lower and ('有哪些' in lower or '列表' in lower):
             response = "ClawsJoy 有决策Agent、聊天Agent、执行Agent、采集Agent、安全Agent、分析Agent等10个专业Agent"
             task = "list_agents"
             used_llm = False
-        
+
         elif any(k in lower for k in ['图', 'chart', '架构图']):
             response = "已生成架构图，保存在 output 目录"
             task = "generate_chart"
             used_llm = False
-        
+
         else:
             # LLM 理解 + 短期记忆 + 长期记忆
             context = self._get_context()
             name = self.short_term.get("name", "")
-            
+
             prompt = f"""你是 ClawsJoy 智能助手。
 
 已知信息：
@@ -133,7 +133,7 @@ class UltimateMemoryAgent:
 {f'用户名字：{name}' if name else ''}
 
 请友好回复，利用已知信息。"""
-            
+
             try:
                 resp = requests.post(
                     f"{self.ollama_url}/api/generate",
@@ -145,12 +145,12 @@ class UltimateMemoryAgent:
                 response = "系统繁忙"
             task = "chat"
             used_llm = True
-        
+
         # 存储记忆
         self._extract_and_store(user_input, response)
-        
+
         elapsed = (time.time() - start) * 1000
-        
+
         return {
             "response": response,
             "task": task,

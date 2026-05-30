@@ -29,10 +29,10 @@ class IntelligentAgentV5Fixed:
         self.user_id = user_id
         self.metacognition = Metacognition(f"agent_{user_id}")
         self.memory = CrossSessionMemory(user_id)
-        
+
         self.ollama_url = "config_loader.get_ollama_url()"
         self.model = config_manager.get_model()
-        
+
         print(f"🧠 智能 Agent v{self.VERSION} 启动")
         user_info = self.memory.recall()
         print(f"📝 用户: {user_info.get('name', '新用户')}")
@@ -76,47 +76,47 @@ class IntelligentAgentV5Fixed:
         user_info = self.memory.recall()
         name = user_info.get("name")
         prefs = user_info.get("preferences", [])
-        
+
         # 问候
         if any(g in lower for g in ['你好', 'hi']):
             if name:
                 return (f"你好，{name}！有什么可以帮你的？", "greeting")
             return ("你好！请问怎么称呼你？", "greeting")
-        
+
         # 问名字
         if any(q in lower for q in ['我叫什么', '我名字', '我是谁', '还记得我吗']):
             if name:
                 return (f"当然记得！你是{name}呀", "query_name")
             return ("你还没告诉我名字呢", "query_name")
-        
+
         # 问偏好
         if any(q in lower for q in ['喜欢什么', '偏好', '我的风格']):
             if prefs:
                 return (f"你喜欢{', '.join(prefs)}", "query_pref")
             return ("你还没告诉我你的偏好呢", "query_pref")
-        
+
         # Agent 列表
         if 'agent' in lower and ('有哪些' in lower or '列表' in lower):
             return ("系统有决策Agent、聊天Agent、执行Agent、采集Agent、安全Agent、分析Agent", "list_agents")
-        
+
         # 生成图表
         if any(g in lower for g in ['图', '架构图']):
             return ("正在生成架构图...", "generate_chart")
-        
+
         return None
     
     def _llm_response(self, text: str) -> str:
         user_info = self.memory.recall()
         name = user_info.get("name", "")
         prefs = user_info.get("preferences", [])
-        
+
         prompt = f"""你是智能助手{f'，用户叫{name}' if name else ''}。
 {f'用户偏好：{", ".join(prefs)}' if prefs else ''}
 
 用户说："{text}"
 
 回复要求：简洁，1-2句话，直接回答问题。"""
-        
+
         try:
             resp = requests.post(
                 f"{self.ollama_url}/api/generate",
@@ -131,19 +131,19 @@ class IntelligentAgentV5Fixed:
     
     def process(self, user_input: str) -> Dict:
         start = time.time()
-        
+
         # 1. 提取名字（精确）
         name = self._extract_name(user_input)
         if name:
             self.memory.remember("name", name)
             print(f"   📝 记住名字: {name}")
-        
+
         # 2. 提取偏好（精确）
         pref = self._extract_preference(user_input)
         if pref:
             self.memory.remember("preference", pref)
             print(f"   📝 记住偏好: {pref}")
-        
+
         # 3. 快速响应
         fast = self._fast_response(user_input)
         if fast:
@@ -153,16 +153,16 @@ class IntelligentAgentV5Fixed:
             response = self._llm_response(user_input)
             task = "chat"
             used_llm = True
-        
+
         # 4. 记录交互
         self.memory.record_interaction(user_input, response, task)
-        
+
         # 5. 元认知反思
         if self.memory.recall().get("total_interactions", 0) % 5 == 0:
             self.metacognition.reflect(user_input, response)
-        
+
         elapsed = (time.time() - start) * 1000
-        
+
         return {
             "response": response,
             "task": task,

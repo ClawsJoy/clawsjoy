@@ -28,17 +28,17 @@ class TaskQualityScorer:
     def _get_skill_history(self, skill_name: str) -> Dict:
         """获取技能历史成功率"""
         outcomes = memory.recall_all(category='workflow_outcome_v2')
-        
+
         success = 0
         total = 0
-        
+
         for outcome in outcomes[-self.history_window:]:
             if isinstance(outcome, str):
                 if skill_name in outcome:
                     total += 1
                     if 'success' in outcome or '✅' in outcome:
                         success += 1
-        
+
         rate = success / max(total, 1)
         return {
             "skill": skill_name,
@@ -64,13 +64,13 @@ class TaskQualityScorer:
             videos = list(output_dir.glob("*.mp4"))
             if not videos:
                 return False, "没有找到可用的视频素材"
-        
+
         # 检查文件依赖
         if task_params.get('input_file'):
             file_path = Path(task_params['input_file'])
             if not file_path.exists():
                 return False, f"输入文件不存在: {task_params['input_file']}"
-        
+
         return True, ""
     
     def score(self, task_name: str, skill: str = "", params: Dict = None) -> Dict:
@@ -79,17 +79,17 @@ class TaskQualityScorer:
         返回: score (0-1), 是否建议跳过, 原因
         """
         params = params or {}
-        
+
         # 初始分
         score = 1.0
         reasons = []
-        
+
         # 1. 检查错误历史 (-0.3 每重复失败)
         has_error, error_reason = self._check_error_history(task_name)
         if has_error:
             score -= 0.3
             reasons.append(error_reason)
-        
+
         # 2. 检查技能历史成功率
         if skill:
             skill_history = self._get_skill_history(skill)
@@ -101,24 +101,24 @@ class TaskQualityScorer:
                     reasons.append(f"{skill} 历史成功率 {history_score:.0%}")
                 elif history_score > 0.8:
                     score += 0.1  # 奖励高成功率技能
-        
+
         # 3. 检查依赖
         deps_ok, deps_reason = self._check_dependencies(params)
         if not deps_ok:
             score -= 0.5
             reasons.append(deps_reason)
-        
+
         # 4. 检查任务名称关键词（启发式）
         low_quality_keywords = ['test', 'debug', 'temp', 'deprecated']
         if any(kw in task_name.lower() for kw in low_quality_keywords):
             score -= 0.2
             reasons.append("任务名称包含低质量关键词")
-        
+
         # 限制分数范围
         score = max(0.0, min(1.0, score))
-        
+
         should_skip = score < self.min_score_to_execute
-        
+
         return {
             "task": task_name,
             "skill": skill,

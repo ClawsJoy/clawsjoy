@@ -27,7 +27,7 @@ class ResourceMonitor:
             cpu = psutil.cpu_percent(interval=1)
             memory = psutil.virtual_memory()
             disk = psutil.disk_usage('/')
-            
+
             return {
                 "cpu_percent": cpu,
                 "memory_percent": memory.percent,

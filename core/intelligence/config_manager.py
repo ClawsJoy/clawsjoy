@@ -10,7 +10,7 @@ class ConfigManager:
     def __init__(self):
         self.config_file = Path(f"{config_helper.get_data_root()}/smart_config.json")
         self.load_config()
-        
+
     def load_config(self):
         """加载配置"""
         if self.config_file.exists():
@@ -46,7 +46,7 @@ class ConfigManager:
         """设置配置值"""
         old_value = self.config['settings'].get(key)
         self.config['settings'][key] = value
-        
+
         # 记录变更
         self.config['history'].append({
             'timestamp': datetime.now().isoformat(),
@@ -54,7 +54,7 @@ class ConfigManager:
             'old': old_value,
             'new': value
         })
-        
+
         self.save_config()
         print(f"⚙️ 配置更新: {key} = {value}")
     
@@ -63,9 +63,9 @@ class ConfigManager:
         from agent_core.brain_enhanced import brain
         stats = brain.get_stats()
         success_rate = stats.get('success_rate', 0.5)
-        
+
         changes = []
-        
+
         # 根据成功率调整学习率
         if success_rate > 0.85:
             new_rate = min(0.5, self.get('learning_rate', 0.3) + 0.05)
@@ -77,7 +77,7 @@ class ConfigManager:
             if new_rate != self.get('learning_rate'):
                 self.set('learning_rate', new_rate)
                 changes.append(f"学习率 -> {new_rate}")
-        
+
         return changes
 
 if __name__ == "__main__":

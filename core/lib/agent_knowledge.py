@@ -18,12 +18,12 @@ class AgentKnowledgeBase:
         from core.lib.path_manager import path_manager
         self.persist_dir = Path(path_manager.get("data.vector_kb")) / knowledge_base_name
         self.persist_dir.mkdir(parents=True, exist_ok=True)
-        
+
         self.client = chromadb.PersistentClient(
             path=str(self.persist_dir),
             settings=Settings(anonymized_telemetry=False)
         )
-        
+
         # 创建多个集合
         self.collections = {
             "reports": self.client.get_or_create_collection("reports"),
@@ -32,7 +32,7 @@ class AgentKnowledgeBase:
             "user_instructions": self.client.get_or_create_collection("user_instructions"),
             "learning_patterns": self.client.get_or_create_collection("learning_patterns")
         }
-        
+
         print(f"✅ Agents 知识库初始化完成")
         for name, col in self.collections.items():
             print(f"   - {name}: {col.count()} 条")
@@ -58,7 +58,7 @@ class AgentKnowledgeBase:
         """添加技能文档到知识库"""
         content = f"技能: {skill_name}\n描述: {description}\n用法: {usage}\n示例: {example}"
         doc_id = hashlib.md5(f"skill_{skill_name}".encode()).hexdigest()[:16]
-        
+
         self.collections["skills"].add(
             ids=[doc_id],
             documents=[content[:3000]],
@@ -76,7 +76,7 @@ class AgentKnowledgeBase:
         """添加 Agent 文档到知识库"""
         content = f"Agent: {agent_name}\n能力: {capability}\nAPI: {api_doc}"
         doc_id = hashlib.md5(f"agent_{agent_name}".encode()).hexdigest()[:16]
-        
+
         self.collections["agents_doc"].add(
             ids=[doc_id],
             documents=[content[:3000]],
@@ -94,7 +94,7 @@ class AgentKnowledgeBase:
         """添加学习模式到知识库"""
         content = f"模式: {pattern}\n上下文: {context}\n结果: {'成功' if success else '失败'}"
         doc_id = hashlib.md5(f"pattern_{datetime.now().isoformat()}".encode()).hexdigest()[:16]
-        
+
         self.collections["learning_patterns"].add(
             ids=[doc_id],
             documents=[content[:2000]],
@@ -111,12 +111,12 @@ class AgentKnowledgeBase:
     def search(self, query: str, collection: str = None, n: int = 5) -> List[Dict]:
         """搜索知识库"""
         results = []
-        
+
         if collection and collection in self.collections:
             target_collections = [collection]
         else:
             target_collections = list(self.collections.keys())
-        
+
         for col_name in target_collections:
             if col_name not in self.collections:
                 continue
@@ -135,7 +135,7 @@ class AgentKnowledgeBase:
                         })
             except Exception as e:
                 print(f"⚠️ 搜索 {col_name} 失败: {e}")
-        
+
         return sorted(results, key=lambda x: x.get('distance', 1))[:n]
     
     def get_stats(self) -> Dict:

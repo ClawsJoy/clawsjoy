@@ -18,20 +18,20 @@ class APIDiscovery:
         """初始化租户 API 向量索引"""
         if self._initialized:
             return
-        
+
         routes = route_registry.get_all_enabled()
         index = tenant_index_manager.get_index(tenant_id)
-        
+
         indexed = 0
         for route in routes:
             path = route.get('path', '')
             method = route.get('method', 'GET')
             handler = route.get('handler', '')
             description = route.get('description', '')
-            
+
             # 构建 API 描述用于向量化
             api_description = f"{method} {path}: {description}"
-            
+
             if path and handler:
                 # 获取权限信息
                 permissions = self._get_permissions(handler)
@@ -41,7 +41,7 @@ class APIDiscovery:
                     description=f"{description} 权限: {permissions.get('roles', [])}"
                 )
                 indexed += 1
-        
+
         print(f"   🔍 已索引 {indexed} 个 API 端点")
         self._initialized = True
         return indexed
@@ -60,7 +60,7 @@ class APIDiscovery:
         """语义发现 API"""
         index = tenant_index_manager.get_index(tenant_id)
         results = index.search_route(query, n)
-        
+
         # 权限过滤
         if user_roles:
             filtered = []
@@ -69,17 +69,17 @@ class APIDiscovery:
                 if self._check_permission(r.get('handler', ''), user_roles):
                     filtered.append(r)
             return filtered
-        
+
         return results
     
     def _check_permission(self, handler_name: str, user_roles: list) -> bool:
         """检查用户是否有权限调用 API"""
         permissions = self._get_permissions(handler_name)
         required_roles = permissions.get('roles', [])
-        
+
         if not required_roles:
             return True
-        
+
         return any(role in user_roles for role in required_roles)
     
     def get_stats(self, tenant_id: str = "default"):

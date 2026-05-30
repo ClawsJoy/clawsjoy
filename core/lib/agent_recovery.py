@@ -21,7 +21,7 @@ class AgentRecovery:
         health = agent_health.check_agent(agent_id)
         if health.get('status') == 'healthy':
             return {"success": True, "message": "Agent 已健康"}
-        
+
         # 恢复策略
         if agent_id == 'orchestrator':
             # 重启网关
@@ -32,25 +32,25 @@ class AgentRecovery:
         else:
             # 其他 Agent 的恢复逻辑
             result = {"action": "skip", "success": False}
-        
+
         self.recovery_log.append({
             "agent": agent_id,
             "timestamp": datetime.now().isoformat(),
             "action": result.get('action'),
             "success": result.get('success')
         })
-        
+
         return result
     
     def recover_all(self):
         """恢复所有不健康的 Agent"""
         health = agent_health.get_summary()
         results = {}
-        
+
         for agent_id in health.get('details', {}):
             if health['details'][agent_id].get('status') != 'healthy':
                 results[agent_id] = self.recover_agent(agent_id)
-        
+
         return results
     
     def get_recovery_log(self, limit=10):

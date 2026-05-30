@@ -21,29 +21,29 @@ class AdvancedAnalyzer:
         outcomes = memory.recall_all(category='workflow_outcome')
         if len(outcomes) < 10:
             return {"trend": "数据不足", "confidence": 0.3}
-        
+
         # 计算最近趋势
         recent = outcomes[-10:]
         success_count = len([o for o in recent if '成功' in o])
         rate = success_count / len(recent) * 100
-        
+
         if rate >= 80:
             trend = "上升"
         elif rate >= 50:
             trend = "稳定"
         else:
             trend = "下降"
-        
+
         return {"trend": trend, "rate": rate, "sample_size": len(recent)}
     
     def root_cause_analysis(self):
         """根因分析"""
         outcomes = memory.recall_all(category='workflow_outcome')
         fails = [o for o in outcomes if '失败' in o]
-        
+
         if not fails:
             return {"has_issues": False, "message": "无失败记录"}
-        
+
         # 让 LLM 分析根因
         prompt = f"""分析以下失败记录，找出根本原因：
 
@@ -62,7 +62,7 @@ class AdvancedAnalyzer:
                 return json.loads(match.group())
         except:
             pass
-        
+
         return {"has_issues": True, "message": "分析失败"}
     
     def predict_next(self):
@@ -70,13 +70,13 @@ class AdvancedAnalyzer:
         outcomes = memory.recall_all(category='workflow_outcome')
         if len(outcomes) < 5:
             return {"prediction": "数据不足"}
-        
+
         recent = outcomes[-10:]
         success_rate = len([o for o in recent if '成功' in o]) / len(recent)
-        
+
         # 简单预测
         prediction = success_rate * 100
-        
+
         return {
             "prediction": f"{prediction:.0f}%",
             "confidence": min(0.9, len(recent) / 20),
@@ -88,7 +88,7 @@ class AdvancedAnalyzer:
         trend = self.get_trend()
         prediction = self.predict_next()
         root_cause = self.root_cause_analysis()
-        
+
         report = {
             "timestamp": datetime.now().isoformat(),
             "trend": trend,
@@ -96,13 +96,13 @@ class AdvancedAnalyzer:
             "root_cause": root_cause,
             "recommendations": self._get_recommendations(trend)
         }
-        
+
         # 存储报告
         memory.remember(
             f"分析报告|趋势:{trend['trend']}|预测:{prediction['prediction']}|时间:{datetime.now().isoformat()}",
             category="advanced_analysis"
         )
-        
+
         return report
     
     def _get_recommendations(self, trend):

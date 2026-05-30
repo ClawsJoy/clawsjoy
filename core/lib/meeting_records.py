@@ -44,7 +44,7 @@ class MeetingRecords:
         self.records["meetings"].append(record)
         self.records["stats"]["total"] += 1
         self._save()
-        
+
         # 同时存到向量记忆
         vector_memory.add(
             text=f"会议记录: {topic} | 决策数: {len(decisions)}",
@@ -55,7 +55,7 @@ class MeetingRecords:
     def query(self, keyword: str = None, limit: int = 10) -> List[Dict]:
         """查询会议记录"""
         results = []
-        
+
         # 从向量记忆语义搜索
         if keyword:
             search_results = vector_memory.search(keyword, category="meeting_record", n=limit)
@@ -65,13 +65,13 @@ class MeetingRecords:
                     "topic": r['metadata'].get('topic'),
                     "similarity": r['similarity']
                 })
-        
+
         # 补充本地记录
         for record in self.records["meetings"][-limit:]:
             if not keyword or keyword in record['topic']:
                 if not any(r.get('meeting_id') == record['meeting_id'] for r in results):
                     results.append(record)
-        
+
         return results[:limit]
     
     def get_by_id(self, meeting_id: str) -> Optional[Dict]:

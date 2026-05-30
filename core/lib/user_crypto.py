@@ -32,7 +32,7 @@ class UserCrypto:
         else:
             salt = os.urandom(16)
             salt_file.write_bytes(salt)
-        
+
         # 使用 PBKDF2 派生密钥（替代方案）
         key = hashlib.pbkdf2_hmac('sha256', user_key.encode(), salt, 100000, 32)
         return base64.urlsafe_b64encode(key)

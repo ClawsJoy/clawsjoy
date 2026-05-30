@@ -32,32 +32,32 @@ class CollectorManager:
         with self.lock:
             self.stats["total_requests"] += 1
             self.stats["last_request"] = datetime.now().isoformat()
-        
+
         # 1. 安全检查
         is_safe, reason = safety_checker.check_url(url)
         if not is_safe and not force:
             self.stats["blocked"] += 1
             print(f"🚫 采集被阻止: {reason}")
             return None
-        
+
         # 2. 用户授权检查
         if safety_checker.need_user_consent(url, user_id):
             if not self._has_consent(user_id, url):
                 print(f"🔐 需要用户授权: {url}")
                 return None
-        
+
         # 3. 频率限制
         if not self._check_rate_limit():
             print(f"⏱️ 频率限制，跳过: {url}")
             return None
-        
+
         # 4. 执行采集
         try:
             resp = requests.get(url, timeout=config_helper.get_timeout("default"), headers={
                 'User-Agent': 'ClawsJoy-Bot/1.0 (Compliant)',
                 'Accept': 'text/html,application/xhtml+xml'
             })
-            
+
             if resp.status_code == 200:
                 content = resp.text[:5000]  # 限制长度
                 
@@ -83,7 +83,7 @@ class CollectorManager:
         """检查频率限制"""
         config = unified_config.get("thresholds.spider", {})
         delay = config.get("delay_between_requests", 1)
-        
+
         if self.stats["last_request"]:
             last = datetime.fromisoformat(self.stats["last_request"])
             if (datetime.now() - last).total_seconds() < delay:

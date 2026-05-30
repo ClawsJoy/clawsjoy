@@ -36,14 +36,14 @@ class SecurityHooks:
     def redact_sensitive(self, context: Dict) -> Dict:
         """脱敏敏感数据"""
         data = context.get('data', {})
-        
+
         # 脱敏模式
         patterns = [
             (r'(api[_-]?key|apikey|token|secret)[=:]\s*\S+', r'\1=***'),
             (r'(password|passwd|pwd)[=:]\s*\S+', r'\1=***'),
             (r'(bearer|authorization)[=:]\s*\S+', r'\1=***'),
         ]
-        
+
         for pattern, replacement in patterns:
             if isinstance(data, dict):
                 for key in list(data.keys()):
@@ -51,7 +51,7 @@ class SecurityHooks:
                         data[key] = '***'
             elif isinstance(data, str):
                 data = re.sub(pattern, replacement, data, flags=re.I)
-        
+
         context['data'] = data
         return context
     
@@ -61,7 +61,7 @@ class SecurityHooks:
         data = context.get('data', {})
         sensitive_fields = context.get('sensitive_fields', 
             ['preferences', 'habits', 'todos', 'patterns', 'credentials'])
-        
+
         for field in sensitive_fields:
             if field in data and data[field]:
                 try:
@@ -72,7 +72,7 @@ class SecurityHooks:
                     # del data[field]
                 except Exception as e:
                     print(f"⚠️ 加密失败 {field}: {e}")
-        
+
         context['data'] = data
         return context
     
@@ -80,7 +80,7 @@ class SecurityHooks:
         """解密敏感数据"""
         data = context.get('data', {})
         encrypted_fields = [k for k in data.keys() if k.endswith('_encrypted')]
-        
+
         for enc_field in encrypted_fields:
             original_field = enc_field.replace('_encrypted', '')
             try:
@@ -89,7 +89,7 @@ class SecurityHooks:
                 data[original_field] = json.loads(decrypted.decode())
             except Exception as e:
                 print(f"⚠️ 解密失败 {enc_field}: {e}")
-        
+
         context['data'] = data
         return context
     
@@ -98,18 +98,18 @@ class SecurityHooks:
         """验证数据完整性"""
         data = context.get('data', {})
         errors = []
-        
+
         # 基本验证规则
         if isinstance(data, dict):
             # 检查必要字段
             if 'user_id' not in data and 'user_id' in context:
                 data['user_id'] = context['user_id']
-            
+
             # 检查数据大小
             data_size = len(json.dumps(data, default=str))
             if data_size > 10 * 1024 * 1024:  # 10MB
                 errors.append("数据过大")
-        
+
         context['data'] = data
         context['validation_errors'] = errors
         return context

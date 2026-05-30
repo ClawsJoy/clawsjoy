@@ -35,7 +35,7 @@ class SmartRetriever:
         relevant_lines = []
         in_section = False
         section_title = ""
-        
+
         for i, line in enumerate(lines):
             # 检测章节标题
             if line.startswith('#') or line.startswith('##'):
@@ -47,10 +47,10 @@ class SmartRetriever:
                     break
             elif in_section:
                 relevant_lines.append(line)
-        
+
         if relevant_lines:
             return '\n'.join(relevant_lines[:50])
-        
+
         # 返回前500字符
         return content[:500]
     
@@ -73,7 +73,7 @@ class SmartRetriever:
 - 要点1：详细描述
 - 要点2：详细描述
 ..."""
-        
+
         try:
             resp = requests.post(
                 f"{self.ollama_url}/api/generate",
@@ -104,18 +104,18 @@ class SmartRetriever:
                     "summary": summary,
                     "success": True
                 }
-        
+
         return {"success": False, "summary": "未找到相关信息"}
     
     def generate_rich_description(self, query: str) -> str:
         """生成丰富的描述"""
         result = self.retrieve_and_summarize(query)
-        
+
         if result['success']:
             return f"""📚 信息来源: {result['source']}
 
 {result['summary']}"""
-        
+
         return "未找到相关信息"
 
 

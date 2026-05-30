@@ -27,7 +27,7 @@ class WorkspaceManager:
         agents_dir = Path("agents")
         if not agents_dir.exists():
             return
-        
+
         for agent_dir in agents_dir.iterdir():
             if agent_dir.is_dir():
                 self._load_workspace(agent_dir)
@@ -37,13 +37,13 @@ class WorkspaceManager:
         config_file = path / "config.yaml"
         if not config_file.exists():
             return
-        
+
         try:
             with open(config_file, 'r') as f:
                 config = yaml.safe_load(f)
-            
+
             agent_name = config.get('agent', {}).get('name', path.name)
-            
+
             self._workspaces[agent_name] = {
                 'name': agent_name,
                 'path': str(path),
@@ -53,9 +53,9 @@ class WorkspaceManager:
                 'data_path': str(path / 'data'),
                 'skills_path': str(path / 'skills')
             }
-            
+
             print(f"   📁 加载工作区: {agent_name} -> {path}")
-            
+
         except Exception as e:
             print(f"   ⚠️ 加载工作区失败 {path}: {e}")
     

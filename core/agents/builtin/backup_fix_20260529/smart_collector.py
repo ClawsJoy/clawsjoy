@@ -52,19 +52,19 @@ class SmartCollector:
     def collect_on_demand(self, query: str, user_id: str = None) -> List[Dict]:
         """按需采集 - 用户查询触发"""
         print(f"🎯 按需采集: {query}")
-        
+
         # 1. 先查本地知识库
         results = vector_memory.search(query, n=5, category="knowledge")
         if results and len(results) >= 3:
             return results
-        
+
         # 2. 未命中，主动采集
         self.stats["active_collections"] += 1
         self.stats["last_collection"] = datetime.now().isoformat()
-        
+
         # 3. 从种子URL采集
         collected = self._crawl_from_seeds(query)
-        
+
         # 4. 向量化存储
         for item in collected:
             vector_memory.add(
@@ -78,18 +78,18 @@ class SmartCollector:
                 }
             )
             self.stats["knowledge_added"] += 1
-        
+
         return collected
     
     def _batch_collect(self):
         """批量采集 - 低峰期"""
         print(f"📦 批量采集 {datetime.now().isoformat()}")
-        
+
         # 采集热门话题
         hot_topics = self._get_hot_topics()
         for topic in hot_topics:
             self.collect_on_demand(topic)
-        
+
         self.stats["scheduled_collections"] += 1
     
     def _get_hot_topics(self) -> List[str]:
@@ -106,7 +106,7 @@ class SmartCollector:
                     topics.append("私人管家")
         except:
             pass
-        
+
         # 默认话题
         topics.extend(["AI智能体", "配置驱动", "多租户隔离"])
         return topics[:5]
@@ -118,7 +118,7 @@ class SmartCollector:
             with open("config/seed_urls.json", 'r') as f:
                 import json
                 seeds = json.load(f)
-            
+
             import requests
             for category, urls in seeds.items():
                 for seed in urls[:2]:  # 限制数量
@@ -134,7 +134,7 @@ class SmartCollector:
                         continue
         except Exception as e:
             print(f"采集失败: {e}")
-        
+
         return results
     
     def get_stats(self) -> Dict:

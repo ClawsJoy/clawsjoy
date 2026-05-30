@@ -75,19 +75,19 @@ class BrainRules:
     def match_auto_fix(self, goal):
         goal_lower = goal.lower()
         triggers = self._config.get('auto_fix_triggers', {})
-        
+
         check_config = triggers.get('service_check', {})
         if any(kw in goal_lower for kw in check_config.get('keywords', [])):
             for key, skill_name in check_config.get('skills', {}).items():
                 if key in goal_lower:
                     return skill_name, {"action": "check"}
-        
+
         fix_config = triggers.get('fix', {})
         if any(kw in goal_lower for kw in fix_config.get('keywords', [])):
             for key, skill_name in fix_config.get('skills', {}).items():
                 if key in goal_lower:
                     return skill_name, {"action": "fix"}
-        
+
         return None, None
     
     def get_llm_config(self):

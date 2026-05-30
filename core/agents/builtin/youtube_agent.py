@@ -11,6 +11,7 @@ class YouTubeAgent(SmartAgent):
     type = "core"
 
     def __init__(self, user_id: str = "default"):
+        self._load_agent_config()
         super().__init__(user_id=user_id)
         print(f"📺 YouTubeAgent 初始化完成")
 

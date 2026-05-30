@@ -36,7 +36,7 @@ def register_template_routes(app):
         template_file = TEMPLATES_DIR / f"{name}.yaml"
         if not template_file.exists():
             return jsonify({"error": "模板不存在"}), 404
-        
+
         with open(template_file, 'r') as f:
             content = unified_config.get("template_api", {})
         return jsonify({"template": content})
@@ -46,28 +46,28 @@ def register_template_routes(app):
         """应用模板到当前配置"""
         from flask import request, g
         from core.lib.auth_api import require_auth
-        
+
         template_file = TEMPLATES_DIR / f"{name}.yaml"
         if not template_file.exists():
             return jsonify({"error": "模板不存在"}), 404
-        
+
         with open(template_file, 'r') as f:
             template = unified_config.get("template_api", {})
-        
+
         target_type = request.json.get('target', 'agent')
-        
+
         if target_type == 'agent':
             # 应用到 agents.yaml
             agents_file = Path("config/agents.yaml")
             with open(agents_file, 'r') as f:
                 agents_config = unified_config.get("template_api", {})
-            
+
             agent_name = template.get('name', name)
             agents_config['agents'][agent_name] = template.get('config', {})
-            
+
             with open(agents_file, 'w') as f:
                 yaml.dump(agents_config, f)
-        
+
         return jsonify({
             "success": True,
             "message": f"模板 {name} 已应用",

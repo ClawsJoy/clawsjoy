@@ -17,11 +17,11 @@ class SkillLoaderWithRetry:
         self.retry_delay = retry_delay
         self.failed_skills = {}  # 记录失败的技能
         self.loaded_skills = {}
-        
+
     def load_skill_with_retry(self, skill_path: Path) -> Optional[object]:
         """带重试的加载技能"""
         skill_name = skill_path.stem
-        
+
         for attempt in range(self.max_retries):
             try:
                 # 尝试加载
@@ -55,13 +55,13 @@ class SkillLoaderWithRetry:
                     time.sleep(self.retry_delay * (attempt + 1))  # 递增延迟
                 else:
                     print(f"❌ 加载失败 {skill_name}: {error_msg[:100]}")
-        
+
         return None
     
     def retry_failed(self) -> Dict:
         """重试所有失败的技能"""
         print(f"\n🔄 重试加载失败的技能 ({len(self.failed_skills)} 个)")
-        
+
         retry_results = {}
         for skill_name in list(self.failed_skills.keys()):
             # 查找技能文件
@@ -78,10 +78,10 @@ class SkillLoaderWithRetry:
                             result = self.load_skill_with_retry(skill_file)
                             retry_results[skill_name] = result is not None
                             break
-        
+
         success_count = sum(1 for v in retry_results.values() if v)
         print(f"\n📊 重试结果: {success_count}/{len(retry_results)} 成功")
-        
+
         return retry_results
     
     def get_failed_skills(self) -> Dict:

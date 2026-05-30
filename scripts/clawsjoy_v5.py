@@ -38,7 +38,17 @@ class ClawsJoy:
                 break
 
 
+def start_services():
+    """启动所有主动服务"""
+    try:
+        from core.lib.smart_active_service import smart_service
+        smart_service.start()
+        print("✅ 主动服务已启动")
+    except Exception as e:
+        print(f"⚠️ 主动服务启动失败: {e}")
+
 if __name__ == "__main__":
+    start_services()
     parser = argparse.ArgumentParser(description="ClawsJoy 5.4")
     parser.add_argument("-u", "--user", default="default", help="用户ID")
     parser.add_argument("-m", "--message", help="直接发送消息")

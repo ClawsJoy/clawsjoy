@@ -15,7 +15,7 @@ class UnifiedDataManager:
         self.conversation_path = self.data_root / f"users/{user_id}/butler_v2"
         self.butler_path.mkdir(parents=True, exist_ok=True)
         self.conversation_path.mkdir(parents=True, exist_ok=True)
-        
+
     def save_butler_identity(self, identity: Dict) -> bool:
         identity['updated_at'] = datetime.now().isoformat()
         identity['user_id'] = self.user_id
@@ -26,14 +26,14 @@ class UnifiedDataManager:
         temp_file.replace(identity_file)
         self._sync_to_conversation(identity)
         return True
-        
+
     def _sync_to_conversation(self, identity: Dict):
         memory_file = self.conversation_path / "memory.json"
         memory = json.load(open(memory_file)) if memory_file.exists() else {}
         memory['butler'] = {'name': identity.get('name'), 'name_changed_at': identity.get('updated_at')}
         with open(memory_file, 'w') as f:
             json.dump(memory, f, indent=2, ensure_ascii=False)
-            
+
     def get_butler_identity(self) -> Dict:
         identity_file = self.butler_path / "identity.json"
         if identity_file.exists():

@@ -9,7 +9,7 @@ sys.path.insert(0, smart_config.ROOT)
 class RepairAdvisor:
     def __init__(self):
         self.knowledge_base = self.load_knowledge_base()
-        
+
     def load_knowledge_base(self):
         """加载修复知识库"""
         return {
@@ -38,7 +38,7 @@ class RepairAdvisor:
     def analyze_error(self, error_text):
         """分析错误并提供修复建议"""
         import re
-        
+
         for error_type, info in self.knowledge_base.items():
             if re.search(info['pattern'], error_text, re.I):
                 return {
@@ -47,7 +47,7 @@ class RepairAdvisor:
                     'command': info.get('cmd', ''),
                     'confidence': 0.8
                 }
-        
+
         return {
             'error_type': 'unknown',
             'solution': '查看日志获取更多信息',
@@ -60,17 +60,17 @@ class RepairAdvisor:
         log_path = Path(log_file)
         if not log_path.exists():
             return None
-        
+
         content = log_path.read_text(encoding='utf-8', errors='ignore')
         lines = content.split('\n')[-50:]  # 最后50行
-        
+
         suggestions = []
         for line in lines:
             if 'Error' in line or 'error' in line or 'fail' in line:
                 advice = self.analyze_error(line)
                 if advice['error_type'] != 'unknown':
                     suggestions.append(advice)
-        
+
         return suggestions
 
 if __name__ == "__main__":

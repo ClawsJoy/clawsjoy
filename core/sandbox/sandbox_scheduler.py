@@ -57,14 +57,14 @@ class SandboxScheduler:
         """为用户创建Agent沙箱实例"""
         if agent_id not in self.images_registry:
             return {"success": False, "error": f"Agent {agent_id} not found"}
-        
+
         if not self.docker_client:
             return {"success": False, "error": "Docker not available"}
-        
+
         image_config = self.images_registry[agent_id]
         instance_id = f"{user_id}_{agent_id}_{uuid.uuid4().hex[:8]}"
         container_name = f"clawsjoy-sandbox-{instance_id}"
-        
+
         try:
             # 创建容器
             container = self.docker_client.containers.run(
@@ -79,12 +79,12 @@ class SandboxScheduler:
                 },
                 remove=True
             )
-            
+
             # 获取容器端口
             container.reload()
             port = image_config["port"]
             host_port = container.attrs['NetworkSettings']['Ports'][f"{port}/tcp"][0]['HostPort']
-            
+
             instance_info = {
                 "instance_id": instance_id,
                 "container_id": container.id,
@@ -95,10 +95,10 @@ class SandboxScheduler:
                 "created_at": datetime.now().isoformat(),
                 "status": "running"
             }
-            
+
             self.instances[instance_id] = instance_info
             return {"success": True, "instance": instance_info}
-            
+
         except Exception as e:
             return {"success": False, "error": str(e)}
     
@@ -106,15 +106,15 @@ class SandboxScheduler:
         """销毁沙箱实例"""
         if instance_id not in self.instances:
             return {"success": False, "error": "Instance not found"}
-        
+
         instance = self.instances[instance_id]
-        
+
         try:
             if self.docker_client:
                 container = self.docker_client.containers.get(instance["container_id"])
                 container.stop()
                 container.remove()
-            
+
             del self.instances[instance_id]
             return {"success": True, "message": "Instance destroyed"}
         except Exception as e:
@@ -126,7 +126,7 @@ class SandboxScheduler:
             if instance["user_id"] == user_id and instance["agent_id"] == agent_id:
                 if instance["status"] == "running":
                     return instance
-        
+
         # 没有实例，创建新的
         result = self.create_instance(agent_id, user_id)
         if result["success"]:
@@ -138,10 +138,10 @@ class SandboxScheduler:
         instance = self.get_instance(user_id, agent_id)
         if not instance:
             return {"success": False, "error": "Cannot create instance"}
-        
+
         try:
             import httpx
-            async with httpx.AsyncClient(timeout=config_helper.get_timeout("default").0) as client:
+            async with httpx.AsyncClient(timeout=config_helper.get_timeout("default")) as client:
                 response = await client.post(
                     f"{instance['endpoint']}{path}",
                     json=data

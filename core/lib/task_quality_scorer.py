@@ -25,24 +25,24 @@ class TaskQualityScorer:
     def score(self, task_name: str, skill: str = "", params: Dict = None) -> Dict:
         if not self.enabled:
             return {"score": 1.0, "should_skip": False, "reasons": ["评分器已禁用"], "enabled": False}
-        
+
         params = params or {}
         score = 1.0
         reasons = []
-        
+
         if params.get('input_file'):
             file_path = Path(params['input_file'])
             if not file_path.exists():
                 score -= 0.5
                 reasons.append(f"输入文件不存在: {params['input_file']}")
-        
+
         if any(kw in task_name.lower() for kw in self.low_quality_keywords):
             score -= 0.2
             reasons.append("任务名称包含低质量关键词")
-        
+
         score = max(0.0, min(1.0, score))
         should_skip = self.skip_on_low and score < self.min_score
-        
+
         return {
             "task": task_name,
             "skill": skill,

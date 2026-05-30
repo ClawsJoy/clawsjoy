@@ -32,7 +32,7 @@ class LLMGuide:
     def get_stable_prompt(self, user_input: str, context: Dict = None) -> str:
         """生成稳定的提示词"""
         context = context or {}
-        
+
         prompt = f"""You are ClawsJoy, a reliable AI assistant.
 
 ## Rules
@@ -50,7 +50,7 @@ class LLMGuide:
 {user_input}
 
 ## Your Response (JSON only):"""
-        
+
         return prompt
     
     def parse_response(self, response: str) -> Optional[Dict]:
@@ -63,7 +63,7 @@ class LLMGuide:
                 response = response[3:]
             if response.endswith('```'):
                 response = response[:-3]
-            
+
             return json.loads(response.strip())
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse LLM response: {e}")

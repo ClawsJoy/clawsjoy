@@ -14,7 +14,7 @@ class AliyunPAI:
         """训练 LoRA 模型"""
         if not self.enabled:
             return {"success": False, "error": "阿里云 PAI 未启用"}
-        
+
         # TODO: 调用阿里云 PAI API
         return {"success": True, "task_id": "lora_001", "status": "running"}
     
@@ -22,7 +22,7 @@ class AliyunPAI:
         """生成视频"""
         if not self.enabled:
             return {"success": False, "error": "阿里云 PAI 未启用"}
-        
+
         return {"success": True, "task_id": "video_001", "status": "running"}
 
 
@@ -36,7 +36,7 @@ class ComfyUIClient:
         """生成图像"""
         if not self.enabled:
             return {"success": False, "error": "ComfyUI 未启用"}
-        
+
         # TODO: 调用 ComfyUI API
         return {"success": True, "task_id": "img_001", "status": "running"}
 

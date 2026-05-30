@@ -48,16 +48,16 @@ class RateLimiter:
         with self.lock:
             self.stats["total"] += 1
             now = time.time()
-            
+
             # 清理过期请求
             while self.requests and now - self.requests[0] > self.time_window:
                 self.requests.popleft()
-            
+
             if len(self.requests) < self.max_requests:
                 self.requests.append(now)
                 self.stats["allowed"] += 1
                 return True
-            
+
             self.stats["rejected"] += 1
             return False
     
@@ -92,7 +92,7 @@ class RateLimitManager:
                 self.config = unified_config.get("rate_limit_manager", {})
         else:
             self.config = {"enabled": True, "default": {"max_requests": 20, "time_window": 1}}
-        
+
         self.enabled = self.config.get('enabled', True)
         self.default_config = RateLimitConfig(**self.config.get('default', {}))
     

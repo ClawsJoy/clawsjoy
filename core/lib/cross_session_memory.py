@@ -17,7 +17,7 @@ class CrossSessionMemory:
         self.user_id = user_id
         self.user_dir = Path(funified_config.get("paths.users_dir", f"{get_data_root()}/users/") + "/{user_id}/memory")
         self.user_dir.mkdir(parents=True, exist_ok=True)
-        
+
         self.name = None
         self.preferences = []
         self.interactions = 0
@@ -28,11 +28,11 @@ class CrossSessionMemory:
         name_file = self.user_dir / "name.txt"
         if name_file.exists():
             self.name = name_file.read_text(encoding='utf-8', errors='ignore').strip()
-        
+
         pref_file = self.user_dir / "preferences.txt"
         if pref_file.exists():
             self.preferences = [p for p in pref_file.read_text(encoding='utf-8', errors='ignore').split('\n') if p]
-        
+
         count_file = self.user_dir / "count.txt"
         if count_file.exists():
             try:
@@ -44,11 +44,11 @@ class CrossSessionMemory:
         if self.name:
             with open(self.user_dir / "name.txt", 'w', encoding='utf-8') as f:
                 f.write(self.name)
-        
+
         if self.preferences:
             with open(self.user_dir / "preferences.txt", 'w', encoding='utf-8') as f:
                 f.write('\n'.join(self.preferences))
-        
+
         with open(self.user_dir / "count.txt", 'w') as f:
             f.write(str(self.interactions))
     

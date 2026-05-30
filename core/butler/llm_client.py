@@ -32,7 +32,7 @@ class SmartLLMClient:
         self.model = self.config.get("model", get_llm_model(fast=True))
         self.temperature = self.config.get("temperature", 0.7)
         self.timeout = self.config.get("timeout", 30)
-        
+
         if self.provider == "ollama":
             self.api_url = "http://localhost:11434/api/chat"
         elif self.provider == "openai":
@@ -67,7 +67,7 @@ class SmartLLMClient:
             },
             timeout=self.timeout
         )
-        
+
         if response.status_code == 200:
             result = response.json()
             return result.get('message', {}).get('content', '')
@@ -89,7 +89,7 @@ class SmartLLMClient:
             },
             timeout=self.timeout
         )
-        
+
         if response.status_code == 200:
             result = response.json()
             return result.get('choices', [{}])[0].get('message', {}).get('content', '')

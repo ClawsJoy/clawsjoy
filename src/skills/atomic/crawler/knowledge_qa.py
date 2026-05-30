@@ -41,7 +41,7 @@ class KnowledgeQASkill:
 请用简洁的语言回答。如果知识不足，请说明。"""
         
         try:
-            resp = requests.post("http://smart_config.HOST:str(smart_config.get_port("ollama"))/api/generate",
+            resp = requests.post(f"http://{smart_config.HOST}:{smart_config.get_port("ollama")}/api/generate",
                 json={"model": "qwen2.5:7b", "prompt": prompt, "stream": False}, timeout=30)
             answer = resp.json().get("response", "无法生成答案")
         except:

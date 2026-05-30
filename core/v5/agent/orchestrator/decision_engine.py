@@ -15,7 +15,7 @@ class DecisionEngine:
     
     def analyze(self, situation: str, context: Dict = None) -> Dict:
         """分析情况并做出决策"""
-        
+
         prompt = f"""你是 {self.agent_name}，一个智能决策引擎。
 
 当前情况: {situation}
@@ -34,7 +34,7 @@ class DecisionEngine:
 }}"""
 
         response = llm.generate(prompt, model_type="decision", temperature=0.3)
-        
+
         # 尝试解析JSON
         try:
             import re
@@ -45,10 +45,10 @@ class DecisionEngine:
                 decision = {"analysis": response, "confidence": 0.5}
         except:
             decision = {"analysis": response, "confidence": 0.5}
-        
+
         decision["timestamp"] = datetime.now().isoformat()
         self.decision_history.append(decision)
-        
+
         return decision
     
     def get_history(self, limit: int = 10) -> List[Dict]:
@@ -79,14 +79,14 @@ class TaskPlanner:
         plan = self.plans.get(plan_id)
         if not plan or plan["status"] != "pending":
             return None
-        
+
         if plan["current_step"] >= len(plan["steps"]):
             plan["status"] = "completed"
             return None
-        
+
         step = plan["steps"][plan["current_step"]]
         plan["current_step"] += 1
-        
+
         return step
     
     def get_plan_status(self, plan_id: str) -> Dict:

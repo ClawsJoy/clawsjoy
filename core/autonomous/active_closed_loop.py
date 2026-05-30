@@ -37,16 +37,16 @@ class ActiveClosedLoop:
         self.loop_count = 0
         self.history = []
         self.running = True
-        
+
         # 配置
         self.sense_interval = 30      # 感知间隔(秒)
         self.auto_fix_enabled = True   # 自动修复开关
         self.notify_on_issue = True    # 问题通知开关
-        
+
         # 存储
         self.data_dir = Path(f"{config_helper.get_data_root()}/autonomous/{name}")
         self.data_dir.mkdir(parents=True, exist_ok=True)
-        
+
         self._load_history()
         print(f"🔄 [{name}] 主动闭环智能体已启动")
         print(f"   📡 感知间隔: {self.sense_interval}秒")
@@ -81,16 +81,16 @@ class ActiveClosedLoop:
         """感知所有数据源"""
         self.state = LoopState.SENSING
         self._log("sense_start", "开始感知系统状态")
-        
+
         # 使用数据源管理器获取所有数据
         all_data = data_source_manager.fetch_all()
-        
+
         # 检查数据质量
         quality_report = self._check_quality(all_data)
-        
+
         self.state = LoopState.IDLE
         self._log("sense_complete", f"感知完成，数据源: {len(all_data)}，质量问题: {len(quality_report.get('issues', []))}")
-        
+
         return {
             "raw_data": all_data,
             "quality": quality_report,
@@ -109,7 +109,7 @@ class ActiveClosedLoop:
                     issues.append(f"{name}: 数量异常 ({data.get('total', 0)} < 100)")
                 elif name == 'memory_vector' and data.get('count', 0) < 50:
                     issues.append(f"{name}: 数量异常 ({data.get('count', 0)} < 50)")
-        
+
         return {"issues": issues, "issue_count": len(issues), "has_issues": len(issues) > 0}
     
     # ========== 2. 分析 ==========
@@ -117,14 +117,14 @@ class ActiveClosedLoop:
         """分析问题，确定优先级"""
         self.state = LoopState.ANALYZING
         self._log("analyze_start", "开始分析系统状态")
-        
+
         issues = sense_result.get('quality', {}).get('issues', [])
-        
+
         # 问题分级
         critical = []
         warning = []
         info = []
-        
+
         for issue in issues:
             if '失败' in issue or '异常' in issue:
                 critical.append(issue)
@@ -132,10 +132,10 @@ class ActiveClosedLoop:
                 warning.append(issue)
             else:
                 info.append(issue)
-        
+
         # 生成行动计划
         actions = []
-        
+
         if critical:
             actions.append({
                 "priority": "critical",
@@ -143,7 +143,7 @@ class ActiveClosedLoop:
                 "target": "admin",
                 "reason": f"严重问题: {critical[0][:50]}"
             })
-        
+
         if warning:
             if self.auto_fix_enabled:
                 actions.append({
@@ -159,7 +159,7 @@ class ActiveClosedLoop:
                     "target": "admin",
                     "reason": warning[0][:50]
                 })
-        
+
         # 定期维护（每10个循环）
         if self.loop_count % 10 == 0 and self.loop_count > 0:
             actions.append({
@@ -168,10 +168,10 @@ class ActiveClosedLoop:
                 "target": "system",
                 "reason": "定期维护"
             })
-        
+
         self.state = LoopState.IDLE
         self._log("analyze_complete", f"分析完成: {len(critical)}个严重, {len(warning)}个警告")
-        
+
         return {
             "issues": issues,
             "critical": critical,
@@ -184,20 +184,20 @@ class ActiveClosedLoop:
     def decide(self, analysis_result: Dict) -> Dict:
         """决策：选择执行哪个行动"""
         self.state = LoopState.DECIDING
-        
+
         actions = analysis_result.get('actions', [])
-        
+
         if not actions:
             self.state = LoopState.IDLE
             return {"action": "idle", "reason": "无需行动"}
-        
+
         # 按优先级排序
         priority_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
         actions.sort(key=lambda x: priority_order.get(x.get('priority', 'low'), 4))
-        
+
         selected = actions[0]
         self._log("decision_made", f"决策: {selected['action']} -> {selected.get('target', 'none')}")
-        
+
         self.state = LoopState.IDLE
         return selected
     
@@ -207,11 +207,11 @@ class ActiveClosedLoop:
         self.state = LoopState.EXECUTING
         action = decision.get('action', 'idle')
         target = decision.get('target', '')
-        
+
         self._log("execute_start", f"执行: {action}/{target}")
-        
+
         result = {"action": action, "target": target, "success": False}
-        
+
         if action == 'notify':
             # 发送通知
             result['result'] = proactive.send_notification(
@@ -220,7 +220,7 @@ class ActiveClosedLoop:
                 decision.get('priority', 'info')
             )
             result['success'] = True
-        
+
         elif action == 'fix':
             if 'sync' in target:
                 # 同步技能
@@ -231,26 +231,26 @@ class ActiveClosedLoop:
                     result['result'] = f"技能同步: {resp.status_code}"
                 except Exception as e:
                     result['result'] = str(e)
-        
+
         elif action == 'maintenance':
             # 完整维护
             result['result'] = proactive.run_maintenance()
             result['success'] = True
-        
+
         elif action == 'idle':
             result['success'] = True
             result['result'] = "空闲"
-        
+
         self.state = LoopState.IDLE
         self._log("execute_complete", f"执行结果: {'成功' if result['success'] else '失败'}")
-        
+
         return result
     
     # ========== 5. 学习 ==========
     def learn(self, sense_result: Dict, analysis_result: Dict, decision: Dict, execute_result: Dict):
         """从本次循环中学习"""
         self.state = LoopState.LEARNING
-        
+
         # 记录本次循环
         cycle_record = {
             "loop_id": self.loop_count,
@@ -263,14 +263,14 @@ class ActiveClosedLoop:
         }
         self.history.append(cycle_record)
         self._save_history()
-        
+
         # 分析成功率
         recent = self.history[-20:]
         success_count = sum(1 for h in recent if h.get('execution', {}).get('success', False))
         success_rate = success_count / len(recent) if recent else 0
-        
+
         self._log("learn_complete", f"学习完成，近期成功率: {success_rate*100:.0f}%")
-        
+
         self.state = LoopState.IDLE
         return {"success_rate": success_rate, "total_loops": len(self.history)}
     
@@ -281,26 +281,26 @@ class ActiveClosedLoop:
         print(f"\n{'='*50}")
         print(f"🔄 闭环 #{self.loop_count}")
         print(f"{'='*50}")
-        
+
         # 1. 感知
         sense_result = self.sense()
         print(f"📡 感知: {sense_result['quality']['issue_count']} 个问题")
-        
+
         # 2. 分析
         analysis_result = self.analyze(sense_result)
         print(f"🔍 分析: {len(analysis_result['actions'])} 个待执行动作")
-        
+
         # 3. 决策
         decision = self.decide(analysis_result)
         print(f"🎯 决策: {decision.get('action', 'idle')}")
-        
+
         # 4. 执行
         execute_result = self.execute(decision)
         print(f"⚡ 执行: {'✅' if execute_result['success'] else '❌'}")
-        
+
         # 5. 学习
         learn_result = self.learn(sense_result, analysis_result, decision, execute_result)
-        
+
         return {
             "loop": self.loop_count,
             "sense": sense_result,
@@ -319,7 +319,7 @@ class ActiveClosedLoop:
                 except Exception as e:
                     print(f"❌ 闭环异常: {e}")
                 time.sleep(interval_seconds)
-        
+
         thread = threading.Thread(target=_loop, daemon=True)
         thread.start()
         print(f"🚀 [{self.name}] 主动闭环已启动，间隔 {interval_seconds} 秒")

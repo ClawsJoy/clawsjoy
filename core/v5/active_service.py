@@ -86,7 +86,7 @@ class ActiveService:
                         self.last_trigger[condition.name] = now
                 except Exception as e:
                     print(f"主动服务错误: {condition.name} - {e}")
-            
+
             time.sleep(10)  # 每10秒检查一次
     
     def stop(self):

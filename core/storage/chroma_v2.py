@@ -14,13 +14,13 @@ class ChromaStoreV2:
         self.user_id = user_id
         self.persist_dir = Path(f"{config_helper.get_data_root()}/chroma/{user_id}")
         self.persist_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # 初始化客户端
         self.client = chromadb.PersistentClient(path=str(self.persist_dir))
-        
+
         # 使用新版 embedding
         self.embedding_fn = OllamaEmbeddingFunctionV2()
-        
+
         # 获取或创建 collection（直接使用 get_or_create_collection）
         # 新版接口会自动处理 embedding 函数
         self.collection = self.client.get_or_create_collection(
@@ -28,7 +28,7 @@ class ChromaStoreV2:
             embedding_function=self.embedding_fn,
             metadata={"hnsw:space": "cosine"}
         )
-        
+
         print(f"   ✅ ChromaDB 已初始化: {user_id}/{collection_name}")
     
     def add(self, text: str, metadata: Dict = None) -> str:
@@ -46,7 +46,7 @@ class ChromaStoreV2:
                 query_texts=[query],
                 n_results=limit
             )
-            
+
             documents = []
             if results['ids'] and results['ids'][0]:
                 for i, doc_id in enumerate(results['ids'][0]):

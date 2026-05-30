@@ -26,7 +26,7 @@ class ContentPipeline:
         self.projects = []
         self.pipeline_file = Path(f"{config_helper.get_data_root()}/content_pipeline.json")
         self.load_pipeline()
-        
+
         print("\n" + "="*60)
         print("📹 内容生产流水线")
         print("="*60)
@@ -55,7 +55,7 @@ class ContentPipeline:
             'history': [],
             'scores': {}
         }
-        
+
         self.projects.append(project)
         self.save_pipeline()
         print(f"✅ 项目创建: {title} (ID: {project['id']})")
@@ -66,21 +66,21 @@ class ContentPipeline:
         project = self.get_project(project_id)
         if not project:
             return None
-        
+
         current = Stage(project['stage'])
         next_stage = self.get_next_stage(current)
-        
+
         if result_data:
             project['history'].append({
                 'stage': current.value,
                 'result': result_data,
                 'timestamp': datetime.now().isoformat()
             })
-        
+
         project['stage'] = next_stage.value if next_stage else Stage.DONE.value
-        
+
         self.save_pipeline()
-        
+
         print(f"📦 项目 {project_id} 前进: {current.value} → {project['stage']}")
         return project
     
@@ -104,14 +104,14 @@ class ContentPipeline:
         project = self.get_project(project_id)
         if not project:
             return None
-        
+
         project['scores'][stage] = {
             'score': score,  # 1-10分
             'feedback': feedback,
             'reviewer': 'flybo',
             'timestamp': datetime.now().isoformat()
         }
-        
+
         # 记录到大脑学习
         brain_core.record_experience(
             agent="content_pipeline",
@@ -119,10 +119,10 @@ class ContentPipeline:
             result={"score": score},
             context=feedback[:200]
         )
-        
+
         print(f"⭐ {project['title']} - {stage}: {score}/10")
         print(f"💬 反馈: {feedback}")
-        
+
         self.save_pipeline()
         return project
     
@@ -135,9 +135,9 @@ class ContentPipeline:
         print("\n" + "="*60)
         print("📊 内容审核看板")
         print("="*60)
-        
+
         stages = ['review_1', 'review_2', 'collect', 'analyze', 'copywrite', 'script', 'video']
-        
+
         for stage in stages:
             projects = self.get_projects_by_stage(stage)
             if projects:
@@ -146,7 +146,7 @@ class ContentPipeline:
                     score_info = p['scores'].get(stage, {})
                     score = score_info.get('score', '未审核')
                     print(f"   [{p['id']}] {p['title'][:30]} - 评分: {score}")
-        
+
         print("\n" + "="*60)
     
     def auto_advance_approved(self, min_score=7):
@@ -168,7 +168,7 @@ class PipelineCLI:
     def run(self):
         print("\n📹 内容生产流水线 CLI")
         print("命令: create | list | review | dashboard | advance | exit")
-        
+
         while True:
             try:
                 cmd = input("\n> ").strip().split()

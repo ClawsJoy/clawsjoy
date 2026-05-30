@@ -1,74 +1,29 @@
-from core.lib.unified_config import unified_config
-
-from core.lib.unified_config import unified_config
-
-"""智能驱动核心 - 统一管理所有驱动"""
+"""智能驱动 - 配置驱动的动态执行"""
 
 import os
-import subprocess
-import requests
-from pathlib import Path
-from core.lib.unified_config import unified_config
+from typing import Dict, Any
+
 
 class IntelligentDriver:
-    """智能驱动核心"""
-    _instance = None
-    
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-        return cls._instance
-    
-    def get_service_url(self, service):
-        """获取服务 URL"""
-        port = unified_config.get_port(service)
-        return fos.environ.get("OLLAMA_HOST", os.environ.get("OLLAMA_HOST", "http://127.0.0.1")"):{port}"
-    
-    def check_service(self, service):
-        """检查服务健康"""
-        url = self.get_service_url(service)
-        # 根据不同服务使用不同健康检查路径
-        health_paths = {
-            'gateway': '/api/health',
-            'multi_agent': '/health',
-            'comfyui': '/',
-            'file_service': '/health',
-            'doc_generator': '/health'
+    """智能驱动类"""
+
+    VERSION = "1.0.0"
+
+    def __init__(self):
+        self.config = {}
+
+    def get_ollama_host(self) -> str:
+        """获取 Ollama 主机"""
+        return os.environ.get("OLLAMA_HOST", "http://127.0.0.1:11434")
+
+    def get_port(self, service: str) -> int:
+        """获取服务端口"""
+        ports = {
+            "ollama": 11434,
+            "gateway": 5002,
+            "multi_agent": 5005
         }
-        path = health_paths.get(service, '/health')
-        try:
-            resp = requests.get(f"{url}{path}", timeout=3)
-            return resp.status_code == 200
-        except:
-            return False
-    
-    def restart_service(self, service):
-        """重启服务"""
-        if service == 'gateway':
-            subprocess.run(['pkill', '-f', 'agent_gateway_web'])
-            subprocess.Popen(
-                ['python3', 'agent_gateway_web.py'],
-                cwd=unified_config.ROOT
-            )
-            return True
-        return False
-    
-    def get_system_status(self):
-        """获取系统状态"""
-        status = {}
-        for service in ['gateway', 'multi_agent', 'comfyui', 'file_service', 'doc_generator']:
-            status[service] = self.check_service(service)
-        return status
-    
-    def get_all_services_status(self):
-        """获取所有服务详细状态"""
-        services = ['gateway', 'multi_agent', 'comfyui', 'file_service', 'doc_generator', 'agent_api']
-        result = {}
-        for svc in services:
-            result[svc] = {
-                'url': self.get_service_url(svc),
-                'healthy': self.check_service(svc)
-            }
-        return result
+        return ports.get(service, 5002)
+
 
 intelligent_driver = IntelligentDriver()

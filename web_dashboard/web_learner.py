@@ -93,6 +93,6 @@ if __name__ == "__main__":
     print("=" * 50)
     print("🤖 ClawsJoy 智能体服务")
     print("=" * 50)
-    print(f"访问: f"http://{config_loader.get("endpoints.gateway.host", "localhost")}:{config_loader.get("endpoints.web_learner.port", 5011)}"")
+    print(f"访问: http://{config_loader.get("endpoints.gateway.host", "localhost")}:{config_loader.get("endpoints.web_learner.port", 5011)}")
     print("=" * 50)
     app.run(host='0.0.0.0', port=smart_config.PORTS.get("web", 5011), debug=False)

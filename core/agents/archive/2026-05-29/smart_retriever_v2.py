@@ -39,7 +39,7 @@ class SmartRetrieverV2:
 需要找的资料可能是：架构师总结、创始人资料、系统起源、开发者信息等。
 
 返回格式：关键词1 关键词2"""
-        
+
         try:
             resp = requests.post(
                 f"{self.ollama_url}/api/generate",
@@ -50,7 +50,7 @@ class SmartRetrieverV2:
                 return resp.json().get('response', '').strip()
         except:
             pass
-        
+
         # 默认提取
         keywords = re.sub(r'[找一下|帮我|搜索|查找]', '', user_input)
         return keywords.strip()
@@ -59,10 +59,10 @@ class SmartRetrieverV2:
         """搜索向量库，使用多种关键词"""
         if not query:
             return ""
-        
+
         # 尝试多个关键词组合
         keywords_list = [query, query.replace("的", ""), query + " 总结", query + " 文档"]
-        
+
         for keywords in keywords_list:
             try:
                 results = vector_memory.search(keywords, n=3)
@@ -80,7 +80,7 @@ class SmartRetrieverV2:
     
     def _answer(self, user_input: str, context: str) -> str:
         name = self.memory.recall().get("name", "")
-        
+
         prompt = f"""你是 ClawsJoy 智能助手。
 
 {f'用户叫{name}。' if name else ''}
@@ -89,7 +89,7 @@ class SmartRetrieverV2:
 {f'找到的资料：\n{context[:1500]}' if context else '没有找到相关资料。'}
 
 请根据资料回答。如果有资料，直接引用内容回答。如果没有，告知用户没找到。"""
-        
+
         try:
             resp = requests.post(
                 f"{self.ollama_url}/api/generate",
@@ -106,7 +106,7 @@ class SmartRetrieverV2:
         self.interaction_count += 1
         lower = user_input.lower()
         name = self.memory.recall().get("name")
-        
+
         # 规则响应
         if any(g in lower for g in ['你好', 'hi']):
             response = f"你好{f'，{name}' if name else ''}！我是 ClawsJoy"
@@ -123,12 +123,12 @@ class SmartRetrieverV2:
             print(f"   🔍 搜索关键词: {keywords}")
             context = self._search_vector(keywords)
             response = self._answer(user_input, context)
-        
+
         self.memory.record_interaction(user_input, response, "chat")
-        
+
         if self.interaction_count % 10 == 0:
             print(f"   💭 梦境循环 #{self.interaction_count // 10}")
-        
+
         return {"response": response}
 
 

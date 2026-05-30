@@ -37,7 +37,7 @@ class AdaptiveOptimizer:
         outcomes = memory.recall_all(category='workflow_outcome')[-50:]
         success = len([o for o in outcomes if '成功' in o])
         rate = success / len(outcomes) * 100 if outcomes else 50
-        
+
         # 自适应调整
         if rate < 40:
             self.params['quality_threshold'] = max(50, self.params['quality_threshold'] - 10)
@@ -45,11 +45,11 @@ class AdaptiveOptimizer:
         elif rate > 80:
             self.params['quality_threshold'] = min(90, self.params['quality_threshold'] + 5)
             self.params['target_duration'] = min(120, self.params['target_duration'] + 10)
-        
+
         self.params['learning_rate'] = 0.3 + (rate - 50) / 100
-        
+
         self.save_params()
-        
+
         memory.remember(
             f"参数优化|成功率:{rate:.0f}%|新参数:{self.params}",
             category="param_optimization"

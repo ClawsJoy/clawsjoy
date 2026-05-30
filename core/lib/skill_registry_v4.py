@@ -47,28 +47,28 @@ class SkillRegistry:
     def _discover_skills(self):
         """直接扫描技能目录"""
         logger.info(f"扫描技能目录: {self.skills_path}")
-        
+
         for skill_dir in self.skills_path.iterdir():
             if not skill_dir.is_dir():
                 continue
             if skill_dir.name.startswith('__'):
                 continue
-            
+
             skill_name = skill_dir.name
             skill_md = skill_dir / "SKILL.md"
             main_py = skill_dir / "scripts" / "main.py"
-            
+
             # 检查是否有 main.py（可执行技能）
             if not main_py.exists():
                 logger.debug(f"跳过 {skill_name}: 缺少 main.py")
                 continue
-            
+
             # 解析元数据
             description = f"{skill_name} skill"
             use_when = ""
             not_for = ""
             version = "1.0.0"
-            
+
             if skill_md.exists():
                 try:
                     content = skill_md.read_text(encoding='utf-8')
@@ -83,7 +83,7 @@ class SkillRegistry:
                             version = metadata.get('version', version)
                 except Exception as e:
                     logger.warning(f"解析 {skill_name} SKILL.md 失败: {e}")
-            
+
             self.skills[skill_name] = SkillMetadata(
                 name=skill_name,
                 version=version,
@@ -94,7 +94,7 @@ class SkillRegistry:
                 path=str(skill_dir)
             )
             logger.info(f"✅ 注册技能: {skill_name} v{version}")
-        
+
         logger.info(f"共注册 {len(self.skills)} 个技能")
     
     def get_skill(self, name: str) -> Optional[SkillMetadata]:
@@ -118,19 +118,19 @@ class SkillRegistry:
         """执行技能"""
         if name not in self.skills:
             return {"success": False, "error": f"技能 '{name}' 未注册"}
-        
+
         skill = self.skills[name]
         script_path = Path(skill.path) / "scripts" / "main.py"
-        
+
         if not script_path.exists():
             return {"success": False, "error": f"技能脚本不存在: {script_path}"}
-        
+
         try:
             import importlib.util
             spec = importlib.util.spec_from_file_location(name, script_path)
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
-            
+
             if hasattr(module, 'execute'):
                 return module.execute(params)
             else:

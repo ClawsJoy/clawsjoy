@@ -24,7 +24,7 @@ class KnowledgeRegistry:
     def __init__(self):
         if self._initialized:
             return
-        
+
         self._initialized = True
         self._init_vector_store()
     
@@ -32,23 +32,23 @@ class KnowledgeRegistry:
         """初始化向量存储"""
         vector_config = unified_config.get("vector", {})
         persist_dir = vector_config.get("knowledge_path", f"{get_data_root()}/knowledge")
-        
+
         Path(persist_dir).mkdir(parents=True, exist_ok=True)
-        
+
         # 使用配置的 embedding 模型
         embedding_model = vector_config.get("embedding_model", get_embedding_model())
-        
+
         from chromadb.utils.embedding_functions import OllamaEmbeddingFunction
         ollama_url = unified_config.get("llm.endpoint", get_llm_endpoint())
         self.embedding_fn = OllamaEmbeddingFunction(
             url=ollama_url,
             model_name=embedding_model
         )
-        
+
         self.client = chromadb.PersistentClient(path=persist_dir)
-        
+
         collection_name = vector_config.get("knowledge_collection", "knowledge_base")
-        
+
         try:
             self.collection = self.client.get_collection(collection_name)
             print(f"   ✅ 使用已有知识库: {collection_name}")
@@ -84,7 +84,7 @@ class KnowledgeRegistry:
             n_results=n,
             where=where
         )
-        
+
         knowledge = []
         if results.get('documents') and results['documents'][0]:
             for i, doc in enumerate(results['documents'][0]):
@@ -116,7 +116,7 @@ class KnowledgeRegistry:
         """从 JSON 文件批量导入知识 - 支持多种格式自动检测"""
         import json
         from pathlib import Path
-        
+
         if not Path(json_path).exists():
             return 0
 
@@ -124,7 +124,7 @@ class KnowledgeRegistry:
             data = json.load(f)
 
         count = 0
-        
+
         # 格式1: 标准格式 [{title, content, category}]
         if isinstance(data, list):
             for item in data:
@@ -136,18 +136,18 @@ class KnowledgeRegistry:
                     if title and content:
                         self.add_knowledge(title, content, category, source=str(json_path), tags=tags)
                         count += 1
-        
+
         # 格式2: 字典包含 knowledge_base 或 documents 数组
         elif isinstance(data, dict):
             # 检测常见的知识容器键名
             container_keys = ['knowledge_base', 'documents', 'knowledge', 'items', 'entries']
             items_to_process = []
-            
+
             for key in container_keys:
                 if key in data and isinstance(data[key], list):
                     items_to_process = data[key]
                     break
-            
+
             if items_to_process:
                 for item in items_to_process:
                     if isinstance(item, dict):
@@ -180,7 +180,7 @@ class KnowledgeRegistry:
                                 if title and content:
                                     self.add_knowledge(str(title), str(content), 'general', source=str(json_path))
                                     count += 1
-        
+
         print(f"   📚 从 {Path(json_path).name} 导入 {count} 条知识")
         return count
 

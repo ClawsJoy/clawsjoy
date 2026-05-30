@@ -145,20 +145,20 @@ Three.js 实现环抱座舱的完整思路：
                 "tags": ["three.js", "完整示例", "座舱"]
             }
         ]
-        
+
         for item in knowledge_items:
             doc_id = hashlib.md5(item['topic'].encode()).hexdigest()[:16]
             if doc_id not in self.index:
                 self.index[doc_id] = item
                 print(f"📚 加载知识: {item['topic']}")
-        
+
         self._save_index()
     
     def retrieve(self, query: str, top_k: int = 3) -> List[Dict]:
         """检索相关知识"""
         query_lower = query.lower()
         scored = []
-        
+
         for doc_id, doc in self.index.items():
             score = 0
             # 关键词匹配
@@ -171,10 +171,10 @@ Three.js 实现环抱座舱的完整思路：
                     for tag in doc['tags']:
                         if word in tag.lower():
                             score += 3
-            
+
             if score > 0:
                 scored.append((score, doc))
-        
+
         scored.sort(key=lambda x: x[0], reverse=True)
         return scored[:top_k]
     

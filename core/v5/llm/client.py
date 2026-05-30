@@ -14,14 +14,14 @@ class LLMClient:
         self.base_url = self.config.get('base_url', config_helper.get_llm_endpoint())
         self.timeout = self.config.get('timeout', 60)
         self.max_retries = self.config.get('max_retries', 3)
-        
+
         # 模型配置
         models = self.config.get('models', {})
         self.default_model = models.get('default', 'qwen2.5:3b')
         self.chat_model = models.get('chat', {}).get('model', self.default_model)
         self.decision_model = models.get('decision', {}).get('model', self.default_model)
         self.code_model = models.get('code', {}).get('model', self.default_model)
-        
+
         # 温度配置
         self.chat_temp = models.get('chat', {}).get('temperature', 0.7)
         self.decision_temp = models.get('decision', {}).get('temperature', 0.3)
@@ -58,7 +58,7 @@ class LLMClient:
         else:
             model = self.default_model
             temp = temperature if temperature is not None else 0.7
-        
+
         for attempt in range(self.max_retries):
             try:
                 response = requests.post(
@@ -81,7 +81,7 @@ class LLMClient:
             except Exception as e:
                 if attempt < self.max_retries - 1:
                     time.sleep(1)
-        
+
         return "抱歉，服务暂时不可用，请稍后重试"
 
 

@@ -16,11 +16,11 @@ class DecisionAgent(BaseAgent):
     def process(self, user_input: str) -> Dict:
         """处理决策请求"""
         self.update_stats()
-        
+
         # 获取历史决策作为上下文
         context = self.mem_mgr.search_context(user_input, limit=3)
         context_text = "\n".join(context) if context else ""
-        
+
         prompt = f"""你是专业的决策分析助手。
 
 用户偏好: {self.mem_mgr.preferences}
@@ -38,13 +38,13 @@ class DecisionAgent(BaseAgent):
 用户问题: {user_input}
 
 决策分析:"""
-        
+
         response = llm.generate(prompt, model_type="decision")
-        
+
         # 记录决策历史
         self.mem_mgr.add_conversation(user_input, response)
         self.record_history(user_input, response)
-        
+
         return {
             "success": True,
             "type": "decision",

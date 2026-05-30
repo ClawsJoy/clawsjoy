@@ -28,6 +28,7 @@ class TranslateAgent(SmartAgent):
     }
 
     def __init__(self, user_id: str = "default"):
+        self._load_agent_config()
         super().__init__(user_id=user_id)
 
     def translate(self, text: str, target: str = "en") -> Dict:

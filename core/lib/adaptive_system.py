@@ -31,17 +31,17 @@ class AdaptiveSystem:
         """加载所有配置"""
         self.configs = {}
         config_dir = Path("PROJECT_ROOT/config/driver")
-        
+
         for yaml_file in config_dir.glob("*.yaml"):
             with open(yaml_file, 'r', encoding='utf-8') as f:
                 self.configs[yaml_file.stem] = unified_config.get("adaptive_system", {})
-        
+
         # 加载 Agent 配置
         agents_file = Path("PROJECT_ROOT/config/agents.yaml")
         if agents_file.exists():
             with open(agents_file, 'r', encoding='utf-8') as f:
                 self.configs['agents'] = unified_config.get("adaptive_system", {})
-        
+
         print(f"✅ 已加载 {len(self.configs)} 个配置模块")
     
     def get_config(self, key: str, default=None):
@@ -62,7 +62,7 @@ class AdaptiveSystem:
         # 获取可用能力描述
         agents_desc = self.get_config('agents.agents', {})
         skills_desc = self.get_config('skills', {})
-        
+
         prompt = f"""你是一个智能助手，需要理解用户意图。
 
 可用能力：
@@ -81,7 +81,7 @@ class AdaptiveSystem:
 }}
 
 只返回 JSON。"""
-        
+
         try:
             resp = requests.post(
                 f"{self.ollama_url}/api/generate",
@@ -96,19 +96,19 @@ class AdaptiveSystem:
                     return json.loads(match.group())
         except Exception as e:
             print(f"理解失败: {e}")
-        
+
         return {"intent": user_input, "type": "unknown", "confidence": 0.3}
     
     def execute(self, user_input: str) -> Dict:
         """执行用户请求（动态路由）"""
-        
+
         # 1. LLM 理解用户意图
         understanding = self.understand_user(user_input)
-        
+
         # 2. 根据理解动态路由
         intent_type = understanding.get('type', 'unknown')
         target = understanding.get('target', '')
-        
+
         # 3. 查找匹配的能力
         if intent_type == 'generate':
             # 调用生成类技能
@@ -128,14 +128,14 @@ class AdaptiveSystem:
         """动态调用生成器"""
         # 这里可以根据理解动态选择生成方式
         from core.lib.education.retrieval_generator import RetrievalGenerator
-        
+
         rg = RetrievalGenerator()
         svg = rg.generate_svg_content()
-        
+
         filename = f"output_{datetime.now().strftime('%Y%m%d_%H%M%S')}.svg"
         file_path = Path("PROJECT_ROOT/output") / filename
         file_path.write_text(svg, encoding='utf-8')
-        
+
         return {
             "success": True,
             "file_path": str(file_path),
@@ -146,12 +146,12 @@ class AdaptiveSystem:
     def _call_query(self, user_input: str, understanding: Dict) -> Dict:
         """动态查询"""
         target = understanding.get('target', '').lower()
-        
+
         if 'agent' in target or 'agent' in user_input.lower():
             agents = self.get_config('agents.agents', {})
             response = "\n".join([f"{k}: {v.get('name', k)}" for k, v in agents.items()])
             return {"success": True, "response": response, "understanding": understanding}
-        
+
         return {"success": True, "response": "请提供更具体的信息", "understanding": understanding}
 
 

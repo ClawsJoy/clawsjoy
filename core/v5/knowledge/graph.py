@@ -13,7 +13,7 @@ class KnowledgeGraph:
         self.user_id = user_id
         self.base_path = Path(f"{config_helper.get_data_root()}/v5/users/{user_id}/knowledge")
         self.base_path.mkdir(parents=True, exist_ok=True)
-        
+
         self.nodes: Dict[str, Dict] = {}
         self.edges: List[tuple] = []
         self._load()
@@ -24,7 +24,7 @@ class KnowledgeGraph:
         if nodes_file.exists():
             with open(nodes_file, 'r') as f:
                 self.nodes = json.load(f)
-        
+
         edges_file = self.base_path / "edges.json"
         if edges_file.exists():
             with open(edges_file, 'r') as f:
@@ -34,7 +34,7 @@ class KnowledgeGraph:
         """保存数据"""
         with open(self.base_path / "nodes.json", 'w') as f:
             json.dump(self.nodes, f, indent=2, ensure_ascii=False)
-        
+
         with open(self.base_path / "edges.json", 'w') as f:
             json.dump(self.edges, f, indent=2)
     
@@ -71,22 +71,22 @@ class KnowledgeGraph:
         visited = set()
         results = []
         queue = [(start_node, 0)]
-        
+
         while queue:
             node, depth = queue.pop(0)
             if node in visited or depth > max_depth:
                 continue
             visited.add(node)
-            
+
             if node != start_node and node in self.nodes:
                 results.append(self.nodes[node])
-            
+
             for f, t, r, w in self.edges:
                 if f == node and t not in visited:
                     queue.append((t, depth + 1))
                 if t == node and f not in visited:
                     queue.append((f, depth + 1))
-        
+
         return results
     
     def get_stats(self) -> Dict:

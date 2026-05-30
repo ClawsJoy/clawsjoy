@@ -45,19 +45,19 @@ def register_tenant_config_routes(app):
         config_file = tenant_dir / 'settings.yaml'
         data = request.json
         new_config = data.get('config', {})
-        
+
         # 加载现有配置
         existing = {}
         if config_file.exists():
             with open(config_file, 'r') as f:
                 existing = unified_config.get("tenant_api", {}) or {}
-        
+
         # 合并配置
         existing.update(new_config)
-        
+
         with open(config_file, 'w') as f:
             yaml.dump(existing, f)
-        
+
         return jsonify({
             "success": True,
             "message": "租户配置已更新",
@@ -90,18 +90,18 @@ def register_tenant_config_routes(app):
         config_file = tenant_dir / 'settings.yaml'
         data = request.json
         value = data.get('value')
-        
+
         # 加载现有配置
         config = {}
         if config_file.exists():
             with open(config_file, 'r') as f:
                 config = unified_config.get("tenant_api", {}) or {}
-        
+
         config[key] = value
-        
+
         with open(config_file, 'w') as f:
             yaml.dump(config, f)
-        
+
         return jsonify({
             "success": True,
             "key": key,

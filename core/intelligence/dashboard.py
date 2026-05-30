@@ -22,7 +22,7 @@ class IntelligentDashboard:
         print("🧠 ClawsJoy 智能仪表盘")
         print(f"⏰ {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print("=" * 60)
-        
+
         # 大脑状态
         stats = brain.get_stats()
         print(f"\n📊 大脑状态:")
@@ -31,16 +31,16 @@ class IntelligentDashboard:
         print(f"   知识节点: {stats.get('knowledge_graph_nodes', 0)} 个")
         print(f"   类比库: {stats.get('analogies_count', 0)} 条")
         print(f"   最佳实践: {stats.get('best_practices', 0)} 条")
-        
+
         # 性能指标
         self.performance_monitor.generate_report()
-        
+
         # 日志分析
         self.log_analyzer.generate_report()
-        
+
         # 智能推荐
         self.recommendation_engine.generate_report()
-        
+
         print("\n" + "=" * 60)
 
 if __name__ == "__main__":

@@ -18,7 +18,7 @@ class BrainNeuralNetwork:
         self.weights = self.load_or_init_weights()
         self.decision_history = []
         self.confidence_threshold = 0.7  # 低于此阈值才调用LLM
-        
+
         print("\n" + "="*60)
         print("🧠 ClawsJoy 大脑神经网络初始化")
         print("="*60)
@@ -30,11 +30,11 @@ class BrainNeuralNetwork:
     def load_or_init_weights(self):
         """加载或初始化神经网络权重"""
         weights_file = Path(f"{config_helper.get_data_root()}/brain_weights.json")
-        
+
         if weights_file.exists():
             with open(weights_file, 'r') as f:
                 return json.load(f)
-        
+
         # 初始化权重（基于经验学习）
         return {
             'fault_recognition': defaultdict(lambda: 0.5),
@@ -52,7 +52,7 @@ class BrainNeuralNetwork:
         """大脑识别故障类型（神经网络推理）"""
         # 从经验中搜索相似故障
         experiences = brain_core.knowledge.get('experiences', [])
-        
+
         similar_faults = []
         for exp in experiences[-100:]:  # 最近100条
             if fault_type in exp.get('action', ''):
@@ -64,19 +64,19 @@ class BrainNeuralNetwork:
                     'weight': weight,
                     'context': exp.get('context', '')
                 })
-        
+
         if similar_faults:
             # 计算置信度
             confidence = sum(f['weight'] for f in similar_faults if f['success']) / len(similar_faults)
             return min(0.95, max(0.3, confidence))
-        
+
         return 0.5  # 未知故障，中等置信度
     
     def select_strategy(self, fault_type, previous_attempts):
         """大脑选择修复策略（基于知识图谱）"""
         # 从知识图谱查找关联
         knowledge_graph = brain_core.knowledge.get('knowledge_graph', [])
-        
+
         strategies = {
             'port_in_use': ['kill_port', 'change_port', 'wait'],
             'connection_refused': ['restart', 'check_service', 'wait'],
@@ -84,31 +84,31 @@ class BrainNeuralNetwork:
             'memory_error': ['clean_cache', 'restart', 'increase_memory'],
             'process_killed': ['restart', 'check_resources', 'monitor']
         }
-        
+
         available = strategies.get(fault_type, ['restart'])
-        
+
         # 计算每个策略的得分
         strategy_scores = []
         for strategy in available:
             # 从知识图谱查找策略成功率
             score = self.weights['strategy_selection'][fault_type][strategy]
-            
+
             # 排除已失败的策略
             if strategy in previous_attempts:
                 score *= 0.3
-            
+
             strategy_scores.append((strategy, score))
-        
+
         # 按得分排序
         strategy_scores.sort(key=lambda x: x[1], reverse=True)
-        
+
         return strategy_scores[0][0] if strategy_scores else 'restart'
     
     def predict_success(self, fault_type, strategy):
         """预测修复成功率"""
         base_rate = self.weights['success_prediction'].get(fault_type, 0.5)
         strategy_modifier = self.weights['strategy_selection'][fault_type].get(strategy, 0.5)
-        
+
         prediction = (base_rate + strategy_modifier) / 2
         return min(0.95, max(0.1, prediction))
     
@@ -118,17 +118,17 @@ class BrainNeuralNetwork:
         current = self.weights['fault_recognition'].get(fault_type, 0.5)
         delta = 0.1 if success else -0.05
         self.weights['fault_recognition'][fault_type] = min(0.95, max(0.05, current + delta))
-        
+
         # 更新策略选择权重
         current_strategy = self.weights['strategy_selection'][fault_type].get(strategy, 0.5)
         delta_strategy = 0.15 if success else -0.1
         self.weights['strategy_selection'][fault_type][strategy] = min(0.95, max(0.05, current_strategy + delta_strategy))
-        
+
         # 更新成功率预测权重
         current_pred = self.weights['success_prediction'].get(fault_type, 0.5)
         delta_pred = (0.1 if success else -0.05) * (1 / (1 + duration/10))
         self.weights['success_prediction'][fault_type] = min(0.95, max(0.05, current_pred + delta_pred))
-        
+
         # 记录到大脑核心
         brain_core.record_experience(
             agent="brain_network",
@@ -136,20 +136,20 @@ class BrainNeuralNetwork:
             result={"success": success, "duration": duration},
             context=f"weight_updated_{self.weights['strategy_selection'][fault_type][strategy]:.2f}"
         )
-        
+
         self.save_weights()
-        
+
         return self.weights['strategy_selection'][fault_type][strategy]
     
     def decide(self, fault_type, context, previous_attempts=None):
         """大脑决策主入口"""
         previous_attempts = previous_attempts or []
-        
+
         # 1. 大脑神经网络推理
         fault_confidence = self.recognize_fault(fault_type, context)
         strategy = self.select_strategy(fault_type, previous_attempts)
         success_prediction = self.predict_success(fault_type, strategy)
-        
+
         decision = {
             'fault_type': fault_type,
             'strategy': strategy,
@@ -157,12 +157,12 @@ class BrainNeuralNetwork:
             'predicted_success_rate': success_prediction,
             'source': 'brain_neural_network'
         }
-        
+
         # 2. 如果置信度低于阈值，考虑LLM辅助
         if fault_confidence < self.confidence_threshold:
             decision['llm_assisted'] = True
             decision['source'] = 'brain_network_with_llm'
-        
+
         return decision
     
     def show_network_stats(self):
@@ -170,12 +170,12 @@ class BrainNeuralNetwork:
         print("\n" + "="*60)
         print("🧠 大脑神经网络统计")
         print("="*60)
-        
+
         print("\n故障识别权重:")
         for fault, weight in list(self.weights['fault_recognition'].items())[:5]:
             bar = "█" * int(weight * 20)
             print(f"  {fault}: {bar} {weight:.2f}")
-        
+
         print("\n策略选择权重:")
         for fault, strategies in list(self.weights['strategy_selection'].items())[:3]:
             print(f"  {fault}:")

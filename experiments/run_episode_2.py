@@ -70,7 +70,7 @@ script_prompt = f"""根据以下大纲生成完整的3分钟旁白稿：
 """
 
 import requests
-resp = requests.post("http://smart_config.HOST:str(smart_config.get_port("ollama"))/api/generate",
+resp = requests.post(f"http://{smart_config.HOST}:{smart_config.get_port("ollama")}/api/generate",
                      json={"model": "qwen2.5:7b", "prompt": script_prompt, "stream": False},
                      timeout=120)
 

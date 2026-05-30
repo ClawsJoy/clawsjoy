@@ -52,7 +52,7 @@ class ButlerCenter:
             target = butler_name
         else:
             target = "personal_butler_v2"  # 默认管家
-        
+
         return {
             "task": task,
             "target": target,

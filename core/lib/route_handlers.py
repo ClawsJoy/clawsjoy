@@ -904,7 +904,7 @@ def feedback_submit():
                 'expected': f'{skill_id} 质量提升'
             }
             coordinator.learn_from_scenario(scenario)
-        
+
         threading.Thread(target=trigger_learning, daemon=True).start()
     
     return jsonify({"success": True, "message": "反馈已提交", "auto_learning": rating <= 2})

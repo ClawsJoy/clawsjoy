@@ -26,7 +26,7 @@ class PathManager:
                 self.config = unified_config.get("path_manager", {})
         else:
             self.config = {}
-        
+
         # 项目根目录自动检测
         self.project_root = Path(__file__).parent.parent
     

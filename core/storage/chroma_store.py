@@ -14,19 +14,19 @@ class ChromaStore:
         self.user_id = user_id
         self.persist_dir = Path(f"{config_helper.get_data_root()}/chroma/{user_id}")
         self.persist_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # 初始化客户端
         self.client = chromadb.PersistentClient(path=str(self.persist_dir))
-        
+
         # 使用默认 embedding 函数
         self.embedding_fn = embedding_functions.DefaultEmbeddingFunction()
-        
+
         # 获取或创建 collection
         self.collection = self.client.get_or_create_collection(
             name=collection_name,
             embedding_function=self.embedding_fn
         )
-        
+
         print(f"   ✅ ChromaDB 已初始化: {user_id}/{collection_name}")
     
     def add(self, text: str, metadata: Dict = None) -> str:
@@ -45,7 +45,7 @@ class ChromaStore:
             query_texts=[query],
             n_results=limit
         )
-        
+
         documents = []
         if results['documents'] and results['documents'][0]:
             for i, doc in enumerate(results['documents'][0]):
@@ -54,7 +54,7 @@ class ChromaStore:
                     "score": 1 - results['distances'][0][i] if results['distances'] else 1.0,
                     "metadata": results['metadatas'][0][i] if results['metadatas'] else {}
                 })
-        
+
         return documents
     
     def get_count(self) -> int:

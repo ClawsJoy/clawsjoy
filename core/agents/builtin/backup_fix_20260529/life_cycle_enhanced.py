@@ -27,12 +27,12 @@ class LifeCycleEnhanced:
         self.user_id = user_id
         self.memory = CrossSessionMemory(user_id)
         self.metacognition = Metacognition(f"agent_{user_id}")
-        
+
         self.ollama_url = "config_loader.get_ollama_url()"
         self.model = model_config.get_fast_model()
         self.dreaming_data = {"short_term": [], "long_term": [], "cycles": 0}
         self.interaction_count = 0
-        
+
         user_info = self.memory.recall()
         print(f"🧠 增强版生命闭环 v{self.VERSION}")
         print(f"📝 用户: {user_info.get('name', '新用户')}")
@@ -51,7 +51,7 @@ class LifeCycleEnhanced:
         """调用 LLM 深度理解"""
         name = self.memory.recall().get("name", "")
         prefs = self.memory.recall().get("preferences", [])
-        
+
         prompt = f"""你是 ClawsJoy 智能助手，不是 Qwen 或其他模型。
 
 {f'用户叫{name}，' if name else ''}
@@ -62,7 +62,7 @@ class LifeCycleEnhanced:
 用户说："{user_input}"
 
 请友好回复。记住你是 ClawsJoy。回复简洁自然。"""
-        
+
         try:
             resp = requests.post(
                 f"{self.ollama_url}/api/generate",
@@ -77,11 +77,11 @@ class LifeCycleEnhanced:
     
     def process(self, user_input: str) -> Dict:
         self.interaction_count += 1
-        
+
         # 1. 规则快速响应
         lower = user_input.lower()
         name = self.memory.recall().get("name")
-        
+
         # 问候
         if any(g in lower for g in ['你好', 'hi']):
             response = f"你好{f'，{name}' if name else ''}！我是 ClawsJoy，有什么可以帮你的？"
@@ -114,16 +114,16 @@ class LifeCycleEnhanced:
         else:
             response = self._call_llm(user_input)
             task = "chat"
-        
+
         # 记录
         self.memory.record_interaction(user_input, response, task)
         self.dreaming_data["short_term"].append({"user": user_input[:100], "response": response[:100], "time": datetime.now().isoformat()})
-        
+
         # 梦境 (每10次)
         if self.interaction_count % 10 == 0:
             self.dreaming_data["cycles"] += 1
             print(f"   💭 梦境循环 #{self.dreaming_data['cycles']}")
-        
+
         return {"response": response, "task": task}
     
 

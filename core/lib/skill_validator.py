@@ -31,12 +31,12 @@ class SkillValidator:
     @classmethod
     def validate(cls, code):
         issues = []
-        
+
         # 危险模式检查
         for pattern, desc in cls.DANGEROUS_PATTERNS:
             if re.search(pattern, code):
                 issues.append(f"危险模式: {desc}")
-        
+
         # AST 检查
         try:
             tree = ast.parse(code)
@@ -61,7 +61,7 @@ class SkillValidator:
                             issues.append(f"不安全的 os 操作: os.{node.attr}")
         except SyntaxError as e:
             issues.append(f"语法错误: {e}")
-        
+
         return {
             "safe": len(issues) == 0,
             "issues": issues,

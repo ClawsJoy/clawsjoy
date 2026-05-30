@@ -33,7 +33,7 @@ class ResponsePrefill:
                      context: Optional[str] = None) -> str:
         """构建带预填充的提示词"""
         prefill = cls.get_prefill(output_type)
-        
+
         prompt = f"""{context or ""}
 
 用户: {user_input}

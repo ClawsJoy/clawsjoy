@@ -30,7 +30,7 @@ class RedisManager:
                 self._config = unified_config.get("redis_manager", {}).get('redis', {})
         else:
             self._config = {"enabled": False}
-        
+
         if self._config.get('enabled', False):
             try:
                 self._client = redis.Redis(

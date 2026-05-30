@@ -38,18 +38,18 @@ class SkillEvolver:
         # 提取成功经验和失败教训
         success_experiences = [e for e in experiences if e.get('success', False)]
         failure_lessons = [e for e in experiences if not e.get('success', False)]
-        
+
         prompt = self.config['generation'].get('template', '').format(
             task=task,
             success_experience=success_experiences[:3],
             failure_lessons=failure_lessons[:3]
         )
-        
+
         response = smart_adapter.generate(prompt, auto_select=True)
-        
+
         # 解析生成的技能
         skill_code = self._parse_skill(response, task)
-        
+
         if skill_code:
             return self._save_skill(skill_code, task)
         return None
@@ -59,11 +59,11 @@ class SkillEvolver:
         # 提取技能名
         name_match = re.search(r'技能名:?\s*(\w+)', response)
         skill_name = name_match.group(1) if name_match else f"auto_skill_{int(time.time())}"
-        
+
         # 提取描述
         desc_match = re.search(r'描述:?\s*(.+?)(?=\n\n|\n技能|$)', response, re.DOTALL)
         description = desc_match.group(1).strip() if desc_match else f"自动生成的技能: {task}"
-        
+
         # 生成技能代码
         code = f'''# AUTO_GENERATED_SKILL
 # 生成时间: {datetime.now().isoformat()}
@@ -80,10 +80,10 @@ class {skill_name.capitalize()}Skill:
         goal = params.get("goal", "")
         if not goal:
             return {{"success": False, "error": "需要提供目标"}}
-        
+
         # TODO: 实现具体逻辑
         # 这里是从经验中学习的逻辑
-        
+
         return {{"success": True, "response": f"执行: {{goal}}"}}
 
 skill = {skill_name.capitalize()}Skill()
@@ -94,21 +94,21 @@ skill = {skill_name.capitalize()}Skill()
         """保存生成的技能"""
         skills_dir = Path("skills/auto_generated")
         skills_dir.mkdir(exist_ok=True)
-        
+
         # 提取技能名
         name_match = re.search(r'name = "(\w+)"', code)
         skill_name = name_match.group(1) if name_match else f"skill_{int(time.time())}"
-        
+
         skill_file = skills_dir / f"{skill_name}.py"
         skill_file.write_text(code)
-        
+
         return skill_name
     
     def trial(self, skill_name: str, test_cases: List[Dict]) -> Dict:
         """试错执行"""
         max_attempts = self.config['trial'].get('max_attempts', 3)
         results = []
-        
+
         for i, test in enumerate(test_cases):
             for attempt in range(max_attempts):
                 start = time.time()
@@ -128,9 +128,9 @@ skill = {skill_name.capitalize()}Skill()
                     break
                 
                 time.sleep(1)
-        
+
         success_rate = sum(1 for r in results if r['success']) / max(1, len(results))
-        
+
         return {
             "skill_name": skill_name,
             "total_tests": len(results),
@@ -154,14 +154,14 @@ skill = {skill_name.capitalize()}Skill()
 3. 改进建议
 """
         summary = smart_adapter.generate(prompt, auto_select=True)
-        
+
         # 存储总结
         vector_memory.add(
             text=f"技能总结: {skill_name} | 成功率: {trial_result['success_rate']:.0%}",
             category="skill_summary",
             metadata={"skill": skill_name, "success_rate": trial_result['success_rate']}
         )
-        
+
         return {
             "skill_name": skill_name,
             "success_rate": trial_result['success_rate'],
@@ -184,9 +184,9 @@ skill = {skill_name.capitalize()}Skill()
         skill_file = Path(f"skills/auto_generated/{skill_name}.py")
         if not skill_file.exists():
             return None
-        
+
         original_code = skill_file.read_text()
-        
+
         prompt = f"""
 原始技能代码:
 {original_code}
@@ -197,20 +197,20 @@ skill = {skill_name.capitalize()}Skill()
 请生成改进后的技能代码，保持相同接口。
 """
         new_code = smart_adapter.generate(prompt, auto_select=True)
-        
+
         # 提取代码块
         code_match = re.search(r'```python\n(.*?)\n```', new_code, re.DOTALL)
         if code_match:
             new_code = code_match.group(1)
-        
+
         # 更新版本
         new_code = new_code.replace('version = "1.0.0"', f'version = "1.0.{len(self.evolution_history) + 1}"')
-        
+
         # 保存新版本
         backup_file = skill_file.with_suffix(f".v{len(self.evolution_history) + 1}.py.bak")
         skill_file.rename(backup_file)
         skill_file.write_text(new_code)
-        
+
         # 记录进化
         self.evolution_history.append({
             "skill": skill_name,
@@ -218,7 +218,7 @@ skill = {skill_name.capitalize()}Skill()
             "version": len(self.evolution_history) + 1,
             "improvements": improvements
         })
-        
+
         return skill_name
     
     def get_evolution_status(self, skill_name: str) -> Dict:

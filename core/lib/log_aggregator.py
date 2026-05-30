@@ -30,7 +30,7 @@ class LogAggregator:
         """获取日志"""
         if service:
             return list(self.log_cache.get(service, []))[-lines:]
-        
+
         all_logs = {}
         for name, logs in self.log_cache.items():
             all_logs[name] = list(logs)[-lines:]
@@ -40,7 +40,7 @@ class LogAggregator:
         """搜索日志"""
         results = []
         targets = [service] if service else self.log_cache.keys()
-        
+
         for svc in targets:
             for log in self.log_cache.get(svc, []):
                 if keyword.lower() in log.lower():

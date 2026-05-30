@@ -21,7 +21,7 @@ class ProductionLogger:
     def _init(self):
         self.logger = logging.getLogger("clawsjoy")
         self.logger.setLevel(logging.INFO)
-        
+
         # 控制台输出
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setLevel(logging.INFO)
@@ -30,7 +30,7 @@ class ProductionLogger:
         )
         console_handler.setFormatter(console_format)
         self.logger.addHandler(console_handler)
-        
+
         # 文件输出
         log_dir = Path("logs/v5")
         log_dir.mkdir(parents=True, exist_ok=True)
@@ -41,7 +41,7 @@ class ProductionLogger:
         )
         file_handler.setFormatter(file_format)
         self.logger.addHandler(file_handler)
-        
+
         # 错误日志单独文件
         error_handler = logging.FileHandler(log_dir / "error.log")
         error_handler.setLevel(logging.ERROR)

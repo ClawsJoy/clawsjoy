@@ -24,7 +24,7 @@ class LocalEmbedding:
                 return response.json().get('embedding', [])
         except Exception as e:
             print(f"Embedding 错误: {e}")
-        
+
         # 降级方案：使用简单哈希
         return self._fallback_embedding(text)
     

@@ -39,21 +39,21 @@ class ChromaOllama:
         self.user_id = user_id
         self.persist_dir = Path(f"{config_helper.get_data_root()}/chroma/{user_id}")
         self.persist_dir.mkdir(parents=True, exist_ok=True)
-        
+
         self.client = chromadb.PersistentClient(path=str(self.persist_dir))
         self.embedding_fn = OllamaEmbeddingFunction()
-        
+
         # 删除旧 collection
         try:
             self.client.delete_collection(collection_name)
         except:
             pass
-        
+
         self.collection = self.client.create_collection(
             name=collection_name,
             embedding_function=self.embedding_fn
         )
-        
+
         print(f"   ✅ ChromaDB 已初始化: {user_id}/{collection_name}")
     
     def add(self, text: str, metadata: Dict = None) -> str:
@@ -63,7 +63,7 @@ class ChromaOllama:
             metadata = {"source": "user_input", "timestamp": str(__import__('time').time())}
         elif len(metadata) == 0:
             metadata = {"source": "user_input", "timestamp": str(__import__('time').time())}
-        
+
         self.collection.add(
             ids=[doc_id],
             documents=[text],
@@ -73,7 +73,7 @@ class ChromaOllama:
     
     def search(self, query: str, limit: int = 3) -> List[Dict]:
         results = self.collection.query(query_texts=[query], n_results=limit)
-        
+
         documents = []
         if results['ids'] and results['ids'][0]:
             for i, doc_id in enumerate(results['ids'][0]):

@@ -39,7 +39,7 @@ class CollaborationOrchestrator:
         """创建协作会话"""
         with self.lock:
             session_id = f"collab_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-            
+
             session = {
                 "id": session_id,
                 "topic": topic,
@@ -52,12 +52,12 @@ class CollaborationOrchestrator:
                 "updated_at": datetime.now().isoformat()
             }
             self.sessions[session_id] = session
-            
+
             # 记录日志
             history = self._load()
             history.append({"action": "create", "session": session_id, "topic": topic, "agents": agents})
             self._save(history)
-            
+
             print(f"📋 创建协作会话: {session_id} (议题: {topic})")
             return session
     
@@ -65,7 +65,7 @@ class CollaborationOrchestrator:
         """添加协作消息"""
         if session_id not in self.sessions:
             return {"error": "会话不存在"}
-        
+
         session = self.sessions[session_id]
         msg = {
             "agent": agent,
@@ -74,14 +74,14 @@ class CollaborationOrchestrator:
         }
         session["messages"].append(msg)
         session["updated_at"] = datetime.now().isoformat()
-        
+
         return {"success": True, "session_id": session_id}
     
     def make_decision(self, session_id: str, decision: str, confidence: float = 0.8) -> Dict:
         """做出协作决策"""
         if session_id not in self.sessions:
             return {"error": "会话不存在"}
-        
+
         session = self.sessions[session_id]
         decision_record = {
             "decision": decision,
@@ -92,12 +92,12 @@ class CollaborationOrchestrator:
         session["decisions"].append(decision_record)
         session["status"] = "completed"
         session["updated_at"] = datetime.now().isoformat()
-        
+
         # 记录历史
         history = self._load()
         history.append({"action": "decision", "session": session_id, "decision": decision})
         self._save(history)
-        
+
         return {"success": True, "decision": decision, "confidence": confidence}
     
     def get_session(self, session_id: str) -> Dict:

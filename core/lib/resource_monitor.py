@@ -32,13 +32,13 @@ class ResourceMonitor:
     def get_status(self) -> Dict:
         if not PSUTIL_AVAILABLE:
             return {"healthy": True, "error": "psutil not installed"}
-        
+
         try:
             cpu = psutil.cpu_percent(interval=1)
             memory = psutil.virtual_memory()
-            
+
             healthy = cpu < self.cpu_threshold and memory.percent < self.memory_threshold
-            
+
             status = {
                 "cpu_percent": cpu,
                 "memory_percent": memory.percent,
@@ -54,11 +54,11 @@ class ResourceMonitor:
     def should_throttle(self) -> bool:
         if not self.enabled or not self.throttle_enabled:
             return False
-        
+
         now = time.time()
         if now - self._last_check > self.check_interval or self._last_status is None:
             self.get_status()
-        
+
         if self._last_status:
             return not self._last_status.get('healthy', True)
         return False

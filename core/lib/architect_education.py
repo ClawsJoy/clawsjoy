@@ -39,7 +39,7 @@ class ArchitectEducation:
 5. 如何验证解决方案正确？
 
 请按此框架输出分析。"""
-        
+
         return self._call_llm(prompt)
     
     # ========== 课程2：分层思维 ==========
@@ -57,7 +57,7 @@ class ArchitectEducation:
 5. 基础设施层：需要什么支撑？
 
 请逐层分析并输出设计方案。"""
-        
+
         return self._call_llm(prompt)
     
     # ========== 课程3：权衡思维 ==========
@@ -76,7 +76,7 @@ class ArchitectEducation:
 5. 为什么推荐这个？
 
 请输出决策分析。"""
-        
+
         return self._call_llm(prompt)
     
     # ========== 课程4：演进思维 ==========
@@ -95,7 +95,7 @@ class ArchitectEducation:
 5. 风险预案是什么？
 
 请输出演进路线图。"""
-        
+
         return self._call_llm(prompt)
     
     # ========== 课程5：故障思维 ==========
@@ -114,13 +114,13 @@ class ArchitectEducation:
 6. 预防措施：如何避免再次发生
 
 请输出排查分析。"""
-        
+
         return self._call_llm(prompt)
     
     # ========== 综合训练：真实问题 ==========
     def train_on_real_problems(self):
         """用 ClawsJoy 真实问题训练"""
-        
+
         problems = [
             {
                 "type": "system",
@@ -139,30 +139,30 @@ class ArchitectEducation:
                 "question": "如何设计系统支持 10000 并发用户？"
             }
         ]
-        
+
         results = []
         for p in problems:
             print(f"\n📚 训练: {p['question']}")
-            
+
             if p['type'] == 'system':
                 answer = self.teach_system_thinking(p['question'])
             elif p['type'] == 'performance':
                 answer = self.teach_fault_thinking(p['question'])
             else:
                 answer = self.teach_layer_thinking(p['question'])
-            
+
             results.append({
                 "question": p['question'],
                 "answer": answer[:500],
                 "timestamp": datetime.now().isoformat()
             })
-            
+
             print(f"✅ 完成\n{answer[:200]}...")
-        
+
         # 保存训练结果
         with open(f"{get_data_root()}/architect_training.json", "w") as f:
             json.dump(results, f, indent=2, ensure_ascii=False)
-        
+
         return results
     
     def _call_llm(self, prompt: str) -> str:

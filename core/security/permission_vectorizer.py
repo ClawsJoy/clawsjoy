@@ -38,7 +38,7 @@ class PermissionVectorizer:
         """检查权限 - 配置驱动"""
         # 获取角色权限
         role_perms = self._rules.get('roles', {}).get(user_role, [])
-        
+
         # 通配符匹配
         for perm in role_perms:
             if perm == '*':
@@ -49,18 +49,18 @@ class PermissionVectorizer:
                     return True
             if perm == f"{resource}.{action}":
                 return True
-        
+
         return False
     
     def get_allowed_apis(self, user_role: str):
         """获取用户有权限的 API 列表"""
         api_perms = self._rules.get('api_permissions', {})
         allowed = []
-        
+
         for api_path, roles in api_perms.items():
             if user_role in roles:
                 allowed.append(api_path)
-        
+
         return allowed
 
 

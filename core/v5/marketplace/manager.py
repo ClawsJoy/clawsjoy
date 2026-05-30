@@ -70,11 +70,11 @@ class MarketplaceManager:
         """安装插件"""
         if plugin_id in self.installed:
             return {"success": False, "error": "Already installed"}
-        
+
         # 创建插件目录
         plugin_dir = self.plugins_dir / plugin_id
         plugin_dir.mkdir(exist_ok=True)
-        
+
         # 创建插件配置
         plugin_config = {
             "id": plugin_id,
@@ -82,20 +82,20 @@ class MarketplaceManager:
             "enabled": True,
             "config": {}
         }
-        
+
         self.installed[plugin_id] = plugin_config
         self._save_installed()
-        
+
         return {"success": True, "message": f"Plugin {plugin_id} installed"}
     
     def uninstall(self, plugin_id: str) -> Dict:
         """卸载插件"""
         if plugin_id not in self.installed:
             return {"success": False, "error": "Not installed"}
-        
+
         del self.installed[plugin_id]
         self._save_installed()
-        
+
         return {"success": True, "message": f"Plugin {plugin_id} uninstalled"}
     
     def get_installed(self) -> List[Dict]:

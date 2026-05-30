@@ -49,23 +49,23 @@ class HermesExecutor:
     def execute(self, goal: str, context: Dict = None) -> Dict:
         """执行任务 - 完整 Hermes 循环"""
         print(f"\n🧠 [Hermes v{self.version}] 开始处理: {goal[:80]}")
-        
+
         # 阶段1: 深度任务分解
         subtasks = self._deep_decompose(goal)
         print(f"   📋 分解为 {len(subtasks)} 个子任务")
-        
+
         if not subtasks:
             return {"success": False, "error": "无法分解任务", "source": "hermes_executor"}
-        
+
         # 阶段2: 执行子任务
         results = []
         for i, subtask in enumerate(subtasks):
             desc = subtask.get('description', str(subtask))
             print(f"   🔧 执行子任务 {i+1}: {desc[:50] if isinstance(desc, str) else str(desc)[:50]}")
-            
+
             result = self._execute_subtask(subtask, context, i)
             results.append(result)
-            
+
             if not result.get("success"):
                 print(f"   ⚠️ 子任务 {i+1} 失败: {result.get('error')}")
                 
@@ -77,13 +77,13 @@ class HermesExecutor:
                     print(f"   🔄 重试子任务 {i+1}...")
                     retry_result = self._retry_subtask(subtask, reflection)
                     results[-1] = retry_result
-        
+
         # 阶段4: 综合结果
         final_result = self._synthesize(goal, results)
-        
+
         # 阶段5: 学习
         self._learn(goal, subtasks, results, final_result)
-        
+
         return {
             "success": final_result.get("success", True),
             "result": final_result.get("output"),
@@ -93,7 +93,7 @@ class HermesExecutor:
     
     def _deep_decompose(self, goal: str) -> List[Dict]:
         """深度任务分解 - 使用 LLM 智能拆解"""
-        
+
         prompt = f"""将以下复杂任务分解为多个简单的子任务。
 
 用户目标: {goal}
@@ -139,7 +139,7 @@ class HermesExecutor:
                     return subtasks
             except:
                 pass
-        
+
         # 降级：返回单个任务
         return [{"step": 1, "action": goal, "skill": "llm", "input": goal, "output": "result"}]
     
@@ -148,7 +148,7 @@ class HermesExecutor:
         action = subtask.get("action", "")
         skill_name = subtask.get("skill", "llm")
         input_data = subtask.get("input", action)
-        
+
         # 尝试使用技能
         if skill_name in skill_loader.list_skills():
             result = skill_loader.execute(skill_name, {"text": input_data, "goal": action})
@@ -159,23 +159,23 @@ class HermesExecutor:
                     "skill": skill_name,
                     "step": step
                 }
-        
+
         # 降级：使用 LLM
         prompt = f"执行: {action}\n输入: {input_data}"
         response = smart_adapter.generate(prompt, auto_select=True)
-        
+
         return {"success": True, "output": response, "skill": "llm", "step": step, "fallback": True}
     
     def _retry_subtask(self, subtask: Dict, reflection: Dict) -> Dict:
         """重试子任务"""
         alternative = reflection.get("alternative_skill", "llm")
         action = subtask.get("action", "")
-        
+
         if alternative in skill_loader.list_skills():
             result = skill_loader.execute(alternative, {"text": action})
             if result.get("success"):
                 return {"success": True, "output": result.get("result"), "skill": alternative, "retry": True}
-        
+
         response = smart_adapter.generate(action, auto_select=True)
         return {"success": True, "output": response, "skill": "llm", "retry": True}
     
@@ -193,19 +193,19 @@ class HermesExecutor:
         match = re.search(r'\{.*\}', response, re.DOTALL)
         if match:
             return json.loads(match.group())
-        
+
         return {"root_cause": "未知", "should_retry": True, "alternative_skill": "llm"}
     
     def _synthesize(self, goal: str, results: List) -> Dict:
         """综合结果"""
         outputs = [r.get("output", "") for r in results if r.get("success")]
-        
+
         if not outputs:
             return {"success": False, "output": "无法完成任务"}
-        
+
         if len(outputs) == 1:
             return {"success": True, "output": outputs[0]}
-        
+
         prompt = f"""综合以下结果回答用户目标。
 
 目标: {goal}
@@ -220,7 +220,7 @@ class HermesExecutor:
     def _learn(self, goal: str, subtasks: List, results: List, final: Dict):
         """学习经验"""
         success_count = sum(1 for r in results if r.get("success"))
-        
+
         learning = {
             "goal": goal[:100],
             "subtask_count": len(subtasks),
@@ -228,14 +228,14 @@ class HermesExecutor:
             "skills_used": [r.get("skill") for r in results if r.get("skill")],
             "timestamp": datetime.now().isoformat()
         }
-        
+
         self.reflections["learnings"].append(learning)
         self.reflections["learnings"] = self.reflections["learnings"][-100:]
-        
+
         if learning["success_rate"] >= 0.7:
             self.reflections["successful_strategies"].append(learning)
             self.reflections["successful_strategies"] = self.reflections["successful_strategies"][-50:]
-        
+
         self._save_reflections()
         print(f"📚 Hermes 学习: {learning['goal'][:40]}... (成功率 {learning['success_rate']:.0%})")
 

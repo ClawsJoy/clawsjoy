@@ -12,7 +12,7 @@ class TaskDecomposer:
     def decompose(self, complex_task: str) -> List[Dict]:
         if complex_task in self.decomposition_cache:
             return self.decomposition_cache[complex_task]
-        
+
         # 优化 prompt，明确要求分解
         prompt = f"""请将以下复杂任务分解为 3-5 个具体的、可执行的子任务。
 
@@ -32,7 +32,7 @@ class TaskDecomposer:
         {{"name": "验证结果", "action": "verify_optimization", "depends_on": ["执行优化"]}}
     ]
 }}"""
-        
+
         try:
             resp = requests.post(
                 'http://localhost:5002/api/chat',
@@ -40,12 +40,12 @@ class TaskDecomposer:
                 timeout=config_helper.get_timeout("default")
             )
             response = resp.json().get('response', '')
-            
+
             # 提取 JSON
             match = re.search(r'\{[^{}]*"sub_tasks"[^{}]*\[.*\]\s*\}', response, re.DOTALL)
             if not match:
                 match = re.search(r'\{.*\}', response, re.DOTALL)
-            
+
             if match:
                 data = json.loads(match.group())
                 sub_tasks = data.get('sub_tasks', [])
@@ -54,7 +54,7 @@ class TaskDecomposer:
                     return sub_tasks
         except Exception as e:
             print(f"分解失败: {e}")
-        
+
         # 降级：手动分解
         return self._manual_decompose(complex_task)
     
@@ -79,7 +79,7 @@ class TaskDecomposer:
     def get_execution_order(self, sub_tasks: List[Dict]) -> List[str]:
         executed = []
         pending = [t['name'] for t in sub_tasks]
-        
+
         while pending:
             for task in sub_tasks:
                 if task['name'] in pending:

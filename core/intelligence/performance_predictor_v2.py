@@ -32,14 +32,14 @@ class PerformancePredictorV2:
         history = self.get_success_rate_history()
         if len(history) < 5:
             return {"prediction": "数据不足", "confidence": 0.3}
-        
+
         # 简单移动平均预测
         window = min(5, len(history))
         avg = sum(history[-window:]) / window
         trend = history[-1] - history[-2] if len(history) >= 2 else 0
-        
+
         prediction = min(100, max(0, avg + trend * 0.5))
-        
+
         return {
             "prediction": f"{prediction:.1f}%",
             "current_rate": f"{history[-1] if history else 0}%",
@@ -62,7 +62,7 @@ class PerformancePredictorV2:
         """生成预测报告"""
         success_pred = self.predict_success_rate()
         resource_pred = self.predict_resource_usage()
-        
+
         report = {
             "timestamp": datetime.now().isoformat(),
             "success_rate_prediction": success_pred,
@@ -70,10 +70,10 @@ class PerformancePredictorV2:
             "overall_status": "正常" if float(success_pred['prediction'].rstrip('%')) > 60 else "需关注",
             "recommendations": self._get_recommendations(success_pred)
         }
-        
+
         # 存储预测结果
         memory.remember(json.dumps(report), category='performance_predictions')
-        
+
         return report
     
     def _get_recommendations(self, pred):

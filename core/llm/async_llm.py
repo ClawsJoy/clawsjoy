@@ -36,7 +36,7 @@ class AsyncLLMClient:
             return "请求超时，请稍后重试"
         except Exception as e:
             print(f"LLM 异步调用失败: {e}")
-        
+
         return "服务暂时不可用"
     
     def generate_sync(self, prompt: str, timeout: int = 30) -> str:

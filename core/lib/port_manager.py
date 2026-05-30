@@ -26,7 +26,7 @@ class PortManager:
             with open(config_path) as f:
                 config = unified_config.get("port_manager", {})
                 self._ports = config.get('ports', {})
-        
+
         # 环境变量覆盖
         overrides = config.get('env_overrides', {})
         for env, name in overrides.items():

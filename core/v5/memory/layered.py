@@ -25,22 +25,22 @@ class LayeredMemory:
         self.agent_name = agent_name
         self.base_path = Path(f"{config_helper.get_data_root()}/v5/users/{user_id}/layered_memory/{agent_name}")
         self.base_path.mkdir(parents=True, exist_ok=True)
-        
+
         # L0: 会话记忆（短期）
         self.l0_session: List[MemoryItem] = []
-        
+
         # L1: 日记忆（中期）
         self.l1_daily: List[MemoryItem] = []
-        
+
         # L2: 长期记忆
         self.l2_long: List[MemoryItem] = []
-        
+
         # L3: 向量记忆（语义）
         self.l3_vector: List[Dict] = []
-        
+
         # L4: 索引记忆（知识图谱）
         self.l4_index: Dict[str, List[str]] = {}
-        
+
         self._load()
     
     def _get_file(self, level: str) -> Path:
@@ -85,7 +85,7 @@ class LayeredMemory:
             data = self.l4_index
         else:
             return
-        
+
         with open(file_path, 'w') as f:
             json.dump(data, f, indent=2)
     
@@ -97,11 +97,11 @@ class LayeredMemory:
             importance=importance,
             timestamp=time.time()
         )
-        
+
         # L0: 会话记忆
         self.l0_session.append(item)
         self._save('0')
-        
+
         # 自动压缩
         self._compress()
     
@@ -115,7 +115,7 @@ class LayeredMemory:
             self.l0_session = self.l0_session[-20:]
             self._save('0')
             self._save('1')
-        
+
         # L1 → L2 压缩
         if len(self.l1_daily) > 100:
             important = [m for m in self.l1_daily if m.importance >= 6]
@@ -123,7 +123,7 @@ class LayeredMemory:
             self.l1_daily = self.l1_daily[-50:]
             self._save('1')
             self._save('2')
-        
+
         # L2 限制
         if len(self.l2_long) > 500:
             self.l2_long = self.l2_long[-500:]
@@ -133,28 +133,28 @@ class LayeredMemory:
         """搜索记忆（优先 L2 → L1 → L0）"""
         results = []
         query_lower = query.lower()
-        
+
         # 先搜索长期记忆
         for mem in reversed(self.l2_long):
             if query_lower in mem.content.lower():
                 results.append(mem.content[:200])
                 if len(results) >= limit:
                     return results
-        
+
         # 再搜索日记忆
         for mem in reversed(self.l1_daily):
             if query_lower in mem.content.lower():
                 results.append(mem.content[:200])
                 if len(results) >= limit:
                     return results
-        
+
         # 最后搜索会话记忆
         for mem in reversed(self.l0_session):
             if query_lower in mem.content.lower():
                 results.append(mem.content[:200])
                 if len(results) >= limit:
                     return results
-        
+
         return results
     
     def get_stats(self) -> Dict:

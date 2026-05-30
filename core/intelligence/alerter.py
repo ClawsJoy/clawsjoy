@@ -12,7 +12,7 @@ class IntelligentAlerter:
         self.thresholds_file = Path(f"{config_helper.get_data_root()}/dynamic_thresholds.json")
         self.alert_history = defaultdict(list)
         self.load_thresholds()
-        
+
     def load_thresholds(self):
         """加载动态阈值"""
         if self.thresholds_file.exists():
@@ -35,35 +35,35 @@ class IntelligentAlerter:
         """自适应调整阈值"""
         if not self.thresholds.get(metric_name, {}).get("adaptive", False):
             return
-            
+
         if len(recent_values) < 10:
             return
-            
+
         # 基于历史数据计算动态阈值
         avg = sum(recent_values) / len(recent_values)
         std = (sum((v - avg) ** 2 for v in recent_values) / len(recent_values)) ** 0.5
-        
+
         # 动态阈值 = 平均值 + 2倍标准差
         dynamic_warning = avg + 2 * std
-        
+
         # 更新阈值（平滑变化）
         old_warning = self.thresholds[metric_name]["warning"]
         self.thresholds[metric_name]["warning"] = 0.7 * old_warning + 0.3 * dynamic_warning
-        
+
         print(f"📊 自适应阈值: {metric_name} {old_warning:.2f} -> {self.thresholds[metric_name]['warning']:.2f}")
     
     def check_and_alert(self, metric_name, current_value):
         """检查并告警"""
         if metric_name not in self.thresholds:
             return None
-            
+
         threshold = self.thresholds[metric_name]
-        
+
         if current_value >= threshold.get("critical", float('inf')):
             return {"level": "critical", "message": f"{metric_name} 严重异常: {current_value}"}
         elif current_value >= threshold.get("warning", float('inf')):
             return {"level": "warning", "message": f"{metric_name} 告警: {current_value}"}
-        
+
         return None
 
 if __name__ == "__main__":

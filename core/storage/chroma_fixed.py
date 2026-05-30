@@ -13,15 +13,15 @@ class ChromaFixed:
         self.collection_name = collection_name
         self.persist_dir = Path(f"{config_helper.get_data_root()}/chroma/{user_id}")
         self.persist_dir.mkdir(parents=True, exist_ok=True)
-        
+
         self.client = chromadb.PersistentClient(path=str(self.persist_dir))
-        
+
         # 使用官方 embedding 函数
         self.embedding_fn = OfficialOllama(
             url=config_helper.get_llm_endpoint(),
             model_name=config_helper.get_embedding_model()
         )
-        
+
         # 获取或创建 collection
         try:
             self.collection = self.client.get_collection(collection_name)
@@ -38,7 +38,7 @@ class ChromaFixed:
         doc_id = str(uuid.uuid4())
         if metadata is None or metadata == {}:
             metadata = {"source": "user_preference", "timestamp": str(__import__('time').time())}
-        
+
         self.collection.add(
             ids=[doc_id],
             documents=[text],
@@ -53,7 +53,7 @@ class ChromaFixed:
                 query_texts=[query],
                 n_results=n_results
             )
-            
+
             formatted = []
             if results.get('documents') and results['documents'][0]:
                 for i, doc in enumerate(results['documents'][0]):

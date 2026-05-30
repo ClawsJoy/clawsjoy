@@ -1,42 +1,44 @@
-"""分析师 Agent - 数据分析和报告生成"""
+"""分析师 - 分析用户问题，给出学习建议"""
 
-from typing import Dict, List, Optional, Any
+from typing import Dict, List
+from pathlib import Path
+import json
 from core.agents.base.smart_agent import SmartAgent
 
 
 class AnalystAgent(SmartAgent):
-    """数据分析 Agent"""
-
     name = "analyst_agent"
-    description = "数据分析和报告生成"
-    version = "1.0.0"
+    description = "分析用户问题，给出学习建议"
 
     def __init__(self, user_id: str = "default"):
         super().__init__(user_id=user_id)
-        self.analysis_cache: Dict[str, Any] = {}
+        print("📊 分析师 已上岗")
 
-    def analyze(self, data: Dict, analysis_type: str = "summary") -> Dict:
-        """分析数据"""
+    def analyze_unknown_questions(self) -> Dict:
+        """分析未知问题，找出需要学习的"""
+        unknown_file = Path("data/unknown_questions.json")
+        if not unknown_file.exists():
+            return {"has_unknown": False, "suggestions": []}
+        
+        with open(unknown_file, 'r') as f:
+            unknown = json.load(f)
+        
+        # 找出问过3次以上的问题
+        suggestions = []
+        for q, count in unknown.items():
+            if count >= 3:
+                suggestions.append({
+                    "question": q,
+                    "frequency": count,
+                    "priority": "high" if count >= 5 else "medium",
+                    "suggestion": f"建议学习：{q}"
+                })
+        
         return {
-            "type": analysis_type,
-            "result": "分析完成",
-            "data_points": len(data)
+            "has_unknown": len(suggestions) > 0,
+            "suggestions": suggestions,
+            "total_questions": len(unknown)
         }
-
-    def generate_report(self, analysis_id: str) -> Dict:
-        """生成报告"""
-        return {
-            "report_id": analysis_id,
-            "status": "generated",
-            "format": "json"
-        }
-
-    def get_stats(self) -> Dict:
-        return {
-            "name": self.name,
-            "version": self.version,
-            "cached_analysis": len(self.analysis_cache)
-        }
-
-
-# analyst_agent = AnalystAgent()  # 注释：改为按需创建
+    
+    def process(self, user_input: str, context=None) -> Dict:
+        return self.analyze_unknown_questions()

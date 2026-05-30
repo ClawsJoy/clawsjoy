@@ -22,19 +22,19 @@ def require_permission(level: int = 2):
             user_role = request.headers.get("X-User-Role", "user")
             permissions = load_permissions()
             levels = permissions.get("levels", {})
-            
+
             allowed = False
             for lvl, config in levels.items():
                 if int(lvl[-1]) == level and user_role in config.get("roles", []):
                     allowed = True
                     break
-            
+
             if not allowed and level == 2:
                 allowed = user_role in ["user", "developer", "tenant_admin", "system_admin"]
-            
+
             if not allowed:
                 return jsonify({"success": False, "error": f"需要 level {level} 权限"}), 403
-            
+
             return f(*args, **kwargs)
         return decorated
     return decorator

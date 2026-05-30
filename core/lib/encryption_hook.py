@@ -28,7 +28,7 @@ class EncryptionHook:
         if not CRYPTO_AVAILABLE:
             self.key = None
             return
-            
+
         if self.key_file.exists():
             with open(self.key_file, 'rb') as f:
                 self.key = f.read()

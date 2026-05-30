@@ -17,7 +17,7 @@ class CodeCompleter:
         self.context_memory = []
         self.completion_stats = defaultdict(lambda: {'used': 0, 'accepted': 0})
         self.load_history()
-        
+
         print("\n" + "="*60)
         print("🤖 智能代码补齐系统")
         print("="*60)
@@ -45,10 +45,10 @@ class CodeCompleter:
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 lines = f.readlines()
-            
+
             start = max(0, line_num - window)
             end = min(len(lines), line_num + window)
-            
+
             context = {
                 'file': file_path,
                 'line': line_num,
@@ -63,7 +63,7 @@ class CodeCompleter:
     def suggest_completion(self, partial_code, file_type='python'):
         """智能补齐建议"""
         suggestions = []
-        
+
         # 1. 基于模式的补齐
         patterns = {
             'def ': r'def (\w+)\(',
@@ -73,7 +73,7 @@ class CodeCompleter:
             'self.': r'self\.(\w+)',
             'python3 ': r'python3 (\w+\.py)'
         }
-        
+
         for pattern_type, pattern in patterns.items():
             if partial_code.startswith(pattern_type):
                 matches = re.findall(pattern, partial_code + ' ')
@@ -83,7 +83,7 @@ class CodeCompleter:
                         'type': pattern_type,
                         'confidence': 0.8
                     })
-        
+
         # 2. 从历史命令中学习
         for ctx in self.context_memory[-20:]:
             if partial_code.lower() in ctx.get('command', '').lower():
@@ -92,7 +92,7 @@ class CodeCompleter:
                     'type': 'historical',
                     'confidence': 0.6
                 })
-        
+
         # 3. 从大脑获取经验
         experiences = brain_core.knowledge.get('experiences', [])
         for exp in experiences[-20:]:
@@ -103,7 +103,7 @@ class CodeCompleter:
                     'type': 'brain_memory',
                     'confidence': 0.7
                 })
-        
+
         # 去重
         seen = set()
         unique_suggestions = []
@@ -111,7 +111,7 @@ class CodeCompleter:
             if s['completion'] not in seen:
                 seen.add(s['completion'])
                 unique_suggestions.append(s)
-        
+
         return unique_suggestions[:5]
     
     def record_completion(self, command, accepted, context=''):
@@ -119,14 +119,14 @@ class CodeCompleter:
         self.completion_stats[command]['used'] += 1
         if accepted:
             self.completion_stats[command]['accepted'] += 1
-        
+
         self.context_memory.append({
             'command': command,
             'accepted': accepted,
             'context': context,
             'timestamp': datetime.now().isoformat()
         })
-        
+
         # 记录到大脑
         brain_core.record_experience(
             agent="code_completer",
@@ -134,20 +134,20 @@ class CodeCompleter:
             result={"accepted": accepted},
             context=command[:100]
         )
-        
+
         self.save_history()
     
     def get_smart_suggestions(self, current_input):
         """获取智能建议"""
         suggestions = self.suggest_completion(current_input)
-        
+
         # 排序：先高置信度，再常用
         for s in suggestions:
             stats = self.completion_stats.get(s['completion'], {'used': 0, 'accepted': 0})
             s['popularity'] = stats['used']
-        
+
         suggestions.sort(key=lambda x: (x['confidence'], x.get('popularity', 0)), reverse=True)
-        
+
         return suggestions
 
 if __name__ == "__main__":

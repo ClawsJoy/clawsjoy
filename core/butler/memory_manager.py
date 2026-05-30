@@ -24,17 +24,17 @@ class SmartMemoryManager:
         self.user_id = user_id
         self.base_path = Path(f"{get_data_root()}/users/{user_id}/butler_memory")
         self.base_path.mkdir(parents=True, exist_ok=True)
-        
+
         # 加载配置
         self._load_config()
-        
+
         # 各层记忆
         self.l0_session: List[MemoryItem] = []  # 会话级
         self.l1_daily: List[MemoryItem] = []    # 日级
         self.l2_long: List[MemoryItem] = []     # 长期
         self.preferences: Dict = {}              # 偏好
         self.knowledge: Dict = {}                # 知识
-        
+
         self._load()
     
     def _load_config(self):
@@ -54,13 +54,13 @@ class SmartMemoryManager:
         if pref_file.exists():
             with open(pref_file, 'r') as f:
                 self.preferences = json.load(f)
-        
+
         # 加载知识
         knowledge_file = self.base_path / "knowledge.json"
         if knowledge_file.exists():
             with open(knowledge_file, 'r') as f:
                 self.knowledge = json.load(f)
-        
+
         # 加载长期记忆
         long_file = self.base_path / "long_term.json"
         if long_file.exists():
@@ -72,10 +72,10 @@ class SmartMemoryManager:
         """保存持久化数据"""
         with open(self.base_path / "preferences.json", 'w') as f:
             json.dump(self.preferences, f, indent=2, ensure_ascii=False)
-        
+
         with open(self.base_path / "knowledge.json", 'w') as f:
             json.dump(self.knowledge, f, indent=2, ensure_ascii=False)
-        
+
         with open(self.base_path / "long_term.json", 'w') as f:
             data = [asdict(item) for item in self.l2_long]
             json.dump(data, f, indent=2, ensure_ascii=False)
@@ -89,12 +89,12 @@ class SmartMemoryManager:
             timestamp=datetime.now().isoformat()
         )
         self.l0_session.append(item)
-        
+
         # L0 达到上限后，压缩到 L1
         max_session = self.config.get("features", {}).get("memory", {}).get("max_history", 50)
         if len(self.l0_session) > max_session:
             self._compress_to_daily()
-        
+
         self._save()
     
     def _compress_to_daily(self):
@@ -103,11 +103,11 @@ class SmartMemoryManager:
         for item in self.l0_session:
             if item.importance >= 5:
                 self.l1_daily.append(item)
-        
+
         # 日记忆上限
         if len(self.l1_daily) > 100:
             self._compress_to_long()
-        
+
         self.l0_session = self.l0_session[-20:]  # 保留最近20条
     
     def _compress_to_long(self):
@@ -116,10 +116,10 @@ class SmartMemoryManager:
         for item in self.l1_daily:
             if item.importance >= 7:
                 self.l2_long.append(item)
-        
+
         # 去重和合并
         self._deduplicate()
-        
+
         self.l1_daily = []
         self._save()
     
@@ -157,18 +157,18 @@ class SmartMemoryManager:
     def recall_context(self, query: str, limit: int = 5) -> List[str]:
         """回忆相关上下文"""
         results = []
-        
+
         # 从会话记忆检索
         for item in reversed(self.l0_session):
             if query in item.content and len(results) < limit:
                 results.append(item.content)
-        
+
         # 从长期记忆检索
         if len(results) < limit:
             for item in reversed(self.l2_long):
                 if query in item.content and len(results) < limit:
                     results.append(item.content)
-        
+
         return results
     
     def get_conversation_context(self, limit: int = 10) -> List[Dict]:

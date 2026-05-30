@@ -31,13 +31,13 @@ class SuccessPredictor:
         """加载历史数据"""
         if not self.log_file.exists():
             return
-        
+
         content = self.log_file.read_text(encoding='utf-8', errors='ignore')
         lines = content.strip().split('\n')
-        
+
         task_history = defaultdict(lambda: {'success': 0, 'fail': 0, 'recent': []})
         skill_history = defaultdict(lambda: {'success': 0, 'fail': 0})
-        
+
         for line in lines[-self.history_window * 2:]:
             # 解析任务
             if '[执行]' in line:
@@ -58,7 +58,7 @@ class SuccessPredictor:
                     # 限制最近记录数量
                     if len(task_history[task_name]['recent']) > 20:
                         task_history[task_name]['recent'] = task_history[task_name]['recent'][-20:]
-        
+
         self._task_history = task_history
         self._skill_history = skill_history
     
@@ -66,10 +66,10 @@ class SuccessPredictor:
         """预测单个任务的成功率"""
         if self._task_history is None:
             self._load_history()
-        
+
         history = self._task_history.get(task_name, {'success': 0, 'fail': 0, 'recent': []})
         total = history['success'] + history['fail']
-        
+
         if total == 0:
             # 无历史数据，使用默认值
             return {
@@ -79,24 +79,24 @@ class SuccessPredictor:
                 "total_samples": 0,
                 "trend": "unknown"
             }
-        
+
         rate = history['success'] / total
-        
+
         # 计算趋势（基于最近5次）
         recent = history['recent'][-5:]
         recent_success = sum(1 for r in recent if r[0] == 'success')
         recent_rate = recent_success / len(recent) if recent else rate
-        
+
         if recent_rate > rate + 0.1:
             trend = "improving"
         elif recent_rate < rate - 0.1:
             trend = "declining"
         else:
             trend = "stable"
-        
+
         # 置信度（样本越多置信度越高）
         confidence = min(0.95, 0.3 + total / 100)
-        
+
         return {
             "task": task_name,
             "predicted_rate": round(rate, 2),
@@ -111,10 +111,10 @@ class SuccessPredictor:
         """预测技能的成功率"""
         if self._skill_history is None:
             self._load_history()
-        
+
         history = self._skill_history.get(skill_name, {'success': 0, 'fail': 0})
         total = history['success'] + history['fail']
-        
+
         if total == 0:
             return {
                 "skill": skill_name,
@@ -122,10 +122,10 @@ class SuccessPredictor:
                 "confidence": 0.2,
                 "total_samples": 0
             }
-        
+
         rate = history['success'] / total
         confidence = min(0.95, 0.3 + total / 200)
-        
+
         return {
             "skill": skill_name,
             "predicted_rate": round(rate, 2),
@@ -137,7 +137,7 @@ class SuccessPredictor:
         """获取预测成功率最高的任务"""
         if self._task_history is None:
             self._load_history()
-        
+
         results = []
         for task_name, history in self._task_history.items():
             total = history['success'] + history['fail']
@@ -148,7 +148,7 @@ class SuccessPredictor:
                     "rate": round(rate, 2),
                     "samples": total
                 })
-        
+
         results.sort(key=lambda x: x['rate'], reverse=True)
         return results[:limit]
     
@@ -156,7 +156,7 @@ class SuccessPredictor:
         """获取预测成功率最低的任务"""
         if self._task_history is None:
             self._load_history()
-        
+
         results = []
         for task_name, history in self._task_history.items():
             total = history['success'] + history['fail']
@@ -167,7 +167,7 @@ class SuccessPredictor:
                     "rate": round(rate, 2),
                     "samples": total
                 })
-        
+
         results.sort(key=lambda x: x['rate'])
         return results[:limit]
     
@@ -175,7 +175,7 @@ class SuccessPredictor:
         """获取预测器统计"""
         if self._task_history is None:
             self._load_history()
-        
+
         return {
             "version": self.VERSION,
             "total_tasks_tracked": len(self._task_history) if self._task_history else 0,

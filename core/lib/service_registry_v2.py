@@ -1,9 +1,3 @@
-from core.lib.config_helper import get_data_root, get_llm_endpoint, get_llm_model, get_embedding_model, get_gateway_port, get_timeout
-from core.lib.unified_config import unified_config
-
-from core.lib.unified_config import unified_config
-
-from core.lib.unified_config import unified_config
 """服务注册中心 V2 - 支持心跳保活、版本管理、自动剔除"""
 import json
 import time
@@ -12,27 +6,29 @@ import requests
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
+from core.lib.config_helper import get_data_root
+
 
 class ServiceRegistryV2:
     """增强版服务注册中心"""
-    
+
     def __init__(self, registry_file=f"{get_data_root()}/service_registry.json", heartbeat_interval=30):
         self.registry_file = Path(registry_file)
         self.heartbeat_interval = heartbeat_interval
         self.services = self._load()
         self._start_heartbeat_checker()
-    
+
     def _load(self):
         if self.registry_file.exists():
             with open(self.registry_file, 'r') as f:
                 return json.load(f)
         return {}
-    
+
     def _save(self):
         self.registry_file.parent.mkdir(parents=True, exist_ok=True)
         with open(self.registry_file, 'w') as f:
             json.dump(self.services, f, indent=2)
-    
+
     def _start_heartbeat_checker(self):
         """启动心跳检查线程"""
         def checker():
@@ -41,16 +37,16 @@ class ServiceRegistryV2:
                 self._check_heartbeats()
         thread = threading.Thread(target=checker, daemon=True)
         thread.start()
-    
+
     def _check_heartbeats(self):
         """检查所有服务的心跳"""
         now = datetime.now().isoformat()
         to_remove = []
-        
+
         for name, service in self.services.items():
             if service.get('status') != 'active':
                 continue
-            
+
             last_heartbeat = service.get('last_heartbeat')
             if last_heartbeat:
                 last_time = datetime.fromisoformat(last_heartbeat)
@@ -59,10 +55,10 @@ class ServiceRegistryV2:
                     service['last_error'] = f'心跳超时: {last_heartbeat}'
                     print(f"⚠️ 服务 {name} 心跳超时，标记为 inactive")
                     self._save()
-        
+
         return to_remove
-    
-    def register(self, name: str, port: int, host: str = "localhost", 
+
+    def register(self, name: str, port: int, host: str = "localhost",
                  version: str = "1.0.0", health_path: str = "/health",
                  metadata: Dict = None):
         """注册服务"""
@@ -83,7 +79,7 @@ class ServiceRegistryV2:
         self._save()
         print(f"✅ 服务已注册: {name} v{version} -> {self.services[name]['url']}")
         return True
-    
+
     def heartbeat(self, name: str):
         """发送心跳"""
         if name in self.services:
@@ -92,7 +88,7 @@ class ServiceRegistryV2:
             self._save()
             return True
         return False
-    
+
     def unregister(self, name: str):
         """注销服务"""
         if name in self.services:
@@ -101,25 +97,25 @@ class ServiceRegistryV2:
             print(f"❌ 服务已注销: {name}")
             return True
         return False
-    
+
     def get(self, name: str) -> Optional[Dict]:
         """获取服务信息"""
         return self.services.get(name)
-    
+
     def get_url(self, name: str) -> Optional[str]:
         service = self.get(name)
         return service["url"] if service else None
-    
+
     def get_active(self) -> List[Dict]:
         """获取活跃服务"""
         return [s for s in self.services.values() if s.get('status') == 'active']
-    
+
     def list_all(self) -> List[str]:
         return list(self.services.keys())
-    
+
     def list_active(self) -> List[str]:
         return [s['name'] for s in self.get_active()]
-    
+
     def health_check(self, name: str) -> bool:
         """健康检查"""
         service = self.get(name)
@@ -145,7 +141,7 @@ class ServiceRegistryV2:
                 service['status'] = 'unhealthy'
             self._save()
             return False
-    
+
     def get_stats(self) -> Dict:
         """获取统计信息"""
         active = len([s for s in self.services.values() if s.get('status') == 'active'])
@@ -157,8 +153,9 @@ class ServiceRegistryV2:
             "services": self.services
         }
 
-service_registry = ServiceRegistryV2()
-
     def list_services(self):
         """列出所有服务"""
         return list(self.services.keys())
+
+
+service_registry = ServiceRegistryV2()

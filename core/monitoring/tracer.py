@@ -54,11 +54,11 @@ class CallTracer:
         """获取统计"""
         if not self.traces:
             return {"total": 0}
-        
+
         total = len(self.traces)
         success = sum(1 for t in self.traces if t["success"])
         avg_duration = sum(t["duration_ms"] for t in self.traces) / total
-        
+
         return {
             "total": total,
             "success_rate": success / total * 100,

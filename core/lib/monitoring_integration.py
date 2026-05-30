@@ -21,7 +21,7 @@ class MonitoringIntegration:
         """获取健康状态"""
         services = ["gateway", "file", "multi_agent", "doc_generator"]
         status = {}
-        
+
         for service in services:
             try:
                 if service == "gateway":
@@ -32,7 +32,7 @@ class MonitoringIntegration:
                     status[service] = "unknown"
             except:
                 status[service] = "unhealthy"
-        
+
         return status
     
     def get_recent_alerts(self, lines: int = 10) -> List[str]:
@@ -51,7 +51,7 @@ class MonitoringIntegration:
         status = self.get_health_status()
         healthy_count = sum(1 for s in status.values() if s == "healthy")
         total = len(status)
-        
+
         return {
             "status": "healthy" if healthy_count == total else "degraded",
             "healthy_count": healthy_count,

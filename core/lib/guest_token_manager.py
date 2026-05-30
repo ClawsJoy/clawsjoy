@@ -30,10 +30,10 @@ class GuestTokenManager:
             "session_id": str(uuid.uuid4())
         }
         self._sessions[token] = session
-        
+
         # 记录会话创建（脱敏）
         self._record_analytics("session_created", session)
-        
+
         return session
     
     def validate_token(self, token: str) -> Optional[dict]:
@@ -56,25 +56,25 @@ class GuestTokenManager:
         old_session = None
         if old_token and old_token in self._sessions:
             old_session = self._sessions[old_token]
-        
+
         # 创建新会话
         new_session = self.create_session()
-        
+
         if old_session:
             # 关联旧会话数据（用于分析游客行为链）
             new_session["previous_session_id"] = old_session.get("session_id")
             new_session["previous_interactions"] = old_session.get("interactions", 0)
-            
+
             # 记录会话续期事件
             self._record_analytics("session_renewed", {
                 "old_session_id": old_session.get("session_id"),
                 "new_session_id": new_session["session_id"],
                 "old_interactions": old_session.get("interactions", 0)
             })
-            
+
             # 删除旧会话
             del self._sessions[old_token]
-        
+
         return new_session
     
     def record_interaction(self, token: str, user_input: str, response: str) -> bool:
@@ -82,11 +82,11 @@ class GuestTokenManager:
         session = self.validate_token(token)
         if not session:
             return False
-        
+
         # 脱敏处理
         from core.lib.security_hooks import SecurityHooks
         hooks = SecurityHooks()
-        
+
         context = {
             "data": {
                 "session_id": session.get("session_id"),
@@ -95,14 +95,14 @@ class GuestTokenManager:
                 "interaction_count": session.get("interactions", 0)
             }
         }
-        
+
         # 调用脱敏钩子
         try:
             redacted = hooks.redact_sensitive(context)
             data = redacted.get("data", {})
         except:
             data = context["data"]
-        
+
         # 存储到分析数据（JSON Lines 格式）
         record = {
             "timestamp": time.time(),
@@ -112,16 +112,16 @@ class GuestTokenManager:
             "response_length": len(data.get("response", "")),
             "interaction_count": data.get("interaction_count", 0)
         }
-        
+
         analytics_file = self._analytics_dir / f"{session.get('session_id')}.jsonl"
         with open(analytics_file, 'a') as f:
             f.write(json.dumps(record) + '\n')
-        
+
         # 同时写入全局汇总（用于市场分析）
         global_file = self._analytics_dir / "_all_interactions.jsonl"
         with open(global_file, 'a') as f:
             f.write(json.dumps(record) + '\n')
-        
+
         return True
     
     def _record_analytics(self, event_type: str, data: dict):

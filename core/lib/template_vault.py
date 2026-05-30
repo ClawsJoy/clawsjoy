@@ -34,7 +34,7 @@ class TemplateVault:
     def submit_for_review(self, name: str, code: str, category: str, submitter: str) -> Dict:
         """提交模板供审核"""
         template_id = f"tmpl_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        
+
         # 保存模板文件
         template_file = self.vault_dir / f"{template_id}.yaml"
         with open(template_file, 'w') as f:
@@ -46,7 +46,7 @@ class TemplateVault:
                 "submitter": submitter,
                 "submitted_at": datetime.now().isoformat()
             }, f)
-        
+
         # 加入审核队列
         self.index["review_queue"].append({
             "id": template_id,
@@ -56,7 +56,7 @@ class TemplateVault:
             "submitted_at": datetime.now().isoformat()
         })
         self._save_index()
-        
+
         return {
             "success": True,
             "template_id": template_id,
@@ -77,9 +77,9 @@ class TemplateVault:
                     "approved_at": datetime.now().isoformat()
                 })
                 break
-        
+
         self._save_index()
-        
+
         return {
             "success": True,
             "message": f"模板已通过审核"
@@ -95,9 +95,9 @@ class TemplateVault:
                 if template_file.exists():
                     template_file.unlink()
                 break
-        
+
         self._save_index()
-        
+
         return {
             "success": True,
             "message": f"模板已拒绝，原因: {reason}"

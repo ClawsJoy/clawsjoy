@@ -22,7 +22,7 @@ class BrainDecisionExecutor:
         self.decision_log = Path(f"{config_helper.get_data_root()}/brain_decisions.json")
         self.execution_history = []
         self.load_history()
-        
+
     def load_history(self):
         if self.decision_log.exists():
             with open(self.decision_log, 'r') as f:
@@ -48,13 +48,13 @@ class BrainDecisionExecutor:
     def analyze_system_state(self):
         """分析系统状态 - 大脑核心能力"""
         stats = brain.get_stats()
-        
+
         # 检查服务健康
         services_healthy = self._check_all_services()
-        
+
         # 获取性能指标
         performance = self._get_performance()
-        
+
         state = {
             'timestamp': datetime.now().isoformat(),
             'brain': {
@@ -67,7 +67,7 @@ class BrainDecisionExecutor:
             'performance': performance,
             'previous_decisions': self.execution_history[-5:] if self.execution_history else []
         }
-        
+
         return state
     
     def _check_all_services(self):
@@ -78,7 +78,7 @@ class BrainDecisionExecutor:
             'agent': 'http://smart_config.HOST:str(unified_config.get_port("multi_agent"))/health',
             'doc': 'http://smart_config.HOST:5008/health'
         }
-        
+
         status = {}
         for name, url in services.items():
             try:
@@ -103,7 +103,7 @@ class BrainDecisionExecutor:
     def brain_decide(self, state):
         """大脑决策 - 基于当前状态做出决策"""
         decisions = []
-        
+
         # 决策1: 服务异常 -> 自动修复
         down_services = [name for name, healthy in state['services'].items() if not healthy]
         if down_services:
@@ -113,7 +113,7 @@ class BrainDecisionExecutor:
                 'reason': f'服务异常: {down_services}',
                 'executor': self._fix_services
             })
-        
+
         # 决策2: 成功率低 -> 优化学习
         if state['brain']['success_rate'] < 0.7:
             decisions.append({
@@ -122,7 +122,7 @@ class BrainDecisionExecutor:
                 'reason': f"成功率偏低: {state['brain']['success_rate']*100:.0f}%",
                 'executor': self._optimize_learning
             })
-        
+
         # 决策3: 经验不足 -> 主动探索
         if state['brain']['experiences'] < 30:
             decisions.append({
@@ -131,7 +131,7 @@ class BrainDecisionExecutor:
                 'reason': f"经验不足: {state['brain']['experiences']}条",
                 'executor': self._explore_and_learn
             })
-        
+
         # 决策4: 知识节点少 -> 扩展知识
         if state['brain']['knowledge_nodes'] < 30:
             decisions.append({
@@ -140,7 +140,7 @@ class BrainDecisionExecutor:
                 'reason': f"知识节点: {state['brain']['knowledge_nodes']}个",
                 'executor': self._expand_knowledge
             })
-        
+
         # 决策5: 磁盘空间不足 -> 清理
         if state['performance']['disk_percent'] > 85:
             decisions.append({
@@ -149,7 +149,7 @@ class BrainDecisionExecutor:
                 'reason': f"磁盘使用率: {state['performance']['disk_percent']}%",
                 'executor': self._cleanup_disk
             })
-        
+
         # 决策6: 内存压力 -> 优化内存
         if state['performance']['memory_percent'] > 80:
             decisions.append({
@@ -158,7 +158,7 @@ class BrainDecisionExecutor:
                 'reason': f"内存使用率: {state['performance']['memory_percent']}%",
                 'executor': self._optimize_memory
             })
-        
+
         # 按优先级排序
         decisions.sort(key=lambda x: x['priority'], reverse=True)
         return decisions
@@ -182,11 +182,11 @@ class BrainDecisionExecutor:
         print("📚 大脑决策: 优化学习策略")
         current_rate = brain.get_stats().get('learning_rate', 0.3)
         new_rate = min(0.5, current_rate + 0.05)
-        
+
         # 更新大脑配置
         if hasattr(brain, 'knowledge'):
             brain.knowledge['learning_rate'] = new_rate
-        
+
         self.notifier.send("学习优化", f"学习率: {current_rate:.2f} -> {new_rate:.2f}", 'info')
         brain.record_experience(
             agent="brain_decision",
@@ -199,7 +199,7 @@ class BrainDecisionExecutor:
     def _explore_and_learn(self):
         """主动探索学习"""
         print("🔍 大脑决策: 主动探索学习")
-        
+
         # 测试一个新技能
         try:
             # 尝试调用文档生成
@@ -222,29 +222,29 @@ class BrainDecisionExecutor:
     def _expand_knowledge(self):
         """扩展知识图谱"""
         print("🔗 大脑决策: 扩展知识图谱")
-        
+
         # 模拟扩展知识
         current_nodes = brain.get_stats().get('knowledge_graph_nodes', 0)
-        
+
         brain.record_experience(
             agent="brain_decision",
             action="expand_knowledge",
             result={"method": "auto_expansion"},
             context="knowledge_expansion"
         )
-        
+
         self.notifier.send("知识扩展", f"节点数: {current_nodes}", 'info')
         return True
     
     def _cleanup_disk(self):
         """清理磁盘空间"""
         print("🗑️ 大脑决策: 清理磁盘空间")
-        
+
         # 清理旧日志
         subprocess.run("find logs -name '*.log' -mtime +7 -delete", shell=True)
         # 清理旧备份
         subprocess.run("find backups/clawsjoy -name '*.tar.gz' -mtime +30 -delete 2>/dev/null", shell=True)
-        
+
         self.notifier.send("磁盘清理", "已清理旧日志和备份", 'warning')
         brain.record_experience(
             agent="brain_decision",
@@ -257,10 +257,10 @@ class BrainDecisionExecutor:
     def _optimize_memory(self):
         """优化内存使用"""
         print("💾 大脑决策: 优化内存使用")
-        
+
         # 清理 Python 缓存
         subprocess.run("find . -type d -name '__pycache__' -exec rm -rf {} + 2>/dev/null", shell=True)
-        
+
         self.notifier.send("内存优化", "已清理缓存", 'info')
         return True
     
@@ -270,44 +270,44 @@ class BrainDecisionExecutor:
         print("🧠 大脑自主决策执行器")
         print(f"⏰ {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print("=" * 60)
-        
+
         # 1. 分析状态
         state = self.analyze_system_state()
-        
+
         print(f"\n📊 当前状态:")
         print(f"   🧠 大脑: {state['brain']['experiences']}经验, {state['brain']['success_rate']*100:.0f}%成功率")
         print(f"   📡 服务: {sum(state['services'].values())}/4 正常")
         print(f"   💾 资源: CPU {state['performance']['cpu_percent']}% / 内存 {state['performance']['memory_percent']}% / 磁盘 {state['performance']['disk_percent']}%")
-        
+
         # 2. 大脑决策
         decisions = self.brain_decide(state)
-        
+
         if not decisions:
             print("\n✅ 大脑判断: 系统状态良好，无需干预")
             return {'executed': [], 'decision': 'no_action_needed'}
-        
+
         # 3. 大脑自动执行决策（不询问）
         print(f"\n🧠 大脑决策: 将执行 {len(decisions)} 个操作")
-        
+
         executed = []
         for decision in decisions:
             print(f"\n   📋 {decision['action']}")
             print(f"      理由: {decision['reason']}")
             print(f"      优先级: {decision['priority']}")
-            
+
             # 大脑自动执行，无需确认
             print(f"      ⚡ 大脑自动执行中...")
             success = decision['executor']()
-            
+
             if success:
                 executed.append(decision['action'])
                 print(f"      ✅ 执行成功")
             else:
                 print(f"      ❌ 执行失败")
-            
+
             # 等待一下避免冲突
             time.sleep(2)
-        
+
         # 4. 记录执行历史
         self.execution_history.append({
             'timestamp': datetime.now().isoformat(),
@@ -316,7 +316,7 @@ class BrainDecisionExecutor:
             'executed': executed
         })
         self.save_history()
-        
+
         # 5. 大脑自我学习
         if executed:
             brain.record_experience(
@@ -325,10 +325,10 @@ class BrainDecisionExecutor:
                 result={"executed_actions": executed},
                 context=f"executed_{len(executed)}_actions"
             )
-        
+
         print("\n" + "=" * 60)
         print(f"✅ 大脑决策完成，执行了 {len(executed)} 个操作")
-        
+
         return {'executed': executed, 'decision': 'actions_executed'}
     
     def run_forever(self, interval=300):
@@ -336,7 +336,7 @@ class BrainDecisionExecutor:
         print("\n🧠 大脑持续运行模式")
         print(f"   决策间隔: {interval}秒")
         print("   按 Ctrl+C 停止\n")
-        
+
         cycle = 0
         while True:
             try:

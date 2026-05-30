@@ -25,7 +25,7 @@ class DirectRetriever:
                 data = unified_config.get("education", {})
                 agents = data.get('agents', {})
                 return [{"name": name, **info} for name, info in agents.items()]
-        
+
         # 手动定义（基于实际系统）
         return [
             {"name": "orchestrator", "description": "任务编排器 - 任务规划、技能编排、工作流管理"},

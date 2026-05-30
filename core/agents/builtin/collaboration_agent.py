@@ -14,6 +14,7 @@ class CollaborationAgent(SmartAgent):
     version = "2.0.0"
 
     def __init__(self, user_id: str = "default"):
+        self._load_agent_config()
         super().__init__(user_id=user_id)
         self.collaborations: Dict[str, Dict] = {}
         self.records: List[Dict] = []

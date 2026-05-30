@@ -112,7 +112,7 @@ class TaskQueue:
         self._stats["completed"] += 1
         self._save_history()
         self.running = None
-        
+
         # 写入记忆
         memory.remember(
             f"任务完成|{task.name}|技能:{task.skill}|时间:{task.completed_at}",
@@ -136,7 +136,7 @@ class TaskQueue:
         self._stats["abandoned"] += 1
         self._save_history()
         self.running = None
-        
+
         memory.remember(
             f"任务放弃|{task.name}|原因:{reason}",
             category="abandoned_tasks"

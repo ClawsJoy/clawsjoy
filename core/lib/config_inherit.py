@@ -12,7 +12,7 @@ class ConfigInherit:
     def load_with_inherit(self, config_path: Path, inherit_from: list = None) -> Dict:
         """加载配置，支持继承"""
         result = {}
-        
+
         # 1. 加载继承的配置
         if inherit_from:
             for parent in inherit_from:
@@ -21,13 +21,13 @@ class ConfigInherit:
                     with open(parent_path, 'r') as f:
                         parent_config = yaml.safe_load(f)
                         self._deep_merge(result, parent_config)
-        
+
         # 2. 加载当前配置
         if config_path.exists():
             with open(config_path, 'r') as f:
                 current_config = yaml.safe_load(f)
                 self._deep_merge(result, current_config)
-        
+
         return result
     
     def _deep_merge(self, base: Dict, override: Dict):

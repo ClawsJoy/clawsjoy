@@ -17,7 +17,7 @@ class CodeAgentTrainer:
         self.conversation_log = Path("logs/conversation_training.json")
         self.command_patterns = self.load_command_patterns()
         self.intent_history = []
-        
+
         print("\n" + "="*60)
         print("🤖 Code Agent 培养系统")
         print("="*60)
@@ -64,13 +64,13 @@ class CodeAgentTrainer:
         """从对话中学习"""
         # 提取用户意图
         intent = self.extract_intent(user_input)
-        
+
         # 提取命令
         commands = self.extract_commands(assistant_response)
-        
+
         # 提取错误和解决方案
         errors = self.extract_errors(user_input, assistant_response)
-        
+
         # 存储学习记录
         learning = {
             'timestamp': datetime.now().isoformat(),
@@ -80,23 +80,23 @@ class CodeAgentTrainer:
             'commands': commands,
             'errors': errors
         }
-        
+
         self.intent_history.append(learning)
-        
+
         # 保存到文件
         existing = []
         if self.conversation_log.exists():
             with open(self.conversation_log, 'r') as f:
                 existing = json.load(f)
-        
+
         existing.append(learning)
         # 保留最近1000条
         if len(existing) > 1000:
             existing = existing[-1000:]
-        
+
         with open(self.conversation_log, 'w') as f:
             json.dump(existing, f, indent=2)
-        
+
         # 同步到大脑
         brain_core.record_experience(
             agent="code_agent_trainer",
@@ -104,18 +104,18 @@ class CodeAgentTrainer:
             result={"commands_found": len(commands)},
             context=user_input[:200]
         )
-        
+
         return learning
     
     def extract_intent(self, text):
         """提取用户意图"""
         text_lower = text.lower()
-        
+
         for intent, patterns in self.command_patterns['intents'].items():
             for pattern in patterns:
                 if re.search(pattern, text_lower):
                     return intent
-        
+
         return 'unknown'
     
     def extract_commands(self, text):
@@ -133,7 +133,7 @@ class CodeAgentTrainer:
     def extract_errors(self, user_input, assistant_response):
         """提取错误和解决方案"""
         errors = []
-        
+
         # 常见的错误模式
         error_patterns = [
             (r'Address already in use', 'port_conflict'),
@@ -142,7 +142,7 @@ class CodeAgentTrainer:
             (r'Timeout', 'timeout'),
             (r'Permission denied', 'permission')
         ]
-        
+
         for pattern, error_type in error_patterns:
             if re.search(pattern, user_input, re.IGNORECASE):
                 errors.append({
@@ -150,14 +150,14 @@ class CodeAgentTrainer:
                     'pattern': pattern,
                     'solution_found': 'fix' in assistant_response.lower()
                 })
-        
+
         return errors
     
     def suggest_completion(self, partial_command):
         """根据部分命令建议补全"""
         partial_lower = partial_command.lower()
         suggestions = []
-        
+
         for key, template in self.command_patterns['completions'].items():
             if key.startswith(partial_lower) or partial_lower.startswith(key[:3]):
                 suggestions.append({
@@ -165,12 +165,12 @@ class CodeAgentTrainer:
                     'confidence': 0.8,
                     'description': f'补全: {key}'
                 })
-        
+
         # 从历史对话中搜索
         if self.conversation_log.exists():
             with open(self.conversation_log, 'r') as f:
                 history = json.load(f)
-            
+
             for record in history[-50:]:  # 最近50条
                 for cmd in record.get('commands', []):
                     if partial_lower in cmd.lower() and cmd not in [s['command'] for s in suggestions]:
@@ -179,36 +179,36 @@ class CodeAgentTrainer:
                             'confidence': 0.6,
                             'description': '来自历史对话'
                         })
-        
+
         return suggestions[:5]
     
     def correct_command(self, command):
         """纠正错误命令"""
         words = command.split()
         corrected_words = []
-        
+
         for word in words:
             if word in self.command_patterns['corrections']:
                 corrected_words.append(self.command_patterns['corrections'][word])
             else:
                 corrected_words.append(word)
-        
+
         corrected = ' '.join(corrected_words)
-        
+
         if corrected != command:
             return {
                 'original': command,
                 'corrected': corrected,
                 'fixed': True
             }
-        
+
         return {'original': command, 'corrected': command, 'fixed': False}
     
     def predict_intent(self, text):
         """预测用户意图"""
         intent = self.extract_intent(text)
         confidence = 0.9 if intent != 'unknown' else 0.3
-        
+
         return {
             'intent': intent,
             'confidence': confidence,
@@ -232,15 +232,15 @@ class CodeAgentTrainer:
         if not self.conversation_log.exists():
             print("暂无训练数据")
             return
-        
+
         with open(self.conversation_log, 'r') as f:
             history = json.load(f)
-        
+
         # 统计意图分布
         intent_counts = defaultdict(int)
         for record in history:
             intent_counts[record.get('intent', 'unknown')] += 1
-        
+
         print("\n📊 Code Agent 训练统计")
         print("="*40)
         print(f"总训练样本: {len(history)}")

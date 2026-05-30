@@ -32,31 +32,31 @@ class LivingAgent:
         self.agent_id = agent_id
         self.agent_dir = Path(f"{get_data_root()}/agents/{agent_id}")
         self.agent_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # ========== 1. 感知层 ==========
         self.perception_file = self.agent_dir / "perception.json"
         self.perception = self._load_perception()
-        
+
         # ========== 2. 记忆层 ==========
         self.memory_file = self.agent_dir / "memory.json"
         self.memory = self._load_memory()
-        
+
         # ========== 3. 思考层 ==========
         self.ollama_url = "config_loader.get_ollama_url()"
         self.model = config_manager.get_model()
-        
+
         # ========== 4. 学习层 ==========
         self.learning_file = self.agent_dir / "learning.json"
         self.learning = self._load_learning()
-        
+
         # ========== 5. 反思层 ==========
         self.reflection_file = self.agent_dir / "reflection.json"
         self.reflection = self._load_reflection()
-        
+
         # ========== 6. 行动记录 ==========
         self.action_file = self.agent_dir / "actions.json"
         self.actions = self._load_actions()
-        
+
         # 初始化时间
         self.birth_time = datetime.now()
         print(f"🎂 Agent {agent_id} 已诞生于 {self.birth_time}")
@@ -86,20 +86,20 @@ class LivingAgent:
             "sad": ["难过", "伤心", "失望", "唉"],
             "curious": ["什么", "怎么", "为什么", "如何"]
         }
-        
+
         detected = []
         for emotion, keywords in emotions.items():
             for kw in keywords:
                 if kw in user_input:
                     detected.append(emotion)
                     break
-        
+
         # 更新感知
         self.perception["awareness"] = min(1.0, self.perception["awareness"] + 0.01)
         self.perception["curiosity"] = max(0, self.perception["curiosity"] - 0.01)
         self.perception["last_awake"] = datetime.now().isoformat()
         self._save_perception()
-        
+
         return {
             "emotions": list(set(detected)),
             "length": len(user_input),
@@ -133,51 +133,51 @@ class LivingAgent:
             "importance": importance,
             "time": datetime.now().isoformat()
         })
-        
+
         # 只保留最近 20 条短期记忆
         if len(self.memory["short_term"]) > 20:
             old = self.memory["short_term"].pop(0)
             # 重要的转入长期记忆
             if old.get("importance", 0) > 0.7:
                 self.memory["long_term"].append(old)
-        
+
         # 长期记忆只保留重要内容
         if len(self.memory["long_term"]) > 100:
             self.memory["long_term"] = self.memory["long_term"][-100:]
-        
+
         # 提取用户信息
         name_match = re.search(r'[我叫我是][\s]*([^\s，。]{2,4})', user_input)
         if name_match:
             self.memory["user"]["name"] = name_match.group(1)
-        
+
         self.memory["stats"]["total_interactions"] += 1
         self._save_memory()
     
     def recall(self, query: str, n: int = 3) -> List[Dict]:
         """回忆记忆"""
         results = []
-        
+
         # 1. 短期记忆检索
         for mem in reversed(self.memory["short_term"]):
             if query.lower() in mem["user"].lower():
                 results.append(mem)
-        
+
         # 2. 长期记忆检索
         for mem in reversed(self.memory["long_term"]):
             if query.lower() in mem["user"].lower():
                 results.append(mem)
-        
+
         # 3. 向量检索
         vector_results = vector_memory.search(query, category=f"agent_{self.agent_id}", n=n)
         for vr in vector_results:
             results.append({"user": vr.get('text', '')[:100], "source": "vector"})
-        
+
         return results[:n]
     
     # ==================== 3. 思考层 ====================
     def think(self, user_input: str, perception: Dict, memories: List[Dict]) -> str:
         """思考 - 结合感知和记忆做出判断"""
-        
+
         # 构建思考上下文
         context = f"""你是一个有生命的学习型 Agent。
 
@@ -196,7 +196,7 @@ class LivingAgent:
 2. 能调用记忆
 3. 展现好奇心
 4. 回复自然"""
-        
+
         try:
             resp = requests.post(
                 f"{self.ollama_url}/api/generate",
@@ -257,20 +257,20 @@ class LivingAgent:
         # 模式学习
         pattern = hashlib.md5(user_input[:50].encode()).hexdigest()
         self.learning["patterns"][pattern] = self.learning["patterns"].get(pattern, 0) + 1
-        
+
         # 记录成功/失败
         record = {"input": user_input[:100], "response": response[:100], "time": datetime.now().isoformat()}
         if success:
             self.learning["successful_responses"].append(record)
         else:
             self.learning["failed_responses"].append(record)
-        
+
         # 保持大小
         if len(self.learning["successful_responses"]) > 50:
             self.learning["successful_responses"] = self.learning["successful_responses"][-50:]
         if len(self.learning["failed_responses"]) > 20:
             self.learning["failed_responses"] = self.learning["failed_responses"][-20:]
-        
+
         self._save_learning()
     
     # ==================== 6. 反思层 ====================
@@ -293,7 +293,7 @@ class LivingAgent:
         # 计算成功率
         total = len(self.learning["successful_responses"]) + len(self.learning["failed_responses"])
         success_rate = len(self.learning["successful_responses"]) / max(total, 1)
-        
+
         # 生成洞察
         insight = {
             "time": datetime.now().isoformat(),
@@ -304,51 +304,51 @@ class LivingAgent:
             "learned_patterns": len(self.learning["patterns"])
         }
         self.reflection["insights"].append(insight)
-        
+
         # 自我评估
         assessment = f"我处理了 {insight['total_interactions']} 次对话，成功率 {insight['success_rate']:.0%}，还在持续学习"
         self.reflection["self_assessment"].append({
             "text": assessment,
             "time": datetime.now().isoformat()
         })
-        
+
         if len(self.reflection["insights"]) > 20:
             self.reflection["insights"] = self.reflection["insights"][-20:]
-        
+
         self._save_reflection()
         return insight
     
     # ==================== 主循环 ====================
     def process(self, user_input: str) -> Dict:
         start = time.time()
-        
+
         # 1. 感知
         perception = self.perceive(user_input)
-        
+
         # 2. 回忆
         memories = self.recall(user_input)
-        
+
         # 3. 思考
         response = self.think(user_input, perception, memories)
-        
+
         # 4. 记录记忆
         importance = 0.7 if perception.get("has_question", False) else 0.3
         self.remember(user_input, response, importance)
-        
+
         # 5. 学习
         self.learn(user_input, response, True)
-        
+
         # 6. 记录行动
         self.act("chat", {"input": user_input}, {"response": response})
-        
+
         # 7. 每 10 次交互反思一次
         if self.memory["stats"]["total_interactions"] % 10 == 0:
             insight = self.reflect()
         else:
             insight = None
-        
+
         elapsed = (time.time() - start) * 1000
-        
+
         return {
             "response": response,
             "perception": perception,

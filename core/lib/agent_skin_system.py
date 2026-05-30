@@ -221,7 +221,7 @@ class AgentSkinSystem:
         """生成皮肤 CSS"""
         agent_skins = self.skins_config.get(agent_id, {}).get("skins", {})
         skin = agent_skins.get(skin_id, agent_skins.get("default", {}))
-        
+
         css = f"""
         .agent-avatar {{
             font-size: 48px;
@@ -235,7 +235,7 @@ class AgentSkinSystem:
             box-shadow: 0 0 20px {skin.get('color', '#00f3f')}40;
         }}
         """
-        
+
         # 添加特效 CSS
         for effect in skin.get('effects', []):
             if effect == 'sparkle':
@@ -266,13 +266,13 @@ class AgentSkinSystem:
                 }
                 .glitch { animation: glitch 0.3s ease-in-out infinite; }
                 """
-        
+
         return css
     
     def get_animation_css(self, animation_id: str) -> str:
         """获取动画 CSS"""
         anim = self.animations_config.get(animation_id, self.animations_config.get("idle", {}))
-        
+
         css_map = {
             "pulse": """
             @keyframes pulse {
@@ -305,7 +305,7 @@ class AgentSkinSystem:
             }
             """
         }
-        
+
         return css_map.get(anim.get('css', '').split()[0], "")
 
 

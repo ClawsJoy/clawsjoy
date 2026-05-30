@@ -13,13 +13,13 @@ class ButlerAsset:
         self.user_id = user_id
         self.asset_root = Path(f"data/users/{user_id}/butler_asset")
         self.asset_root.mkdir(parents=True, exist_ok=True)
-        
+
         # 资产文件
         self.memory_file = self.asset_root / "memory.json"
         self.preference_file = self.asset_root / "preferences.json"
         self.knowledge_file = self.asset_root / "knowledge.json"
         self.achievement_file = self.asset_root / "achievements.json"
-        
+
         # 加载资产
         self._load_assets()
 

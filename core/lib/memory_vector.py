@@ -22,7 +22,7 @@ class VectorMemory:
         meta["category"] = category
         meta["timestamp"] = datetime.now().isoformat()
         meta["doc_id"] = doc_id
-        
+
         self.collection.add(
             ids=[doc_id],
             documents=[text],
@@ -38,13 +38,13 @@ class VectorMemory:
                 where_filter['category'] = category
             if where:
                 where_filter.update(where)
-            
+
             results = self.collection.query(
                 query_texts=[query],
                 n_results=n,
                 where=where_filter if where_filter else None
             )
-            
+
             items = []
             if results['documents'] and results['documents'][0]:
                 for i, doc in enumerate(results['documents'][0]):

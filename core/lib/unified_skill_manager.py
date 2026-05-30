@@ -28,7 +28,7 @@ class UnifiedSkillManager:
         # 获取所有技能
         loader_skills = set(skill_loader.list_skills())
         registry_skills = set(skill_registry.list_all())
-        
+
         # 将 loader 中缺失的技能注册到 registry
         missing_in_registry = loader_skills - registry_skills
         for skill_name in missing_in_registry:
@@ -36,7 +36,7 @@ class UnifiedSkillManager:
             skill_info = skill_loader.skills.get(skill_name, {})
             category = skill_info.get('category', 'general')
             skill_registry.register(skill_name, category, "1.0.0")
-        
+
         # 将 registry 中缺失的技能添加到 loader（如果文件存在）
         missing_in_loader = registry_skills - loader_skills
         for skill_name in missing_in_loader:
@@ -54,7 +54,7 @@ class UnifiedSkillManager:
                         'path': f"skills.{cat_dir}.{skill_name}"
                     }
                     break
-        
+
         # 同步后统计
         self._all_skills = list(loader_skills | registry_skills)
         print(f"   统一后技能总数: {len(self._all_skills)}")

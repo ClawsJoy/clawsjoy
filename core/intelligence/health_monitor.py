@@ -21,11 +21,11 @@ class HealthMonitor:
         self.running = True
         self.log_file = Path("logs/monitor.log")
         self.log_file.parent.mkdir(exist_ok=True)
-        
+
     def check_service(self, name, config):
         """检查单个服务"""
         try:
-            url = f"{unified_config.get_service_url("{config['port']}{config['health_url']}"
+            url = unified_config.get_service_url(f"{config['port']}{config['health_url']}")
             resp = requests.get(url, timeout=3)
             if resp.status_code == 200:
                 return 'healthy'
@@ -40,7 +40,7 @@ class HealthMonitor:
         """监控循环"""
         while self.running:
             status_changed = False
-            
+
             for name, config in self.services.items():
                 new_status = self.check_service(name, config)
                 
@@ -59,7 +59,7 @@ class HealthMonitor:
                         if name not in self.failures:
                             self.failures[name] = []
                         self.failures[name].append(datetime.now().isoformat())
-            
+
             time.sleep(10)  # 每10秒检查一次
     
     def get_summary(self):
@@ -68,17 +68,17 @@ class HealthMonitor:
             "timestamp": datetime.now().isoformat(),
             "services": {}
         }
-        
+
         healthy_count = 0
         for name, config in self.services.items():
             summary["services"][name] = config['status']
             if config['status'] == 'healthy':
                 healthy_count += 1
-        
+
         summary["healthy_count"] = healthy_count
         summary["total_count"] = len(self.services)
         summary["health_score"] = int(healthy_count / len(self.services) * 100)
-        
+
         return summary
     
     def start(self):

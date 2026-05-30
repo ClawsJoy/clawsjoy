@@ -81,7 +81,7 @@ class MonitorAlert:
                 }
                 alerts.append(alert)
                 print(f"⚠️ 告警: {alert}")
-        
+
         for alert in alerts:
             self.alerts.append(alert)
         self._save_alerts()

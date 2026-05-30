@@ -1,17 +1,26 @@
-#!/usr/bin/env python3
-"""ClawsJoy Web Dashboard v3.0.00_20260515 - 修复成功率显示"""
+import sys
+sys.path.insert(0, "/home/flybo/clawsjoy_v5")
 
+#!/usr/bin/env python3
+import os
 import json
 import re
 from pathlib import Path
 from datetime import datetime
 from flask import Flask, render_template_string, jsonify
+from core.lib.smart_config import smart_config; from pathlib import Path
+from core.agents.builtin.llm_agent import LLMAgent
+from web.driver_api import driver_bp
+
+app = Flask(__name__)
+"""ClawsJoy Web Dashboard v3.0.00_20260515 - 修复成功率显示"""
+
 
 app = Flask(__name__)
 
 # 项目根目录
-from lib.smart_config import smart_config; ROOT = smart_config.ROOT
-LOG_FILE = ROOT / "logs" / "active_runner.log"
+ROOT = Path(smart_config.ROOT)
+LOG_FILE = os.path.join(ROOT, "logs", "active_runner.log")
 MEMORY_FILE = ROOT / "data" / "memory_simple.json"
 
 
@@ -230,8 +239,8 @@ def api_stats():
 # ========== 智能化 API 路由 ==========
 @app.route("/api/intelligence/stats")
 def intelligence_stats():
-    from lib.success_predictor import success_predictor
-    from lib.smart_scheduler import smart_scheduler
+    from core.lib.success_predictor import success_predictor
+    from core.lib.smart_scheduler import smart_scheduler
     return jsonify({
         "predictor": success_predictor.get_stats(),
         "scheduler": smart_scheduler.get_schedule_stats()
@@ -239,233 +248,16 @@ def intelligence_stats():
 
 @app.route("/api/intelligence/best-tasks")
 def best_tasks():
-    from lib.success_predictor import success_predictor
+    from core.lib.success_predictor import success_predictor
     return jsonify(success_predictor.get_best_tasks(20))
 
 @app.route("/api/intelligence/worst-tasks")
 def worst_tasks():
-    from lib.success_predictor import success_predictor
+    from core.lib.success_predictor import success_predictor
     return jsonify(success_predictor.get_worst_tasks(20))
 
 @app.route("/api/intelligence/predict/<task_name>")
 def predict_task(task_name):
-    from lib.success_predictor import success_predictor
+    from core.lib.success_predictor import success_predictor
     return jsonify(success_predictor.predict_task_success_rate(task_name))
 
-if __name__ == '__main__':
-    print("=" * 50)
-    print("🌐 ClawsJoy Web Dashboard v3.0.00_20260515")
-    print("=" * 50)
-    print(f"日志文件: {LOG_FILE}")
-    print(f"启动服务: http://0.0.0.0:8080")
-    print("=" * 50)
-    app.run(host='0.0.0.0', port=8080, debug=False)
-
-# 智能化 API 路由
-    })
-
-@app.route('/api/intelligence/best-tasks')
-def best_tasks():
-    from lib.success_predictor import success_predictor
-    return jsonify(success_predictor.get_best_tasks(20))
-
-@app.route('/api/intelligence/worst-tasks')
-def worst_tasks():
-    from lib.success_predictor import success_predictor
-
-@app.route('/api/intelligence/best-tasks')
-def best_tasks():
-    from lib.success_predictor import success_predictor
-    return jsonify(success_predictor.get_best_tasks(20))
-
-@app.route('/api/intelligence/worst-tasks')
-def worst_tasks():
-    from lib.success_predictor import success_predictor
-    return jsonify(success_predictor.get_worst_tasks(20))
-
-@app.route('/api/intelligence/predict/<task_name>')
-def predict_task(task_name):
-    from lib.success_predictor import success_predictor
-    return jsonify(success_predictor.predict_task_success_rate(task_name))
-
-# ========== LLM Agent API ==========
-from core.agent.llm_agent import llm_agent
-
-@app.route('/api/v4/chat', methods=['POST'])
-def chat():
-    """LLM Agent 对话接口"""
-    data = request.json or {}
-    user_input = data.get('message', '')
-    
-    if not user_input:
-        return jsonify({"error": "No message provided"}), 400
-    
-    # 调用 LLM Agent
-    result = llm_agent.process(user_input)
-    
-    return jsonify({
-        "success": result.get('success', False),
-        "response": result.get('response', ''),
-        "skill": result.get('skill'),
-        "fallback": result.get('fallback', False)
-    })
-
-
-@app.route('/api/v4/chat/stream', methods=['POST'])
-def chat_stream():
-    """流式对话接口"""
-    from flask import Response
-    import json
-    
-    data = request.json or {}
-    user_input = data.get('message', '')
-    
-    if not user_input:
-        return jsonify({"error": "No message provided"}), 400
-    
-    def generate():
-        # 这里可以实现流式响应
-        result = llm_agent.process(user_input)
-        yield json.dumps(result) + "\n"
-    
-    return Response(generate(), mimetype='application/json')
-
-# 注册驱动 API
-from web.driver_api import driver_bp
-app.register_blueprint(driver_bp)
-print("✅ 驱动 API 已注册")
-
-@app.route('/health')
-def health():
-    return jsonify({"status": "ok", "service": "ClawsJoy"})
-
-# ========== 健康检查 ==========
-@app.route('/health')
-def health_check():
-    """健康检查接口"""
-    return jsonify({
-        "status": "healthy",
-        "service": "ClawsJoy",
-        "version": "5.0.0",
-        "ollama": check_ollama_status()
-    })
-
-def check_ollama_status():
-    """检查 Ollama 状态"""
-    import requests
-    try:
-        resp = requests.get("config_loader.get_ollama_url()/api/tags", timeout=5)
-        if resp.status_code == 200:
-            return "connected"
-        return "error"
-    except:
-        return "disconnected"
-
-# ========== 聊天 API ==========
-@app.route('/api/v4/chat', methods=['POST'])
-def chat_api():
-    """LLM Agent 对话接口"""
-    import requests
-    
-    data = request.get_json()
-    if not data:
-        return jsonify({"error": "No JSON data"}), 400
-    
-    user_input = data.get('message', '')
-    if not user_input:
-        return jsonify({"error": "No message provided"}), 400
-    
-    try:
-        # 调用 Ollama
-        resp = requests.post(
-            "config_loader.get_ollama_url()/api/generate",
-            json={
-                "model": "qwen2.5:3b",
-                "prompt": user_input,
-                "stream": False,
-                "options": {"temperature": 0.7, "num_predict": 500}
-            },
-            timeout=60
-        )
-        
-        if resp.status_code == 200:
-            result = resp.json()
-            return jsonify({
-                "success": True,
-                "response": result.get('response', ''),
-                "skill": None,
-                "fallback": False
-            })
-        else:
-            return jsonify({
-                "success": False,
-                "response": f"API 错误: {resp.status_code}",
-                "skill": None,
-                "fallback": True
-            }), 500
-            
-    except requests.exceptions.Timeout:
-        return jsonify({
-            "success": False,
-            "response": "请求超时，请重试",
-            "skill": None,
-            "fallback": True
-        }), 500
-    except Exception as e:
-        return jsonify({
-            "success": False,
-            "response": f"错误: {str(e)}",
-            "skill": None,
-            "fallback": True
-        }), 500
-
-# ========== 简单聊天页面 ==========
-@app.route('/chat')
-def chat_page():
-    """简单的聊天页面"""
-    return '''
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>ClawsJoy Chat</title>
-        <meta charset="utf-8">
-        <style>
-            body { font-family: Arial; max-width: 800px; margin: 50px auto; padding: 20px; }
-            #chat { height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 20px; background: #f9f9f9; }
-            .user { text-align: right; color: #007bff; margin: 10px; }
-            .bot { text-align: left; color: #28a745; margin: 10px; }
-            input { width: 80%; padding: 10px; }
-            button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; }
-        </style>
-    </head>
-    <body>
-        <h1>🦞 ClawsJoy AI Assistant</h1>
-        <div id="chat"></div>
-        <input type="text" id="msg" placeholder="输入消息..." onkeypress="if(event.keyCode==13) send()">
-        <button onclick="send()">发送</button>
-        <script>
-            function addMessage(role, text) {
-                const chat = document.getElementById('chat');
-                const div = document.createElement('div');
-                div.className = role;
-                div.innerHTML = '<b>' + (role == 'user' ? '你' : 'ClawsJoy') + ':</b> ' + text;
-                chat.appendChild(div);
-                chat.scrollTop = chat.scrollHeight;
-            }
-            async function send() {
-                const msg = document.getElementById('msg').value;
-                if (!msg) return;
-                addMessage('user', msg);
-                document.getElementById('msg').value = '';
-                const resp = await fetch('/api/v4/chat', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({message: msg})
-                });
-                const data = await resp.json();
-                addMessage('bot', data.response || '抱歉，出错了');
-            }
-        </script>
-    </body>
-    </html>
-    '''

@@ -34,7 +34,7 @@ class RealLearner:
                 "task_counts": defaultdict(int),
                 "user_satisfaction": []
             }
-        
+
         if self.cache_file.exists():
             with open(self.cache_file, 'r') as f:
                 self.cache = json.load(f)
@@ -46,10 +46,10 @@ class RealLearner:
         # 转换 defaultdict
         stats_copy = dict(self.stats)
         stats_copy['task_counts'] = dict(self.stats['task_counts'])
-        
+
         with open(self.stats_file, 'w') as f:
             json.dump(stats_copy, f, indent=2)
-        
+
         with open(self.cache_file, 'w') as f:
             json.dump(self.cache, f, indent=2)
     
@@ -57,19 +57,19 @@ class RealLearner:
                        success: bool, cache_hit: bool = False):
         """记录真实请求"""
         self.stats['total_requests'] += 1
-        
+
         # 更新平均响应时间
         old_avg = self.stats['avg_response_time']
         n = self.stats['total_requests']
         self.stats['avg_response_time'] = old_avg + (response_time - old_avg) / n
-        
+
         # 记录任务次数
         self.stats['task_counts'][task] = self.stats['task_counts'].get(task, 0) + 1
-        
+
         # 记录缓存命中
         if cache_hit:
             self.stats['cache_hit_count'] = self.stats.get('cache_hit_count', 0) + 1
-        
+
         self._save()
     
     def cache_result(self, key: str, result: Dict, ttl: int = 3600):
@@ -99,7 +99,7 @@ class RealLearner:
     def get_stats(self) -> Dict:
         """获取真实统计"""
         cache_hit_rate = self.stats.get('cache_hit_count', 0) / max(1, self.stats['total_requests'])
-        
+
         return {
             "total_requests": self.stats['total_requests'],
             "avg_response_time_ms": round(self.stats['avg_response_time'] * 1000, 2),
@@ -137,7 +137,7 @@ if __name__ == "__main__":
         """从代码中发现新模式"""
         import re
         patterns = []
-        
+
         # 检测布局模式
         if 'display: flex' in code:
             patterns.append('flex_layout')
@@ -147,7 +147,7 @@ if __name__ == "__main__":
             patterns.append('animation')
         if 'box-shadow' in code and '0 0' in code:
             patterns.append('glow_effect')
-        
+
         if patterns:
             # 记录到成功模式
             self.stats['learned_patterns'] = self.stats.get('learned_patterns', [])
@@ -157,14 +157,14 @@ if __name__ == "__main__":
                 "timestamp": datetime.now().isoformat()
             })
             self._save()
-        
+
         return {"discovered": patterns, "total": len(self.stats.get('learned_patterns', []))}
 
     def discover_pattern(self, code: str, context: str) -> Dict:
         """从代码中发现新模式"""
         import re
         patterns = []
-        
+
         # 检测布局模式
         if 'display: flex' in code:
             patterns.append('flex_layout')
@@ -174,7 +174,7 @@ if __name__ == "__main__":
             patterns.append('animation')
         if 'box-shadow' in code and '0 0' in code:
             patterns.append('glow_effect')
-        
+
         if patterns:
             # 记录到成功模式
             self.stats['learned_patterns'] = self.stats.get('learned_patterns', [])
@@ -184,14 +184,14 @@ if __name__ == "__main__":
                 "timestamp": datetime.now().isoformat()
             })
             self._save()
-        
+
         return {"discovered": patterns, "total": len(self.stats.get('learned_patterns', []))}
 
     def discover_pattern(self, code: str, context: str) -> Dict:
         """从代码中发现新模式"""
         import re
         patterns = []
-        
+
         # 检测布局模式
         if 'display: flex' in code:
             patterns.append('flex_layout')
@@ -211,12 +211,12 @@ if __name__ == "__main__":
             patterns.append('absolute_position')
         if 'position: fixed' in code:
             patterns.append('fixed_position')
-        
+
         if patterns:
             # 记录到成功模式
             if 'learned_patterns' not in self.stats:
                 self.stats['learned_patterns'] = []
-            
+
             self.stats['learned_patterns'].append({
                 "context": context,
                 "patterns": patterns,
@@ -224,7 +224,7 @@ if __name__ == "__main__":
                 "timestamp": datetime.now().isoformat()
             })
             self._save()
-        
+
         return {
             "discovered": patterns,
             "total": len(self.stats.get('learned_patterns', []))
@@ -238,7 +238,7 @@ if __name__ == "__main__":
         """从代码中发现新模式"""
         import re
         patterns = []
-        
+
         if 'display: flex' in code:
             patterns.append('flex_layout')
         if 'display: grid' in code:
@@ -249,16 +249,16 @@ if __name__ == "__main__":
             patterns.append('animation')
         if 'transition' in code:
             patterns.append('transition')
-        
+
         if patterns:
             if 'learned_patterns' not in self.stats:
                 self.stats['learned_patterns'] = []
-            
+
             self.stats['learned_patterns'].append({
                 "context": context,
                 "patterns": patterns,
                 "timestamp": datetime.now().isoformat()
             })
             self._save()
-        
+
         return {"discovered": patterns, "total": len(self.stats.get('learned_patterns', []))}

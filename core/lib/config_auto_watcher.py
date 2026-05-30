@@ -63,8 +63,8 @@ class ConfigAutoWatcher:
             return route_registry.reload
 
         if "scriptbook.yaml" in path_str or "butler.yaml" in path_str:
-            from core.agents.builtin.chat_agent import chat_agent
-            return chat_agent._load_config
+            from agents.chat_agent.agent import ChatAgent
+            return None
 
         if any(x in path_str for x in ["agents.yaml", "registry.yaml"]):
             from core.agents.builtin.agent_manager import agent_manager

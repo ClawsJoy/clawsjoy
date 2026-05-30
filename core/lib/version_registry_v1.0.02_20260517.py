@@ -27,16 +27,16 @@ class VersionRegistry:
     
     def __init__(self, root_path: Optional[Path] = None):
         self.root = Path(root_path) if root_path else Path(__file__).parent.parent
-        
+
         # 主要存储：JSON（程序读写）
         self.json_file = self.root / "config" / "version_registry.json"
-        
+
         # 可选导出：YAML（人工可读）
         self.yaml_file = self.root / "config" / "version_registry.yaml"
-        
+
         # 系统版本文件
         self.system_version_file = self.root / "VERSION"
-        
+
         # 加载注册表
         self.registry = self._load_registry()
     
@@ -57,10 +57,10 @@ class VersionRegistry:
     def _save_registry(self):
         """保存注册表到 JSON（主存储）"""
         self.registry["last_updated"] = datetime.now().isoformat()
-        
+
         with open(self.json_file, 'w') as f:
             json.dump(self.registry, f, indent=2, ensure_ascii=False)
-        
+
         # 同时导出 YAML（如果可用）
         self._export_yaml()
     
@@ -68,7 +68,7 @@ class VersionRegistry:
         """导出到 YAML（人工可读）"""
         if not YAML_AVAILABLE:
             return
-        
+
         try:
             with open(self.yaml_file, 'w') as f:
                 yaml.dump(self.registry, f, default_flow_style=False, allow_unicode=True)
@@ -87,15 +87,15 @@ class VersionRegistry:
             cmd_time = f'git log -1 --format="%ai" -- "{file_path}"'
             time_result = subprocess.run(cmd_time, shell=True, capture_output=True, text=True, cwd=self.root)
             commit_time = time_result.stdout.strip()
-            
+
             cmd_hash = f'git log -1 --format="%h" -- "{file_path}"'
             hash_result = subprocess.run(cmd_hash, shell=True, capture_output=True, text=True, cwd=self.root)
             commit_hash = hash_result.stdout.strip()
-            
+
             cmd_count = f'git rev-list --count HEAD -- "{file_path}"'
             count_result = subprocess.run(cmd_count, shell=True, capture_output=True, text=True, cwd=self.root)
             commit_count = int(count_result.stdout.strip()) if count_result.stdout.strip() else 0
-            
+
             return {
                 "commit_count": commit_count,
                 "commit_hash": commit_hash,
@@ -108,12 +108,12 @@ class VersionRegistry:
     def auto_version(self, module_path: str, module_type: str = "core") -> str:
         """自动生成模块版本号"""
         full_path = self.root / module_path
-        
+
         if not full_path.exists():
             return f"v0.0.00_unknown"
-        
+
         git_info = self._get_git_info(full_path)
-        
+
         if git_info.get("has_git"):
             system_ver = self._get_system_version()
             revision = git_info["commit_count"]
@@ -128,7 +128,7 @@ class VersionRegistry:
     def register_module(self, module_name: str, module_path: str, module_type: str = "core") -> Dict:
         """注册模块并自动生成版本"""
         version = self.auto_version(module_path, module_type)
-        
+
         self.registry["modules"][module_name] = {
             "path": module_path,
             "type": module_type,
@@ -136,10 +136,10 @@ class VersionRegistry:
             "registered_at": datetime.now().isoformat(),
             "status": "active"
         }
-        
+
         self.registry["system_version"] = self._get_system_version()
         self._save_registry()
-        
+
         return self.registry["modules"][module_name]
     
     def get_version(self, module_name: str) -> Optional[str]:
@@ -161,14 +161,14 @@ class VersionRegistry:
                 info["version"] = new_version
                 info["updated_at"] = datetime.now().isoformat()
                 updated.append(f"{name}: {info['version']} -> {new_version}")
-        
+
         if updated:
             self.registry["system_version"] = self._get_system_version()
             self._save_registry()
             print("🔄 更新:")
             for u in updated:
                 print(f"   {u}")
-        
+
         return self.registry
     
     def get_status(self) -> Dict:
@@ -192,23 +192,23 @@ if __name__ == "__main__":
     
     if len(sys.argv) > 1:
         cmd = sys.argv[1]
-        
+
         if cmd == "list":
             modules = version_registry.list_all()
             print(f"📦 已注册模块 ({len(modules)}):")
             for name, info in modules.items():
                 print(f"   {info['version']}  {name}")
-        
+
         elif cmd == "register":
             if len(sys.argv) >= 4:
                 name, path, mtype = sys.argv[2], sys.argv[3], sys.argv[4]
                 result = version_registry.register_module(name, path, mtype)
                 print(f"✅ 已注册: {name} -> {result['version']}")
-        
+
         elif cmd == "sync":
             version_registry.sync_all()
             print("✅ 同步完成")
-        
+
         elif cmd == "status":
             status = version_registry.get_status()
             print(f"📌 版本注册中心 v{version_registry.VERSION}")

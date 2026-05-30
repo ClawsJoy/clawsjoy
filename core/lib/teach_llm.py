@@ -30,7 +30,7 @@ class ArchitectTeacher:
     def teach(self, question: str, context: str = "") -> str:
         """用架构师框架教 LLM"""
         prompt = get_architect_prompt(question, context)
-        
+
         try:
             resp = requests.post(
                 f"{self.ollama_url}/api/generate",
@@ -46,7 +46,7 @@ class ArchitectTeacher:
                 return resp.json().get('response', '')
         except Exception as e:
             print(f"教学失败: {e}")
-        
+
         return ""
     
     def train_on_problems(self, problems: list):

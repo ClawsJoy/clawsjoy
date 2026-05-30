@@ -29,7 +29,7 @@ class OllamaEmbeddingLegacy:
             except Exception as e:
                 print(f"   ❌ Embedding 错误: {e}")
                 embeddings.append([0.0] * 768)
-        
+
         return embeddings
 
 

@@ -42,7 +42,7 @@ class GrayExecutor:
         start_time = time.time()
         result = executor(suggestion)
         execution_time = time.time() - start_time
-        
+
         # 记录样本
         self._samples.append({
             "timestamp": datetime.now().isoformat(),
@@ -50,10 +50,10 @@ class GrayExecutor:
             "success": result.get('success', False),
             "execution_time": execution_time
         })
-        
+
         # 评估是否需要回滚
         need_rollback = self._evaluate_rollback()
-        
+
         return {
             "executed": True,
             "result": result,
@@ -66,11 +66,11 @@ class GrayExecutor:
         """评估是否需要回滚"""
         if len(self._samples) < self.sample_size:
             return False
-        
+
         recent = list(self._samples)[-self.sample_size:]
         success_count = sum(1 for s in recent if s.get('success', False))
         success_rate = success_count / len(recent)
-        
+
         return success_rate < self.success_threshold
     
     def get_status(self) -> Dict:

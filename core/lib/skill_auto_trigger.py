@@ -23,7 +23,7 @@ class SkillAutoTrigger:
         self.generated_file = Path(f"{get_data_root()}/skill_stats/generated_skills.json")
         self.auto_gen_dir = Path("skills/auto_generated")
         self.auto_gen_dir.mkdir(parents=True, exist_ok=True)
-        
+
         self._load_data()
     
     def _load_config(self) -> Dict:
@@ -41,7 +41,7 @@ class SkillAutoTrigger:
                 self.successful_combos = json.load(f)
         else:
             self.successful_combos = {}
-        
+
         if self.generated_file.exists():
             with open(self.generated_file, 'r') as f:
                 self.generated_skills = json.load(f)
@@ -58,7 +58,7 @@ class SkillAutoTrigger:
     def record_success_combination(self, intent: str, skills: List[str], params: Dict = None):
         """记录成功的技能组合"""
         combo_key = f"{intent}_{'_'.join(skills)}"
-        
+
         if combo_key not in self.successful_combos:
             self.successful_combos[combo_key] = {
                 "intent": intent,
@@ -68,33 +68,33 @@ class SkillAutoTrigger:
                 "last_success": None,
                 "params": params or {}
             }
-        
+
         self.successful_combos[combo_key]["success_count"] += 1
         self.successful_combos[combo_key]["last_success"] = datetime.now().isoformat()
-        
+
         self._save_data()
-        
+
         # 检查是否需要自动生成技能
         min_count = self.config.get("learning", {}).get("min_success_count", 3)
         auto_generate = self.config.get("learning", {}).get("auto_generate", True)
-        
+
         if auto_generate and self.successful_combos[combo_key]["success_count"] >= min_count:
             if combo_key not in self.generated_skills:
                 self._generate_skill(intent, skills)
-        
+
         return combo_key
     
     def _generate_skill(self, intent: str, skills: List[str]):
         """生成组合技能"""
         skill_name = self._generate_skill_name(intent)
         skill_file = self.auto_gen_dir / f"auto_{skill_name}.py"
-        
+
         if skill_file.exists():
             return
-        
+
         # 使用配置中的模板
         template = self.config.get("generation", {}).get("skill_template", "")
-        
+
         code = f'''"""
 自动生成技能: {intent}
 原始意图: {intent}
@@ -121,10 +121,10 @@ class Auto{skill_name.title()}Skill:
 
 skill = Auto{skill_name.title()}Skill()
 '''
-        
+
         with open(skill_file, 'w') as f:
             f.write(code)
-        
+
         # 记录已生成
         self.generated_skills[f"auto_{skill_name}"] = {
             "intent": intent,
@@ -133,9 +133,9 @@ skill = Auto{skill_name.title()}Skill()
             "created_at": datetime.now().isoformat()
         }
         self._save_data()
-        
+
         print(f"✅ 自动生成技能: auto_{skill_name}")
-        
+
         # 触发技能重载
         self._reload_skills()
     

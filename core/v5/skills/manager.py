@@ -66,7 +66,7 @@ class SkillManager:
                 "handler": self._text_to_speech
             }
         }
-        
+
         for skill_id, skill in builtin_skills.items():
             self.skills[skill_id] = skill
             print(f"   ✅ 加载技能: {skill['name']}")

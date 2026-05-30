@@ -31,10 +31,10 @@ class SuggestionEngine:
     def generate(self, context: Dict) -> List[Dict]:
         """根据上下文生成建议"""
         suggestions = []
-        
+
         # 基于分析结果生成建议
         analysis = context.get('analysis', {})
-        
+
         # 性能优化建议
         if analysis.get('slow_response', False):
             suggestions.append({
@@ -44,7 +44,7 @@ class SuggestionEngine:
                 "priority": "high",
                 "action": "检查 ollama 服务"
             })
-        
+
         # 技能使用建议
         skill_usage = context.get('skill_usage', {})
         if skill_usage.get('frequent_skills'):
@@ -55,7 +55,7 @@ class SuggestionEngine:
                 "priority": "medium",
                 "action": "可将常用技能添加到快捷方式"
             })
-        
+
         # 学习建议
         if context.get('learning_opportunity', False):
             suggestions.append({
@@ -65,7 +65,7 @@ class SuggestionEngine:
                 "priority": "low",
                 "action": "查看技能商店"
             })
-        
+
         return suggestions
     
     def add_suggestion(self, suggestion: Dict):

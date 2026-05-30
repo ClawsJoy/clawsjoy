@@ -11,7 +11,7 @@ from core.lib.memory_simple import memory
 
 class UnifiedAnalyzerV2:
     def __init__(self):
-        self.ollama_url = "http://unified_config.HOST:str(unified_config.get_port("ollama"))/api/generate"
+        self.ollama_url = f"http://{unified_config.HOST}:{unified_config.get_port("ollama")}/api/generate"
     
     def collect_data(self):
         """收集所有数据源"""
@@ -26,7 +26,7 @@ class UnifiedAnalyzerV2:
     
     def analyze(self):
         sources = self.collect_data()
-        
+
         prompt = f"""基于以下数据源统计，分析系统问题：
 {json.dumps(sources, ensure_ascii=False, indent=2)[:2000]}
 
@@ -37,14 +37,14 @@ class UnifiedAnalyzerV2:
                             json={"model": unified_config.get_llm_config().get("default_model", unified_config.get_llm_config().get("default_model", config_helper.get_llm_model())), "prompt": prompt, "stream": False},
                             timeout=config_helper.get_timeout("llm"))
         result = resp.json()["response"]
-        
+
         import re
         match = re.search(r'\{.*\}', result, re.DOTALL)
         if match:
             analysis = json.loads(match.group())
         else:
             analysis = {"summary": "分析失败", "critical_issues": []}
-        
+
         # 使用数据契约存储
         DataContract.store_analysis(analysis)
         return analysis

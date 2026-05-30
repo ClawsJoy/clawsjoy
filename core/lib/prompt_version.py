@@ -32,7 +32,7 @@ class PromptVersion:
         """保存当前版本"""
         version_id = f"v{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         version_file = self.VERSIONS_DIR / f"{version_id}.yaml"
-        
+
         version_data = {
             "id": version_id,
             "tag": tag,
@@ -41,13 +41,13 @@ class PromptVersion:
             "prompts": self.current,
             "diff_from_previous": self._get_diff()
         }
-        
+
         with open(version_file, 'w') as f:
             yaml.dump(version_data, f, allow_unicode=True)
-        
+
         # 更新索引
         self._update_index(version_id, tag, description)
-        
+
         return version_id
     
     def _get_diff(self) -> str:
@@ -55,7 +55,7 @@ class PromptVersion:
         versions = self.list_versions()
         if len(versions) < 2:
             return "首次版本"
-        
+
         prev_file = self.VERSIONS_DIR / f"{versions[-2]['id']}.yaml"
         if prev_file.exists():
             with open(prev_file, 'r') as f:
@@ -72,14 +72,14 @@ class PromptVersion:
                 index = json.load(f)
         else:
             index = {"versions": []}
-        
+
         index["versions"].append({
             "id": version_id,
             "tag": tag,
             "description": description,
             "timestamp": datetime.now().isoformat()
         })
-        
+
         with open(index_file, 'w') as f:
             json.dump(index, f, indent=2)
     
@@ -96,32 +96,32 @@ class PromptVersion:
         version_file = self.VERSIONS_DIR / f"{version_id}.yaml"
         if not version_file.exists():
             return False
-        
+
         with open(version_file, 'r') as f:
             version_data = unified_config.get("prompt_version", {})
-        
+
         # 备份当前
         self.save_version("pre_rollback", f"回滚前备份")
-        
+
         # 恢复
         with open(self.current_file, 'w') as f:
             yaml.dump(version_data.get('prompts', {}), f, allow_unicode=True)
-        
+
         return True
     
     def compare(self, version_a: str, version_b: str) -> Dict:
         """比较两个版本"""
         file_a = self.VERSIONS_DIR / f"{version_a}.yaml"
         file_b = self.VERSIONS_DIR / f"{version_b}.yaml"
-        
+
         if not file_a.exists() or not file_b.exists():
             return {"error": "版本不存在"}
-        
+
         with open(file_a, 'r') as f:
             data_a = unified_config.get("prompt_version", {})
         with open(file_b, 'r') as f:
             data_b = unified_config.get("prompt_version", {})
-        
+
         return {
             "version_a": version_a,
             "version_b": version_b,

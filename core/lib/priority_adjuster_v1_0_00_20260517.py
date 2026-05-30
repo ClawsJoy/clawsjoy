@@ -19,32 +19,32 @@ class PriorityAdjuster:
     def adjust_priority(self, task_name: str, current_priority: int, 
                         success_rate: float = None) -> int:
         """动态调整优先级"""
-        
+
         # 高成功率任务降低优先级（让新任务有机会）
         if success_rate and success_rate > 0.9:
             return max(0, current_priority - 1)
-        
+
         # 新任务（无历史）提升优先级
         if task_name not in self.history:
             return min(3, current_priority + 1)
-        
+
         # 历史失败多的任务降低优先级
         fail_count = self.history.get(task_name, {}).get('fail_count', 0)
         if fail_count > 3:
             return max(0, current_priority - 2)
-        
+
         return current_priority
     
     def record_outcome(self, task_name: str, success: bool):
         """记录任务结果"""
         if task_name not in self.history:
             self.history[task_name] = {'success': 0, 'fail': 0, 'last_seen': None}
-        
+
         if success:
             self.history[task_name]['success'] += 1
         else:
             self.history[task_name]['fail'] += 1
-        
+
         self.history[task_name]['last_seen'] = datetime.now().isoformat()
     
     def get_stats(self) -> Dict:

@@ -23,9 +23,9 @@ class IntelligentDecisionEngine:
         outcomes = memory.recall_all(category='workflow_outcome')[-20:]
         success = len([o for o in outcomes if '成功' in o])
         rate = success / len(outcomes) * 100 if outcomes else 50
-        
+
         prompt = f"成功率{rate:.0f}%。输出JSON:{{\"decision\":\"决策\",\"action\":\"行动\"}}"
-        
+
         try:
             resp = requests.post(self.ollama_url, json={
                 "model": self.fast_model,
@@ -33,7 +33,7 @@ class IntelligentDecisionEngine:
                 "stream": False
             }, timeout=config_helper.get_timeout("default"))
             result = resp.json().get("response", "")
-            
+
             import re
             match = re.search(r'\{.*\}', result, re.DOTALL)
             if match:
@@ -45,7 +45,7 @@ class IntelligentDecisionEngine:
                 return decision
         except Exception as e:
             print(f"决策错误: {e}")
-        
+
         default = {"decision": "保持现状", "action": "继续监控"}
         memory.remember(
             f"决策执行|成功率{rate:.0f}%|保持现状|行动:继续监控",
@@ -57,7 +57,7 @@ class IntelligentDecisionEngine:
         print(f"🧠 决策引擎启动")
         print(f"   LLM: {self.ollama_url}")
         print(f"   模型: {self.default_model} / {self.fast_model}")
-        
+
         while True:
             decision = self.decide("系统状态")
             print(f"[{datetime.now().strftime('%H:%M:%S')}] {decision}")

@@ -65,13 +65,13 @@ class ReminderManager:
                 if r.get("trigger_time", 0) <= now:
                     print(f"\n🔔 提醒 [{r['user_id']}]: {r['message']}")
                     triggered.append(r)
-            
+
             for r in triggered:
                 self.reminders.remove(r)
-            
+
             if triggered:
                 self._save()
-            
+
             time.sleep(1)
     
     def stop(self):

@@ -18,10 +18,10 @@ class ForceRetriever:
     def search_docs(self, query: str) -> List[Dict]:
         """搜索所有文档，返回匹配的内容"""
         results = []
-        
+
         for md_file in self.docs_dir.glob("*.md"):
             content = md_file.read_text(encoding='utf-8', errors='ignore')
-            
+
             # 查找包含关键词的段落
             lines = content.split('\n')
             for i, line in enumerate(lines):
@@ -50,10 +50,10 @@ class ForceRetriever:
                     
                     if len(results) >= 5:
                         break
-            
+
             if len(results) >= 5:
                 break
-        
+
         return results
     
     def retrieve_agents(self) -> str:
@@ -61,13 +61,13 @@ class ForceRetriever:
         doc_file = self.docs_dir / "AGENT_COMPOSITION.md"
         if not doc_file.exists():
             return "未找到 Agent 文档"
-        
+
         content = doc_file.read_text(encoding='utf-8', errors='ignore')
-        
+
         # 提取 Agent 列表
         agents = []
         lines = content.split('\n')
-        
+
         in_list = False
         for line in lines:
             # 检测 Agent 名称
@@ -91,10 +91,10 @@ class ForceRetriever:
                 agents.append("personal_butler (私人管家) - 用户数字分身、1对1服务")
             elif 'analysis_agent' in line.lower():
                 agents.append("analysis_agent (分析Agent) - 数据分析、优化建议")
-        
+
         if agents:
             return f"根据 `AGENT_COMPOSITION.md` 文档，ClawsJoy 包含以下 Agent：\n\n" + "\n".join([f"- {a}" for a in agents])
-        
+
         return "未找到 Agent 信息"
     
     def retrieve_architecture(self) -> str:
@@ -102,20 +102,20 @@ class ForceRetriever:
         doc_file = self.docs_dir / "ARCHITECTURE.md"
         if not doc_file.exists():
             return "未找到架构文档"
-        
+
         content = doc_file.read_text(encoding='utf-8', errors='ignore')
-        
+
         # 提取架构层级
         layers = []
         keywords = ["用户层", "安全层", "Agent层", "技能层", "记忆层"]
-        
+
         for layer in keywords:
             if layer in content:
                 layers.append(layer)
-        
+
         if layers:
             return f"根据 `ARCHITECTURE.md` 文档，系统架构包含：\n\n" + "\n".join([f"- {layer}" for layer in layers])
-        
+
         return "未找到架构信息"
     
     def retrieve_skill(self, skill_name: str) -> str:
@@ -123,7 +123,7 @@ class ForceRetriever:
         skill_dir = Path("skills") / skill_name
         if not skill_dir.exists():
             return f"未找到技能 {skill_name}"
-        
+
         skill_md = skill_dir / "SKILL.md"
         if skill_md.exists():
             content = skill_md.read_text(encoding='utf-8', errors='ignore')
@@ -134,7 +134,7 @@ class ForceRetriever:
                     desc = line.replace('description:', '').strip()
                     break
             return f"根据 `skills/{skill_name}/SKILL.md` 文档：\n- {desc if desc else content[:200]}"
-        
+
         return "未找到技能描述"
 
 

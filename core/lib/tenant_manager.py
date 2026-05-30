@@ -66,21 +66,21 @@ class TenantManager:
     def create_tenant(self, tenant_id: str, name: str = None) -> Dict:
         """创建新租户"""
         rules = self.config.get('creation_rules', {})
-        
+
         # 验证命名规则
         import re
         pattern = rules.get('naming_pattern', '^[a-z0-9_]{3,32}$')
         if not re.match(pattern, tenant_id):
             return {"success": False, "error": f"租户ID格式不符合规则: {pattern}"}
-        
+
         # 检查是否已存在
         tenant_dir = self.base_path / tenant_id
         if tenant_dir.exists():
             return {"success": False, "error": "租户已存在"}
-        
+
         # 创建目录
         tenant_dir.mkdir()
-        
+
         # 创建租户配置文件
         tenant_config = {
             "id": tenant_id,
@@ -89,10 +89,10 @@ class TenantManager:
             "created_at": datetime.now().isoformat(),
             "quota": self.config.get('default_quota', {})
         }
-        
+
         with open(tenant_dir / "config.json", 'w') as f:
             json.dump(tenant_config, f, indent=2)
-        
+
         return {"success": True, "tenant_id": tenant_id, "path": str(tenant_dir)}
     
     def delete_tenant(self, tenant_id: str) -> Dict:
@@ -101,7 +101,7 @@ class TenantManager:
         tenant_dir = self.base_path / tenant_id
         if not tenant_dir.exists():
             return {"success": False, "error": "租户不存在"}
-        
+
         shutil.rmtree(tenant_dir)
         return {"success": True, "message": f"租户 {tenant_id} 已删除"}
 

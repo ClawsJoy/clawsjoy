@@ -53,18 +53,18 @@ def register_hotreload_routes(app):
     def hotreload_all():
         from flask import jsonify
         from core.lib.auth_api import auth_manager
-        
+
         # 验证用户
         token = request.headers.get('Authorization', '').replace('Bearer ', '')
         user = auth_manager.verify_token(token)
-        
+
         if not user:
             return jsonify({"error": "未认证"}), 401
-        
+
         # 在自己的沙箱里就有权限
         if not is_tenant_admin(user):
             return jsonify({"error": "需要管理员权限"}), 403
-        
+
         results = reload_all_configs()
         return jsonify({"success": True, "reloaded": results, "user": user.get('username')})
     
@@ -72,27 +72,27 @@ def register_hotreload_routes(app):
     def hotreload_type(config_type):
         from flask import jsonify
         from core.lib.auth_api import auth_manager
-        
+
         token = request.headers.get('Authorization', '').replace('Bearer ', '')
         user = auth_manager.verify_token(token)
-        
+
         if not user:
             return jsonify({"error": "未认证"}), 401
-        
+
         if not is_tenant_admin(user):
             return jsonify({"error": "需要管理员权限"}), 403
-        
+
         mapping = {
             'routes': 'lib.route_registry',
             'agents': 'lib.agent_registry',
             'skills': 'lib.skill_loader_v3',
             'auth': 'lib.auth_api'
         }
-        
+
         if config_type in mapping:
             result = reload_module(mapping[config_type])
             return jsonify({"success": result, "config_type": config_type})
-        
+
         return jsonify({"success": False, "error": "未知配置类型"})
     
     print("✅ 热重载 API 已注册（租户内管理员可用）")

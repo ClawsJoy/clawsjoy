@@ -52,7 +52,7 @@ class UnifiedAnalyzer:
     def analyze(self) -> Dict:
         """综合分析"""
         all_data = self.collect_all_data()
-        
+
         result = {
             "timestamp": datetime.now().isoformat(),
             "sources": all_data.get("sources", {}),
@@ -60,23 +60,23 @@ class UnifiedAnalyzer:
             "insights": [],
             "suggestions": []
         }
-        
+
         # 计算健康度
         health_score = 85
         error_count = len(all_data.get("sources", {}).get("errors", {}).get("items", []))
         if error_count > 0:
             health_score -= min(30, error_count)
-        
+
         result["summary"]["health_score"] = max(0, health_score)
         result["summary"]["total_items"] = all_data.get("summary", {}).get("total_items", 0)
-        
+
         # 生成建议
         if error_count > 0:
             result["suggestions"].append({
                 "level": "warning",
                 "message": f"发现 {error_count} 条错误，建议检查错误知识库"
             })
-        
+
         # 发送分析结果给决策者
         try:
             from core.lib.file_exchange import file_exchange

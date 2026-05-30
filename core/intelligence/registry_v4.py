@@ -14,7 +14,7 @@ class IntelligenceRegistry:
     def _discover_modules(self):
         """发现并注册所有智能模块"""
         intelligence_dir = Path(__file__).parent
-        
+
         # 使用修复后的模块
         modules = {
             'predictor': 'predictor.py',
@@ -24,7 +24,7 @@ class IntelligenceRegistry:
             'analyzer': 'analyzer.py',
             'success_monitor': 'success_monitor_v1.0.01_20260517.py',
         }
-        
+
         for name, filename in modules.items():
             file_path = intelligence_dir / filename
             if file_path.exists():

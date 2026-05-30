@@ -26,7 +26,7 @@ swagger_template = {
             "email": "support@clawsjoy.local"
         }
     },
-    "host": "localhost:str(smart_config.get_port("gateway"))",
+    "host": f"localhost:{smart_config.get_port("gateway")}",
     "basePath": "/",
     "schemes": ["http"],
     "tags": [

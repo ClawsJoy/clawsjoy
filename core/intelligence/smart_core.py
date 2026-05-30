@@ -23,7 +23,7 @@ class SmartCore:
         self.alerter = IntelligentAlerter()
         self.learner = IntelligentLearner()
         self.running = True
-        
+
         print("🧠 智能核心启动")
         print("=" * 50)
         print("   📊 分析器 - 系统状态分析")
@@ -36,22 +36,22 @@ class SmartCore:
         """执行一次完整智能分析"""
         print(f"\n[{datetime.now().strftime('%H:%M:%S')}] 智能分析循环")
         print("-" * 40)
-        
+
         # 1. 分析
         report = self.analyzer.analyze()
         print(f"📊 健康度: {report['health_score']}/100")
-        
+
         # 2. 预测
         forecast = self.predictor.generate_forecast()
         for pred in forecast.get('predictions', []):
             print(f"📈 预测: {pred['metric']} -> {pred['predicted_value']} ({pred['trend']})")
-        
+
         # 3. 学习
         insights = self.learner.auto_optimize()
-        
+
         # 4. 获取大脑统计
         stats = brain.get_stats()
-        
+
         return {
             "health_score": report['health_score'],
             "forecast": forecast,
@@ -62,7 +62,7 @@ class SmartCore:
     def run_loop(self, interval=60):
         """持续运行智能循环"""
         print(f"\n🔄 智能循环启动 (间隔: {interval}秒)")
-        
+
         while self.running:
             try:
                 self.run_once()

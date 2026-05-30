@@ -15,7 +15,7 @@ class SmartMonitor:
     def __init__(self):
         self.log_file = config.get_path('logs') / 'monitor.log'
         self.gateway_port = config.get_port('gateway')
-        self.gateway_url = f"{unified_config.get_service_url("{self.gateway_port}"
+        self.gateway_url = unified_config.get_service_url(f"{self.gateway_port}")
         self.stats = {"checks": 0, "issues": 0}
     
     def check_service(self, name, url):
@@ -29,10 +29,10 @@ class SmartMonitor:
         print(f"🔍 智能监控器启动（旁路模式）")
         print(f"   监控网关: {self.gateway_url}")
         print(f"   监控日志: {self.log_file}")
-        
+
         while True:
             self.stats["checks"] += 1
-            
+
             # 监控网关
             api_ok = self.check_service("gateway", f"{self.gateway_url}/api/health")
             if not api_ok:
@@ -44,7 +44,7 @@ class SmartMonitor:
                 # 每10次检查输出一次正常状态
                 if self.stats["checks"] % 10 == 0:
                     print(f"✅ {datetime.now().strftime('%H:%M:%S')}: 系统正常 (检查: {self.stats['checks']})")
-            
+
             time.sleep(30)
 
 if __name__ == "__main__":

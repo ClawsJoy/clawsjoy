@@ -26,23 +26,23 @@ class PriorityRetriever:
     def search_knowledge(self, query: str) -> List[Dict]:
         """从文档中搜索"""
         results = []
-        
+
         # 关键词映射
         keyword_map = {
             "agent": ["agent", "Agent", "决策", "聊天", "执行", "采集", "安全", "分析", "管家"],
             "架构": ["架构", "architecture", "层", "layer", "用户层", "安全层", "Agent层", "技能层", "记忆层"],
             "技能": ["skill", "技能", "svg-generator", "ai-image-gen", "scheduler"]
         }
-        
+
         # 确定搜索关键词
         keywords = []
         for k, v in keyword_map.items():
             if k in query.lower() or any(kw in query.lower() for kw in v):
                 keywords.extend(v)
-        
+
         if not keywords:
             keywords = [query.lower()]
-        
+
         # 扫描文档
         for md_file in self.docs_dir.glob("*.md"):
             try:
@@ -65,7 +65,7 @@ class PriorityRetriever:
                         break
             except:
                 pass
-        
+
         return results[:3]
     
     def search_skills(self, query: str) -> List[Dict]:
@@ -97,7 +97,7 @@ class PriorityRetriever:
                 "final_content": knowledge[0]['content'],
                 "sources": knowledge
             }
-        
+
         # 2. 再查技能库
         skills = self.search_skills(query)
         if skills:
@@ -106,7 +106,7 @@ class PriorityRetriever:
                 "final_content": skills[0]['content'],
                 "sources": skills
             }
-        
+
         # 3. 返回已知信息（不调用 LLM）
         if "agent" in query.lower():
             return {
@@ -123,7 +123,7 @@ class PriorityRetriever:
                 "source_used": "builtin",
                 "final_content": "svg-generator 技能：根据自然语言生成SVG图表。支持蓝图、架构图、流程图。使用示例：'生成ClawsJoy发展蓝图'"
             }
-        
+
         return {
             "source_used": "none",
             "final_content": "未找到相关信息"

@@ -20,12 +20,12 @@ class MarkdownParser:
         file_path = self.docs_dir / "AGENT_COMPOSITION.md"
         if not file_path.exists():
             return {}
-        
+
         content = file_path.read_text(encoding='utf-8', errors='ignore')
-        
+
         agents = []
         current_agent = {}
-        
+
         lines = content.split('\n')
         for i, line in enumerate(lines):
             # 提取 Agent 名称
@@ -44,7 +44,7 @@ class MarkdownParser:
                     "name": line.strip(),
                     "description": lines[i+1].strip() if i+1 < len(lines) else ""
                 })
-        
+
         # 预定义的 Agent 信息
         if not agents:
             agents = [
@@ -55,7 +55,7 @@ class MarkdownParser:
                 {"name": "security_agent (安全Agent)", "description": "安全助手，负责安全检查、权限验证"},
                 {"name": "memory_manager (记忆Agent)", "description": "记忆管理助手，负责记忆存储、回忆、向量搜索"}
             ]
-        
+
         return {"agents": agents, "total": len(agents)}
     
     def generate_rich_text(self, query: str) -> str:
@@ -68,7 +68,7 @@ class MarkdownParser:
                 lines.append(f"   - {agent['description']}")
                 lines.append("")
             return '\n'.join(lines)
-        
+
         return "请指定查询内容"
 
 

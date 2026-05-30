@@ -43,7 +43,7 @@ class KnowledgeGrower:
 如果没有新知识，输出: {{"has_knowledge": false}}"""
 
         result = smart_adapter.generate(prompt, auto_select=True)
-        
+
         import re
         match = re.search(r'\{.*\}', result, re.DOTALL)
         if match:
@@ -76,7 +76,7 @@ class KnowledgeGrower:
         self.learned["insights"].append(insight)
         self.learned["insights"] = self.learned["insights"][-50:]
         self._save_learned()
-        
+
         print(f"💡 获得新洞察: {goal[:50]}...")
 
 

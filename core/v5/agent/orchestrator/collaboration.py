@@ -34,7 +34,7 @@ class CollaborationHub:
         """发送消息"""
         if to_agent not in self.agents:
             return False
-        
+
         msg = Message(
             id=str(uuid.uuid4())[:8],
             from_agent=from_agent,
@@ -43,9 +43,9 @@ class CollaborationHub:
             type="request",
             timestamp=datetime.now().isoformat()
         )
-        
+
         self.message_queue.append(msg)
-        
+
         # 尝试立即处理
         try:
             handler = self.agents[to_agent]

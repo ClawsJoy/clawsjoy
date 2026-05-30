@@ -44,7 +44,7 @@ class ContextLearner:
             "timestamp": datetime.now().isoformat()
         }
         self.history.append(turn)
-        
+
         # 提取上下文
         self._extract_context(user, assistant)
     
@@ -54,13 +54,13 @@ class ContextLearner:
         if "修改" in user or "改一下" in user or "不是" in user:
             self.context["last_modify"] = user
             self.context["needs_update"] = True
-        
+
         # 检测指代（它、这个、那个）
         if "它" in user or "这个" in user or "那个" in user:
             if len(self.history) >= 1:
                 last = self.history[-1]
                 self.context["refers_to"] = last.get("task")
-        
+
         # 检测否定
         if "不对" in user or "错了" in user or "不是这个" in user:
             self.context["last_correction"] = user
@@ -75,7 +75,7 @@ class ContextLearner:
             "is_followup": False,
             "suggested_task": None
         }
-        
+
         # 1. 检查是否有指代
         if "它" in user_input or "这个" in user_input:
             if self.history:
@@ -83,19 +83,19 @@ class ContextLearner:
                 result["has_context"] = True
                 result["refers_to"] = last.get("task")
                 result["is_followup"] = True
-        
+
         # 2. 检查是否是修改
         if any(kw in user_input for kw in ["修改", "改一下", "调整", "换成"]):
             result["has_context"] = True
             result["is_modify"] = True
             if self.history:
                 result["refers_to"] = self.history[-1].get("task")
-        
+
         # 3. 检查是否是否定纠正
         if any(kw in user_input for kw in ["不对", "错了", "不是"]):
             result["has_context"] = True
             result["is_correction"] = True
-        
+
         # 4. 根据上下文推断任务
         if result["has_context"] and result["refers_to"]:
             result["suggested_task"] = result["refers_to"]
@@ -103,14 +103,14 @@ class ContextLearner:
             # 连续提问，可能是同一主题
             result["suggested_task"] = self.history[-1].get("task")
             result["is_followup"] = True
-        
+
         return result
     
     def get_history_summary(self) -> str:
         """获取历史摘要"""
         if not self.history:
             return "暂无历史"
-        
+
         summary = []
         for i, turn in enumerate(self.history[-3:], 1):
             summary.append(f"{i}. 用户: {turn['user'][:30]} → 任务: {turn.get('task')}")
@@ -140,10 +140,10 @@ class ContextAwareAgent:
     def process(self, user_input: str, user_id: str = "default") -> Dict:
         """处理带上下文的输入"""
         session = self.get_session(user_id)
-        
+
         # 1. 理解上下文
         context = session.understand(user_input)
-        
+
         # 2. 根据上下文决定任务
         if context["suggested_task"]:
             task = context["suggested_task"]
@@ -159,7 +159,7 @@ class ContextAwareAgent:
             else:
                 task = 'unknown'
             source = "direct"
-        
+
         # 3. 生成回复
         if task == 'list_agents':
             response = "ClawsJoy 有决策Agent、聊天Agent、执行Agent、采集Agent、安全Agent、分析Agent等10个专业Agent"
@@ -169,10 +169,10 @@ class ContextAwareAgent:
             response = "已生成系统架构图，保存在 output 目录"
         else:
             response = f"收到：{user_input}"
-        
+
         # 4. 记录对话
         session.add(user_input, response, task)
-        
+
         return {
             "success": True,
             "response": response,

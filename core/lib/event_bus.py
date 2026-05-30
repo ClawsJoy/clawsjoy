@@ -14,16 +14,16 @@ class EventBus:
             cls._instance._handlers: Dict[str, List[Callable]] = defaultdict(list)
         return cls._instance
     
-    def on(self, event: str, handler: Callable):
+    def on(self, event: str, handler: Callable) -> Dict:
         """订阅事件（避免重复订阅）"""
         if handler not in self._handlers[event]:
             self._handlers[event].append(handler)
     
-    def subscribe(self, event: str, handler: Callable):
+    def subscribe(self, event: str, handler: Callable) -> Dict:
         """订阅事件（on 的别名）"""
         self.on(event, handler)
     
-    def emit(self, event: str, data: Any = None):
+    def emit(self, event: str, data: Any = None) -> Dict:
         """触发事件 - 支持 0/1/2 参数的 handler"""
         for handler in self._handlers.get(event, []):
             try:
@@ -37,11 +37,11 @@ class EventBus:
                     except TypeError:
                         pass
     
-    def publish(self, event: str, data: Any = None):
+    def publish(self, event: str, data: Any = None) -> Dict:
         """发布事件（emit 的别名）"""
         self.emit(event, data)
     
-    def off(self, event: str, handler: Callable = None):
+    def off(self, event: str, handler: Callable = None) -> Dict:
         """取消订阅"""
         if handler is None:
             self._handlers[event] = []

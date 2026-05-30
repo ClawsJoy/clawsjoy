@@ -51,10 +51,10 @@ class SelfTuner:
         for h in self.history[-50:]:
             if param['path'] in h['params']:
                 scores.append((h['params'][param['path']], h['score']))
-        
+
         if not scores:
             return random.uniform(param['range'][0], param['range'][1])
-        
+
         # 找最佳值附近
         best = max(scores, key=lambda x: x[1])
         new_val = best[0] + random.uniform(-param['step'], param['step'])
@@ -64,11 +64,11 @@ class SelfTuner:
         """评估参数效果"""
         score = 0
         weights = {obj['name']: obj.get('weight', 1) for obj in self.config.get('objectives', [])}
-        
+
         # 这里根据实际指标计算
         # 模拟：从最近记忆中获取指标
         metrics = self._get_metrics()
-        
+
         for name, weight in weights.items():
             if name == 'success_rate':
                 score += weight * metrics.get('success_rate', 0.9)
@@ -77,7 +77,7 @@ class SelfTuner:
                 score += weight * (1 / (rt + 0.1))
             elif name == 'accuracy':
                 score += weight * metrics.get('accuracy', 0.85)
-        
+
         return min(1.0, score)
     
     def _get_metrics(self) -> Dict:
@@ -97,18 +97,18 @@ class SelfTuner:
             "params": params,
             "score": score
         })
-        
+
         if score > self.best_score:
             self.best_score = score
             self.best_params = params.copy()
-            
+
             # 存储到记忆
             vector_memory.add(
                 text=f"最佳参数: {params} | 得分: {score:.3f}",
                 category="tuning_result",
                 metadata={"score": score}
             )
-        
+
         # 保留最近500条
         if len(self.history) > 500:
             self.history = self.history[-500:]
@@ -122,7 +122,7 @@ class SelfTuner:
         # 更新配置文件
         for path, value in params.items():
             self._update_config(path, value)
-        
+
         # 通知热重载
         from core.lib.closed_loop_config import closed_loop_config
         closed_loop_config.reload()

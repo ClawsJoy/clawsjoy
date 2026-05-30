@@ -15,12 +15,12 @@ class TenantVectorIndex:
         base_path = vector_config.get("tenant_vector_path", "data/tenant_vectors")
         self.persist_dir = Path(base_path) / tenant_id
         self.persist_dir.mkdir(parents=True, exist_ok=True)
-        
+
         embedding_model = vector_config.get("embedding_model", "nomic-embed-text")
         from chromadb.utils.embedding_functions import OllamaEmbeddingFunction
         ollama_url = unified_config.get("llm.endpoint", "http://localhost:11434")
         self.embedding_fn = OllamaEmbeddingFunction(url=ollama_url, model_name=embedding_model)
-        
+
         self.client = chromadb.PersistentClient(path=str(self.persist_dir))
         try:
             self.skill_collection = self.client.get_collection("tenant_skills")

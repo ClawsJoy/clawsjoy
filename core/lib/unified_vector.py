@@ -28,7 +28,7 @@ class UnifiedVector:
             return []
         n = n or self.config.get("recommendation", {}).get("default_top_k", 5)
         min_sim = self.config.get("recommendation", {}).get("min_similarity", 0.3)
-        
+
         results = tenant_index_manager.search_skills(tenant_id, query, n)
         # 过滤低相似度结果
         return [r for r in results if r.get('similarity', 0) >= min_sim]

@@ -19,7 +19,7 @@ class ButlerMemory:
         self.user_dir.mkdir(parents=True, exist_ok=True)
         self.memory_file = self.user_dir / "memory.json"
         self.data = self._load_memory()
-        
+
         vector_dir = self.user_dir / unified_config.get("butler.paths.vectors_dir", "vectors")
         vector_dir.mkdir(exist_ok=True)
         self.vector_client = chromadb.PersistentClient(path=str(vector_dir))

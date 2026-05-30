@@ -35,7 +35,7 @@ class IntentParser:
     @classmethod
     def parse(cls, user_input: str) -> dict:
         user_input_lower = user_input.lower()
-        
+
         # 按优先级匹配
         for intent, config in cls.INTENT_PATTERNS.items():
             for keyword in config["keywords"]:
@@ -46,7 +46,7 @@ class IntentParser:
                         "confidence": 1.0,
                         "message": f"识别到{intent}意图"
                     }
-        
+
         # 默认返回
         return {
             "intent": "general",

@@ -47,18 +47,18 @@ class ClientSanitizer:
         original = text
         redacted = text
         detected = {}
-        
+
         for pattern_name, pattern in self.SENSITIVE_PATTERNS.items():
             matches = re.findall(pattern, redacted, re.IGNORECASE)
             if matches:
                 detected[pattern_name] = len(matches)
                 replacement = self.REPLACEMENTS.get(pattern_name, "[敏感信息]")
                 redacted = re.sub(pattern, replacement, redacted, flags=re.IGNORECASE)
-        
+
         # 额外处理：移除连续数字（可能是身份证号片段）
         if level == "high":
             redacted = re.sub(r'\d{5,}', '[数字]', redacted)
-        
+
         return redacted, {
             "original_length": len(original),
             "redacted_length": len(redacted),
@@ -70,7 +70,7 @@ class ClientSanitizer:
         """脱敏消息"""
         sanitized = message.copy()
         stats = {"total_redactions": 0}
-        
+
         # 脱敏用户输入
         if "user_input" in sanitized:
             redacted, info = self.sanitize(sanitized["user_input"])
@@ -78,14 +78,14 @@ class ClientSanitizer:
             sanitized["_sanitized"] = True
             stats["user_input_redactions"] = info["detected"]
             stats["total_redactions"] += sum(info["detected"].values())
-        
+
         # 脱敏参数中的 prompt
         if "params" in sanitized and "prompt" in sanitized["params"]:
             redacted, info = self.sanitize(sanitized["params"]["prompt"])
             sanitized["params"]["prompt"] = redacted
             stats["prompt_redactions"] = info["detected"]
             stats["total_redactions"] += sum(info["detected"].values())
-        
+
         return sanitized, stats
     
     def can_send_to_server(self, text: str) -> bool:

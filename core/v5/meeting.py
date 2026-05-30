@@ -28,7 +28,7 @@ class MeetingRoom:
         """获取会议摘要"""
         if not self.messages:
             return f"会议 '{self.topic}' 暂无讨论内容"
-        
+
         summary = f"会议: {self.topic}\n"
         summary += f"参与者: {', '.join(self.participants)}\n"
         summary += f"消息数: {len(self.messages)}\n"
@@ -53,7 +53,7 @@ class MeetingManager:
         meeting = self.meetings.get(meeting_id)
         if not meeting:
             return False
-        
+
         if agent_name not in meeting.participants:
             meeting.participants.append(agent_name)
         return True
@@ -63,7 +63,7 @@ class MeetingManager:
         meeting = self.meetings.get(meeting_id)
         if not meeting:
             return False
-        
+
         meeting.add_message(from_agent, content)
         return True
     
@@ -72,7 +72,7 @@ class MeetingManager:
         meeting = self.meetings.get(meeting_id)
         if not meeting:
             return {"error": "会议不存在"}
-        
+
         return {
             "meeting_id": meeting.meeting_id,
             "topic": meeting.topic,

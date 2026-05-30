@@ -17,7 +17,7 @@ class TaskDependency:
         if task_id not in self.dependencies:
             self.dependencies[task_id] = []
         self.dependencies[task_id].append(depends_on)
-        
+
         if depends_on not in self.reverse:
             self.reverse[depends_on] = []
         self.reverse[depends_on].append(task_id)

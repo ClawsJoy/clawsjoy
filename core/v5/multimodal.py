@@ -15,11 +15,11 @@ class ImageProcessor:
         """分析图片内容"""
         if not Path(image_path).exists():
             return "图片文件不存在"
-        
+
         try:
             with open(image_path, 'rb') as f:
                 img_data = base64.b64encode(f.read()).decode()
-            
+
             import requests
             resp = requests.post(f"{self.ollama_url}/api/generate",
                 json={"model": "llava:7b", "prompt": prompt, "images": [img_data], "stream": False},
@@ -28,7 +28,7 @@ class ImageProcessor:
                 return resp.json().get('response', '无法识别')
         except Exception as e:
             print(f"图像分析失败: {e}")
-        
+
         return "图像分析服务不可用"
     
     def extract_text(self, image_path: str) -> Optional[str]:

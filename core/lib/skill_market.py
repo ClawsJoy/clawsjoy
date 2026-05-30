@@ -35,7 +35,7 @@ class SkillMarket:
             "published_at": datetime.now().isoformat(),
             "downloads": 0
         }
-        
+
         if skill_info not in self.skills["local"]:
             self.skills["local"].append(skill_info)
             self._save()

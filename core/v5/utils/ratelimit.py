@@ -23,7 +23,7 @@ class RateLimiter:
             elapsed = now - self.last_refill
             self.tokens = min(self.capacity, self.tokens + elapsed * self.rate)
             self.last_refill = now
-            
+
             if self.tokens >= 1:
                 self.tokens -= 1
                 return True
@@ -46,7 +46,7 @@ class CircuitBreaker:
         def wrapper(*args, **kwargs):
             if not self.allow_request():
                 raise Exception("Circuit breaker is open")
-            
+
             try:
                 result = func(*args, **kwargs)
                 self.on_success()
@@ -54,20 +54,20 @@ class CircuitBreaker:
             except Exception as e:
                 self.on_failure()
                 raise e
-        
+
         return wrapper
     
     def allow_request(self) -> bool:
         with self.lock:
             if self.state == "closed":
                 return True
-            
+
             if self.state == "open":
                 if time.time() - self.last_failure_time > self.timeout:
                     self.state = "half_open"
                     return True
                 return False
-            
+
             return True
     
     def on_success(self):

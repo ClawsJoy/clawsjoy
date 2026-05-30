@@ -15,34 +15,34 @@ class ChromaStoreOptimized:
         self.user_id = user_id
         self.persist_dir = Path(f"{config_helper.get_data_root()}/chroma/{user_id}")
         self.persist_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # 初始化客户端
         self.client = chromadb.PersistentClient(path=str(self.persist_dir))
-        
+
         # 使用 Ollama embedding（本地，高质量）
         self.embedding_fn = embedding_functions.OllamaEmbeddingFunction(
             model_name=config_helper.get_embedding_model(),
             url="http://localhost:11434/api/embeddings"
         )
-        
+
         # 获取或创建 collection，使用余弦距离
         self.collection = self.client.get_or_create_collection(
             name=collection_name,
             embedding_function=self.embedding_fn,
             metadata={"hnsw:space": "cosine"}  # 使用余弦相似度
         )
-        
+
         print(f"   ✅ ChromaDB 已优化: {user_id}/{collection_name}")
     
     def add(self, text: str, metadata: Dict = None) -> str:
         """添加文档"""
         doc_id = str(uuid.uuid4())
-        
+
         # 添加更多元数据以便过滤
         meta = metadata or {}
         meta["timestamp"] = __import__('time').time()
         meta["text_length"] = len(text)
-        
+
         self.collection.add(
             ids=[doc_id],
             documents=[text],
@@ -55,7 +55,7 @@ class ChromaStoreOptimized:
         ids = [str(uuid.uuid4()) for _ in texts]
         if metadatas is None:
             metadatas = [{} for _ in texts]
-        
+
         self.collection.add(
             ids=ids,
             documents=texts,
@@ -72,7 +72,7 @@ class ChromaStoreOptimized:
                 n_results=limit,
                 where=filter_condition
             )
-            
+
             documents = []
             if results['ids'] and results['ids'][0]:
                 # 计算相似度分数（cosine 距离转相似度）
@@ -90,7 +90,7 @@ class ChromaStoreOptimized:
                         "similarity": round(similarity, 4),
                         "metadata": metadata
                     })
-            
+
             return documents
         except Exception as e:
             print(f"搜索错误: {e}")
@@ -103,7 +103,7 @@ class ChromaStoreOptimized:
                 where=metadata_filter,
                 limit=limit
             )
-            
+
             documents = []
             if results['ids']:
                 for i, doc_id in enumerate(results['ids']):

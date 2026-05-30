@@ -44,7 +44,7 @@ class PromptLoader:
                 value = value.get(part, {})
             else:
                 break
-        
+
         if isinstance(value, str):
             return value.format(**kwargs) if kwargs else value
         return str(value) if value else ""

@@ -30,14 +30,14 @@ class SuccessPredictor:
     def _load_history(self):
         """从日志加载历史数据"""
         self._task_history = defaultdict(lambda: {'success': 0, 'fail': 0, 'recent': []})
-        
+
         if not self.log_file.exists():
             print(f"日志文件不存在: {self.log_file}")
             return
-        
+
         content = self.log_file.read_text(encoding='utf-8', errors='ignore')
         lines = content.strip().split('\n')
-        
+
         # 从后往前解析，只取最近的窗口大小
         for line in lines[-self.history_window:]:
             # 匹配执行行
@@ -64,29 +64,29 @@ class SuccessPredictor:
                     elif '❌ 失败' in line:
                         self._task_history[task_name]['fail'] += 1
                         self._task_history[task_name]['recent'].append(('fail', datetime.now()))
-        
+
         # 限制最近记录数量
         for task in self._task_history:
             if len(self._task_history[task]['recent']) > 20:
                 self._task_history[task]['recent'] = self._task_history[task]['recent'][-20:]
-        
+
         print(f"📊 已加载 {len(self._task_history)} 个任务的历史数据")
     
     def predict_task_success_rate(self, task_name: str) -> Dict:
         """预测单个任务的成功率"""
         if self._task_history is None:
             self._load_history()
-        
+
         # 尝试精确匹配
         history = self._task_history.get(task_name)
-        
+
         # 如果没有精确匹配，尝试模糊匹配
         if not history:
             for name, hist in self._task_history.items():
                 if task_name in name or name in task_name:
                     history = hist
                     break
-        
+
         if not history:
             return {
                 "task": task_name,
@@ -95,16 +95,16 @@ class SuccessPredictor:
                 "total_samples": 0,
                 "trend": "unknown"
             }
-        
+
         total = history['success'] + history['fail']
         rate = history['success'] / total if total > 0 else 0.5
-        
+
         # 计算趋势（基于最近5次）
         recent = history['recent'][-5:]
         if recent:
             recent_success = sum(1 for r in recent if r[0] == 'success')
             recent_rate = recent_success / len(recent)
-            
+
             if recent_rate > rate + 0.1:
                 trend = "improving"
             elif recent_rate < rate - 0.1:
@@ -113,10 +113,10 @@ class SuccessPredictor:
                 trend = "stable"
         else:
             trend = "stable"
-        
+
         # 置信度（样本越多置信度越高）
         confidence = min(0.95, 0.3 + total / 100)
-        
+
         return {
             "task": task_name,
             "predicted_rate": round(rate, 2),
@@ -131,7 +131,7 @@ class SuccessPredictor:
         """获取预测成功率最高的任务"""
         if self._task_history is None:
             self._load_history()
-        
+
         results = []
         for task_name, history in self._task_history.items():
             total = history['success'] + history['fail']
@@ -142,7 +142,7 @@ class SuccessPredictor:
                     "rate": round(rate, 2),
                     "samples": total
                 })
-        
+
         results.sort(key=lambda x: x['rate'], reverse=True)
         return results[:limit]
     
@@ -150,7 +150,7 @@ class SuccessPredictor:
         """获取预测成功率最低的任务"""
         if self._task_history is None:
             self._load_history()
-        
+
         results = []
         for task_name, history in self._task_history.items():
             total = history['success'] + history['fail']
@@ -161,7 +161,7 @@ class SuccessPredictor:
                     "rate": round(rate, 2),
                     "samples": total
                 })
-        
+
         results.sort(key=lambda x: x['rate'])
         return results[:limit]
     
@@ -169,7 +169,7 @@ class SuccessPredictor:
         """获取预测器统计"""
         if self._task_history is None:
             self._load_history()
-        
+
         return {
             "version": self.VERSION,
             "total_tasks_tracked": len(self._task_history) if self._task_history else 0,

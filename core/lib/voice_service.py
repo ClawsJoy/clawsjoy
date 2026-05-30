@@ -20,14 +20,14 @@ class VoiceService:
         """文字转语音，返回文件路径"""
         if not output_file:
             output_file = str(self.output_dir / f"speech_{hash(text) % 10000}.mp3")
-        
+
         cmd = [
             'edge-tts',
             '--text', text,
             '--voice', self.voice,
             '--write-media', output_file
         ]
-        
+
         try:
             subprocess.run(cmd, capture_output=True, timeout=unified_config.get("timeouts.default", 30), check=True)
             return output_file

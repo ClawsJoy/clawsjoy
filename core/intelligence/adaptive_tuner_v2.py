@@ -20,10 +20,10 @@ class AdaptiveTunerV2:
         total = len(outcomes)
         success = len([o for o in outcomes if '成功' in o])
         rate = success / total * 100 if total > 0 else 0
-        
+
         errors = memory.recall_all(category='error_knowledge')
         decisions = memory.recall_all(category='executed_decisions')
-        
+
         return {
             "success_rate": rate,
             "error_count": len(errors),
@@ -35,9 +35,9 @@ class AdaptiveTunerV2:
     def suggest_optimization(self):
         """建议优化方案"""
         perf = self.analyze_performance()
-        
+
         suggestions = []
-        
+
         if perf['success_rate'] < 70:
             suggestions.append({
                 "target": "success_rate",
@@ -45,7 +45,7 @@ class AdaptiveTunerV2:
                 "priority": "high",
                 "expected_improvement": "10-20%"
             })
-        
+
         if perf['error_count'] > 20:
             suggestions.append({
                 "target": "error_rate",
@@ -53,7 +53,7 @@ class AdaptiveTunerV2:
                 "priority": "medium",
                 "expected_improvement": "30-50%"
             })
-        
+
         if perf['skill_count'] < 50:
             suggestions.append({
                 "target": "skill_coverage",
@@ -61,7 +61,7 @@ class AdaptiveTunerV2:
                 "priority": "low",
                 "expected_improvement": "功能增强"
             })
-        
+
         return {
             "timestamp": datetime.now().isoformat(),
             "current_performance": perf,
@@ -72,13 +72,13 @@ class AdaptiveTunerV2:
     def auto_tune(self):
         """自动调优"""
         analysis = self.suggest_optimization()
-        
+
         # 记录调优建议
         memory.remember(
             json.dumps(analysis, ensure_ascii=False),
             category='auto_tuning'
         )
-        
+
         return analysis
 
 tuner = AdaptiveTunerV2()

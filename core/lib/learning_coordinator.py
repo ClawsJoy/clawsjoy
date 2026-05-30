@@ -39,7 +39,7 @@ class LearningCoordinator:
         """处理反馈，触发学习循环"""
         # 1. 记录交互
         self.learning_hooks.log_interaction(context)
-        
+
         # 2. 记录真实数据
         self.real_learner.record_request(
             user_input=context.get('user_input', ''),
@@ -47,37 +47,37 @@ class LearningCoordinator:
             response_time=context.get('duration', 0),
             success=context.get('success', False)
         )
-        
+
         # 3. 如果成功，尝试学习新模式
         patterns = []
         if context.get('success'):
             patterns = self._discover_patterns(context.get('code', ''))
             if patterns:
                 self._auto_register_skills(patterns)
-        
+
         return {"learned": True, "patterns": patterns}
     
     def _discover_patterns(self, code: str) -> List[str]:
         """发现代码模式"""
         discovered = []
         patterns_config = self.config.get('pattern_discovery', {}).get('patterns', [])
-        
+
         for pattern in patterns_config:
             if re.search(pattern.get('regex', ''), code, re.IGNORECASE | re.DOTALL):
                 discovered.append(pattern.get('skill'))
-        
+
         return discovered
     
     def _auto_register_skills(self, skills: List[str]):
         """自动注册新技能"""
         registry_file = Path(f"{get_data_root()}/skill_registry_v2.json")
-        
+
         if registry_file.exists():
             with open(registry_file, 'r') as f:
                 registry = json.load(f)
         else:
             registry = {}
-        
+
         for skill_name in skills:
             if skill_name not in registry:
                 registry[skill_name] = {
@@ -89,7 +89,7 @@ class LearningCoordinator:
                     "registered_at": datetime.now().isoformat()
                 }
                 print(f"📚 自动注册新技能: {skill_name}")
-        
+
         with open(registry_file, 'w') as f:
             json.dump(registry, f, indent=2)
 

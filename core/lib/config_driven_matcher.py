@@ -56,7 +56,7 @@ class ConfigDrivenMatcher:
     def match(self, query: str, tenant_id: str = None) -> dict:
         """匹配技能"""
         mappings = self.mapping_config.get('mappings', {})
-        
+
         # 精确匹配
         if query in mappings:
             return {
@@ -66,7 +66,7 @@ class ConfigDrivenMatcher:
                 'similarity': 1.0,
                 'match_type': 'exact_mapping'
             }
-        
+
         # 分类匹配
         category_mappings = self.mapping_config.get('category_mappings', {})
         for category, skill_name in category_mappings.items():
@@ -78,7 +78,7 @@ class ConfigDrivenMatcher:
                     'similarity': 0.9,
                     'match_type': 'category_mapping'
                 }
-        
+
         # 向量搜索
         results = self.index.search_skill(query, 5)
         if results:
@@ -90,7 +90,7 @@ class ConfigDrivenMatcher:
                 'similarity': round(best['similarity'], 3),
                 'match_type': 'vector_search'
             }
-        
+
         return {
             'success': False,
             'query': query,

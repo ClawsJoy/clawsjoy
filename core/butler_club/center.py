@@ -99,11 +99,11 @@ class ButlerClub:
         """注册会员"""
         if butler_name is None:
             butler_name = self.config.get("settings", {}).get("default_butler_name", "小管")
-        
+
         # 检查是否已存在
         if self.get_member(user_id):
             return {"success": False, "message": "会员已存在"}
-        
+
         profile_dir = self.data_root / f'members/{user_id}'
         profile_dir.mkdir(parents=True, exist_ok=True)
         profile_file = profile_dir / 'profile.json'
@@ -155,14 +155,14 @@ class ButlerClub:
             {"name": "gold", "min_interactions": 500},
             {"name": "diamond", "min_interactions": 2000}
         ])
-        
+
         # 找到适合的等级（从高到低）
         new_level = current
         for level in reversed(levels):
             if interactions >= level.get("min_interactions", 0):
                 new_level = level["name"]
                 break
-        
+
         if new_level != current:
             # 升级
             old_level = current
@@ -200,11 +200,11 @@ class ButlerClub:
         """添加会员向量"""
         if not self.vector_enabled:
             return
-        
+
         member = self.get_member(user_id)
         if not member:
             return
-        
+
         # 准备会员特征
         metadata = {
             "butler_name": member.get("butler_name", "小管"),
@@ -213,35 +213,35 @@ class ButlerClub:
             "achievements": len(member.get("achievements", [])),
             "tags": self._extract_member_tags(member)
         }
-        
+
         self.vector_service.add_member(user_id, metadata)
     
     def _update_member_vector(self, user_id: str):
         """更新会员向量"""
         if not self.vector_enabled:
             return
-        
+
         member = self.get_member(user_id)
         if not member:
             return
-        
+
         metadata = {
             "butler_name": member.get("butler_name", "小管"),
             "level": member.get("membership_level", "bronze"),
             "interactions": member.get("total_interactions", 0),
             "achievements": len(member.get("achievements", []))
         }
-        
+
         self.vector_service.update_member(user_id, metadata)
     
     def _extract_member_tags(self, member: Dict) -> list:
         """从会员数据中提取标签"""
         tags = []
-        
+
         # 基于等级
         level = member.get("membership_level", "bronze")
         tags.append(f"等级_{level}")
-        
+
         # 基于交互次数
         interactions = member.get("total_interactions", 0)
         if interactions > 1000:
@@ -250,12 +250,12 @@ class ButlerClub:
             tags.append("活跃用户")
         else:
             tags.append("新用户")
-        
+
         # 基于成就
         achievements = member.get("achievements", [])
         if len(achievements) >= 5:
             tags.append("成就达人")
-        
+
         return tags
     
     def find_similar_members(self, user_id: str, top_k: int = 5) -> List[Dict]:
@@ -263,9 +263,9 @@ class ButlerClub:
         if not self.vector_enabled:
             print("⚠️ 向量服务未启用")
             return []
-        
+
         similar = self.vector_service.search_similar_members(user_id, top_k)
-        
+
         # 补充会员详细信息
         for s in similar:
             member = self.get_member(s.get("user_id"))
@@ -273,14 +273,14 @@ class ButlerClub:
                 s["butler_name"] = member.get("butler_name", "小管")
                 s["level"] = member.get("membership_level", "bronze")
                 s["joined_at"] = member.get("joined_at", "")
-        
+
         return similar
     
     def search_members_by_query(self, query: str, top_k: int = 10) -> List[Dict]:
         """根据查询文本检索会员"""
         if not self.vector_enabled:
             return []
-        
+
         return self.vector_service.search_members(query, top_k)
     
     def recommend_butler_style(self, user_id: str) -> str:
@@ -288,13 +288,13 @@ class ButlerClub:
         similar = self.find_similar_members(user_id, 3)
         if not similar:
             return "小管"
-        
+
         # 统计相似会员的管家名称偏好
         name_counts = {}
         for s in similar:
             name = s.get("butler_name", "小管")
             name_counts[name] = name_counts.get(name, 0) + 1
-        
+
         if name_counts:
             return max(name_counts, key=name_counts.get)
         return "小管"
@@ -303,15 +303,15 @@ class ButlerClub:
         """重建所有会员向量（用于初始化或修复）"""
         if not self.vector_enabled:
             return {"success": False, "error": "向量服务未启用"}
-        
+
         # 获取所有会员
         members_dir = self.data_root / "members"
         if not members_dir.exists():
             return {"success": False, "error": "无会员目录"}
-        
+
         success_count = 0
         fail_count = 0
-        
+
         for member_dir in members_dir.iterdir():
             if member_dir.is_dir():
                 user_id = member_dir.name
@@ -321,7 +321,7 @@ class ButlerClub:
                 except Exception as e:
                     print(f"重建失败 {user_id}: {e}")
                     fail_count += 1
-        
+
         return {
             "success": True,
             "total": success_count + fail_count,
@@ -345,11 +345,11 @@ class ButlerClub:
         svc = self._get_vector_service()
         if not svc:
             return
-        
+
         member = self.get_member(user_id)
         if not member:
             return
-        
+
         svc.add_member(user_id, {
             "butler_name": member.get("butler_name", "小管"),
             "level": member.get("membership_level", "bronze"),

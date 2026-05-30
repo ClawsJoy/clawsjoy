@@ -18,18 +18,18 @@ class AdaptiveLearner:
         stats = brain.get_stats()
         success_rate = stats.get('success_rate', 0.5)
         self.success_window.append(success_rate)
-        
+
         if success_rate > 0.85:
             new_mode = "exploit"
         elif success_rate < 0.6:
             new_mode = "explore"
         else:
             new_mode = "balance"
-        
+
         if new_mode != self.state["mode"]:
             with open(self.adaptation_log, 'a') as f:
                 f.write(f"{datetime.now()}: {self.state['mode']} -> {new_mode}\n")
-        
+
         self.state.update({"mode": new_mode, "success_rate": success_rate})
         return self.state
 

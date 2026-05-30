@@ -7,7 +7,7 @@ from src.lib.memory_brain import memory_brain
 
 class SmartBrain:
     def __init__(self):
-        self.ollama_url = "http://smart_config.HOST:str(smart_config.get_port("ollama"))/api/generate"
+        self.ollama_url = f"http://{smart_config.HOST}:{smart_config.get_port("ollama")}/api/generate"
     
     def process(self, user_input):
         # 1. 快速规则匹配（数学）

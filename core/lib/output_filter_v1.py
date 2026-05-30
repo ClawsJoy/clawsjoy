@@ -19,7 +19,7 @@ class OutputFilter:
         (r'^(Reasoning|Let me|I will|Now I|First, let me|Here is|I think).*$', ''),
         (r'^(Wait|Actually|By the way|Note that).*$', ''),
         (r'^(In order to|To accomplish|Based on).*$', ''),
-        
+
         # 中文推理模式
         (r'^(让我想想|我来分析|我需要|首先|接下来|然后|最后).*$', ''),
         (r'^(根据|基于|为了|通过|从).*$', ''),
@@ -46,10 +46,10 @@ class OutputFilter:
         """过滤输出文本"""
         if not text:
             return text
-        
+
         original = text
         filtered = text
-        
+
         # 1. 逐行过滤推理内容
         lines = filtered.split('\n')
         filtered_lines = []
@@ -62,19 +62,19 @@ class OutputFilter:
             if should_keep:
                 filtered_lines.append(line)
         filtered = '\n'.join(filtered_lines)
-        
+
         # 2. 移除工具调用泄漏
         for pattern, replacement in cls.TOOL_LEAK_PATTERNS:
             filtered = re.sub(pattern, replacement, filtered, flags=re.DOTALL | re.IGNORECASE)
-        
+
         # 3. 移除 thinking 标签
         for pattern, replacement in cls.THINKING_TAGS:
             filtered = re.sub(pattern, replacement, filtered, flags=re.DOTALL | re.IGNORECASE)
-        
+
         # 4. 清理多余空行
         filtered = re.sub(r'\n{3,}', '\n\n', filtered)
         filtered = filtered.strip()
-        
+
         return filtered
     
     @classmethod
@@ -94,7 +94,7 @@ class OutputFilter:
             r'```\n(\{.*?\})\n```',
             r'(\{.*\})',
         ]
-        
+
         for pattern in json_patterns:
             match = re.search(pattern, text, re.DOTALL)
             if match:

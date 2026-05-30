@@ -29,11 +29,11 @@ class ConfigVersionManager:
         version_id = datetime.now().strftime("%Y%m%d_%H%M%S")
         version_path = self.version_dir / config_name / version_id
         version_path.mkdir(parents=True, exist_ok=True)
-        
+
         # 保存配置
         with open(version_path / "config.json", 'w') as f:
             json.dump(config, f, indent=2)
-        
+
         # 保存元数据
         metadata = {
             "version_id": version_id,
@@ -45,10 +45,10 @@ class ConfigVersionManager:
         }
         with open(version_path / "metadata.json", 'w') as f:
             json.dump(metadata, f, indent=2)
-        
+
         # 清理旧版本（保留最近10个）
         self._cleanup_old_versions(config_name, keep=10)
-        
+
         return metadata
     
     def get_latest_hash(self, config_name: str) -> Optional[str]:
@@ -56,11 +56,11 @@ class ConfigVersionManager:
         config_dir = self.version_dir / config_name
         if not config_dir.exists():
             return None
-        
+
         versions = sorted([d for d in config_dir.iterdir() if d.is_dir()])
         if not versions:
             return None
-        
+
         with open(versions[-1] / "metadata.json", 'r') as f:
             metadata = json.load(f)
         return metadata.get("hash")
@@ -70,7 +70,7 @@ class ConfigVersionManager:
         config_dir = self.version_dir / config_name
         if not config_dir.exists():
             return []
-        
+
         versions = []
         for v in sorted(config_dir.iterdir(), reverse=True):
             if v.is_dir():
@@ -86,7 +86,7 @@ class ConfigVersionManager:
         version_path = self.version_dir / config_name / version_id
         if not version_path.exists():
             return None
-        
+
         with open(version_path / "config.json", 'r') as f:
             return json.load(f)
     
@@ -95,7 +95,7 @@ class ConfigVersionManager:
         config = self.get_version(config_name, version_id)
         if not config:
             return False
-        
+
         # 这里需要根据配置类型写入对应的配置文件
         # 简化版：只返回配置内容
         return {"success": True, "config": config}
@@ -105,7 +105,7 @@ class ConfigVersionManager:
         config_dir = self.version_dir / config_name
         if not config_dir.exists():
             return
-        
+
         versions = sorted([d for d in config_dir.iterdir() if d.is_dir()])
         for old in versions[:-keep]:
             shutil.rmtree(old)

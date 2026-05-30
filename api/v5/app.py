@@ -39,7 +39,7 @@ def register_routes():
         print(f"   ❌ Agent 路由注册失败: {e}")
     
     try:
-        from api.v5.async import register_async_routes
+#         from .async import register_async_routes
         register_async_routes(app)
         print("   ✅ 异步路由已注册")
     except Exception as e:

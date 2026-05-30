@@ -58,7 +58,7 @@ class IntentLearner:
         """从任务中学习"""
         key = self.get_intent_key(user_input)
         self.patterns[key] = self.patterns.get(key, 0) + 1
-        
+
         # 记录用户历史
         self.user_history[key].append({
             "input": user_input,
@@ -67,17 +67,17 @@ class IntentLearner:
             "result": result[:100],
             "timestamp": datetime.now().isoformat()
         })
-        
+
         # 只保留最近 10 条
         if len(self.user_history[key]) > 10:
             self.user_history[key] = self.user_history[key][-10:]
-        
+
         self._save()
     
     def predict(self, user_input: str) -> Optional[Dict]:
         """预测用户意图（基于历史）"""
         key = self.get_intent_key(user_input)
-        
+
         if key in self.patterns and self.patterns[key] >= 2:
             # 有过类似请求，返回历史结果
             history = self.user_history.get(key, [])
@@ -92,7 +92,7 @@ class IntentLearner:
                             "history_count": self.patterns[key],
                             "suggestion": h.get('result', '')
                         }
-        
+
         return {"matched": False, "confidence": 0}
     
     def get_stats(self) -> Dict:
@@ -114,10 +114,10 @@ class SmartIntentHandler:
     
     def understand(self, user_input: str) -> Dict:
         """理解用户意图（学习优先）"""
-        
+
         # 1. 先查学习历史
         prediction = self.learner.predict(user_input)
-        
+
         if prediction.get('matched'):
             return {
                 "source": "learned",
@@ -126,7 +126,7 @@ class SmartIntentHandler:
                 "history_count": prediction.get('history_count'),
                 "suggestion": prediction.get('suggestion')
             }
-        
+
         # 2. 没有历史，用 LLM 理解
         return self._llm_understand(user_input)
     
@@ -138,7 +138,7 @@ class SmartIntentHandler:
 可用任务：list_agents, list_skills, generate_chart, unknown
 
 输出格式：{{"task": "任务名", "confidence": 0.0-1.0, "params": {{}}}}"""
-        
+
         try:
             import requests
             resp = requests.post(
@@ -154,7 +154,7 @@ class SmartIntentHandler:
                     return {"source": "llm", **json.loads(match.group())}
         except:
             pass
-        
+
         return {"source": "default", "task": "unknown", "confidence": 0.3}
     
     def record_feedback(self, user_input: str, task: str, success: bool, result: str = ""):
@@ -185,7 +185,7 @@ if __name__ == "__main__":
         result = intent_handler.understand(q)
         print(f"   来源: {result.get('source')}")
         print(f"   任务: {result.get('task')}")
-        
+
         # 模拟成功，记录学习
         intent_handler.record_feedback(q, result.get('task', 'unknown'), True, "成功执行")
     

@@ -69,10 +69,10 @@ class SkillComposer:
         for skill_dir in self.skills_path.iterdir():
             if not skill_dir.is_dir() or skill_dir.name.startswith('__'):
                 continue
-            
+
             # 获取预定义关键词
             keywords = self.SKILL_KEYWORDS.get(skill_dir.name, [skill_dir.name])
-            
+
             skill_md = skill_dir / "SKILL.md"
             if skill_md.exists():
                 try:
@@ -118,28 +118,28 @@ class SkillComposer:
         """根据意图匹配技能，返回 (技能名, 匹配分数)"""
         intent_lower = intent.lower()
         matches = []
-        
+
         for name, skill in self.skills.items():
             score = 0
-            
+
             # 检查关键词匹配
             for keyword in skill.keywords:
                 if keyword.lower() in intent_lower:
                     score += 2
                 elif keyword.lower() in intent_lower.split():
                     score += 3
-            
+
             # 检查技能名匹配
             if name.lower() in intent_lower:
                 score += 2
-            
+
             # 检查描述匹配
             if skill.description.lower() in intent_lower:
                 score += 1
-            
+
             if score > 0:
                 matches.append((name, score))
-        
+
         # 按分数排序
         matches.sort(key=lambda x: x[1], reverse=True)
         return matches[:10]
@@ -154,13 +154,13 @@ class SkillComposer:
     def compose_workflow(self, intent: str) -> Dict:
         """自动组合工作流"""
         matches = self.find_skills_for_intent(intent)
-        
+
         workflow = {
             "intent": intent,
             "steps": [],
             "estimated_success_rate": 0.8
         }
-        
+
         for i, (skill_name, score) in enumerate(matches[:5]):
             skill = self.skills.get(skill_name)
             step = {
@@ -171,7 +171,7 @@ class SkillComposer:
                 "keywords": skill.keywords[:5] if skill else []
             }
             workflow["steps"].append(step)
-        
+
         return workflow
     
     def get_skill_guide(self) -> str:
@@ -181,11 +181,11 @@ class SkillComposer:
         guide.append("")
         guide.append("| Skill | Keywords | Security |")
         guide.append("|-------|----------|----------|")
-        
+
         for skill in self.skills.values():
             keywords_str = ", ".join(skill.keywords[:5])
             guide.append(f"| {skill.name} | {keywords_str} | {skill.security_grade} |")
-        
+
         return "\n".join(guide)
     
     def get_stats(self) -> Dict:

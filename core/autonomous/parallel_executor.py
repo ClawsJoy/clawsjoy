@@ -16,13 +16,13 @@ class ParallelExecutor:
     def execute_parallel(self, goals: List[Dict]) -> List[Dict]:
         """并行执行多个目标"""
         results = []
-        
+
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             futures = {}
             for goal in goals:
                 future = executor.submit(self._execute_single, goal)
                 futures[future] = goal
-            
+
             for future in as_completed(futures):
                 goal = futures[future]
                 try:
@@ -32,13 +32,13 @@ class ParallelExecutor:
                 except Exception as e:
                     results.append({"goal": goal, "result": {"success": False, "error": str(e)}})
                     print(f"  ❌ 并行失败: {goal['description']} - {e}")
-        
+
         return results
     
     def _execute_single(self, goal: Dict) -> Dict:
         """执行单个目标"""
         action = goal.get('action', '')
-        
+
         if action == 'check_skills':
             try:
                 resp = requests.get('http://localhost:5002/api/skills', timeout=10)
@@ -46,18 +46,18 @@ class ParallelExecutor:
                 return {"success": True, "result": f"技能数: {skills.get('total', 0)}"}
             except Exception as e:
                 return {"success": False, "error": str(e)}
-        
+
         elif action == 'sync_knowledge':
             try:
                 resp = requests.post('http://localhost:5002/api/knowledge/sync', timeout=config_helper.get_timeout("default"))
                 return {"success": resp.status_code == 200, "result": "同步完成"}
             except Exception as e:
                 return {"success": False, "error": str(e)}
-        
+
         elif action == 'optimize_system':
             # 模拟优化
             return {"success": True, "result": "系统优化完成"}
-        
+
         return {"success": False, "error": f"未知操作: {action}"}
 
 parallel_executor = ParallelExecutor()
@@ -99,7 +99,7 @@ def _execute_advanced(self, goal: Dict) -> Dict:
     def _execute_enhanced(self, goal: Dict) -> Dict:
         """执行增强目标"""
         action = goal.get('action', '')
-        
+
         if action == 'optimize_knowledge_base':
             try:
                 # 重新同步知识库
@@ -107,7 +107,7 @@ def _execute_advanced(self, goal: Dict) -> Dict:
                 return {"success": True, "result": "知识库优化完成"}
             except Exception as e:
                 return {"success": False, "error": str(e)}
-        
+
         elif action == 'defrag_memory':
             try:
                 from core.lib.memory_vector import vector_memory
@@ -116,7 +116,7 @@ def _execute_advanced(self, goal: Dict) -> Dict:
                 return {"success": True, "result": f"记忆整理完成，当前 {count} 条"}
             except Exception as e:
                 return {"success": False, "error": str(e)}
-        
+
         elif action == 'analyze_skill_usage':
             try:
                 import json
@@ -130,5 +130,5 @@ def _execute_advanced(self, goal: Dict) -> Dict:
                 return {"success": True, "result": "暂无使用数据"}
             except Exception as e:
                 return {"success": False, "error": str(e)}
-        
+
         return None

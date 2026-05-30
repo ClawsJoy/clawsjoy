@@ -22,7 +22,7 @@ class AnalyzerDaemon:
         outcomes = memory.recall_all(category='workflow_outcome')
         total = len(outcomes)
         success = len([o for o in outcomes if '成功' in o])
-        
+
         # 构建有效的 JSON 对象
         analysis = {
             "timestamp": datetime.now().isoformat(),
@@ -33,18 +33,18 @@ class AnalyzerDaemon:
             "decision_count": len(memory.recall_all(category='executed_decisions')),
             "user_feedback_count": len(memory.recall_all(category='user_feedback'))
         }
-        
+
         # 存储为有效 JSON 字符串
         json_str = json.dumps(analysis, ensure_ascii=False)
         memory.remember(json_str, category='intelligence_analysis')
-        
+
         return analysis
     
     def run(self):
         print(f"📊 智能分析器启动")
         print(f"   分析间隔: {self.interval}秒")
         print(f"   日志文件: {self.log_file}")
-        
+
         while True:
             try:
                 analysis = self.analyze()
@@ -54,7 +54,7 @@ class AnalyzerDaemon:
                 print(f"✅ {datetime.now().strftime('%H:%M:%S')}: 分析完成 - 成功率 {analysis['success_rate']:.1f}% ({analysis['total_tasks']}任务)")
             except Exception as e:
                 print(f"❌ 分析失败: {e}")
-            
+
             time.sleep(self.interval)
 
 if __name__ == "__main__":

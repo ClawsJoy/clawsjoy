@@ -1,6 +1,0 @@
-# 资源配置 v1.0.00
-check_interval: 60                # 检查间隔（秒）
-throttle_when_high_load: true     # 高负载时限流
-cooldown_seconds: 30              # 冷却时间（秒）
-max_concurrent_tasks: 5           # 最大并发任务数
-task_queue_size: 1000             # 任务队列大小

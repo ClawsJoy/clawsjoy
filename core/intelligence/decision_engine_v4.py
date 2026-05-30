@@ -35,7 +35,7 @@ class DecisionEngineV4:
     def decide(self, context: Dict[str, Any]) -> Dict[str, Any]:
         """做出决策"""
         task_name = context.get('task_name', '')
-        
+
         # 基于规则的快速决策
         if '热度100' in task_name:
             decision = {"action": "execute", "priority": "high", "confidence": 0.9}
@@ -43,13 +43,13 @@ class DecisionEngineV4:
             decision = {"action": "execute", "priority": "normal", "confidence": 0.7}
         else:
             decision = {"action": "defer", "priority": "low", "confidence": 0.5}
-        
+
         # 记录决策
         decision["task"] = task_name
         decision["timestamp"] = datetime.now().isoformat()
         self.decision_history.append(decision)
         self._save_history()
-        
+
         return decision
     
     def get_stats(self) -> Dict:

@@ -23,7 +23,7 @@ class CrossLearning:
             "timestamp": __import__('datetime').datetime.now().isoformat(),
             "status": "pending"
         }
-        
+
         # 写入共享队列
         queue_file = self.shared_memory / f"{from_agent}_to_{to_agent}.json"
         data = []
@@ -33,7 +33,7 @@ class CrossLearning:
         data.append(record)
         with open(queue_file, 'w') as f:
             json.dump(data, f, indent=2)
-        
+
         print(f"📤 {from_agent} 分享知识给 {to_agent}")
         return True
     
@@ -52,7 +52,7 @@ class CrossLearning:
             # 更新状态
             with open(f, 'w') as fp:
                 json.dump(data, fp, indent=2)
-        
+
         if results:
             print(f"📥 {agent} 收到 {len(results)} 条知识分享")
         return results

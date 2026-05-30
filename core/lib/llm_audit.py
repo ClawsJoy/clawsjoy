@@ -32,10 +32,10 @@ class LLMAudit:
             "success": context.get('success', False),
             "tokens": context.get('tokens', {})
         }
-        
+
         with open(self.current_log, 'a') as f:
             f.write(json.dumps(log_entry, ensure_ascii=False) + '\n')
-        
+
         return log_entry['call_id']
     
     def get_stats(self, date: str = None) -> Dict:
@@ -44,10 +44,10 @@ class LLMAudit:
             log_file = self.log_dir / f"llm_{date}.log"
         else:
             log_file = self.current_log
-        
+
         if not log_file.exists():
             return {"total_calls": 0}
-        
+
         calls = []
         with open(log_file, 'r') as f:
             for line in f:
@@ -55,11 +55,11 @@ class LLMAudit:
                     calls.append(json.loads(line))
                 except:
                     pass
-        
+
         total = len(calls)
         success = sum(1 for c in calls if c.get('success'))
         avg_duration = sum(c.get('duration_ms', 0) for c in calls) / total if total else 0
-        
+
         return {
             "total_calls": total,
             "success_rate": success / total if total else 0,

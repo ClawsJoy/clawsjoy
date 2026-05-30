@@ -68,7 +68,7 @@ class UserMarketplace:
                 "popularity": 90
             }
         ]
-        
+
         for pkg in packages:
             pkg_file = self.marketplace_dir / f"{pkg['id']}.json"
             if not pkg_file.exists():
@@ -91,14 +91,14 @@ class UserMarketplace:
         pkg_file = self.marketplace_dir / f"{package_id}.json"
         if not pkg_file.exists():
             return {"success": False, "error": "包不存在"}
-        
+
         with open(pkg_file, 'r') as f:
             pkg = json.load(f)
-        
+
         # 用户安装目录
         user_install_dir = Path(funified_config.get("paths.users_dir", f"{get_data_root()}/users/") + "/{user_id}/installed/{package_id}")
         user_install_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # 保存安装记录
         install_info = {
             "package_id": package_id,
@@ -110,18 +110,18 @@ class UserMarketplace:
             "user_config": custom_config or {},
             "status": "active"
         }
-        
+
         with open(user_install_dir / "install.json", 'w') as f:
             json.dump(install_info, f, indent=2)
-        
+
         # 如果是 Agent，创建用户实例
         if pkg['type'] == 'agent':
             self._create_user_agent_instance(user_id, pkg, custom_config)
-        
+
         # 如果是技能，创建用户技能包装器
         if pkg['type'] == 'skill':
             self._create_user_skill_wrapper(user_id, pkg, custom_config)
-        
+
         return {
             "success": True,
             "package": pkg['name'],
@@ -133,7 +133,7 @@ class UserMarketplace:
     def _create_user_agent_instance(self, user_id: str, pkg: Dict, config: Dict):
         """创建用户 Agent 实例"""
         from core.agents.user_translate_agent import get_user_translator
-        
+
         if pkg['id'] == 'language_master':
             translator = get_user_translator(user_id)
             if config:
@@ -147,17 +147,17 @@ class UserMarketplace:
         """创建用户技能包装器"""
         user_skill_dir = Path(funified_config.get("paths.users_dir", f"{get_data_root()}/users/") + "/{user_id}/skills/{pkg['id']}")
         user_skill_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # 创建用户技能配置
         skill_config = {
             "base_skill": pkg['base_skill'],
             "user_config": config or {},
             "created_at": datetime.now().isoformat()
         }
-        
+
         with open(user_skill_dir / "config.json", 'w') as f:
             json.dump(skill_config, f, indent=2)
-        
+
         print(f"✅ 用户 {user_id} 的技能 {pkg['name']} 已安装")
     
     def get_user_installed(self, user_id: str) -> List[Dict]:

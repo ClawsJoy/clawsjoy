@@ -51,7 +51,7 @@ class ErrorKnowledge:
                 err['last_seen'] = datetime.now().isoformat()
                 self._save_errors(errors)
                 return err
-        
+
         new_error = {
             "task": task_name,
             "error": error_msg[:200],

@@ -21,14 +21,14 @@ class MemoryWriterV1_0_01:
     
     def __init__(self):
         self.root = unified_config.ROOT
-        
+
     def write_task_outcome(self, task_name: str, status: str, 
                            skill: str = "", error_msg: str = "",
                            metadata: Dict = None) -> bool:
         """写入任务结果到记忆"""
         try:
             from core.lib.memory_simple import memory
-            
+
             outcome = {
                 "timestamp": datetime.now().isoformat(),
                 "task": task_name,
@@ -36,23 +36,23 @@ class MemoryWriterV1_0_01:
                 "skill": skill,
                 "version": self.VERSION
             }
-            
+
             if error_msg:
                 outcome["error"] = error_msg[:200]
-            
+
             if metadata:
                 outcome.update(metadata)
-            
+
             memory.remember(
                 json.dumps(outcome, ensure_ascii=False),
                 category="workflow_outcome_v2"
             )
-            
+
             simple_msg = f"{'✅' if status == 'success' else '❌'} {task_name}"
             memory.remember(simple_msg, category="workflow_outcome")
-            
+
             return True
-            
+
         except Exception as e:
             print(f"⚠️ 记忆写入失败: {e}")
             return False

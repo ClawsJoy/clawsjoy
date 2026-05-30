@@ -22,10 +22,10 @@ class VersionManager:
         self.root = Path(root_path) if root_path else Path(__file__).parent.parent
         self.version_dir = self.root / "config" / "version"
         self.current_version_dir = self.version_dir / "current"
-        
+
         # 确保目录存在
         self.version_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # 如果没有 current 软链接，使用最新版本
         if not self.current_version_dir.exists():
             self._init_current_version()
@@ -53,17 +53,17 @@ class VersionManager:
     def get_config(self, config_name: str, module: str = "monitoring") -> Dict:
         """获取配置（支持版本化）"""
         config_file = self.current_version_dir / f"{config_name}.yaml"
-        
+
         if not config_file.exists():
             config_file = self.version_dir / "default" / f"{config_name}.yaml"
-        
+
         if config_file.exists():
             with open(config_file, 'r', encoding='utf-8') as f:
                 if config_file.suffix == '.yaml':
                     return unified_config.get("version_manager_v1_0_01_20260517", {})
                 elif config_file.suffix == '.json':
                     return json.load(f)
-        
+
         return {}
     
     def get_status(self) -> Dict:

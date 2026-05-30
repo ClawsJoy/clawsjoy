@@ -31,7 +31,7 @@ class SecretHook:
                 self.config = unified_config.get('secret_hook', {})
         else:
             self.config = {}
-        
+
         self.sensitive_patterns = self.config.get('sensitive_patterns', [])
         self.log_redaction = self.config.get('log_redaction', {})
     
@@ -43,17 +43,17 @@ class SecretHook:
     def redact_sensitive(self, text: str) -> str:
         if not self.log_redaction.get('enabled', True):
             return text
-        
+
         result = text
         for pattern_config in self.log_redaction.get('patterns', []):
             pattern = pattern_config.get('pattern', '')
             replace = pattern_config.get('replace', '***')
             if pattern:
                 result = re.sub(pattern, replace, result, flags=re.IGNORECASE)
-        
+
         for pattern in self.sensitive_patterns:
             result = re.sub(f"({pattern})[=:]\\S+", r'\1=***', result, flags=re.IGNORECASE)
-        
+
         return result
     
     def check_message(self, message: Dict) -> Tuple[bool, Optional[Dict]]:

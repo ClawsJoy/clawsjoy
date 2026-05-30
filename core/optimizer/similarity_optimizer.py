@@ -11,7 +11,7 @@ class SimilarityOptimizer:
         """重排序结果，保持原始分数"""
         if not results:
             return results
-        
+
         # 关键词提权 (轻量)
         if boost_keywords:
             for r in results:
@@ -21,7 +21,7 @@ class SimilarityOptimizer:
                     if keyword in name:
                         boost = max(boost, multiplier)
                 r['similarity'] = r['similarity'] * boost
-        
+
         # 按相似度排序
         results.sort(key=lambda x: x.get('similarity', 0), reverse=True)
         return results

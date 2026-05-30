@@ -28,7 +28,7 @@ class SkillExecutor:
             return {"success": False, "error": f"技能不存在: {skill_name}"}
 
         print(f"[DEBUG] 找到技能: {skill_name}", flush=True)
-        
+
         try:
             # 动态导入技能模块
             module_path = skill_info['path']

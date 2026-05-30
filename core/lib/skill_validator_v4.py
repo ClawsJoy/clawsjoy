@@ -47,30 +47,30 @@ class SkillValidator:
     def validate_skill(self, skill_name: str) -> ValidationResult:
         """完整验证一个技能"""
         result = ValidationResult(skill_name=skill_name, passed=True)
-        
+
         # Layer 1: 静态验证
         self._validate_static(skill_name, result)
-        
+
         # Layer 2: 动态验证
         if result.passed:
             self._validate_dynamic(skill_name, result)
-        
+
         # Layer 3: 运行验证
         if result.passed:
             self._validate_runtime(skill_name, result)
-        
+
         result.passed = len(result.errors) == 0
         return result
     
     def _validate_static(self, skill_name: str, result: ValidationResult):
         """Layer 1: 静态验证"""
         skill_dir = self.skills_path / skill_name
-        
+
         # 检查目录存在
         if not skill_dir.exists():
             result.errors.append(f"Skill directory not found: {skill_name}")
             return
-        
+
         # 检查 SKILL.md
         skill_md = skill_dir / "SKILL.md"
         if not skill_md.exists():
@@ -99,7 +99,7 @@ class SkillValidator:
                     result.warnings.append("SKILL.md missing YAML frontmatter")
             except Exception as e:
                 result.errors.append(f"Failed to parse SKILL.md: {e}")
-        
+
         # 检查 scripts/main.py
         main_py = skill_dir / "scripts" / "main.py"
         if not main_py.exists():
@@ -118,43 +118,43 @@ class SkillValidator:
     def _validate_dynamic(self, skill_name: str, result: ValidationResult):
         """Layer 2: 动态验证"""
         main_py = self.skills_path / skill_name / "scripts" / "main.py"
-        
+
         try:
             import importlib.util
             spec = importlib.util.spec_from_file_location(skill_name, main_py)
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
-            
+
             # 检查 execute 函数
             if not hasattr(module, 'execute'):
                 result.errors.append("No 'execute' function in main.py")
                 return
-            
+
             # 检查函数签名
             import inspect
             sig = inspect.signature(module.execute)
             params = list(sig.parameters.keys())
             if len(params) != 1 or params[0] != 'params':
                 result.warnings.append(f"execute() should take 'params' dict, got: {params}")
-            
+
             result.metadata['has_execute'] = True
-            
+
         except Exception as e:
             result.errors.append(f"Import failed: {str(e)[:100]}")
     
     def _validate_runtime(self, skill_name: str, result: ValidationResult):
         """Layer 3: 运行验证"""
         main_py = self.skills_path / skill_name / "scripts" / "main.py"
-        
+
         try:
             import importlib.util
             spec = importlib.util.spec_from_file_location(skill_name, main_py)
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
-            
+
             # 测试执行
             test_result = module.execute({"test": True, "validate": True})
-            
+
             if not isinstance(test_result, dict):
                 result.errors.append("execute() must return a dict")
             elif not test_result.get('success', False):
@@ -177,15 +177,15 @@ class SkillValidator:
     def get_validation_report(self) -> str:
         """生成验证报告"""
         results = self.validate_all()
-        
+
         report = []
         report.append("=" * 60)
         report.append("技能验证报告")
         report.append("=" * 60)
-        
+
         passed = 0
         failed = 0
-        
+
         for name, result in results.items():
             status = "✅" if result.passed else "❌"
             report.append(f"{status} {name}")
@@ -199,11 +199,11 @@ class SkillValidator:
                 passed += 1
             else:
                 failed += 1
-        
+
         report.append("-" * 60)
         report.append(f"总计: {passed + failed} | 通过: {passed} | 失败: {failed}")
         report.append("=" * 60)
-        
+
         return "\n".join(report)
 
 

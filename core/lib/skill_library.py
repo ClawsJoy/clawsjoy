@@ -24,7 +24,7 @@ class SkillLibrary:
                     manifest = json.load(fp)
                     self.atomic_skills[manifest["name"]] = manifest
                     print(f"✅ 加载原子技能: {manifest['name']}")
-        
+
         # 加载工作流技能
         workflow_dir = self.manifests_dir / "workflow"
         if workflow_dir.exists():

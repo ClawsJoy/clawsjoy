@@ -9,7 +9,7 @@ class AgentHealthCheck:
 
     def __init__(self):
         self.health_history: Dict[str, List[Dict]] = {}
-        
+
         # 内置 Agent 列表
         self.builtin_agents = [
             'orchestrator', 'decision_agent', 'executor_agent',

@@ -36,27 +36,27 @@ class SimpleMemory:
         existing_ids = [i["id"] for i in self.memories["items"]]
         if doc_id not in existing_ids:
             self.memories["items"].append(item)
-        
+
         if category not in self.memories["categories"]:
             self.memories["categories"][category] = []
         if fact not in self.memories["categories"][category]:
             self.memories["categories"][category].append(fact)
-        
+
         self._save()
         return True
     
     def recall(self, query, category=None, n=5):
         query_lower = query.lower()
         results = []
-        
+
         items = self.memories["items"]
         if category:
             items = [i for i in items if i["category"] == category]
-        
+
         for item in items:
             if query_lower in item["fact"].lower():
                 results.append(item["fact"])
-        
+
         return results[:n]
     
     def get_all(self, category=None):

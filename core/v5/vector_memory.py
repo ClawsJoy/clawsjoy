@@ -76,11 +76,11 @@ class VectorMemory:
         """添加文档"""
         doc_id = hashlib.md5(f"{text}{time.time()}".encode()).hexdigest()[:8]
         words = self._tokenize(text)
-        
+
         # 更新 IDF
         for w in set(words):
             self.idf[w] = self.idf.get(w, 0) + 1
-        
+
         self.documents.append({
             "id": doc_id,
             "text": text,
@@ -88,24 +88,24 @@ class VectorMemory:
             "metadata": metadata or {},
             "timestamp": time.time()
         })
-        
+
         # 限制文档数
         if len(self.documents) > 500:
             self.documents = self.documents[-500:]
-        
+
         self._save()
     
     def search(self, query: str, limit: int = 3) -> List[Dict]:
         """语义搜索"""
         query_words = self._tokenize(query)
         query_vec = self._compute_tfidf(query_words)
-        
+
         results = []
         for doc in self.documents:
             doc_vec = self._compute_tfidf(doc['words'])
             score = self._cosine_similarity(query_vec, doc_vec)
             results.append((score, doc))
-        
+
         results.sort(key=lambda x: x[0], reverse=True)
         return [{"text": r[1]['text'], "score": round(r[0], 3), "metadata": r[1]['metadata']} 
                 for r in results[:limit] if r[0] > 0.1]

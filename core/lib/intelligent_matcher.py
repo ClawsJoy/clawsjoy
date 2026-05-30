@@ -44,12 +44,12 @@ class IntelligentMatcher:
     def route_intent(self, query: str) -> dict:
         """智能路由 - 根据意图决定调用什么"""
         matches = self.match_all(query, 3)
-        
+
         # 按相似度排序，取最高分
         best_skill = matches['skills'][0] if matches['skills'] else None
         best_api = matches['apis'][0] if matches['apis'] else None
         best_agent = matches['agents'][0] if matches['agents'] else None
-        
+
         scores = []
         if best_skill:
             scores.append(('skill', best_skill['name'], best_skill['similarity']))
@@ -57,7 +57,7 @@ class IntelligentMatcher:
             scores.append(('api', best_api['path'], best_api['similarity']))
         if best_agent:
             scores.append(('agent', best_agent['name'], best_agent['similarity']))
-        
+
         # 返回最佳匹配
         if scores:
             scores.sort(key=lambda x: x[2], reverse=True)
@@ -67,7 +67,7 @@ class IntelligentMatcher:
                 'similarity': scores[0][2],
                 'all_matches': matches
             }
-        
+
         return {'type': 'unknown', 'name': None, 'similarity': 0, 'all_matches': matches}
 
 

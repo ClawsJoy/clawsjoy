@@ -35,7 +35,7 @@ class VectorMemory:
         meta = metadata or {}
         meta["category"] = category
         meta["timestamp"] = datetime.now().isoformat()
-        
+
         # 配置驱动：存储 ID 到 metadata
         if memory_opt_config.get('id_management.store_in_metadata', True):
             id_field = memory_opt_config.get('id_management.id_field_name', 'doc_id')

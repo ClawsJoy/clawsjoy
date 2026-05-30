@@ -1,58 +1,55 @@
-from core.lib.config_helper import get_data_root, get_llm_endpoint, get_llm_model, get_embedding_model, get_gateway_port, get_timeout
-from core.lib.unified_config import unified_config
-
-from core.lib.unified_config import unified_config
-
 """反馈处理器 - 收集和处理用户反馈"""
 
 import json
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Any
+from typing import Dict, List
+from core.lib.config_helper import get_data_root
+
 
 class FeedbackHandler:
     """反馈处理器 - 收集用户反馈并触发学习"""
-    
+
     def __init__(self):
         self.feedback_file = Path(f"{get_data_root()}/feedback.json")
         self.feedback_list = []
         self._load()
-    
+
     def _load(self):
         if self.feedback_file.exists():
             with open(self.feedback_file, 'r') as f:
                 self.feedback_list = json.load(f)
-    
+
     def _save(self):
         self.feedback_file.parent.mkdir(parents=True, exist_ok=True)
         with open(self.feedback_file, 'w') as f:
             json.dump(self.feedback_list, f, indent=2, default=str)
-    
+
     def collect(self, feedback: Dict) -> Dict:
         """收集反馈"""
         feedback_entry = {
             "id": f"fb_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
             "timestamp": datetime.now().isoformat(),
             "user_id": feedback.get('user_id', 'anonymous'),
-            "type": feedback.get('type', 'general'),  # helpful/unhelpful/bug/suggestion
+            "type": feedback.get('type', 'general'),
             "content": feedback.get('content', ''),
             "context": feedback.get('context', {}),
             "processed": False
         }
-        
+
         self.feedback_list.append(feedback_entry)
         self._save()
-        
+
         # 触发学习
         self._trigger_learning(feedback_entry)
-        
+
         return {"success": True, "id": feedback_entry['id']}
-    
+
     def _trigger_learning(self, feedback: Dict):
         """触发学习机制"""
         try:
             from core.lib.learning_hooks import learning_hooks
-            
+
             if feedback.get('type') == 'helpful':
                 learning_hooks.stats['user_satisfaction'].append({
                     'feedback': 'positive',
@@ -69,13 +66,13 @@ class FeedbackHandler:
                 print(f"📚 从反馈中学习: 需要改进")
         except Exception as e:
             print(f"⚠️ 学习触发失败: {e}")
-    
+
     def get_stats(self) -> Dict:
         """获取反馈统计"""
         total = len(self.feedback_list)
         helpful = sum(1 for f in self.feedback_list if f.get('type') == 'helpful')
         unhelpful = sum(1 for f in self.feedback_list if f.get('type') == 'unhelpful')
-        
+
         return {
             "total": total,
             "helpful": helpful,
@@ -83,14 +80,11 @@ class FeedbackHandler:
             "satisfaction_rate": helpful / total if total > 0 else 0
         }
 
-
-feedback_handler = FeedbackHandler()
-
     def _trigger_learning_with_coordinator(self, feedback: Dict):
         """使用学习协调器触发学习"""
         try:
             from core.learner.self_learning_coordinator import SelfLearningCoordinator
-            
+
             coordinator = SelfLearningCoordinator()
             scenario = {
                 'type': 'feedback_improvement',
@@ -101,3 +95,6 @@ feedback_handler = FeedbackHandler()
             print(f"   📚 学习协调器已触发: {feedback.get('skill_id', 'unknown')}")
         except Exception as e:
             print(f"   ⚠️ 学习协调器触发失败: {e}")
+
+
+feedback_handler = FeedbackHandler()

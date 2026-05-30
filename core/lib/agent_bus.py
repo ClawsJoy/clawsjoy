@@ -22,23 +22,23 @@ class Message:
     timestamp: str
     priority: int = 0
     
-    def __lt__(self, other):
+    def __lt__(self, other) -> Dict:
         """支持优先级队列比较"""
         return self.priority < other.priority
     
-    def __le__(self, other):
+    def __le__(self, other) -> Dict:
         return self.priority <= other.priority
     
-    def __gt__(self, other):
+    def __gt__(self, other) -> Dict:
         return self.priority > other.priority
     
-    def __ge__(self, other):
+    def __ge__(self, other) -> Dict:
         return self.priority >= other.priority
 
 class AgentBus:
     """Agent 消息总线 - 支持发布/订阅和消息队列"""
 
-    def __init__(self):
+    def __init__(self) -> Dict:
         self.subscribers: Dict[str, List[str]] = {}
         self.message_queue = queue.PriorityQueue()
         self.message_history: List[Message] = []
@@ -52,7 +52,7 @@ class AgentBus:
         import uuid
         return str(uuid.uuid4())
 
-    def publish(self, sender: str, topic: str, content: Dict, priority: int = 0):
+    def publish(self, sender: str, topic: str, content: Dict, priority: int = 0) -> Dict:
         """发布消息到主题"""
         message = Message(
             id=self._generate_id(),
@@ -75,7 +75,7 @@ class AgentBus:
         print(f"📢 [{sender}] 发布 [{topic}]: {content}")
         return message.id
 
-    def subscribe(self, agent_name: str, topic: str):
+    def subscribe(self, agent_name: str, topic: str) -> Dict:
         """订阅主题"""
         if topic not in self.subscribers:
             self.subscribers[topic] = []
@@ -83,20 +83,20 @@ class AgentBus:
             self.subscribers[topic].append(agent_name)
             print(f"📡 [{agent_name}] 订阅 [{topic}]")
 
-    def unsubscribe(self, agent_name: str, topic: str):
+    def unsubscribe(self, agent_name: str, topic: str) -> Dict:
         """取消订阅"""
         if topic in self.subscribers and agent_name in self.subscribers[topic]:
             self.subscribers[topic].remove(agent_name)
             print(f"📡 [{agent_name}] 取消订阅 [{topic}]")
 
-    def register_handler(self, topic: str, handler: callable):
+    def register_handler(self, topic: str, handler: callable) -> Dict:
         """注册消息处理器"""
         if topic not in self._handlers:
             self._handlers[topic] = []
         self._handlers[topic].append(handler)
         print(f"🔧 注册处理器: {handler.__name__} -> [{topic}]")
 
-    def _notify(self, agent_name: str, message: Message):
+    def _notify(self, agent_name: str, message: Message) -> Dict:
         """通知订阅者"""
         if agent_name in self._handlers:
             for handler in self._handlers[agent_name]:
@@ -131,7 +131,7 @@ class AgentBus:
             history = [m for m in history if m.topic == topic]
         return [asdict(m) for m in history[-limit:]]
 
-    def start_listener(self, callback: callable = None):
+    def start_listener(self, callback: callable = None) -> Dict:
         """启动消息监听器（后台线程）"""
         if self._running:
             print("⚠️ 监听器已在运行")
@@ -152,7 +152,7 @@ class AgentBus:
         self._listener_thread = threading.Thread(target=_listen, daemon=True)
         self._listener_thread.start()
 
-    def stop_listener(self):
+    def stop_listener(self) -> Dict:
         """停止消息监听器"""
         self._running = False
         print("📡 消息监听器已停止")

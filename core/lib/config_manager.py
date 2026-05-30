@@ -113,7 +113,7 @@ class ConfigHotReload:
         """检查配置文件是否变更，如有则重载"""
         if not self.config_file.exists():
             return False
-        
+
         current_mtime = self.config_file.stat().st_mtime
         if current_mtime > self.last_mtime:
             self.last_mtime = current_mtime
@@ -136,12 +136,12 @@ class ConfigHotReload:
     def start_background_watch(self, interval: int = 5):
         """启动后台监控线程"""
         import threading
-        
+
         def watch_loop():
             while True:
                 self.check_and_reload()
                 time.sleep(interval)
-        
+
         thread = threading.Thread(target=watch_loop, daemon=True)
         thread.start()
         return thread

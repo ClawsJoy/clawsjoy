@@ -43,18 +43,18 @@ class ContentRetriever:
         """检索知识库"""
         query_lower = query.lower()
         results = []
-        
+
         for key, value in self.knowledge_base.items():
             if key.lower() in query_lower:
                 results.append(f"{key}: {json.dumps(value, ensure_ascii=False)}")
-        
+
         if results:
             return "\n".join(results)
         return "未找到相关信息"
     
     def retrieve_content(self, topic: str) -> Dict:
         """让 LLM 规划需要什么内容，然后检索"""
-        
+
         # 第一步：LLM 规划需要什么内容
         plan_prompt = f"""用户需要生成关于 "{topic}" 的 SVG 蓝图。
 
@@ -64,7 +64,7 @@ class ContentRetriever:
   "needed_data": ["数据项1", "数据项2"],
   "questions": ["问题1", "问题2"]
 }}"""
-        
+
         try:
             resp = requests.post(
                 f"{self.ollama_url}/api/generate",
@@ -93,24 +93,24 @@ class ContentRetriever:
                     }
         except Exception as e:
             print(f"规划失败: {e}")
-        
+
         return {"success": False, "content": {}, "needed": []}
     
     def generate_svg_with_content(self, topic: str) -> str:
         """基于检索到的内容生成 SVG"""
-        
+
         # 先检索内容
         retrieval = self.retrieve_content(topic)
-        
+
         if not retrieval['success']:
             return ""
-        
+
         content = retrieval['content']
-        
+
         # 加载示例模板
         example_file = Path(__file__).parent / "examples" / "roadmap.svg"
         example_svg = example_file.read_text(encoding='utf-8') if example_file.exists() else ""
-        
+
         # 让 LLM 基于内容生成 SVG
         prompt = f"""参考 SVG 模板的结构，用以下真实数据填充。
 
@@ -129,7 +129,7 @@ class ContentRetriever:
 4. 输出完整 SVG
 
 SVG："""
-        
+
         try:
             resp = requests.post(
                 f"{self.ollama_url}/api/generate",
@@ -144,7 +144,7 @@ SVG："""
                     return svg[start:end]
         except Exception as e:
             print(f"生成失败: {e}")
-        
+
         return ""
 
 
@@ -168,18 +168,18 @@ if __name__ == "__main__":
         """从文档中检索内容"""
         docs_dir = Path("PROJECT_ROOT/docs")
         results = []
-        
+
         for md_file in docs_dir.glob("*.md"):
             content = md_file.read_text(encoding='utf-8', errors='ignore')
             if query.lower() in content.lower():
                 # 提取相关段落
-            lines = content.split('\n')
+                        lines = content.split('\n')
             for i, line in enumerate(lines):
                 if query.lower() in line.lower():
                     context = '\n'.join(lines[max(0,i-2):min(len(lines),i+3)])
                     results.append(f"来源 {md_file.name}:\n{context[:300]}")
                     break
-        
+
         return "\n---\n".join(results[:3]) if results else ""
     
     def search_vector_db(self, query: str) -> str:

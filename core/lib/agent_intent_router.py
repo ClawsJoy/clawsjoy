@@ -32,16 +32,16 @@ class AgentIntentRouter:
     def _vectorize_all_routes(self):
         """向量化所有路由（供 Agent 使用）"""
         routes_config = clawsjoy_config.get('registry.routes.routes', [])
-        
+
         for route in routes_config:
             path = route.get('path')
             method = route.get('method')
             handler = route.get('handler')
             description = route.get('description', '')
-            
+
             # 构建 Agent 可理解的描述
             text = f"{method} {path}: {description}"
-            
+
             vector_memory.add(
                 text=text,
                 category="route",
@@ -57,7 +57,7 @@ class AgentIntentRouter:
     def route(self, user_intent: str) -> dict:
         """根据用户意图路由到合适的 API"""
         results = vector_memory.search(user_intent, category="route", n=3)
-        
+
         for r in results:
             if r['similarity'] >= 0.3:
                 return {
@@ -68,7 +68,7 @@ class AgentIntentRouter:
                     "confidence": r['similarity'],
                     "description": r['metadata'].get('description')
                 }
-        
+
         return {
             "success": False,
             "message": f"无法理解意图: {user_intent}",

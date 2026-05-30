@@ -39,13 +39,13 @@ class SelfLearningCoordinator:
         self.chat_agent = chat_agent
         self.butler = PersonalButlerV2(user_id="self_learner")
         self.skill_registry = SkillRegistryV2()
-        
+
         # 学习数据存储（利用你现有的 memory 目录）
         self.memory_dir = Path("memory/long_term")
         self.memory_dir.mkdir(parents=True, exist_ok=True)
-        
+
         self.knowledge_dir = Path("knowledge")
-        
+
         # 学习统计
         self.stats = {
             'total_learnings': 0,
@@ -53,7 +53,7 @@ class SelfLearningCoordinator:
             'failed_learnings': 0,
             'by_scenario': {}
         }
-        
+
         self._load_stats()
     
     def _load_stats(self):
@@ -75,16 +75,16 @@ class SelfLearningCoordinator:
         scenario_type = scenario.get('type', 'unknown')
         user_input = scenario.get('input', '')
         expected_outcome = scenario.get('expected', '')
-        
+
         start_time = time.time()
-        
+
         try:
             # 使用你的 chat_agent 处理
             result = self.chat_agent.process(user_input)
-            
+
             response = result.get('response', '')
             success = result.get('success', False)
-            
+
             # 记录到 personal_butler 的记忆中
             try:
                 self.butler._load_data()
@@ -97,33 +97,33 @@ class SelfLearningCoordinator:
                 self.butler._save_data()
             except Exception as e:
                 print(f"⚠️ 保存到 butler 失败: {e}")
-            
+
             # 如果成功，存入长期记忆
             if success:
                 self._store_success_case(user_input, response, scenario_type)
-            
+
             # 更新统计
             self.stats['total_learnings'] += 1
             if success:
                 self.stats['successful_learnings'] += 1
             else:
                 self.stats['failed_learnings'] += 1
-            
+
             scenario_stat = self.stats['by_scenario'].get(scenario_type, {'total': 0, 'success': 0})
             scenario_stat['total'] += 1
             if success:
                 scenario_stat['success'] += 1
             self.stats['by_scenario'][scenario_type] = scenario_stat
-            
+
             self._save_stats()
-            
+
             return {
                 'success': success,
                 'response': response[:100] + "..." if len(response) > 100 else response,
                 'scenario': scenario_type,
                 'duration': time.time() - start_time
             }
-            
+
         except Exception as e:
             self.stats['failed_learnings'] += 1
             self._save_stats()
@@ -144,7 +144,7 @@ class SelfLearningCoordinator:
                 'response': response[:500],
                 'tags': ['learned', scenario_type]
             }, f, indent=2)
-        
+
         # 同时更新 personal_butler 的学习模式
         try:
             self.butler.patterns['learned'].append({
@@ -156,7 +156,7 @@ class SelfLearningCoordinator:
             self.butler._save_data()
         except Exception as e:
             print(f"⚠️ 更新 patterns 失败: {e}")
-        
+
         print(f"📚 已学习: {user_input[:50]}...")
     
     def run_batch(self, scenarios: List[Dict]) -> Dict:
@@ -168,10 +168,10 @@ class SelfLearningCoordinator:
             result = self.learn_from_scenario(scenario)
             results.append(result)
             time.sleep(0.3)  # 避免过载
-        
+
         success_count = sum(1 for r in results if r['success'])
         success_rate = success_count / len(results) if results else 0
-        
+
         return {
             'total': len(results),
             'success_count': success_count,
@@ -187,7 +187,7 @@ class ScenarioGenerator:
     def __init__(self):
         self.skill_loader = skill_loader
         self.skills = self.skill_loader.list_all()
-        
+
         # 场景模板
         self.templates = {
             'greeting': [
@@ -216,7 +216,7 @@ class ScenarioGenerator:
     def generate(self, count: int = 10) -> List[Dict]:
         """生成学习场景"""
         scenarios = []
-        
+
         # 基于真实技能生成场景
         for i in range(count):
             # 随机选择技能
@@ -224,19 +224,19 @@ class ScenarioGenerator:
                 skill_name = random.choice(self.skills)
             else:
                 skill_name = "add"
-            
+
             scenario_type = random.choice(list(self.templates.keys()))
             template = random.choice(self.templates[scenario_type])
-            
+
             if '{}' in template:
                 user_input = template.format(skill_name)
             else:
                 user_input = template
-            
+
             scenarios.append({
                 'type': scenario_type,
                 'input': user_input,
                 'expected': f"成功调用{skill_name}" if scenario_type == 'skill_execute' else "正常回复"
             })
-        
+
         return scenarios

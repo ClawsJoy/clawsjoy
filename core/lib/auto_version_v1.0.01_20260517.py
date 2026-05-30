@@ -18,15 +18,15 @@ def auto_version(module_name: str, module_path: str = None):
             version = reg_info["version"]
         else:
             version = version_registry.get_version(module_name) or "v0.0.00"
-        
+
         # 注入版本属性
         if hasattr(cls_or_func, '__version__'):
             cls_or_func.__version__ = version
-        
+
         @functools.wraps(cls_or_func)
         def wrapper(*args, **kwargs):
             return cls_or_func(*args, **kwargs)
-        
+
         wrapper.__version__ = version
         return wrapper
     return decorator

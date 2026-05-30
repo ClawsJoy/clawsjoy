@@ -21,7 +21,7 @@ class SkillLearner:
                 self.combos = json.load(f)
         else:
             self.combos = {"combos": [], "stats": {}}
-        
+
         if self.generated_file.exists():
             with open(self.generated_file, 'r') as f:
                 self.generated = json.load(f)
@@ -38,18 +38,18 @@ class SkillLearner:
     
     def record_success(self, intent: str, skills: list, task: str = ""):
         combo_key = f"{intent}|{'|'.join(skills)}"
-        
+
         if "stats" not in self.combos:
             self.combos["stats"] = {}
-        
+
         if combo_key not in self.combos["stats"]:
             self.combos["stats"][combo_key] = 0
         self.combos["stats"][combo_key] += 1
         count = self.combos["stats"][combo_key]
-        
+
         self._save_combos()
         print(f"📊 记录组合: {combo_key} (第{count}次)")
-        
+
         if count >= 3:
             self._generate_skill(intent, skills, combo_key)
     
@@ -58,9 +58,9 @@ class SkillLearner:
             if existing.get("combo_key") == combo_key:
                 print(f"⏭️ 技能已存在，跳过生成")
                 return
-        
+
         skill_name = f"auto_{intent.replace(' ', '_').lower()}"
-        
+
         # 生成技能代码 - 修复 f-string 问题
         code = f'''"""
 自动生成技能: {intent}
@@ -76,12 +76,12 @@ class {skill_name.title().replace('_', '')}Skill:
     
     def execute(self, params: dict) -> dict:
         from core.lib.skill_loader_v3 import skill_loader
-        
+
         results = {{}}
         for skill in self.composed_skills:
             result = skill_loader.execute(skill, params)
             results[skill] = result
-        
+
         return {{
             "success": all(r.get('success', False) for r in results.values()),
             "results": results,
@@ -90,11 +90,11 @@ class {skill_name.title().replace('_', '')}Skill:
 
 skill = {skill_name.title().replace('_', '')}Skill()
 '''
-        
+
         skill_file = Path(f"skills/auto_generated/{skill_name}.py")
         skill_file.parent.mkdir(parents=True, exist_ok=True)
         skill_file.write_text(code)
-        
+
         import json
         registry_file = Path(f"{get_data_root()}/skill_registry_v2.json")
         if registry_file.exists():
@@ -102,7 +102,7 @@ skill = {skill_name.title().replace('_', '')}Skill()
                 registry = json.load(f)
         else:
             registry = {}
-        
+
         registry[skill_name] = {
             "name": skill_name,
             "category": "auto_generated",
@@ -112,10 +112,10 @@ skill = {skill_name.title().replace('_', '')}Skill()
             "created_at": datetime.now().isoformat(),
             "composed_skills": skills
         }
-        
+
         with open(registry_file, 'w') as f:
             json.dump(registry, f, indent=2)
-        
+
         self.generated["skills"].append({
             "skill_name": skill_name,
             "intent": intent,
@@ -124,7 +124,7 @@ skill = {skill_name.title().replace('_', '')}Skill()
             "created_at": datetime.now().isoformat()
         })
         self._save_generated()
-        
+
         print(f"🎉 自动生成新技能: {skill_name}")
         print(f"   组合: {skills}")
         print(f"   意图: {intent}")

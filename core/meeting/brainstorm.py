@@ -26,7 +26,7 @@ class BrainstormEngine:
         """召开会议"""
         print(f"\n📢 召开会议: {topic}")
         print("=" * 50)
-        
+
         meeting = {
             "id": f"meeting_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
             "topic": topic,
@@ -36,35 +36,35 @@ class BrainstormEngine:
             "conclusions": [],
             "actions": []
         }
-        
+
         # 1. 分析师发言 - 数据洞察
         analyst_view = self._analyst_speech(topic, context)
         meeting["discussions"].append({"speaker": "analyst", "content": analyst_view})
         print(f"📊 [分析师] {analyst_view.get('summary', '')[:100]}...")
-        
+
         # 2. 安全员发言 - 风险评估
         security_view = self._security_speech(topic, context)
         meeting["discussions"].append({"speaker": "security", "content": security_view})
         print(f"🔒 [安全员] {security_view.get('summary', '')[:100]}...")
-        
+
         # 3. 头脑风暴 - 讨论阶段
         brainstorm_results = self._brainstorm(topic, analyst_view, security_view)
         meeting["discussions"].extend(brainstorm_results)
-        
+
         # 4. 得出结论
         conclusion = self._conclude(meeting["discussions"])
         meeting["conclusions"] = conclusion
-        
+
         # 5. 生成行动计划
         actions = self._plan_actions(conclusion, context)
         meeting["actions"] = actions
-        
+
         # 记录会议
         self._save_meeting(meeting)
-        
+
         print("=" * 50)
         print(f"✅ 会议结束，生成 {len(actions)} 个行动项")
-        
+
         return meeting
     
     def _analyst_speech(self, topic: str, context: Dict) -> Dict:
@@ -99,26 +99,26 @@ class BrainstormEngine:
     def _brainstorm(self, topic: str, analyst_view: Dict, security_view: Dict) -> List:
         """头脑风暴"""
         discussions = []
-        
+
         # 决策师发言
         discussions.append({
             "speaker": "decision",
             "content": f"基于分析师建议: {analyst_view.get('recommendations', [])}"
         })
-        
+
         # 编排器发言
         discussions.append({
             "speaker": "orchestrator",
             "content": "可以编排以下任务..." if analyst_view.get('recommendations') else "等待决策"
         })
-        
+
         # 自愈系统发言
         if analyst_view.get('data_insights'):
             discussions.append({
                 "speaker": "self_healer",
                 "content": "检测到问题，可尝试自动修复"
             })
-        
+
         return discussions
     
     def _conclude(self, discussions: List) -> List:

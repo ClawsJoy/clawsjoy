@@ -55,11 +55,11 @@ class ActiveLearner:
         }
         self.memory["lessons"].append(lesson)
         self.memory["feedback_history"].append(lesson)
-        
+
         # 只保留最近 50 条
         if len(self.memory["lessons"]) > 50:
             self.memory["lessons"] = self.memory["lessons"][-50:]
-        
+
         self.save_memory()
         return lesson
     
@@ -77,11 +77,11 @@ class ActiveLearner:
         """应用学到的教训来改进输出"""
         # 提取最近的教训
         recent_lessons = self.memory["lessons"][-5:]
-        
+
         lessons_text = ""
         for lesson in recent_lessons:
             lessons_text += f"- 问题：{lesson['feedback']}，改进：{lesson['improvement']}\n"
-        
+
         enhanced_prompt = f"""请根据以下历史教训改进你的输出：
 
 历史教训：
@@ -95,7 +95,7 @@ class ActiveLearner:
 3. 格式简洁清晰
 
 请输出："""
-        
+
         try:
             resp = requests.post(
                 f"{self.ollama_url}/api/generate",
@@ -106,7 +106,7 @@ class ActiveLearner:
                 return resp.json().get('response', '')
         except Exception as e:
             print(f"生成失败: {e}")
-        
+
         return ""
     
     def self_reflect(self, task: str, output: str) -> str:
@@ -126,7 +126,7 @@ class ActiveLearner:
 
 输出 JSON 格式：
 {{"has_symbols": true/false, "detail_score": 0-5, "format_score": 0-5, "improvement": "改进建议"}}"""
-        
+
         try:
             resp = requests.post(
                 f"{self.ollama_url}/api/generate",
@@ -148,7 +148,7 @@ class ActiveLearner:
         lessons = self.memory["lessons"]
         if not lessons:
             return {"total_lessons": 0, "avg_score": 0}
-        
+
         scores = [l.get('score', 0) for l in lessons]
         return {
             "total_lessons": len(lessons),

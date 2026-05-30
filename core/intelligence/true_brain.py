@@ -23,10 +23,10 @@ class TrueBrain:
         self.last_states = {}
         self.event_history = deque(maxlen=1000)
         self.notifier = Notifier()
-        
+
         # 启动事件监听器
         self.start_listeners()
-        
+
         print("\n🧠 真智能大脑已启动")
         print("=" * 50)
         print("⚡ 事件驱动模式 - 实时响应")
@@ -39,15 +39,15 @@ class TrueBrain:
         # 服务状态监听
         service_thread = threading.Thread(target=self._listen_services, daemon=True)
         service_thread.start()
-        
+
         # 大脑状态监听
         brain_thread = threading.Thread(target=self._listen_brain, daemon=True)
         brain_thread.start()
-        
+
         # 事件处理线程
         process_thread = threading.Thread(target=self._process_events, daemon=True)
         process_thread.start()
-        
+
         print("✅ 事件监听器已启动")
     
     def _listen_services(self):
@@ -58,7 +58,7 @@ class TrueBrain:
             'agent': 'http://smart_config.HOST:str(unified_config.get_port("multi_agent"))/health',
             'doc': 'http://smart_config.HOST:5008/health'
         }
-        
+
         while self.running:
             for name, url in services.items():
                 try:
@@ -93,19 +93,19 @@ class TrueBrain:
                         self.event_queue.put(event)
                         self.last_states[name] = False
                         self._on_service_down(name)
-            
+
             time.sleep(3)  # 3秒检查一次，不是定时任务，是持续感知
     
     def _listen_brain(self):
         """监听大脑状态 - 实时感知大脑变化"""
         last_experiences = brain.get_stats().get('total_experiences', 0)
         last_success_rate = brain.get_stats().get('success_rate', 0)
-        
+
         while self.running:
             stats = brain.get_stats()
             current_experiences = stats.get('total_experiences', 0)
             current_success_rate = stats.get('success_rate', 0)
-            
+
             # 新经验事件（增量超过5）
             if current_experiences - last_experiences >= 5:
                 event = {
@@ -116,7 +116,7 @@ class TrueBrain:
                 }
                 self.event_queue.put(event)
                 last_experiences = current_experiences
-            
+
             # 成功率大幅下降事件
             if current_success_rate < last_success_rate - 0.1:
                 event = {
@@ -129,7 +129,7 @@ class TrueBrain:
                 last_success_rate = current_success_rate
             else:
                 last_success_rate = current_success_rate
-            
+
             time.sleep(5)  # 持续感知
     
     def _process_events(self):
@@ -144,22 +144,22 @@ class TrueBrain:
     def _handle_event(self, event):
         """大脑处理事件 - 智能反应"""
         event_type = event['type']
-        
+
         print(f"\n⚡ 大脑感知到事件: {event_type}")
-        
+
         # 记录事件历史
         self.event_history.append(event)
-        
+
         if event_type == 'service_state_change':
             if not event['new_state']:
                 self._decide_fix_service(event['service'])
-        
+
         elif event_type == 'service_unreachable':
             self._decide_fix_service(event['service'])
-        
+
         elif event_type == 'success_rate_drop':
             self._decide_optimize_learning(event)
-        
+
         elif event_type == 'new_experiences_gained':
             self._decide_analyze_patterns(event)
     
@@ -176,10 +176,10 @@ class TrueBrain:
     def _decide_fix_service(self, service_name):
         """决策：修复服务"""
         print(f"🔧 大脑决策: 修复 {service_name} 服务")
-        
+
         import subprocess
         subprocess.Popen("./restart_services.sh", shell=True, cwd=smart_config.ROOT)
-        
+
         # 记录决策
         brain.record_experience(
             agent="true_brain",
@@ -187,20 +187,20 @@ class TrueBrain:
             result={"success": True},
             context="event_detected"
         )
-        
+
         self.notifier.send("服务修复", f"自动修复 {service_name}", 'warning')
     
     def _decide_optimize_learning(self, event):
         """决策：优化学习"""
         print(f"📚 大脑决策: 优化学习 (成功率 {event['old_rate']*100:.0f}% -> {event['new_rate']*100:.0f}%)")
-        
+
         # 调整学习率
         current_rate = brain.get_stats().get('learning_rate', 0.3)
         new_rate = max(0.2, current_rate - 0.05)
-        
+
         if hasattr(brain, 'knowledge'):
             brain.knowledge['learning_rate'] = new_rate
-        
+
         brain.record_experience(
             agent="true_brain",
             action="optimize_learning",
@@ -211,7 +211,7 @@ class TrueBrain:
     def _decide_analyze_patterns(self, event):
         """决策：分析新模式"""
         print(f"🔍 大脑决策: 分析新经验模式 (+{event['count']}条)")
-        
+
         # 触发经验分析
         brain.record_experience(
             agent="true_brain",
@@ -236,25 +236,21 @@ if __name__ == "__main__":
 # 启动真智能大脑（事件驱动，无定时）
 cat > start_true_brain.sh << 'EOF'
 #!/bin/bash
-cd smart_config.ROOT
+# cd smart_config.ROOT
 
-echo "🧠 启动真智能大脑（事件驱动模式）"
-echo "=================================="
+# echo "🧠 启动真智能大脑（事件驱动模式）"
+# echo "=================================="
 
 # 停止旧的
-pkill -f "true_brain.py" 2>/dev/null
-pkill -f "decision_executor.py" 2>/dev/null
 
 # 启动新的真智能大脑
-python3 intelligence/true_brain.py &
-BRAIN_PID=$!
 
-echo ""
-echo "✅ 真智能大脑已启动 (PID: $BRAIN_PID)"
-echo ""
-echo "⚡ 事件驱动 - 无需定时任务"
-echo "🔄 持续感知 - 3秒检查间隔"
-echo "🎯 自主决策 - 实时响应"
-echo ""
-echo "查看日志: tail -f logs/brain.log"
-echo "停止: kill $BRAIN_PID"
+# echo ""
+# echo "✅ 真智能大脑已启动 (PID: $BRAIN_PID)"
+# echo ""
+# echo "⚡ 事件驱动 - 无需定时任务"
+# echo "🔄 持续感知 - 3秒检查间隔"
+# echo "🎯 自主决策 - 实时响应"
+# echo ""
+# echo "查看日志: tail -f logs/brain.log"
+# echo "停止: kill $BRAIN_PID"

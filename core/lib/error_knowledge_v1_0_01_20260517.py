@@ -52,7 +52,7 @@ class ErrorKnowledge:
     def add(self, task_name: str, error_msg: str, skill: str = "") -> Dict:
         """添加错误"""
         errors = self._load_errors()
-        
+
         # 查找已存在的错误
         for err in errors:
             if err.get('task') == task_name:
@@ -60,7 +60,7 @@ class ErrorKnowledge:
                 err['last_seen'] = datetime.now().isoformat()
                 self._save_errors(errors)
                 return err
-        
+
         # 新增错误
         new_error = {
             "task": task_name,
@@ -78,13 +78,13 @@ class ErrorKnowledge:
         """判断是否应该跳过任务"""
         if not self.skip_enabled:
             return False, "跳过功能已禁用"
-        
+
         error = self.query(task_name)
         if error:
             retries = error.get('retry_count', 0)
             if retries >= self.max_retry:
                 return True, f"重复失败 {retries} 次 (阈值: {self.max_retry})"
-        
+
         return False, ""
     
     def get_stats(self) -> Dict:

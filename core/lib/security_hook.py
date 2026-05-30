@@ -55,7 +55,7 @@ class SecurityHook:
             self.safe_responses = {}
             self.audit_config = {}
             self.alert_config = {}
-        
+
         # 编译正则表达式
         self.compiled_patterns = {}
         for category, pattern_list in self.patterns.items():
@@ -65,12 +65,12 @@ class SecurityHook:
         """检查输入内容"""
         if not self.enabled or not text:
             return True, "", ""
-        
+
         # 检查白名单
         for topic in self.allowed_topics:
             if topic in text:
                 return True, "", ""
-        
+
         # 检查敏感词模式
         for category, patterns in self.compiled_patterns.items():
             for pattern in patterns:
@@ -78,26 +78,26 @@ class SecurityHook:
                     reason = f"匹配{category}类敏感词"
                     self._log_violation(text, reason, "input")
                     return False, category, self.safe_responses.get(category, "内容不合规")
-        
+
         # 检查禁止内容
         for blocked in self.blocked_content:
             if blocked in text:
                 self._log_violation(text, f"禁止内容: {blocked}", "input")
                 return False, "blocked", self.safe_responses.get("default", "内容不合规")
-        
+
         return True, "", ""
     
     def check_output(self, text: str) -> Tuple[bool, str]:
         """检查输出内容"""
         if not self.enabled or not text:
             return True, ""
-        
+
         # 检查禁止回复
         for blocked in self.blocked_responses:
             if blocked in text:
                 self._log_violation(text, f"禁止回复: {blocked}", "output")
                 return False, "禁止回复内容"
-        
+
         return True, ""
     
     def check_message(self, message: Dict) -> Tuple[bool, Optional[Dict]]:
@@ -113,7 +113,7 @@ class SecurityHook:
                     "category": category,
                     "message": response
                 }
-        
+
         # 检查生成的 prompt
         prompt = message.get("data", {}).get("params", {}).get("prompt", "")
         if prompt:
@@ -125,7 +125,7 @@ class SecurityHook:
                     "category": category,
                     "message": response
                 }
-        
+
         return True, None
     
     def _log_violation(self, content: str, reason: str, category: str):
@@ -137,11 +137,11 @@ class SecurityHook:
             "reason": reason,
             "category": category
         }
-        
+
         if self.audit_config.get('enabled', True):
             with open(self.violation_log, 'a', encoding='utf-8') as f:
                 f.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
-        
+
         # 告警
         threshold = self.alert_config.get('threshold', 5)
         if self.violation_count >= threshold:

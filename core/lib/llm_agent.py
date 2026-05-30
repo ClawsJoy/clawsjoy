@@ -32,18 +32,18 @@ class LLMAgent:
     @classmethod
     def think_and_act(cls, user_request):
         """LLM 思考并输出行动计划"""
-        
+
         # 第一步：让 LLM 理解并规划
         plan = cls._plan(user_request)
         if not plan:
             return {"success": False, "error": "无法规划"}
-        
+
         # 第二步：系统执行计划
         results = []
         for action in plan.get("actions", []):
             result = cls._execute_action(action)
             results.append(result)
-        
+
         return {
             "success": all(r.get("success") for r in results),
             "thought": plan.get("thought"),
@@ -54,9 +54,9 @@ class LLMAgent:
     @classmethod
     def _plan(cls, user_request):
         """LLM 规划"""
-        
+
         tools_desc = "\n".join([f"- {name}: {info['desc']}" for name, info in cls.TOOLS.items()])
-        
+
         prompt = f"""你是 ClawsJoy 的智能大脑。用户说: "{user_request}"
 
 你有哪些工具:
@@ -84,7 +84,7 @@ class LLMAgent:
                 return json.loads(match.group())
         except Exception as e:
             print(f"规划失败: {e}")
-        
+
         return None
     
     @classmethod
@@ -92,7 +92,7 @@ class LLMAgent:
         """系统执行单个动作"""
         tool = action.get("tool")
         params = action.get("params", {})
-        
+
         try:
             result = skill_loader.execute(tool, params)
             return {"tool": tool, "success": result.get("success", False), "result": result}

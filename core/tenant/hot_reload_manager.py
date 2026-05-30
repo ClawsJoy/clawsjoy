@@ -25,13 +25,13 @@ class HotReloadManager:
         self.running = False
         self.base_path = Path(f"{unified_config.get("paths.data_root", "data")}/tenants")
         self.base_path.mkdir(parents=True, exist_ok=True)
-        
+
     def register_skill(self, tenant_id: str, skill_id: str, skill_config: Dict) -> bool:
         """注册技能到热加载系统"""
         try:
             if tenant_id not in self.tenant_skills:
                 self.tenant_skills[tenant_id] = {}
-            
+
             # 技能配置
             skill = {
                 "id": skill_id,
@@ -44,12 +44,12 @@ class HotReloadManager:
                 "registered_at": datetime.now().isoformat(),
                 "status": "active"
             }
-            
+
             self.tenant_skills[tenant_id][skill_id] = skill
             self._save_skill_manifest(tenant_id, skill_id, skill)
-            
+
             print(f"✅ [热加载] 技能注册成功: {tenant_id}/{skill_id}")
-            
+
             # 向量索引
             try:
                 from core.tenant.tenant_vector_index import tenant_index_manager
@@ -60,7 +60,7 @@ class HotReloadManager:
             except Exception as e:
                 pass
             return True
-            
+
         except Exception as e:
             print(f"❌ [热加载] 注册失败: {e}")
             return False
@@ -82,23 +82,23 @@ class HotReloadManager:
         """执行技能 - 支持热加载"""
         if tenant_id not in self.tenant_skills:
             return {"success": False, "error": f"租户 {tenant_id} 不存在"}
-        
+
         if skill_id not in self.tenant_skills[tenant_id]:
             return {"success": False, "error": f"技能 {skill_id} 不存在"}
-        
+
         skill = self.tenant_skills[tenant_id][skill_id]
         skill_path = self.base_path / tenant_id / "skills" / skill["entry"]
-        
+
         if not skill_path.exists():
             return {"success": False, "error": f"技能文件不存在: {skill['entry']}"}
-        
+
         try:
             # 动态加载技能模块
             import importlib.util
             spec = importlib.util.spec_from_file_location(f"{tenant_id}_{skill_id}", skill_path)
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
-            
+
             # 查找 execute 函数
             if hasattr(module, 'execute'):
                 result = module.execute(params)
@@ -115,11 +115,11 @@ class HotReloadManager:
         if not skills_dir.exists():
             skills_dir.mkdir(parents=True)
             return
-        
+
         for skill_file in skills_dir.glob("*.py"):
             skill_id = skill_file.stem
             manifest_file = skills_dir / f"{skill_id}.manifest.json"
-            
+
             if manifest_file.exists():
                 with open(manifest_file, 'r') as f:
                     skill_config = json.load(f)
@@ -130,14 +130,14 @@ class HotReloadManager:
                     "description": f"自动发现技能: {skill_id}",
                     "entry": skill_file.name
                 }
-            
+
             self.register_skill(tenant_id, skill_id, skill_config)
     
     def start_watcher(self):
         """启动热加载监控线程"""
         if self.watcher_thread and self.watcher_thread.is_alive():
             return
-        
+
         self.running = True
         self.watcher_thread = threading.Thread(target=self._watch_loop, daemon=True)
         self.watcher_thread.start()
@@ -146,7 +146,7 @@ class HotReloadManager:
     def _watch_loop(self):
         """监控循环"""
         last_state = {}
-        
+
         while self.running:
             try:
                 # 扫描所有租户
@@ -178,13 +178,13 @@ class HotReloadManager:
         """重新加载单个技能"""
         skills_dir = self.base_path / tenant_id / "skills"
         manifest_file = skills_dir / f"{skill_id}.manifest.json"
-        
+
         if manifest_file.exists():
             with open(manifest_file, 'r') as f:
                 skill_config = json.load(f)
         else:
             skill_config = {"name": skill_id, "entry": f"{skill_id}.py"}
-        
+
         self.register_skill(tenant_id, skill_id, skill_config)
         print(f"🔄 [热加载] 重新加载: {tenant_id}/{skill_id}")
     
@@ -193,7 +193,7 @@ class HotReloadManager:
         manifest_dir = self.base_path / tenant_id / "skills"
         manifest_dir.mkdir(parents=True, exist_ok=True)
         manifest_file = manifest_dir / f"{skill_id}.manifest.json"
-        
+
         with open(manifest_file, 'w') as f:
             json.dump(skill, f, indent=2, ensure_ascii=False)
     

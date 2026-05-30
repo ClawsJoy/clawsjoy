@@ -63,7 +63,7 @@ class DataSourceManager:
             DataSource("knowledge_base", "vector", "lib.agent_knowledge", True),
             DataSource("skill_registry", "file", f"{get_data_root()}/skill_registry_v2.json", True),
         ]
-        
+
         existing_names = [s.name for s in self.sources]
         for src in defaults:
             if src.name not in existing_names:
@@ -74,10 +74,10 @@ class DataSourceManager:
         source = next((s for s in self.sources if s.name == source_name), None)
         if not source:
             return {"error": f"数据源不存在: {source_name}"}
-        
+
         if not source.enabled:
             return {"error": f"数据源已禁用: {source_name}"}
-        
+
         try:
             if source.type == "api":
                 resp = requests.get(f"http://localhost:5002{source.endpoint}", timeout=10)
@@ -104,15 +104,15 @@ class DataSourceManager:
                     data = {"error": "未知向量源"}
             else:
                 data = {"error": f"不支持的类型: {source.type}"}
-            
+
             source.last_fetch = datetime.now().isoformat()
             if isinstance(data, dict) and 'total' in data:
                 source.last_count = data['total']
             elif isinstance(data, dict) and 'count' in data:
                 source.last_count = data['count']
-            
+
             return {"success": True, "data": data, "source": source.name}
-            
+
         except Exception as e:
             return {"success": False, "error": str(e), "source": source.name}
     
@@ -184,25 +184,25 @@ def fetch_with_quality(self, source_name: str) -> Dict:
         """增强版质量检查"""
         issues = []
         warnings = []
-        
+
         if source_name == "skills":
             total = data.get('total', 0)
             if total < 100:
                 issues.append(f"技能数量不足: {total} < 100")
             elif total < 130:
                 warnings.append(f"技能数量偏低: {total}")
-        
+
         elif source_name == "memory_vector":
             count = data.get('count', 0)
             if count < 50:
                 issues.append(f"向量记忆不足: {count} < 50")
-        
+
         elif source_name == "knowledge_base":
             from core.lib.agent_knowledge import agent_knowledge
             stats = agent_knowledge.get_stats()
             if stats.get('skills', 0) < 30:
                 issues.append(f"知识库技能不足: {stats.get('skills', 0)}")
-        
+
         return {
             "quality": "good" if not issues else "poor",
             "issues": issues,

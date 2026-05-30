@@ -41,7 +41,7 @@ class AgentPackager:
         agent_id = f"custom_{user_id}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
         agent_dir = self.upload_dir / user_id / agent_id
         agent_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # 生成 Agent 配置文件
         config = {
             "id": agent_id,
@@ -55,15 +55,15 @@ class AgentPackager:
             "prompt": agent_config.get('prompt', ''),
             "created_at": datetime.now().isoformat()
         }
-        
+
         with open(agent_dir / "config.json", 'w') as f:
             json.dump(config, f, indent=2)
-        
+
         # 生成 Agent 技能代码
         skill_code = self._generate_skill_code(config)
         with open(agent_dir / "skill.py", 'w') as f:
             f.write(skill_code)
-        
+
         # 提交审核
         self.registry["pending"].append({
             "agent_id": agent_id,
@@ -72,7 +72,7 @@ class AgentPackager:
             "submitted_at": datetime.now().isoformat()
         })
         self._save_registry()
-        
+
         return {
             "success": True,
             "agent_id": agent_id,
@@ -82,7 +82,7 @@ class AgentPackager:
     def _generate_skill_code(self, config: Dict) -> str:
         """生成 Agent 技能代码"""
         prompt = config.get('prompt', '你是智能助手，帮助用户解决问题。')
-        
+
         return f'''"""
 {config.get('name')} - 自定义 Agent
 作者: {config.get('author')}
@@ -101,12 +101,12 @@ class CustomAgent:
     def execute(self, params: dict) -> dict:
         action = params.get('action', 'chat')
         message = params.get('message', '')
-        
+
         if action == 'chat':
             full_prompt = f"{{self.prompt}}\\n\\n用户: {{message}}\\n助手:"
             response = smart_adapter.generate(full_prompt, auto_select=True)
             return {{"success": True, "response": response}}
-        
+
         return {{"success": False, "error": "未知操作"}}
 
 skill = CustomAgent()
@@ -131,7 +131,7 @@ skill = CustomAgent()
                     "package_path": package_path,
                     "message": f"Agent [{item['name']}] 已通过审核并打包"
                 }
-        
+
         return {"success": False, "error": "Agent 不存在"}
     
     def _package_agent(self, agent_id: str) -> str:

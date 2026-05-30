@@ -39,7 +39,7 @@ class SafeAutonomousAgent:
     def analyze(self) -> dict:
         """分析系统状态"""
         issues = []
-        
+
         # 检查技能
         result = subprocess.run(
             ['curl', '-s', 'http://localhost:5002/api/skills'],
@@ -48,10 +48,10 @@ class SafeAutonomousAgent:
         import json
         data = json.loads(result.stdout) if result.stdout else {}
         skill_count = data.get('total', 0)
-        
+
         if skill_count < 150:
             issues.append({"type": "skill_count_low", "detail": f"技能数 {skill_count}", "action": "sync_skills"})
-        
+
         # 检查健康
         health = subprocess.run(
             ['curl', '-s', 'http://localhost:5002/api/health'],
@@ -59,14 +59,14 @@ class SafeAutonomousAgent:
         )
         if 'ok' not in health.stdout:
             issues.append({"type": "health_check_failed", "detail": health.stdout, "action": "restart_service"})
-        
+
         return {"issues": issues, "timestamp": datetime.now().isoformat()}
     
     def propose_solution(self, issue: dict) -> dict:
         """生成解决方案"""
         action = issue.get('action')
         level = self._get_action_level(action)
-        
+
         return {
             "issue": issue,
             "action": action,
@@ -96,12 +96,12 @@ class SafeAutonomousAgent:
         """执行提案（根据安全级别）"""
         if proposal['level'] == 'danger':
             return {"success": False, "error": "危险操作被阻止", "action": proposal['action']}
-        
+
         if proposal['level'] == 'warning':
             # 需要审批，加入待审批队列
             self.approval_pending.append(proposal)
             return {"success": False, "pending": True, "message": f"需要审批: {proposal['description']}"}
-        
+
         # 安全操作，自动执行
         action = proposal['action']
         if action == 'sync_skills':
@@ -110,10 +110,10 @@ class SafeAutonomousAgent:
                 capture_output=True, text=True
             )
             return {"success": True, "result": result.stdout}
-        
+
         elif action == 'get_stats':
             return {"success": True, "stats": {"skills": 152, "memory": 122}}
-        
+
         return {"success": False, "error": "未知操作"}
     
     def approve(self, action_index: int) -> dict:
@@ -127,25 +127,25 @@ class SafeAutonomousAgent:
         """主动运行一次"""
         print("🔍 Agent 主动分析中...")
         analysis = self.analyze()
-        
+
         if not analysis['issues']:
             print("✅ 系统正常，无问题")
             return {"action": "idle"}
-        
+
         print(f"⚠️ 发现 {len(analysis['issues'])} 个问题")
-        
+
         for issue in analysis['issues']:
             proposal = self.propose_solution(issue)
             print(f"\n  问题: {issue['type']}")
             print(f"  方案: {proposal['description']}")
             print(f"  级别: {proposal['level']}")
-            
+
             if proposal['auto_execute']:
                 result = self.execute(proposal)
                 print(f"  结果: {'✅ 成功' if result.get('success') else '❌ 失败'}")
             else:
                 print(f"  ⏳ 等待审批 (pending_id={len(self.approval_pending)-1})")
-        
+
         return {"issues_found": len(analysis['issues']), "pending_approvals": len(self.approval_pending)}
 
 agent = SafeAutonomousAgent()

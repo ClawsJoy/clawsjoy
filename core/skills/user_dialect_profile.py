@@ -55,7 +55,7 @@ class UserDialectProfile:
         """根据地点判断方言"""
         import yaml
         from pathlib import Path
-        
+
         config_file = Path("config/dialect_learning.yaml")
         if config_file.exists():
             with open(config_file, 'r') as f:
@@ -70,7 +70,7 @@ class UserDialectProfile:
     def learn_word(self, user_id: str, dialect: str, standard: str, context: str = "") -> Dict:
         """学习方言词"""
         profile = self.get_profile(user_id)
-        
+
         if dialect not in profile["learned_words"]:
             profile["learned_words"][dialect] = {
                 "standard": standard,
@@ -90,10 +90,10 @@ class UserDialectProfile:
             profile["learned_words"][dialect]["review_count"] += 1
             if profile["learned_words"][dialect]["review_count"] >= 3:
                 profile["learned_words"][dialect]["mastered"] = True
-        
+
         # 更新置信度
         profile["confidence"][dialect] = min(1.0, profile.get("confidence", {}).get(dialect, 0) + 0.2)
-        
+
         self.save_profile(user_id, profile)
         return {"learned": True, "mastered": profile["learned_words"][dialect]["mastered"]}
 
@@ -101,7 +101,7 @@ class UserDialectProfile:
         """根据用户画像翻译方言"""
         profile = self.get_profile(user_id)
         result = text
-        
+
         # 按掌握程度排序（已掌握的优先）
         learned = profile.get("learned_words", {})
         sorted_words = sorted(
@@ -109,11 +109,11 @@ class UserDialectProfile:
             key=lambda x: x[1].get("review_count", 0),
             reverse=True
         )
-        
+
         for dialect, info in sorted_words:
             if dialect in result:
                 result = result.replace(dialect, info["standard"])
-        
+
         return result
 
     def get_stats(self, user_id: str) -> Dict:
@@ -121,7 +121,7 @@ class UserDialectProfile:
         profile = self.get_profile(user_id)
         learned = profile.get("learned_words", {})
         mastered = sum(1 for w in learned.values() if w.get("mastered", False))
-        
+
         return {
             "user_id": user_id,
             "location": profile.get("location"),

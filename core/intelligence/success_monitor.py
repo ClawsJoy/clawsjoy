@@ -21,7 +21,7 @@ class SuccessMonitor:
     
     def check_and_alert(self):
         rate = self.get_recent_success_rate()
-        
+
         if rate < 30:
             alert = f"🔴 紧急: 成功率仅{rate:.0f}%，需要立即干预"
             level = "critical"
@@ -31,16 +31,16 @@ class SuccessMonitor:
         else:
             alert = f"🟢 正常: 成功率{rate:.0f}%"
             level = "normal"
-        
+
         # 记录到记忆
         memory.remember(
             f"成功率监控|{rate:.0f}%|等级:{level}|时间:{datetime.now().isoformat()}",
             category="success_monitoring"
         )
-        
+
         if level != "normal":
             print(f"{datetime.now().strftime('%H:%M:%S')} {alert}")
-        
+
         return {"rate": rate, "level": level, "alert": alert}
 
 if __name__ == "__main__":

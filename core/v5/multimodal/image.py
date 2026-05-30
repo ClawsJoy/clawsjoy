@@ -16,11 +16,11 @@ class ImageProcessor:
         """分析图片内容"""
         if not Path(image_path).exists():
             return None
-        
+
         # 读取并编码图片
         with open(image_path, 'rb') as f:
             image_data = base64.b64encode(f.read()).decode()
-        
+
         try:
             # 使用 LLaVA 或其他多模态模型
             response = requests.post(
@@ -33,12 +33,12 @@ class ImageProcessor:
                 },
                 timeout=config_helper.get_timeout("llm")
             )
-            
+
             if response.status_code == 200:
                 return response.json().get('response', '无法识别图片内容')
         except Exception as e:
             print(f"图像分析失败: {e}")
-        
+
         return "图像分析服务不可用"
     
     def extract_text(self, image_path: str) -> Optional[str]:

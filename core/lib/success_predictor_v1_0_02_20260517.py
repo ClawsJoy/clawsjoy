@@ -28,16 +28,16 @@ class SuccessPredictor:
     def _load_history(self):
         """从日志加载历史数据"""
         self._task_history = defaultdict(lambda: {'success': 0, 'fail': 0, 'recent': []})
-        
+
         if not self.log_file.exists():
             print(f"日志文件不存在: {self.log_file}")
             return
-        
+
         content = self.log_file.read_text(encoding='utf-8', errors='ignore')
         lines = content.strip().split('\n')
-        
+
         current_task = None
-        
+
         for line in lines:
             # 匹配执行行: [数字] 执行: 任务名
             if '执行:' in line:
@@ -47,41 +47,41 @@ class SuccessPredictor:
                     current_task = match.group(1).strip()
                     # 移除可能的前缀
                     current_task = re.sub(r'^\[.*?\]\s*', '', current_task)
-            
+
             # 匹配完成
             elif '✅ 完成' in line and current_task:
                 self._task_history[current_task]['success'] += 1
                 self._task_history[current_task]['recent'].append(('success', datetime.now()))
                 current_task = None
-            
+
             # 匹配失败
             elif '❌ 失败' in line and current_task:
                 self._task_history[current_task]['fail'] += 1
                 self._task_history[current_task]['recent'].append(('fail', datetime.now()))
                 current_task = None
-        
+
         # 限制最近记录数量
         for task in self._task_history:
             if len(self._task_history[task]['recent']) > 20:
                 self._task_history[task]['recent'] = self._task_history[task]['recent'][-20:]
-        
+
         print(f"📊 已加载 {len(self._task_history)} 个任务的历史数据")
     
     def predict_task_success_rate(self, task_name: str) -> Dict:
         """预测单个任务的成功率"""
         if self._task_history is None:
             self._load_history()
-        
+
         # 精确匹配
         history = self._task_history.get(task_name)
-        
+
         # 模糊匹配
         if not history:
             for name, hist in self._task_history.items():
                 if task_name in name or name in task_name:
                     history = hist
                     break
-        
+
         if not history:
             return {
                 "task": task_name,
@@ -90,10 +90,10 @@ class SuccessPredictor:
                 "total_samples": 0,
                 "trend": "unknown"
             }
-        
+
         total = history['success'] + history['fail']
         rate = history['success'] / total if total > 0 else 0.5
-        
+
         # 趋势
         recent = history['recent'][-5:]
         if recent:
@@ -107,9 +107,9 @@ class SuccessPredictor:
                 trend = "stable"
         else:
             trend = "stable"
-        
+
         confidence = min(0.95, 0.3 + total / 100)
-        
+
         return {
             "task": task_name,
             "predicted_rate": round(rate, 2),
@@ -124,7 +124,7 @@ class SuccessPredictor:
         """获取预测成功率最高的任务"""
         if self._task_history is None:
             self._load_history()
-        
+
         results = []
         for task_name, history in self._task_history.items():
             total = history['success'] + history['fail']
@@ -135,7 +135,7 @@ class SuccessPredictor:
                     "rate": round(rate, 2),
                     "samples": total
                 })
-        
+
         results.sort(key=lambda x: x['rate'], reverse=True)
         return results[:limit]
     
@@ -143,7 +143,7 @@ class SuccessPredictor:
         """获取预测成功率最低的任务"""
         if self._task_history is None:
             self._load_history()
-        
+
         results = []
         for task_name, history in self._task_history.items():
             total = history['success'] + history['fail']
@@ -154,7 +154,7 @@ class SuccessPredictor:
                     "rate": round(rate, 2),
                     "samples": total
                 })
-        
+
         results.sort(key=lambda x: x['rate'])
         return results[:limit]
     
@@ -162,7 +162,7 @@ class SuccessPredictor:
         """获取预测器统计"""
         if self._task_history is None:
             self._load_history()
-        
+
         return {
             "version": self.VERSION,
             "total_tasks_tracked": len(self._task_history) if self._task_history else 0,
@@ -187,7 +187,7 @@ if __name__ == "__main__":
         print("\n最佳任务:")
         for task in success_predictor.get_best_tasks(5):
             print(f"  ✅ {task['task'][:40]}: {task['rate']*100:.0f}%")
-        
+
         print("\n待优化任务:")
         for task in success_predictor.get_worst_tasks(5):
             print(f"  ⚠️ {task['task'][:40]}: {task['rate']*100:.0f}%")

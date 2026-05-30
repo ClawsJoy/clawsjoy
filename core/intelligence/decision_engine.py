@@ -1,3 +1,4 @@
+from core.lib.config_helper import get_llm_model
 from typing import Dict
 
 """决策引擎 v4 - 配置驱动"""
@@ -15,7 +16,7 @@ class DecisionEngineV4:
 
     def __init__(self):
         self.ollama_url = unified_config.get("llm.endpoint", "http://127.0.0.1:11434")
-        self.ollama_model = unified_config.get("llm.default_model", unified_config.get("llm.default_model", config_helper.get_llm_model()))
+        self.ollama_model = unified_config.get("llm.default_model", unified_config.get("llm.default_model", get_llm_model()))
         self.data_dir = Path(unified_config.get("paths.data_root", "data"))
         self.decision_file = self.data_dir / "decisions.json"
         self.rules = self._load_rules()
@@ -31,14 +32,14 @@ class DecisionEngineV4:
     def decide(self, context: dict) -> dict:
         """根据上下文做决策"""
         task_type = context.get('task_type', 'general')
-        
+
         # 简单决策逻辑
         if task_type == 'math':
-            return {"action": "use_math_model", "model": unified_config.get("llm.fast_model", config_helper.get_llm_model(fast=True))}
+            return {"action": "use_math_model", "model": unified_config.get("llm.fast_model", get_llm_model(fast=True))}
         elif task_type == 'code':
             return {"action": "use_code_model", "model": unified_config.get("llm.models.code", "deepseek-coder:6.7b")}
         elif task_type == 'creative':
-            return {"action": "use_creative_model", "model": unified_config.get("llm.default_model", config_helper.get_llm_model())}
+            return {"action": "use_creative_model", "model": unified_config.get("llm.default_model", get_llm_model())}
         else:
             return {"action": "use_default_model", "model": self.ollama_model}
 
@@ -48,7 +49,7 @@ class DecisionEngineV4:
         threshold = condition.get('threshold', 0)
         operator = condition.get('operator', '>=')
         current_value = condition.get('current_value', 0)
-        
+
         if operator == '>=':
             return current_value >= threshold
         elif operator == '<=':

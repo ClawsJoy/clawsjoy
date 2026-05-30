@@ -37,7 +37,7 @@ class LLMTrainer:
 - 直接输出 SVG 代码，不要任何解释
 
 SVG："""
-        
+
         try:
             resp = requests.post(
                 f"{self.ollama_url}/api/generate",
@@ -58,16 +58,16 @@ SVG："""
         example_file = Path(__file__).parent / "examples" / f"{example_name}.svg"
         if not example_file.exists():
             return {"success": False, "error": f"示例不存在: {example_name}"}
-        
+
         example_svg = example_file.read_text(encoding='utf-8')
         print(f"📚 教学: {task}")
         print(f"📖 参考示例: {example_name}")
-        
+
         result_svg = self.teach(task, example_svg)
-        
+
         if result_svg and result_svg.startswith('<svg'):
             return {"success": True, "svg": result_svg, "llm_generated": True}
-        
+
         # 降级：修改示例文字
         print("⚠️ LLM 未响应，使用降级模式")
         modified = example_svg.replace('发展蓝图', task[:30])

@@ -49,19 +49,19 @@ class FrontendCollector:
             }
             date = datetime.now().strftime('%Y%m%d')
             file_path = self.metrics_dir / f"metrics_{date}.json"
-            
+
             existing = []
             if file_path.exists():
                 with open(file_path, 'r') as f:
                     existing = json.load(f)
-            
+
             existing.append(metric)
             # 保留最近1000条
             existing = existing[-1000:]
-            
+
             with open(file_path, 'w') as f:
                 json.dump(existing, f, indent=2)
-            
+
             return {"success": True, "collected": "page_view"}
     
     def collect_error(self, error: str, stack: str = None, user_id: str = None) -> Dict:
@@ -91,18 +91,18 @@ class FrontendCollector:
             }
             date = datetime.now().strftime('%Y%m%d')
             file_path = self.behavior_dir / f"behavior_{date}.json"
-            
+
             existing = []
             if file_path.exists():
                 with open(file_path, 'r') as f:
                     existing = json.load(f)
-            
+
             existing.append(behavior)
             existing = existing[-2000:]
-            
+
             with open(file_path, 'w') as f:
                 json.dump(existing, f, indent=2)
-            
+
             return {"success": True, "collected": "behavior"}
     
     def get_stats(self) -> Dict:
@@ -110,7 +110,7 @@ class FrontendCollector:
         metrics_count = len(list(self.metrics_dir.glob("*.json")))
         errors_count = len(self._load_errors())
         behavior_count = len(list(self.behavior_dir.glob("*.json")))
-        
+
         return {
             "metrics_files": metrics_count,
             "errors_count": errors_count,

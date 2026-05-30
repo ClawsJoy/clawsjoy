@@ -77,6 +77,6 @@ if __name__ == '__main__':
     print("🔐 用户偏好服务")
     print("=" * 50)
     print("端口: 5445")
-    print("健康检查: f"http://{config_loader.get("endpoints.user_preference.host", "localhost")}:{config_loader.get("endpoints.user_preference.port", 5445)}"/health")
+    print(f"健康检查: http://{config_loader.get("endpoints.user_preference.host", "localhost")}:{config_loader.get("endpoints.user_preference.port", 5445)}/health")
     print("=" * 50)
     app.run(host='0.0.0.0', port=smart_config.PORTS.get("user_preference", 5445), debug=False, ssl_context=('ssl/cert.pem', 'ssl/key.pem'))

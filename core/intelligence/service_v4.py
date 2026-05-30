@@ -24,19 +24,19 @@ class IntelligenceServiceV4:
         # 预测服务
         predictor_module = self.registry.get('predictor')
         self.predict = predictor_module.predict if predictor_module and hasattr(predictor_module, 'predict') else self._default_predict
-        
+
         # 决策服务
         decision_module = self.registry.get('decision_engine')
         self.decide = decision_module.decide if decision_module and hasattr(decision_module, 'decide') else self._default_decide
-        
+
         # 学习服务
         learner_module = self.registry.get('learner')
         self.learn = learner_module.learn if learner_module and hasattr(learner_module, 'learn') else self._default_learn
-        
+
         # 闭环服务
         loop_module = self.registry.get('closed_loop')
         self.run_loop = loop_module.run if loop_module and hasattr(loop_module, 'run') else self._default_loop
-        
+
         # 监控服务
         monitor_module = self.registry.get('success_monitor')
         self.monitor = monitor_module.check_and_alert if monitor_module and hasattr(monitor_module, 'check_and_alert') else self._default_monitor
@@ -71,7 +71,7 @@ class IntelligenceServiceV4:
         """综合分析任务"""
         prediction = self.predict(task_name)
         decision = self.decide({"task_name": task_name})
-        
+
         return {
             "task": task_name,
             "prediction": prediction,

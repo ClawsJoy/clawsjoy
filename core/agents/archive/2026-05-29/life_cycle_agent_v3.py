@@ -29,12 +29,12 @@ class LifeCycleAgentV3:
         self.agent_id = agent_id
         self.agent_dir = Path(f"{get_data_root()}/agents/{agent_id}/life_v3")
         self.agent_dir.mkdir(parents=True, exist_ok=True)
-        
+
         self._load()
         self.ollama_url = "config_loader.get_ollama_url()"
         self.model = config_manager.get_model()
         self.birth_time = datetime.now()
-        
+
         print(f"🎂 Agent {agent_id} v{self.VERSION} 诞生")
         print(f"📝 已知用户: {self.user.get('name', '未知')}")
     
@@ -67,7 +67,7 @@ class LifeCycleAgentV3:
             r'^[我][是][\s]*([^\s，。！？]{2,4})$',  # "我是李明"
             r'名字[叫是][\s]*([^\s，。！？]{2,4})',   # "名字叫李明"
         ]
-        
+
         for pattern in patterns:
             match = re.search(pattern, text)
             if match:
@@ -90,34 +90,34 @@ class LifeCycleAgentV3:
         """获取回复"""
         lower = user_input.lower()
         name = self.user.get("name")
-        
+
         # 问候
         if any(g in lower for g in ['你好', 'hi', 'hello']):
             if name:
                 return (f"你好，{name}！有什么可以帮你的？", "greeting")
             return ("你好！请问怎么称呼你？", "greeting")
-        
+
         # 问名字
         if any(q in lower for q in ['我叫什么', '我名字', '我是谁']):
             if name:
                 return (f"你是{name}呀", "query_name")
             return ("你还没告诉我名字呢", "query_name")
-        
+
         # 问偏好
         if any(q in lower for q in ['喜欢什么', '偏好', '我的风格']):
             prefs = self.user.get("preferences", [])
             if prefs:
                 return (f"你喜欢{', '.join(prefs)}", "query_pref")
             return ("你还没告诉我你的偏好呢", "query_pref")
-        
+
         # Agent 列表
         if 'agent' in lower and ('有哪些' in lower or '列表' in lower):
             return ("系统有决策Agent、聊天Agent、执行Agent、采集Agent、安全Agent、分析Agent", "list_agents")
-        
+
         # 生成图表
         if any(g in lower for g in ['图', '架构图']):
             return ("正在生成架构图...", "generate_chart")
-        
+
         # 默认用 LLM
         return (self._llm_reply(user_input), "chat")
     
@@ -125,14 +125,14 @@ class LifeCycleAgentV3:
         """LLM 回复"""
         name = self.user.get("name", "")
         prefs = self.user.get("preferences", [])
-        
+
         prompt = f"""你是私人管家{f'，用户叫{name}' if name else ''}。
 {f'用户偏好：{", ".join(prefs)}' if prefs else ''}
 
 用户：{user_input}
 
 回复要求：简洁，1-2句话，直接回答问题。"""
-        
+
         try:
             resp = requests.post(
                 f"{self.ollama_url}/api/generate",
@@ -147,44 +147,44 @@ class LifeCycleAgentV3:
     
     def process(self, user_input: str) -> Dict:
         start = time.time()
-        
+
         # 1. 提取信息
         name = self._extract_name(user_input)
         if name:
             self.user["name"] = name
             print(f"   📝 学习名字: {name}")
-        
+
         pref = self._extract_preference(user_input)
         if pref and pref not in self.user["preferences"]:
             self.user["preferences"].append(pref)
             print(f"   📝 学习偏好: {pref}")
-        
+
         # 2. 生成回复
         response, task = self._get_reply(user_input)
-        
+
         # 3. 存储记忆
         self.memory["short"].append({
             "user": user_input[:100],
             "assistant": response[:100],
             "time": datetime.now().isoformat()
         })
-        
+
         # 短期记忆限制
         if len(self.memory["short"]) > 15:
             old = self.memory["short"].pop(0)
             self.memory["long"].append(old)
-        
+
         self.stats["total"] += 1
-        
+
         # 梦境循环
         if self.stats["total"] % 10 == 0 and self.stats["total"] > 0:
             self.stats["dreams"] += 1
             print(f"   💭 梦境 #{self.stats['dreams']}: 晋升记忆")
-        
+
         self._save()
-        
+
         elapsed = (time.time() - start) * 1000
-        
+
         return {
             "response": response,
             "task": task,

@@ -59,7 +59,7 @@ class GoalSetter:
             skill_count = resp.json().get('total', 0)
         except:
             skill_count = 0
-        
+
         if skill_count < 150:
             goals.append({
                 "id": f"goal_fix_skills_{datetime.now().strftime('%Y%m%d_%H%M')}",
@@ -67,21 +67,21 @@ class GoalSetter:
                 "action": "fix_broken_skills",
                 "priority": "high"
             })
-        
+
         goals.append({
             "id": f"goal_clean_cache_{datetime.now().strftime('%Y%m%d_%H%M')}",
             "description": "清理系统缓存",
             "action": "clean_cache",
             "priority": "low"
         })
-        
+
         goals.append({
             "id": f"goal_generate_report_{datetime.now().strftime('%Y%m%d_%H%M')}",
             "description": "生成系统报告",
             "action": "generate_report",
             "priority": "low"
         })
-        
+
         return goals
     
     def generate_proactive_goals(self) -> List[Dict]:

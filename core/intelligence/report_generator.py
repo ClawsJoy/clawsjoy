@@ -9,7 +9,7 @@ from agent_core.brain_enhanced import brain
 class ReportGenerator:
     def generate(self):
         stats = brain.get_stats()
-        
+
         report = {
             "timestamp": datetime.now().isoformat(),
             "brain": {
@@ -18,10 +18,10 @@ class ReportGenerator:
                 "knowledge_nodes": stats.get('knowledge_graph_nodes', 0)
             }
         }
-        
+
         with open(f"{config_helper.get_data_root()}/full_report.json", 'w') as f:
             json.dump(report, f, indent=2)
-        
+
         print("\n" + "=" * 50)
         print("📊 ClawsJoy 智能报告")
         print("=" * 50)
@@ -29,7 +29,7 @@ class ReportGenerator:
         print(f"📈 成功率: {report['brain']['success_rate']*100:.1f}%")
         print(f"🔗 知识节点: {report['brain']['knowledge_nodes']} 个")
         print("=" * 50)
-        
+
         return report
 
 if __name__ == "__main__":

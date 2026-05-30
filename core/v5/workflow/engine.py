@@ -36,7 +36,7 @@ class WorkflowEngine:
     def create_workflow(self, name: str, description: str, nodes: List[Dict]) -> str:
         """创建工作流"""
         workflow_id = str(uuid.uuid4())[:8]
-        
+
         workflow_nodes = []
         for node in nodes:
             workflow_nodes.append(WorkflowNode(
@@ -46,14 +46,14 @@ class WorkflowEngine:
                 config=node.get('config', {}),
                 next_nodes=node.get('next_nodes', [])
             ))
-        
+
         self.workflows[workflow_id] = Workflow(
             id=workflow_id,
             name=name,
             description=description,
             nodes=workflow_nodes
         )
-        
+
         return workflow_id
     
     def execute(self, workflow_id: str, input_data: str) -> Dict:
@@ -61,45 +61,45 @@ class WorkflowEngine:
         workflow = self.workflows.get(workflow_id)
         if not workflow:
             return {"success": False, "error": "Workflow not found"}
-        
+
         context = {"input": input_data, "output": ""}
-        
+
         # 找到起始节点
         start_node = next((n for n in workflow.nodes if n.type == "input"), workflow.nodes[0])
-        
+
         current_node = start_node
         visited = set()
-        
+
         while current_node and current_node.id not in visited:
             visited.add(current_node.id)
-            
+
             # 执行节点
             result = self._execute_node(current_node, context)
             context["output"] = result
-            
+
             # 找下一个节点
             if current_node.next_nodes:
                 next_id = current_node.next_nodes[0]
                 current_node = next((n for n in workflow.nodes if n.id == next_id), None)
             else:
                 break
-        
+
         return {"success": True, "result": context["output"]}
     
     def _execute_node(self, node: WorkflowNode, context: Dict) -> str:
         """执行单个节点"""
         from core.v5.llm.client import llm
-        
+
         if node.type == "input":
             return context.get("input", "")
-        
+
         elif node.type == "llm":
             prompt = node.config.get("prompt", "请处理: {input}").format(**context)
             return llm.generate(prompt)
-        
+
         elif node.type == "output":
             return context.get("output", "")
-        
+
         return ""
 
 

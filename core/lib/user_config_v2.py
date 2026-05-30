@@ -23,12 +23,12 @@ class UserConfigV2:
         self.user_id = user_id
         self.user_dir = Path(funified_config.get("paths.users_dir", f"{get_data_root()}/users/") + "/{user_id}")
         self.user_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # 三个配置文件
         self.system_base_file = Path("config/user_system_base.yaml")  # 系统级，只读
         self.user_custom_file = self.user_dir / "custom.yaml"          # 用户自定义，可修改
         self.user_private_file = self.user_dir / "private.yaml"        # 用户私有，不可复制
-        
+
         self._load()
     
     def _load(self):
@@ -39,7 +39,7 @@ class UserConfigV2:
                 self.system_base = unified_config.get("user_v2", {}) or {}
         else:
             self.system_base = self._get_system_base()
-        
+
         # 2. 用户自定义（可修改）
         if self.user_custom_file.exists():
             with open(self.user_custom_file, 'r') as f:
@@ -47,7 +47,7 @@ class UserConfigV2:
         else:
             self.user_custom = self._get_default_custom()
             self._save_custom()
-        
+
         # 3. 用户私有（不可复制，不可导出）
         if self.user_private_file.exists():
             with open(self.user_private_file, 'r') as f:
@@ -176,7 +176,7 @@ class UserConfigV2:
         """安装技能（用户自定义部分）"""
         if "installed_skills" not in self.user_custom:
             self.user_custom["installed_skills"] = {}
-        
+
         self.user_custom["installed_skills"][skill_name] = {
             "enabled": True,
             "custom_config": custom_config or {},
@@ -207,7 +207,7 @@ class UserConfigV2:
         """添加私有记忆（不可复制）"""
         if "memory" not in self.user_private:
             self.user_private["memory"] = []
-        
+
         self.user_private["memory"].append({
             "content": content,
             "type": memory_type,
@@ -219,7 +219,7 @@ class UserConfigV2:
         """记录学习历史"""
         if "learning_history" not in self.user_private:
             self.user_private["learning_history"] = []
-        
+
         self.user_private["learning_history"].append({
             "query": query,
             "result": result,

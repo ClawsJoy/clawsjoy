@@ -30,14 +30,14 @@ class ChannelAnalyzer:
         """模拟视频表现（实际应从 YouTube API 获取）"""
         if video_id not in self.video_stats:
             return None
-        
+
         # 模拟数据
         stats = self.video_stats[video_id]
         stats["views"] = random.randint(100, 10000)
         stats["likes"] = random.randint(10, stats["views"] // 10)
         stats["comments"] = random.randint(0, stats["likes"] // 5)
         stats["analyzed_at"] = datetime.now().isoformat()
-        
+
         # 评估效果
         if stats["views"] > 5000:
             rating = "优秀"
@@ -45,12 +45,12 @@ class ChannelAnalyzer:
             rating = "良好"
         else:
             rating = "待改进"
-        
+
         memory.remember(
             f"视频效果|{stats['topic']}|播放:{stats['views']}|评级:{rating}",
             category="video_performance"
         )
-        
+
         return {"video_id": video_id, "stats": stats, "rating": rating}
     
     def get_best_topics(self, limit=3):

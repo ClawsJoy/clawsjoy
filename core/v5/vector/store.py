@@ -24,7 +24,7 @@ class VectorStore:
         self.collection = collection
         self.base_path = Path(f"{config_helper.get_data_root()}/v5/users/{user_id}/vectors/{collection}")
         self.base_path.mkdir(parents=True, exist_ok=True)
-        
+
         self.documents: List[VectorDoc] = []
         self._load()
     
@@ -57,24 +57,24 @@ class VectorStore:
         import uuid
         doc_id = str(uuid.uuid4())[:8]
         embedding = self._simple_embedding(content)
-        
+
         self.documents.append(VectorDoc(
             id=doc_id,
             content=content,
             embedding=embedding,
             metadata=metadata or {}
         ))
-        
+
         if len(self.documents) > 1000:
             self.documents = self.documents[-1000:]
-        
+
         self._save()
         return doc_id
     
     def search(self, query: str, limit: int = 5) -> List[Dict]:
         """语义搜索"""
         query_vec = self._simple_embedding(query)
-        
+
         # 计算相似度
         scores = []
         for doc in self.documents:
@@ -84,9 +84,9 @@ class VectorStore:
             norm_d = sum(b * b for b in doc.embedding) ** 0.5
             sim = dot / (norm_q * norm_d + 1e-8)
             scores.append((sim, doc))
-        
+
         scores.sort(key=lambda x: x[0], reverse=True)
-        
+
         return [{"content": doc.content, "score": sim, "metadata": doc.metadata} for sim, doc in scores[:limit]]
     
     def get_stats(self) -> Dict:

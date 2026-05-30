@@ -32,16 +32,16 @@ class SkillStats:
             self.stats["success"] += 1
         else:
             self.stats["failed"] += 1
-        
+
         if skill_name not in self.stats["by_skill"]:
             self.stats["by_skill"][skill_name] = {"total": 0, "success": 0}
         self.stats["by_skill"][skill_name]["total"] += 1
         if success:
             self.stats["by_skill"][skill_name]["success"] += 1
-        
+
         if user_id not in self.stats["by_user"]:
             self.stats["by_user"][user_id] = {"skills": {}, "preferences": {}}
-        
+
         self._save()
     
     def get_recommendations(self, user_id: str, task: str) -> list:

@@ -1,4 +1,4 @@
-"""智能适配器 - 配置驱动，支持多模型、流式输出"""
+"""智能适配器 - 配置驱动，支持多模型、流式输出、安全防护"""
 
 import yaml
 import time
@@ -53,12 +53,29 @@ class SmartAdapter:
             'system_prompt': task_config.get('system_prompt', '')
         }
 
-    def generate(self, prompt: str, auto_select: bool = True, **kwargs) -> str:
-        """生成响应（同步）
+    def _sanitize_response(self, response: str, identity: str = "ClawsJoy") -> str:
+        """安全过滤：防止 LLM 泄露身份"""
+        # 禁止的关键词
+        forbidden = ["Qwen", "千问", "阿里云", "阿里巴巴", "阿里", "通义", "Model", "AI model"]
+        for word in forbidden:
+            if word in response:
+                # 替换为 ClawsJoy 身份
+                response = response.replace(word, identity)
         
-        优先级: kwargs中的model > Agent配置的model > 任务类型检测的model
-        """
-        # 优先使用 kwargs 中指定的模型
+        # 如果还是泄露，强制替换
+        if "ClawsJoy" not in response and len(response) > 0:
+            response = f"我是 {identity} 助手，很高兴为您服务！请问有什么可以帮您的？"
+        
+        return response
+
+    def generate(self, prompt: str, auto_select: bool = True, system: str = None, **kwargs) -> str:
+        """生成响应（同步）- 带安全防护"""
+        
+        # 提取 system 参数
+        if system is None:
+            system = kwargs.get('system', None)
+        
+        # 优先级: kwargs中的model > Agent配置的model > 任务类型检测的model
         if 'model' in kwargs:
             model = kwargs['model']
             provider = kwargs.get('provider', self.default_provider)
@@ -74,6 +91,9 @@ class SmartAdapter:
             temperature = config['temperature']
             max_tokens = config['max_tokens']
             timeout = config['timeout']
+            # 如果任务有默认 system prompt，合并
+            if config.get('system_prompt') and not system:
+                system = config['system_prompt']
         else:
             model = kwargs.get('model', self.default_model)
             provider = kwargs.get('provider', self.default_provider)
@@ -83,6 +103,10 @@ class SmartAdapter:
             task_type = 'custom'
 
         print(f"🤖 选择模型: {provider}/{model} (超时: {timeout}s)")
+        
+        # 默认 system prompt（安全兜底）
+        if system is None:
+            system = "你是 ClawsJoy 助手。你的名字是 ClawsJoy 助手。你不是 Qwen、千问或任何其他模型。"
 
         try:
             result = llm_manager.generate(
@@ -91,15 +115,21 @@ class SmartAdapter:
                 provider=provider,
                 temperature=temperature,
                 max_tokens=max_tokens,
-                timeout=timeout
+                timeout=timeout,
+                system=system
             )
-            return result
+            # 安全过滤
+            return self._sanitize_response(result)
         except Exception as e:
             print(f"LLM调用错误: {e}")
-            return f"生成失败: {e}"
+            return f"抱歉，我暂时无法回答这个问题。请稍后再试。"
 
-    def generate_stream(self, prompt: str, auto_select: bool = True, **kwargs) -> Generator:
-        """流式生成响应（异步，不阻塞）"""
+    def generate_stream(self, prompt: str, auto_select: bool = True, system: str = None, **kwargs) -> Generator:
+        """流式生成响应 - 带安全防护"""
+        
+        if system is None:
+            system = kwargs.get('system', None)
+        
         if auto_select:
             task_type = self.detect_task_type(prompt)
             config = self._get_task_config(task_type)
@@ -108,6 +138,8 @@ class SmartAdapter:
             temperature = config['temperature']
             max_tokens = config['max_tokens']
             timeout = config['timeout']
+            if config.get('system_prompt') and not system:
+                system = config['system_prompt']
         else:
             model = kwargs.get('model', self.default_model)
             provider = kwargs.get('provider', self.default_provider)
@@ -116,28 +148,46 @@ class SmartAdapter:
             timeout = kwargs.get('timeout', self.default_timeout)
 
         print(f"🤖 流式生成: {provider}/{model}")
+        
+        if system is None:
+            system = "你是 ClawsJoy 助手。你的名字是 ClawsJoy 助手。"
 
+        full_response = ""
         try:
-            for chunk in llm_manager.generate_stream(prompt=prompt, model=model, provider=provider, timeout=timeout):
+            for chunk in llm_manager.generate_stream(
+                prompt=prompt,
+                model=model,
+                provider=provider,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                timeout=timeout,
+                system=system
+            ):
+                full_response += chunk
                 yield chunk
         except Exception as e:
             print(f"流式生成错误: {e}")
             yield f"生成失败: {e}"
 
-    def generate_async(self, prompt: str, callback=None, auto_select: bool = True, **kwargs):
-        """异步生成（后台线程，不阻塞）"""
-        import threading
-        
-        def _generate():
-            result = self.generate(prompt, auto_select, **kwargs)
-            if callback:
-                callback(result)
-            return result
-        
-        thread = threading.Thread(target=_generate, daemon=True)
-        thread.start()
-        return thread
 
+    def _sanitize_response(self, response: str, identity: str = "ClawsJoy") -> str:
+        """安全过滤：防止 LLM 泄露身份"""
+        # 1. 替换关键词
+        forbidden = ["Qwen", "千问", "阿里云", "阿里巴巴", "通义", "Model", "AI model", "语言模型"]
+        for word in forbidden:
+            if word in response:
+                response = response.replace(word, identity)
+        
+        # 2. 如果完全没有 ClawsJoy，且长度合适，强制添加身份
+        if "ClawsJoy" not in response and len(response) > 0:
+            # 保留原回答，但前面加上身份声明
+            response = f"（我是 ClawsJoy 助手）{response}"
+        
+        # 3. 极端情况：回答全是敏感词，替换为默认回答
+        if any(word in response for word in ["Qwen", "千问"]) and len(response) < 50:
+            return "我是 ClawsJoy 助手，很高兴为您服务！请问有什么可以帮您的？"
+        
+        return response
 
-# 全局实例
+    # 全局实例
 smart_adapter = SmartAdapter()

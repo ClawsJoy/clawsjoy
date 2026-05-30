@@ -24,7 +24,7 @@ class MainAgent(BaseAgent):
         """初始化知识图谱"""
         if self.knowledge.nodes:
             return
-        
+
         concepts = [
             ("python", "Python", "concept", {"用途": "数据分析、AI、Web开发"}),
             ("java", "Java", "concept", {"用途": "企业级应用、Android开发"}),
@@ -33,7 +33,7 @@ class MainAgent(BaseAgent):
         ]
         for cid, name, ctype, props in concepts:
             self.knowledge.add_node(cid, name, ctype, props)
-        
+
         relations = [
             ("python", "ai", "用于", 0.9),
             ("python", "ml", "用于", 0.8),
@@ -56,13 +56,13 @@ class MainAgent(BaseAgent):
                 "response": cached,
                 "user_id": self.user_id
             }
-        
+
         self.update_stats()
-        
+
         intent = self._analyze_intent(user_input)
-        
+
         start_time = time.time()
-        
+
         if intent == "plan":
             response = self._make_plan(user_input)
         elif intent == "decision":
@@ -71,17 +71,17 @@ class MainAgent(BaseAgent):
             response = self._query_knowledge(user_input)
         else:
             response = self._chat(user_input)
-        
+
         elapsed = time.time() - start_time
         metrics.record("response_time", elapsed)
-        
+
         # 记录历史
         self.record_history(user_input, response)
         self.mem_mgr.add_history(user_input, response)
-        
+
         # 存入缓存
         response_cache.set(self.user_id, user_input, response)
-        
+
         return {
             "success": True,
             "intent": intent,
@@ -130,7 +130,7 @@ class MainAgent(BaseAgent):
                     for r in related[:5]:
                         result += f"- {r['name']}: {r.get('relation', '相关')}\n"
                     return result
-        
+
         prompt = f"请用简单易懂的语言解释:\n{query}\n\n解释:"
         return llm.generate(prompt)
     

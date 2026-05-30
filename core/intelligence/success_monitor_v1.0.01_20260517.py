@@ -20,33 +20,33 @@ class SuccessMonitorV1_0_01:
     
     def __init__(self):
         self.root = smart_config.ROOT
-        
+
         # 配置（硬编码默认值，后续可改为配置驱动）
         self.log_path = self.root / "logs" / "active_runner.log"
         self.success_pattern = "✅ 完成"
         self.failure_pattern = "❌ 失败"
         self.window_size = 100
-        
+
     def get_recent_success_rate(self) -> Dict:
         """从日志文件读取真实成功率"""
         if not self.log_path.exists():
             return {"success": 0, "failed": 0, "total": 0, "rate": 0, "source": "no_log"}
-        
+
         content = self.log_path.read_text(encoding='utf-8', errors='ignore')
         lines = content.strip().split('\n')
-        
+
         success = 0
         failed = 0
-        
+
         for line in lines[-self.window_size * 2:]:
             if self.success_pattern in line:
                 success += 1
             elif self.failure_pattern in line:
                 failed += 1
-        
+
         total = success + failed
         rate = (success / total * 100) if total > 0 else 0
-        
+
         return {
             "success": success,
             "failed": failed,
@@ -67,17 +67,17 @@ class SuccessMonitorV1_0_01:
         stats = self.get_recent_success_rate()
         rate = stats['rate']
         level = self.get_alert_level(rate)
-        
+
         alerts = {
             'critical': '🔴 紧急',
             'warning': '🟡 警告',
             'normal': '🟢 正常'
         }
-        
+
         alert_msg = f"{alerts[level]} 成功率: {rate:.1f}% (成功:{stats['success']}, 失败:{stats['failed']}, 来源:{stats.get('source', 'unknown')})"
-        
+
         print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {alert_msg}")
-        
+
         return {
             "rate": rate,
             "level": level,

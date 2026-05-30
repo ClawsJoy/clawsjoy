@@ -32,7 +32,7 @@ class HotDataSource:
             score = base_score + random.randint(-10, 10)
             score = max(0, min(100, score))
             topics_with_score.append({"topic": topic, "score": score})
-        
+
         # 按热度排序
         topics_with_score.sort(key=lambda x: x["score"], reverse=True)
         return topics_with_score[:limit]

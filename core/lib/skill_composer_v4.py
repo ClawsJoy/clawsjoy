@@ -45,7 +45,7 @@ class SkillComposer:
         for skill_dir in self.skills_path.iterdir():
             if not skill_dir.is_dir() or skill_dir.name.startswith('__'):
                 continue
-            
+
             skill_md = skill_dir / "SKILL.md"
             if skill_md.exists():
                 try:
@@ -74,7 +74,7 @@ class SkillComposer:
         guide = []
         guide.append("# Available Skills for Composition")
         guide.append("")
-        
+
         for skill in self.skills.values():
             guide.append(f"## {skill.name}")
             guide.append(f"Description: {skill.description}")
@@ -86,14 +86,14 @@ class SkillComposer:
                 guide.append(f"Depends on: {', '.join(skill.dependencies)}")
             guide.append(f"Security: {'🟢' if skill.security_grade == 'A' else '🟡' if skill.security_grade == 'B' else '🟠'}")
             guide.append("")
-        
+
         return "\n".join(guide)
     
     def find_skills_for_intent(self, intent: str) -> List[str]:
         """根据意图匹配技能"""
         matched = []
         intent_lower = intent.lower()
-        
+
         for name, skill in self.skills.items():
             for condition in skill.use_when:
                 if condition.lower() in intent_lower:
@@ -103,7 +103,7 @@ class SkillComposer:
                 if any(word in intent_lower for word in name.lower().split('_')):
                     if name not in matched:
                         matched.append(name)
-        
+
         return matched[:10]
     
     def compose_workflow(self, intent: str, selected_skills: List[str]) -> Dict:
@@ -113,7 +113,7 @@ class SkillComposer:
             "steps": [],
             "estimated_success_rate": 0.8
         }
-        
+
         for i, skill_name in enumerate(selected_skills):
             skill = self.skills.get(skill_name)
             step = {
@@ -123,7 +123,7 @@ class SkillComposer:
                 "depends_on": skill.dependencies if skill else []
             }
             workflow["steps"].append(step)
-        
+
         return workflow
     
     def get_stats(self) -> Dict:

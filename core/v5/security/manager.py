@@ -43,13 +43,13 @@ class SecurityManager:
         current = time.time()
         if user_id not in self.rate_limits:
             self.rate_limits[user_id] = []
-        
+
         # 清理过期记录
         self.rate_limits[user_id] = [t for t in self.rate_limits[user_id] if current - t < window]
-        
+
         if len(self.rate_limits[user_id]) >= limit:
             return False
-        
+
         self.rate_limits[user_id].append(current)
         return True
     

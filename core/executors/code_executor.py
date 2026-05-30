@@ -13,7 +13,7 @@ class CodeExecutor:
     
     def execute(self, goal: str, params: dict = None) -> dict:
         """动态生成并执行代码"""
-        
+
         # 构建代码生成 prompt
         prompt = f"""根据用户需求生成 Python 代码来完成任务。
 
@@ -29,14 +29,14 @@ class CodeExecutor:
 
         from core.lib.smart_adapter import smart_adapter
         code = smart_adapter.generate(prompt, auto_select=True)
-        
+
         # 提取代码
         code = self._extract_code(code)
         if not code:
             return {"success": False, "error": "无法生成代码"}
-        
+
         print(f"📝 生成代码: {code[:200]}...")
-        
+
         # 执行代码
         try:
             result = self._run_code(code)
@@ -51,11 +51,11 @@ class CodeExecutor:
         match = re.search(pattern, text, re.DOTALL)
         if match:
             return match.group(1).strip()
-        
+
         # 检查是否已经是代码
         if 'def ' in text or 'import ' in text or 'print(' in text:
             return text.strip()
-        
+
         return None
     
     def _run_code(self, code: str) -> str:
@@ -63,7 +63,7 @@ class CodeExecutor:
         with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
             f.write(code)
             temp_file = f.name
-        
+
         try:
             result = subprocess.run(
                 ['python3', temp_file],

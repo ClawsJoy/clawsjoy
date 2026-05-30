@@ -33,7 +33,7 @@ class LLMGoalGenerator:
 返回 JSON: {{"goals": [{{"description": "目标", "priority": "high", "steps": []}}]}}
 """
         response = self._call_llm(context)
-        
+
         try:
             match = re.search(r'\{.*\}', response, re.DOTALL)
             if match:
@@ -41,7 +41,7 @@ class LLMGoalGenerator:
                 return self._convert(data)
         except:
             pass
-        
+
         return self._fallback()
     
     def _convert(self, data: Dict) -> List[Dict]:

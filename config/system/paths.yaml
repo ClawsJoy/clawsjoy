@@ -1,6 +1,0 @@
-# 路径配置
-paths:
-  project_root: "."
-  skills_dir: "skills"
-  data_dir: "data"
-  logs_dir: "logs"

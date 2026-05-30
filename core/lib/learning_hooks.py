@@ -18,7 +18,7 @@ class LearningHooks:
     def __init__(self):
         self.log_dir = Path(f"{get_data_root()}/learning_logs")
         self.log_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # 学习统计
         self.stats = {
             'total_interactions': 0,
@@ -54,10 +54,10 @@ class LearningHooks:
         response = context.get('response', '')
         success = context.get('success', False)
         duration = context.get('duration', 0)
-        
+
         # 记录到日志文件
         log_file = self.log_dir / f"{user_id}_{datetime.now().strftime('%Y%m%d')}.jsonl"
-        
+
         log_entry = {
             'timestamp': datetime.now().isoformat(),
             'user_id': user_id,
@@ -67,19 +67,19 @@ class LearningHooks:
             'duration': duration,
             'learned': False
         }
-        
+
         with open(log_file, 'a') as f:
             f.write(json.dumps(log_entry, ensure_ascii=False) + '\n')
-        
+
         # 更新统计
         self.stats['total_interactions'] += 1
         if success:
             self.stats['successful_interactions'] += 1
         else:
             self.stats['failed_interactions'] += 1
-        
+
         self._save_stats()
-        
+
         # 触发学习分析
         context['log_entry'] = log_entry
         return context
@@ -91,7 +91,7 @@ class LearningHooks:
         user_id = log_entry.get('user_id')
         user_input = log_entry.get('input', '')
         success = log_entry.get('success', False)
-        
+
         # 学习成功模式
         if success:
             pattern = self._extract_pattern(user_input)
@@ -107,10 +107,10 @@ class LearningHooks:
                 if pattern_entry not in self.stats['learned_patterns']:
                     self.stats['learned_patterns'].append(pattern_entry)
                     print(f"📚 学到新模式: {pattern}")
-        
+
         # 学习用户偏好
         self._learn_preference(user_id, user_input, success)
-        
+
         context['learned'] = True
         return context
     
@@ -132,11 +132,11 @@ class LearningHooks:
             self.stats['user_preferences'][user_id]['style'] = 'concise'
         elif '详细' in user_input or '具体' in user_input:
             self.stats['user_preferences'][user_id]['style'] = 'detailed'
-        
+
         # 检测用户活跃时间
         hour = datetime.now().hour
         self.stats['user_preferences'][user_id]['active_hour'] = hour
-        
+
         self._save_stats()
     
     # ========== 监控钩子 ==========
@@ -145,33 +145,33 @@ class LearningHooks:
         duration = context.get('duration', 0)
         success = context.get('success', False)
         user_id = context.get('user_id', 'unknown')
-        
+
         alerts = []
-        
+
         # 检测慢响应
         if duration > 5:
             alerts.append(f"⚠️ 响应慢: {duration:.1f}秒")
-        
+
         # 检测失败率
         user_stats = self._get_user_stats(user_id)
         if user_stats.get('recent_failures', 0) > 3:
             alerts.append(f"⚠️ 用户 {user_id} 失败率较高")
-        
+
         # 检测学习机会
         if not success and context.get('user_input'):
             alerts.append(f"📚 学习机会: 用户问题未能解决")
-        
+
         context['alerts'] = alerts
         if alerts:
             print(f"📊 监控: {', '.join(alerts)}")
-        
+
         return context
     
     def _get_user_stats(self, user_id: str) -> Dict:
         """获取用户统计"""
         recent_failures = 0
         log_file = self.log_dir / f"{user_id}_{datetime.now().strftime('%Y%m%d')}.jsonl"
-        
+
         if log_file.exists():
             with open(log_file, 'r') as f:
                 lines = f.readlines()[-10:]  # 最近10条
@@ -182,7 +182,7 @@ class LearningHooks:
                             recent_failures += 1
                     except:
                         pass
-        
+
         return {'recent_failures': recent_failures}
     
     # ========== 主动服务钩子 ==========
@@ -191,18 +191,18 @@ class LearningHooks:
         user_id = context.get('user_id', 'unknown')
         hour = datetime.now().hour
         preferences = self.stats['user_preferences'].get(user_id, {})
-        
+
         suggestions = []
-        
+
         # 根据活跃时间主动问候
         if preferences.get('active_hour') == hour and hour in [8, 9, 22, 23]:
             suggestions.append("早上好！今天有什么可以帮你的？")
-        
+
         # 根据失败记录主动帮助
         user_stats = self._get_user_stats(user_id)
         if user_stats.get('recent_failures', 0) >= 2:
             suggestions.append("我注意到你刚才遇到了问题，需要我换个方式解释吗？")
-        
+
         context['suggestions'] = suggestions
         return context
 

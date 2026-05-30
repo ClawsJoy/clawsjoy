@@ -21,12 +21,12 @@ class VideoPlanner:
                 text=True,
                 timeout=unified_config.get("timeouts.default", 30)
             )
-            
+
             # 提取 JSON（输出中可能包含日志前缀）
             output = result.stdout
             start = output.find('{')
             end = output.rfind('}') + 1
-            
+
             if start != -1 and end > start:
                 plan = json.loads(output[start:end])
                 return {"success": True, "plan": plan}
@@ -40,7 +40,7 @@ class VideoPlanner:
         # 从记忆获取偏好
         prefs = memory.recall("preference")
         style = memory.recall("style")
-        
+
         # 增强 segments
         enhanced_segments = []
         for seg in base_segments:
@@ -48,7 +48,7 @@ class VideoPlanner:
             if prefs:
                 enhanced_seg["text"] = f"{prefs[0]}，{seg.get('text', '')}"
             enhanced_segments.append(enhanced_seg)
-        
+
         return self.create_plan(topic, enhanced_segments)
     
     def save_plan(self, plan, filename="output/video_plan.json"):

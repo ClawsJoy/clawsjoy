@@ -29,7 +29,7 @@ class EnhancedRetriever:
     def _classify_task(self, user_input: str) -> Tuple[str, str]:
         """识别任务类型"""
         lower = user_input.lower()
-        
+
         search_keywords = ["找", "搜索", "查找", "查", "资料", "文档", "总结", "报告", "介绍"]
         if any(kw in user_input for kw in search_keywords):
             query = user_input
@@ -37,26 +37,26 @@ class EnhancedRetriever:
                 query = query.replace(kw, "")
             query = query.strip().strip("，。？！")
             return "search", query if query else user_input
-        
+
         if any(g in user_input for g in ["你好", "hi"]):
             return "greeting", ""
-        
+
         if re.match(r'^[我][叫][\s]*', user_input):
             return "self_intro", user_input
-        
+
         if "你是谁" in user_input:
             return "ask_who", ""
-        
+
         return "chat", user_input
     
     def _search(self, query: str) -> str:
         """搜索 - 优先匹配中文"""
         if not query:
             return ""
-        
+
         # 直接搜索原词
         results = vector_memory.search(query, n=5)
-        
+
         # 过滤：优先返回包含中文的结果
         chinese_results = []
         for r in results:
@@ -65,16 +65,16 @@ class EnhancedRetriever:
             chinese_count = len(re.findall(r'[\u4e00-\u9fff]', text))
             if chinese_count > 50:  # 至少50个中文字符
                 chinese_results.append(r)
-        
+
         if chinese_results:
             return "\n\n---\n\n".join([r.get('text', '')[:800] for r in chinese_results[:2]])
-        
+
         return ""
     
     def _execute_search(self, query: str) -> str:
         print(f"   🔍 搜索: '{query}'")
         results = self._search(query)
-        
+
         if results:
             return f"找到相关资料：\n\n{results}"
         else:
@@ -100,7 +100,7 @@ class EnhancedRetriever:
         prompt = f"""你是 ClawsJoy。{f'用户叫{name}。' if name else ''}
 用户说："{user_input}"
 请友好回复。"""
-        
+
         try:
             resp = requests.post(
                 f"{self.ollama_url}/api/generate",
@@ -116,7 +116,7 @@ class EnhancedRetriever:
     def process(self, user_input: str) -> Dict:
         task_type, task_param = self._classify_task(user_input)
         print(f"   🎯 任务: {task_type} -> '{task_param[:30]}'")
-        
+
         if task_type == "search":
             response = self._execute_search(task_param)
         elif task_type == "greeting":
@@ -127,7 +127,7 @@ class EnhancedRetriever:
             response = self._execute_ask_who()
         else:
             response = self._execute_chat(user_input)
-        
+
         self.memory.record_interaction(user_input, response, task_type)
         return {"response": response, "task": task_type}
 

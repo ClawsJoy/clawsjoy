@@ -28,7 +28,7 @@ class EnhancedLLMClient:
                 cached, ts = self.cache[key]
                 if time.time() - ts < 3600:  # 1小时缓存
                     return cached
-        
+
         # 重试机制
         for attempt in range(self.max_retries):
             try:
@@ -51,7 +51,7 @@ class EnhancedLLMClient:
                 if attempt == self.max_retries - 1:
                     return self._fallback(prompt)
                 time.sleep(1)
-        
+
         return self._fallback(prompt)
     
     def _fallback(self, prompt: str) -> str:

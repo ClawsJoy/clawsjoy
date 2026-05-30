@@ -43,7 +43,7 @@ class HookManager:
                 self.config = unified_config.get('hooks', {})
         else:
             self.config = {}
-        
+
         self._hooks = {}
         self._load_all_hooks()
     
@@ -52,19 +52,19 @@ class HookManager:
         # 加载事件钩子
         for event_name, hooks in self.config.get('events', {}).items():
             self._hooks[f"event:{event_name}"] = self._parse_hooks(hooks, 'events')
-        
+
         # 加载数据钩子
         for data_stage, hooks in self.config.get('data', {}).items():
             self._hooks[f"data:{data_stage}"] = self._parse_hooks(hooks, 'data')
-        
+
         # 加载请求钩子
         for req_stage, hooks in self.config.get('request', {}).items():
             self._hooks[f"request:{req_stage}"] = self._parse_hooks(hooks, 'request')
-        
+
         # 加载学习钩子
         for learn_stage, hooks in self.config.get('learning', {}).items():
             self._hooks[f"learning:{learn_stage}"] = self._parse_hooks(hooks, 'learning')
-        
+
         # 加载安全钩子
         for sec_stage, hooks in self.config.get('security', {}).items():
             self._hooks[f"security:{sec_stage}"] = self._parse_hooks(hooks, 'security')
@@ -116,7 +116,7 @@ class HookManager:
                     
             except Exception as e:
                 print(f"  ❌ 钩子加载失败 {h.get('name')}: {e}")
-        
+
         # 按优先级排序
         hooks.sort(key=lambda x: x.priority)
         return hooks
@@ -125,11 +125,11 @@ class HookManager:
         """触发钩子"""
         hooks = self._hooks.get(hook_path, [])
         result = context
-        
+
         for hook in hooks:
             if not hook.enabled:
                 continue
-            
+
             try:
                 if hook._func:
                     # 调用钩子函数
@@ -140,7 +140,7 @@ class HookManager:
                     print(f"  ✅ 钩子执行: {hook_path}/{hook.name}")
             except Exception as e:
                 print(f"  ❌ 钩子失败: {hook_path}/{hook.name}: {e}")
-        
+
         return result
     
     def get_hooks(self, hook_path: str = None) -> Dict:

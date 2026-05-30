@@ -176,7 +176,7 @@ class SkillRegistry:
             "script_writing": ["脚本", "文案", "写作"],
             "data_analysis": ["分析", "统计", "处理"]
         }
-        
+
         for workflow, keywords in workflow_keywords.items():
             if any(kw in goal_lower for kw in keywords):
                 if workflow in self.manifests:

@@ -43,17 +43,17 @@ class SelfReflection:
             "timestamp": datetime.now().isoformat(),
             "lesson": self._extract_lesson(action, result)
         }
-        
+
         self.reflections.append(reflection)
         self._save()
-        
+
         # 如果不成功，分析原因并提出改进
         if not reflection['success']:
             improvement = self._suggest_improvement(action, result)
             if improvement:
                 self.improvements.append(improvement)
                 print(f"💡 改进建议: {improvement['description']}")
-        
+
         return reflection
     
     def _extract_lesson(self, action: str, result: Dict) -> str:
@@ -67,7 +67,7 @@ class SelfReflection:
     def _suggest_improvement(self, action: str, result: Dict) -> Dict:
         """提出改进建议"""
         error = result.get('error', result.get('result', ''))
-        
+
         if 'timeout' in error.lower():
             return {
                 "type": "timeout",
@@ -89,7 +89,7 @@ class SelfReflection:
                 "action": "retry_with_backof",
                 "priority": "high"
             }
-        
+
         return None
     
     def get_improvements(self) -> List[Dict]:
@@ -111,7 +111,7 @@ class SelfReflection:
         total = len(self.reflections)
         if total == 0:
             return {"message": "暂无反思记录"}
-        
+
         success = sum(1 for r in self.reflections if r.get('success', False))
         return {
             "total_reflections": total,

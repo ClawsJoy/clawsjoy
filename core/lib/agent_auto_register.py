@@ -40,11 +40,11 @@ class AgentAutoRegister:
         agent_name = config.get('name')
         if not agent_name:
             return False
-        
+
         config_file = self.registry_dir / f"{agent_name}.yaml"
         with open(config_file, 'w') as f:
             yaml.dump(config, f, allow_unicode=True, sort_keys=False)
-        
+
         self._agents[agent_name] = config
         print(f"   ✅ 动态注册 Agent: {agent_name}")
         return True

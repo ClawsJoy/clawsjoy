@@ -14,12 +14,12 @@ class MemoryManager:
         self.agent_name = agent_name
         self.base_path = Path(f"{config_helper.get_data_root()}/v5/users/{user_id}/memory/{agent_name}")
         self.base_path.mkdir(parents=True, exist_ok=True)
-        
+
         # 加载数据
         self.preferences = self._load("preferences.json")
         self.history = self._load("history.json")
         self.knowledge = self._load("knowledge.json")
-        
+
         if not isinstance(self.history, list):
             self.history = []
     

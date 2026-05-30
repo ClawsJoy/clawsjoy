@@ -52,18 +52,18 @@ class AutonomousScheduler:
         """启动调度器"""
         # 每30秒执行主动闭环
         schedule.every(30).seconds.do(self.run_active_loop)
-        
+
         # 每小时执行维护
         schedule.every().hour.do(self.run_maintenance)
-        
+
         # 每6小时生成报告
         schedule.every(6).hours.do(self.run_report)
-        
+
         self._log("调度器启动")
         self._log("  - 主动闭环: 每30秒")
         self._log("  - 系统维护: 每小时")
         self._log("  - 系统报告: 每6小时")
-        
+
         while self.running:
             schedule.run_pending()
             time.sleep(1)

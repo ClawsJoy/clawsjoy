@@ -25,7 +25,7 @@ class VersionManager:
     def get_current_version(self) -> str:
         if not self.enabled:
             return "versioning_disabled"
-        
+
         current_link = self.version_dir / "current"
         if current_link.exists():
             return current_link.readlink().name if hasattr(current_link, 'readlink') else str(current_link)

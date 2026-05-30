@@ -44,7 +44,7 @@ class DeveloperAPI:
     def sanitize_agent(self, agent_path: Path) -> Dict:
         """脱敏处理 - 清空用户记忆"""
         result = {"cleared": [], "kept": []}
-        
+
         # 清空记忆文件
         memory_files = ["memory.json", "preferences.json", "habits.json", "todos.json", "conversations.json"]
         for f in memory_files:
@@ -53,42 +53,42 @@ class DeveloperAPI:
                 with open(target, 'w') as fp:
                     json.dump({"sanitized": True, "data": {}, "sanitized_at": datetime.now().isoformat()}, fp)
                 result["cleared"].append(f)
-        
+
         # 清空向量目录
         vector_dir = agent_path / "vectors"
         if vector_dir.exists():
             shutil.rmtree(vector_dir)
             vector_dir.mkdir(parents=True)
             result["cleared"].append("vectors/")
-        
+
         # 清空用户数据目录
         user_data_dir = agent_path / "user_data"
         if user_data_dir.exists():
             shutil.rmtree(user_data_dir)
             user_data_dir.mkdir(parents=True)
             result["cleared"].append("user_data/")
-        
+
         # 保留配置和技能
         keep_dirs = ["config", "skills", "workflows", "templates", "prompts"]
         for d in keep_dirs:
             if (agent_path / d).exists():
                 result["kept"].append(f"{d}/")
-        
+
         # 标记已脱敏
         with open(agent_path / ".sanitized", 'w') as f:
             f.write(f"version: {self.VERSION}\n")
             f.write(f"sanitized_at: {datetime.now().isoformat()}\n")
             f.write("user_memory_cleared: true\n")
-        
+
         return result
     
     def register_developer(self, developer_id: str, name: str, email: str) -> Dict:
         """注册开发者"""
         registry = self._load_registry()
-        
+
         if developer_id in registry.get("developers", {}):
             return {"success": False, "error": "Developer already exists"}
-        
+
         registry["developers"][developer_id] = {
             "id": developer_id,
             "name": name,
@@ -102,20 +102,20 @@ class DeveloperAPI:
                 "total_downloads": 0
             }
         }
-        
+
         registry["statistics"]["total_developers"] = len(registry["developers"])
         self._save_registry(registry)
-        
+
         return {"success": True, "developer": registry["developers"][developer_id]}
     
     def upload_agent(self, developer_id: str, agent_path: Path, version: str = "1.0.0") -> Dict:
         """上传Agent（自动脱敏）"""
         registry = self._load_registry()
-        
+
         # 验证开发者
         if developer_id not in registry.get("developers", {}):
             return {"success": False, "error": "Developer not found"}
-        
+
         # 读取Agent配置
         config_file = agent_path / "config" / "agent.yaml"
         if config_file.exists():
@@ -126,20 +126,20 @@ class DeveloperAPI:
         else:
             agent_name = agent_path.name
             agent_type = "custom"
-        
+
         # 脱敏处理
         sanitize_result = self.sanitize_agent(agent_path)
-        
+
         # 生成包ID
         package_id = hashlib.md5(
             f"{developer_id}_{agent_name}_{datetime.now()}".encode()
         ).hexdigest()[:12]
-        
+
         # 打包
         package_file = self.pending_dir / f"{package_id}.tar.gz"
         with tarfile.open(package_file, "w:gz") as tar:
             tar.add(agent_path, arcname=f"{agent_name}_{version}")
-        
+
         # 创建审核记录
         review_record = {
             "package_id": package_id,
@@ -152,11 +152,11 @@ class DeveloperAPI:
             "sanitized": True,
             "sanitize_result": sanitize_result
         }
-        
+
         # 保存审核记录
         with open(self.pending_dir / f"{package_id}.json", 'w') as f:
             json.dump(review_record, f, indent=2)
-        
+
         # 更新开发者统计
         registry["developers"][developer_id]["stats"]["total_uploads"] += 1
         registry["developers"][developer_id]["agents"][agent_name] = {
@@ -165,10 +165,10 @@ class DeveloperAPI:
             "package_id": package_id,
             "uploaded_at": datetime.now().isoformat()
         }
-        
+
         registry["review_queue"].append(package_id)
         self._save_registry(registry)
-        
+
         return {
             "success": True,
             "package_id": package_id,
@@ -191,15 +191,15 @@ class DeveloperAPI:
         pending_file = self.pending_dir / f"{package_id}.json"
         if not pending_file.exists():
             return {"success": False, "error": "Package not found"}
-        
+
         with open(pending_file, 'r') as f:
             record = json.load(f)
-        
+
         # 移动到正式市场
         record["status"] = "approved"
         record["reviewer"] = reviewer
         record["approved_time"] = datetime.now().isoformat()
-        
+
         # 创建产品文件
         product_file = self.marketplace_dir / f"{record['agent_name']}.json"
         product_data = {
@@ -214,17 +214,17 @@ class DeveloperAPI:
             "price": "free",
             "downloads": 0
         }
-        
+
         with open(product_file, 'w') as f:
             json.dump(product_data, f, indent=2)
-        
+
         # 移动包文件
         shutil.move(
             self.pending_dir / f"{package_id}.tar.gz",
             self.marketplace_dir / f"{package_id}.tar.gz"
         )
         shutil.move(pending_file, self.marketplace_dir / f"{package_id}.json")
-        
+
         # 更新注册表
         registry = self._load_registry()
         dev_id = record['developer_id']
@@ -232,13 +232,13 @@ class DeveloperAPI:
             registry["developers"][dev_id]["stats"]["total_published"] += 1
             if record['agent_name'] in registry["developers"][dev_id]["agents"]:
                 registry["developers"][dev_id]["agents"][record['agent_name']]["status"] = "published"
-        
+
         if package_id in registry.get("review_queue", []):
             registry["review_queue"].remove(package_id)
-        
+
         registry["statistics"]["total_published_agents"] += 1
         self._save_registry(registry)
-        
+
         return {"success": True, "message": f"Agent {record['agent_name']} approved"}
     
     def reject_agent(self, package_id: str, reason: str = "") -> Dict:
@@ -246,33 +246,33 @@ class DeveloperAPI:
         pending_file = self.pending_dir / f"{package_id}.json"
         if not pending_file.exists():
             return {"success": False, "error": "Package not found"}
-        
+
         with open(pending_file, 'r') as f:
             record = json.load(f)
-        
+
         record["status"] = "rejected"
         record["reject_reason"] = reason
         record["rejected_time"] = datetime.now().isoformat()
-        
+
         # 移动回退
         shutil.move(
             self.pending_dir / f"{package_id}.tar.gz",
             self.marketplace_dir / f"rejected_{package_id}.tar.gz"
         )
         shutil.move(pending_file, self.marketplace_dir / f"rejected_{package_id}.json")
-        
+
         # 更新注册表
         registry = self._load_registry()
         dev_id = record['developer_id']
         if dev_id in registry.get("developers", {}):
             if record['agent_name'] in registry["developers"][dev_id]["agents"]:
                 registry["developers"][dev_id]["agents"][record['agent_name']]["status"] = "rejected"
-        
+
         if package_id in registry.get("review_queue", []):
             registry["review_queue"].remove(package_id)
-        
+
         self._save_registry(registry)
-        
+
         return {"success": True, "message": f"Agent {record['agent_name']} rejected"}
 
 
@@ -300,7 +300,7 @@ def register_developer_routes(app):
         agent_path = Path(data.get('agent_path'))
         if not agent_path.exists():
             return jsonify({"success": False, "error": "Agent path not found"}), 400
-        
+
         result = developer_api.upload_agent(
             developer_id=data.get('developer_id'),
             agent_path=agent_path,

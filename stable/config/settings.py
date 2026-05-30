@@ -20,7 +20,7 @@ PORT_TASK = 8084
 PORT_WEB = 8082
 
 # ========== AI 配置 ==========
-OLLAMA_URL = "http://smart_config.HOST:str(smart_config.get_port("ollama"))"
+OLLAMA_URL = f"http://{smart_config.HOST}:{smart_config.get_port("ollama")}"
 OLLAMA_MODEL = "qwen2.5:3b"
 
 # ========== Redis 配置 ==========

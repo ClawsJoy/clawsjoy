@@ -26,14 +26,14 @@ class MemoryDrivenButler:
         self.user_id = user_id
         self.user_dir = Path(funified_config.get("paths.users_dir", f"{get_data_root()}/users/") + "/{user_id}/butler_memory")
         self.user_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # ========== 记忆驱动：所有数据从记忆加载 ==========
         self.memory_file = self.user_dir / "profile.json"
         self._load_memory()
-        
+
         # 规则配置（可配置化）
         self.rules = self._load_rules()
-        
+
         self.ollama_url = "config_loader.get_ollama_url()"
         self.model = config_manager.get_model()
     
@@ -63,7 +63,7 @@ class MemoryDrivenButler:
         if rules_file.exists():
             with open(rules_file, 'r') as f:
                 return json.load(f)
-        
+
         # 默认规则（可从配置修改）
         return {
             "greeting_keywords": ["你好", "hi", "hello", "嗨"],
@@ -94,7 +94,7 @@ class MemoryDrivenButler:
                     self.profile["user"]["name"] = name
                     self._save_memory()
                     break
-        
+
         # 提取偏好
         for pattern_cfg in self.rules.get("preference_patterns", []):
             match = re.search(pattern_cfg["pattern"], text)
@@ -109,14 +109,14 @@ class MemoryDrivenButler:
         """生成问候（基于记忆）"""
         name = self.profile["user"].get("name")
         hour = datetime.now().hour
-        
+
         if hour < 12:
             time_word = "早上好"
         elif hour < 18:
             time_word = "下午好"
         else:
             time_word = "晚上好"
-        
+
         if name:
             return f"{time_word}，{name}！很高兴又见到你"
         return f"{time_word}！我是你的私人管家，请问怎么称呼？"
@@ -124,12 +124,12 @@ class MemoryDrivenButler:
     def _fast_task(self, text: str) -> Optional[tuple]:
         """快速任务（基于配置）"""
         lower = text.lower()
-        
+
         # 问候
         for kw in self.rules.get("greeting_keywords", []):
             if kw in lower:
                 return (self._get_greeting(), "greeting")
-        
+
         # 问名字
         for kw in self.rules.get("query_name_keywords", []):
             if kw in lower:
@@ -137,7 +137,7 @@ class MemoryDrivenButler:
                 if name:
                     return (f"当然记得！你是{name}呀", "query_name")
                 return ("你还没告诉我名字呢，请问怎么称呼？", "query_name")
-        
+
         # 问偏好
         for kw in self.rules.get("query_pref_keywords", []):
             if kw in lower:
@@ -145,24 +145,24 @@ class MemoryDrivenButler:
                 if prefs:
                     return (f"根据记忆，你喜欢{', '.join(prefs)}", "query_pref")
                 return ("你还没告诉我你的偏好呢", "query_pref")
-        
+
         # 其他任务
         for task_name, task_cfg in self.rules.get("fast_tasks", {}).items():
             for kw in task_cfg.get("keywords", []):
                 if kw in lower:
                     return (task_cfg.get("response", "处理中"), task_name)
-        
+
         return None
     
     def process(self, user_input: str) -> Dict:
         start = time.time()
-        
+
         # 1. 从输入学习（更新记忆）
         self._update_from_input(user_input)
-        
+
         # 2. 快速任务
         fast = self._fast_task(user_input)
-        
+
         if fast:
             response, task = fast
             used_llm = False
@@ -170,14 +170,14 @@ class MemoryDrivenButler:
             # 3. LLM 理解（上下文从记忆加载）
             name = self.profile["user"].get("name", "")
             prefs = list(self.profile["preferences"].keys())
-            
+
             prompt = f"""你是私人管家{f'，用户叫{name}' if name else ''}。
 {f'用户偏好：{", ".join(prefs)}' if prefs else ''}
 
 用户说："{user_input}"
 
 回复要求：简洁自然，1-2句话。"""
-            
+
             try:
                 resp = requests.post(
                     f"{self.ollama_url}/api/generate",
@@ -189,7 +189,7 @@ class MemoryDrivenButler:
                 response = "让我想想"
             task = "chat"
             used_llm = True
-        
+
         # 记录历史
         self.profile["history"].append({
             "user": user_input[:100],
@@ -200,9 +200,9 @@ class MemoryDrivenButler:
             self.profile["history"] = self.profile["history"][-50:]
         self.profile["stats"]["total"] += 1
         self._save_memory()
-        
+
         elapsed = (time.time() - start) * 1000
-        
+
         return {
             "response": response,
             "task": task,

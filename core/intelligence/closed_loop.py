@@ -45,7 +45,7 @@ class ClosedLoop:
             import requests
             gateway_health = requests.get("http://localhost:5002/api/health", timeout=5).json()
             gateway_status = gateway_health.get("status") == "ok"
-            
+
             return {
                 "timestamp": datetime.now().isoformat(),
                 "gateway": {
@@ -66,9 +66,9 @@ class ClosedLoop:
         thresholds = self.health_scoring.get("thresholds", {})
         base_score = self.health_scoring.get("base_score", 85)
         health_score = base_score
-        
+
         issues = []
-        
+
         # 网关健康分析
         if state.get("gateway", {}).get("status") != "healthy":
             health_score -= 30
@@ -77,18 +77,18 @@ class ClosedLoop:
                 "severity": "critical",
                 "message": "网关服务不健康"
             })
-        
+
         # 等级判定
         warning_threshold = thresholds.get("health_warning", 70)
         critical_threshold = thresholds.get("health_critical", 50)
-        
+
         if health_score < critical_threshold:
             level = "critical"
         elif health_score < warning_threshold:
             level = "warning"
         else:
             level = "healthy"
-        
+
         return {
             "timestamp": datetime.now().isoformat(),
             "health_score": health_score,
@@ -101,7 +101,7 @@ class ClosedLoop:
         """3. 决策 - 制定行动方案"""
         actions = []
         priority = "normal"
-        
+
         if analysis["level"] == "critical":
             actions.append({
                 "type": "restart_gateway",
@@ -122,7 +122,7 @@ class ClosedLoop:
                 "priority": "low",
                 "message": "系统运行正常"
             })
-        
+
         return {
             "timestamp": datetime.now().isoformat(),
             "actions": actions,
@@ -152,7 +152,7 @@ class ClosedLoop:
                     "success": True,
                     "message": "继续监控"
                 })
-        
+
         return {
             "timestamp": datetime.now().isoformat(),
             "results": results,
@@ -171,19 +171,19 @@ class ClosedLoop:
     def learn(self, feedback: Dict) -> Dict:
         """6. 学习 - 优化决策"""
         insights = []
-        
+
         if not feedback.get("execution_success"):
             insights.append({
                 "type": "action_failure",
                 "message": "执行失败，需要检查行动条件"
             })
-        
+
         if feedback.get("health_score", 100) < 50:
             insights.append({
                 "type": "critical_pattern",
                 "message": "系统频繁进入严重状态"
             })
-        
+
         return {
             "timestamp": datetime.now().isoformat(),
             "insights": insights,
@@ -194,9 +194,9 @@ class ClosedLoop:
         """运行完整闭环"""
         start_time = time.time()
         self.loop_count += 1
-        
+
         print(f"\n🔄 闭环 #{self.loop_count}")
-        
+
         # 1-6 完整闭环
         state = self.sense()
         analysis = self.analyze(state)
@@ -204,20 +204,20 @@ class ClosedLoop:
         execution = self.act(decision)
         feedback_data = self.feedback(execution, analysis)
         learning = self.learn(feedback_data)
-        
+
         elapsed = time.time() - start_time
-        
+
         # 更新统计
         self.stats["total_loops"] += 1
         if execution.get("success"):
             self.stats["successful"] += 1
         else:
             self.stats["failed"] += 1
-        
+
         self.stats["avg_response_time"] = (
             self.stats["avg_response_time"] * (self.stats["total_loops"] - 1) + elapsed
         ) / self.stats["total_loops"] if self.stats["total_loops"] > 1 else elapsed
-        
+
         # 记录历史
         self.history.append({
             "loop_id": self.loop_count,
@@ -226,10 +226,10 @@ class ClosedLoop:
             "actions": len(decision.get("actions", [])),
             "success": execution.get("success")
         })
-        
+
         if len(self.history) > 100:
             self.history = self.history[-100:]
-        
+
         return {
             "status": "success",
             "loop_id": self.loop_count,

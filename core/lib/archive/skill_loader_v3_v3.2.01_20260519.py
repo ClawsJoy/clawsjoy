@@ -62,7 +62,7 @@ class SkillLoaderV3:
             cat_path = Path(f"skills/{cat_dir}")
             if not cat_path.exists():
                 continue
-            
+
             for py_file in cat_path.glob("*.py"):
                 if py_file.stem == '__init__':
                     continue
@@ -75,7 +75,7 @@ class SkillLoaderV3:
                     'file': str(py_file),
                     'path': f"skills.{cat_dir}.{skill_name}"
                 }
-        
+
         print(f"✅ 技能加载器 V3 已初始化")
         print(f"   总技能: {len(self.skills)} 个")
         for cat, skills in self.categories.items():

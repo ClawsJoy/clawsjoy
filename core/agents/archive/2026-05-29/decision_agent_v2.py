@@ -56,15 +56,15 @@ class DecisionAgentV4:
         """处理分析报告"""
         action = message.get("action")
         from_agent = message.get("from")
-        
+
         print(f"\n📊 [{datetime.now().isoformat()}] 收到分析报告 from {from_agent}")
-        
+
         if action == "analysis_report":
             health_score = message.get("health_score", 0)
             suggestions = message.get("suggestions", [])
             self.last_health_score = health_score
             self.last_suggestions = suggestions
-            
+
             # 根据健康度决策
             if health_score < 50:
                 self._handle_critical(health_score, suggestions)
@@ -72,21 +72,21 @@ class DecisionAgentV4:
                 self._handle_warning(health_score, suggestions)
             else:
                 self._handle_healthy(health_score, suggestions)
-            
+
             # 触发主动服务
             self._trigger_active_services(health_score)
 
     def _handle_critical(self, health_score: int, suggestions: list):
         """处理严重问题"""
         print(f"🚨 [严重] 健康度 {health_score}，需要紧急处理")
-        
+
         # 执行修复动作
         actions = [
             ("重启网关", "sudo systemctl restart clawsjoy"),
             ("清理缓存", self._clear_cache),
             ("检查服务", self._check_services),
         ]
-        
+
         for name, action in actions:
             print(f"  执行: {name}")
             if callable(action):
@@ -97,7 +97,7 @@ class DecisionAgentV4:
     def _handle_warning(self, health_score: int, suggestions: list):
         """处理警告问题"""
         print(f"⚠️ [警告] 健康度 {health_score}，建议优化")
-        
+
         for sug in suggestions[:3]:
             print(f"  建议: {sug.get('message', sug)}")
 
@@ -113,7 +113,7 @@ class DecisionAgentV4:
             "error_detected": health_score < 70,
             "first_interaction": False
         }
-        
+
         result = self.smart_service.should_serve("decision_agent", context)
         if result.get("should"):
             print(f"💡 主动服务触发: {result.get('reason')} (优先级: {result.get('priority')})")
@@ -122,7 +122,7 @@ class DecisionAgentV4:
     def _execute_service_action(self, service_result: Dict):
         """执行主动服务动作"""
         reason = service_result.get("reason")
-        
+
         if reason == "help_needed":
             print("  🆘 发送帮助通知")
             self._send_notification("系统需要帮助", "健康度下降")

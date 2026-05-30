@@ -47,13 +47,13 @@ class ErrorKnowledge:
         # 简单关键词匹配
         words1 = set(re.findall(r'\w+', error1.lower()))
         words2 = set(re.findall(r'\w+', error2.lower()))
-        
+
         if not words1 or not words2:
             return 0.0
-        
+
         intersection = words1 & words2
         union = words1 | words2
-        
+
         return len(intersection) / len(union)
     
     def _extract_error_type(self, error_msg: str) -> str:
@@ -68,11 +68,11 @@ class ErrorKnowledge:
             'ffmpeg_error': r'ffmpeg|ffprobe',
             'port_in_use': r'Address already in use|port.*in use',
         }
-        
+
         for error_type, pattern in patterns.items():
             if re.search(pattern, error_msg, re.IGNORECASE):
                 return error_type
-        
+
         return 'unknown'
     
     def query(self, task_name: str, error_msg: str = None) -> Optional[Dict]:
@@ -81,33 +81,33 @@ class ErrorKnowledge:
         返回: 匹配的错误信息或 None
         """
         errors = self._load_errors()
-        
+
         if not errors:
             return None
-        
+
         # 先按任务名匹配
         for err in errors:
             context = err.get('context', '')
             if task_name in context or context in task_name:
                 return err
-        
+
         # 再按错误内容匹配
         if error_msg:
             error_type = self._extract_error_type(error_msg)
-            
+
             for err in errors:
                 err_type = self._extract_error_type(err.get('error', ''))
                 if error_type == err_type and error_type != 'unknown':
                     similarity = self._calculate_similarity(error_msg, err.get('error', ''))
                     if similarity >= self.similarity_threshold:
                         return err
-        
+
         return None
     
     def add(self, task_name: str, error_msg: str, skill: str = "") -> Dict:
         """添加错误到知识库"""
         errors = self._load_errors()
-        
+
         # 检查是否已存在
         existing = self.query(task_name, error_msg)
         if existing:
@@ -116,7 +116,7 @@ class ErrorKnowledge:
             existing['last_seen'] = datetime.now().isoformat()
             self._save_errors(errors)
             return existing
-        
+
         # 新增错误
         new_error = {
             "id": datetime.now().strftime("%Y%m%d%H%M%S"),
@@ -130,22 +130,22 @@ class ErrorKnowledge:
             "last_seen": datetime.now().isoformat(),
             "solution": self._suggest_solution(error_msg)
         }
-        
+
         errors.append(new_error)
         self._save_errors(errors)
-        
+
         # 同时写入记忆系统
         memory.remember(
             f"错误|{task_name}|{error_msg[:100]}",
             category="error_knowledge"
         )
-        
+
         return new_error
     
     def _suggest_solution(self, error_msg: str) -> str:
         """根据错误类型建议解决方案"""
         error_type = self._extract_error_type(error_msg)
-        
+
         solutions = {
             'connection_refused': "检查服务是否启动: docker ps 或 systemctl status",
             'timeout': "增加超时时间或检查网络连接",
@@ -156,29 +156,29 @@ class ErrorKnowledge:
             'ffmpeg_error': "安装 ffmpeg: sudo apt install ffmpeg -y",
             'port_in_use': "释放端口: fuser -k <port>/tcp",
         }
-        
+
         return solutions.get(error_type, "查看日志获取详细信息")
     
     def should_skip(self, task_name: str, retry_count: int = 0) -> Tuple[bool, str]:
         """判断是否应该跳过任务"""
         error = self.query(task_name)
-        
+
         if error:
             retry_count = error.get('retry_count', retry_count)
             if retry_count >= self.max_retry_same_error:
                 return True, f"重复失败 {retry_count} 次，建议: {error.get('solution', '人工介入')}"
-        
+
         return False, ""
     
     def get_stats(self) -> Dict:
         """获取错误知识库统计"""
         errors = self._load_errors()
-        
+
         type_counts = {}
         for err in errors:
             err_type = err.get('error_type', 'unknown')
             type_counts[err_type] = type_counts.get(err_type, 0) + 1
-        
+
         return {
             "total_errors": len(errors),
             "by_type": type_counts,

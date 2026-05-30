@@ -24,10 +24,10 @@ class ConfigDriver:
         self.root = unified_config.ROOT
         self.config_dir = self.root / "config" / "driver"
         self.config_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # 配置缓存
         self._cache = {}
-        
+
         # 加载所有配置
         self._load_all_configs()
     
@@ -40,7 +40,7 @@ class ConfigDriver:
             ("resources", "resources.yaml"),
             ("tasks", "tasks.yaml"),
         ]
-        
+
         for name, filename in config_files:
             self._load_config(name, filename)
     
@@ -104,7 +104,7 @@ class ConfigDriver:
         """获取配置值，支持点号分隔，如 'thresholds.quality_min_score'"""
         parts = key.split('.')
         value = self._cache
-        
+
         for part in parts:
             if isinstance(value, dict):
                 value = value.get(part)
@@ -112,7 +112,7 @@ class ConfigDriver:
                     return default
             else:
                 return default
-        
+
         return value if value is not None else default
     
     def get_section(self, section: str) -> Dict:

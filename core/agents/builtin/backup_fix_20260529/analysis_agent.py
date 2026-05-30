@@ -76,9 +76,9 @@ class AnalysisAgent(SmartAgent):
     def _call_decision_maker(self, analysis: Dict) -> Dict:
         """调用决策师"""
         import requests
-        
+
         print(f"[分析师] 调用决策师: {analysis.get('intent')}")
-        
+
         try:
             resp = requests.post(
                 "http://localhost:5002/api/agent/decision_agent/message",

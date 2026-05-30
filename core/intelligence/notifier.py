@@ -9,20 +9,20 @@ class Notifier:
     def __init__(self):
         self.notification_file = Path("logs/notifications.log")
         self.notification_file.parent.mkdir(exist_ok=True)
-        
+
     def send(self, title, message, level='info'):
         """发送通知"""
         timestamp = datetime.now().strftime('%H:%M:%S')
         icons = {'info': 'ℹ️', 'warning': '⚠️', 'success': '✅', 'error': '❌'}
         icon = icons.get(level, '📢')
-        
+
         notification = f"[{timestamp}] {icon} {title}: {message}"
         print(notification)
-        
+
         # 记录到文件
         with open(self.notification_file, 'a') as f:
             f.write(f"{datetime.now().isoformat()} | {level} | {title} | {message}\n")
-        
+
         # 如果是严重问题，记录到大脑
         if level in ['warning', 'error']:
             from agent_core.brain_enhanced import brain

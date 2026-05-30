@@ -1,32 +1,36 @@
-"""决策 Agent - 智能决策"""
+"""决策师 - 决定学习哪些内容"""
 
-from typing import Dict, Optional
+from typing import Dict
 from core.agents.base.smart_agent import SmartAgent
-from core.lib.smart_adapter import smart_adapter
 
 
 class DecisionAgent(SmartAgent):
     name = "decision_agent"
-    description = "智能决策引擎"
-    version = "2.0.0"
+    description = "决策学习内容"
 
     def __init__(self, user_id: str = "default"):
         super().__init__(user_id=user_id)
-        self._load_agent_config()
         print("🎖️ 决策师 已上岗")
 
-    def process(self, user_input: str, context: Optional[Dict] = None) -> Dict:
-        print(f"[决策师] 收到: {user_input}")
+    def decide_what_to_learn(self, analysis: Dict) -> Dict:
+        """决定学习什么"""
+        if not analysis.get("has_unknown"):
+            return {"need_learn": False, "tasks": []}
         
-        result = smart_adapter.generate(
-            user_input,
-            model=self.llm_model,
-            temperature=self.llm_temperature
-        )
+        tasks = []
+        for suggestion in analysis.get("suggestions", []):
+            tasks.append({
+                "action": "learn",
+                "question": suggestion["question"],
+                "priority": suggestion["priority"],
+                "source": "auto_analysis"
+            })
         
         return {
-            "success": True,
-            "response": result,
-            "agent": self.name,
-            "user_id": self.user_id
+            "need_learn": len(tasks) > 0,
+            "tasks": tasks,
+            "message": f"需要学习 {len(tasks)} 个新问题"
         }
+    
+    def process(self, user_input: str, context=None) -> Dict:
+        return self.decide_what_to_learn(user_input if isinstance(user_input, dict) else {})

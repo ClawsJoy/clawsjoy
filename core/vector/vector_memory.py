@@ -69,7 +69,7 @@ class VectorMemory:
         for mem in self.memories:
             score = self._similarity(query_vec, mem["vector"])
             results.append((score, mem))
-        
+
         results.sort(key=lambda x: x[0], reverse=True)
         return [{"text": r[1]["text"], "score": round(r[0], 3)} for r in results[:limit] if r[0] > 0.1]
 

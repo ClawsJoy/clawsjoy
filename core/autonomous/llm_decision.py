@@ -50,29 +50,29 @@ class LLMDecisionAgent:
             skill_count = resp.json().get('total', 0)
         except:
             skill_count = 0
-        
+
         try:
             resp = requests.get('http://localhost:5002/api/health', timeout=5)
             health = resp.json().get('status', 'unknown') if resp.status_code == 200 else 'unknown'
         except:
             health = 'unknown'
-        
+
         try:
             from core.lib.memory_vector import vector_memory
             memory_count = vector_memory.collection.count()
         except:
             memory_count = 0
-        
+
         return {'skill_count': skill_count, 'health_status': health, 'memory_count': memory_count}
     
     def think(self, state: Dict) -> Dict:
         recent = self.decision_history[-5:] if self.decision_history else []
         history = "\n".join([f"  {d.get('timestamp', '')[:16]}: {d.get('decision', {}).get('action_type', '?')} - {d.get('result', {}).get('success', False)}" for d in recent])
-        
+
         prompt = f"""状态: 技能{state['skill_count']}, 健康{state['health_status']}, 记忆{state['memory_count']}
 历史: {history}
 返回JSON: {{"action": "check|fix|optimize|idle", "target": "具体目标", "reason": "理由"}}"""
-        
+
         response = self._call_llm(prompt)
         try:
             match = re.search(r'\{.*\}', response, re.DOTALL)
@@ -110,7 +110,7 @@ class LLMDecisionAgent:
         print(f"  💭 决策: {decision.get('action', 'idle')} - {decision.get('reason', '')[:40]}")
         result = self.act(decision)
         print(f"  ⚡ 执行: {result.get('result', '')[:40]}")
-        
+
         self.decision_history.append({
             'timestamp': datetime.now().isoformat(),
             'state': state,

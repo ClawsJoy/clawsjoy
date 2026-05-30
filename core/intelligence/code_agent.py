@@ -13,7 +13,7 @@ class CodeAgent:
     def __init__(self):
         self.trainer = CodeAgentTrainer()
         self.command_history = []
-        
+
         print("\n" + "="*60)
         print("🤖 Code Agent 已启动")
         print("="*60)
@@ -24,14 +24,14 @@ class CodeAgent:
     def process_input(self, user_input):
         """处理用户输入"""
         print(f"\n💭 分析: {user_input}")
-        
+
         # 1. 预测意图
         intent = self.trainer.predict_intent(user_input)
         print(f"🎯 意图: {intent['intent']} (置信度 {intent['confidence']:.0%})")
-        
+
         # 2. 建议行动
         print(f"💡 建议: {intent['suggested_action']}")
-        
+
         # 3. 命令补全建议
         words = user_input.split()
         if len(words) > 0 and len(words[0]) > 2:
@@ -40,10 +40,10 @@ class CodeAgent:
                 print(f"\n📝 补全建议:")
                 for s in suggestions[:3]:
                     print(f"   {s['command']} ({s['description']})")
-        
+
         # 4. 记录学习
         self.trainer.learn_from_conversation(user_input, "助手响应")
-        
+
         return intent
     
     def run(self):

@@ -11,15 +11,15 @@ class BaseAgent:
     def __init__(self, name: str, user_id: str = "default"):
         self.name = name
         self.user_id = user_id
-        
+
         # 初始化目录
         self.data_dir = Path(f"{config_helper.get_data_root()}/v5/users/{self.user_id}/agents/{self.name}")
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self.memory_file = self.data_dir / "memory.json"
-        
+
         # 加载记忆
         self._load_memory()
-        
+
         print(f"✓ {name} 已启动")
     
     def _load_memory(self):
@@ -57,7 +57,7 @@ class BaseAgent:
 用户偏好: {self.memory.get('preferences', {})}
 
 用户: {user_input}"""
-        
+
         return f"""你是 {self.name}。
 
 用户偏好: {self.memory.get('preferences', {})}

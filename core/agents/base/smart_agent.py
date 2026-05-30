@@ -192,3 +192,49 @@ class SmartAgent(CommunicableAgent):
                     print(f"[{self.name}] 使用模型: {self.llm_model}")
             except Exception as e:
                 print(f"[{self.name}] 加载配置失败: {e}")
+
+    def register_capability(self):
+        """注册 Agent 能力到向量库（用于智能路由）"""
+        try:
+            from core.lib.vector_knowledge_center import vector_knowledge_center
+            
+            # 生成能力描述
+            capability_desc = f"""
+            角色: {getattr(self, 'agent_role', {}).get('title', self.name)}
+            职责: {', '.join(getattr(self, 'capabilities', []))}
+            描述: {self.description}
+            """
+            
+            vector_knowledge_center.add_agent_capability(
+                agent_name=self.name,
+                capability_desc=capability_desc,
+                user_id=self.user_id
+            )
+            print(f"[{self.name}] 能力已注册到向量库")
+        except Exception as e:
+            print(f"[{self.name}] 能力注册失败: {e}")
+
+    def register_capability(self):
+        """注册 Agent 能力到向量库（用于智能路由）"""
+        try:
+            from core.lib.vector_knowledge_center import vector_knowledge_center
+            
+            # 生成能力描述
+            role = getattr(self, 'agent_role', {})
+            capabilities = getattr(self, 'capabilities', [])
+            
+            capability_desc = f"""
+Agent名称: {self.name}
+角色: {role.get('title', self.name) if role else self.name}
+职责: {', '.join(capabilities) if capabilities else self.description}
+描述: {self.description}
+"""
+            
+            vector_knowledge_center.add_agent_capability(
+                agent_name=self.name,
+                capability_desc=capability_desc.strip(),
+                user_id=self.user_id
+            )
+            print(f"[{self.name}] 能力已注册到向量库")
+        except Exception as e:
+            print(f"[{self.name}] 能力注册失败: {e}")

@@ -33,7 +33,7 @@ class SkillWatcher:
     def _watch_loop(self):
         """监听循环"""
         skills_dir = Path("skills")
-        
+
         while self._running:
             try:
                 # 扫描所有技能文件
@@ -65,7 +65,7 @@ class SkillWatcher:
             module_name = f"skills.{skill_file.parent.name}.{skill_file.stem}"
             if module_name in sys.modules:
                 importlib.reload(sys.modules[module_name])
-            
+
             # 重新加载技能加载器
             importlib.reload(importlib.import_module('lib.skill_loader_v3'))
             print(f"   ✅ 技能已重载: {skill_file.stem}")

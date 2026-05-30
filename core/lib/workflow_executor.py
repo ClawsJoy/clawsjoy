@@ -22,7 +22,7 @@ class WorkflowExecutor:
         self.workflows = self._load_workflows()
         self.bus = get_bus()
         self.running_workflows = {}
-        
+
     def _load_workflows(self) -> Dict:
         """加载工作流配置"""
         config_file = Path("config/agent_workflows.yaml")
@@ -55,22 +55,22 @@ class WorkflowExecutor:
         workflow = self.get_workflow(workflow_name)
         if not workflow:
             return {"success": False, "error": f"工作流不存在: {workflow_name}"}
-        
+
         workflow_id = f"{workflow_name}_{datetime.now().timestamp()}"
-        
+
         print(f"\n🚀 开始执行工作流: {workflow['name']}")
         print(f"   ID: {workflow_id}")
-        
+
         results = {}
         current_data = input_data
-        
+
         for step in workflow.get('steps', []):
             step_num = step.get('step')
             agent = step.get('agent')
             action = step.get('action')
-            
+
             print(f"\n📌 步骤 {step_num}: {agent} -> {action}")
-            
+
             # 发送消息到 Agent
             message_id = self.bus.publish(
                 "workflow_executor",
@@ -82,24 +82,24 @@ class WorkflowExecutor:
                     "step": step_num
                 }
             )
-            
+
             results[f"step_{step_num}"] = {
                 "agent": agent,
                 "action": action,
                 "message_id": message_id,
                 "status": "sent"
             }
-            
+
             # 更新数据供下一步使用
             current_data = {"previous_result": results}
-        
+
         self.running_workflows[workflow_id] = {
             "name": workflow_name,
             "status": "running",
             "started_at": datetime.now().isoformat(),
             "results": results
         }
-        
+
         return {
             "success": True,
             "workflow_id": workflow_id,

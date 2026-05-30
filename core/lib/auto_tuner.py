@@ -12,7 +12,7 @@ class AutoTuner:
     def __init__(self):
         self.config = self._load_config()
         self.running = False
-        
+
     def _load_config(self):
         config_file = Path("config/self_tuning.yaml")
         if config_file.exists():

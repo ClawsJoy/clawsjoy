@@ -27,7 +27,7 @@ class OllamaEmbeddingFunction:
                 return response.json().get('embedding', [])
         except Exception as e:
             print(f"   ⚠️ Embedding 错误: {e}")
-        
+
         # 降级：返回零向量（768维）
         return [0.0] * 768
     

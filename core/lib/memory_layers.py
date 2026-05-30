@@ -8,7 +8,7 @@ import json
 import os
 from pathlib import Path
 from datetime import datetime, timedelta
-from core.lib.memory_simple import memory
+from core.lib.memory_vector import vector_memory as memory
 from core.lib.memory_vector import vector_memory
 
 class MemoryLayers:
@@ -18,7 +18,7 @@ class MemoryLayers:
         self.memory_dir = Path("memory")
         self.daily_dir = self.memory_dir / "daily"
         self.long_term_file = self.memory_dir / "MEMORY.md"
-        
+
         # 创建目录
         self.daily_dir.mkdir(parents=True, exist_ok=True)
     
@@ -49,7 +49,7 @@ class MemoryLayers:
         """添加日记忆（append-only）"""
         today = datetime.now().strftime("%Y-%m-%d")
         daily_file = self.daily_dir / f"{today}.md"
-        
+
         timestamp = datetime.now().strftime("%H:%M:%S")
         with open(daily_file, 'a', encoding='utf-8') as f:
             f.write(f"- [{timestamp}] [{category}] {content}\n")
@@ -73,10 +73,10 @@ class MemoryLayers:
     def add_long_term_memory(self, content, importance="normal"):
         """添加长期记忆（经筛选的持久知识）"""
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        
+
         with open(self.long_term_file, 'a', encoding='utf-8') as f:
             f.write(f"\n## {timestamp} [{importance}]\n{content}\n")
-        
+
         # 同时存入 brain_v2.json
         memory.remember(content, category="long_term")
         return True
@@ -85,10 +85,10 @@ class MemoryLayers:
         """获取长期记忆"""
         if not self.long_term_file.exists():
             return []
-        
+
         with open(self.long_term_file, 'r', encoding='utf-8') as f:
             content = f.read()
-        
+
         # 解析 markdown 格式的记忆
         memories = []
         for section in content.split('\n## '):
@@ -125,7 +125,7 @@ class MemoryLayers:
     def promote_to_long_term(self, days_threshold=7):
         """将重要的日记忆晋升为长期记忆"""
         recent_daily = self.get_daily_memory(days=days_threshold)
-        
+
         for daily in recent_daily:
             # 简单规则：超过 500 字或包含重要关键词
             content = daily.get('content', '')
@@ -140,10 +140,10 @@ class MemoryLayers:
     def get_stats(self):
         """获取记忆统计"""
         daily_count = len(list(self.daily_dir.glob("*.md")))
-        
+
         # 向量统计
         vector_stats = vector_memory.get_stats()
-        
+
         return {
             "session": "动态",
             "daily_files": daily_count,

@@ -34,27 +34,27 @@ class RedisCache:
     
     def get(self, user_id: str, message: str) -> Optional[str]:
         key = self._key(user_id, message)
-        
+
         if self._redis:
             value = self._redis.get(f"cache:{key}")
             if value:
                 return value
-        
+
         # fallback 到内存
         if key in self._cache:
             cached, ts = self._cache[key]
             import time
             if time.time() - ts < 3600:
                 return cached
-        
+
         return None
     
     def set(self, user_id: str, message: str, response: str):
         key = self._key(user_id, message)
-        
+
         if self._redis:
             self._redis.setex(f"cache:{key}", 3600, response)
-        
+
         # 内存缓存
         import time
         self._cache[key] = (response, time.time())

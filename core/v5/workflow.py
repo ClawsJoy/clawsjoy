@@ -41,7 +41,7 @@ class WorkflowEngine:
         # 按依赖排序
         executed = set()
         results = {}
-        
+
         for node_id, node in self.nodes.items():
             if node_id in executed:
                 continue
@@ -49,7 +49,7 @@ class WorkflowEngine:
             if result is not None:
                 results[node_id] = result
                 executed.add(node_id)
-        
+
         return results
     
     def _execute_node(self, node_id: str, previous_results: Dict) -> Any:
@@ -57,13 +57,13 @@ class WorkflowEngine:
         node = self.nodes.get(node_id)
         if not node:
             return None
-        
+
         # 获取输入
         inputs = {}
         for from_node, to_node, output in self.edges:
             if to_node == node_id and from_node in previous_results:
                 inputs[output] = previous_results[from_node]
-        
+
         # 执行节点逻辑
         if node.type == "input":
             result = inputs.get("value", node.config.get("value", ""))
@@ -78,7 +78,7 @@ class WorkflowEngine:
             result = inputs.get("value", previous_results.get(node_id, ""))
         else:
             result = None
-        
+
         node.status = "completed"
         return result
     

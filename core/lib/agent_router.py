@@ -33,7 +33,7 @@ class AgentRouter:
         routing = self._config.get('routing', {})
         route = routing.get(user_role, routing.get('guest', {}))
         agent_name = route.get('agent', 'chat_agent')
-        
+
         if agent_name == 'personal_butler':
             from core.agents.builtin.personal_butler_v2 import PersonalButlerV2
             personal_butler = PersonalButlerV2()

@@ -29,7 +29,7 @@ class UserSecretManager:
                 self.keys = json.load(f)
         else:
             self.keys = {}
-        
+
         if self.tokens_file.exists():
             with open(self.tokens_file, 'rb') as f:
                 self.tokens = pickle.load(f)

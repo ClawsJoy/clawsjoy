@@ -25,7 +25,7 @@ class SkillGenerator:
     def analyze_and_generate(self):
         """分析成功组合，生成新技能"""
         generated = []
-        
+
         # 按技能组合频率分组
         combo_frequency = {}
         for combo in self.combos.get("combos", []):
@@ -40,7 +40,7 @@ class SkillGenerator:
                     }
                 combo_frequency[key]["count"] += 1
                 combo_frequency[key]["intents"].append(combo.get("intent", ""))
-        
+
         # 高频组合自动生成新技能
         for key, data in combo_frequency.items():
             if data["count"] >= 3:
@@ -53,7 +53,7 @@ class SkillGenerator:
                         f.write(skill_code)
                     generated.append(skill_name)
                     print(f"✨ 自动生成新技能: {skill_name}")
-        
+
         return generated
     
     def _generate_skill_name(self, skills: list) -> str:
@@ -93,7 +93,7 @@ class {skill_name.replace('_', ' ').title().replace(' ', '')}Skill:
                     "failed_at": skill_name,
                     "error": result.get("error")
                 }}
-        
+
         final = results.get(skills[-1], {{}})
         return {{
             "success": True,

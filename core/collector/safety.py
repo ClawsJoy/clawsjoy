@@ -41,24 +41,24 @@ class SafetyChecker:
         try:
             parsed = urlparse(url)
             domain = parsed.netloc.lower()
-            
+
             # 1. 黑名单检查
             for black in cls.BLACKLIST_DOMAINS:
                 if black in domain:
                     return False, f"域名 {domain} 在黑名单中"
-            
+
             # 2. 白名单检查（可选）
             whitelist = cls.load_whitelist()
             if whitelist and not any(w in domain for w in whitelist):
                 # 非白名单域名需要特殊处理
                 return False, f"域名 {domain} 不在白名单中，需要用户授权"
-            
+
             # 3. 协议检查
             if parsed.scheme not in ['http', 'https']:
                 return False, f"不支持的协议: {parsed.scheme}"
-            
+
             return True, "合规"
-            
+
         except Exception as e:
             return False, f"URL解析失败: {e}"
     
@@ -78,7 +78,7 @@ class SafetyChecker:
         whitelist = cls.load_whitelist()
         parsed = urlparse(url)
         domain = parsed.netloc.lower()
-        
+
         if not any(w in domain for w in whitelist):
             return True
         return False

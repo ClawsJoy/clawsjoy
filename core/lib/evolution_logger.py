@@ -44,7 +44,7 @@ class EvolutionLogger:
         }
         self.log["events"].append(event)
         self.log["stats"]["total"] += 1
-        
+
         # 存储到向量记忆
         try:
             vector_memory.add(
@@ -54,7 +54,7 @@ class EvolutionLogger:
             )
         except:
             pass
-        
+
         self._save()
         print(f"📈 进化记录: {event_type}")
     

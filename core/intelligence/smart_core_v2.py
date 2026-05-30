@@ -27,10 +27,10 @@ class SmartCoreV2:
         self.decision_engine = SmartDecisionEngine()
         self.task_allocator = SmartTaskAllocator()
         self.memory_optimizer = MemoryOptimizer()
-        
+
         self.running = True
         self.cycle_count = 0
-        
+
         print("\n" + "=" * 60)
         print("🧠 ClawsJoy 智能核心 V2 - 完全版")
         print("=" * 60)
@@ -49,27 +49,27 @@ class SmartCoreV2:
         self.cycle_count += 1
         print(f"\n[{datetime.now().strftime('%H:%M:%S')}] 智能周期 #{self.cycle_count}")
         print("-" * 50)
-        
+
         # 1. 分析
         report = self.analyzer.analyze()
         print(f"📊 健康度: {report['health_score']}/100")
-        
+
         # 2. 预测
         forecast = self.predictor.generate_forecast()
         for pred in forecast.get('predictions', []):
             print(f"📈 预测: {pred['metric']} {pred['trend']} -> {pred['predicted_value']}")
-        
+
         # 3. 记忆优化
         memory_health = self.memory_optimizer.optimize()
-        
+
         # 4. 决策
         if self.cycle_count % 5 == 0:  # 每5周期决策一次
             decision = self.decision_engine.auto_decide()
             print(f"🎯 决策: {decision.get('decision', 'N/A')}")
-        
+
         # 5. 学习
         insights = self.learner.auto_optimize()
-        
+
         return {
             "cycle": self.cycle_count,
             "health_score": report['health_score'],
@@ -81,7 +81,7 @@ class SmartCoreV2:
         """持续运行"""
         print(f"\n🔄 智能循环启动 (间隔: {interval}秒)")
         print("按 Ctrl+C 停止\n")
-        
+
         while self.running:
             try:
                 self.run_cycle()

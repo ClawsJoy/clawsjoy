@@ -30,11 +30,11 @@ class SmartScheduler:
         """获取最优优先级"""
         if not self.enabled:
             return current_priority
-        
+
         # 获取预测
         prediction = success_predictor.predict_task_success_rate(task_name)
         predicted_rate = prediction['predicted_rate']
-        
+
         # 基于预测率调整优先级
         if predicted_rate >= self.high_priority_threshold:
             # 高成功率任务提升优先级
@@ -42,40 +42,40 @@ class SmartScheduler:
         elif predicted_rate <= self.low_priority_threshold:
             # 低成功率任务降低优先级
             return max(Priority.LOW.value, current_priority - 1)
-        
+
         return current_priority
     
     def should_execute_now(self, task_name: str) -> Tuple[bool, str]:
         """判断是否应该立即执行"""
         if not self.enabled:
             return True, "调度器已禁用"
-        
+
         prediction = success_predictor.predict_task_success_rate(task_name)
-        
+
         # 如果预测率太低且置信度高，建议延迟执行
         if prediction['predicted_rate'] < 0.3 and prediction['confidence'] > 0.7:
             return False, f"预测成功率低 ({prediction['predicted_rate']*100:.0f}%)，建议优化后再执行"
-        
+
         # 如果趋势下降，建议谨慎
         if prediction['trend'] == 'declining' and prediction['total_samples'] > 5:
             return False, f"任务成功率呈下降趋势"
-        
+
         return True, "可以执行"
     
     def get_execution_order(self, tasks: List) -> List:
         """获取优化后的执行顺序"""
         if not self.enabled:
             return tasks
-        
+
         # 按预测成功率排序
         scored_tasks = []
         for task in tasks:
             prediction = success_predictor.predict_task_success_rate(task.name)
             scored_tasks.append((prediction['predicted_rate'], prediction['confidence'], task))
-        
+
         # 高成功率、高置信度的任务优先
         scored_tasks.sort(key=lambda x: (x[0], x[1]), reverse=True)
-        
+
         return [task for _, _, task in scored_tasks]
     
     def get_schedule_stats(self) -> Dict:

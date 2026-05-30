@@ -24,9 +24,9 @@ class StructuredGenerator:
     
     def generate_with_schema(self, prompt: str, output_schema: Dict) -> Dict:
         """按照 schema 生成结构化输出"""
-        
+
         schema_str = json.dumps(output_schema, indent=2, ensure_ascii=False)
-        
+
         full_prompt = f"""你是一个智能助手，需要按照指定的 JSON 格式回答问题。
 
 输出格式要求：
@@ -52,7 +52,7 @@ class StructuredGenerator:
                     return json.loads(match.group())
         except Exception as e:
             print(f"生成失败: {e}")
-        
+
         return {}
     
     def generate_agent_description(self) -> Dict:
@@ -67,7 +67,7 @@ class StructuredGenerator:
                 }
             ]
         }
-        
+
         prompt = """ClawsJoy 系统有以下 Agent，请详细描述每个 Agent 的职责和能力：
 - orchestrator (任务编排器)
 - code_agent (代码助手)
@@ -81,7 +81,7 @@ class StructuredGenerator:
 - analysis_agent (数据分析师)
 
 请为每个 Agent 生成详细的职责描述，每个 Agent 至少 3 个职责。"""
-        
+
         return self.generate_with_schema(prompt, schema)
     
     def generate_architecture_desc(self) -> str:
@@ -100,7 +100,7 @@ class StructuredGenerator:
 - 突出技术特点
 
 输出纯文本，不要用 JSON。"""
-        
+
         try:
             resp = requests.post(
                 f"{self.ollama_url}/api/generate",
@@ -122,7 +122,7 @@ class StructuredGenerator:
 - 如何使用？
 
 要求：3-5 句话，简洁明了。"""
-        
+
         try:
             resp = requests.post(
                 f"{self.ollama_url}/api/generate",

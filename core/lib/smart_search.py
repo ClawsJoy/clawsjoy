@@ -57,7 +57,7 @@ class SmartSearch:
         """分类查询意图"""
         query_lower = query.lower()
         categories = self.config.get("skill_categories", {})
-        
+
         for category, info in categories.items():
             for kw in info.get("keywords", []):
                 if kw in query_lower:
@@ -71,10 +71,10 @@ class SmartSearch:
     def search(self, query: str, n: int = 5) -> List[Dict]:
         """智能检索"""
         category = self.classify_query(query)
-        
+
         # 获取该分类的技能列表
         skills = self.get_skills_by_category(category)
-        
+
         if skills:
             results = []
             for skill_name in skills[:n]:
@@ -84,7 +84,7 @@ class SmartSearch:
                     "metadata": {"skill_name": skill_name, "category": category}
                 })
             return results
-        
+
         return []
     
     def search_skills(self, query: str = "", category: str = None, n: int = 5) -> List[Dict]:
@@ -96,7 +96,7 @@ class SmartSearch:
                 "content": f"技能: {s}\n分类: {category}",
                 "metadata": {"skill_name": s, "category": category}
             } for s in skills[:n]]
-        
+
         return self.search(query, n)
 
 

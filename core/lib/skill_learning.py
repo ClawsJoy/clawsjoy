@@ -30,7 +30,7 @@ class SkillLearning:
                 self.combos = json.load(f)
         else:
             self.combos = {"stats": {}}
-        
+
         generated_file = Path(f"{get_data_root()}/skill_stats/generated_skills.json")
         if generated_file.exists():
             with open(generated_file, 'r') as f:
@@ -42,7 +42,7 @@ class SkillLearning:
         combos_file = Path(f"{get_data_root()}/skill_stats/successful_combos.json")
         with open(combos_file, 'w') as f:
             json.dump(self.combos, f, indent=2)
-        
+
         generated_file = Path(f"{get_data_root()}/skill_stats/generated_skills.json")
         with open(generated_file, 'w') as f:
             json.dump(self.generated, f, indent=2)
@@ -50,15 +50,15 @@ class SkillLearning:
     def record(self, intent: str, skills: list):
         """记录成功组合"""
         combo_key = f"{intent}|{'|'.join(skills)}"
-        
+
         if combo_key not in self.combos.get("stats", {}):
             self.combos["stats"][combo_key] = 0
         self.combos["stats"][combo_key] += 1
         count = self.combos["stats"][combo_key]
-        
+
         self._save_data()
         print(f"📊 记录: {combo_key} ({count}次)")
-        
+
         # 检查是否需要生成
         min_count = self.config["learning"].get("min_success_count", 3)
         if count >= min_count:
@@ -70,13 +70,13 @@ class SkillLearning:
         for existing in self.generated.get("skills", []):
             if existing.get("combo_key") == combo_key:
                 return
-        
+
         skill_name = f"auto_{intent.replace(' ', '_').lower()}"
-        
+
         # 创建技能文件
         output_dir = Path("skills/auto_generated")
         output_dir.mkdir(parents=True, exist_ok=True)
-        
+
         code = f'''"""
 自动生成: {intent}
 组合: {skills}
@@ -91,10 +91,10 @@ def execute(params):
 
 skill = None
 '''
-        
+
         skill_file = output_dir / f"{skill_name}.py"
         skill_file.write_text(code)
-        
+
         # 注册到技能注册中心
         registry_file = Path(f"{get_data_root()}/skill_registry_v2.json")
         if registry_file.exists():
@@ -102,7 +102,7 @@ skill = None
                 registry = json.load(f)
         else:
             registry = {}
-        
+
         registry[skill_name] = {
             "name": skill_name,
             "category": "auto_generated",
@@ -110,10 +110,10 @@ skill = None
             "enabled": True,
             "created_at": datetime.now().isoformat()
         }
-        
+
         with open(registry_file, 'w') as f:
             json.dump(registry, f, indent=2)
-        
+
         self.generated["skills"].append({
             "skill_name": skill_name,
             "intent": intent,
@@ -121,7 +121,7 @@ skill = None
             "created_at": datetime.now().isoformat()
         })
         self._save_data()
-        
+
         print(f"🎉 自动生成新技能: {skill_name}")
         print(f"   文件: {skill_file}")
         print(f"   组合: {skills}")

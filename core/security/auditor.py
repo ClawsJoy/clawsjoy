@@ -40,42 +40,42 @@ class SecurityAuditor:
                 "data": data,
                 "risk_score": self._calculate_risk(action, actor, resource, data)
             }
-            
+
             # 写入审计日志
             with open(self.audit_log, 'a') as f:
                 f.write(json.dumps(entry) + '\n')
-            
+
             # 更新风险评分
             self.risk_scores[actor] += entry["risk_score"]
-            
+
             # 高风险告警
             if entry["risk_score"] > 70:
                 self._alert(entry)
-            
+
             return entry
     
     def _calculate_risk(self, action: str, actor: str, resource: str, data: Dict) -> int:
         """计算风险分数 (0-100)"""
         risk = 0
-        
+
         # 1. 敏感操作
         if "delete" in action or "drop" in action:
             risk += 60
         if "config" in resource or "secret" in resource:
             risk += 40
-        
+
         # 2. 敏感数据
         if data:
             for keyword in ["password", "token", "secret"]:
                 if keyword in str(data).lower():
                     risk += 50
                     break
-        
+
         # 3. 频率风险
         actions_in_window = len([e for e in self._get_recent_actions(actor) if e["action"] == action])
         if actions_in_window > 10:
             risk += 30
-        
+
         return min(risk, 100)
     
     def _get_recent_actions(self, actor: str) -> List:

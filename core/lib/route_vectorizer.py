@@ -16,21 +16,21 @@ class RouteVectorizer:
         """初始化租户路由向量索引"""
         if self._initialized:
             return
-        
+
         # 获取所有启用的路由
         routes = route_registry.get_all_enabled()
-        
+
         index = tenant_index_manager.get_index(tenant_id)
-        
+
         for route in routes:
             path = route.get('path', '')
             method = route.get('method', 'GET')
             handler = route.get('handler', '')
             description = route.get('description', '')
-            
+
             if path and handler:
                 index.index_route(path, method, handler, description)
-        
+
         print(f"   📍 已向量化 {len(routes)} 条路由")
         self._initialized = True
         return len(routes)

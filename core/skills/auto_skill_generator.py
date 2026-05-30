@@ -54,13 +54,13 @@ class AutoSkillGenerator:
 
     def _generate_skill(self, skill_name: str, skills: list):
         """生成符合 OpenClaw 规范的技能（标准化参数）"""
-        
+
         class_name = ''.join(word.capitalize() for word in skill_name.split('_'))
         description = f"自动组合技能: {' → '.join(skills)}"
-        
+
         # 生成参数映射代码
         param_mapping = self._generate_param_mapping(skills)
-        
+
         code = f'''"""{description}"""
 
 class {class_name}:
@@ -74,12 +74,12 @@ class {class_name}:
     def execute(self, params):
         """执行组合技能，自动分发参数"""
         from core.lib.skill_loader_v3 import skill_loader
-        
+
         results = {{}}
         context = params.copy()
-        
+
 {param_mapping}
-        
+
         return {{
             "success": True,
             "result": results,
@@ -96,13 +96,13 @@ skill = {class_name}()
 
         # 生成 SKILL.md
         self._generate_skill_md(skill_name, description, skills)
-        
+
         print(f"✨ 生成新技能: {skill_name} ({' → '.join(skills)})")
 
     def _generate_param_mapping(self, skills: list) -> str:
         """生成参数映射代码"""
         mappings = []
-        
+
         for skill in skills:
             if skill == "vision":
                 mappings.append(f'''        # {skill}: 需要 image_path
@@ -113,7 +113,7 @@ skill = {class_name}()
             }})
         else:
             results["{skill}"] = {{"success": False, "error": "image_path required"}}''')
-            
+
             elif skill == "translate":
                 mappings.append(f'''        # {skill}: 需要 text
         if "text" in params:
@@ -133,18 +133,18 @@ skill = {class_name}()
                 results["{skill}"] = {{"success": False, "error": "no text to translate"}}
         else:
             results["{skill}"] = {{"success": False, "error": "text required"}}''')
-            
+
             else:
                 mappings.append(f'''        # {skill}: 通用传递
         results["{skill}"] = skill_loader.execute("{skill}", params)''')
-        
+
         return "\n\n".join(mappings)
 
     def _generate_skill_md(self, skill_name: str, description: str, skills: list):
         """生成 SKILL.md"""
         md_file = self.generated_dir / "SKILL.md"
         existing = md_file.read_text() if md_file.exists() else ""
-        
+
         skill_entry = f'''
 ## {skill_name}
 

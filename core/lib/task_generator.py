@@ -21,24 +21,24 @@ class TaskGenerator:
     def generate(self) -> int:
         new_tasks = []
         status = task_queue.get_status()
-        
+
         # 1. 热点视频任务（优先级高）
         if status["pending"] < 3:
             new_tasks.append(self._create_hot_video_task())
-        
+
         # 2. 记忆查询任务
         if status["pending"] < 2:
             new_tasks.append(self._create_query_task())
-        
+
         # 3. 状态检查任务
         if self._need_status_check():
             new_tasks.append(self._create_status_task())
-        
+
         added = 0
         for task in new_tasks:
             if task_queue.add(task):
                 added += 1
-        
+
         self.last_generate = datetime.now()
         self.total_generated += added
         return added
@@ -48,10 +48,10 @@ class TaskGenerator:
         topics = hot_data.get_topics(3)
         topic = topics[0]["topic"] if topics else "人工智能"
         score = topics[0]["score"] if topics else 50
-        
+
         self.video_count += 1
         task_id = f"hot_video_{int(time.time())}_{self.video_count}"
-        
+
         # 热度高 => 优先级高
         if score > 85:
             priority = Priority.HIGH
@@ -59,7 +59,7 @@ class TaskGenerator:
             priority = Priority.NORMAL
         else:
             priority = Priority.LOW
-        
+
         return Task(
             task_id=task_id,
             name=f"[热度{score}] 制作视频: {topic}",

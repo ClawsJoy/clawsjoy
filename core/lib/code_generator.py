@@ -42,7 +42,7 @@ class CodeGenerator:
         """加载模板（从配置读取模板路径）"""
         templates_config = self.config.get('templates', {})
         templates = {}
-        
+
         for name, cfg in templates_config.items():
             template_file = Path(cfg.get('file', ''))
             if template_file.exists():
@@ -51,7 +51,7 @@ class CodeGenerator:
             else:
                 # 使用内置模板
                 templates[name] = self._get_builtin_template(name)
-        
+
         return templates
     
     def _get_builtin_template(self, name: str) -> str:
@@ -80,17 +80,17 @@ class CodeGenerator:
     </script>
     <script type="module">
         import * as THREE from 'three';
-        
+
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x0a0a1a);
-        
+
         const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
         camera.position.set(0, 2, 8);
-        
+
         const renderer = new THREE.WebGLRenderer({{ antialias: true }});
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
-        
+
         // 穹顶
         const dome = new THREE.Mesh(
             new THREE.SphereGeometry(3.8, 64, 64, 0, Math.PI * 2, 0, Math.PI / 3),
@@ -98,18 +98,18 @@ class CodeGenerator:
         );
         dome.position.y = 1.5;
         scene.add(dome);
-        
+
         // 灯光
         const light = new THREE.PointLight(0x00f3ff, 0.5);
         light.position.set(0, 2, 2);
         scene.add(light);
-        
+
         function animate() {{
             requestAnimationFrame(animate);
             renderer.render(scene, camera);
         }}
         animate();
-        
+
         window.addEventListener('resize', () => {{
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
@@ -124,23 +124,23 @@ class CodeGenerator:
         # 更新统计
         self.memory['generation_count'] = self.memory.get('generation_count', 0) + 1
         self._save_memory()
-        
+
         # 识别请求类型
         if "座舱" in request or "cockpit" in request.lower():
             template = self.templates.get('threejs_cockpit', self._get_cockpit_template())
-            
+
             # 应用用户偏好
             prefs = self.memory.get('user_preferences', {}).get(user_id, {})
             if prefs.get('color') == 'purple':
                 template = template.replace('#00f3f', '#9b59b6')
-            
+
             return {
                 "success": True,
                 "code": template,
                 "type": "threejs",
                 "suggestions": ["调整穹顶颜色", "添加左右舱壁", "增加星空粒子"]
             }
-        
+
         return {"success": False, "error": "无法识别的请求"}
     
     def modify(self, code: str, instruction: str) -> Dict:
@@ -149,17 +149,17 @@ class CodeGenerator:
         if "紫色" in instruction or "purple" in instruction:
             modified = modified.replace("#00f3f", "#9b59b6")
             modified = modified.replace("0x00f3f", "0x9b59b6")
-        
+
         return {"success": True, "code": modified}
     
     def record_feedback(self, user_id: str, feedback: str, accepted: bool):
         """记录用户反馈"""
         if user_id not in self.memory['user_preferences']:
             self.memory['user_preferences'][user_id] = {}
-        
+
         if "紫色" in feedback and accepted:
             self.memory['user_preferences'][user_id]['color'] = 'purple'
-        
+
         self._save_memory()
         return {"success": True}
 

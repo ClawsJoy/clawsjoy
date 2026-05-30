@@ -29,10 +29,10 @@ class ToolLoopGuard:
     def record_unknown_tool(self, tool_name: str) -> Tuple[bool, str]:
         """记录未知工具调用，返回 (是否应中断, 消息)"""
         now = datetime.now()
-        
+
         # 清理过期记录
         self._cleanup_expired(now)
-        
+
         # 检查是否已被封禁
         if tool_name in self.blocked_tools:
             blocked_until = self.blocked_tools[tool_name]
@@ -41,22 +41,22 @@ class ToolLoopGuard:
                 return True, f"Tool '{tool_name}' is blocked for {remaining}s (too many unknown calls)"
             else:
                 del self.blocked_tools[tool_name]
-        
+
         # 记录调用
         self.unknown_tool_calls[tool_name].append(now)
         call_count = len(self.unknown_tool_calls[tool_name])
-        
+
         # 检查阈值
         if call_count >= self.unknown_tool_threshold:
             self.blocked_tools[tool_name] = now + self.block_duration
             logger.warning(f"Tool '{tool_name}' blocked for {self.block_duration.seconds}s (called {call_count} times)")
             return True, f"Tool '{tool_name}' blocked (exceeded {self.unknown_tool_threshold} unknown calls)"
-        
+
         # 警告
         if call_count >= self.unknown_tool_threshold / 2:
             remaining = self.unknown_tool_threshold - call_count
             return False, f"Warning: Tool '{tool_name}' unknown, {remaining} more attempts before blocking"
-        
+
         return False, f"Tool '{tool_name}' not found"
     
     def _cleanup_expired(self, now: datetime):

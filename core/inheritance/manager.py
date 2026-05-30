@@ -20,7 +20,7 @@ class InheritanceManager:
         """加载配置"""
         import yaml
         from pathlib import Path
-        
+
         config_file = Path("config/inheritance.yaml")
         if config_file.exists():
             with open(config_file, 'r') as f:
@@ -53,11 +53,11 @@ class InheritanceManager:
         content = parent_exp.content.copy()
         if adapter:
             content.update(adapter)
-        
+
         # 继承时置信度衰减
         decay_rate = self.config.get("inheritance", {}).get("generation", {}).get("decay_rate", 0.9)
         new_confidence = parent_exp.confidence * decay_rate
-        
+
         # 创建新经验（不指定id，让系统自动生成）
         exp = Experience(
             type=parent_exp.type,
@@ -70,11 +70,11 @@ class InheritanceManager:
             tags=parent_exp.tags.copy()
         )
         self.storage.save_experience(exp)
-        
+
         # 创建传承链
         self.storage.create_chain(parent_exp.id)
         self.storage.add_to_chain(f"chain_{parent_exp.id}", exp.id)
-        
+
         print(f"🔗 继承经验: {parent_exp.type} -> {exp.type} (置信度: {parent_exp.confidence} -> {new_confidence})")
         return exp
     
@@ -97,7 +97,7 @@ class InheritanceManager:
         chain = []
         current_id = exp_id
         visited = set()
-        
+
         while current_id and current_id not in visited:
             visited.add(current_id)
             current = self.storage.get_experience(current_id)
@@ -106,7 +106,7 @@ class InheritanceManager:
                 current_id = current.parent_id
             else:
                 break
-        
+
         return chain
     
     def sediment(self):
@@ -114,7 +114,7 @@ class InheritanceManager:
         experiences = self.storage.list_experiences()
         min_confidence = self.config.get("inheritance", {}).get("sedimentation", {}).get("min_confidence", 0.6)
         min_usage = self.config.get("inheritance", {}).get("sedimentation", {}).get("min_usage", 5)
-        
+
         sedimented = []
         for exp in experiences:
             if exp.success_rate >= min_confidence and exp.use_count >= min_usage:
@@ -123,10 +123,10 @@ class InheritanceManager:
                     exp.confidence = min(exp.confidence + 0.1, 1.0)
                     self.storage.save_experience(exp)
                     sedimented.append(exp)
-        
+
         if sedimented:
             print(f"🧠 经验沉淀: {len(sedimented)} 个经验升级为智慧")
-        
+
         return sedimented
     
     def get_stats(self) -> Dict:

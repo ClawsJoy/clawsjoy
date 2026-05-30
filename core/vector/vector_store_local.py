@@ -40,7 +40,7 @@ class VectorStoreLocal:
         """添加文档"""
         import time
         import uuid
-        
+
         doc_id = str(uuid.uuid4())[:8]
         self.documents.append({
             "id": doc_id,
@@ -48,25 +48,25 @@ class VectorStoreLocal:
             "metadata": metadata or {},
             "timestamp": time.time()
         })
-        
+
         # 使用本地 embedding
         embedding = embedding_model.encode(text)
         self.embeddings.append(np.array(embedding))
-        
+
         # 限制数量
         if len(self.documents) > 500:
             self.documents = self.documents[-500:]
             self.embeddings = self.embeddings[-500:]
-        
+
         self._save()
     
     def search(self, query: str, limit: int = 3) -> List[Dict]:
         """语义搜索"""
         if not self.embeddings:
             return []
-        
+
         query_vec = embedding_model.encode(query)
-        
+
         # 计算相似度
         similarities = []
         for i, doc_vec in enumerate(self.embeddings):
@@ -74,7 +74,7 @@ class VectorStoreLocal:
             min_len = min(len(query_vec), len(doc_vec))
             qv = query_vec[:min_len]
             dv = doc_vec[:min_len]
-            
+
             norm_q = np.linalg.norm(qv)
             norm_d = np.linalg.norm(dv)
             if norm_q > 0 and norm_d > 0:
@@ -82,9 +82,9 @@ class VectorStoreLocal:
             else:
                 sim = 0
             similarities.append((sim, i))
-        
+
         similarities.sort(key=lambda x: x[0], reverse=True)
-        
+
         results = []
         for sim, idx in similarities[:limit]:
             if sim > 0.3:
@@ -93,7 +93,7 @@ class VectorStoreLocal:
                     "score": float(sim),
                     "metadata": self.documents[idx]["metadata"]
                 })
-        
+
         return results
     
     def get_stats(self) -> Dict:

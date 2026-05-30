@@ -50,7 +50,7 @@ class VectorStore:
         """添加文档"""
         import time
         import uuid
-        
+
         doc_id = str(uuid.uuid4())[:8]
         self.documents.append({
             "id": doc_id,
@@ -58,21 +58,21 @@ class VectorStore:
             "metadata": metadata or {},
             "timestamp": time.time()
         })
-        
+
         # 计算 embedding
         if self.model:
             embedding = self.model.encode(text)
         else:
             # 简化版：使用 TF-IDF 风格
             embedding = self._simple_embedding(text)
-        
+
         self.embeddings.append(np.array(embedding))
-        
+
         # 限制数量
         if len(self.documents) > 500:
             self.documents = self.documents[-500:]
             self.embeddings = self.embeddings[-500:]
-        
+
         self._save()
     
     def _simple_embedding(self, text: str) -> List[float]:
@@ -91,21 +91,21 @@ class VectorStore:
         """语义搜索"""
         if not self.embeddings:
             return []
-        
+
         # 计算查询向量
         if self.model:
             query_vec = self.model.encode(query)
         else:
             query_vec = self._simple_embedding(query)
-        
+
         # 计算相似度
         similarities = []
         for i, doc_vec in enumerate(self.embeddings):
             sim = np.dot(query_vec, doc_vec) / (np.linalg.norm(query_vec) * np.linalg.norm(doc_vec) + 1e-8)
             similarities.append((sim, i))
-        
+
         similarities.sort(key=lambda x: x[0], reverse=True)
-        
+
         results = []
         for sim, idx in similarities[:limit]:
             if sim > 0.3:  # 相似度阈值
@@ -114,7 +114,7 @@ class VectorStore:
                     "score": float(sim),
                     "metadata": self.documents[idx]["metadata"]
                 })
-        
+
         return results
     
     def get_stats(self) -> Dict:

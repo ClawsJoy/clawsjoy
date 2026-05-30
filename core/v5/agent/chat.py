@@ -17,7 +17,7 @@ class ChatAgent(BaseAgent):
     def process(self, user_input: str) -> Dict:
         """处理聊天"""
         self.update_stats()
-        
+
         # 1. 偏好记忆
         if "喜欢" in user_input:
             match = re.search(r'喜欢(.+?)(?:[，。！？]|$)', user_input)
@@ -32,7 +32,7 @@ class ChatAgent(BaseAgent):
                         "response": f"好的，已记住您喜欢{value}",
                         "user_id": self.user_id
                     }
-        
+
         # 2. 偏好查询
         if any(q in user_input for q in ["我喜欢喝什么", "我的偏好", "我喜欢什么"]):
             likes = self.mem_mgr.recall_preference("likes")
@@ -40,7 +40,7 @@ class ChatAgent(BaseAgent):
                 response = f"根据记录，您喜欢{likes}"
             else:
                 response = "我还没有记住您的偏好，可以告诉我'我喜欢xxx'"
-            
+
             self.record_history(user_input, response)
             return {
                 "success": True,
@@ -48,21 +48,21 @@ class ChatAgent(BaseAgent):
                 "response": response,
                 "user_id": self.user_id
             }
-        
+
         # 3. 问候
         if any(g in user_input for g in ["你好", "您好", "嗨"]):
             response = "您好！我是聊天助手，很高兴为您服务"
-        
+
         # 4. 道别
         elif any(f in user_input for f in ["再见", "拜拜", "bye"]):
             response = "再见，随时欢迎回来"
-        
+
         # 5. LLM 对话
         else:
             # 获取相关上下文
             context = self.mem_mgr.search_context(user_input, limit=3)
             context_text = "\n".join(context) if context else ""
-            
+
             prompt = f"""你是聊天助手。
 
 用户偏好: {self.mem_mgr.preferences}
@@ -72,13 +72,13 @@ class ChatAgent(BaseAgent):
 用户: {user_input}
 
 请用温暖、贴心的方式回复:"""
-            
+
             response = llm.generate(prompt, model_type="chat")
-        
+
         # 记录到记忆
         self.mem_mgr.add_conversation(user_input, response)
         self.record_history(user_input, response)
-        
+
         return {
             "success": True,
             "type": "chat",

@@ -61,22 +61,22 @@ class LLMThinker:
 步骤5：验证结果 - 是否满足需求？
 
 请输出你的思考过程。"""
-        
+
         response = self._call_llm(prompt)
-        
+
         # 记录思考历史
         self.think_history.append({
             "problem": problem,
             "thinking": response,
             "timestamp": self._now()
         })
-        
+
         return {"thinking": response, "history_count": len(self.think_history)}
     
     def solve(self, problem: str, tools: List[str] = None) -> Dict:
         """让 LLM 思考后调用工具解决"""
         tools_desc = "\n".join([f"- {t}" for t in (tools or [])])
-        
+
         prompt = f"""你是一个智能助手，可以调用以下工具来解决问题。
 
 可用工具：
@@ -92,9 +92,9 @@ class LLMThinker:
 
 输出 JSON：
 {{"analysis": "...", "tool": "工具名", "params": {{}}, "reasoning": "..."}}"""
-        
+
         response = self._call_llm(prompt)
-        
+
         try:
             # 提取 JSON
             import re
@@ -103,7 +103,7 @@ class LLMThinker:
                 return json.loads(json_match.group())
         except:
             pass
-        
+
         return {"analysis": response, "tool": None, "params": {}}
     
     def reflect(self, task: str, result: str, feedback: str) -> str:
@@ -120,7 +120,7 @@ class LLMThinker:
 3. 下次遇到类似问题应该怎么做？
 
 输出你的反思。"""
-        
+
         return self._call_llm(prompt)
     
     def _call_llm(self, prompt: str) -> str:

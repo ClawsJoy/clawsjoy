@@ -62,10 +62,10 @@ class AgentCommunication:
         """发送消息"""
         msg = Message(msg_type, from_agent, to_agent, payload)
         self.message_history.append(msg)
-        
+
         if msg_type == MessageType.REQUEST:
             self.pending_responses[msg.id] = msg
-        
+
         print(f"📨 {from_agent} -> {to_agent}: {payload.get('action', 'unknown')}")
         return msg.id
     
@@ -81,17 +81,17 @@ class AgentCommunication:
         """响应请求"""
         if request_id not in self.pending_responses:
             return False
-        
+
         req = self.pending_responses[request_id]
         resp = Message(MessageType.RESPONSE, "system", req.from_agent, response_payload)
         resp.status = "success" if success else "failed"
-        
+
         req.response = resp
         req.status = "completed"
-        
+
         self.message_history.append(resp)
         del self.pending_responses[request_id]
-        
+
         print(f"📨 响应 -> {req.from_agent}: {response_payload.get('result', 'ok')}")
         return True
     
@@ -126,7 +126,7 @@ class AgentCommunication:
         """发送事件给订阅者"""
         if event_type not in self.subscribers:
             return
-        
+
         for agent_id in self.subscribers[event_type]:
             self.send(from_agent, agent_id, {**payload, "event_type": event_type}, MessageType.EVENT)
     

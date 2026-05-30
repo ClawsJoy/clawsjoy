@@ -27,10 +27,10 @@ class MemoryAgent:
         self.user_dir.mkdir(parents=True, exist_ok=True)
         self.session_file = self.user_dir / f"session_{datetime.now().strftime('%Y%m%d')}.json"
         self.long_memory_file = self.user_dir / "long_memory.json"
-        
+
         self.ollama_url = "config_loader.get_ollama_url()"
         self.model = config_manager.get_model()
-        
+
         self.session_history = self._load_session()
         self.long_memory = self._load_long_memory()
     
@@ -63,7 +63,7 @@ class MemoryAgent:
     def _get_context(self, user_input: str, limit: int = 5) -> str:
         """构建上下文（从 Agent 记忆）"""
         context = []
-        
+
         # 最近对话
         if self.session_history:
             recent = self.session_history[-limit:]
@@ -71,19 +71,19 @@ class MemoryAgent:
             for turn in recent:
                 context.append(f"用户: {turn['user'][:50]}")
                 context.append(f"助手: {turn['assistant'][:50]}")
-        
+
         # 用户偏好
         if self.long_memory.get('preferences'):
             context.append("【用户偏好】")
             for k, v in self.long_memory['preferences'].items():
                 context.append(f"- {k}: {v}")
-        
+
         # 学到的模式
         if self.long_memory.get('learned_patterns'):
             context.append("【学到的模式】")
             for p in self.long_memory['learned_patterns'][-3:]:
                 context.append(f"- {p}")
-        
+
         return '\n'.join(context)
     
     def _update_memory(self, user_input: str, response: str, task: str):
@@ -96,7 +96,7 @@ class MemoryAgent:
             "timestamp": datetime.now().isoformat()
         })
         self._save_session()
-        
+
         # 学习用户偏好
         if "喜欢" in user_input or "偏好" in user_input:
             import re
@@ -104,7 +104,7 @@ class MemoryAgent:
             if match:
                 self.long_memory['preferences'][match.group(1)] = True
                 self._save_long_memory()
-        
+
         # 学习成功模式
         if "谢谢" in user_input or "很好" in user_input:
             pattern = f"用户对 '{task}' 满意"
@@ -115,7 +115,7 @@ class MemoryAgent:
     def _call_llm(self, user_input: str) -> str:
         """LLM 只做推理"""
         context = self._get_context(user_input)
-        
+
         prompt = f"""你是 ClawsJoy 智能助手，有记忆能力。
 
 {context}
@@ -125,7 +125,7 @@ class MemoryAgent:
 请根据上下文理解用户意图，友好回复。
 如果用户有偏好，要记住并应用。
 如果用户重复问题，要提醒之前回答过。"""
-        
+
         try:
             resp = requests.post(
                 f"{self.ollama_url}/api/generate",
@@ -140,7 +140,7 @@ class MemoryAgent:
     
     def process(self, user_input: str) -> Dict:
         start = time.time()
-        
+
         # 1. 识别任务
         task = "chat"
         if any(k in user_input for k in ['agent', 'Agent', '有哪些']):
@@ -149,7 +149,7 @@ class MemoryAgent:
             task = "list_skills"
         elif any(k in user_input for k in ['图', 'chart']):
             task = "generate_chart"
-        
+
         # 2. 执行任务
         if task == "list_agents":
             response = "ClawsJoy 有决策Agent、聊天Agent、执行Agent、采集Agent、安全Agent、分析Agent等10个专业Agent"
@@ -162,12 +162,12 @@ class MemoryAgent:
         else:
             # 3. LLM 推理
             response = self._call_llm(user_input)
-        
+
         # 4. 更新 Agent 记忆
         self._update_memory(user_input, response, task)
-        
+
         elapsed = (time.time() - start) * 1000
-        
+
         return {
             "response": response,
             "task": task,

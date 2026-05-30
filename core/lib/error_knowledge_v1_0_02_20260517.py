@@ -48,14 +48,14 @@ class ErrorKnowledge:
     
     def add(self, task_name: str, error_msg: str, skill: str = "") -> Dict:
         errors = self._load_errors()
-        
+
         for err in errors:
             if err.get('task') == task_name:
                 err['retry_count'] = err.get('retry_count', 0) + 1
                 err['last_seen'] = datetime.now().isoformat()
                 self._save_errors(errors)
                 return err
-        
+
         new_error = {
             "id": datetime.now().strftime("%Y%m%d%H%M%S"),
             "task": task_name,
@@ -72,7 +72,7 @@ class ErrorKnowledge:
     def should_skip(self, task_name: str) -> Tuple[bool, str]:
         if not config_driver.get('optimization.skip_on_repeated_failure', True):
             return False, "跳过功能已禁用"
-        
+
         error = self.query(task_name)
         if error:
             retries = error.get('retry_count', 0)

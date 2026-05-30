@@ -15,15 +15,15 @@ class ExperienceStorage:
         self.agent_name = agent_name
         self.base_path = Path(f"{config_helper.get_data_root()}/users/{user_id}/inheritance/{agent_name}")
         self.base_path.mkdir(parents=True, exist_ok=True)
-        
+
         # 文件路径
         self.experience_file = self.base_path / "experiences.json"
         self.chains_file = self.base_path / "chains.json"
-        
+
         # 缓存
         self._experiences: Dict[str, Experience] = {}
         self._chains: Dict[str, ExperienceChain] = {}
-        
+
         self._load()
     
     def _load(self):
@@ -37,7 +37,7 @@ class ExperienceStorage:
                         self._experiences[exp_id] = Experience.from_dict(exp_data)
             except Exception as e:
                 print(f"加载经验失败: {e}")
-        
+
         # 加载传承链
         if self.chains_file.exists():
             try:
@@ -61,7 +61,7 @@ class ExperienceStorage:
                 "updated_at": datetime.now().isoformat(),
                 "experiences": {exp_id: exp.to_dict() for exp_id, exp in self._experiences.items()}
             }, f, indent=2, ensure_ascii=False)
-        
+
         # 保存传承链
         with open(self.chains_file, 'w') as f:
             json.dump({

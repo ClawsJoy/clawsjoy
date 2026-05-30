@@ -48,7 +48,7 @@ Agent 包括：orchestrator, code_agent, video_agent, youtube_agent, security_ag
 聊天Agent：负责话术生成和用户沟通
 
 现在请输出："""
-        
+
         try:
             resp = requests.post(
                 f"{self.ollama_url}/api/generate",
@@ -60,7 +60,7 @@ Agent 包括：orchestrator, code_agent, video_agent, youtube_agent, security_ag
                 return self.clean_response(raw)
         except Exception as e:
             print(f"生成失败: {e}")
-        
+
         # 默认输出
         return """决策Agent：用户总管，负责任务调度和决策
 聊天Agent：负责话术生成和用户沟通
@@ -83,7 +83,7 @@ Agent 包括：orchestrator, code_agent, video_agent, youtube_agent, security_ag
 不要用表格、不要用 #、*、-、|、% 等符号。
 
 输出："""
-        
+
         try:
             resp = requests.post(
                 f"{self.ollama_url}/api/generate",
@@ -95,7 +95,7 @@ Agent 包括：orchestrator, code_agent, video_agent, youtube_agent, security_ag
                 return self.clean_response(raw)
         except:
             pass
-        
+
         return """用户层：Web/API/移动端入口，接收用户请求
 安全层：HTTPS加密、JWT认证、数据脱敏
 Agent层：10个专业Agent协同工作

@@ -13,7 +13,7 @@ class IntelligentMatcherV3:
     def match_skill(self, query: str, n: int = None):
         n = n or self.top_k
         results = self.index.search_skill(query, n)
-        
+
         # 名称精确匹配提权
         for r in results:
             name = r.get('name', '').lower()
@@ -21,13 +21,13 @@ class IntelligentMatcherV3:
                 r['similarity'] = r['similarity'] * 2.0
             elif query.lower() in name:
                 r['similarity'] = r['similarity'] * 1.5
-        
+
         results.sort(key=lambda x: x.get('similarity', 0), reverse=True)
         return [r for r in results if r.get('similarity', 0) >= self.min_similarity]
     
     def route_intent(self, query: str) -> dict:
         skills = self.match_skill(query, 3)
-        
+
         if skills:
             best = skills[0]
             return {
@@ -36,7 +36,7 @@ class IntelligentMatcherV3:
                 'similarity': best['similarity'],
                 'is_exact': best['name'].lower() == query.lower()
             }
-        
+
         return {'type': 'unknown', 'name': None, 'similarity': 0}
 
 

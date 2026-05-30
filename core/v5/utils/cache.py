@@ -23,7 +23,7 @@ class ResponseCache:
     def get(self, user_id: str, message: str) -> Optional[str]:
         """获取缓存"""
         key = self._get_key(user_id, message)
-        
+
         with self.lock:
             if key in self.cache:
                 response, timestamp = self.cache[key]
@@ -36,13 +36,13 @@ class ResponseCache:
     def set(self, user_id: str, message: str, response: str):
         """设置缓存"""
         key = self._get_key(user_id, message)
-        
+
         with self.lock:
             # LRU 淘汰
             if len(self.cache) >= self.max_size:
                 oldest = min(self.cache.keys(), key=lambda k: self.cache[k][1])
                 del self.cache[oldest]
-            
+
             self.cache[key] = (response, time.time())
     
     def clear(self):
