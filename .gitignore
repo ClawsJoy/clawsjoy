@@ -75,3 +75,132 @@ tools/
 localmind/src/tools/
 src/skills/atomic/tools/
 tenants/template/
+
+# 新增忽略规则 - 2026-05-31
+
+# 临时交换文件
+data/exchange/processing/
+data/exchange/to_chat/
+data/exchange/to_decision/
+
+# 测试音频文件
+*.wav
+*.mp3
+
+# 向量数据库大文件（保留目录结构，忽略二进制文件）
+data/vector_kb/*/*.bin
+data/vector_kb/*/header.bin
+data/vector_kb/*/length.bin
+data/vector_kb/*/link_lists.bin
+
+# 未使用的旧版本文件
+simple_mobile_*.py
+!simple_mobile_final_v7_espeak.py
+agent_gateway_enhanced_*.py
+!agent_gateway_enhanced_complete.py
+!agent_gateway_enhanced_learning.py
+
+# 临时测试脚本
+test_*.py
+test_*.sh
+add_*.py
+check_*.py
+fix_*.py
+voice_*.py
+tts_*.py
+vosk_*.py
+
+# Web 备份文件
+web/*.bak*
+web/*.bak[0-9]
+web/index.html.bak*
+web/*/index.html.bak*
+
+# 移动端临时文件
+web/mobile/*.bak
+web/mobile/*.zip.*
+web/mobile/vosk-model/
+
+# Piper TTS 引擎（太大）
+piper/
+piper_*.tar.gz
+
+# 语音模型重复文件
+vosk-model-*.zip
+vosk-model-*.zip.*
+
+# 未使用的配置归档
+config/agents/archive/
+config/driver/backup/
+
+# nohup 输出
+nohup.out
+
+# 测试网关文件
+gateway.log
+gunicorn.log
+
+# 未跟踪的 Python 缓存
+*.pyc
+__pycache__/
+
+# 临时用户数据
+data/butler_club/members/test_*/
+data/butler_club/members/*_test/
+data/butler_club/members/verify_user/
+
+# 临时交换文件（其他）
+data/exchange/*.json
+data/exchange/2026*.json
+
+# 旧代码备份
+core/agents/base/*.bak*
+core/agents/builtin/*.bak*
+core/lib/*.bak*
+
+# WSL 运行时
+/mnt/wslg/
+
+# 向量数据库（数据，不跟踪）
+data/vector_kb/
+data/vector_kb/*/
+
+# 语音模型（大文件，数据）
+vosk-model-small-cn-0.22/
+vosk-model-*/
+
+# 移动端前端（如果不想跟踪）
+web/mobile/index_*.html
+web/mobile/*.bak*
+web/mobile/*.fixed
+web/mobile/*.mellon_bak
+web/mobile/*.min.js
+web/mobile/test_*.html
+
+# 但保留核心 API 文件（取消忽略）
+!web/mobile/api.py
+!web/mobile/stream_api.py
+
+# Piper 相关
+piper_wrapper.sh
+
+# 文档（可选，看是否需要）
+docs/AGENT_MATURITY_UPGRADE.md
+secrets.json
+*.bak*
+logs/
+tenants/*/library.db
+tenants/*/memory.db
+
+# 客户端构建产物
+client/dist/
+client/node_modules/
+*.AppImage
+*.snap
+
+# Python 缓存
+*.pyc
+__pycache__/
+
+# 配置文件备份
+*.json.bak
