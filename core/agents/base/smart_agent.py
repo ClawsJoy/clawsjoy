@@ -16,6 +16,7 @@ from core.agents.base.communicable_agent import CommunicableAgent
 from core.lib.smart_adapter import smart_adapter
 from core.lib.skill_loader_v3 import skill_loader
 from core.lib.workspace_manager import workspace_manager
+from core.lib.unified_config import unified_config
 
 
 class SmartAgent(CommunicableAgent):
@@ -53,7 +54,7 @@ class SmartAgent(CommunicableAgent):
         return {
             "decomposition": {"enabled": True, "max_subtasks": 5},
             "reflection": {"enabled": True, "max_retries": 2},
-            "llm": {"enabled": True, "model": "qwen2.5:3b"}
+            "llm": {"enabled": True, "model": unified_config.get("llm.fast_model", "qwen2.5:3b")}
         }
 
     def get_life_status(self) -> Any:
@@ -89,7 +90,7 @@ class SmartAgent(CommunicableAgent):
         import requests
         try:
             resp = requests.post(
-                f"http://localhost:5002/api/agent/{target}/message",
+                f"http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/agent/{target}/message",
                 json={"message": message, "user_id": self.user_id},
                 timeout=30
             )
@@ -149,7 +150,7 @@ class SmartAgent(CommunicableAgent):
         import yaml
         from pathlib import Path
         
-        self.llm_model = "qwen2.5:3b"
+        self.llm_model = unified_config.get("llm.fast_model", "qwen2.5:3b")
         self.llm_temperature = 0.7
         self.llm_max_tokens = 1024
         
@@ -173,7 +174,7 @@ class SmartAgent(CommunicableAgent):
         from pathlib import Path
         
         # 默认值
-        self.llm_model = "qwen2.5:3b"
+        self.llm_model = unified_config.get("llm.fast_model", "qwen2.5:3b")
         self.llm_temperature = 0.7
         self.llm_max_tokens = 1024
         self.agent_role = None

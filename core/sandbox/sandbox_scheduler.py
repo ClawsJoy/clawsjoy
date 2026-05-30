@@ -98,7 +98,7 @@ class SandboxScheduler:
                 "container_name": container_name,
                 "user_id": user_id,
                 "agent_id": agent_id,
-                "endpoint": f"http://localhost:{host_port}",
+                "endpoint": f"http://{unified_config.get("services.sandbox.host", "localhost")}:{host_port}",
                 "created_at": datetime.now().isoformat(),
                 "status": "running"
             }

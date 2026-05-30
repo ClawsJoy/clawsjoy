@@ -13,6 +13,7 @@ import json
 from typing import Dict, List, Optional
 import yaml
 from pathlib import Path
+from core.lib.unified_config import unified_config
 
 
 class SmartLLMClient:
@@ -42,7 +43,7 @@ class SmartLLMClient:
         self.timeout = self.config.get("timeout", 30)
 
         if self.provider == "ollama":
-            self.api_url = "http://localhost:11434/api/chat"
+            self.api_url = "http://{unified_config.get("llm.endpoint", "http://localhost:11434")}/api/chat"
         elif self.provider == "openai":
             self.api_url = "https://api.openai.com/v1/chat/completions"
         else:
@@ -111,7 +112,7 @@ class SmartLLMClient:
         """检查 LLM 服务是否可用"""
         if self.provider == "ollama":
             try:
-                resp = requests.get("http://localhost:11434/api/tags", timeout=5)
+                resp = requests.get("http://{unified_config.get("llm.endpoint", "http://localhost:11434")}/api/tags", timeout=5)
                 return resp.status_code == 200
             except:
                 return False

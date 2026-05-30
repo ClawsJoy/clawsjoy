@@ -1,3 +1,5 @@
+from core.lib.unified_config import unified_config
+
 #!/usr/bin/env python3
 """Goal Setter - Goal Setter 模块
 
@@ -62,7 +64,7 @@ class GoalSetter:
     def generate_advanced_goals(self) -> List[Dict]:
         goals = []
         try:
-            resp = requests.get('http://localhost:5002/api/skills', timeout=5)
+            resp = requests.get('http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/skills', timeout=5)
             skill_count = resp.json().get('total', 0)
         except:
             skill_count = 0

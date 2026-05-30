@@ -1,3 +1,5 @@
+from core.lib.unified_config import unified_config
+
 #!/usr/bin/env python3
 """Data Source Manager - Data Source Manager 模块
 
@@ -88,7 +90,7 @@ class DataSourceManager:
 
         try:
             if source.type == "api":
-                resp = requests.get(f"http://localhost:5002{source.endpoint}", timeout=10)
+                resp = requests.get(f"http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}{source.endpoint}", timeout=10)
                 data = resp.json() if resp.status_code == 200 else {"error": f"HTTP {resp.status_code}"}
             elif source.type == "file":
                 path = Path(source.endpoint)

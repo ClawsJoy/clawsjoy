@@ -65,7 +65,7 @@ class ServiceRegistryV2:
 
         return to_remove
 
-    def register(self, name: str, port: int, host: str = "localhost",
+    def register(self, name: str, port: int, host: str = unified_config.get("services.gateway.host", "localhost"),
                  version: str = "1.0.0", health_path: str = "/health",
                  metadata: Dict = None):
         """注册服务"""

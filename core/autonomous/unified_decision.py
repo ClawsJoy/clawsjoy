@@ -1,3 +1,5 @@
+from core.lib.unified_config import unified_config
+
 #!/usr/bin/env python3
 """Unified Decision - Unified Decision 模块
 
@@ -44,7 +46,7 @@ class UnifiedDecisionAgent:
     def sense(self) -> Dict:
         status = {'skills': 0, 'health': 'unknown', 'memory': 0, 'backend': False}
         try:
-            resp = requests.get('http://localhost:5002/api/health', timeout=3)
+            resp = requests.get('http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/health', timeout=3)
             if resp.status_code == 200:
                 status['backend'] = True
                 status['health'] = resp.json().get('status', 'unknown')
@@ -52,7 +54,7 @@ class UnifiedDecisionAgent:
             status['backend'] = False
         if status['backend']:
             try:
-                resp = requests.get('http://localhost:5002/api/skills', timeout=5)
+                resp = requests.get('http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/skills', timeout=5)
                 status['skills'] = resp.json().get('total', 0)
             except:
                 pass
@@ -90,7 +92,7 @@ class UnifiedDecisionAgent:
     def act(self, decision: Dict) -> Dict:
         if decision['action'] == 'fix' and 'sync' in decision['target']:
             try:
-                resp = requests.post('http://localhost:5002/api/knowledge/sync', timeout=10)
+                resp = requests.post('http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/knowledge/sync', timeout=10)
                 return {"success": True, "result": f"技能同步完成", "code": resp.status_code}
             except Exception as e:
                 return {"success": False, "result": str(e)}

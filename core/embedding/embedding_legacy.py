@@ -1,3 +1,5 @@
+from core.lib.unified_config import unified_config
+
 #!/usr/bin/env python3
 """Embedding Legacy - Embedding Legacy 模块
 
@@ -14,7 +16,7 @@ from typing import List
 class OllamaEmbeddingLegacy:
     """兼容旧版 ChromaDB 的 Embedding 函数"""
     
-    def __init__(self, model_name: str = config_helper.get_embedding_model(), url: str = "http://localhost:11434/api/embeddings"):
+    def __init__(self, model_name: str = config_helper.get_embedding_model(), url: str = unified_config.get("llm.endpoint", "http://localhost:11434") + "/api/embeddings"):
         self.model_name = model_name
         self.url = url
     

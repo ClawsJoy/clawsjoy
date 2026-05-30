@@ -12,6 +12,7 @@ from core.agents.base.base_agent import BaseAgent
 from core.lib.agent_bus import get_bus
 from core.lib.agent_communication import agent_comm, MessageType
 from core.lib.file_queue import to_decision, to_chat
+from core.lib.unified_config import unified_config
 
 
 class CommunicableAgent(BaseAgent):
@@ -22,7 +23,7 @@ class CommunicableAgent(BaseAgent):
         import requests
         try:
             resp = requests.post(
-                f"http://localhost:5002/api/agent/{target}/message",
+                f"http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/agent/{target}/message",
                 json={"message": message, "user_id": self.user_id},
                 timeout=timeout
             )

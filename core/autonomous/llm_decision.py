@@ -1,3 +1,5 @@
+from core.lib.unified_config import unified_config
+
 #!/usr/bin/env python3
 """Llm Decision - Llm Decision 模块
 
@@ -43,7 +45,7 @@ class LLMDecisionAgent:
     def _call_llm(self, prompt: str) -> str:
         try:
             resp = requests.post(
-                'http://localhost:5002/api/chat',
+                'http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/chat',
                 json={'message': prompt, 'user_role': 'system'},
                 timeout=config_helper.get_timeout("default")
             )
@@ -53,13 +55,13 @@ class LLMDecisionAgent:
     
     def sense(self) -> Dict:
         try:
-            resp = requests.get('http://localhost:5002/api/skills', timeout=5)
+            resp = requests.get('http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/skills', timeout=5)
             skill_count = resp.json().get('total', 0)
         except:
             skill_count = 0
 
         try:
-            resp = requests.get('http://localhost:5002/api/health', timeout=5)
+            resp = requests.get('http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/health', timeout=5)
             health = resp.json().get('status', 'unknown') if resp.status_code == 200 else 'unknown'
         except:
             health = 'unknown'
@@ -95,7 +97,7 @@ class LLMDecisionAgent:
             return {"success": True, "result": "检查完成"}
         elif action == 'fix':
             try:
-                requests.post('http://localhost:5002/api/knowledge/sync', timeout=10)
+                requests.post('http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/knowledge/sync', timeout=10)
                 return {"success": True, "result": "修复已执行"}
             except:
                 return {"success": False, "result": "修复失败"}

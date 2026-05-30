@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import List, Dict, Optional
 import uuid
 import numpy as np
+from core.lib.unified_config import unified_config
 
 
 class ChromaStoreOptimized:
@@ -29,7 +30,7 @@ class ChromaStoreOptimized:
         # 使用 Ollama embedding（本地，高质量）
         self.embedding_fn = embedding_functions.OllamaEmbeddingFunction(
             model_name=config_helper.get_embedding_model(),
-            url="http://localhost:11434/api/embeddings"
+            url="http://{unified_config.get("llm.endpoint", "http://localhost:11434")}/api/embeddings"
         )
 
         # 获取或创建 collection，使用余弦距离

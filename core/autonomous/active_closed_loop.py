@@ -1,3 +1,5 @@
+from core.lib.unified_config import unified_config
+
 #!/usr/bin/env python3
 """Active Closed Loop - Active Closed Loop 模块
 
@@ -233,7 +235,7 @@ class ActiveClosedLoop:
                 # 同步技能
                 try:
                     import requests
-                    resp = requests.post('http://localhost:5002/api/knowledge/sync', timeout=config_helper.get_timeout("default"))
+                    resp = requests.post('http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/knowledge/sync', timeout=config_helper.get_timeout("default"))
                     result['success'] = resp.status_code == 200
                     result['result'] = f"技能同步: {resp.status_code}"
                 except Exception as e:
@@ -388,7 +390,7 @@ def execute_goal(self, goal: Dict) -> Dict:
     
     if action == 'check_skills':
         try:
-            resp = requests.get('http://localhost:5002/api/skills', timeout=10)
+            resp = requests.get('http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/skills', timeout=10)
             skills = resp.json()
             return {"success": True, "result": f"技能数: {skills.get('total', 0)}"}
         except Exception as e:
@@ -396,7 +398,7 @@ def execute_goal(self, goal: Dict) -> Dict:
     
     elif action == 'sync_knowledge':
         try:
-            resp = requests.post('http://localhost:5002/api/knowledge/sync', timeout=config_helper.get_timeout("default"))
+            resp = requests.post('http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/knowledge/sync', timeout=config_helper.get_timeout("default"))
             return {"success": resp.status_code == 200, "result": f"同步完成"}
         except Exception as e:
             return {"success": False, "result": str(e)}

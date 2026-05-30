@@ -1,3 +1,5 @@
+from core.lib.unified_config import unified_config
+
 #!/usr/bin/env python3
 """Butler Cache - Butler Cache 模块
 
@@ -19,7 +21,7 @@ from datetime import timedelta
 
 # Redis 连接配置
 redis_client = redis.Redis(
-    host='localhost',
+    host=unified_config.get("redis.host", "localhost"),
     port=int(os.environ.get("REDIS_PORT", 6379)),
     decode_responses=False,  # 保持二进制以便 pickle
     socket_connect_timeout=5

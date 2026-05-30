@@ -12,6 +12,7 @@ import time
 import uuid
 from typing import Dict, List, Any, Callable
 from pathlib import Path
+from core.lib.unified_config import unified_config
 
 
 class WorkflowNode:
@@ -93,7 +94,7 @@ class WorkflowEngine:
         """调用 LLM"""
         import requests
         try:
-            resp = requests.post("http://localhost:11434/api/generate",
+            resp = requests.post("http://{unified_config.get("llm.endpoint", "http://localhost:11434")}/api/generate",
                 json={"model": config_helper.get_llm_model(fast=True), "prompt": prompt, "stream": False}, timeout=config_helper.get_timeout("default"))
             return resp.json().get('response', '') if resp.status_code == 200 else ""
         except:

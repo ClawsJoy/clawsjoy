@@ -1,3 +1,5 @@
+from core.lib.unified_config import unified_config
+
 #!/usr/bin/env python3
 """Cache - Cache 模块
 
@@ -10,6 +12,7 @@
 import json
 from typing import Optional, Any
 import hashlib
+from core.lib.unified_config import unified_config
 
 
 class RedisCache:
@@ -24,7 +27,7 @@ class RedisCache:
         try:
             import redis
             self._redis = redis.Redis(
-                host='localhost',
+                host=unified_config.get("redis.host", "localhost"),
                 port=6379,
                 decode_responses=True,
                 socket_connect_timeout=2

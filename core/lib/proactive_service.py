@@ -94,7 +94,7 @@ class ProactiveService:
 
         # 同步技能
         try:
-            resp = requests.post('http://localhost:5002/api/knowledge/sync', timeout=get_timeout("default"))
+            resp = requests.post('http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/knowledge/sync', timeout=get_timeout("default"))
             if resp.status_code == 200:
                 result["actions"].append("技能同步完成")
         except Exception as e:
@@ -128,14 +128,14 @@ class ProactiveService:
 
         # 获取系统状态
         try:
-            resp = requests.get('http://localhost:5002/api/health', timeout=5)
+            resp = requests.get('http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/health', timeout=5)
             report["system"]["health"] = resp.json() if resp.status_code == 200 else {"error": "无法获取"}
         except:
             report["system"]["health"] = {"status": "unreachable"}
 
         # 获取技能统计
         try:
-            resp = requests.get('http://localhost:5002/api/skills', timeout=5)
+            resp = requests.get('http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/skills', timeout=5)
             skills = resp.json() if resp.status_code == 200 else {}
             report["skills"]["total"] = skills.get('total', 0)
             report["skills"]["categories"] = list(skills.get('categories', {}).keys())[:10]

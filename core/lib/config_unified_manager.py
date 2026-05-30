@@ -173,7 +173,7 @@ class ConfigUnifiedManager:
         return {
             "provider": llm.get("provider", "ollama"),
             "model": llm.get("model", "qwen2.5:3b"),
-            "endpoint": llm.get("endpoint", "http://localhost:11434")
+            "endpoint": llm.get("endpoint", unified_config.get("llm.endpoint", "http://localhost:11434"))
         }
 
         # 全局实例

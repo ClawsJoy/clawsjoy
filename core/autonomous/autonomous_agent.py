@@ -1,3 +1,5 @@
+from core.lib.unified_config import unified_config
+
 #!/usr/bin/env python3
 """Autonomous Agent - Autonomous Agent 模块
 
@@ -107,7 +109,7 @@ class AutonomousAgent:
             # 调用视频制作
             try:
                 result = subprocess.run(
-                    ['curl', '-s', '-X', 'POST', 'http://localhost:5002/api/smart/execute',
+                    ['curl', '-s', '-X', 'POST', 'http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/smart/execute',
                      '-H', 'Content-Type: application/json',
                      '-d', f'{{"query": "{goal}", "user_id": "autonomous"}}'],
                     capture_output=True, text=True, timeout=config_helper.get_timeout("default")
@@ -123,7 +125,7 @@ class AutonomousAgent:
             # 检查技能状态
             try:
                 result = subprocess.run(
-                    ['curl', '-s', 'http://localhost:5002/api/skills'],
+                    ['curl', '-s', 'http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/skills'],
                     capture_output=True, text=True, timeout=10
                 )
                 return {"success": True, "result": f"共 {result.stdout.count('"name"')} 个技能"}

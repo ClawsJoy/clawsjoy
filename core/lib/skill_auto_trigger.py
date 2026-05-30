@@ -1,3 +1,5 @@
+from core.lib.unified_config import unified_config
+
 #!/usr/bin/env python3
 """Skill Auto Trigger - Skill Auto Trigger 模块
 
@@ -165,7 +167,7 @@ skill = Auto{skill_name.title()}Skill()
         """触发技能重载"""
         try:
             import requests
-            requests.post("http://localhost:5002/api/skills/reload", timeout=2)
+            requests.post(f"http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/skills/reload", timeout=2)
         except:
             pass
     

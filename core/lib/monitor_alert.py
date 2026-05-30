@@ -62,10 +62,10 @@ class MonitorAlert:
     
     def check_services(self) -> List[Dict]:
         services = [
-            ("https://localhost:5443/health", "驱动服务"),
-            ("https://localhost:5444/auth/verify", "认证服务"),
-            ("https://localhost:5445/", "偏好服务"),
-            ("https://localhost:5446/", "Web服务"),
+            ("http://{unified_config.get("services.driver.host", "localhost")}:{unified_config.get("services.driver.port", 5443)}/health", "驱动服务"),
+            ("http://{unified_config.get("services.auth.host", "localhost")}:{unified_config.get("services.auth.port", 5444)}/auth/verify", "认证服务"),
+            ("http://{unified_config.get("services.preference.host", "localhost")}:{unified_config.get("services.preference.port", 5445)}/", "偏好服务"),
+            ("http://{unified_config.get("services.web.host", "localhost")}:{unified_config.get("services.web.port", 5446)}/", "Web服务"),
             ("config_loader.get_ollama_url()/api/tags", "Ollama"),
         ]
         results = []

@@ -11,6 +11,7 @@ import time
 import requests
 from typing import Dict, List, Optional, Any
 from core.agents.base.smart_agent import SmartAgent
+from core.lib.unified_config import unified_config
 
 
 class CollaborationAgent(SmartAgent):
@@ -54,7 +55,7 @@ class CollaborationAgent(SmartAgent):
         start = time.time()
         try:
             resp = requests.post(
-                f"http://localhost:5002/api/agent/{target}/message",
+                f"http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/agent/{target}/message",
                 json={"message": user_input, "user_id": self.user_id},
                 timeout=10
             )

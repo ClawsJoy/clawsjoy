@@ -33,7 +33,7 @@ class MonitoringIntegration:
         for service in services:
             try:
                 if service == "gateway":
-                    resp = requests.get('http://localhost:5002/api/health', timeout=3)
+                    resp = requests.get('http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/health', timeout=3)
                     status[service] = "healthy" if resp.status_code == 200 else "unhealthy"
                 else:
                     # 其他服务可能未启动
@@ -73,7 +73,7 @@ class MonitoringIntegration:
         try:
             # 尝试调用自愈技能
             result = subprocess.run(
-                ['curl', '-s', '-X', 'POST', 'http://localhost:5002/api/skills/execute',
+                ['curl', '-s', '-X', 'POST', 'http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/skills/execute',
                  '-H', 'Content-Type: application/json',
                  '-d', f'{{"skill": "self_heal", "params": {{"issue": "{issue}"}}}}'],
                 capture_output=True, text=True, timeout=unified_config.get("timeouts.default", 30)

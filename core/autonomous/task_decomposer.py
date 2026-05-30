@@ -1,3 +1,5 @@
+from core.lib.unified_config import unified_config
+
 #!/usr/bin/env python3
 """Task Decomposer - Task Decomposer 模块
 
@@ -42,7 +44,7 @@ class TaskDecomposer:
 
         try:
             resp = requests.post(
-                'http://localhost:5002/api/chat',
+                'http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/chat',
                 json={'message': prompt, 'user_role': 'system'},
                 timeout=config_helper.get_timeout("default")
             )

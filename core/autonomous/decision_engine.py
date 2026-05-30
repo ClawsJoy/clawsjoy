@@ -1,3 +1,5 @@
+from core.lib.unified_config import unified_config
+
 #!/usr/bin/env python3
 """Decision Engine - Decision Engine 模块
 
@@ -22,7 +24,7 @@ class DecisionEngine:
         """感知：收集系统状态"""
         # 获取技能状态
         skill_result = subprocess.run(
-            ['curl', '-s', 'http://localhost:5002/api/skills'],
+            ['curl', '-s', 'http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/skills'],
             capture_output=True, text=True
         )
         import json
@@ -30,7 +32,7 @@ class DecisionEngine:
 
         # 获取健康状态
         health_result = subprocess.run(
-            ['curl', '-s', 'http://localhost:5002/api/health'],
+            ['curl', '-s', 'http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/health'],
             capture_output=True, text=True
         )
 
@@ -77,7 +79,7 @@ class DecisionEngine:
             if decision['target'] == 'skills_count_low':
                 # 尝试恢复技能
                 result = subprocess.run(
-                    ['curl', '-s', '-X', 'POST', 'http://localhost:5002/api/knowledge/sync'],
+                    ['curl', '-s', '-X', 'POST', 'http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/knowledge/sync'],
                     capture_output=True, text=True
                 )
                 return {"success": True, "result": "技能同步已触发", "output": result.stdout}

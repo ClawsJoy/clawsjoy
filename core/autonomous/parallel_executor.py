@@ -1,3 +1,5 @@
+from core.lib.unified_config import unified_config
+
 #!/usr/bin/env python3
 """Parallel Executor - Parallel Executor 模块
 
@@ -48,7 +50,7 @@ class ParallelExecutor:
 
         if action == 'check_skills':
             try:
-                resp = requests.get('http://localhost:5002/api/skills', timeout=10)
+                resp = requests.get('http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/skills', timeout=10)
                 skills = resp.json()
                 return {"success": True, "result": f"技能数: {skills.get('total', 0)}"}
             except Exception as e:
@@ -56,7 +58,7 @@ class ParallelExecutor:
 
         elif action == 'sync_knowledge':
             try:
-                resp = requests.post('http://localhost:5002/api/knowledge/sync', timeout=config_helper.get_timeout("default"))
+                resp = requests.post('http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/knowledge/sync', timeout=config_helper.get_timeout("default"))
                 return {"success": resp.status_code == 200, "result": "同步完成"}
             except Exception as e:
                 return {"success": False, "error": str(e)}
@@ -76,7 +78,7 @@ def _execute_advanced(self, goal: Dict) -> Dict:
     if action == 'fix_broken_skills':
         # 重新同步技能
         try:
-            resp = requests.post('http://localhost:5002/api/knowledge/sync', timeout=config_helper.get_timeout("llm"))
+            resp = requests.post('http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/knowledge/sync', timeout=config_helper.get_timeout("llm"))
             return {"success": resp.status_code == 200, "result": "技能修复尝试完成"}
         except Exception as e:
             return {"success": False, "error": str(e)}
@@ -110,7 +112,7 @@ def _execute_advanced(self, goal: Dict) -> Dict:
         if action == 'optimize_knowledge_base':
             try:
                 # 重新同步知识库
-                resp = requests.post('http://localhost:5002/api/knowledge/sync', timeout=config_helper.get_timeout("llm"))
+                resp = requests.post('http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/knowledge/sync', timeout=config_helper.get_timeout("llm"))
                 return {"success": True, "result": "知识库优化完成"}
             except Exception as e:
                 return {"success": False, "error": str(e)}

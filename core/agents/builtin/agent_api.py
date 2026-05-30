@@ -45,4 +45,4 @@ def get_agent(name):
     return jsonify({"error": "Agent not found"}), 404
 
 if __name__ == "__main__":
-    app.run(port=5010)
+    app.run(port=unified_config.get("services.agent_api.port", 5010))

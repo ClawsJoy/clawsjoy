@@ -14,6 +14,7 @@ import shutil
 import requests
 from pathlib import Path
 from datetime import datetime
+from core.lib.unified_config import unified_config
 
 
 class DecisionConsumer:
@@ -83,7 +84,7 @@ class DecisionConsumer:
 
         try:
             resp = requests.post(
-                "http://localhost:5002/api/agent/decision_agent/message",
+                "http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/agent/decision_agent/message",
                 json={"message": message, "user_id": user_id},
                 timeout=30
             )

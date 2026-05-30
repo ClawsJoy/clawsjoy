@@ -50,7 +50,7 @@ class ClosedLoop:
         """1. 感知 - 收集系统状态"""
         try:
             import requests
-            gateway_health = requests.get("http://localhost:5002/api/health", timeout=5).json()
+            gateway_health = requests.get("http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/health", timeout=5).json()
             gateway_status = gateway_health.get("status") == "ok"
 
             return {

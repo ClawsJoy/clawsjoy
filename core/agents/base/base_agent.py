@@ -7,6 +7,7 @@
 """
 
 from core.lib.config_helper import get_data_root, get_llm_endpoint, get_llm_model, get_embedding_model, get_gateway_port, get_timeout
+from core.lib.unified_config import unified_config
 #!/usr/bin/env python3
 """Base Agent - 所有 Agent 的基类
 
@@ -583,7 +584,7 @@ def get_agent(agent_name: str, user_id: str = "default") -> Optional[BaseAgent]:
 
         start = time.time()
         resp = requests.post(
-            f"http://localhost:5002/api/agent/{to_agent}/message",
+            f"http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/agent/{to_agent}/message",
             json={"message": message, "user_id": self.user_id},
             timeout=10
         )

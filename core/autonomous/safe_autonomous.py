@@ -1,3 +1,5 @@
+from core.lib.unified_config import unified_config
+
 #!/usr/bin/env python3
 """Safe Autonomous - Safe Autonomous 模块
 
@@ -49,7 +51,7 @@ class SafeAutonomousAgent:
 
         # 检查技能
         result = subprocess.run(
-            ['curl', '-s', 'http://localhost:5002/api/skills'],
+            ['curl', '-s', 'http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/skills'],
             capture_output=True, text=True
         )
         import json
@@ -61,7 +63,7 @@ class SafeAutonomousAgent:
 
         # 检查健康
         health = subprocess.run(
-            ['curl', '-s', 'http://localhost:5002/api/health'],
+            ['curl', '-s', 'http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/health'],
             capture_output=True, text=True
         )
         if 'ok' not in health.stdout:
@@ -113,7 +115,7 @@ class SafeAutonomousAgent:
         action = proposal['action']
         if action == 'sync_skills':
             result = subprocess.run(
-                ['curl', '-s', '-X', 'POST', 'http://localhost:5002/api/knowledge/sync'],
+                ['curl', '-s', '-X', 'POST', 'http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/knowledge/sync'],
                 capture_output=True, text=True
             )
             return {"success": True, "result": result.stdout}

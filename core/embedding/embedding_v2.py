@@ -1,3 +1,5 @@
+from core.lib.unified_config import unified_config
+
 #!/usr/bin/env python3
 """Embedding V2 - Embedding V2 模块
 
@@ -14,7 +16,7 @@ from typing import List
 class OllamaEmbeddingFunctionV2:
     """新版 Ollama Embedding 函数 - 兼容 ChromaDB 0.4.16+"""
     
-    def __init__(self, model_name: str = config_helper.get_embedding_model(), url: str = "http://localhost:11434/api/embeddings"):
+    def __init__(self, model_name: str = config_helper.get_embedding_model(), url: str = unified_config.get("llm.endpoint", "http://localhost:11434") + "/api/embeddings"):
         self.model_name = model_name
         self.url = url
     
