@@ -654,5 +654,47 @@ Agent名称: {agent_name}
             print(f"检索 Agent 失败: {e}")
             return []
 
-          # 全局实例
+
+        """智能搜索 - 自动分类"""
+        knowledge_type = self.classify_query(query)
+        return self.search(query, knowledge_type=knowledge_type, n=n)
+
+
+    def classify_query(self, query: str) -> str:
+        """分类查询类型"""
+        query_lower = query.lower()
+        
+        # 技能相关关键词
+        skill_keywords = ['技能', 'skill', '执行', 'execute', '调用', 'call', '运行', 'run']
+        for kw in skill_keywords:
+            if kw in query_lower:
+                return 'skills'
+        
+        # 智能体相关关键词
+        agent_keywords = ['智能体', 'agent', '助手', 'assistant', '管家', 'butler']
+        for kw in agent_keywords:
+            if kw in query_lower:
+                return 'agents'
+        
+        # 记忆相关关键词
+        memory_keywords = ['记忆', 'memory', '记住', 'remember', '回忆', 'recall', '知道', '了解']
+        for kw in memory_keywords:
+            if kw in query_lower:
+                return 'memories'
+        
+        # 路由相关关键词
+        route_keywords = ['路由', 'route', '接口', 'api', '路径']
+        for kw in route_keywords:
+            if kw in query_lower:
+                return 'routes'
+        
+        # 默认返回 None（全部搜索）
+        return None
+
+    def smart_search(self, query: str, n: int = 10) -> List[Dict]:
+        """智能搜索 - 自动分类"""
+        knowledge_type = self.classify_query(query)
+        return self.search(query, knowledge_type=knowledge_type, n=n)
+
+# 全局实例
 vector_knowledge_center = VectorKnowledgeCenter()

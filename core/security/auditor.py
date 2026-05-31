@@ -1,3 +1,6 @@
+from core.lib.unified_config import unified_config
+
+from core.lib.config_helper import get_data_root
 #!/usr/bin/env python3
 """Auditor - Auditor 模块
 
@@ -21,7 +24,7 @@ class SecurityAuditor:
     VERSION = "1.0.0"
     
     def __init__(self):
-        self.audit_log = Path(f"{config_helper.get_data_root()}/audit.log")
+        self.audit_log = Path(f"{unified_config.get("paths.data_root", "data")}/audit.log")
         self.risk_rules = self._load_rules()
         self.risk_scores = defaultdict(int)
         self.lock = Lock()

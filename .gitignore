@@ -282,3 +282,8 @@ data/exchange/2026*.json
 data/butler_club/members/test_*/
 data/butler_club/members/*_test/
 data/butler_club/members/verify_user/
+agents/video_indexer_agent/
+agents/vision_agent/
+config/agents/video_indexer_agent/
+config/agents/vision_agent/
+core/agents/builtin/config/

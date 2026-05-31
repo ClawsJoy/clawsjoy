@@ -106,3 +106,24 @@ class ConfigAutoWatcher:
 
 
 config_auto_watcher = ConfigAutoWatcher()
+
+def start_file_watcher():
+    """启动文件监听器"""
+    try:
+        from watchdog.observers import Observer
+        from watchdog.events import FileSystemEventHandler
+        
+        class ConfigFileHandler(FileSystemEventHandler):
+            def on_modified(self, event):
+                if event.src_path.endswith(('.yaml', '.yml', '.json')):
+                    print(f"📁 配置文件变更: {event.src_path}")
+                    ConfigAutoWatcher.trigger_reload()
+        
+        observer = Observer()
+        observer.schedule(ConfigFileHandler(), 'config/', recursive=True)
+        observer.start()
+        print("✅ 配置文件监听器已启动")
+        return observer
+    except ImportError:
+        print("⚠️ watchdog 未安装，文件自动重载不可用")
+        return None

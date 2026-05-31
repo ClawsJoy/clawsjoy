@@ -1,13 +1,125 @@
+
+# ========== 用户状态管理（系统层，不依赖 LLM） ==========
+USER_STATES = {}  # user_id -> {name, preferences, context}
+
+def get_user_state(user_id):
+    """获取用户状态"""
+    if user_id not in USER_STATES:
+        USER_STATES[user_id] = {}
+    return USER_STATES[user_id]
+
+def update_user_state(user_id, key, value):
+    """更新用户状态"""
+    state = get_user_state(user_id)
+    state[key] = value
+    # 同时存储到向量记忆
+    save_memory(user_id, f"{key}: {value}")
+
+def extract_user_info(message, user_id):
+    """从消息中提取用户信息（规则匹配）"""
+    import re
+    state = get_user_state(user_id)
+    
+    # 提取名字
+    patterns = [
+        r'我叫([\u4e00-\u9fa5]{2,4})',
+        r'名字是([\u4e00-\u9fa5]{2,4})',
+        r'我是([\u4e00-\u9fa5]{2,4})',
+    ]
+    for p in patterns:
+        match = re.search(p, message)
+        if match:
+            name = match.group(1)
+            update_user_state(user_id, 'name', name)
+            return f"name:{name}"
+    
+    # 提取喜好
+    like_match = re.search(r'喜欢([\u4e00-\u9fa5]+)', message)
+    if like_match:
+        pref = like_match.group(1)
+        update_user_state(user_id, 'preference', pref)
+        return f"preference:{pref}"
+    
+    return None
+
+def answer_from_state(message, user_id):
+    """从记忆中回答问题 - 配置驱动"""
+    import logging
+    logging.info(f"[ANSWER_FROM_STATE] 收到消息: {message}")
+    msg = message.lower()
+    
+    # 能力介绍（从配置读取）
+    # 名字查询
+    if '我叫什么名字' in msg or '我的名字' in msg:
+        logging.info("[ANSWER_FROM_STATE] 匹配名字查询")
+        memories = load_memories(user_id)
+        for m in memories:
+            fact = m.get('fact', '')
+            if '用户说: 我叫' in fact:
+                start = fact.find('我叫')
+                if start != -1:
+                    name = fact[start+2:start+6].strip('，。！？')
+                    if name:
+                        return f"您叫{name}呀，我记着呢！"
+        return "您还没告诉我您的名字呢。您可以说'我叫XXX'告诉我哦~"
+    
+    # 喜好查询
+    if '我喜欢什么' in msg or '我的喜好' in msg:
+        logging.info("[ANSWER_FROM_STATE] 匹配喜好查询")
+        memories = load_memories(user_id)
+        for m in memories:
+            fact = m.get('fact', '')
+            if '喜欢' in fact and '用户说' in fact:
+                start = fact.find('喜欢')
+                if start != -1:
+                    pref = fact[start+2:start+8].strip('，。！？')
+                    if pref:
+                        return f"您喜欢{pref}呀！"
+        return "您还没告诉我您的喜好呢。您可以说'我喜欢XXX'告诉我哦~"
+    
+    return None
+
+    if '我喜欢' in message and '什么' in message:
+        memories = load_memories(user_id)
+        for m in memories:
+            fact = m.get('fact', '')
+            if '用户说: 我喜欢' in fact:
+                start = fact.find('我喜欢')
+                if start != -1:
+                    pref_start = start + 3
+                    pref_end = pref_start + 6
+                    pref = fact[pref_start:pref_end]
+                    pref = pref.strip('，。！？')
+                    if pref:
+                        return f"您喜欢{pref}呀！"
+        return None
+
+    return None
+    
+    if '我喜欢' in message and '什么' in message:
+        if state.get('preference'):
+            return f"您喜欢{state['preference']}呀！"
+        return None
+    
+    return None
+
+from core.lib.smart_active_service import smart_service
+
 #!/usr/bin/env python3
 """ClawsJoy Gateway - Complete Version with All Modules"""
 
 import json
+import logging
 import sys
 import os
 from pathlib import Path
 from datetime import datetime
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, Response
 from flask_cors import CORS
+from core.security.auditor import SecurityAuditor
+from core.lib.client_sanitizer import client_sanitizer
+from core.lib.preference_config import preference_config
+
 
 app = Flask(__name__)
 CORS(app)
@@ -30,19 +142,69 @@ def load_memories(user_id):
     return []
 
 def save_memory(user_id, fact):
+    """保存记忆到文件和向量库"""
     memories = load_memories(user_id)
-    memories.append({'fact': fact, 'timestamp': datetime.now().isoformat()})
+    memories.append({
+        'fact': fact,
+        'timestamp': datetime.now().isoformat()
+    })
+    
     all_memories = {}
     if MEMORY_FILE.exists():
         with open(MEMORY_FILE, 'r') as f:
             all_memories = json.load(f)
+    
     all_memories[user_id] = memories[-100:]
     with open(MEMORY_FILE, 'w') as f:
         json.dump(all_memories, f, indent=2)
+    
+    try:
+        from core.lib.memory_vector import vector_memory
+        vector_memory.add(
+            content=fact,
+            metadata={"user_id": user_id, "type": "conversation"},
+            category=f"user_{user_id}"
+        )
+    except Exception as e:
+        pass
+    
+    # 向量存储
+    try:
+        from core.lib.memory_vector import vector_memory
+        vector_memory.add(
+            content=fact,
+            metadata={
+                "user_id": user_id,
+                "type": "conversation",
+                "timestamp": datetime.now().isoformat()
+            },
+            category=f"user_{user_id}"
+        )
+    except Exception as e:
+        print(f"向量存储失败: {e}")
 
 def search_memories(user_id, query):
+    """检索相关记忆 - 增强版"""
     memories = load_memories(user_id)
-    return [m['fact'] for m in memories if query.lower() in m['fact'].lower()][:10]
+    results = []
+    query_lower = query.lower()
+    
+    for m in memories:
+        fact = m.get('fact', '')
+        # 如果是问名字，优先找包含"叫"的记忆
+        if '名字' in query_lower or '叫什么' in query_lower:
+            if '叫' in fact and '用户说' in fact:
+                results.append(fact)
+        # 通用匹配
+        elif any(kw in query_lower for kw in ['什么', '哪', '多少']):
+            for word in query_lower.split():
+                if len(word) > 1 and word in fact.lower():
+                    results.append(fact)
+                    break
+        elif query_lower in fact.lower():
+            results.append(fact)
+    
+    return results[:10]
 
 def load_learning_stats():
     if LEARNING_FILE.exists():
@@ -67,18 +229,18 @@ def record_learning(fact, success=True):
 # ========== 基础路由 ==========
 @app.route('/health', methods=['GET'])
 def health():
-    return jsonify({'status': 'healthy', 'service': 'clawsjoy-gateway', 'version': '4.0.0'})
+    return jsonify({'status': 'healthy', 'service': 'clawsjoy-gateway', 'version': '5.0.0'})
 
 @app.route('/', methods=['GET'])
 def index():
-    return jsonify({'service': 'ClawsJoy Gateway', 'version': '4.0.0'})
+    return jsonify({'service': 'ClawsJoy Gateway', 'version': '5.0.0'})
 
 # ========== 技能和智能体 ==========
 @app.route('/api/skills/list', methods=['GET'])
 def list_skills():
     try:
-        from core.lib.skill_loader_v3 import skill_loader
-        skills = skill_loader.list_skills()
+        from core.lib.unified_skill_manager import unified_manager
+        skills = unified_manager.list_all()
         return jsonify({'success': True, 'total': len(skills), 'skills': skills})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -91,27 +253,154 @@ def list_agents():
         {"name": "analysis_agent", "status": "active", "version": "1.0.0"},
         {"name": "decision_agent", "status": "active", "version": "1.0.0"},
         {"name": "executor_agent", "status": "active", "version": "1.0.0"},
-        {"name": "orchestrator", "status": "active", "version": "1.0.0"}
+        {"name": "orchestrator", "status": "active", "version": "1.0.0"},
+        {"name": "translate_agent", "status": "active", "version": "2.0.0"},
+        {"name": "vision_agent", "status": "active", "version": "1.0.0"},
+        {"name": "memory_agent", "status": "active", "version": "1.0.0"},
+        {"name": "video_agent", "status": "active", "version": "1.0.0"},
+        {"name": "youtube_agent", "status": "active", "version": "1.0.0"},
+        {"name": "director_agent", "status": "active", "version": "1.0.0"},
+        {"name": "writer_agent", "status": "active", "version": "1.0.0"},
+        {"name": "dialect_agent", "status": "active", "version": "1.0.0"},
+        {"name": "collaboration_agent", "status": "active", "version": "1.0.0"},
+        {"name": "video_indexer_agent", "status": "active", "version": "1.0.0"},
     ]
     return jsonify({'success': True, 'total': len(agents), 'agents': agents})
 
 # ========== 增强对话（带记忆） ==========
+
+# ========== 增强对话（集成 Orchestrator） ==========
 @app.route('/api/v5/enhanced/chat', methods=['POST'])
 def enhanced_chat():
     data = request.json or {}
     message = data.get('message', '')
     user_id = data.get('user_id', 'guest')
-    memories = search_memories(user_id, message)
-    if memories:
-        context = "根据您的记忆：" + "；".join(memories[:3])
-        response = f"{context}\n\n收到消息: {message}"
-    else:
-        response = f"收到消息: {message}"
-    return jsonify({
-        'success': True, 'response': response, 'agent': 'chat_agent',
-        'enhanced': True, 'memories_used': memories[:3], 'user_id': user_id
-    })
+    
+    # 1. 提取用户信息（规则匹配）
+    extract_user_info(message, user_id)
+    
 
+
+    # 2. 尝试从状态中直接回答（不调用 LLM）
+    direct_answer = answer_from_state(message, user_id)
+    if direct_answer:
+        return jsonify({
+            "success": True,
+            "response": direct_answer,
+            "agent": "state_manager",
+            "enhanced": True,
+            "memories_used": [],
+            "user_id": user_id
+        })
+    
+    # 2.5 尝试话本匹配（chat_agent 的规则处理）
+    try:
+        from core.agents.builtin.chat_agent import ChatAgent
+        chat_agent = ChatAgent(user_id=user_id)
+        intent = chat_agent._match_intent(message)
+        if intent:
+            template = chat_agent._get_template(intent)
+            if template:
+                return jsonify({
+                    "success": True,
+                    "response": template,
+                    "agent": "scriptbook",
+                    "enhanced": True,
+                    "memories_used": [],
+                    "user_id": user_id
+                })
+    except Exception as e:
+        pass
+
+    
+    # 2.5 尝试话本匹配（chat_agent 的规则处理）
+    try:
+        from core.agents.builtin.chat_agent import ChatAgent
+        chat_agent = ChatAgent(user_id=user_id)
+        intent = chat_agent._match_intent(message)
+        if intent:
+            template = chat_agent._get_template(intent)
+            if template:
+                return jsonify({
+                    "success": True,
+                    "response": template,
+                    "agent": "scriptbook",
+                    "enhanced": True,
+                    "memories_used": [],
+                    "user_id": user_id
+                })
+    except Exception as e:
+        pass
+
+    
+    # 3. 检索记忆
+    memories = search_memories(user_id, message)
+    import logging; logging.info(f"[DEBUG] search_memories returned: {memories}")
+    
+    # 使用 Orchestrator 智能路由
+    try:
+        from core.agents.builtin.orchestrator import OrchestratorAgent
+        orchestrator = OrchestratorAgent(user_id=user_id)
+        target_agent = orchestrator.smart_route(message)
+        
+        # 如果是 chat_agent，调用 LLM 服务
+        if target_agent == "chat_agent":
+            import requests
+            
+            # 调试日志
+            with open("/tmp/memories_debug.txt", "w") as f:
+                f.write(f"memories: {memories}\n")
+                f.write(f"message: {message}\n")
+                f.write(f"user_id: {user_id}\n")
+            
+            resp = requests.post(
+                "http://localhost:5012/chat",
+                json={"message": message, "history": [], "memories": memories},
+                timeout=60
+            )
+            if resp.status_code == 200:
+                response = resp.json().get('response', '')
+            else:
+                response = f"服务异常: {resp.status_code}"
+        else:
+            # 调用对应的专业 Agent
+            module = __import__(f"core.agents.builtin.{target_agent}", fromlist=[target_agent])
+            # 类名映射
+            class_map = {
+                "code_agent": "CodeAgent",
+                "analysis_agent": "AnalysisAgent", 
+                "decision_agent": "DecisionAgent",
+                "chat_agent": "ChatAgent",
+                "executor_agent": "ExecutorAgent",
+                "orchestrator": "OrchestratorAgent",
+                "translate_agent": "TranslateAgent",
+                "vision_agent": "VisionAgent",
+                "memory_agent": "MemoryAgent",
+                "video_agent": "VideoAgent",
+            }
+            class_name = class_map.get(target_agent, target_agent.replace('_', ' ').title().replace(' ', '') + "Agent")
+            agent_class = getattr(module, class_name)
+            agent = agent_class(user_id=user_id)
+            result = agent.process(message)
+            response = result.get('response', '处理完成')
+        
+        # 存储记忆
+        save_memory(user_id, f"用户说: {message}")
+        save_memory(user_id, f"ClawsJoy说: {response[:200]}")
+        agent_used = target_agent
+        
+    except Exception as e:
+        response = f"处理异常: {str(e)[:100]}"
+        agent_used = "fallback"
+    
+    return jsonify({
+        "success": True,
+        "response": response,
+        "agent": agent_used,
+        "enhanced": True,
+        "memories_used": memories[:3],
+        "user_id": user_id
+    })
 # ========== 记忆路由 ==========
 @app.route('/api/v5/memory/remember', methods=['POST'])
 def memory_remember():
@@ -134,6 +423,9 @@ def memory_recall():
 
 @app.route('/api/v5/memory/stats', methods=['GET'])
 def memory_stats():
+    user_id = request.args.get("user_id", "guest")
+    memories = load_memories(user_id)
+    return jsonify({"success": True, "total": len(memories)})
     user_id = request.args.get('user_id', 'guest')
     memories = load_memories(user_id)
     return jsonify({'success': True, 'total': len(memories)})
@@ -151,7 +443,7 @@ def record_learning_api():
     success = data.get('success', True)
     if fact:
         record_learning(fact, success)
-        return jsonify({'success': True, 'message': '学习已记录'})
+    return jsonify({'success': True, 'message': '学习已记录'})
     return jsonify({'success': False, 'error': 'fact required'}), 400
 
 # ========== 工作流管理 ==========
@@ -300,10 +592,211 @@ def analyst_report():
     """分析师报告"""
     return jsonify({'success': True, 'report': {'total_analysis': 100, 'insights': []}})
 
+# ========== 向量统一接口 ==========
+@app.route('/api/vector/stats', methods=['GET'])
+def vector_stats():
+    """向量统计"""
+    try:
+        from core.lib.vector_knowledge_center import vector_knowledge_center
+        stats = {
+            'skills': 0,
+            'agents': 0,
+            'routes': 0,
+            'memories': 0,
+            'documents': 0
+        }
+        if hasattr(vector_knowledge_center, 'collections'):
+            for name, col in vector_knowledge_center.collections.items():
+                if name in stats:
+                    stats[name] = col.count()
+        return jsonify({'success': True, 'stats': stats})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/skills/reload', methods=['POST'])
+def reload_skills():
+    """热重载技能"""
+    try:
+        from core.lib.unified_skill_manager import unified_manager
+        unified_manager.reload()
+        return jsonify({'success': True, 'message': '技能已重载'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/hot-reload/status', methods=['GET'])
+def hot_reload_status():
+    """热重载状态"""
+    return jsonify({'success': True, 'status': 'active', 'watchers': ['config', 'skills']})
+
+    # 启动配置自动监听
+    from core.lib.config_auto_watcher import config_auto_watcher
+    config_auto_watcher.start()
+    
+    # 启动技能监听
+    from core.lib.skill_watcher import skill_watcher
+    skill_watcher.start()
+
+
+    # 启动配置文件监听
+    from core.lib.config_auto_watcher import start_file_watcher
+    start_file_watcher()
+
+
+# ========== 向量统一接口 ==========
+    return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/vector/search', methods=['POST'])
+def vector_search():
+    data = request.json or {}
+    query = data.get('query', '')
+    knowledge_type = data.get('knowledge_type', None)
+    top_k = data.get('top_k', 10)
+    try:
+        from core.lib.vector_knowledge_center import vector_knowledge_center
+        results = vector_knowledge_center.smart_search(query, n=top_k)
+        return jsonify({'success': True, 'results': results})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+    # 启动事件处理器
+    from core.lib.event_handlers import register_all
+    register_all()
 if __name__ == '__main__':
-    port = 5002
+    smart_service.start()
+    # 启动事件处理器
+    port = unified_config.get("services.gateway.port", 5002)
     print("=" * 50)
     print("🚀 ClawsJoy Gateway 完整版启动")
     print(f"   📡 端口: {port}")
     print("=" * 50)
     app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
+
+
+# ========== 流式对话 SSE ==========
+@app.route('/api/v5/enhanced/chat/stream', methods=['POST'])
+def enhanced_chat_stream():
+    """流式对话 - 实时响应"""
+    from flask import Response
+    import time
+    
+    data = request.json or {}
+    message = data.get('message', '')
+    user_id = data.get('user_id', 'guest')
+    
+    def generate():
+        # 检索记忆
+        memories = search_memories(user_id, message)
+        import logging; logging.info(f"[DEBUG] search_memories returned: {memories}")
+        
+        # 发送记忆上下文
+        if memories:
+            context_text = "根据您的记忆：" + ";".join(memories[:3])
+            yield f"data: {json.dumps({'type': 'context', 'content': context_text})}\n\n"
+        
+        # 调用 LLM 流式
+        try:
+            import requests
+            
+    # DEBUG: 写入 memories 到文件
+            with open('/tmp/memories_debug.txt', 'w') as f:
+                f.write(f"memories: {memories}\n")
+                f.write(f"message: {message}\n")
+                f.write(f"user_id: {user_id}\n")
+                resp = requests.post(
+                    "http://localhost:5012/chat/stream",
+                    json={"message": message},
+                    stream=True,
+                    timeout=60
+                )
+                for chunk in resp.iter_content(chunk_size=64, decode_unicode=True):
+                    if chunk:
+                        yield f"data: {json.dumps({'type': 'chunk', 'content': chunk})}\n\n"
+                yield "data: {}\n\n".format(json.dumps({'type': 'end'}))
+        except Exception as e:
+            yield f"data: {json.dumps({'type': 'error', 'content': str(e)})}\n\n"
+    
+    return Response(generate(), mimetype='text/event-stream')
+
+# ========== 限流中间件 ==========
+from core.v5.utils.ratelimit import rate_limiter
+
+@app.before_request
+def limit_middleware():
+    """请求限流"""
+    user_id = request.headers.get('X-User-Id', request.remote_addr)
+    if not rate_limiter.check(user_id):
+        return jsonify({'error': '请求过于频繁，请稍后再试'}), 429
+
+# ========== 多租户中间件 ==========
+from core.tenant.tenant_vector_index import tenant_index_manager
+
+@app.before_request
+def tenant_middleware():
+    """多租户隔离"""
+    tenant_id = request.headers.get('X-Tenant-Id', 'default')
+    request.tenant_id = tenant_id
+#request.tenant_index = tenant_index_manager.get_index(tenant_id)
+
+# ========== Prometheus 指标端点 ==========
+from core.lib.metrics import get_metrics
+
+@app.route('/metrics', methods=['GET'])
+def metrics_endpoint():
+    """Prometheus 指标端点"""
+    from flask import Response
+    return Response(get_metrics(), mimetype='text/plain')
+
+# ========== 私人管家俱乐部 API ==========
+from core.butler_club.center import butler_club
+from core.butler_center.center import butler_center
+
+@app.route('/api/club/stats', methods=['GET'])
+def club_stats():
+    """俱乐部统计"""
+    return jsonify({
+        "success": True,
+        "stats": butler_club.get_stats()
+    })
+
+@app.route('/api/club/members', methods=['GET'])
+def club_members():
+    """俱乐部成员列表"""
+    limit = request.args.get('limit', 50, type=int)
+    return jsonify({
+        "success": True,
+        "members": butler_club.list_members(limit=limit)
+    })
+
+@app.route('/api/club/member/<user_id>', methods=['GET'])
+def club_member_detail(user_id):
+    """成员详情"""
+    member = butler_club.get_member(user_id)
+    if member:
+        return jsonify({"success": True, "member": member})
+    return jsonify({"success": False, "error": "成员不存在"}), 404
+
+@app.route('/api/butler/rename', methods=['POST'])
+def butler_rename():
+    """管家改名"""
+    data = request.json or {}
+    new_name = data.get('name', '')
+    user_id = data.get('user_id', 'guest')
+    
+    if not new_name:
+        return jsonify({"success": False, "error": "请提供新名字"}), 400
+    
+    result = butler_center.rename(user_id, new_name)
+    return jsonify({"success": True, "result": result})
+
+@app.route('/api/butler/todo', methods=['GET', 'POST'])
+def butler_todo():
+    """管家待办事项"""
+    user_id = request.args.get('user_id', 'guest')
+    
+    if request.method == 'POST':
+        data = request.json or {}
+        task = data.get('task', '')
+        return jsonify({"success": True, "todo": butler_center.add_todo(user_id, task)})
+    else:
+        return jsonify({"success": True, "todos": butler_center.get_todos(user_id)})

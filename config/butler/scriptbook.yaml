@@ -99,3 +99,33 @@ rules:
       value: "positive"
     action: "reinforce"
     message: "看到您这么开心，我也很高兴！🎉"
+
+  - keywords: ["我叫什么名字", "我的名字", "我名字"]
+    response: "recall_name"
+
+  - keywords: ["我喜欢什么", "我的喜好", "我爱好"]
+    response: "recall_preference"
+
+  - keywords: ["我叫", "名字叫"]
+    response: "remember_name"
+
+templates:
+  recall_name: |
+    {% if user_name %}
+    您叫 {{user_name}} 呀，我记着呢！
+    {% else %}
+    您还没告诉我您的名字呢。您可以直接说"我叫XXX"告诉我哦~
+    {% endif %}
+
+  recall_preference: |
+    {% if user_preference %}
+    您喜欢 {{user_preference}} 呀！
+    {% else %}
+    您还没告诉我您的喜好呢。您可以直接说"我喜欢XXX"告诉我哦~
+    {% endif %}
+
+  remember_name: |
+    好的，我记住了！您叫 {{extracted_name}}。✨
+
+  remember_preference: |
+    好的，我记住了！您喜欢 {{extracted_preference}}。✨

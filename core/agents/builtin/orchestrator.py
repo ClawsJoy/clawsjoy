@@ -33,22 +33,22 @@ class OrchestratorAgent(SmartAgent):
         print(f"[Orchestrator] 初始化完成")
 
     def smart_route(self, user_input: str) -> str:
-        """关键词路由（降级方案）"""
+        """关键词路由 - 从 routing_keywords.yaml 读取"""
         user_lower = user_input.lower()
         
-        routing_rules = {
-            "code_agent": ["代码", "编程", "python", "函数", "写一个", "实现", "排序", "算法"],
-            "analysis_agent": ["分析", "统计", "趋势", "报告", "总结", "销售", "数据"],
-            "decision_agent": ["决策", "选择", "哪个更好", "建议"],
-            "chat_agent": ["聊天", "对话", "闲聊", "你好", "天气"],
-            "executor_agent": ["执行", "运行", "启动", "部署"],
-            "collaboration_agent": ["协作", "一起", "多个任务"],
-        }
+        # 加载路由配置
+        try:
+            with open('config/routing_keywords.yaml', 'r') as f:
+                import yaml
+                config = yaml.safe_load(f)
+                routing_keywords = config.get('routing_keywords', {})
+        except:
+            routing_keywords = {}
         
         best_match = "chat_agent"
         best_score = 0
         
-        for agent, keywords in routing_rules.items():
+        for agent, keywords in routing_keywords.items():
             score = sum(1 for kw in keywords if kw in user_lower)
             if score > best_score:
                 best_score = score

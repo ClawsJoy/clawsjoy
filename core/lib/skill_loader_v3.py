@@ -1,18 +1,15 @@
 #!/usr/bin/env python3
-"""Skill Loader V3 - Skill Loader V3 模块
+"""技能加载器 V3"""
 
-@version: 5.0.0
-@author: ClawsJoy
-@date: 2026-05-31
-"""
-
-
+import os
+import yaml
 from pathlib import Path
 from typing import Dict, List, Optional
+from core.lib.unified_config import unified_config
 
 
 class SkillLoaderV3:
-    """统一技能加载器 - 支持分类目录"""
+    """技能加载器 V3"""
 
     def __init__(self):
         self.skills = {}
@@ -20,39 +17,43 @@ class SkillLoaderV3:
         self._load_all()
 
     def _load_all(self):
-        """加载所有分类目录中的技能 - 直接扫描 skills 目录"""
-        skills_root = Path("skills")
-        if not skills_root.exists():
-            print(f"⚠️ skills 目录不存在: {skills_root}")
+        """加载所有技能"""
+        skills_dir = Path("skills")
+        if not skills_dir.exists():
             return
-
-        for cat_dir in skills_root.iterdir():
-            if not cat_dir.is_dir():
+        
+        for skill_dir in skills_dir.iterdir():
+            if not skill_dir.is_dir():
                 continue
-            if cat_dir.name.startswith('.'):
+            # 查找 SKILL.md 或 manifest.json
+            skill_file = skill_dir / "SKILL.md"
+            if not skill_file.exists():
                 continue
-
-            cat_name = cat_dir.name
-            self.categories[cat_name] = []
-
-            for py_file in cat_dir.glob("*.py"):
-                if py_file.stem == '__init__':
-                    continue
-                skill_name = py_file.stem
-                self.categories[cat_name].append(skill_name)
-                self.skills[skill_name] = {
-                    'name': skill_name,
-                    'category': cat_name,
-                    'category_name': cat_name,
-                    'file': str(py_file),
-                    'path': f"skills.{cat_name}.{skill_name}"
-                }
-
-        print(f"✅ 技能加载器 V3 已初始化")
-        print(f"   总技能: {len(self.skills)} 个")
-        for cat, skills in self.categories.items():
-            if skills:
-                print(f"   {cat}: {len(skills)} 个")
+            
+            # 解析技能信息
+            name = skill_dir.name
+            with open(skill_file, 'r') as f:
+                content = f.read()
+            
+            # 提取类别
+            category = "general"
+            if "category:" in content:
+                for line in content.split('\n'):
+                    if line.startswith("category:"):
+                        category = line.split(":", 1)[1].strip()
+                        break
+            
+            self.skills[name] = {
+                "name": name,
+                "category": category,
+                "file": str(skill_file),
+                "path": f"skills.{name}",
+                "category_name": category
+            }
+            
+            if category not in self.categories:
+                self.categories[category] = []
+            self.categories[category].append(name)
 
     def list_skills(self, category: str = None) -> Dict:
         """列出所有技能"""
@@ -60,45 +61,51 @@ class SkillLoaderV3:
             return {s: self.skills[s] for s in self.categories[category]}
         return self.skills
 
-    def get_skill(self, name: str):
+    def get_skill(self, name: str) -> Optional[Dict]:
         """获取技能信息"""
         return self.skills.get(name)
 
     def execute(self, skill_name: str, params: dict) -> dict:
         """执行技能"""
-        skill_info = self.skills.get(skill_name)
-        if not skill_info:
-            return {"success": False, "error": f"技能 {skill_name} 不存在"}
-
         try:
-            # 动态导入技能模块
-            module_path = skill_info['path']
-            module = __import__(module_path, fromlist=['skill'])
-            if hasattr(module, 'skill') and hasattr(module.skill, 'execute'):
-                result = module.skill.execute(params)
-                return {"success": True, "result": result, "skill": skill_name}
+            import importlib
+            skill_info = self.get_skill(skill_name)
+            if not skill_info:
+                return {"error": f"技能 {skill_name} 不存在"}
+            
+            module_path = skill_info["path"]
+            module = importlib.import_module(module_path)
+            
+            if hasattr(module, 'execute'):
+                result = module.execute(params)
+            elif hasattr(module, 'run'):
+                result = module.run(params)
             else:
-                return {"success": False, "error": f"技能 {skill_name} 格式不正确"}
+                result = {"error": f"技能 {skill_name} 没有 execute 或 run 方法"}
+            
+            return result
         except Exception as e:
-            return {"success": False, "error": str(e)}
-
-
+            return {"error": str(e)}
 
     def search_skills(self, keyword: str) -> list:
-        """搜索技能（基于关键词）"""
-        keyword_lower = keyword.lower()
+        """搜索技能"""
         results = []
-        for skill_name, info in self.skills.items():
-            if keyword_lower in skill_name.lower():
-                results.append(skill_name)
-            elif 'category' in info and keyword_lower in info.get('category_name', '').lower():
-                results.append(skill_name)
-        return results[:20]
+        keyword_lower = keyword.lower()
+        for name, info in self.skills.items():
+            if keyword_lower in name.lower() or keyword_lower in info.get("category", "").lower():
+                results.append(info)
+        return results
 
     def get_categories(self) -> Dict:
         """获取分类"""
         return self.categories
 
+    def reload(self):
+        """重新加载所有技能"""
+        self.skills = {}
+        self.categories = {}
+        self._load_all()
+        print(f"✅ 技能已重载，共 {len(self.skills)} 个技能")
 
-# 全局实例
+
 skill_loader = SkillLoaderV3()

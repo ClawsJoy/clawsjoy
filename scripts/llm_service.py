@@ -1,153 +1,88 @@
 #!/usr/bin/env python3
-#!/usr/bin/env python3
-"""Llm Service - Llm Service 模块
-
-@version: 5.0.0
-@author: ClawsJoy
-@date: 2026-05-31
-"""
+"""LLM Service - 强制使用系统记忆"""
 
 import sys
 import json
+import re
 import requests
-from flask import Flask, request, jsonify, Response
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 
-sys.path.insert(0, 'core')
+sys.path.insert(0, '/home/flybo/clawsjoy_v5')
 
-from lib.skill_registry_v4 import skill_registry
-from lib.config_loader import config
+from core.lib.unified_config import unified_config
 
 app = Flask(__name__)
 CORS(app)
 
-# Ollama 配置
-OLLAMA_URL = config.get('llm.endpoint', 'config_loader.get_ollama_url()')
-MODEL = config.get('llm.default_model', 'qwen2.5:7b')
+OLLAMA_URL = unified_config.get("llm.endpoint", "http://localhost:11434")
+MODEL = unified_config.get("llm.fast_model", "qwen2.5:3b")
 
 
-def call_llm(prompt: str, system: str = "") -> str:
-    """调用 LLM"""
-    full_prompt = f"{system}\n\n{prompt}" if system else prompt
-    
+def call_llm(prompt: str) -> str:
     try:
         resp = requests.post(
             f"{OLLAMA_URL}/api/generate",
-            json={"model": MODEL, "prompt": full_prompt, "stream": False},
-            timeout=60
+            json={"model": MODEL, "prompt": prompt, "stream": False, "options": {"num_predict": 200}},
+            timeout=30
         )
         if resp.status_code == 200:
             return resp.json().get('response', '')
-        return f"LLM 错误: {resp.status_code}"
     except Exception as e:
-        return f"连接错误: {e}"
-
-
-def get_skills_description() -> str:
-    """获取技能描述"""
-    desc = []
-    for name in skill_registry.skills.keys():
-        skill = skill_registry.get_skill(name)
-        if skill:
-            desc.append(f"- {name}: {skill.description[:100]}")
-    return "\n".join(desc)
+        print(f"LLM 错误: {e}")
+    return "抱歉，我暂时无法回答。"
 
 
 @app.route('/chat', methods=['POST'])
 def chat():
-    """LLM 对话接口"""
     data = request.json or {}
     user_message = data.get('message', '')
-    history = data.get('history', [])
+    memories = data.get('memories', [])
     
     if not user_message:
         return jsonify({"error": "No message"}), 400
     
-    # 构建系统提示
-    system_prompt = f"""你是一个智能助手，名叫 ClawsJoy。
-你可以调用以下技能来帮助用户:
-{get_skills_description()}
-
-当用户需要生成图像时，回复格式: [SKILL:ai-image-gen] 然后描述图像需求
-当用户需要调度任务时，回复格式: [SKILL:scheduler] 然后描述任务
-其他情况正常对话。
-
-记住: 你是一个乐于助人的助手，要友好、热情。"""
+    # ===== 系统直接处理，不依赖 LLM =====
+    # 问名字
+    if '名字' in user_message:
+        for m in memories:
+            # 查找 "用户说: 我叫XXX" 格式
+            match = re.search(r'叫([\u4e00-\u9fa5]{2,4})', m)
+            if match:
+                name = match.group(1)
+                return jsonify({
+                    "success": True, 
+                    "response": f"您叫 {name} 呀！我记着呢。",
+                    "cached": False,
+                    "source": "system_memory"
+                })
     
-    # 构建对话上下文
-    context = "\n".join([f"用户: {h.get('user', '')}\n助手: {h.get('assistant', '')}" for h in history[-5:]])
-    full_prompt = f"{system_prompt}\n\n{context}\n用户: {user_message}\n助手:"
+    # 问喜好
+    if '喜欢' in user_message:
+        for m in memories:
+            match = re.search(r'喜欢([\u4e00-\u9fa5]+)', m)
+            if match:
+                pref = match.group(1)
+                return jsonify({
+                    "success": True,
+                    "response": f"您喜欢 {pref} 呀！",
+                    "cached": False,
+                    "source": "system_memory"
+                })
     
-    # 调用 LLM
+    # 其他问题走 LLM
+    full_prompt = f"你是 ClawsJoy。用户问: {user_message}\n助手:"
     response = call_llm(full_prompt)
     
-    # 检查是否需要调用技能
-    if '[SKILL:' in response:
-        import re
-        match = re.search(r'\[SKILL:(\w+)\](.*)', response)
-        if match:
-            skill_name = match.group(1)
-            skill_prompt = match.group(2).strip()
-            
-            # 调用技能
-            if skill_name == "ai-image-gen":
-                result = skill_registry.execute_skill(skill_name, {
-                    "prompt": skill_prompt or user_message,
-                    "test": False
-                })
-                if result.get('success'):
-                    response = f"✅ 已开始生成图像！{skill_prompt}\n图像将保存到 output 目录。"
-                else:
-                    response = f"❌ 生成失败: {result.get('error', '未知错误')}"
-    
-    return jsonify({
-        "success": True,
-        "response": response,
-        "skill_used": skill_name if '[SKILL:' in response else None
-    })
-
-
-@app.route('/chat/stream', methods=['POST'])
-def chat_stream():
-    """流式对话"""
-    data = request.json or {}
-    user_message = data.get('message', '')
-    
-    def generate():
-        full_prompt = f"用户: {user_message}\n助手:"
-        resp = requests.post(
-            f"{OLLAMA_URL}/api/generate",
-            json={"model": MODEL, "prompt": full_prompt, "stream": True},
-            stream=True
-        )
-        for line in resp.iter_lines():
-            if line:
-                try:
-                    data = json.loads(line)
-                    yield data.get('response', '')
-                except:
-                    pass
-    
-    return Response(generate(), mimetype='text/plain')
+    return jsonify({"success": True, "response": response, "cached": False})
 
 
 @app.route('/health', methods=['GET'])
 def health():
-    """健康检查"""
-    return jsonify({"status": "ok", "model": MODEL, "ollama": OLLAMA_URL})
+    return jsonify({"status": "ok"})
 
 
-if __name__ == "__main__":
-    print("=" * 50)
-    print("🤖 ClawsJoy LLM 服务")
-    print("=" * 50)
-    print(f"Ollama: {OLLAMA_URL}")
-    print(f"模型: {MODEL}")
-    print(f"技能数: {len(skill_registry.skills)}")
-    print("=" * 50)
-    print("API 端点:")
-    print("  POST /chat      - 对话")
-    print("  POST /chat/stream - 流式对话")
-    print("  GET  /health    - 健康检查")
-    print("=" * 50)
-    app.run(host='0.0.0.0', port=5012, debug=False)
+if __name__ == '__main__':
+    port = 5012
+    print(f"🚀 LLM Service 启动, 模型: {MODEL}")
+    app.run(host='0.0.0.0', port=port, debug=False)

@@ -6,9 +6,7 @@
 @date: 2026-05-31
 """
 
-from core.lib.unified_config import unified_config
 
-from core.lib.unified_config import unified_config
 
 #!/usr/bin/env python3
 """客户端脱敏钩子 - 用户端执行，源文件不上传"""
