@@ -151,3 +151,6 @@ class ChatAgent(SmartAgent):
                 "agent": self.name,
                 "user_id": self.user_id
             }
+
+# 全局实例
+chat_agent = ChatAgent()
