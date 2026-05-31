@@ -46,7 +46,13 @@ class VideoIndexerAgent(SmartAgent):
                  '-of', 'default=noprint_wrappers=1:nokey=1', video_path],
                 capture_output=True, text=True
             )
-            duration = float(result.stdout.strip())
+            try:
+                try:
+                duration = float(result.stdout.strip())
+            except (ValueError, TypeError):
+                duration = 30.0
+            except (ValueError, TypeError):
+                duration = 0
 
             # 计算帧间隔
             step = duration / (max_frames + 1)
@@ -104,7 +110,13 @@ class VideoIndexerAgent(SmartAgent):
                  '-of', 'default=noprint_wrappers=1:nokey=1', video_path],
                 capture_output=True, text=True
             )
-            duration = float(result.stdout.strip()) if result.stdout else 0
+            try:
+                try:
+                duration = float(result.stdout.strip())
+            except (ValueError, TypeError):
+                duration = 30.0
+            except (ValueError, TypeError):
+                duration = 0 if result.stdout else 0
 
             result2 = subprocess.run(
                 ['ffprobe', '-v', 'error', '-select_streams', 'v:0', 

@@ -54,3 +54,6 @@ class TranslateAgent(SmartAgent):
 
 
 # translate_agent = TranslateAgent()  # 注释：改为按需创建
+
+# 全局实例
+translate_agent = TranslateAgent()
