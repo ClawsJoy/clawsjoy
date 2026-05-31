@@ -75,23 +75,46 @@ class ChatAgent(SmartAgent):
         return None
 
     def _match_intent(self, user_input: str):
-        """话本匹配"""
-        if "你是谁" in user_input or "你叫什么" in user_input:
+        """话本匹配 + 自动学习规则匹配"""
+        u = user_input.lower()
+        
+        # 先检查自动学习的规则
+        try:
+            import yaml
+            from pathlib import Path
+            rules_file = Path("config/auto_learned_rules.yaml")
+            if rules_file.exists():
+                with open(rules_file, 'r') as f:
+                    data = yaml.safe_load(f)
+                    for rule in data.get('rules', []):
+                        if rule.get('enabled') and rule.get('question') in u:
+                            return {"type": "learned", "answer": rule.get('answer')}
+        except:
+            pass
+        
+        # 原有话本匹配
+        if "你是谁" in u or "你叫什么" in u:
             return "identity"
-        if "ClawsJoy" in user_input or "clawsjoy" in user_input.lower():
+        if "clawsjoy" in u:
             return "about"
-        if "你好" in user_input or "您好" in user_input:
+        if any(w in u for w in ["你好", "您好", "hi", "hello"]):
             return "greeting"
-        if "谢谢" in user_input:
+        if any(w in u for w in ["谢谢", "感谢"]):
             return "thanks"
-        if "再见" in user_input:
+        if any(w in u for w in ["再见", "拜拜", "bye"]):
             return "farewell"
-        if "能做什么" in user_input or "功能" in user_input:
+        if any(w in u for w in ["能做什么", "功能", "能力"]):
             return "capabilities"
+        if any(w in u for w in ["我叫什么", "我的名字"]):
+            return "recall_name"
+        
         return None
 
-    def _get_template(self, intent: str):
-        """获取话本模板"""
+    def _get_template(self, intent):
+        """获取话本模板或自动规则答案"""
+        if isinstance(intent, dict) and intent.get('type') == 'learned':
+            return intent.get('answer')
+        
         templates = {
             "identity": "我是 ClawsJoy 助手，您的智能语音助手！🎉\n\n我可以帮您查天气、翻译方言、计算、回答各种问题。",
             "about": "ClawsJoy 是一个智能体操作系统！🎯\n\n可以帮您完成各种任务，支持语音交互、知识学习。",

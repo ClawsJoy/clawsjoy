@@ -1,0 +1,11 @@
+description: 自动学习的规则
+learned_at: '2026-05-31T16:43:42.744968'
+rules:
+- answer: 大约需要3天
+  created_at: '2026-05-31T16:43:42.744954'
+  enabled: true
+  frequency: 3
+  id: 1
+  last_seen: '2026-05-31T16:43:42.744964'
+  question: 这个项目要多久完成？
+version: 1.0.0

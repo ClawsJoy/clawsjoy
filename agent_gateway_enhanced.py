@@ -272,7 +272,12 @@ def enhanced_chat():
     save_memory(user_id, f"用户说: {message}")
     save_memory(user_id, f"ClawsJoy说: {response[:200]}")
     record_learning(f"对话: {user_id} -> {message[:30]}", True)
-    
+    # 模式识别（自动发现规律）
+    try:
+        from core.lib.pattern_recognizer import pattern_recognizer
+        pattern_recognizer.record_behavior(user_id, message, response, agent_used)
+    except:
+        pass
     return jsonify({
         "success": True,
         "response": response,
@@ -595,3 +600,16 @@ if __name__ == '__main__':
     print(f"   Workers: 4, Threads: 8, 并发: 32")
     print("=" * 50)
     app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
+
+# ========== 模式识别查询 ==========
+@app.route('/api/learning/patterns', methods=['GET'])
+def get_patterns():
+    try:
+        from core.lib.pattern_recognizer import pattern_recognizer
+        return jsonify({
+            'success': True,
+            'stats': pattern_recognizer.get_stats(),
+            'rules': pattern_recognizer.data.get('generated_rules', [])
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
