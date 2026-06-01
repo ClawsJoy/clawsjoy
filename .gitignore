@@ -38,3 +38,25 @@ outbox/
 .env
 venv/
 .venv/
+
+# 文档和报告 (临时生成)
+docs/reports/
+docs/analysis/
+*.docx
+*.pptx
+
+# 图片和媒体
+web/images/*.jpg
+web/images/*.png
+output/
+outbox/
+
+# IDE 配置
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 系统文件
+.DS_Store
+Thumbs.db
