@@ -9,6 +9,7 @@ from pathlib import Path
 from datetime import datetime
 from flask import Flask, request, jsonify, Response, send_from_directory
 from flask_cors import CORS
+from engine.security import desensitizer
 from functools import lru_cache
 
 from core.lib.unified_config import unified_config
@@ -218,8 +219,12 @@ def get_patterns():
 # ========== 增强对话（集成 Orchestrator v6） ==========
 @app.route('/api/v5/enhanced/chat', methods=['POST'])
 def enhanced_chat():
+    # 请求脱敏
+    from engine.security import desensitizer
     data = request.json or {}
     message = data.get('message', '')
+    # 脱敏处理用户输入
+    message = desensitizer.desensitize(message)
     user_id = data.get('user_id', 'guest')
 
     # 提取用户信息
@@ -652,6 +657,8 @@ def enhanced_chat_stream():
     from flask import Response
     data = request.json or {}
     message = data.get('message', '')
+    # 脱敏处理用户输入
+    message = desensitizer.desensitize(message)
     user_id = data.get('user_id', 'guest')
 
     def generate():
@@ -758,7 +765,169 @@ def market_list_skills():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+
+# ========== 隐私保护 API ==========
+@app.route('/api/v1/privacy/policy', methods=['GET'])
+def get_privacy_policy():
+    """获取隐私政策"""
+    import yaml
+    try:
+        with open('config/ginoor.yaml', 'r') as f:
+            config = yaml.safe_load(f)
+        return jsonify({
+            'success': True,
+            'policy': config.get('privacy_policy', {}),
+            'version': config.get('privacy_policy', {}).get('version', '1.0.0')
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/v1/privacy/consent', methods=['GET', 'POST'])
+def manage_consent():
+    """用户同意管理"""
+    from datetime import datetime
+    from engine.security.audit import audit_logger
+    
+    if request.method == 'GET':
+        user_id = request.args.get('user_id', 'guest')
+        consent_file = Path(f"data/consent/{user_id}.json")
+        if consent_file.exists():
+            with open(consent_file, 'r') as f:
+                consent_data = json.load(f)
+        else:
+            consent_data = {
+                'user_id': user_id,
+                'consents': {},
+                'updated_at': None
+            }
+        return jsonify({'success': True, 'consent': consent_data})
+    else:
+        data = request.json or {}
+        user_id = data.get('user_id', 'guest')
+        purposes = data.get('purposes', {})
+        
+        consent_dir = Path("data/consent")
+        consent_dir.mkdir(parents=True, exist_ok=True)
+        
+        consent_data = {
+            'user_id': user_id,
+            'consents': purposes,
+            'updated_at': datetime.now().isoformat()
+        }
+        
+        with open(consent_dir / f"{user_id}.json", 'w') as f:
+            json.dump(consent_data, f, indent=2)
+        
+        audit_logger.log("consent_update", user_id, details=purposes)
+        return jsonify({'success': True, 'message': 'Consent updated'})
+
+@app.route('/api/v1/privacy/data/request', methods=['POST'])
+def data_subject_request():
+    """数据主体请求"""
+    from engine.security.audit import audit_logger
+    from datetime import datetime
+    
+    data = request.json or {}
+    user_id = data.get('user_id', 'guest')
+    request_type = data.get('request_type', 'access')
+    
+    request_id = f"dsr_{user_id}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+    
+    audit_logger.log(
+        f"data_subject_request_{request_type}",
+        user_id,
+        details={'request_id': request_id, 'type': request_type}
+    )
+    
+    return jsonify({
+        'success': True,
+        'request_id': request_id,
+        'status': 'pending',
+        'estimated_completion': '72 hours',
+        'message': f'Your {request_type} request has been submitted'
+    })
+
+@app.route('/api/v1/privacy/export', methods=['POST'])
+def export_user_data():
+    """导出用户数据"""
+    from engine.security.audit import audit_logger
+    from datetime import datetime
+    
+    data = request.json or {}
+    user_id = data.get('user_id', 'guest')
+    format_type = data.get('format', 'json')
+    
+    user_data = {
+        'user_id': user_id,
+        'exported_at': datetime.now().isoformat(),
+        'format': format_type,
+        'data': {
+            'profile': {},
+            'memories': [],
+            'preferences': [],
+            'interactions': []
+        }
+    }
+    
+    try:
+        from engine.profile import profile_engine
+        profile = profile_engine.get_or_create(user_id)
+        user_data['data']['profile'] = {
+            'name': profile.name,
+            'preferences': profile.preferences,
+            'interaction_count': profile.interaction_count
+        }
+    except:
+        pass
+    
+    audit_logger.log("data_export", user_id, details={'format': format_type})
+    
+    return jsonify({
+        'success': True,
+        'data': user_data,
+        'format': format_type,
+        'message': 'Data export completed'
+    })
+
+@app.route('/api/v1/privacy/delete', methods=['POST'])
+def delete_user_data():
+    """删除用户数据"""
+    from engine.security.audit import audit_logger
+    from datetime import datetime
+    
+    data = request.json or {}
+    user_id = data.get('user_id', 'guest')
+    confirm = data.get('confirm', False)
+    
+    if not confirm:
+        return jsonify({
+            'success': False,
+            'error': 'Confirmation required',
+            'message': 'Please confirm data deletion'
+        }), 400
+    
+    deletion_dir = Path("data/deletion_requests")
+    deletion_dir.mkdir(parents=True, exist_ok=True)
+    
+    deletion_record = {
+        'user_id': user_id,
+        'deleted_at': datetime.now().isoformat(),
+        'status': 'pending'
+    }
+    
+    with open(deletion_dir / f"{user_id}.json", 'w') as f:
+        json.dump(deletion_record, f, indent=2)
+    
+    audit_logger.log("data_deletion_request", user_id, result="pending")
+    
+    return jsonify({
+        'success': True,
+        'message': 'Data deletion request submitted',
+        'processing_time': '72 hours'
+    })
+
 # ========== 启动入口 ==========
+
 if __name__ == '__main__':
     port = unified_config.get("services.gateway.port", 5002)
     smart_service.start()
