@@ -44,6 +44,11 @@ from engine.multimodal.audio import audio_engine
 from engine.multimodal.video import video_engine
 from engine.marketplace.core import marketplace_engine
 from engine.evolution.autonomous import evolution_engine
+from engine.synthetic.generator import synthetic_generator
+from engine.active_learning.core import active_learning_engine
+from engine.rl.core import rl_engine
+from engine.transfer.core import transfer_engine
+from engine.meta.core import meta_engine
 
 class AtomicEngine:
     """原子引擎 - 统一入口"""
@@ -87,7 +92,20 @@ class AtomicEngine:
         self._video = video_engine
         self._marketplace = marketplace_engine
         self._autonomous = evolution_engine
+        self._synthetic = synthetic_generator
+        self._active_learning = active_learning_engine
+        self._rl = rl_engine
+        self._transfer = transfer_engine
+        self._meta = meta_engine
         print("🧠 原子引擎 v6.0 已初始化")
+
+    @property
+    def synthetic(self): return synthetic_generator
+    @property
+    def active_learning(self): return active_learning_engine
+    @property
+    def rl(self): return rl_engine
+
 
     @property
     def semantic(self):
@@ -240,6 +258,26 @@ class AtomicEngine:
     @property
     def autonomous(self):
         return self._autonomous
+
+    @property
+    def synthetic(self):
+        return self._synthetic
+
+    @property
+    def active_learning(self):
+        return self._active_learning
+
+    @property
+    def rl(self):
+        return self._rl
+
+    @property
+    def transfer(self):
+        return self._transfer
+
+    @property
+    def meta(self):
+        return self._meta
 
 engine = AtomicEngine()
 

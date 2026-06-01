@@ -60,3 +60,27 @@ outbox/
 # 系统文件
 .DS_Store
 Thumbs.db
+
+# 用户数据 (必须排除)
+data/
+tenants/
+logs/
+*.db
+*.sqlite3
+*.sqlite
+
+# 训练数据 (可选，太大)
+data/synthetic_training.json
+data/training_dataset*.json
+data/training_report.json
+data/rl_learning.json
+data/active_learning_requests.json
+data/transfer_knowledge.json
+data/meta_learning.json
+
+# 临时文件
+*.tmp
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
