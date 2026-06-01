@@ -56,7 +56,7 @@ class UnifiedSkillManager:
                     skill_loader.skills[skill_name] = {
                         'name': skill_name,
                         'category': cat_dir,
-                        'category_name': skill_loader.CATEGORIES.get(cat_dir, cat_dir),
+                        'category_name': skill_loader.categories.get(cat_dir, cat_dir),
                         'file': str(skill_path),
                         'path': f"skills.{cat_dir}.{skill_name}"
                     }

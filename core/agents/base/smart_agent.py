@@ -90,7 +90,7 @@ class SmartAgent(CommunicableAgent):
         import requests
         try:
             resp = requests.post(
-                f"http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/agent/{target}/message",
+                f'http://{unified_config.get('services.gateway.host', 'localhost')}:{unified_config.get('services.gateway.port', 5002)}/api/agent/{target}/message',
                 json={"message": message, "user_id": self.user_id},
                 timeout=30
             )

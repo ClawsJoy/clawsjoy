@@ -9,11 +9,52 @@ from pathlib import Path
 from datetime import datetime
 from flask import Flask, request, jsonify, Response, send_from_directory
 from flask_cors import CORS
+from functools import lru_cache
 
 from core.lib.unified_config import unified_config
 from core.lib.smart_active_service import smart_service
 
+# ========== 连接池优化 ==========
+import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+
+# 创建共享 session
+session = requests.Session()
+retry = Retry(total=3, backoff_factor=0.5, status_forcelist=[500, 502, 503, 504])
+adapter = HTTPAdapter(pool_connections=20, pool_maxsize=20, max_retries=retry)
+session.mount('http://', adapter)
+session.mount('https://', adapter)
+
 app = Flask(__name__)
+
+
+# ========== 缓存优化 ==========
+from functools import lru_cache
+from datetime import datetime, timedelta
+
+# 简单的内存缓存
+class SimpleCache:
+    def __init__(self, ttl=300):
+        self.cache = {}
+        self.ttl = ttl
+    
+    def get(self, key):
+        if key in self.cache:
+            data, timestamp = self.cache[key]
+            if datetime.now().timestamp() - timestamp < self.ttl:
+                return data
+            del self.cache[key]
+        return None
+    
+    def set(self, key, value):
+        self.cache[key] = (value, datetime.now().timestamp())
+    
+    def clear(self):
+        self.cache.clear()
+
+request_cache = SimpleCache(ttl=300)
+
 CORS(app)
 # 主动学习模块
 try:
@@ -306,7 +347,8 @@ def enhanced_chat():
             "user_id": user_id
         })
 
-    # ===== 4. 调用 LLM 服务（兜底） =====
+
+   # ===== 4. 调用 LLM 服务（兜底） =====
     try:
         import requests
         resp = requests.post(
@@ -657,6 +699,64 @@ def metrics_endpoint():
         return Response(get_metrics(), mimetype='text/plain')
     except:
         return jsonify({'success': False, 'error': 'metrics not available'}), 500
+
+#========== 技能市场 API ==========
+@app.route('/api/market/skills/export', methods=['POST'])
+def market_export_skill():
+    """导出技能到市场"""
+    try:
+        data = request.json or {}
+        skill_name = data.get('skill_name', '')
+        if not skill_name:
+            return jsonify({'success': False, 'error': 'skill_name required'}), 400
+
+        from engine.openclaw.core import openclaw_engine
+        result = openclaw_engine.export_skill(skill_name, data.get('skill_data', {}))
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/market/skills/import', methods=['POST'])
+def market_import_skill():
+    """从市场导入技能"""
+    try:
+        data = request.json or {}
+        skill_name = data.get('skill_name', '')
+        if not skill_name:
+            return jsonify({'success': False, 'error': 'skill_name required'}), 400
+
+        from engine.openclaw.core import openclaw_engine
+        result = openclaw_engine.import_skill(skill_name, data.get('source'))
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/market/skills/sync', methods=['POST'])
+def market_sync_skills():
+    """与社区同步技能"""
+    try:
+        data = request.json or {}
+        direction = data.get('direction', 'both')
+
+        from engine.openclaw.core import openclaw_engine
+        result = openclaw_engine.sync_with_community(direction)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/market/skills/list', methods=['GET'])
+def market_list_skills():
+    """列出市场技能"""
+    try:
+        from engine.openclaw.core import openclaw_engine
+        return jsonify({
+            'success': True,
+            'exported': openclaw_engine.list_exported(),
+            'imported': openclaw_engine.list_imported(),
+            'stats': openclaw_engine.get_stats()
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 # ========== 启动入口 ==========
 if __name__ == '__main__':
