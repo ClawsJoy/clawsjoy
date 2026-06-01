@@ -84,3 +84,5 @@ data/meta_learning.json
 *.swo
 .DS_Store
 Thumbs.db
+Modelfile.intent
+scripts/finetune_intent.py
