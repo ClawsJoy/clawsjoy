@@ -28,17 +28,21 @@ fi
 # 启动 LLM 服务
 pkill -f llm_service 2>/dev/null
 nohup python3 scripts/llm_service.py > logs/llm_service.log 2>&1 &
-echo "✅ LLM 服务已启动"
 
-# 使用 Gunicorn 启动网关
+# 停止旧服务
 pkill -f gunicorn 2>/dev/null
-gunicorn -w 4 --threads 8 --worker-class gthread \
-    --bind 0.0.0.0:5002 \
-    --access-logfile logs/access.log \
-    --error-logfile logs/error.log \
-    --daemon \
-    agent_gateway_enhanced:app
+sleep 2
 
-echo "✅ ClawsJoy v5 生产环境已启动"
-echo "   网关: http://localhost:5002"
-echo "   Workers: 4, Threads: 8, 并发: 32"
+# 启动新服务 (使用配置文件)
+nohup gunicorn -c gunicorn.conf.py agent_gateway_enhanced:app > logs/gunicorn.log 2>&1 &
+
+sleep 3
+
+# 检查状态
+if pgrep -f "gunicorn" > /dev/null; then
+    echo "✅ ClawsJoy v5 生产环境已启动"
+    echo "   网关: http://localhost:5002"
+    echo "   Workers: 4, Threads: 8, 并发: 32"
+else
+    echo "❌ 启动失败，查看日志: tail -50 logs/gunicorn.log"
+fi

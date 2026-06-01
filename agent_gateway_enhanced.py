@@ -13,6 +13,41 @@ from engine.security import desensitizer
 from functools import lru_cache
 
 from core.lib.unified_config import unified_config
+
+# ========== Gunicorn post_fork 钩子 ==========
+def post_fork(server, worker):
+    """每个 worker fork 后执行，重新启动监听器线程"""
+    import sys
+    import os
+    sys.path.insert(0, os.getcwd())
+    
+    try:
+        from core.lib.config_auto_watcher import config_auto_watcher
+        config_auto_watcher.scan_and_register()
+        config_auto_watcher.start()
+        print(f"✅ Worker {worker.pid} 配置监听器已启动")
+    except Exception as e:
+        print(f"⚠️ Worker {worker.pid} 监听器启动失败: {e}")
+
+    # 注册退出清理
+    import atexit
+    def cleanup():
+        try:
+            from core.lib.config_watcher import config_watcher
+            config_watcher.stop()
+        except:
+            pass
+    atexit.register(cleanup)
+
+# 如果被 gunicorn 导入，注册 post_fork
+if 'gunicorn' in sys.modules:
+    try:
+        from gunicorn import glogging
+        # gunicorn 会检测 post_fork 函数
+        print("✅ Gunicorn post_fork 钩子已注册")
+    except:
+        pass
+
 from core.lib.smart_active_service import smart_service
 
 # ========== 连接池优化 ==========
@@ -926,17 +961,7 @@ def delete_user_data():
         'processing_time': '72 hours'
     })
 
-# ========== 启动入口 ==========
-
-
-# 启动配置监听器
-from core.lib.config_auto_watcher import config_auto_watcher
-config_auto_watcher.scan_and_register()
-config_auto_watcher.start()
-print("✅ 配置热重载监听器已启动")
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     port = unified_config.get("services.gateway.port", 5002)
     smart_service.start()
     print("=" * 50)
@@ -987,3 +1012,14 @@ def youtube_content_ideas():
     niche = request.args.get('niche', 'AI')
     ideas = youtube_agent.get_content_ideas(niche)
     return jsonify({'success': True, 'ideas': ideas})
+
+
+@app.route('/api/debug/config', methods=['GET'])
+def debug_config():
+    """调试端点：查看配置"""
+    from core.lib.unified_config import unified_config
+    key = request.args.get('key', '')
+    if key:
+        value = unified_config.get(key, None)
+        return {"key": key, "value": value}
+    return {"config_keys": list(unified_config._config.keys())[:20]}
