@@ -1,3 +1,4 @@
+from pathlib import Path
 """自主进化引擎 - 引擎自我优化和演进"""
 
 from typing import Dict, List, Any, Optional
