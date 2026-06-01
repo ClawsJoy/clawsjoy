@@ -928,6 +928,14 @@ def delete_user_data():
 
 # ========== 启动入口 ==========
 
+
+# 启动配置监听器
+from core.lib.config_auto_watcher import config_auto_watcher
+config_auto_watcher.scan_and_register()
+config_auto_watcher.start()
+print("✅ 配置热重载监听器已启动")
+
+
 if __name__ == '__main__':
     port = unified_config.get("services.gateway.port", 5002)
     smart_service.start()
