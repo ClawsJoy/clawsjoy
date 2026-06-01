@@ -13,7 +13,7 @@ class OrchestratorV6:
     def __init__(self, user_id: str = "anonymous"):
         self.user_id = user_id
         self._intent_map = None
-        self._route_stats = {"total": 0, "keyword_hits": 0, "vector_hits": 0, "fallback": 0, "avg_time_ms": 0}
+        self._route_stats = {"total": 0, "llm_hits": 0, "vector_hits": 0, "config_hits": 0, "rule_hits": 0, "avg_time_ms": 0}
     
     # ========== 四引擎调用链 ==========
     
@@ -96,19 +96,25 @@ class OrchestratorV6:
     # ========== 核心路由 ==========
     
     def smart_route(self, message: str) -> str:
+        import time
+        start = time.time()
         intent, conf, source = self._llm_understand(message)
         if intent:
+            self._record_route(source, (time.time() - start) * 1000)
             print(f"[Orchestrator] LLM: {intent}({conf:.2f})")
             return self._intent_to_agent(intent)
         intent, conf, source = self._vector_understand(message)
         if intent:
+            self._record_route(source, (time.time() - start) * 1000)
             print(f"[Orchestrator] 向量: {intent}({conf:.2f})")
             return self._intent_to_agent(intent)
         intent, conf, source = self._config_understand(message)
         if intent:
+            self._record_route(source, (time.time() - start) * 1000)
             print(f"[Orchestrator] 配置: {intent}({conf:.2f})")
             return self._intent_to_agent(intent)
         intent, conf, source = self._rule_understand(message)
+        self._record_route(source, (time.time() - start) * 1000)
         print(f"[Orchestrator] 规则: {intent}({conf:.2f})")
         return self._intent_to_agent(intent)
     
@@ -168,12 +174,16 @@ class OrchestratorV6:
     
     def _record_route(self, route_type: str, duration_ms: float):
         self._route_stats["total"] += 1
-        if route_type == "keyword":
-            self._route_stats["keyword_hits"] += 1
+        if route_type == "llm":
+            self._route_stats["llm_hits"] += 1
         elif route_type == "vector":
             self._route_stats["vector_hits"] += 1
+        elif route_type == "config":
+            self._route_stats["config_hits"] += 1
+        elif route_type == "rule":
+            self._route_stats["rule_hits"] += 1
         else:
-            self._route_stats["fallback"] += 1
+            pass
         total = self._route_stats["total"]
         old_avg = self._route_stats["avg_time_ms"]
         self._route_stats["avg_time_ms"] = old_avg + (duration_ms - old_avg) / total if total > 0 else duration_ms
