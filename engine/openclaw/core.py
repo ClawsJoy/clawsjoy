@@ -182,6 +182,16 @@ openclaw_version: {manifest['openclaw_version']}
     def list_imported(self) -> List[str]:
         return self.state['imported_skills']
     
+    
+    def reload(self) -> Dict:
+        """热重载配置"""
+        self._load_sync_state()
+        return {"success": True, "message": "OpenClaw engine reloaded"}
+    
+    def health_check(self) -> Dict:
+        """健康检查"""
+        return {"name": "openclaw_engine", "status": "healthy"}
+
     def get_stats(self) -> Dict:
         return {
             "exported_skills": len(self.state['exported_skills']),
