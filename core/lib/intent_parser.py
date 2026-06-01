@@ -14,6 +14,47 @@ from core.lib.unified_config import unified_config
 
 class IntentParser:
     INTENT_PATTERNS = {
+        "代码编写": {
+            "keywords": ["写代码", "编程", "代码", "python", "java", "javascript", "函数", "算法", "开发", "写个程序", "帮我写", "代码能力"],
+            "skills": ["code_agent"],
+            "priority": 30
+        },
+        "天气查询": {
+            "keywords": ["天气", "气温", "预报", "温度", "下雨", "晴天", "阴天", "气象", "会不会下雨", "今天天气"],
+            "skills": ["weather_skill", "weather"],
+            "priority": 25
+        },
+        "翻译": {
+            "keywords": ["翻译", "译成", "怎么读", "英文怎么说", "中文翻译", "translate"],
+            "skills": ["translate_agent", "translate"],
+            "priority": 20
+        },
+        "计算": {
+            "keywords": ["计算", "加法", "减法", "乘法", "除法", "加", "减", "乘", "除", "等于", "多少", "求和"],
+            "skills": ["calculator", "math"],
+            "priority": 25
+        },
+        "名字记忆": {
+            "keywords": ["我叫", "名字叫", "称为", "我是", "我的名字是"],
+            "skills": ["chat_agent"],
+            "priority": 15
+        },
+        "名字查询": {
+            "keywords": ["我叫什么", "我的名字", "我名字", "我叫啥", "我是谁"],
+            "skills": ["chat_agent"],
+            "priority": 20
+        },
+        "问候": {
+            "keywords": ["你好", "您好", "hi", "hello", "在吗", "早上好", "晚上好", "下午好"],
+            "skills": ["chat_agent"],
+            "priority": 10
+        },
+        "感谢": {
+            "keywords": ["谢谢", "感谢", "多谢", "thanks", "thx"],
+            "skills": ["chat_agent"],
+            "priority": 10
+        },
+
         "视频制作": {
             "keywords": ["视频", "漫剧", "制作", "生成视频", "做视频"],
             "skills": ["manju_maker", "complete_video_maker"]

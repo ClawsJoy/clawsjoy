@@ -27,4 +27,4 @@ routing:
   embedding: nomic-embed-text
   fallback: qwen2.5:7b
 # 超时配置
-timeout: 120
+timeout: 60

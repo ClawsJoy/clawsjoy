@@ -42,6 +42,8 @@ from engine.observability.tracer import tracer
 from engine.multimodal.vision import vision_engine
 from engine.multimodal.audio import audio_engine
 from engine.multimodal.video import video_engine
+from engine.marketplace.core import marketplace_engine
+from engine.evolution.autonomous import evolution_engine
 
 class AtomicEngine:
     """原子引擎 - 统一入口"""
@@ -83,6 +85,8 @@ class AtomicEngine:
         self._vision = vision_engine
         self._audio = audio_engine
         self._video = video_engine
+        self._marketplace = marketplace_engine
+        self._autonomous = evolution_engine
         print("🧠 原子引擎 v6.0 已初始化")
 
     @property
@@ -228,6 +232,14 @@ class AtomicEngine:
     @property
     def video(self):
         return self._video
+
+    @property
+    def marketplace(self):
+        return self._marketplace
+
+    @property
+    def autonomous(self):
+        return self._autonomous
 
 engine = AtomicEngine()
 

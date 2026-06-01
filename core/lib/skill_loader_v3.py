@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
-"""技能加载器 V3"""
+"""技能加载器 V3 - 支持多种技能定义方式"""
 
-import os
-import yaml
+import json
+import re
 from pathlib import Path
 from typing import Dict, List, Optional
-from core.lib.unified_config import unified_config
 
 
 class SkillLoaderV3:
-    """技能加载器 V3"""
+    """技能加载器 V3 - 支持 SKILL.md、manifest.json、装饰器等多种定义"""
 
     def __init__(self):
         self.skills = {}
@@ -18,42 +17,202 @@ class SkillLoaderV3:
 
     def _load_all(self):
         """加载所有技能"""
-        skills_dir = Path("skills")
-        if not skills_dir.exists():
-            return
+        # 1. 扫描 SKILL.md
+        self._load_from_skill_md()
         
-        for skill_dir in skills_dir.iterdir():
-            if not skill_dir.is_dir():
-                continue
-            # 查找 SKILL.md 或 manifest.json
-            skill_file = skill_dir / "SKILL.md"
-            if not skill_file.exists():
+        # 2. 扫描 manifest.json
+        self._load_from_manifest()
+        
+        # 3. 扫描 *_skill.py 文件
+        self._load_from_skill_files()
+        
+        # 4. 扫描 core/skills/ 目录
+        self._load_from_core_skills()
+        
+        # 5. 扫描 agents 作为技能
+        self._load_from_agents()
+        
+        print(f"✅ 技能加载完成，共 {len(self.skills)} 个技能")
+
+    def _load_from_skill_md(self):
+        """从 SKILL.md 文件加载技能"""
+        for skill_md in Path(".").rglob("SKILL.md"):
+            if 'site-packages' in str(skill_md) or '__pycache__' in str(skill_md):
                 continue
             
-            # 解析技能信息
-            name = skill_dir.name
-            with open(skill_file, 'r') as f:
-                content = f.read()
+            name = skill_md.parent.name
+            if name in self.skills:
+                continue
             
-            # 提取类别
             category = "general"
-            if "category:" in content:
+            description = ""
+            
+            try:
+                with open(skill_md, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                # 提取 category
                 for line in content.split('\n'):
                     if line.startswith("category:"):
                         category = line.split(":", 1)[1].strip()
                         break
+                    if line.startswith("description:"):
+                        description = line.split(":", 1)[1].strip()
+            except:
+                pass
             
             self.skills[name] = {
                 "name": name,
                 "category": category,
-                "file": str(skill_file),
-                "path": f"skills.{name}",
-                "category_name": category
+                "description": description,
+                "file": str(skill_md),
+                "source": "SKILL.md",
+                "type": "skill_md"
             }
+            self._add_to_category(category, name)
+
+    def _load_from_manifest(self):
+        """从 manifest.json 文件加载技能"""
+        for manifest_file in Path(".").rglob("manifest.json"):
+            if 'site-packages' in str(manifest_file) or '__pycache__' in str(manifest_file):
+                continue
             
-            if category not in self.categories:
-                self.categories[category] = []
-            self.categories[category].append(name)
+            try:
+                with open(manifest_file, 'r') as f:
+                    data = json.load(f)
+                
+                name = data.get('name', manifest_file.parent.name)
+                if name in self.skills:
+                    continue
+                
+                category = data.get('category', 'general')
+                description = data.get('description', '')
+                
+                self.skills[name] = {
+                    "name": name,
+                    "category": category,
+                    "description": description,
+                    "file": str(manifest_file),
+                    "source": "manifest.json",
+                    "type": "manifest"
+                }
+                self._add_to_category(category, name)
+            except:
+                pass
+
+    def _load_from_skill_files(self):
+        """从 *_skill.py 文件加载技能"""
+        for py_file in Path(".").rglob("*_skill.py"):
+            if 'site-packages' in str(py_file) or '__pycache__' in str(py_file):
+                continue
+            
+            name = py_file.stem
+            if name in self.skills:
+                continue
+            
+            # 提取描述
+            description = ""
+            try:
+                with open(py_file, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    for line in content.split('\n'):
+                        if '"""' in line and not description:
+                            desc = line.strip(' """').strip()
+                            if desc and len(desc) > 5:
+                                description = desc[:100]
+                                break
+            except:
+                pass
+            
+            self.skills[name] = {
+                "name": name,
+                "category": "skill_file",
+                "description": description,
+                "file": str(py_file),
+                "source": "skill_file",
+                "type": "skill_file"
+            }
+            self._add_to_category("skill_file", name)
+
+    def _load_from_core_skills(self):
+        """从 core/skills/ 目录加载"""
+        core_skills = Path("core/skills")
+        if not core_skills.exists():
+            return
+        
+        for py_file in core_skills.glob("*.py"):
+            if py_file.name.startswith('__'):
+                continue
+            
+            name = py_file.stem
+            if name in self.skills:
+                continue
+            
+            # 提取描述
+            description = ""
+            try:
+                with open(py_file, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    for line in content.split('\n'):
+                        if '"""' in line and not description:
+                            desc = line.strip(' """').strip()
+                            if desc and len(desc) > 5:
+                                description = desc[:100]
+                                break
+            except:
+                pass
+            
+            self.skills[name] = {
+                "name": name,
+                "category": "core",
+                "description": description,
+                "file": str(py_file),
+                "source": "core/skills",
+                "type": "core"
+            }
+            self._add_to_category("core", name)
+
+    def _load_from_agents(self):
+        """从 agents 目录加载技能"""
+        agents_dir = Path("core/agents/builtin")
+        if not agents_dir.exists():
+            return
+        
+        for agent_file in agents_dir.glob("*_agent.py"):
+            name = agent_file.stem
+            if name in self.skills:
+                continue
+            
+            # 提取描述
+            description = ""
+            try:
+                with open(agent_file, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    for line in content.split('\n'):
+                        if '"""' in line and not description:
+                            desc = line.strip(' """').strip()
+                            if desc and len(desc) > 5:
+                                description = desc[:100]
+                                break
+            except:
+                pass
+            
+            self.skills[name] = {
+                "name": name,
+                "category": "agent",
+                "description": description,
+                "file": str(agent_file),
+                "source": "agents",
+                "type": "agent"
+            }
+            self._add_to_category("agent", name)
+
+    def _add_to_category(self, category: str, skill_name: str):
+        """添加到分类"""
+        if category not in self.categories:
+            self.categories[category] = []
+        if skill_name not in self.categories[category]:
+            self.categories[category].append(skill_name)
 
     def list_skills(self, category: str = None) -> Dict:
         """列出所有技能"""
@@ -72,18 +231,26 @@ class SkillLoaderV3:
             skill_info = self.get_skill(skill_name)
             if not skill_info:
                 return {"error": f"技能 {skill_name} 不存在"}
+
+            # 尝试不同的模块路径
+            module_paths = [
+                f"skills.{skill_name}",
+                f"skills.{skill_info.get('category', 'general')}.{skill_name}",
+                f"core.skills.{skill_name}",
+                f"core.agents.builtin.{skill_name}",
+            ]
             
-            module_path = skill_info["path"]
-            module = importlib.import_module(module_path)
+            for module_path in module_paths:
+                try:
+                    module = importlib.import_module(module_path)
+                    if hasattr(module, 'execute'):
+                        return module.execute(params)
+                    elif hasattr(module, 'run'):
+                        return module.run(params)
+                except ImportError:
+                    continue
             
-            if hasattr(module, 'execute'):
-                result = module.execute(params)
-            elif hasattr(module, 'run'):
-                result = module.run(params)
-            else:
-                result = {"error": f"技能 {skill_name} 没有 execute 或 run 方法"}
-            
-            return result
+            return {"error": f"技能 {skill_name} 无法执行"}
         except Exception as e:
             return {"error": str(e)}
 
@@ -105,7 +272,6 @@ class SkillLoaderV3:
         self.skills = {}
         self.categories = {}
         self._load_all()
-        print(f"✅ 技能已重载，共 {len(self.skills)} 个技能")
 
 
 skill_loader = SkillLoaderV3()

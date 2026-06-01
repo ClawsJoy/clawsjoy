@@ -1,11 +1,32 @@
 description: 自动学习的规则
-learned_at: '2026-05-31T16:43:42.744968'
+learned_at: '2026-06-01T11:34:25.406609'
 rules:
 - answer: 大约需要3天
   created_at: '2026-05-31T16:43:42.744954'
   enabled: true
   frequency: 3
   id: 1
-  last_seen: '2026-05-31T16:43:42.744964'
+  last_seen: '2026-06-01T11:34:25.405415'
   question: 这个项目要多久完成？
+- answer: 25乘以4等于100。
+  created_at: '2026-06-01T09:55:03.992167'
+  enabled: true
+  frequency: 3
+  id: 2
+  last_seen: '2026-06-01T11:34:25.406601'
+  question: '[NUM]乘以[NUM]等于多少'
+- answer: 你好，李华！很高兴为你提供帮助。你可以告诉我你需要什么帮助吗？无论是学习上的问题、生活中的困惑还是其他方面的需求，我都会尽全力协助你。
+  created_at: '2026-06-01T09:55:05.031437'
+  enabled: true
+  frequency: 3
+  id: 3
+  last_seen: '2026-06-01T09:55:05.031440'
+  question: 我叫李华
+- answer: 您好！有什么可以帮助您的吗？
+  created_at: '2026-06-01T11:34:24.719214'
+  enabled: true
+  frequency: 7
+  id: 4
+  last_seen: '2026-06-01T11:34:25.371079'
+  question: 你好
 version: 1.0.0

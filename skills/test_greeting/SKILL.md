@@ -1,15 +1,15 @@
 ---
-name: 
+name: test_greeting
 version: 1.0.0
-description: '自动生成: 帮我分析数据'
-category: general
+description: '测试问候技能'
+category: greeting
 author: ClawsJoy
 security_grade: 🟢 A
 ---
 
-# 
+# test_greeting
 
-自动生成: 帮我分析数据
+测试问候技能
 
 ## 参数
 | 参数 | 类型 | 必填 | 描述 |

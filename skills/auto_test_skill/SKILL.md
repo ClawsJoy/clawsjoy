@@ -1,15 +1,15 @@
 ---
-name: 
+name: auto_test_skill
 version: 1.0.0
-description: '自动生成: 帮我分析数据'
+description: '自动生成的测试技能'
 category: general
 author: ClawsJoy
 security_grade: 🟢 A
 ---
 
-# 
+# auto_test_skill
 
-自动生成: 帮我分析数据
+自动生成的测试技能
 
 ## 参数
 | 参数 | 类型 | 必填 | 描述 |
