@@ -33,13 +33,8 @@ class SkillEvolver:
         self.skill_templates = {}
     
     def _load_config(self):
-        config_file = Path(__file__).parent.parent / "config/skill_evolution.yaml"
-        if config_file.exists():
-            import yaml
-            with open(config_file, 'r') as f:
-                self.config = unified_config.get("skill_evolver", {})
-        else:
-            self.config = {"generation": {}, "trial": {}, "learning": {}, "evolution": {}}
+        """从统一配置加载"""
+        self.config = unified_config.get("skill_evolver", {"generation": {}, "trial": {}, "learning": {}, "evolution": {}})
     
     def generate_skill(self, task: str, experiences: List[Dict]) -> Optional[str]:
         """从经验生成原子技能"""

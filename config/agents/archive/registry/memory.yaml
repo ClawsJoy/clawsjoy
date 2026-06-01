@@ -1,0 +1,14 @@
+# Agent 记忆配置
+version: "3.0.0"
+
+l0_session:
+  ttl: 3600
+  max_size: 50
+l1_daily:
+  max_size: 30
+l2_long:
+  max_size: 1000
+l3_vector:
+  enabled: false
+l4_index:
+  enabled: true

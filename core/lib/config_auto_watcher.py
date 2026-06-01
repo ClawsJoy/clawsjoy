@@ -24,6 +24,7 @@ class ConfigAutoWatcher:
 
         if config_dirs is None:
             config_dirs = [
+                "config",  # 监听 config 根目录
                 "config/system",
                 "config/routes",
                 "config/agents_soul",
@@ -60,6 +61,10 @@ class ConfigAutoWatcher:
     def _get_callback(cls, file_path: Path):
         """根据文件路径返回对应的重载函数"""
         path_str = str(file_path)
+
+        if "keywords.yaml" in path_str:
+            from core.lib.unified_config import unified_config
+            return unified_config._load
 
         if "system_unified.yaml" in path_str:
             from core.lib.unified_config import unified_config

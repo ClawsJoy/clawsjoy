@@ -1,4 +1,9 @@
 #!/bin/bash
+# 加载环境变量
+if [ -f config/.env ]; then
+    export $(cat config/.env | grep -v "^#" | xargs)
+fi
+
 # ClawsJoy v5 生产环境启动脚本
 
 cd /home/flybo/clawsjoy_v5

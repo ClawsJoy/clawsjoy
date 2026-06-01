@@ -37,12 +37,8 @@ class SkillAutoTrigger:
         self._load_data()
     
     def _load_config(self) -> Dict:
-        """加载 skill_learning.yaml 配置"""
-        config_file = Path("config/skill_learning.yaml")
-        if config_file.exists():
-            with open(config_file, 'r') as f:
-                return unified_config.get("skill_auto_trigger", {})
-        return {"learning": {"min_success_count": 3, "auto_generate": True}}
+        """从统一配置加载"""
+        return unified_config.get("skill_auto_trigger", {"learning": {"min_success_count": 3, "auto_generate": True}})
     
     def _load_data(self):
         """加载统计数据"""

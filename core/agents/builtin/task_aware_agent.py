@@ -46,7 +46,8 @@ class TaskAwareAgent:
         lower = user_input.lower()
 
         # 1. 搜索任务
-        search_keywords = ["找", "搜索", "查找", "查一下", "帮我找", "有没有", "在哪", "资料", "文档", "总结", "报告"]
+        # 关键词已统一到 config/keywords.yaml 的 agent_mapping 中
+        search_keywords = []  # 由 Orchestrator 路由
         if any(kw in user_input for kw in search_keywords):
             # 提取搜索对象
             query = user_input

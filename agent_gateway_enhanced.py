@@ -936,3 +936,46 @@ if __name__ == '__main__':
     print(f"   Workers: 4, Threads: 8, 并发: 32")
     print("=" * 50)
     app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
+
+# ========== YouTube 经营 API ==========
+@app.route('/api/youtube/generate/script', methods=['POST'])
+def youtube_generate_script():
+    from core.agents.builtin.youtube_agent import youtube_agent
+    """生成视频脚本"""
+    data = request.json or {}
+    topic = data.get('topic', '')
+    result = youtube_agent.generate_script(topic)
+    return jsonify(result)
+
+@app.route('/api/youtube/generate/title', methods=['POST'])
+def youtube_generate_title():
+    from core.agents.builtin.youtube_agent import youtube_agent
+    """生成标题"""
+    data = request.json or {}
+    topic = data.get('topic', '')
+    result = youtube_agent.generate_title(f"生成标题：{topic}")
+    return jsonify(result)
+
+@app.route('/api/youtube/generate/description', methods=['POST'])
+def youtube_generate_description():
+    from core.agents.builtin.youtube_agent import youtube_agent
+    """生成描述"""
+    data = request.json or {}
+    topic = data.get('topic', '')
+    result = youtube_agent.generate_description(f"生成描述：{topic}")
+    return jsonify(result)
+
+@app.route('/api/youtube/channel/stats', methods=['GET'])
+def youtube_channel_stats():
+    from core.agents.builtin.youtube_agent import youtube_agent
+    """获取频道统计"""
+    result = youtube_agent.get_channel_stats()
+    return jsonify(result)
+
+@app.route('/api/youtube/ideas', methods=['GET'])
+def youtube_content_ideas():
+    from core.agents.builtin.youtube_agent import youtube_agent
+    """获取内容创意"""
+    niche = request.args.get('niche', 'AI')
+    ideas = youtube_agent.get_content_ideas(niche)
+    return jsonify({'success': True, 'ideas': ideas})

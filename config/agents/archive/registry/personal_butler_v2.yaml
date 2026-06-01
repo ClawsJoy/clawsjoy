@@ -1,0 +1,30 @@
+name: personal_butler_v2
+display_name: "私人管家"
+version: "3.0.0"
+type: "core"
+enabled: true
+description: "智能私人管家 - 真实 LLM 驱动"
+implementation:
+  module: "core.agents.personal_butler_v2"
+  class: "PersonalButlerV2"
+capabilities:
+  - name: "chat"
+    description: "智能对话"
+  - name: "todo"
+    description: "待办管理"
+  - name: "memory"
+    description: "记忆存储"
+  - name: "rename"
+    description: "改名"
+permissions:
+  - read_user_preferences
+  - write_own_memory
+config:
+  llm:
+    url: "http://localhost:11434"
+    model: "qwen2.5:3b"
+    temperature: 0.7
+  features:
+    memory: true
+    todo: true
+    rename: true

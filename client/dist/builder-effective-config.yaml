@@ -1,0 +1,25 @@
+directories:
+  output: dist
+  buildResources: build
+appId: com.clawsjoy.app
+productName: ClawsJoy
+win:
+  target:
+    - nsis
+  icon: static/icon.ico
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+linux:
+  target:
+    - AppImage
+    - snap
+  category: Utility
+files:
+  - filter:
+      - main.js
+      - src/**/*
+      - renderer/**/*
+      - node_modules/**/*
+electronVersion: 28.3.3

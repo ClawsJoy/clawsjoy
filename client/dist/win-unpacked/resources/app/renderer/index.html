@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ClawsJoy 智能助手</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0a1a;
+            color: #e0e0ff;
+            font-family: monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            text-align: center;
+        }
+        h1 {
+            font-size: 48px;
+            color: #00f3ff;
+            text-shadow: 0 0 20px rgba(0,243,255,0.5);
+        }
+        .status {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid rgba(0,243,255,0.3);
+            border-radius: 8px;
+            background: rgba(0,243,255,0.05);
+        }
+        .online { color: #4ade80; }
+        .offline { color: #ef4444; }
+        button {
+            margin-top: 20px;
+            background: transparent;
+            border: 1px solid #00f3ff;
+            color: #00f3ff;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🦞 ClawsJoy</h1>
+        <div class="status" id="status">加载中...</div>
+        <button onclick="testPlugin()">测试插件</button>
+        <div id="result"></div>
+    </div>
+    
+    <script>
+        const { ipcRenderer } = require('electron');
+        
+        async function testPlugin() {
+            document.getElementById('result').innerHTML = '测试中...';
+            
+            // 测试保存数据
+            await ipcRenderer.invoke('plugin:save-data', {
+                key: 'test_key',
+                data: { message: 'Hello ClawsJoy', timestamp: Date.now() }
+            });
+            
+            // 测试加载数据
+            const data = await ipcRenderer.invoke('plugin:load-data', 'test_key');
+            
+            document.getElementById('result').innerHTML = `
+                <p>✅ 插件测试成功</p>
+                <p>数据: ${JSON.stringify(data)}</p>
+            `;
+        }
+        
+        // 检查后端状态
+        async function checkBackend() {
+            try {
+                const response = await fetch('http://localhost:5002/api/health');
+                const data = await response.json();
+                const statusEl = document.getElementById('status');
+                if (data.status === 'ok') {
+                    statusEl.innerHTML = `✅ 后端已连接 v${data.version}`;
+                    statusEl.className = 'status online';
+                }
+            } catch (e) {
+                document.getElementById('status').innerHTML = '❌ 后端连接失败';
+                document.getElementById('status').className = 'status offline';
+            }
+        }
+        
+        checkBackend();
+        setInterval(checkBackend, 10000);
+    </script>
+</body>
+</html>

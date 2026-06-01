@@ -2,19 +2,33 @@
 
 from typing import Dict, Any, Optional
 from engine.semantic import semantic_engine
-from engine.profile import profile_engine
 from engine.reasoning import reasoning_engine
-from engine.planning import planning_engine
 
 class OrchestratorV6:
     """智能路由 - 使用原子引擎增强决策"""
-    
+
     def __init__(self, user_id: str = "anonymous"):
         self.user_id = user_id
-        # Agent 映射
         self.agent_map = {
+            'script': 'youtube_agent',
+            '生成脚本': 'youtube_agent',
+            '写脚本': 'youtube_agent',
+            '视频脚本': 'youtube_agent',
             'code': 'code_agent',
             '代码编写': 'code_agent',
+            'script': 'youtube_agent',
+            '生成脚本': 'youtube_agent',
+            '写脚本': 'youtube_agent',
+            '视频脚本': 'youtube_agent',
+            'director': 'director_agent',
+            '导演': 'director_agent',
+            '策划': 'director_agent',
+            '导演策划': 'director_agent',
+            '内容日历': 'director_agent',
+            '日历': 'director_agent',
+            '排期': 'director_agent',
+            '生产状态': 'director_agent',
+            '进度': 'director_agent',
             'weather': 'chat_agent',
             '天气查询': 'chat_agent',
             'translate': 'translate_agent',
@@ -26,48 +40,33 @@ class OrchestratorV6:
             'name_set': 'chat_agent',
             'name_query': 'chat_agent',
             'capability': 'chat_agent',
-            '能力询问': 'chat_agent',
             'thanks': 'chat_agent',
             'farewell': 'chat_agent',
         }
-     
+
     def smart_route(self, message: str) -> str:
-        """智能路由 - 使用语义理解 + 推理"""
-        # 1. 语义理解
-        result = semantic_engine.understand(message)
-        # IntentResult 对象: result.intent 是字符串, result.confidence 是浮点数
-        intent = result.intent          # 直接取字符串，不是 result.intent.name
-        confidence = result.confidence  # 直接取浮点数，不是 result.intent.confidence
-    
-        print(f"[OrchestratorV6] 语义理解: intent={intent}, conf={confidence}")
+        """智能路由 - 使用语义理解"""
+        try:
+            result = semantic_engine.understand(message)
+            intent = result.intent
+            confidence = result.confidence
 
-        # 2. 路由选择
-        if confidence > 0.6 and intent in self.agent_map:
-            target = self.agent_map[intent]
-            print(f"[OrchestratorV6] 路由: {intent} → {target}")
-            return target
+            if confidence > 0.6 and intent in self.agent_map:
+                target = self.agent_map[intent]
+                print(f"[OrchestratorV6] {intent}({confidence:.2f}) → {target}")
+                return target
+        except Exception as e:
+            print(f"[OrchestratorV6] 错误: {e}")
 
-        # 3. 默认路由
-        print(f"[OrchestratorV6] 默认路由: chat_agent")
         return "chat_agent"
 
-    
     def decompose_task(self, task: str) -> Dict:
-        """任务分解 - 使用规划引擎"""
-        # 使用语义理解获取意图
+        """任务分解"""
         result = semantic_engine.understand(task)
-        intent = result.intent.name
-        
-        # 规划引擎分解
-        plan = planning_engine.decompose(task, intent)
-        
+        intent = result.intent
         return {
             'intent': intent,
-            'plan_id': plan.id,
-            'subtasks': [{'name': s.name, 'description': s.description, 'agent': s.agent} 
-                        for s in plan.subtasks],
-            'total_subtasks': len(plan.subtasks)
+            'subtasks': []
         }
 
-# 全局实例
 orchestrator_v6 = OrchestratorV6()

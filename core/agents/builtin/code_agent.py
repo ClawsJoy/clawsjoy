@@ -22,7 +22,8 @@ class CodeAgent(SmartAgent):
         print(f"[代码] 收到: {user_input}")
         
         # 检测是否为代码审查请求
-        review_keywords = ['检查代码', '审查代码', 'review', '检查语法', '代码有问题', '帮我看看', '找bug', '哪里有错']
+        # 关键词已统一到 config/keywords.yaml 的 agent_mapping 中
+        review_keywords = []  # 由 Orchestrator 路由
         if any(kw in user_input.lower() for kw in review_keywords):
             return self.code_review(user_input)
         

@@ -1,0 +1,20 @@
+{
+  "_class_name": "FlowUniPCMultistepScheduler",
+  "_diffusers_version": "0.32.2",
+  "disable_corrector": [],
+  "dynamic_thresholding_ratio": 0.995,
+  "final_sigmas_type": "zero",
+  "lower_order_final": true,
+  "num_train_timesteps": 1000,
+  "predict_x0": true,
+  "prediction_type": "flow_prediction",
+  "sample_max_value": 1.0,
+  "shift": 3.0,
+  "solver_order": 2,
+  "solver_p": null,
+  "solver_type": "bh2",
+  "steps_offset": 0,
+  "thresholding": false,
+  "timestep_spacing": "linspace",
+  "use_dynamic_shifting": false
+}

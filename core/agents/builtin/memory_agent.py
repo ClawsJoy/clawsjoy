@@ -85,12 +85,6 @@ class MemoryAgent(SmartAgent):
             "user_id": self.user_id
         }
 
-    def can_handle(self, user_input: str) -> dict:
-        """判断是否能处理该请求"""
-        memory_keywords = ["记住", "忘记", "回忆", "记得", "记录", "保存", "备忘录"]
-        score = sum(1 for kw in memory_keywords if kw in user_input)
-        return {"can": score >= 1, "confidence": min(score / 3, 1.0)}
-
 
 # 注意：不创建全局实例（单例模式）
 

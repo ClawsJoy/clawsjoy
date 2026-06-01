@@ -33,26 +33,34 @@ class OrchestratorAgent(SmartAgent):
         print(f"[Orchestrator] 初始化完成")
 
     def smart_route(self, user_input: str) -> str:
-        """关键词路由 - 从 routing_keywords.yaml 读取"""
+        """能力声明式路由 - 从 agent_capabilities 读取"""
         user_lower = user_input.lower()
         
-        # 加载路由配置
+        # 加载能力声明
         try:
-            with open('config/routing_keywords.yaml', 'r') as f:
-                import yaml
+            from pathlib import Path
+            import yaml
+            config_path = Path("config/keywords.yaml")
+            with open(config_path, "r") as f:
                 config = yaml.safe_load(f)
-                routing_keywords = config.get('routing_keywords', {})
-        except:
-            routing_keywords = {}
+                capabilities = config.get("agent_capabilities", {})
+        except Exception as e:
+            print(f"⚠️ 加载能力声明失败: {e}")
+            capabilities = {}
         
         best_match = "chat_agent"
         best_score = 0
         
-        for agent, keywords in routing_keywords.items():
-            score = sum(1 for kw in keywords if kw in user_lower)
-            if score > best_score:
-                best_score = score
-                best_match = agent
+        for agent_name, capability in capabilities.items():
+            capable_of = capability.get("capable_of", [])
+            priority = capability.get("priority", 10)
+            # 计算匹配分数
+            score = sum(1 for kw in capable_of if kw in user_lower)
+            # 优先级加权
+            weighted_score = score * (priority / 10)
+            if weighted_score > best_score:
+                best_score = weighted_score
+                best_match = agent_name
         
         return best_match
 
@@ -112,7 +120,7 @@ class OrchestratorAgent(SmartAgent):
         from pathlib import Path
         
         hard_rules = {}
-        config_path = Path("config/routing_keywords.yaml")
+        config_path = Path("config/keywords.yaml")
         if config_path.exists():
             try:
                 with open(config_path, 'r') as f:

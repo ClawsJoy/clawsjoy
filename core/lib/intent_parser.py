@@ -14,6 +14,92 @@ from core.lib.unified_config import unified_config
 
 class IntentParser:
     INTENT_PATTERNS = {
+
+        "脚本生成": {
+            "keywords": ["生成脚本", "写脚本", "视频脚本", "脚本创作", "帮我写脚本", "写一个脚本"],
+            "skills": ["youtube_agent"],
+            "priority": 30
+        },
+        "内容日历": {
+            "keywords": ["日历", "排期", "内容日历", "查看日历", "发布日历", "内容排期"],
+            "skills": ["director_agent"],
+            "priority": 25
+        },
+        "生产状态": {
+            "keywords": ["生产状态", "制作进度", "进度查询", "状态", "当前进度"],
+            "skills": ["director_agent"],
+            "priority": 25
+        },
+        "导演策划": {
+            "keywords": ["策划", "导演", "内容规划", "拍摄计划", "系列策划"],
+            "skills": ["director_agent"],
+            "priority": 25
+        },
+
+
+        "脚本生成": {
+            "keywords": ["生成脚本", "写脚本", "视频脚本", "脚本创作", "帮我写脚本", "写一个脚本"],
+            "skills": ["youtube_agent"],
+            "priority": 30
+        },
+        "内容日历": {
+            "keywords": ["日历", "排期", "内容日历", "查看日历", "发布日历", "内容排期"],
+            "skills": ["director_agent"],
+            "priority": 25
+        },
+        "生产状态": {
+            "keywords": ["生产状态", "制作进度", "进度查询", "状态", "当前进度"],
+            "skills": ["director_agent"],
+            "priority": 25
+        },
+        "导演策划": {
+            "keywords": ["策划", "导演", "内容规划", "拍摄计划", "系列策划"],
+            "skills": ["director_agent"],
+            "priority": 25
+        },
+
+
+        "脚本生成": {
+            "keywords": ["生成脚本", "写脚本", "视频脚本", "脚本创作", "帮我写脚本", "写一个脚本"],
+            "skills": ["youtube_agent"],
+            "priority": 30
+        },
+        "内容日历": {
+            "keywords": ["日历", "排期", "内容日历", "查看日历", "发布日历", "内容排期"],
+            "skills": ["director_agent"],
+            "priority": 25
+        },
+        "生产状态": {
+            "keywords": ["生产状态", "制作进度", "进度查询", "状态", "当前进度"],
+            "skills": ["director_agent"],
+            "priority": 25
+        },
+        "导演策划": {
+            "keywords": ["策划", "导演", "内容规划", "拍摄计划", "系列策划"],
+            "skills": ["director_agent"],
+            "priority": 25
+        },
+
+        "脚本生成": {
+            "keywords": ["生成脚本", "写脚本", "视频脚本", "脚本创作", "帮我写脚本", "写一个脚本"],
+            "skills": ["youtube_agent"],
+            "priority": 30
+        },
+        "内容日历": {
+            "keywords": ["日历", "排期", "内容日历", "查看日历", "发布日历", "内容排期"],
+            "skills": ["director_agent"],
+            "priority": 25
+        },
+        "生产状态": {
+            "keywords": ["生产状态", "制作进度", "进度查询", "状态", "当前进度"],
+            "skills": ["director_agent"],
+            "priority": 25
+        },
+        "导演策划": {
+            "keywords": ["策划", "导演", "内容规划", "拍摄计划", "系列策划"],
+            "skills": ["director_agent"],
+            "priority": 25
+        },
         "代码编写": {
             "keywords": ["写代码", "编程", "代码", "python", "java", "javascript", "函数", "算法", "开发", "写个程序", "帮我写", "代码能力"],
             "skills": ["code_agent"],

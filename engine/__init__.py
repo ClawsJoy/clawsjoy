@@ -49,6 +49,7 @@ from engine.active_learning.core import active_learning_engine
 from engine.rl.core import rl_engine
 from engine.transfer.core import transfer_engine
 from engine.meta.core import meta_engine
+from engine.youtube.auth import youtube_auth
 
 class AtomicEngine:
     """原子引擎 - 统一入口"""

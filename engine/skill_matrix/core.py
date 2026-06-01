@@ -31,16 +31,27 @@ class SkillMatrixEngine:
             engine_logger.get().warning(f"skill_loader 加载失败: {e}")
     
     def _load_keyword_mapping(self):
-        matching_file = Path("config/skills/skill_matching.yaml")
-        if matching_file.exists():
+        """从统一配置加载关键词映射"""
+        keyword_mapping = {}
+        
+        config_path = Path("config/keywords.yaml")
+        if config_path.exists():
             try:
-                with open(matching_file, 'r') as f:
-                    data = yaml.safe_load(f)
-                    keyword_mapping = data.get('matching', {}).get('keyword_mapping', {})
-                    for keyword, skills in keyword_mapping.items():
-                        self.keyword_mapping[keyword] = skills
-            except:
-                pass
+                with open(config_path, 'r') as f:
+                    import yaml
+                    config = yaml.safe_load(f)
+                    skills = config.get('skills', {})
+                    for skill_name, skill_config in skills.items():
+                        keywords = skill_config.get('keywords', [])
+                        for keyword in keywords:
+                            if keyword not in keyword_mapping:
+                                keyword_mapping[keyword] = []
+                            keyword_mapping[keyword].append(skill_name)
+            except Exception as e:
+                print(f"从统一配置加载关键词失败: {e}")
+        
+        self.keyword_mapping = keyword_mapping
+        print(f"✅ 加载了 {len(keyword_mapping)} 个关键词映射")
     
     def _load_all_skills(self):
         if self.skill_loader:

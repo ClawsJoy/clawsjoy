@@ -1,24 +1,24 @@
-"""意图解析器 V2 - 配置驱动，支持热重载"""
+"""配置驱动的意图解析器 - 从统一配置文件读取"""
 
 import yaml
 import re
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Optional, Tuple
 
 class IntentParserV2:
     """配置驱动的意图解析器"""
-    
+
     _instance = None
     _config = None
-    _config_file = Path("config/intents.yaml")
+    _config_file = Path("config/keywords.yaml")  # 改为统一配置
     _last_modified = 0
-    
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._load_config()
         return cls._instance
-    
+
     def _load_config(self):
         """加载配置文件"""
         if self._config_file.exists():
@@ -26,98 +26,90 @@ class IntentParserV2:
                 self._config = yaml.safe_load(f)
                 self._last_modified = self._config_file.stat().st_mtime
         else:
-            self._config = {"intents": {}}
-    
+            # 兼容旧配置
+            old_file = Path("config/intents.yaml")
+            if old_file.exists():
+                with open(old_file, 'r') as f:
+                    self._config = yaml.safe_load(f)
+                    print("⚠️ 使用旧配置文件，建议迁移到 config/keywords.yaml")
+            else:
+                self._config = {"intents": {}}
+
     def _check_reload(self):
         """检查是否需要热重载"""
         if self._config_file.exists():
-            mtime = self._config_file.stat().st_mtime
-            if mtime > self._last_modified:
+            current_mtime = self._config_file.stat().st_mtime
+            if current_mtime > self._last_modified:
                 self._load_config()
                 print("🔄 意图配置已热重载")
-    
-    def parse(self, user_input: str) -> Dict:
-        """解析用户输入"""
+
+    def parse(self, text: str) -> Dict:
+        """解析意图"""
         self._check_reload()
         
-        user_input_lower = user_input.lower()
+        if not text:
+            return {"intent": "unknown", "confidence": 0, "skills": []}
+        
+        text_lower = text.lower()
+        best_intent = None
+        best_score = 0
+        matched_keywords = []
+        
         intents = self._config.get('intents', {})
         
-        # 按优先级排序（高优先级先匹配）
-        sorted_intents = sorted(
-            intents.items(),
-            key=lambda x: x[1].get('priority', 0),
-            reverse=True
-        )
-        
-        for intent_key, intent_config in sorted_intents:
+        for intent_name, intent_config in intents.items():
             keywords = intent_config.get('keywords', [])
+            score = 0
+            matched = []
+            
             for keyword in keywords:
-                # 支持正则表达式匹配
-                if keyword.startswith('.*') or keyword.endswith('.*'):
-                    if re.search(keyword, user_input_lower):
-                        return self._build_result(intent_key, intent_config, user_input)
-                else:
-                    if keyword in user_input_lower:
-                        return self._build_result(intent_key, intent_config, user_input)
+                if keyword in text_lower:
+                    score += 1
+                    matched.append(keyword)
+                # 正则匹配
+                elif keyword.startswith('.*') or keyword.endswith('.*'):
+                    if re.search(keyword, text_lower):
+                        score += 2
+                        matched.append(keyword)
+            
+            if score > best_score:
+                best_score = score
+                best_intent = intent_name
+                matched_keywords = matched
         
-        # 默认返回
+        if best_intent and best_score > 0:
+            intent_config = intents.get(best_intent, {})
+            return {
+                "intent": best_intent,
+                "name": intent_config.get('name', best_intent),
+                "confidence": min(best_score / 5, 1.0),
+                "skills": intent_config.get('skills', []),
+                "priority": intent_config.get('priority', 10),
+                "response_template": intent_config.get('response_template'),
+                "matched_keywords": matched_keywords
+            }
+        
         return {
-            "intent": "general",
+            "intent": "unknown",
+            "confidence": 0,
             "skills": ["chat_agent"],
-            "confidence": 0.3,
-            "message": "未识别明确意图"
+            "matched_keywords": []
         }
     
-    def _build_result(self, intent_key: str, intent_config: Dict, user_input: str) -> Dict:
-        """构建返回结果"""
-        result = {
-            "intent": intent_key,
-            "name": intent_config.get('name', intent_key),
-            "skills": intent_config.get('skills', ['chat_agent']),
-            "confidence": 0.85,
-            "message": f"识别到{intent_config.get('name', intent_key)}意图"
-        }
-        
-        # 实体提取
-        extractors = intent_config.get('extractors', [])
-        for extractor in extractors:
-            entities = self._extract_entities(user_input, extractor)
-            if entities:
-                result['entities'] = entities
-        
-        return result
+    def get_extractors(self) -> Dict:
+        """获取实体提取器配置"""
+        self._check_reload()
+        return self._config.get('extractors', {})
     
-    def _extract_entities(self, text: str, extractor_name: str) -> Dict:
-        """提取实体"""
-        extractors_config = self._config.get('extractors', {})
-        extractor_config = extractors_config.get(extractor_name, {})
-        
-        if extractor_name == 'name':
-            patterns = extractor_config.get('patterns', [])
-            for pattern in patterns:
-                match = re.search(pattern, text)
-                if match:
-                    return {"name": match.group(1)}
-        
-        elif extractor_name == 'city':
-            cities = extractor_config.get('list', [])
-            for city in cities:
-                if city in text:
-                    return {"city": city}
-        
-        return {}
-    
-    def get_intent(self, user_input: str) -> str:
-        """快速获取意图名称"""
-        return self.parse(user_input).get('intent', 'unknown')
+    def get_all_intents(self) -> Dict:
+        """获取所有意图配置"""
+        self._check_reload()
+        return self._config.get('intents', {})
     
     def reload(self):
         """手动重载配置"""
         self._load_config()
-        return {"success": True, "message": "意图配置已重载"}
+        print("✅ 意图配置已重载")
 
-intent_parser_v2 = IntentParserV2()
-
-# 兼容原有接口
-intent_parser = intent_parser_v2
+# 全局实例
+intent_parser = IntentParserV2()

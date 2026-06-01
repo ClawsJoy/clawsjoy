@@ -1,0 +1,119 @@
+import type {
+  AgentConfigData,
+  AgentMode,
+  ConfigOption,
+  ConnectionStatus,
+  PermissionOption,
+  PermissionPolicy,
+  PreflightCheck,
+  PromptInputBlock,
+} from '../../electron/acp/types';
+
+// ─── 前端使用的消息类型 ────────────────────────────────────
+
+export type ContentBlock =
+  | {
+      type: 'session_started';
+      sessionId: string;
+    }
+  | { type: 'text'; text: string }
+  | { type: 'thinking'; text: string }
+  | {
+      type: 'tool_call';
+      toolCallId: string;
+      title: string;
+      kind: string;
+      status: string;
+      rawInput?: string;
+      rawOutput?: string;
+    }
+  | {
+      type: 'tool_call_update';
+      toolCallId: string;
+      title?: string;
+      status?: string;
+      rawInput?: string;
+      rawOutput?: string;
+      rawOutputAppend?: boolean;
+    }
+  | {
+      type: 'turn_complete';
+      stopReason: string;
+    }
+  | {
+      type: 'permission_request';
+      requestId: string;
+      toolCall: unknown;
+      options: PermissionOption[];
+    }
+  | {
+      type: 'file_changed';
+      path: string;
+      before: string | null;
+      after: string;
+    }
+  | {
+      type: 'error';
+      message: string;
+    };
+
+export interface AgentCapabilities {
+  modes: AgentMode[];
+  configOptions: ConfigOption[];
+  forkSupported: boolean;
+}
+
+// ─── AgentAPI 接口（window.agentAPI）────────────────────────
+//
+// 只包含两类 API：
+//   1. 全局配置 / 预检 / 安装管理 —— 和单个会话无关
+//   2. Per-conversation runtime —— 多会话架构的唯一入口
+//
+// 历史上的"单例 ACP 连接" API（connect/disconnect/getStatus/sendPrompt/
+// cancelTurn/setMode/setConfigOption/respondPermission/onStatusChanged/
+// onEvent/onCapabilities）已经在多会话迁移中彻底移除。
+
+export interface AgentAPI {
+  // 设置
+  getConfig(): Promise<AgentConfigData>;
+  saveConfig(data: AgentConfigData): Promise<void>;
+  getApiKey(agentId: string): Promise<string>;
+  setApiKey(agentId: string, key: string): Promise<void>;
+  getPermissionPolicy(): Promise<PermissionPolicy>;
+  setPermissionPolicy(policy: PermissionPolicy): Promise<void>;
+
+  // 预检与安装
+  runPreflight(): Promise<PreflightCheck[]>;
+  installAgent(version: string): Promise<void>;
+  uninstallAgent(): Promise<void>;
+  getLatestVersion(): Promise<string | null>;
+
+  // 多会话 runtime API
+  connectRuntime(input: {
+    conversationId: number;
+    projectDir: string;
+    sessionId?: string | null;
+    agentType?: string;
+  }): Promise<void>;
+  disconnectRuntime(conversationId: number): Promise<void>;
+  sendPromptToConversation(conversationId: number, contents: PromptInputBlock[]): Promise<void>;
+  cancelConversationTurn(conversationId: number): Promise<void>;
+  setConversationMode(conversationId: number, modeId: string): Promise<void>;
+  setConversationConfigOption(conversationId: number, configId: string, valueId: string): Promise<void>;
+  respondConversationPermission(conversationId: number, requestId: string, optionId: string): Promise<void>;
+  onRuntimeStatusChanged(
+    callback: (payload: { conversationId: number; status: ConnectionStatus }) => void,
+  ): () => void;
+  onRuntimeEvent(
+    callback: (payload: { conversationId: number; event: ContentBlock | Record<string, unknown> }) => void,
+  ): () => void;
+  onRuntimeCapabilities(
+    callback: (payload: { conversationId: number; capabilities: AgentCapabilities | Record<string, unknown> }) => void,
+  ): () => void;
+}
+
+declare global {
+  interface Window {
+    agentAPI: AgentAPI;
+  }
+}

@@ -80,6 +80,14 @@ class UnifiedConfig:
         if soul_path:
             self._load_yaml(soul_path, "agents_soul")
 
+        # 关键词配置 (统一关键词配置)
+        keywords_paths = [
+            "config/keywords.yaml",
+        ]
+        keywords_path = self._find_file(keywords_paths)
+        if keywords_path:
+            self._load_yaml(keywords_path, "keywords")
+
     def get(self, path: str, default=None):
         """获取配置值，支持点号路径如 'llm.model'"""
         keys = path.split('.')
