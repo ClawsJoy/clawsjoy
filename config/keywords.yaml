@@ -794,3 +794,25 @@ weighted_keywords:
     天气: 10
     气温: 8
     温度: 7
+engine_config:
+  llm:
+    enabled: true
+    model: qwen2.5:3b
+    priority: 1
+    timeout: 60
+    steady_timeout: 10
+    warmup_timeout: 60
+    confidence_threshold: 0.7
+  vector:
+    enabled: true
+    priority: 2
+    confidence_threshold: 0.5
+    similarity_threshold: 0.3
+  config:
+    enabled: true
+    priority: 3
+    confidence_threshold: 0.3
+  rule:
+    enabled: true
+    priority: 4
+    confidence_threshold: 0.2

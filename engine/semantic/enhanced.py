@@ -55,24 +55,85 @@ class EnhancedSemanticEngine:
         return {'intent': 'unknown', 'entities': {}}
     
     def _find_similar_intents(self, text: str) -> List[Dict]:
-        """基于向量查找相似意图"""
-        # 预定义意图示例
-        intent_examples = {
-            'greeting': ['你好', '您好', '早上好', '下午好', '晚上好'],
-            'query': ['这是什么', '如何做', '为什么', '什么时候'],
-            'action': ['帮我做', '请回答', '需要帮助', '想要了解'],
-            'code': ['写代码', '编程', '写函数', '写算法'],
-            'weather': ['天气', '气温', '会不会下雨'],
-        }
+        """基于向量查找相似意图 - 从配置动态加载"""
+        # 从 unified_config 加载意图示例
+        intent_examples = self._load_intent_examples()
         
         results = []
         for intent, examples in intent_examples.items():
-            best_sim = max(self.embedding.similarity(text, ex) for ex in examples)
-            if best_sim > 0.3:
-                results.append({'intent': intent, 'similarity': best_sim})
+            if not examples:
+                continue
+            try:
+                best_sim = max(self.embedding.similarity(text, ex) for ex in examples)
+                if best_sim > 0.3:
+                    results.append({'intent': intent, 'similarity': best_sim})
+            except:
+                continue
         
-        return sorted(results, key=lambda x: -x['similarity'])[:3]
+        return sorted(results, key=lambda x: -x['similarity'])[:5]
     
+    def _load_intent_examples(self) -> Dict:
+        """从 keywords.yaml 加载意图示例"""
+        try:
+            from core.lib.unified_config import unified_config
+            intents = unified_config.get("keywords.intents", {})
+            intent_examples = {}
+            for intent_name, intent_config in intents.items():
+                keywords = intent_config.get('keywords', [])
+                if keywords:
+                    intent_examples[intent_name] = keywords[:10]  # 取前10个关键词作为示例
+            # 添加 code 意图（如果不存在）
+            if 'code' not in intent_examples:
+                intent_examples['code'] = ['写代码', '编程', 'python', 'java', 'javascript', '函数', '算法']
+            if 'weather' not in intent_examples:
+                intent_examples['weather'] = ['天气', '气温', '温度', '预报', '下雨', '晴天']
+            if 'translate' not in intent_examples:
+                intent_examples['translate'] = ['翻译', '译成', 'translate', '英文怎么说']
+            if 'calculate' not in intent_examples:
+                intent_examples['calculate'] = ['计算', '加', '减', '乘', '除', '等于']
+            if 'greeting' not in intent_examples:
+                intent_examples['greeting'] = ['你好', '您好', 'hi', 'hello', '在吗']
+            return intent_examples
+        except Exception as e:
+            print(f"加载意图示例失败: {e}")
+            return {
+                'code': ['写代码', '编程', 'python'],
+                'weather': ['天气', '气温'],
+                'translate': ['翻译', '译成'],
+                'calculate': ['计算', '加', '减'],
+                'greeting': ['你好', '您好']
+            }
+    def _load_intent_examples(self) -> Dict:
+        """从 keywords.yaml 加载意图示例"""
+        try:
+            from core.lib.unified_config import unified_config
+            intents = unified_config.get("keywords.intents", {})
+            intent_examples = {}
+            for intent_name, intent_config in intents.items():
+                keywords = intent_config.get('keywords', [])
+                if keywords:
+                    intent_examples[intent_name] = keywords[:10]  # 取前10个关键词作为示例
+            # 添加 code 意图（如果不存在）
+            if 'code' not in intent_examples:
+                intent_examples['code'] = ['写代码', '编程', 'python', 'java', 'javascript', '函数', '算法']
+            if 'weather' not in intent_examples:
+                intent_examples['weather'] = ['天气', '气温', '温度', '预报', '下雨', '晴天']
+            if 'translate' not in intent_examples:
+                intent_examples['translate'] = ['翻译', '译成', 'translate', '英文怎么说']
+            if 'calculate' not in intent_examples:
+                intent_examples['calculate'] = ['计算', '加', '减', '乘', '除', '等于']
+            if 'greeting' not in intent_examples:
+                intent_examples['greeting'] = ['你好', '您好', 'hi', 'hello', '在吗']
+            return intent_examples
+        except Exception as e:
+            print(f"加载意图示例失败: {e}")
+            return {
+                'code': ['写代码', '编程', 'python'],
+                'weather': ['天气', '气温'],
+                'translate': ['翻译', '译成'],
+                'calculate': ['计算', '加', '减'],
+                'greeting': ['你好', '您好']
+            }
     def _extract_entities(self, text: str) -> Dict:
         import re
         entities = {}
