@@ -15,6 +15,15 @@ from core.lib.smart_active_service import smart_service
 
 app = Flask(__name__)
 CORS(app)
+# 主动学习模块
+try:
+    from engine.active.integration import active_loop
+except ImportError:
+    class DummyActiveLoop:
+        def process(self, **kwargs):
+            return {}
+    active_loop = DummyActiveLoop()
+
 
 # ========== 配置 ==========
 DATA_DIR = Path("data")
@@ -152,68 +161,65 @@ def list_agents():
     ]
     return jsonify({'success': True, 'total': len(agents), 'agents': agents})
 
-# ========== 增强对话（集成 Orchestrator） ==========
+# ========== 模式识别查询 ==========
+@app.route('/api/learning/patterns', methods=['GET'])
+def get_patterns():
+    try:
+        from core.lib.pattern_recognizer import pattern_recognizer
+        return jsonify({
+            'success': True,
+            'stats': pattern_recognizer.get_stats(),
+            'rules': pattern_recognizer.data.get('generated_rules', [])
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# ========== 增强对话（集成 Orchestrator v6） ==========
 @app.route('/api/v5/enhanced/chat', methods=['POST'])
 def enhanced_chat():
     data = request.json or {}
     message = data.get('message', '')
     user_id = data.get('user_id', 'guest')
-    
+
     # 提取用户信息
     extract_user_info(message, user_id)
-    
-    # ===== 原子技能和话本匹配（优先于 LLM）=====
+
+    # ========== 原子引擎注入 (v6.0) ==========
     try:
-        from core.agents.builtin.chat_agent import ChatAgent
-        chat_agent = ChatAgent(user_id=user_id)
-        
-        # 原子技能（天气、计算、方言）
-        atomic_result = chat_agent._check_atomic_skill(message)
-        if atomic_result:
-            save_memory(user_id, f"用户说: {message}")
-            save_memory(user_id, f"ClawsJoy说: {atomic_result[:200]}")
-            return jsonify({
-                "success": True,
-                "response": atomic_result,
-                "agent": "atomic_skill",
-                "enhanced": True,
-                "user_id": user_id
-            })
-        
-        # 话本匹配
-        intent = chat_agent._match_intent(message)
-        if intent:
-            template = chat_agent._get_template(intent)
-            if template:
-                save_memory(user_id, f"用户说: {message}")
-                save_memory(user_id, f"ClawsJoy说: {template[:200]}")
-                return jsonify({
-                    "success": True,
-                    "response": template,
-                    "agent": "scriptbook",
-                    "enhanced": True,
-                    "user_id": user_id
-                })
+        from engine.semantic import semantic_engine
+        from engine.profile import profile_engine
+        from engine.knowledge import knowledge_engine
+
+        semantic_result = semantic_engine.understand(message)
+        intent_name = semantic_result.intent
+        intent_confidence = semantic_result.confidence
+        entities = semantic_result.entities if hasattr(semantic_result, 'entities') else {}
+
+        # 用户画像自动更新
+        profile = profile_engine.get_or_create(user_id)
+        if entities.get("name"):
+            profile_engine.update_name(user_id, entities["name"])
+        if entities.get("preference"):
+            profile_engine.add_preference(user_id, entities["preference"])
+
+        # 知识图谱查询
+        kg_result = knowledge_engine.query(message)
+
+        print(f"[原子引擎] user={user_id}, intent={intent_name}, conf={intent_confidence:.2f}, entities={entities}")
     except Exception as e:
-        print(f"原子技能/话本匹配失败: {e}")
-    
-    # 从状态回答
-    direct_answer = answer_from_state(message, user_id)
-    if direct_answer:
-        return jsonify({
-            "success": True,
-            "response": direct_answer,
-            "agent": "state_manager",
-            "enhanced": True,
-            "user_id": user_id
-        })
-    
-    # 使用 Orchestrator 智能路由
+        print(f"[原子引擎] 初始化失败: {e}")
+        intent_name = "unknown"
+        intent_confidence = 0.0
+        entities = {}
+        kg_result = None
+    # ========== 原子引擎注入结束 ==========
+
+    # ===== 1. Orchestrator 智能路由（优先） =====
     try:
-        from core.agents.builtin.orchestrator import OrchestratorAgent
-        orchestrator = OrchestratorAgent(user_id=user_id)
+        from core.agents.builtin.orchestrator_v6 import OrchestratorV6
+        orchestrator = OrchestratorV6(user_id=user_id)
         target_agent = orchestrator.smart_route(message)
-        
+
         if target_agent != "chat_agent":
             # 调用专业 Agent
             module = __import__(f"core.agents.builtin.{target_agent}", fromlist=[target_agent])
@@ -239,11 +245,11 @@ def enhanced_chat():
             result = agent.process(message)
             response = result.get('response', '处理完成')
             agent_used = target_agent
-            
+
             save_memory(user_id, f"用户说: {message}")
             save_memory(user_id, f"{agent_used}说: {response[:200]}")
             record_learning(f"{user_id} -> {target_agent}", True)
-            
+
             return jsonify({
                 "success": True,
                 "response": response,
@@ -252,9 +258,55 @@ def enhanced_chat():
                 "user_id": user_id
             })
     except Exception as e:
-        pass
-    
-    # 调用 LLM 服务
+        print(f"Orchestrator 路由失败: {e}")
+
+    # ===== 2. 原子技能和话本匹配 =====
+    try:
+        from core.agents.builtin.chat_agent import ChatAgent
+        chat_agent = ChatAgent(user_id=user_id)
+
+        # 原子技能（天气、计算、方言）
+        atomic_result = chat_agent._check_atomic_skill(message)
+        if atomic_result:
+            save_memory(user_id, f"用户说: {message}")
+            save_memory(user_id, f"ClawsJoy说: {atomic_result[:200]}")
+            return jsonify({
+                "success": True,
+                "response": atomic_result,
+                "agent": "atomic_skill",
+                "enhanced": True,
+                "user_id": user_id
+            })
+
+        # 话本匹配
+        intent = chat_agent._match_intent(message)
+        if intent:
+            template = chat_agent._get_template(intent)
+            if template:
+                save_memory(user_id, f"用户说: {message}")
+                save_memory(user_id, f"ClawsJoy说: {template[:200]}")
+                return jsonify({
+                    "success": True,
+                    "response": template,
+                    "agent": "scriptbook",
+                    "enhanced": True,
+                    "user_id": user_id
+                })
+    except Exception as e:
+        print(f"原子技能/话本匹配失败: {e}")
+
+    # ===== 3. 从状态回答 =====
+    direct_answer = answer_from_state(message, user_id)
+    if direct_answer:
+        return jsonify({
+            "success": True,
+            "response": direct_answer,
+            "agent": "state_manager",
+            "enhanced": True,
+            "user_id": user_id
+        })
+
+    # ===== 4. 调用 LLM 服务（兜底） =====
     try:
         import requests
         resp = requests.post(
@@ -268,16 +320,31 @@ def enhanced_chat():
             response = f"服务异常: {resp.status_code}"
     except Exception as e:
         response = f"服务繁忙: {e}"
-    
+
     save_memory(user_id, f"用户说: {message}")
     save_memory(user_id, f"ClawsJoy说: {response[:200]}")
     record_learning(f"对话: {user_id} -> {message[:30]}", True)
+
     # 模式识别（自动发现规律）
     try:
         from core.lib.pattern_recognizer import pattern_recognizer
-        pattern_recognizer.record_behavior(user_id, message, response, agent_used)
+        pattern_recognizer.record_behavior(user_id, message, response, "chat_agent")
     except:
         pass
+    # 主动学习闭环（最后）
+    try:
+        from engine.active.integration import active_loop
+        learn_result = active_loop.process(
+            user_id=user_id,
+            message=message,
+            response=response,
+            intent=intent_name,
+            confidence=intent_confidence,
+            success=True
+        )
+    except Exception as e:
+        print(f"[主动学习] 处理失败: {e}")
+
     return jsonify({
         "success": True,
         "response": response,
@@ -285,7 +352,6 @@ def enhanced_chat():
         "enhanced": True,
         "user_id": user_id
     })
-
 # ========== 记忆路由 ==========
 @app.route('/api/v5/memory/remember', methods=['POST'])
 def memory_remember():
@@ -545,7 +611,7 @@ def enhanced_chat_stream():
     data = request.json or {}
     message = data.get('message', '')
     user_id = data.get('user_id', 'guest')
-    
+
     def generate():
         memories = search_memories(user_id, message)
         if memories:
@@ -565,7 +631,7 @@ def enhanced_chat_stream():
             yield "data: {}\n\n".format(json.dumps({'type': 'end'}))
         except Exception as e:
             yield f"data: {json.dumps({'type': 'error', 'content': str(e)})}\n\n"
-    
+
     return Response(generate(), mimetype='text/event-stream')
 
 # ========== 热重载 ==========
@@ -592,6 +658,7 @@ def metrics_endpoint():
     except:
         return jsonify({'success': False, 'error': 'metrics not available'}), 500
 
+# ========== 启动入口 ==========
 if __name__ == '__main__':
     port = unified_config.get("services.gateway.port", 5002)
     smart_service.start()
@@ -600,16 +667,3 @@ if __name__ == '__main__':
     print(f"   Workers: 4, Threads: 8, 并发: 32")
     print("=" * 50)
     app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
-
-# ========== 模式识别查询 ==========
-@app.route('/api/learning/patterns', methods=['GET'])
-def get_patterns():
-    try:
-        from core.lib.pattern_recognizer import pattern_recognizer
-        return jsonify({
-            'success': True,
-            'stats': pattern_recognizer.get_stats(),
-            'rules': pattern_recognizer.data.get('generated_rules', [])
-        })
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
