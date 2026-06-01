@@ -71,7 +71,6 @@ class DecisionConsumer:
             return
 
         processing_path = self.processing_dir / task_file.name
-        # 检查文件是否存在
         if not task_file.exists():
             print(f"⚠️ 文件不存在，跳过: {task_file}")
             return
@@ -83,8 +82,11 @@ class DecisionConsumer:
         print(f"[消费者] 处理: {message}")
 
         try:
+            gateway_host = unified_config.get("services.gateway.host", "localhost")
+            gateway_port = unified_config.get("services.gateway.port", 5002)
+            url = f"http://{gateway_host}:{gateway_port}/api/agent/decision_agent/message"
             resp = requests.post(
-                "http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/agent/decision_agent/message",
+                url,
                 json={"message": message, "user_id": user_id},
                 timeout=30
             )
@@ -99,30 +101,22 @@ class DecisionConsumer:
             "id": f"response_{task_file.stem}.json",
             "from": "decision_agent",
             "to": "butler",
-            "user_id": user_id,
             "response": response_text,
-            "original_task": task,
+            "user_id": user_id,
             "timestamp": datetime.now().isoformat()
         }
 
-        response_file = self.response_dir / response_task["id"]
-        with open(response_file, 'w') as f:
+        response_path = self.response_dir / f"resp_{task_file.stem}.json"
+        with open(response_path, 'w') as f:
             json.dump(response_task, f, indent=2)
 
         # 主动推送
         self._push_notification(user_id, response_text, task_file.stem)
 
-        # 标记完成
-        task["status"] = "completed"
-        task["result"] = result
-        task["completed_at"] = datetime.now().isoformat()
-
-        completed_file = self.completed_dir / task_file.name
-        with open(completed_file, 'w') as f:
-            json.dump(task, f, indent=2)
-
-        processing_path.unlink()
-        print(f"[消费者] 完成: {message} -> {response_text[:50]}")
+        # 清理
+        if processing_path.exists():
+            processing_path.unlink()
 
 
+# 全局实例
 decision_consumer = DecisionConsumer()

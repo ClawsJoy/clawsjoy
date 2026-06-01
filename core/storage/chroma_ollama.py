@@ -19,7 +19,7 @@ class OllamaEmbeddingFunction:
     """符合 ChromaDB 要求的 Embedding 函数"""
     
     def __init__(self):
-        self.url = "http://{unified_config.get("llm.endpoint", "http://localhost:11434")}/api/embeddings"
+        self.url = f"http://{unified_config.get("llm.endpoint", "http://localhost:11434")}/api/embeddings"
         self.model = config_helper.get_embedding_model()
     
     def __call__(self, input: List[str]) -> List[List[float]]:

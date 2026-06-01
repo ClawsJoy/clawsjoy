@@ -17,7 +17,7 @@ class LocalEmbedding:
     """本地 embedding 服务 - 使用 Ollama"""
     
     def __init__(self):
-        self.url = "http://{unified_config.get("llm.endpoint", "http://localhost:11434")}/api/embeddings"
+        self.url = f"http://{unified_config.get("llm.endpoint", "http://localhost:11434")}/api/embeddings"
         self.model = config_helper.get_embedding_model()  # 本地已有模型
     
     def encode(self, text: str) -> List[float]:

@@ -42,17 +42,14 @@ class VideoIndexerAgent(SmartAgent):
         try:
             # 获取视频时长
             result = subprocess.run(
-                ['ffprobe', '-v', 'error', '-show_entries', 'format=duration', 
+                ['ffprobe', '-v', 'error', '-show_entries', 'format=duration',
                  '-of', 'default=noprint_wrappers=1:nokey=1', video_path],
                 capture_output=True, text=True
             )
             try:
-                try:
                 duration = float(result.stdout.strip())
             except (ValueError, TypeError):
                 duration = 30.0
-            except (ValueError, TypeError):
-                duration = 0
 
             # 计算帧间隔
             step = duration / (max_frames + 1)
@@ -61,12 +58,12 @@ class VideoIndexerAgent(SmartAgent):
                 for i in range(max_frames):
                     timestamp = step * (i + 1)
                     frame_path = Path(tmpdir) / f"frame_{i}.jpg"
-                    
+
                     subprocess.run([
                         'ffmpeg', '-ss', str(timestamp), '-i', video_path,
                         '-vframes', '1', '-q:v', '2', str(frame_path)
                     ], capture_output=True)
-                    
+
                     if frame_path.exists():
                         frames.append(str(frame_path))
         except Exception as e:
@@ -98,49 +95,30 @@ class VideoIndexerAgent(SmartAgent):
         for frame_path in frames:
             result = self.vision_skill.execute({
                 "image_path": frame_path,
-                "prompt": "描述这张视频画面"
+                "task": "describe"
             })
-            if result.get('success'):
-                descriptions.append(result.get('description', ''))
-
-        # 获取视频元数据
-        try:
-            result = subprocess.run(
-                ['ffprobe', '-v', 'error', '-show_entries', 'format=duration', 
-                 '-of', 'default=noprint_wrappers=1:nokey=1', video_path],
-                capture_output=True, text=True
-            )
-            try:
-                try:
-                duration = float(result.stdout.strip())
-            except (ValueError, TypeError):
-                duration = 30.0
-            except (ValueError, TypeError):
-                duration = 0 if result.stdout else 0
-
-            result2 = subprocess.run(
-                ['ffprobe', '-v', 'error', '-select_streams', 'v:0', 
-                 '-show_entries', 'stream=width,height', 
-                 '-of', 'default=noprint_wrappers=1', video_path],
-                capture_output=True, text=True
-            )
-            resolution = result2.stdout.strip().replace('\n', 'x')
-        except:
-            duration = 0
-            resolution = "unknown"
-
-        # 合并描述
-        combined = f"视频: {path.name}\n时长: {duration:.1f}秒\n分辨率: {resolution}\n"
-        if descriptions:
-            combined += f"画面描述: {' '.join(descriptions[:3])}"
+            if result and result.get("success"):
+                descriptions.append(result.get("description", ""))
+            else:
+                descriptions.append("无法识别该帧")
 
         return {
             "success": True,
-            "description": combined,
-            "frames_analyzed": len(frames),
-            "duration": duration,
-            "resolution": resolution
+            "description": " | ".join(descriptions),
+            "frames_analyzed": len(frames)
         }
 
+    def process(self, message: str, **kwargs) -> Dict:
+        """处理请求"""
+        if "描述" in message or "分析" in message:
+            # 提取视频路径
+            import re
+            video_match = re.search(r'([^\s]+\.(mp4|avi|mov|mkv))', message)
+            if video_match:
+                return self.describe_video(video_match.group(1))
+            return {"success": False, "error": "请提供视频文件路径"}
+        return {"success": False, "error": "不支持的操作"}
 
-video_indexer = VideoIndexerAgent()
+
+# 全局实例
+video_indexer_agent = VideoIndexerAgent()
