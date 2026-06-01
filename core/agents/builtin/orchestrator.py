@@ -1,160 +1,159 @@
-#!/usr/bin/env python3
-"""Orchestrator - Orchestrator 模块
+# version: 2.0.0 - 四引擎完整版 (LLM+向量+配置+规则)
+# 更新日期: 2026-06-02
 
-@version: 5.0.0
-@author: ClawsJoy
-@date: 2026-05-31
-"""
+"""Orchestrator - 四引擎完整版（兼容 OrchestratorAgent）"""
 
-import logging
-import time
-import requests
-import json
-from datetime import datetime
-from pathlib import Path
-from typing import Dict, Optional, List
-from core.agents.base.smart_agent import SmartAgent
-from core.lib.workspace_manager import workspace_manager
-from core.lib.smart_adapter import smart_adapter
+from typing import Dict, List, Optional
+from core.lib.unified_config import unified_config
 
 
-class OrchestratorAgent(SmartAgent):
-    """任务编排器 - 真正的任务分解"""
-
-    name = "orchestrator"
-    description = "任务编排与分发"
-    type = "core"
-    version = "2.0.0"
-
-    def __init__(self, user_id: str = "default"):
-        self._load_agent_config()
-        super().__init__(user_id=user_id)
-        self.behavior = workspace_manager.get_behavior_config("orchestrator")
-        print(f"[Orchestrator] 初始化完成")
-
-    def smart_route(self, user_input: str) -> str:
-        """能力声明式路由 - 从 agent_capabilities 读取"""
-        user_lower = user_input.lower()
-        
-        # 加载能力声明
+class OrchestratorV6:
+    """智能体编排器 V6 - 四引擎完整版"""
+    
+    def __init__(self, user_id: str = "anonymous"):
+        self.user_id = user_id
+        self._intent_map = None
+        self._route_stats = {"total": 0, "keyword_hits": 0, "vector_hits": 0, "fallback": 0, "avg_time_ms": 0}
+    
+    # ========== 四引擎调用链 ==========
+    
+    def _llm_understand(self, message: str):
         try:
-            from pathlib import Path
-            import yaml
-            config_path = Path("config/keywords.yaml")
-            with open(config_path, "r") as f:
-                config = yaml.safe_load(f)
-                capabilities = config.get("agent_capabilities", {})
-        except Exception as e:
-            print(f"⚠️ 加载能力声明失败: {e}")
-            capabilities = {}
-        
-        best_match = "chat_agent"
-        best_score = 0
-        
-        for agent_name, capability in capabilities.items():
-            capable_of = capability.get("capable_of", [])
-            priority = capability.get("priority", 10)
-            # 计算匹配分数
-            score = sum(1 for kw in capable_of if kw in user_lower)
-            # 优先级加权
-            weighted_score = score * (priority / 10)
-            if weighted_score > best_score:
-                best_score = weighted_score
-                best_match = agent_name
-        
-        return best_match
-
-
+            from engine.semantic.engines.llm_engine import llm_engine
+            if llm_engine.is_available():
+                intent, conf, _ = llm_engine.understand(message)
+                if conf > 0.3:
+                    return intent, conf, "llm"
+        except:
+            pass
+        return None, 0, None
+    
+    def _vector_understand(self, message: str):
+        try:
+            from core.lib.vector_knowledge_center import vector_knowledge_center
+            skills_collection = vector_knowledge_center.collections.get("skills")
+            if skills_collection:
+                results = skills_collection.query(query_texts=[message], n_results=3)
+                if results and results.get('metadatas') and results['metadatas'][0]:
+                    meta = results['metadatas'][0][0]
+                    intent = meta.get('name', 'unknown')
+                    dist = results['distances'][0][0] if results.get('distances') else 1
+                    conf = 1 - min(dist, 1.0)
+                    if conf > 0.3:
+                        return intent, conf, "vector"
+        except:
+            pass
+        return None, 0, None
+    
+    def _config_understand(self, message: str):
+        try:
+            from engine.semantic.engines.config_engine import config_engine
+            intent, conf, _ = config_engine.understand(message)
+            if conf > 0.2:
+                return intent, conf, "config"
+        except:
+            pass
+        return None, 0, None
+    
+    def _rule_understand(self, message: str):
+        try:
+            from engine.semantic.engines.rule_engine import rule_engine
+            intent, conf, _ = rule_engine.understand(message)
+            return intent, conf, "rule"
+        except:
+            return "unknown", 0, "rule"
+    
+    # ========== Agent 映射 ==========
+    
+    def _get_intent_map(self) -> Dict:
+        if self._intent_map is not None:
+            return self._intent_map
+        capabilities = unified_config.get("keywords.agent_capabilities", {})
+        intent_map = {}
+        for agent_name in capabilities.keys():
+            base_name = agent_name.replace('_agent', '').replace('_skill', '')
+            intent_map[base_name] = agent_name
+            intent_map[agent_name] = agent_name
+        extra_map = {
+            'weather': 'weather_skill', 'translate': 'translate_agent',
+            'code': 'code_agent', 'video': 'video_agent',
+            'analysis': 'analysis_agent', 'memory': 'memory_agent',
+            'greeting': 'chat_agent', 'thanks': 'chat_agent',
+            'farewell': 'chat_agent', 'calculate': 'calculator',
+        }
+        intent_map.update(extra_map)
+        self._intent_map = intent_map
+        return intent_map
+    
+    def _intent_to_agent(self, intent: str) -> str:
+        intent_map = self._get_intent_map()
+        if intent in intent_map:
+            return intent_map[intent]
+        if intent + "_agent" in intent_map:
+            return intent + "_agent"
+        return "chat_agent"
+    
+    # ========== 核心路由 ==========
+    
+    def smart_route(self, message: str) -> str:
+        intent, conf, source = self._llm_understand(message)
+        if intent:
+            print(f"[Orchestrator] LLM: {intent}({conf:.2f})")
+            return self._intent_to_agent(intent)
+        intent, conf, source = self._vector_understand(message)
+        if intent:
+            print(f"[Orchestrator] 向量: {intent}({conf:.2f})")
+            return self._intent_to_agent(intent)
+        intent, conf, source = self._config_understand(message)
+        if intent:
+            print(f"[Orchestrator] 配置: {intent}({conf:.2f})")
+            return self._intent_to_agent(intent)
+        intent, conf, source = self._rule_understand(message)
+        print(f"[Orchestrator] 规则: {intent}({conf:.2f})")
+        return self._intent_to_agent(intent)
+    
+    def decompose_task(self, task: str) -> Dict:
+        try:
+            from engine.semantic import semantic_engine
+            result = semantic_engine.understand(task)
+            return {'intent': result.intent, 'subtasks': []}
+        except:
+            return {'intent': 'unknown', 'subtasks': []}
+    
+    # ========== 兼容方法 ==========
+    
     def agent_decide_route(self, user_input: str, candidates: list) -> str:
-        """让候选 Agent 自己决定是否适合处理"""
         for agent_name in candidates:
             try:
                 module = __import__(f"core.agents.builtin.{agent_name}", fromlist=[agent_name])
                 class_name = agent_name.replace('_', ' ').title().replace(' ', '') + "Agent"
                 agent_class = getattr(module, class_name)
                 agent = agent_class(self.user_id)
-                
-                # 询问 Agent 是否适合
                 if hasattr(agent, 'can_handle'):
                     result = agent.can_handle(user_input)
                     if result.get('can', False):
-                        print(f"[Agent自决] '{user_input[:30]}...' → {agent_name} (置信度: {result.get('confidence', 0)})")
                         return agent_name
-            except Exception as e:
+            except:
                 continue
         return candidates[0] if candidates else "chat_agent"
-
+    
     def vector_route(self, user_input: str) -> str:
-        """基于向量的智能路由（向量优先，关键词降级）"""
-        user_lower = user_input.lower()
-        
-        # 1. 向量检索（优先）
-        try:
-            from core.lib.vector_knowledge_center import vector_knowledge_center
-            
-            collection = vector_knowledge_center._get_collection("agent_capabilities")
-            if collection:
-                results = collection.query(query_texts=[user_input], n_results=3)
-                
-                exclude_agents = [self.name]
-                
-                if results and results.get('ids') and results['ids'][0]:
-                    for i, doc_id in enumerate(results['ids'][0]):
-                        metadata = results['metadatas'][0][i] if results.get('metadatas') else {}
-                        agent_name = metadata.get('agent_name')
-                        score = results['distances'][0][i] if results.get('distances') else 1.0
-                        
-                        if agent_name and agent_name not in exclude_agents:
-                            # 相似度阈值 0.7（越低越相似）
-                            if score < 1.3:
-                                print(f"[向量路由] '{user_input[:30]}...' → {agent_name} (相似度: {score:.2f})")
-                                self._record_route("vector", 0)
-                                return agent_name
-                            else:
-                                print(f"[向量路由] 相似度不足: {agent_name} (score={score:.2f})")
-        except Exception as e:
-            print(f"[向量路由] 失败: {e}")
-        
-        # 2. 关键词路由（降级）
-        import yaml
-        from pathlib import Path
-        
-        hard_rules = {}
-        config_path = Path("config/keywords.yaml")
-        if config_path.exists():
-            try:
-                with open(config_path, 'r') as f:
-                    config = yaml.safe_load(f)
-                    hard_rules = config.get('routing_keywords', {})
-            except Exception as e:
-                print(f"加载关键词配置失败: {e}")
-        
-        for agent, keywords in hard_rules.items():
-            for kw in keywords:
-                if kw in user_lower:
-                    print(f"[关键词路由] '{user_input[:30]}...' → {agent} (匹配: {kw})")
-                    self._record_route("keyword", 0)
-                    return agent
-        
-        # 3. 默认降级
-        self._record_route("fallback", 0)
+        intent, conf, _ = self._vector_understand(user_input)
+        if intent:
+            return self._intent_to_agent(intent)
         return "chat_agent"
+    
     def auto_dispatch(self, user_input: str) -> dict:
-        """自动路由并执行"""
-        target = self.vector_route(user_input)
-        return self.dispatch(user_input, target)
-
+        target = self.smart_route(user_input)
+        return {"target": target, "confidence": 0.8}
+    
     def dispatch(self, task: str, target_agent: str, params: dict = None) -> dict:
-        """分发任务到指定 Agent"""
         try:
-            module_path = f"core.agents.builtin.{target_agent}"
-            module = __import__(module_path, fromlist=[target_agent])
-            
+            module = __import__(f"core.agents.builtin.{target_agent}", fromlist=[target_agent])
             base_name = target_agent.replace('_agent', '')
             class_name = base_name[0].upper() + base_name[1:] + "Agent"
             agent_class = getattr(module, class_name)
             agent = agent_class(self.user_id)
-            
             if params and 'action' in params:
                 method = getattr(agent, params['action'], None)
                 if method:
@@ -163,25 +162,11 @@ class OrchestratorAgent(SmartAgent):
                     result = agent.process(task)
             else:
                 result = agent.process(task)
-            
             return {"success": True, "task": task, "target": target_agent, "result": result}
         except Exception as e:
             return {"success": False, "task": task, "target": target_agent, "error": str(e)}
-
-
-# 注意：不创建全局实例
-
-    # 路由统计
-    _route_stats = {
-        "total": 0,
-        "keyword_hits": 0,
-        "vector_hits": 0,
-        "fallback": 0,
-        "avg_time_ms": 0
-    }
     
     def _record_route(self, route_type: str, duration_ms: float):
-        """记录路由统计"""
         self._route_stats["total"] += 1
         if route_type == "keyword":
             self._route_stats["keyword_hits"] += 1
@@ -189,12 +174,17 @@ class OrchestratorAgent(SmartAgent):
             self._route_stats["vector_hits"] += 1
         else:
             self._route_stats["fallback"] += 1
-        
-        # 更新平均耗时
         total = self._route_stats["total"]
         old_avg = self._route_stats["avg_time_ms"]
-        self._route_stats["avg_time_ms"] = old_avg + (duration_ms - old_avg) / total
+        self._route_stats["avg_time_ms"] = old_avg + (duration_ms - old_avg) / total if total > 0 else duration_ms
     
     def get_route_stats(self) -> dict:
-        """获取路由统计"""
         return self._route_stats
+
+
+# 兼容别名
+class OrchestratorAgent(OrchestratorV6):
+    pass
+
+
+orchestrator = OrchestratorV6()

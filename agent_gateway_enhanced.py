@@ -297,7 +297,7 @@ def enhanced_chat():
 
     # ===== 1. Orchestrator 智能路由（优先） =====
     try:
-        from core.agents.builtin.orchestrator_v6 import OrchestratorV6
+        from core.agents.builtin.orchestrator import OrchestratorV6
         orchestrator = OrchestratorV6(user_id=user_id)
         target_agent = orchestrator.smart_route(message)
 
