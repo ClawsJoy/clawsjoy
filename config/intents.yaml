@@ -1,0 +1,177 @@
+# ============================================
+# 意图配置文件 - 可热重载
+# ============================================
+# 修改后执行: curl -X POST http://localhost:5002/api/reload/intents
+# 无需重启服务
+
+version: "2.0.0"
+updated_at: "2026-06-01"
+
+intents:
+  code:
+    name: "代码编写"
+    keywords:
+      - "写代码"
+      - "编程"
+      - "代码"
+      - "python"
+      - "java"
+      - "javascript"
+      - "函数"
+      - "算法"
+      - "开发"
+      - "写个程序"
+      - "帮我写"
+      - "代码能力"
+      - "你会写代码吗"
+      - "能写代码吗"
+    skills: ["code_agent"]
+    priority: 30
+    response_template: "code"
+    
+  weather:
+    name: "天气查询"
+    keywords:
+      - "天气"
+      - "气温"
+      - "预报"
+      - "温度"
+      - "下雨"
+      - "晴天"
+      - "阴天"
+      - "气象"
+      - "会不会下雨"
+      - "今天天气"
+    skills: ["weather_skill", "weather"]
+    priority: 25
+    response_template: "weather"
+    
+  translate:
+    name: "翻译"
+    keywords:
+      - "翻译"
+      - "译成"
+      - "怎么读"
+      - "英文怎么说"
+      - "中文翻译"
+      - "translate"
+      - "把.*翻译成"
+    skills: ["translate_agent", "translate"]
+    priority: 20
+    response_template: "translate"
+    
+  calculate:
+    name: "计算"
+    keywords:
+      - "计算"
+      - "加法"
+      - "减法"
+      - "乘法"
+      - "除法"
+      - "加"
+      - "减"
+      - "乘"
+      - "除"
+      - "等于"
+      - "多少"
+      - "求和"
+    skills: ["calculator", "math"]
+    priority: 25
+    response_template: "calculate"
+    
+  name_set:
+    name: "名字记忆"
+    keywords:
+      - "我叫"
+      - "名字叫"
+      - "称为"
+      - "我是"
+      - "我的名字是"
+    skills: ["chat_agent"]
+    priority: 15
+    response_template: "remember_name"
+    extractors: ["name"]
+    
+  name_query:
+    name: "名字查询"
+    keywords:
+      - "我叫什么"
+      - "我的名字"
+      - "我名字"
+      - "我叫啥"
+      - "我是谁"
+    skills: ["chat_agent"]
+    priority: 20
+    response_template: "recall_name"
+    
+  greeting:
+    name: "问候"
+    keywords:
+      - "你好"
+      - "您好"
+      - "hi"
+      - "hello"
+      - "在吗"
+      - "早上好"
+      - "晚上好"
+      - "下午好"
+    skills: ["chat_agent"]
+    priority: 10
+    response_template: "greeting"
+    
+  thanks:
+    name: "感谢"
+    keywords:
+      - "谢谢"
+      - "感谢"
+      - "多谢"
+      - "thanks"
+      - "thx"
+    skills: ["chat_agent"]
+    priority: 10
+    response_template: "thanks"
+    
+  farewell:
+    name: "告别"
+    keywords:
+      - "再见"
+      - "拜拜"
+      - "bye"
+      - "88"
+      - "回见"
+    skills: ["chat_agent"]
+    priority: 10
+    response_template: "farewell"
+    
+  capability:
+    name: "能力询问"
+    keywords:
+      - "能做什么"
+      - "有什么功能"
+      - "可以做什么"
+      - "能力"
+      - "你会什么"
+    skills: ["chat_agent"]
+    priority: 10
+    response_template: "capabilities"
+
+# 实体提取器配置
+extractors:
+  name:
+    patterns:
+      - "叫([\\u4e00-\\u9fa5]{2,4})"
+      - "名字[叫是]([\\u4e00-\\u9fa5]{2,4})"
+      - "是([\\u4e00-\\u9fa5]{2,4})"
+      
+  city:
+    list:
+      - "北京"
+      - "上海"
+      - "广州"
+      - "深圳"
+      - "杭州"
+      - "成都"
+      - "武汉"
+      - "西安"
+      - "南京"
+      - "重庆"
