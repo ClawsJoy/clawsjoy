@@ -1,84 +1,40 @@
-version: 2.0.0
-updated_at: '2026-06-01'
-intents:
-  director:
-    name: 导演策划
-    keywords:
-    - 策划
-    - 导演
-    - 视频策划
-    - 内容规划
-    - 拍摄计划
-    - 制作流程
-    - 统筹
-    - 安排拍摄
-    - 导演帮我
-    - 帮我策划
-    - 规划内容
-    - 剧本
-    - 分镜
-    - 漫剧
-    skills:
-    - director_agent
-    priority: 25
-    response_template: director
-  code:
-    name: 代码编写
-    keywords:
-    - 写代码
-    - 编程
-    - 代码
-    - python
-    - java
-    - javascript
-    - 函数
-    - 算法
-    - 开发
-    - 写个程序
-    - 帮我写
-    - 代码能力
-    - 你会写代码吗
-    - 能写代码吗
-    skills:
-    - code_agent
-    priority: 30
-    response_template: code
-  weather:
-    name: 天气查询
-    keywords:
-    - 天气
-    - 气温
-    - 预报
-    - 温度
-    - 下雨
-    - 晴天
-    - 阴天
-    - 气象
-    - 会不会下雨
-    - 今天天气
-    skills:
-    - weather_skill
-    - weather
-    priority: 25
-    response_template: weather
-  translate:
-    name: 翻译
-    keywords:
-    - 翻译
-    - 译成
-    - 怎么读
-    - 英文怎么说
-    - 中文翻译
-    - translate
-    - 把.*翻译成
-    skills:
-    - translate_agent
-    - translate
+_hotreload_timestamp: 1780310254.3297393
+agent_capabilities:
+  analysis_agent:
+    capable_of:
+    - 数据分析
+    - 数据统计
+    - 报表生成
+    - 数据可视化
     priority: 20
-    response_template: translate
-  calculate:
-    name: 计算
-    keywords:
+    requires_context: false
+  analyst_agent:
+    capable_of:
+    - 业务分析
+    - 需求分析
+    - 市场分析
+    - 竞品分析
+    - 商业洞察
+    priority: 20
+    requires_context: false
+  architect_agent:
+    capable_of:
+    - 架构
+    - 设计
+    - 系统设计
+    - 技术选型
+    priority: 20
+    requires_context: false
+  auditor_agent:
+    capable_of:
+    - 审计日志
+    - 合规检查
+    - 安全审计
+    - 权限审计
+    priority: 15
+    requires_context: false
+  calculator:
+    capable_of:
     - 计算
     - 加法
     - 减法
@@ -91,40 +47,10 @@ intents:
     - 等于
     - 多少
     - 求和
-    skills:
-    - calculator
-    - math
     priority: 25
-    response_template: calculate
-  name_set:
-    name: 名字记忆
-    keywords:
-    - 我叫
-    - 名字叫
-    - 称为
-    - 我是
-    - 我的名字是
-    skills:
-    - chat_agent
-    priority: 15
-    response_template: remember_name
-    extractors:
-    - name
-  name_query:
-    name: 名字查询
-    keywords:
-    - 我叫什么
-    - 我的名字
-    - 我名字
-    - 我叫啥
-    - 我是谁
-    skills:
-    - chat_agent
-    priority: 20
-    response_template: recall_name
-  greeting:
-    name: 问候
-    keywords:
+    requires_context: false
+  chat_agent:
+    capable_of:
     - 你好
     - 您好
     - hi
@@ -133,101 +59,326 @@ intents:
     - 早上好
     - 晚上好
     - 下午好
-    skills:
-    - chat_agent
-    priority: 10
-    response_template: greeting
-  thanks:
-    name: 感谢
-    keywords:
     - 谢谢
     - 感谢
-    - 多谢
-    - thanks
-    - thx
-    skills:
-    - chat_agent
-    priority: 10
-    response_template: thanks
-  farewell:
-    name: 告别
-    keywords:
     - 再见
     - 拜拜
-    - bye
-    - '88'
-    - 回见
-    skills:
-    - chat_agent
     priority: 10
-    response_template: farewell
-  capability:
-    name: 能力询问
-    keywords:
-    - 能做什么
-    - 有什么功能
-    - 可以做什么
-    - 能力
-    - 你会什么
-    skills:
-    - chat_agent
-    priority: 10
-    response_template: capabilities
-  analysis:
-    name: 数据分析
-    keywords:
-    - 分析
-    - 统计
-    - 趋势
-    - 报告
-    - 总结
-    - 数据
-    skills:
-    - analysis_agent
+    requires_context: true
+  code_agent:
+    capable_of:
+    - 写代码
+    - 编程
+    - 代码
+    - python
+    - java
+    - javascript
+    - 函数
+    - 算法
+    - 开发
+    - 写个程序
+    - 帮我写
+    - 代码能力
+    priority: 30
+    requires_context: false
+  collaboration_agent:
+    capable_of:
+    - 协作
+    - 合作
+    - 一起
+    - 协同
+    - 团队
+    - 分配任务
+    - 多人
+    priority: 25
+    requires_context: true
+  collector_agent:
+    capable_of:
+    - 收集
+    - 采集
+    - 抓取
+    - 爬虫
+    - 数据收集
+    priority: 15
+    requires_context: false
+  complete_memory_agent:
+    capable_of:
+    - 对话记忆
+    - 会话历史
+    - 上下文记忆
+    - 短期记忆
+    - 刚才说的
+    - 对话历史
+    - 会话
     priority: 20
-    response_template: analysis
-  video:
-    name: 视频处理
-    keywords:
+    requires_context: true
+  copywriter_agent:
+    capable_of:
+    - 写文案
+    - 广告词
+    - 营销文案
+    - 宣传语
+    - 品牌文案
+    - 产品介绍
+    - 推广文案
+    - 社交媒体文案
+    priority: 22
+    requires_context: false
+  decision_agent:
+    capable_of:
+    - 决策
+    - 选择
+    - 判断
+    - 哪个好
+    - 建议
+    - 推荐
+    - 应该
+    priority: 25
+    requires_context: true
+  dialect_agent:
+    capable_of:
+    - 方言
+    - 粤语
+    - 四川话
+    - 东北话
+    - 闽南语
+    - 上海话
+    - 方言翻译
+    - 方言学习
+    priority: 20
+    requires_context: false
+  director_agent:
+    capable_of:
+    - 策划
+    - 导演
+    - 视频策划
+    - 内容规划
+    - 拍摄计划
+    - 制作流程
+    - 统筹
+    - 安排拍摄
+    - 剧本
+    - 分镜
+    - 漫剧
+    priority: 25
+    requires_context: false
+  executor_agent:
+    capable_of:
+    - 执行任务
+    - 运行命令
+    - 启动进程
+    - 部署服务
+    priority: 20
+    requires_context: false
+  frontend_agent:
+    capable_of:
+    - 前端
+    - 界面
+    - UI
+    - 页面
+    - HTML
+    - CSS
+    - React
+    priority: 20
+    requires_context: false
+  hermes_agent:
+    capable_of:
+    - 通信
+    - 消息
+    - 通知
+    - 推送
+    - Hermes
+    priority: 10
+    requires_context: false
+  learning_agent:
+    capable_of:
+    - 机器学习
+    - 训练模型
+    - 学习算法
+    - 强化学习
+    - 深度学习
+    priority: 15
+    requires_context: true
+  living_agent:
+    capable_of:
+    - 生活
+    - 日常
+    - 助手
+    - 管家
+    priority: 10
+    requires_context: true
+  llm_agent:
+    capable_of:
+    - 大语言模型
+    - LLM
+    - GPT
+    - 问答
+    - 通用对话
+    - 聊天
+    - gpt
+    priority: 10
+    requires_context: true
+  memory_agent:
+    capable_of:
+    - 记忆
+    - 短期记忆
+    - 对话记忆
+    - 刚才说的
+    - 之前说过
+    priority: 20
+    requires_context: true
+  metacognitive_agent:
+    capable_of:
+    - 元认知
+    - 思考
+    - 反思
+    - 分析自己
+    - 改进方法
+    priority: 10
+    requires_context: true
+  pure_vector_agent:
+    capable_of:
+    - 向量搜索
+    - 语义搜索
+    - 相似度
+    - embedding
+    priority: 10
+    requires_context: false
+  real_agent:
+    capable_of:
+    - 真实环境
+    - 生产环境
+    - 实际部署
+    - 上线
+    priority: 15
+    requires_context: true
+  security_agent:
+    capable_of:
+    - 安全
+    - 权限
+    - 认证
+    - 加密
+    - 防护
+    - 漏洞
+    priority: 25
+    requires_context: false
+  task_aware_agent:
+    capable_of:
+    - 任务
+    - 待办
+    - 提醒
+    - 日程
+    - 计划
+    - 安排
+    - todo
+    priority: 20
+    requires_context: true
+  translate_agent:
+    capable_of:
+    - 翻译
+    - 译成
+    - 怎么读
+    - 英文怎么说
+    - 中文翻译
+    - translate
+    priority: 20
+    requires_context: false
+  trial_agent:
+    capable_of:
+    - 试用功能
+    - 测试新功能
+    - A/B测试
+    - 实验
+    priority: 10
+    requires_context: true
+  ultimate_memory_agent:
+    capable_of:
+    - 终极记忆
+    - 永久知识
+    - 知识库
+    - 长期存储
+    - 永久记忆
+    - 长期记忆
+    priority: 22
+    requires_context: true
+  user_translate_agent:
+    capable_of:
+    - 用户翻译
+    - 个性化翻译
+    - 习惯用语
+    priority: 15
+    requires_context: true
+  video_agent:
+    capable_of:
     - 剪辑
     - 裁剪
     - 拼接
     - 字幕
     - 转码
-    skills:
-    - video_agent
+    - ffmpeg
+    - mp4
     priority: 20
-    response_template: video
-  file:
-    name: 文件操作
-    keywords:
-    - 文件
-    - 读写
-    - 保存
-    - 读取
-    - 列出
-    skills:
-    - file_agent
+    requires_context: false
+  video_indexer_agent:
+    capable_of:
+    - 视频索引
+    - 视频分析
+    - 视频标签
+    - 视频理解
     priority: 15
-    response_template: file
-extractors:
-  name:
-    patterns:
-    - 叫([\u4e00-\u9fa5]{2,4})
-    - 名字[叫是]([\u4e00-\u9fa5]{2,4})
-    - 是([\u4e00-\u9fa5]{2,4})
-  city:
-    list:
-    - 北京
-    - 上海
-    - 广州
-    - 深圳
-    - 杭州
-    - 成都
-    - 武汉
-    - 西安
-    - 南京
-    - 重庆
+    requires_context: false
+  vision_agent:
+    capable_of:
+    - 图片
+    - 图像
+    - 识别
+    - 看图
+    - 描述图片
+    - 图片分析
+    - OCR
+    - 文字识别
+    priority: 25
+    requires_context: false
+  weather_skill:
+    capable_of:
+    - 天气
+    - 气温
+    - 预报
+    - 温度
+    - 下雨
+    - 晴天
+    - 阴天
+    - 气象
+    - 会不会下雨
+    - 今天天气
+    priority: 25
+    requires_context: false
+  writer_agent:
+    capable_of:
+    - 写故事
+    - 写小说
+    - 写文章
+    - 润色文章
+    - 改作文
+    - 文学创作
+    - 小说情节
+    - 人物设定
+    - 故事大纲
+    priority: 15
+    requires_context: false
+  youtube_agent:
+    capable_of:
+    - youtube
+    - 油管
+    - 上传视频
+    - 频道
+    - 生成脚本
+    - 写脚本
+    - 标题
+    - 描述
+    - 标签
+    priority: 20
+    requires_context: false
 agent_mapping:
   analysis_agent:
     keywords:
@@ -302,160 +453,40 @@ agent_mapping:
     - 油管
     - 上传视频
     - 频道
-skills:
-  code_agent:
+extractors:
+  city:
+    list:
+    - 北京
+    - 上海
+    - 广州
+    - 深圳
+    - 杭州
+    - 成都
+    - 武汉
+    - 西安
+    - 南京
+    - 重庆
+  name:
+    patterns:
+    - 叫([\u4e00-\u9fa5]{2,4})
+    - 名字[叫是]([\u4e00-\u9fa5]{2,4})
+    - 是([\u4e00-\u9fa5]{2,4})
+intents:
+  analysis:
     keywords:
-    - 代码
-    - 编程
-    - 写代码
-    - python
-    - java
-    - javascript
-    - 函数
-    - 算法
-  video_agent:
-    keywords:
-    - 视频
-    - 制作视频
-    - 剪辑
-    - ffmpeg
-    - mp4
-    - 裁剪
-    - 拼接
-    - 字幕
-    - 转码
-  weather_skill:
-    keywords:
-    - 天气
-    - 气温
-    - 预报
-    - 下雨
-    - 晴天
-    - 阴天
-    - 气象
-  translate_agent:
-    keywords:
-    - 翻译
-    - 语言
-    - 英文
-    - 中文
-    - 日语
-    - 译成
-  image_agent:
-    keywords:
-    - 图片
-    - 图像
-    - 生成图片
-    - ai绘画
-    - 画图
-  calculator:
-    keywords:
-    - 计算
-    - 数学
-    - 加
-    - 减
-    - 乘
-    - 除
-    - 加法
-    - 减法
-    - 乘法
-    - 除法
-  file_agent:
-    keywords:
-    - 文件
-    - 读写
-    - 保存
-    - 读取
-    - 列出
-  audio_agent:
-    keywords:
-    - 音频
-    - 语音
-    - tts
-    - 朗读
-    - 配音
-  ai_agent:
-    keywords:
-    - 人工智能
-    - AI
-    - LLM
-    - 机器学习
-  vision_agent:
-    keywords:
-    - 图像
-    - 视觉
-    - 识别
-    - 图片识别
-  director_agent:
-    keywords:
-    - 导演
-    - 策划
-    - 剧本
-    - 分镜
-    - 漫剧
-    - 视频策划
-    - 内容规划
-    - 拍摄计划
-    - 制作流程
-    - 统筹
-agent_capabilities:
-  code_agent:
-    capable_of:
-    - 写代码
-    - 编程
-    - 代码
-    - python
-    - java
-    - javascript
-    - 函数
-    - 算法
-    - 开发
-    - 写个程序
-    - 帮我写
-    - 代码能力
-    priority: 30
-    requires_context: false
-  director_agent:
-    capable_of:
-    - 策划
-    - 导演
-    - 视频策划
-    - 内容规划
-    - 拍摄计划
-    - 制作流程
-    - 统筹
-    - 安排拍摄
-    - 剧本
-    - 分镜
-    - 漫剧
-    priority: 25
-    requires_context: false
-  weather_skill:
-    capable_of:
-    - 天气
-    - 气温
-    - 预报
-    - 温度
-    - 下雨
-    - 晴天
-    - 阴天
-    - 气象
-    - 会不会下雨
-    - 今天天气
-    priority: 25
-    requires_context: false
-  translate_agent:
-    capable_of:
-    - 翻译
-    - 译成
-    - 怎么读
-    - 英文怎么说
-    - 中文翻译
-    - translate
+    - 分析
+    - 统计
+    - 趋势
+    - 报告
+    - 总结
+    - 数据
+    name: 数据分析
     priority: 20
-    requires_context: false
-  calculator:
-    capable_of:
+    response_template: analysis
+    skills:
+    - analysis_agent
+  calculate:
+    keywords:
     - 计算
     - 加法
     - 减法
@@ -468,64 +499,92 @@ agent_capabilities:
     - 等于
     - 多少
     - 求和
+    name: 计算
     priority: 25
-    requires_context: false
-  memory_agent:
-    capable_of:
-    - 记忆
-    - 短期记忆
-    - 对话记忆
-    - 刚才说的
-    - 之前说过
-    priority: 20
-    requires_context: true
-  analysis_agent:
-    capable_of:
-    - 数据分析
-    - 数据统计
-    - 报表生成
-    - 数据可视化
-    priority: 20
-    requires_context: false
-  video_agent:
-    capable_of:
-    - 剪辑
-    - 裁剪
-    - 拼接
-    - 字幕
-    - 转码
-    - ffmpeg
-    - mp4
-    priority: 20
-    requires_context: false
-  writer_agent:
-    capable_of:
-    - 写故事
-    - 写小说
-    - 写文章
-    - 润色文章
-    - 改作文
-    - 文学创作
-    - 小说情节
-    - 人物设定
-    - 故事大纲
+    response_template: calculate
+    skills:
+    - calculator
+    - math
+  capability:
+    keywords:
+    - 能做什么
+    - 有什么功能
+    - 可以做什么
+    - 能力
+    - 你会什么
+    name: 能力询问
+    priority: 10
+    response_template: capabilities
+    skills:
+    - chat_agent
+  code:
+    keywords:
+    - 写代码
+    - 编程
+    - 代码
+    - python
+    - java
+    - javascript
+    - 函数
+    - 算法
+    - 开发
+    - 写个程序
+    - 帮我写
+    - 代码能力
+    - 你会写代码吗
+    - 能写代码吗
+    name: 代码编写
+    priority: 30
+    response_template: code
+    skills:
+    - code_agent
+  director:
+    keywords:
+    - 策划
+    - 导演
+    - 视频策划
+    - 内容规划
+    - 拍摄计划
+    - 制作流程
+    - 统筹
+    - 安排拍摄
+    - 导演帮我
+    - 帮我策划
+    - 规划内容
+    - 剧本
+    - 分镜
+    - 漫剧
+    name: 导演策划
+    priority: 25
+    response_template: director
+    skills:
+    - director_agent
+  farewell:
+    keywords:
+    - 再见
+    - 拜拜
+    - bye
+    - '88'
+    - 回见
+    name: 告别
+    priority: 10
+    response_template: farewell
+    skills:
+    - chat_agent
+  file:
+    keywords:
+    - 文件
+    - 读写
+    - 保存
+    - 读取
+    - 列出
+    name: 文件操作
     priority: 15
-    requires_context: false
-  youtube_agent:
-    capable_of:
-    - youtube
-    - 油管
-    - 上传视频
-    - 频道
-    - 生成脚本
-    - 写脚本
-    - 标题
-    - 描述
-    - 标签
-    priority: 20
-    requires_context: false
-  chat_agent:
-    capable_of:
+    response_template: file
+    skills:
+    - file_agent
+  greeting:
+    keywords:
     - 你好
     - 您好
     - hi
@@ -534,247 +593,204 @@ agent_capabilities:
     - 早上好
     - 晚上好
     - 下午好
+    name: 问候
+    priority: 10
+    response_template: greeting
+    skills:
+    - chat_agent
+  name_query:
+    keywords:
+    - 我叫什么
+    - 我的名字
+    - 我名字
+    - 我叫啥
+    - 我是谁
+    name: 名字查询
+    priority: 20
+    response_template: recall_name
+    skills:
+    - chat_agent
+  name_set:
+    extractors:
+    - name
+    keywords:
+    - 我叫
+    - 名字叫
+    - 称为
+    - 我是
+    - 我的名字是
+    name: 名字记忆
+    priority: 15
+    response_template: remember_name
+    skills:
+    - chat_agent
+  thanks:
+    keywords:
     - 谢谢
     - 感谢
-    - 再见
-    - 拜拜
+    - 多谢
+    - thanks
+    - thx
+    name: 感谢
     priority: 10
-    requires_context: true
-  dialect_agent:
-    capable_of:
-    - 方言
-    - 粤语
-    - 四川话
-    - 东北话
-    - 闽南语
-    - 上海话
-    - 方言翻译
-    - 方言学习
+    response_template: thanks
+    skills:
+    - chat_agent
+  translate:
+    keywords:
+    - 翻译
+    - 译成
+    - 怎么读
+    - 英文怎么说
+    - 中文翻译
+    - translate
+    - 把.*翻译成
+    name: 翻译
     priority: 20
-    requires_context: false
-  collaboration_agent:
-    capable_of:
-    - 协作
-    - 合作
-    - 一起
-    - 协同
-    - 团队
-    - 分配任务
-    - 多人
-    priority: 25
-    requires_context: true
-  decision_agent:
-    capable_of:
-    - 决策
-    - 选择
-    - 判断
-    - 哪个好
-    - 建议
-    - 推荐
-    - 应该
-    priority: 25
-    requires_context: true
-  executor_agent:
-    capable_of:
-    - 执行任务
-    - 运行命令
-    - 启动进程
-    - 部署服务
+    response_template: translate
+    skills:
+    - translate_agent
+    - translate
+  video:
+    keywords:
+    - 剪辑
+    - 裁剪
+    - 拼接
+    - 字幕
+    - 转码
+    name: 视频处理
     priority: 20
-    requires_context: false
-  vision_agent:
-    capable_of:
+    response_template: video
+    skills:
+    - video_agent
+  weather:
+    keywords:
+    - 天气
+    - 气温
+    - 预报
+    - 温度
+    - 下雨
+    - 晴天
+    - 阴天
+    - 气象
+    - 会不会下雨
+    - 今天天气
+    name: 天气查询
+    priority: 25
+    response_template: weather
+    skills:
+    - weather_skill
+    - weather
+skills:
+  ai_agent:
+    keywords:
+    - 人工智能
+    - AI
+    - LLM
+    - 机器学习
+  audio_agent:
+    keywords:
+    - 音频
+    - 语音
+    - tts
+    - 朗读
+    - 配音
+  calculator:
+    keywords:
+    - 计算
+    - 数学
+    - 加
+    - 减
+    - 乘
+    - 除
+    - 加法
+    - 减法
+    - 乘法
+    - 除法
+  code_agent:
+    keywords:
+    - 代码
+    - 编程
+    - 写代码
+    - python
+    - java
+    - javascript
+    - 函数
+    - 算法
+  director_agent:
+    keywords:
+    - 导演
+    - 策划
+    - 剧本
+    - 分镜
+    - 漫剧
+    - 视频策划
+    - 内容规划
+    - 拍摄计划
+    - 制作流程
+    - 统筹
+  file_agent:
+    keywords:
+    - 文件
+    - 读写
+    - 保存
+    - 读取
+    - 列出
+  image_agent:
+    keywords:
     - 图片
     - 图像
+    - 生成图片
+    - ai绘画
+    - 画图
+  translate_agent:
+    keywords:
+    - 翻译
+    - 语言
+    - 英文
+    - 中文
+    - 日语
+    - 译成
+  video_agent:
+    keywords:
+    - 视频
+    - 制作视频
+    - 剪辑
+    - ffmpeg
+    - mp4
+    - 裁剪
+    - 拼接
+    - 字幕
+    - 转码
+  vision_agent:
+    keywords:
+    - 图像
+    - 视觉
     - 识别
-    - 看图
-    - 描述图片
-    - 图片分析
-    - OCR
-    - 文字识别
-    priority: 25
-    requires_context: false
-  task_aware_agent:
-    capable_of:
-    - 任务
-    - 待办
-    - 提醒
-    - 日程
-    - 计划
-    - 安排
-    - todo
-    priority: 20
-    requires_context: true
-  llm_agent:
-    capable_of:
-    - 大语言模型
-    - LLM
-    - GPT
-    - 问答
-    - 通用对话
-    - 聊天
-    - gpt
-    priority: 10
-    requires_context: true
-  learning_agent:
-    capable_of:
-    - 机器学习
-    - 训练模型
-    - 学习算法
-    - 强化学习
-    - 深度学习
-    priority: 15
-    requires_context: true
-  metacognitive_agent:
-    capable_of:
-    - 元认知
-    - 思考
-    - 反思
-    - 分析自己
-    - 改进方法
-    priority: 10
-    requires_context: true
-  complete_memory_agent:
-    capable_of:
-    - 对话记忆
-    - 会话历史
-    - 上下文记忆
-    - 短期记忆
-    - 刚才说的
-    - 对话历史
-    - 会话
-    priority: 20
-    requires_context: true
-  ultimate_memory_agent:
-    capable_of:
-    - 终极记忆
-    - 永久知识
-    - 知识库
-    - 长期存储
-    - 永久记忆
-    - 长期记忆
-    priority: 22
-    requires_context: true
-  analyst_agent:
-    capable_of:
-    - 业务分析
-    - 需求分析
-    - 市场分析
-    - 竞品分析
-    - 商业洞察
-    priority: 20
-    requires_context: false
-  auditor_agent:
-    capable_of:
-    - 审计日志
-    - 合规检查
-    - 安全审计
-    - 权限审计
-    priority: 15
-    requires_context: false
-  user_translate_agent:
-    capable_of:
-    - 用户翻译
-    - 个性化翻译
-    - 习惯用语
-    priority: 15
-    requires_context: true
-  copywriter_agent:
-    capable_of:
-    - 写文案
-    - 广告词
-    - 营销文案
-    - 宣传语
-    - 品牌文案
-    - 产品介绍
-    - 推广文案
-    - 社交媒体文案
-    priority: 22
-    requires_context: false
-  architect_agent:
-    capable_of:
-    - 架构
-    - 设计
-    - 系统设计
-    - 技术选型
-    priority: 20
-    requires_context: false
-  frontend_agent:
-    capable_of:
-    - 前端
-    - 界面
-    - UI
-    - 页面
-    - HTML
-    - CSS
-    - React
-    priority: 20
-    requires_context: false
-  security_agent:
-    capable_of:
-    - 安全
-    - 权限
-    - 认证
-    - 加密
-    - 防护
-    - 漏洞
-    priority: 25
-    requires_context: false
-  video_indexer_agent:
-    capable_of:
-    - 视频索引
-    - 视频分析
-    - 视频标签
-    - 视频理解
-    priority: 15
-    requires_context: false
-  pure_vector_agent:
-    capable_of:
-    - 向量搜索
-    - 语义搜索
-    - 相似度
-    - embedding
-    priority: 10
-    requires_context: false
-  collector_agent:
-    capable_of:
-    - 收集
-    - 采集
-    - 抓取
-    - 爬虫
-    - 数据收集
-    priority: 15
-    requires_context: false
-  trial_agent:
-    capable_of:
-    - 试用功能
-    - 测试新功能
-    - A/B测试
-    - 实验
-    priority: 10
-    requires_context: true
-  living_agent:
-    capable_of:
-    - 生活
-    - 日常
-    - 助手
-    - 管家
-    priority: 10
-    requires_context: true
-  hermes_agent:
-    capable_of:
-    - 通信
-    - 消息
-    - 通知
-    - 推送
-    - Hermes
-    priority: 10
-    requires_context: false
-  real_agent:
-    capable_of:
-    - 真实环境
-    - 生产环境
-    - 实际部署
-    - 上线
-    priority: 15
-    requires_context: true
+    - 图片识别
+  weather_skill:
+    keywords:
+    - 天气
+    - 气温
+    - 预报
+    - 下雨
+    - 晴天
+    - 阴天
+    - 气象
+updated_at: '2026-06-01'
+version: 2.0.0
+weighted_keywords:
+  code_agent:
+    写代码: 10
+    编程: 8
+    python: 7
+    java: 6
+    代码: 5
+  translate_agent:
+    翻译: 10
+    translate: 8
+    译成: 7
+  weather_skill:
+    天气: 10
+    气温: 8
+    温度: 7

@@ -1,6 +1,7 @@
 """配置驱动的意图解析器 - 从统一配置文件读取"""
 
 import yaml
+from core.lib.unified_config import unified_config
 import re
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -64,12 +65,22 @@ class IntentParserV2:
             
             for keyword in keywords:
                 if keyword in text_lower:
-                    score += 1
+                    # 加权匹配
+                    try:
+                        weight = unified_config.get(f"keywords.weighted_keywords.{intent_name}.{keyword}", 1)
+                    except:
+                        weight = 1
+                    score += weight
                     matched.append(keyword)
                 # 正则匹配
                 elif keyword.startswith('.*') or keyword.endswith('.*'):
                     if re.search(keyword, text_lower):
-                        score += 2
+                        # 正则匹配权重更高
+                        try:
+                            weight = unified_config.get(f"keywords.weighted_keywords.{intent_name}.{keyword}", 2)
+                        except:
+                            weight = 2
+                        score += weight
                         matched.append(keyword)
             
             if score > best_score:
