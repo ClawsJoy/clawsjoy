@@ -33,6 +33,15 @@ agent_capabilities:
     - 权限审计
     priority: 15
     requires_context: false
+  blender_skill:
+    capable_of:
+    - blender
+    - 渲染
+    - 3d渲染
+    - 高质量渲染
+    - 离线渲染
+    priority: 25
+    requires_context: false
   calculator:
     capable_of:
     - 计算
@@ -181,6 +190,14 @@ agent_capabilities:
     - React
     priority: 20
     requires_context: false
+  gpu_safe_skill:
+    capable_of:
+    - gpu渲染
+    - 安全渲染
+    - 显卡渲染
+    - cuda渲染
+    priority: 25
+    requires_context: false
   hermes_agent:
     capable_of:
     - 通信
@@ -199,6 +216,18 @@ agent_capabilities:
     - 深度学习
     priority: 15
     requires_context: true
+  light_agent:
+    capable_of:
+    - 光影
+    - 光线
+    - 色彩
+    - 特效
+    - 渲染
+    - 亮度
+    - 饱和度
+    - 滤镜
+    priority: 25
+    requires_context: false
   living_agent:
     capable_of:
     - 生活
@@ -236,6 +265,24 @@ agent_capabilities:
     - 改进方法
     priority: 10
     requires_context: true
+  opengl_skill:
+    capable_of:
+    - opengl
+    - 本地渲染
+    - 实时渲染
+    - 3d实时
+    priority: 20
+    requires_context: false
+  panorama_skill:
+    capable_of:
+    - 全景
+    - 360度
+    - 全景图
+    - vr
+    - 虚拟现实
+    - 环视
+    priority: 25
+    requires_context: false
   pure_vector_agent:
     capable_of:
     - 向量搜索
@@ -273,6 +320,17 @@ agent_capabilities:
     - todo
     priority: 20
     requires_context: true
+  threejs_skill:
+    capable_of:
+    - 3d
+    - 三维
+    - 立体
+    - 立方体
+    - 球体
+    - 旋转
+    - three.js
+    priority: 25
+    requires_context: false
   translate_agent:
     capable_of:
     - 翻译
@@ -453,6 +511,28 @@ agent_mapping:
     - 油管
     - 上传视频
     - 频道
+engine_config:
+  config:
+    confidence_threshold: 0.3
+    enabled: true
+    priority: 3
+  llm:
+    confidence_threshold: 0.7
+    enabled: true
+    model: qwen2.5:3b
+    priority: 1
+    steady_timeout: 10
+    timeout: 60
+    warmup_timeout: 60
+  rule:
+    confidence_threshold: 0.2
+    enabled: true
+    priority: 4
+  vector:
+    confidence_threshold: 0.5
+    enabled: true
+    priority: 2
+    similarity_threshold: 0.3
 extractors:
   city:
     list:
@@ -781,38 +861,16 @@ updated_at: '2026-06-01'
 version: 2.0.0
 weighted_keywords:
   code_agent:
+    java: 6
+    python: 7
+    代码: 5
     写代码: 10
     编程: 8
-    python: 7
-    java: 6
-    代码: 5
   translate_agent:
-    翻译: 10
     translate: 8
+    翻译: 10
     译成: 7
   weather_skill:
     天气: 10
     气温: 8
     温度: 7
-engine_config:
-  llm:
-    enabled: true
-    model: qwen2.5:3b
-    priority: 1
-    timeout: 60
-    steady_timeout: 10
-    warmup_timeout: 60
-    confidence_threshold: 0.7
-  vector:
-    enabled: true
-    priority: 2
-    confidence_threshold: 0.5
-    similarity_threshold: 0.3
-  config:
-    enabled: true
-    priority: 3
-    confidence_threshold: 0.3
-  rule:
-    enabled: true
-    priority: 4
-    confidence_threshold: 0.2

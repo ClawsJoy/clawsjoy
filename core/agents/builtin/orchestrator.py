@@ -5,6 +5,8 @@
 
 from typing import Dict, List, Optional
 from core.lib.unified_config import unified_config
+from engine.semantic.vector_learner import vector_learner
+from core.lib.engine_metrics import engine_metrics
 
 
 class OrchestratorV6:
@@ -101,20 +103,25 @@ class OrchestratorV6:
         intent, conf, source = self._llm_understand(message)
         if intent:
             self._record_route(source, (time.time() - start) * 1000)
+            engine_metrics.record(source, True, (time.time() - start) * 1000)
             print(f"[Orchestrator] LLM: {intent}({conf:.2f})")
+            vector_learner.record_learning(message, intent, conf)
             return self._intent_to_agent(intent)
         intent, conf, source = self._vector_understand(message)
         if intent:
             self._record_route(source, (time.time() - start) * 1000)
+            engine_metrics.record(source, True, (time.time() - start) * 1000)
             print(f"[Orchestrator] 向量: {intent}({conf:.2f})")
             return self._intent_to_agent(intent)
         intent, conf, source = self._config_understand(message)
         if intent:
             self._record_route(source, (time.time() - start) * 1000)
+            engine_metrics.record(source, True, (time.time() - start) * 1000)
             print(f"[Orchestrator] 配置: {intent}({conf:.2f})")
             return self._intent_to_agent(intent)
         intent, conf, source = self._rule_understand(message)
         self._record_route(source, (time.time() - start) * 1000)
+        engine_metrics.record(source, True, (time.time() - start) * 1000)
         print(f"[Orchestrator] 规则: {intent}({conf:.2f})")
         return self._intent_to_agent(intent)
     

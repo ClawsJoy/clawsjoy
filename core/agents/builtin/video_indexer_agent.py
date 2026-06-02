@@ -120,5 +120,13 @@ class VideoIndexerAgent(SmartAgent):
         return {"success": False, "error": "不支持的操作"}
 
 
-# 全局实例
+    def can_handle(self, user_input: str) -> Dict:
+        """判断是否能处理该请求"""
+        keywords = ["视频", "分析", "描述", "识别", "帧", "index", "索引", "内容"]
+        for kw in keywords:
+            if kw in user_input.lower():
+                return {"can": True, "confidence": 0.7}
+        return {"can": False, "confidence": 0.0}
+
+    # 全局实例
 video_indexer_agent = VideoIndexerAgent()

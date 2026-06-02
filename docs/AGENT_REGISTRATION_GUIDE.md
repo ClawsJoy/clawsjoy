@@ -1,21 +1,36 @@
+
+## 2. 更新 Agent 注册指南
+
+```bash
+cd /home/flybo/clawsjoy_v5
+
+echo "=========================================="
+echo "基于实际系统更新 AGENT_REGISTRATION_GUIDE.md"
+echo "=========================================="
+
+# 备份原文件
+cp docs/AGENT_REGISTRATION_GUIDE.md docs/AGENT_REGISTRATION_GUIDE.md.bak
+
+# 更新内容
+cat > docs/AGENT_REGISTRATION_GUIDE.md << 'EOF'
 # ClawsJoy Agent 注册开发指南
 
 ## 版本信息
-- 版本: 1.0.0
-- 更新日期: 2026-05-27
+- 版本: 2.0.0
+- 更新日期: 2026-06-02
 - 适用系统: ClawsJoy v5.0+
 
 ---
 
 ## 一、概述
 
-ClawsJoy Agent 系统采用**配置驱动 + 静态继承**的设计哲学。开发者只需：
+#ClawsJoy Agent 系统采用**三种注册机制并存**的设计：
 
-1. 创建 Agent 类（继承 `SmartAgent`）
-2. 在配置文件中声明
-3. 系统自动发现并注册
+1. **配置文件注册**：通过 `config/agents/registry/agents.yaml`
+2. **工作区注册**：通过 `agents/{agent_name}/config.yaml`
+3. **能力声明注册**：通过 `keywords.yaml` 的 `agent_capabilities`
 
-**无需修改核心代码，无需重启服务（支持热重载）**
+#系统自动发现并注册 Agent，**无需修改核心代码，支持热重载**。
 
 ---
 
@@ -28,7 +43,7 @@ ClawsJoy Agent 系统采用**配置驱动 + 静态继承**的设计哲学。开�
 │ ├── 用户隔离 (user_id) │
 │ ├── 记忆系统 (remember/recall) │
 │ ├── 配置管理 (_config) │
-│ └── 生命周期钩子 (on_init, on_start, on_stop) │
+│ └── 生命周期钩子 │
 │ ↑ │
 │ │ 继承 │
 │ │ │
@@ -40,218 +55,210 @@ ClawsJoy Agent 系统采用**配置驱动 + 静态继承**的设计哲学。开�
 │ ↑ │
 │ │ 继承 │
 │ │ │
-│ CodeAgent, ChatAgent, DecisionAgent... (具体 Agent) │
+│ CodeAgent, ChatAgent, VideoAgent... (具体 Agent) │
 │ │
 └─────────────────────────────────────────────────────────────┘
 
 ---
 
-## 三、快速开始
+## 三、三种注册方式
 
-### 3.1 创建 Agent 类
+### 3.1 方式一：工作区注册（推荐）
 
-```python
-# core/agents/my_agent.py
+**目录结构：**
+#agents/
+├── code_agent/
+│ ├── config.yaml # Agent 配置
+│ ├── memory/ # 记忆存储
+│ └── skills/ # 专属技能
+├── video_agent/
+│ └── config.yaml
+└── ...
 
-from core.agents.smart_agent import SmartAgent
+**配置文件示例 (`agents/code_agent/config.yaml`)：**
+```yaml
+agent:
+  name: code_agent
+  display_name: 代码助手
+  type: builtin
+  enabled: true
+  role:
+    title: "代码工程师"
+    responsibilities:
+      - "生成代码"
+      - "代码审查"
+  llm:
+    provider: ollama
+    model: deepseek-coder:6.7b
+    temperature: 0.2
+  capabilities:
+    - write_code
+    - debug_code
+  keywords:
+    - "写代码"
+    - "编程"
+    - "python"
+###3.2 方式二：配置文件注册
+#文件位置： config/agents/registry/agents.yaml
+#agents:
+  orchestrator:
+    name: "任务编排器"
+    type: "core"
+    capabilities: ["task_planning", "skill_orchestration"]
+    personality: "professional"
+  
+  code_agent:
+    name: "代码助手"
+    type: "custom"
+    capabilities: ["code_generation", "code_review"]
+###3.3 方式三：能力声明注册
+#文件位置： config/keywords.yaml
+agent_capabilities:
+  code_agent:
+    capable_of:
+      - "写代码"
+      - "编程"
+      - "python"
+      - "java"
+    priority: 30
+    requires_context: false
+  
+  video_agent:
+    capable_of:
+      - "剪辑"
+      - "视频"
+      - "制作"
+    priority: 25
+    requires_context: false
+##四、创建 Agent 类
+###4.1 基本模板
+# core/agents/builtin/my_agent.py
+
+from core.agents.base.smart_agent import SmartAgent
+from typing import Dict, Optional
 
 
 class MyAgent(SmartAgent):
     """我的自定义 Agent"""
     
-    name = "my_agent"                    # Agent 唯一标识
-    description = "我的智能助手"          # 描述
-    type = "custom"                      # core / custom / marketplace
-    version = "1.0.0"                    # 版本号
+    name = "my_agent"
+    description = "我的智能助手"
+    type = "custom"
+    version = "2.0.0"
 
     def __init__(self, user_id: str = "default"):
         super().__init__(user_id=user_id)
-        self._load_my_config()
+        print(f"🤖 {self.name} 初始化完成")
 
-    def _load_my_config(self):
-        """加载自定义配置"""
-        import yaml
-        from pathlib import Path
-        config_file = Path("config/agents/my_agent.yaml")
-        if config_file.exists():
-            with open(config_file, 'r') as f:
-                self.my_config = yaml.safe_load(f)
-
-    def process(self, user_input: str, context: dict = None) -> dict:
+    def process(self, user_input: str, context: Optional[Dict] = None) -> Dict:
         """处理用户输入 - 必须实现"""
-        # 使用基类的智能处理
-        result = self.smart_process(user_input, context)
+        msg = user_input.lower()
         
-        return {
-            "success": result.get("success", True),
-            "response": result.get("response", "处理完成"),
-            "agent": self.name,
-            "user_id": self.user_id
-        }
-
-
-# 全局实例（必需）
-my_agent = MyAgent()
-3.2 注册 Agent
-在 config/agents.yaml 中添加配置：
-agents:
-  my_agent:
-    name: "我的智能助手"
-    type: "custom"
-    enabled: true
-    module: "core.agents.my_agent"
-    class: "MyAgent"
-    capabilities:
-      - custom_capability_1
-      - custom_capability_2
-3.3 配置说明
-字段	类型	必填	说明
-name	string	是	显示名称
-type	string	是	core/custom/marketplace
-enabled	boolean	是	是否启用
-module	string	是	Python 模块路径
-class	string	是	Agent 类名
-capabilities	list	否	能力声明
-四、使用 Agent
-4.1 API 调用
-# 发送消息到 Agent
-curl -X POST http://localhost:5002/api/agent/my_agent/message \
-  -H "Content-Type: application/json" \
-  -d '{"message": "你好", "user_id": "test"}'
-
-# 响应
-{
-  "success": true,
-  "response": "你好！有什么可以帮您的？",
-  "agent": "my_agent",
-  "user_id": "test"
-}
-4.2 列出所有 Agent
-curl http://localhost:5002/api/agents/list
-4.3 Agent 间通信
-from lib.agent_bus import get_bus
-
-bus = get_bus()
-bus.publish("my_agent", "topic.event", {"data": "value"})
-五、高级特性
-5.1 继承 SmartAgent 获得的能力
-能力	方法	说明
-任务分解	_decompose_task()	自动将复杂任务拆解为子任务
-工具调用	_execute_subtask()	调用原子技能执行子任务
-自我反思	_reflect()	失败时分析原因并调整策略
-配置驱动	smart_config	通过 YAML 配置行为
-5.2 记忆系统
-# 存储记忆
-self.remember("用户偏好", "喜欢简洁回答")
-
-# 召回记忆
-memories = self.recall("用户偏好", n=5)
-5.3 技能调用
-from lib.skill_loader_v3 import skill_loader
-
-result = skill_loader.execute("skill_name", params)
-六、热重载
-修改配置后，系统自动检测并重新加载：
-# 修改 config/agents.yaml 后
-# 系统会自动检测变化并重新注册
-
-# 或手动触发
-curl -X POST http://localhost:5002/api/admin/agents/reload
-七、示例：创建一个完整的 Agent
-7.1 需求
-创建一个天气助手，用户可以说"今天天气怎么样"
-7.2 实现
-# core/agents/weather_agent.py
-
-from core.agents.smart_agent import SmartAgent
-from lib.skill_loader_v3 import skill_loader
-
-
-class WeatherAgent(SmartAgent):
-    name = "weather_agent"
-    description = "天气助手"
-    type = "custom"
-    version = "1.0.0"
-
-    def process(self, user_input: str, context: dict = None) -> dict:
-        # 调用天气技能
-        result = skill_loader.execute("weather", {"city": self._extract_city(user_input)})
+        # 意图识别
+        if "帮助" in msg:
+            return self._show_help()
+        
+        # 调用技能
+        result = self._call_skill("some_skill", {"input": user_input})
         
         return {
             "success": True,
-            "response": result.get("result", "获取天气失败"),
+            "response": result.get("result", "处理完成"),
             "agent": self.name,
             "user_id": self.user_id
         }
     
-    def _extract_city(self, text: str) -> str:
-        # 简单提取城市名
-        import re
-        match = re.search(r'([\u4e00-\u9fa5]{2,3})天气', text)
-        return match.group(1) if match else "北京"
+    def _show_help(self) -> Dict:
+        return {"success": True, "response": "我可以帮你...", "agent": self.name}
+    
+    def _call_skill(self, skill_name: str, params: dict) -> dict:
+        from core.lib.skill_loader_v3 import skill_loader
+        return skill_loader.execute(skill_name, params)
 
 
-weather_agent = WeatherAgent()
-7.3 注册
-# config/agents.yaml
-agents:
-  weather_agent:
-    name: "天气助手"
-    type: "custom"
-    enabled: true
-    module: "core.agents.weather_agent"
-    class: "WeatherAgent"
-    capabilities: ["weather_query"]
-7.4 测试
-curl -X POST http://localhost:5002/api/agent/weather_agent/message \
-  -d '{"message": "上海天气怎么样"}'
-八、常见问题
-Q1: Agent 没有被加载？
-检查清单：
-1.config/agents.yaml 中 enabled: true
+# 注意：工作区注册方式不需要全局实例
+###4.2 关键要点
+#要素	要求   	说明
+#继承	SmartAgent	获得智能能力
+#name	字符串	Agent 唯一标识
+#description	字符串	功能描述
+#process	方法	必须实现
+#全局实例	可选	工作区方式不需要
+##五、注册 Agent
+###5.1 工作区方式（最简单）
+#创建目录：agents/my_agent/
+#创建 config.yaml
+#系统自动发现
+# 系统启动时自动扫描
+#agents/my_agent/
+├── config.yaml
+└── memory/
+###5.2 配置文件方式
+#编辑 config/agents/registry/agents.yaml，添加 Agent 信息后重启。
+##六、使用 Agent
+###6.1 API 调用
+# 通过 Orchestrator 自动路由
+#curl -X POST http://localhost:5002/api/v5/enhanced/chat \
+#  -H "Content-Type: application/json" \
+ # -d '{"message": "帮我写代码", "user_id": "test"}'
 
-2.module 和 class 路径正确
+# 直接调用特定 Agent
+#curl -X POST http://localhost:5002/api/agent/code_agent/message \
+  -H "Content-Type: application/json" \
+  -d '{"message": "写个Python函数", "user_id": "test"}'
+###6.2 响应格式
+{
+  "success": true,
+  "agent": "code_agent",
+  "response": "这是生成的代码...",
+  "user_id": "test"
+}
+##七、已注册的 Agent 列表
+#Agent	类型	能力	工作区
+#orchestrator	core	任务编排	✅
+#code_agent	custom	代码生成	✅
+#video_agent	custom	视频处理	✅
+#vision_agent	custom	图像识别	✅
+#translate_agent	custom	翻译	✅
+#memory_agent	custom	记忆	✅
+#chat_agent	core	对话	✅
+#...	...	...	...
+##八、热重载
+# 修改配置后自动检测，或手动触发
+#curl -X POST http://localhost:5002/api/admin/agents/reload
+##九、常见问题
+#Q1: Agent 没有被加载？
+#检查清单：
+#工作区目录是否存在？
+#config.yaml 中 enabled: true？
+#类名与配置一致？
+#查看日志：tail -50 logs/error.log
+#Q2: Agent 路由不到？
+#检查：
+#keywords.yaml 中是否有 agent_capabilities 声明？
+#关键词是否匹配？
+#优先级是否设置？
+##十、最佳实践
+#单一职责：一个 Agent 专注一个领域
+#使用技能：具体功能实现为原子技能
+#能力声明：在 keywords.yaml 中声明能力
+#配置驱动：可变参数放到配置文件
+#错误处理：process 方法必须 try-except
+#附录：常用命令
+# 列出所有 Agent
+#curl http://localhost:5002/api/agents/list
+# 查看 Agent 能力
+#curl http://localhost:5002/api/agents/capabilities
+# 热重载
+#curl -X POST http://localhost:5002/api/admin/agents/reload
+#本指南基于 ClawsJoy v5.0 实际验证，反映当前系统实现
+EOF
 
-3.Python 文件语法正确
+echo "✅ Agent 注册指南已更新"
 
-4.类名与配置一致
-Q2: Agent 返回空响应？
-检查：
-1.process 方法是否返回包含 response 字段的字典
-
-2.是否调用了 super().__init__(user_id)
-
-3.查看网关日志 tail -50 logs/gateway.log
-Q3: 如何调试 Agent？
-# 在 Agent 中添加日志
-self.log(f"处理: {user_input}")
-self.log(f"结果: {result}")
-九、最佳实践
-1.命名规范：Agent 名使用小写加下划线（如 my_agent）
-
-2.单一职责：一个 Agent 专注一个领域
-
-3.使用技能：具体功能实现为原子技能，Agent 负责编排
-
-4.配置驱动：可变参数放到配置文件
-
-5.错误处理：process 方法必须 try-except
-十、参考
-BaseAgent: core/agents/base_agent.py
-
-SmartAgent: core/agents/smart_agent.py
-
-Agent 配置: config/agents.yaml
-
-API 文档: docs/API.md
-本指南基于 ClawsJoy v5.0 编写，遵循配置驱动设计哲学
-
-说明书已创建，包含：
-- 架构设计
-- 快速开始
-- 配置说明
-- API 使用
-- 高级特性
-- 完整示例
-- 常见问题
-- 最佳实践
+echo ""
+echo "=========================================="
+echo "两份手册已更新完成"
+echo "=========================================="
+ls -la docs/OPENCLAW_SKILL_SPECIFICATION.md
+ls -la docs/AGENT_REGISTRATION_GUIDE.md
