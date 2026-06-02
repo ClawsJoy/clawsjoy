@@ -92,3 +92,6 @@ nohup.out
 __pycache__/
 *.pyc
 *.pyo
+.env
+*.db
+*.log
