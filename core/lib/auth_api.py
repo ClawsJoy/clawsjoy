@@ -27,7 +27,7 @@ if CONFIG_FILE.exists():
         JWT_ALGORITHM = jwt_config.get('algorithm', 'HS256')
         JWT_EXPIRY_HOURS = jwt_config.get('expire_hours', 24)
 else:
-    JWT_SECRET = "clawsjoy-production-secret-key-2024"
+    JWT_SECRET = os.getenv("JWT_SECRET", "change-me-in-production")
     JWT_ALGORITHM = "HS256"
     JWT_EXPIRY_HOURS = 24
 
