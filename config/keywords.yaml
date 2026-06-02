@@ -88,7 +88,18 @@ agent_capabilities:
     - 写个程序
     - 帮我写
     - 代码能力
-    priority: 30
+    - 3d
+    - 三维
+    - 立方体
+    - 球体
+    - 立体
+    - 旋转
+    - three.js
+    - 3D场景
+    - threejs
+    - 生成.*3D
+    - 红色立方体
+    priority: 50
     requires_context: false
   collaboration_agent:
     capable_of:
@@ -329,7 +340,7 @@ agent_capabilities:
     - 球体
     - 旋转
     - three.js
-    priority: 25
+    priority: 1
     requires_context: false
   translate_agent:
     capable_of:

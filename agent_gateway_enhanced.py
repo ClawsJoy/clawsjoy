@@ -227,7 +227,7 @@ def index():
     return jsonify({'service': 'ClawsJoy Gateway', 'version': '5.0.0'})
 
 
-# ========== 技能和智能体 ==========
+# ========== 技能清单 ==========
 @app.route('/api/skills/list', methods=['GET'])
 def list_skills():
     try:
@@ -238,6 +238,25 @@ def list_skills():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+# ========== 技能执行 ==========
+@app.route('/api/skills/execute', methods=['POST'])
+def execute_skill():
+    """执行技能"""
+    try:
+        from core.lib.skill_loader_v3 import skill_loader
+        data = request.json or {}
+        skill_name = data.get('skill', '')
+        params = data.get('params', {})
+
+        if not skill_name:
+            return jsonify({'success': False, 'error': 'skill required'}), 400
+
+        result = skill_loader.execute(skill_name, params)
+        return jsonify({'success': True, 'result': result, 'skill': skill_name})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# ========== 智能体 ==========
 @app.route('/api/agents/list', methods=['GET'])
 def list_agents():
     agents = [
@@ -1064,6 +1083,32 @@ def market_list_skills():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+
+# ========== 热重载端点 ==========
+@app.route('/api/reload/config', methods=['POST'])
+def reload_config():
+    """热重载配置文件"""
+    try:
+        from core.lib.unified_config import unified_config
+        unified_config._load()
+        from core.lib.intent_parser_v2 import intent_parser
+        intent_parser.reload()
+        from engine.lib.config_loader import config_loader
+        config_loader.reload()
+        return jsonify({"success": True, "message": "配置已重载"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/reload/agents', methods=['POST'])
+def reload_agents():
+    """热重载 Agent"""
+    try:
+        from core.agents.builtin.agent_manager import agent_manager
+        agent_manager.reload()
+        return jsonify({"success": True, "message": "Agent 已重载"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 # ========== 启动入口 ==========
 if __name__ == "__main__":

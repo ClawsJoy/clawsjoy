@@ -101,24 +101,29 @@ class OrchestratorV6:
         import time
         start = time.time()
         intent, conf, source = self._llm_understand(message)
-        if intent:
+        if intent and self._intent_to_agent(intent) != "chat_agent":
             self._record_route(source, (time.time() - start) * 1000)
             engine_metrics.record(source, True, (time.time() - start) * 1000)
             print(f"[Orchestrator] LLM: {intent}({conf:.2f})")
             vector_learner.record_learning(message, intent, conf)
             return self._intent_to_agent(intent)
+        if intent:
+            print(f"[Orchestrator] LLM: {intent}({conf:.2f}) -> 映射失败，继续降级")
+        
         intent, conf, source = self._vector_understand(message)
         if intent:
             self._record_route(source, (time.time() - start) * 1000)
             engine_metrics.record(source, True, (time.time() - start) * 1000)
             print(f"[Orchestrator] 向量: {intent}({conf:.2f})")
             return self._intent_to_agent(intent)
+        
         intent, conf, source = self._config_understand(message)
         if intent:
             self._record_route(source, (time.time() - start) * 1000)
             engine_metrics.record(source, True, (time.time() - start) * 1000)
             print(f"[Orchestrator] 配置: {intent}({conf:.2f})")
             return self._intent_to_agent(intent)
+        
         intent, conf, source = self._rule_understand(message)
         self._record_route(source, (time.time() - start) * 1000)
         engine_metrics.record(source, True, (time.time() - start) * 1000)
