@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
-"""ClawsJoy Gateway - 完整版主网关"""
+"""ClawsJoy Gateway - 完整版主网关 v2.0
+
+功能清单:
+- 四引擎路由 (LLM → 向量 → 配置 → 规则)
+- Agent 管理、技能管理
+- 记忆系统、学习系统
+- 向量系统、工作流系统
+- 热重载系统、监控系统
+- 俱乐部、管家、隐私保护
+"""
 
 import json
 import sys
@@ -7,12 +16,17 @@ import os
 import re
 from pathlib import Path
 from datetime import datetime
-from flask import Flask, request, jsonify, Response, send_from_directory
-from flask_cors import CORS
-from engine.security import desensitizer
 from functools import lru_cache
 
+from flask import Flask, request, jsonify, Response, send_from_directory
+from flask_cors import CORS
+import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+
+from engine.security import desensitizer
 from core.lib.unified_config import unified_config
+
 
 # ========== Gunicorn post_fork 钩子 ==========
 def post_fork(server, worker):
@@ -20,7 +34,7 @@ def post_fork(server, worker):
     import sys
     import os
     sys.path.insert(0, os.getcwd())
-    
+
     try:
         from core.lib.config_auto_watcher import config_auto_watcher
         config_auto_watcher.scan_and_register()
@@ -29,7 +43,6 @@ def post_fork(server, worker):
     except Exception as e:
         print(f"⚠️ Worker {worker.pid} 监听器启动失败: {e}")
 
-    # 注册退出清理
     import atexit
     def cleanup():
         try:
@@ -39,42 +52,37 @@ def post_fork(server, worker):
             pass
     atexit.register(cleanup)
 
-# 如果被 gunicorn 导入，注册 post_fork
+
 if 'gunicorn' in sys.modules:
     try:
         from gunicorn import glogging
-        # gunicorn 会检测 post_fork 函数
         print("✅ Gunicorn post_fork 钩子已注册")
     except:
         pass
 
+
 from core.lib.smart_active_service import smart_service
 
-# ========== 连接池优化 ==========
-import requests
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
 
-# 创建共享 session
+# ========== 连接池优化 ==========
 session = requests.Session()
 retry = Retry(total=3, backoff_factor=0.5, status_forcelist=[500, 502, 503, 504])
 adapter = HTTPAdapter(pool_connections=20, pool_maxsize=20, max_retries=retry)
 session.mount('http://', adapter)
 session.mount('https://', adapter)
 
+
+# ========== Flask 应用 ==========
 app = Flask(__name__)
+CORS(app)
 
 
-# ========== 缓存优化 ==========
-from functools import lru_cache
-from datetime import datetime, timedelta
-
-# 简单的内存缓存
+# ========== 缓存 ==========
 class SimpleCache:
     def __init__(self, ttl=300):
         self.cache = {}
         self.ttl = ttl
-    
+
     def get(self, key):
         if key in self.cache:
             data, timestamp = self.cache[key]
@@ -82,17 +90,18 @@ class SimpleCache:
                 return data
             del self.cache[key]
         return None
-    
+
     def set(self, key, value):
         self.cache[key] = (value, datetime.now().timestamp())
-    
+
     def clear(self):
         self.cache.clear()
 
+
 request_cache = SimpleCache(ttl=300)
 
-CORS(app)
-# 主动学习模块
+
+# ========== 主动学习 ==========
 try:
     from engine.active.integration import active_loop
 except ImportError:
@@ -102,12 +111,13 @@ except ImportError:
     active_loop = DummyActiveLoop()
 
 
-# ========== 配置 ==========
+# ========== 数据目录 ==========
 DATA_DIR = Path("data")
 MEMORY_FILE = DATA_DIR / "memory_simple.json"
 LEARNING_FILE = DATA_DIR / "learning_data" / "learning_stats.json"
 MEMORY_FILE.parent.mkdir(parents=True, exist_ok=True)
 (DATA_DIR / "learning_data").mkdir(parents=True, exist_ok=True)
+
 
 # ========== 记忆函数 ==========
 def load_memories(user_id):
@@ -116,6 +126,7 @@ def load_memories(user_id):
             all_memories = json.load(f)
             return all_memories.get(user_id, [])
     return []
+
 
 def save_memory(user_id, fact):
     memories = load_memories(user_id)
@@ -128,6 +139,7 @@ def save_memory(user_id, fact):
     with open(MEMORY_FILE, 'w') as f:
         json.dump(all_memories, f, indent=2)
 
+
 def search_memories(user_id, query):
     memories = load_memories(user_id)
     results = []
@@ -138,6 +150,7 @@ def search_memories(user_id, query):
         elif query.lower() in fact.lower():
             results.append(fact)
     return results[:10]
+
 
 # ========== 学习函数 ==========
 def load_learning_stats():
@@ -150,6 +163,7 @@ def load_learning_stats():
                 return data
     return {"total_learnings": 0, "successful_learnings": 0, "failed_learnings": 0}
 
+
 def record_learning(fact, success=True):
     stats = load_learning_stats()
     stats['total_learnings'] = stats.get('total_learnings', 0) + 1
@@ -160,13 +174,16 @@ def record_learning(fact, success=True):
     with open(LEARNING_FILE, 'w') as f:
         json.dump(stats, f, indent=2)
 
+
 # ========== 用户状态 ==========
 USER_STATES = {}
+
 
 def get_user_state(user_id):
     if user_id not in USER_STATES:
         USER_STATES[user_id] = {}
     return USER_STATES[user_id]
+
 
 def extract_user_info(message, user_id):
     state = get_user_state(user_id)
@@ -178,6 +195,7 @@ def extract_user_info(message, user_id):
         save_memory(user_id, f"用户说: 我叫{name}")
         return True
     return False
+
 
 def answer_from_state(message, user_id):
     if '我叫什么名字' in message or '我的名字' in message:
@@ -197,14 +215,17 @@ def answer_from_state(message, user_id):
         return "您还没告诉我您的名字呢。您可以说'我叫XXX'告诉我哦~"
     return None
 
+
 # ========== 基础路由 ==========
 @app.route('/health', methods=['GET'])
 def health():
     return jsonify({'status': 'healthy', 'service': 'clawsjoy-gateway', 'version': '5.0.0'})
 
+
 @app.route('/', methods=['GET'])
 def index():
     return jsonify({'service': 'ClawsJoy Gateway', 'version': '5.0.0'})
+
 
 # ========== 技能和智能体 ==========
 @app.route('/api/skills/list', methods=['GET'])
@@ -216,27 +237,29 @@ def list_skills():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+
 @app.route('/api/agents/list', methods=['GET'])
 def list_agents():
     agents = [
-        {"name": "chat_agent", "status": "active", "version": "2.0.0"},
-        {"name": "code_agent", "status": "active", "version": "1.0.0"},
+        {"name": "code_agent", "status": "active", "version": "2.0.0"},
         {"name": "analysis_agent", "status": "active", "version": "1.0.0"},
         {"name": "decision_agent", "status": "active", "version": "1.0.0"},
         {"name": "executor_agent", "status": "active", "version": "1.0.0"},
-        {"name": "orchestrator", "status": "active", "version": "1.0.0"},
+        {"name": "orchestrator", "status": "active", "version": "2.0.0"},
         {"name": "translate_agent", "status": "active", "version": "2.0.0"},
-        {"name": "vision_agent", "status": "active", "version": "1.0.0"},
-        {"name": "memory_agent", "status": "active", "version": "1.0.0"},
-        {"name": "video_agent", "status": "active", "version": "1.0.0"},
+        {"name": "vision_agent", "status": "active", "version": "2.0.0"},
+        {"name": "memory_agent", "status": "active", "version": "2.0.0"},
+        {"name": "video_agent", "status": "active", "version": "2.0.0"},
         {"name": "youtube_agent", "status": "active", "version": "1.0.0"},
         {"name": "director_agent", "status": "active", "version": "1.0.0"},
         {"name": "writer_agent", "status": "active", "version": "1.0.0"},
         {"name": "dialect_agent", "status": "active", "version": "1.0.0"},
         {"name": "collaboration_agent", "status": "active", "version": "1.0.0"},
         {"name": "video_indexer_agent", "status": "active", "version": "1.0.0"},
+        {"name": "chat_agent", "status": "active", "version": "2.0.0"},
     ]
     return jsonify({'success': True, 'total': len(agents), 'agents': agents})
+
 
 # ========== 模式识别查询 ==========
 @app.route('/api/learning/patterns', methods=['GET'])
@@ -251,21 +274,18 @@ def get_patterns():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-# ========== 增强对话（集成 Orchestrator v6） ==========
+
+# ========== 增强对话（集成 Orchestrator 四引擎） ==========
 @app.route('/api/v5/enhanced/chat', methods=['POST'])
 def enhanced_chat():
-    # 请求脱敏
-    from engine.security import desensitizer
     data = request.json or {}
     message = data.get('message', '')
-    # 脱敏处理用户输入
     message = desensitizer.desensitize(message)
     user_id = data.get('user_id', 'guest')
 
-    # 提取用户信息
     extract_user_info(message, user_id)
 
-    # ========== 原子引擎注入 (v6.0) ==========
+    # ========== 原子引擎注入 ==========
     try:
         from engine.semantic import semantic_engine
         from engine.profile import profile_engine
@@ -276,33 +296,28 @@ def enhanced_chat():
         intent_confidence = semantic_result.confidence
         entities = semantic_result.entities if hasattr(semantic_result, 'entities') else {}
 
-        # 用户画像自动更新
         profile = profile_engine.get_or_create(user_id)
         if entities.get("name"):
             profile_engine.update_name(user_id, entities["name"])
         if entities.get("preference"):
             profile_engine.add_preference(user_id, entities["preference"])
 
-        # 知识图谱查询
         kg_result = knowledge_engine.query(message)
-
-        print(f"[原子引擎] user={user_id}, intent={intent_name}, conf={intent_confidence:.2f}, entities={entities}")
+        print(f"[原子引擎] user={user_id}, intent={intent_name}, conf={intent_confidence:.2f}")
     except Exception as e:
         print(f"[原子引擎] 初始化失败: {e}")
         intent_name = "unknown"
         intent_confidence = 0.0
         entities = {}
         kg_result = None
-    # ========== 原子引擎注入结束 ==========
 
-    # ===== 1. Orchestrator 智能路由（优先） =====
+    # ===== 1. Orchestrator 智能路由（四引擎） =====
     try:
         from core.agents.builtin.orchestrator import OrchestratorV6
         orchestrator = OrchestratorV6(user_id=user_id)
         target_agent = orchestrator.smart_route(message)
 
         if target_agent != "chat_agent":
-            # 调用专业 Agent
             module = __import__(f"core.agents.builtin.{target_agent}", fromlist=[target_agent])
             class_map = {
                 "code_agent": "CodeAgent",
@@ -346,7 +361,6 @@ def enhanced_chat():
         from core.agents.builtin.chat_agent import ChatAgent
         chat_agent = ChatAgent(user_id=user_id)
 
-        # 原子技能（天气、计算、方言）
         atomic_result = chat_agent._check_atomic_skill(message)
         if atomic_result:
             save_memory(user_id, f"用户说: {message}")
@@ -359,7 +373,6 @@ def enhanced_chat():
                 "user_id": user_id
             })
 
-        # 话本匹配
         intent = chat_agent._match_intent(message)
         if intent:
             template = chat_agent._get_template(intent)
@@ -387,10 +400,8 @@ def enhanced_chat():
             "user_id": user_id
         })
 
-
-   # ===== 4. 调用 LLM 服务（兜底） =====
+    # ===== 4. 调用 LLM 服务（兜底） =====
     try:
-        import requests
         resp = requests.post(
             "http://localhost:5012/chat",
             json={"message": message},
@@ -407,22 +418,17 @@ def enhanced_chat():
     save_memory(user_id, f"ClawsJoy说: {response[:200]}")
     record_learning(f"对话: {user_id} -> {message[:30]}", True)
 
-    # 模式识别（自动发现规律）
     try:
         from core.lib.pattern_recognizer import pattern_recognizer
         pattern_recognizer.record_behavior(user_id, message, response, "chat_agent")
     except:
         pass
-    # 主动学习闭环（最后）
+
     try:
         from engine.active.integration import active_loop
-        learn_result = active_loop.process(
-            user_id=user_id,
-            message=message,
-            response=response,
-            intent=intent_name,
-            confidence=intent_confidence,
-            success=True
+        active_loop.process(
+            user_id=user_id, message=message, response=response,
+            intent=intent_name, confidence=intent_confidence, success=True
         )
     except Exception as e:
         print(f"[主动学习] 处理失败: {e}")
@@ -434,6 +440,8 @@ def enhanced_chat():
         "enhanced": True,
         "user_id": user_id
     })
+
+
 # ========== 记忆路由 ==========
 @app.route('/api/v5/memory/remember', methods=['POST'])
 def memory_remember():
@@ -446,6 +454,7 @@ def memory_remember():
     record_learning(f"用户 {user_id} 学习了: {fact}", True)
     return jsonify({'success': True, 'message': '记忆已存储'})
 
+
 @app.route('/api/v5/memory/recall', methods=['POST'])
 def memory_recall():
     data = request.json or {}
@@ -454,17 +463,20 @@ def memory_recall():
     results = search_memories(user_id, query)
     return jsonify({'success': True, 'results': results})
 
+
 @app.route('/api/v5/memory/stats', methods=['GET'])
 def memory_stats():
     user_id = request.args.get('user_id', 'guest')
     memories = load_memories(user_id)
     return jsonify({'success': True, 'total': len(memories)})
 
+
 # ========== 学习路由 ==========
 @app.route('/api/learning/stats', methods=['GET'])
 def learning_stats():
     stats = load_learning_stats()
     return jsonify({'success': True, 'stats': stats})
+
 
 @app.route('/api/learning/record', methods=['POST'])
 def record_learning_api():
@@ -476,18 +488,13 @@ def record_learning_api():
         return jsonify({'success': True, 'message': '学习已记录'})
     return jsonify({'success': False, 'error': 'fact required'}), 400
 
+
 # ========== 向量服务 ==========
 @app.route('/api/vector/stats', methods=['GET'])
 def vector_stats():
     try:
         from core.lib.vector_knowledge_center import vector_knowledge_center
-        stats = {
-            'skills': 0,
-            'agents': 0,
-            'routes': 0,
-            'memories': 0,
-            'documents': 0
-        }
+        stats = {'skills': 0, 'agents': 0, 'routes': 0, 'memories': 0, 'documents': 0}
         if hasattr(vector_knowledge_center, 'collections'):
             for name, col in vector_knowledge_center.collections.items():
                 if name in stats:
@@ -495,6 +502,7 @@ def vector_stats():
         return jsonify({'success': True, 'stats': stats})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @app.route('/api/vector/search', methods=['POST'])
 def vector_search():
@@ -509,6 +517,7 @@ def vector_search():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+
 # ========== 俱乐部 ==========
 @app.route('/api/club/stats', methods=['GET'])
 def club_stats():
@@ -518,6 +527,7 @@ def club_stats():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+
 @app.route('/api/club/members', methods=['GET'])
 def club_members():
     try:
@@ -526,6 +536,7 @@ def club_members():
         return jsonify({'success': True, 'members': butler_club.list_members(limit=limit)})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @app.route('/api/club/member/<user_id>', methods=['GET'])
 def club_member_detail(user_id):
@@ -537,6 +548,7 @@ def club_member_detail(user_id):
         return jsonify({"success": False, "error": "成员不存在"}), 404
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
 
 # ========== 管家 API ==========
 @app.route('/api/butler/rename', methods=['POST'])
@@ -553,6 +565,7 @@ def butler_rename():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+
 @app.route('/api/butler/todo', methods=['GET', 'POST'])
 def butler_todo():
     try:
@@ -567,6 +580,7 @@ def butler_todo():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+
 # ========== 工作流 ==========
 @app.route('/api/workflows/list', methods=['GET'])
 def list_workflows():
@@ -575,11 +589,8 @@ def list_workflows():
     return jsonify({'success': True, 'total': len(workflows), 'workflows': workflows})
 
 
-
 @app.route('/api/workflows/execute/<name>', methods=['POST'])
 def execute_workflow(name):
-    from core.lib.workflow_executor import workflow_executor
-    """执行工作流"""
     from core.lib.workflow_executor import workflow_executor
     data = request.json or {}
     result = workflow_executor.execute(name, data)
@@ -590,118 +601,122 @@ def execute_workflow(name):
 def workflow_status():
     return jsonify({'success': True, 'status': 'idle', 'running': []})
 
-# ========== 任务 ==========
-@app.route('/api/tasks/status', methods=['GET'])
-def get_task_status():
-    task_id = request.args.get('task_id', '')
-    return jsonify({'success': True, 'task_id': task_id, 'status': 'completed'})
 
-# ========== 语音唤醒 ==========
-@app.route('/api/voice/wakeup', methods=['POST'])
-def voice_wakeup():
-    return jsonify({'success': True, 'wakeup': True, 'keywords': ['小管', '你好小管']})
+# ========== 技能热重载 ==========
+@app.route('/api/skills/reload', methods=['POST'])
+def reload_skills():
+    try:
+        from core.lib.unified_skill_manager import unified_manager
+        unified_manager.reload()
+        return jsonify({'success': True, 'message': '技能已重载'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
-# ========== WebSocket 状态 ==========
-@app.route('/api/ws/status', methods=['GET'])
-def ws_status():
-    return jsonify({'success': True, 'status': 'connected', 'connections': 0})
 
-# ========== SSE 订阅 ==========
-@app.route('/api/sse/subscribe', methods=['GET', 'POST'])
-def sse_subscribe():
-    return jsonify({'success': True, 'message': 'SSE endpoint ready'})
+@app.route('/api/hot-reload/status', methods=['GET'])
+def hot_reload_status():
+    return jsonify({'success': True, 'status': 'active', 'watchers': ['config', 'skills']})
 
-@app.route('/api/sse/test', methods=['GET'])
-def sse_test():
-    return jsonify({'success': True, 'message': 'SSE test successful'})
 
-# ========== 翻译 ==========
-@app.route('/api/translate/query', methods=['POST'])
-def translate_query():
+# ========== 监控指标 ==========
+@app.route('/metrics', methods=['GET'])
+def metrics_endpoint():
+    try:
+        from core.lib.metrics import get_metrics
+        return Response(get_metrics(), mimetype='text/plain')
+    except:
+        return jsonify({'success': False, 'error': 'metrics not available'}), 500
+
+
+@app.route('/api/metrics', methods=['GET'])
+def get_metrics():
+    try:
+        from core.lib.engine_metrics import engine_metrics
+        return jsonify(engine_metrics.get_summary())
+    except:
+        return jsonify({})
+
+
+@app.route('/api/metrics/reset', methods=['POST'])
+def reset_metrics():
+    try:
+        from core.lib.engine_metrics import engine_metrics
+        engine_metrics.reset()
+        return jsonify({"success": True, "message": "指标已重置"})
+    except:
+        return jsonify({"success": False}), 500
+
+
+# ========== 调试端点 ==========
+@app.route('/api/debug/config', methods=['GET'])
+def debug_config():
+    from core.lib.unified_config import unified_config
+    key = request.args.get('key', '')
+    if key:
+        value = unified_config.get(key, None)
+        return {"key": key, "value": value}
+    return {"config_keys": list(unified_config._config.keys())[:20]}
+
+
+@app.route('/api/debug/orchestrator', methods=['POST'])
+def debug_orchestrator():
+    from core.agents.builtin.orchestrator import OrchestratorV6
     data = request.json or {}
-    text = data.get('text', '')
-    return jsonify({'success': True, 'original': text, 'translated': f"[翻译]{text}"})
+    message = data.get('message', '')
+    user_id = data.get('user_id', 'test')
+    orchestrator = OrchestratorV6(user_id)
+    target = orchestrator.smart_route(message)
+    return jsonify({'message': message, 'target': target, 'orchestrator_version': '2.0.0'})
 
-# ========== 前端埋点 ==========
-@app.route('/api/frontend/page-view', methods=['POST'])
-def frontend_page_view():
-    return jsonify({'success': True, 'recorded': True})
 
-@app.route('/api/frontend/error', methods=['POST'])
-def frontend_error():
-    return jsonify({'success': True, 'recorded': True})
-
-# ========== 用户数据请求 ==========
-@app.route('/api/user/data-request', methods=['POST'])
-def user_data_request():
-    return jsonify({'success': True, 'request_id': 'req_001', 'status': 'pending'})
-
-# ========== 开发者上传 ==========
-@app.route('/api/developer/upload', methods=['POST'])
-def developer_upload():
-    return jsonify({'success': True, 'message': 'Upload endpoint ready'})
-
-# ========== 管理员审批 ==========
-@app.route('/api/admin/pending', methods=['GET'])
-def admin_pending():
-    return jsonify({'success': True, 'pending': []})
-
-@app.route('/api/admin/approve', methods=['POST'])
-def admin_approve():
-    return jsonify({'success': True, 'approved': True})
-
-@app.route('/api/admin/reject', methods=['POST'])
-def admin_reject():
-    return jsonify({'success': True, 'rejected': True})
-
-# ========== 会议管理 ==========
-@app.route('/api/meeting/create', methods=['POST'])
-def meeting_create():
+# ========== YouTube 经营 API ==========
+@app.route('/api/youtube/generate/script', methods=['POST'])
+def youtube_generate_script():
+    from core.agents.builtin.youtube_agent import youtube_agent
     data = request.json or {}
-    return jsonify({'success': True, 'meeting_id': 'meet_001'})
+    topic = data.get('topic', '')
+    result = youtube_agent.generate_script(topic)
+    return jsonify(result)
 
-@app.route('/api/meeting/list', methods=['GET'])
-def meeting_list():
-    return jsonify({'success': True, 'meetings': []})
 
-@app.route('/api/meeting/close', methods=['POST'])
-def meeting_close():
-    return jsonify({'success': True, 'closed': True})
+@app.route('/api/youtube/generate/title', methods=['POST'])
+def youtube_generate_title():
+    from core.agents.builtin.youtube_agent import youtube_agent
+    data = request.json or {}
+    topic = data.get('topic', '')
+    result = youtube_agent.generate_title(f"生成标题：{topic}")
+    return jsonify(result)
 
-# ========== 协作功能 ==========
-@app.route('/api/collaboration/start', methods=['POST'])
-def collaboration_start():
-    return jsonify({'success': True, 'session_id': 'collab_001'})
 
-@app.route('/api/collaboration/message', methods=['POST'])
-def collaboration_message():
-    return jsonify({'success': True, 'delivered': True})
+@app.route('/api/youtube/generate/description', methods=['POST'])
+def youtube_generate_description():
+    from core.agents.builtin.youtube_agent import youtube_agent
+    data = request.json or {}
+    topic = data.get('topic', '')
+    result = youtube_agent.generate_description(f"生成描述：{topic}")
+    return jsonify(result)
 
-# ========== 闭环控制 ==========
-@app.route('/api/closed-loop/run', methods=['POST'])
-def closed_loop_run():
-    return jsonify({'success': True, 'loop_id': 'loop_001'})
 
-@app.route('/api/closed-loop/status', methods=['GET'])
-def closed_loop_status():
-    return jsonify({'success': True, 'status': 'running'})
+@app.route('/api/youtube/channel/stats', methods=['GET'])
+def youtube_channel_stats():
+    from core.agents.builtin.youtube_agent import youtube_agent
+    result = youtube_agent.get_channel_stats()
+    return jsonify(result)
 
-# ========== 分析师功能 ==========
-@app.route('/api/analyst/status', methods=['GET'])
-def analyst_status():
-    return jsonify({'success': True, 'status': 'active'})
 
-@app.route('/api/analyst/report', methods=['GET'])
-def analyst_report():
-    return jsonify({'success': True, 'report': {'total_analysis': 100, 'insights': []}})
+@app.route('/api/youtube/ideas', methods=['GET'])
+def youtube_content_ideas():
+    from core.agents.builtin.youtube_agent import youtube_agent
+    niche = request.args.get('niche', 'AI')
+    ideas = youtube_agent.get_content_ideas(niche)
+    return jsonify({'success': True, 'ideas': ideas})
+
 
 # ========== 流式对话 SSE ==========
 @app.route('/api/v5/enhanced/chat/stream', methods=['POST'])
 def enhanced_chat_stream():
-    from flask import Response
     data = request.json or {}
     message = data.get('message', '')
-    # 脱敏处理用户输入
     message = desensitizer.desensitize(message)
     user_id = data.get('user_id', 'guest')
 
@@ -711,7 +726,6 @@ def enhanced_chat_stream():
             context_text = "根据您的记忆：" + ";".join(memories[:3])
             yield f"data: {json.dumps({'type': 'context', 'content': context_text})}\n\n"
         try:
-            import requests
             resp = requests.post(
                 "http://localhost:5012/chat/stream",
                 json={"message": message},
@@ -727,93 +741,10 @@ def enhanced_chat_stream():
 
     return Response(generate(), mimetype='text/event-stream')
 
-# ========== 热重载 ==========
-@app.route('/api/skills/reload', methods=['POST'])
-def reload_skills():
-    try:
-        from core.lib.unified_skill_manager import unified_manager
-        unified_manager.reload()
-        return jsonify({'success': True, 'message': '技能已重载'})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@app.route('/api/hot-reload/status', methods=['GET'])
-def hot_reload_status():
-    return jsonify({'success': True, 'status': 'active', 'watchers': ['config', 'skills']})
-
-# ========== Prometheus 指标 ==========
-@app.route('/metrics', methods=['GET'])
-def metrics_endpoint():
-    try:
-        from core.lib.metrics import get_metrics
-        from flask import Response
-        return Response(get_metrics(), mimetype='text/plain')
-    except:
-        return jsonify({'success': False, 'error': 'metrics not available'}), 500
-
-#========== 技能市场 API ==========
-@app.route('/api/market/skills/export', methods=['POST'])
-def market_export_skill():
-    """导出技能到市场"""
-    try:
-        data = request.json or {}
-        skill_name = data.get('skill_name', '')
-        if not skill_name:
-            return jsonify({'success': False, 'error': 'skill_name required'}), 400
-
-        from engine.openclaw.core import openclaw_engine
-        result = openclaw_engine.export_skill(skill_name, data.get('skill_data', {}))
-        return jsonify(result)
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@app.route('/api/market/skills/import', methods=['POST'])
-def market_import_skill():
-    """从市场导入技能"""
-    try:
-        data = request.json or {}
-        skill_name = data.get('skill_name', '')
-        if not skill_name:
-            return jsonify({'success': False, 'error': 'skill_name required'}), 400
-
-        from engine.openclaw.core import openclaw_engine
-        result = openclaw_engine.import_skill(skill_name, data.get('source'))
-        return jsonify(result)
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@app.route('/api/market/skills/sync', methods=['POST'])
-def market_sync_skills():
-    """与社区同步技能"""
-    try:
-        data = request.json or {}
-        direction = data.get('direction', 'both')
-
-        from engine.openclaw.core import openclaw_engine
-        result = openclaw_engine.sync_with_community(direction)
-        return jsonify(result)
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@app.route('/api/market/skills/list', methods=['GET'])
-def market_list_skills():
-    """列出市场技能"""
-    try:
-        from engine.openclaw.core import openclaw_engine
-        return jsonify({
-            'success': True,
-            'exported': openclaw_engine.list_exported(),
-            'imported': openclaw_engine.list_imported(),
-            'stats': openclaw_engine.get_stats()
-        })
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
 
 # ========== 隐私保护 API ==========
 @app.route('/api/v1/privacy/policy', methods=['GET'])
 def get_privacy_policy():
-    """获取隐私政策"""
     import yaml
     try:
         with open('config/ginoor.yaml', 'r') as f:
@@ -826,12 +757,12 @@ def get_privacy_policy():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+
 @app.route('/api/v1/privacy/consent', methods=['GET', 'POST'])
 def manage_consent():
-    """用户同意管理"""
     from datetime import datetime
     from engine.security.audit import audit_logger
-    
+
     if request.method == 'GET':
         user_id = request.args.get('user_id', 'guest')
         consent_file = Path(f"data/consent/{user_id}.json")
@@ -839,50 +770,42 @@ def manage_consent():
             with open(consent_file, 'r') as f:
                 consent_data = json.load(f)
         else:
-            consent_data = {
-                'user_id': user_id,
-                'consents': {},
-                'updated_at': None
-            }
+            consent_data = {'user_id': user_id, 'consents': {}, 'updated_at': None}
         return jsonify({'success': True, 'consent': consent_data})
     else:
         data = request.json or {}
         user_id = data.get('user_id', 'guest')
         purposes = data.get('purposes', {})
-        
+
         consent_dir = Path("data/consent")
         consent_dir.mkdir(parents=True, exist_ok=True)
-        
+
         consent_data = {
             'user_id': user_id,
             'consents': purposes,
             'updated_at': datetime.now().isoformat()
         }
-        
+
         with open(consent_dir / f"{user_id}.json", 'w') as f:
             json.dump(consent_data, f, indent=2)
-        
+
         audit_logger.log("consent_update", user_id, details=purposes)
         return jsonify({'success': True, 'message': 'Consent updated'})
 
+
 @app.route('/api/v1/privacy/data/request', methods=['POST'])
 def data_subject_request():
-    """数据主体请求"""
     from engine.security.audit import audit_logger
     from datetime import datetime
-    
+
     data = request.json or {}
     user_id = data.get('user_id', 'guest')
     request_type = data.get('request_type', 'access')
-    
+
     request_id = f"dsr_{user_id}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
-    
-    audit_logger.log(
-        f"data_subject_request_{request_type}",
-        user_id,
-        details={'request_id': request_id, 'type': request_type}
-    )
-    
+
+    audit_logger.log(f"data_subject_request_{request_type}", user_id, details={'request_id': request_id})
+
     return jsonify({
         'success': True,
         'request_id': request_id,
@@ -891,16 +814,16 @@ def data_subject_request():
         'message': f'Your {request_type} request has been submitted'
     })
 
+
 @app.route('/api/v1/privacy/export', methods=['POST'])
 def export_user_data():
-    """导出用户数据"""
     from engine.security.audit import audit_logger
     from datetime import datetime
-    
+
     data = request.json or {}
     user_id = data.get('user_id', 'guest')
     format_type = data.get('format', 'json')
-    
+
     user_data = {
         'user_id': user_id,
         'exported_at': datetime.now().isoformat(),
@@ -912,7 +835,7 @@ def export_user_data():
             'interactions': []
         }
     }
-    
+
     try:
         from engine.profile import profile_engine
         profile = profile_engine.get_or_create(user_id)
@@ -923,9 +846,9 @@ def export_user_data():
         }
     except:
         pass
-    
+
     audit_logger.log("data_export", user_id, details={'format': format_type})
-    
+
     return jsonify({
         'success': True,
         'data': user_data,
@@ -933,43 +856,216 @@ def export_user_data():
         'message': 'Data export completed'
     })
 
+
 @app.route('/api/v1/privacy/delete', methods=['POST'])
 def delete_user_data():
-    """删除用户数据"""
     from engine.security.audit import audit_logger
     from datetime import datetime
-    
+
     data = request.json or {}
     user_id = data.get('user_id', 'guest')
     confirm = data.get('confirm', False)
-    
+
     if not confirm:
         return jsonify({
             'success': False,
             'error': 'Confirmation required',
             'message': 'Please confirm data deletion'
         }), 400
-    
+
     deletion_dir = Path("data/deletion_requests")
     deletion_dir.mkdir(parents=True, exist_ok=True)
-    
+
     deletion_record = {
         'user_id': user_id,
         'deleted_at': datetime.now().isoformat(),
         'status': 'pending'
     }
-    
+
     with open(deletion_dir / f"{user_id}.json", 'w') as f:
         json.dump(deletion_record, f, indent=2)
-    
+
     audit_logger.log("data_deletion_request", user_id, result="pending")
-    
+
     return jsonify({
         'success': True,
         'message': 'Data deletion request submitted',
         'processing_time': '72 hours'
     })
 
+
+# ========== 其他辅助路由 ==========
+@app.route('/api/tasks/status', methods=['GET'])
+def get_task_status():
+    task_id = request.args.get('task_id', '')
+    return jsonify({'success': True, 'task_id': task_id, 'status': 'completed'})
+
+
+@app.route('/api/voice/wakeup', methods=['POST'])
+def voice_wakeup():
+    return jsonify({'success': True, 'wakeup': True, 'keywords': ['小管', '你好小管']})
+
+
+@app.route('/api/ws/status', methods=['GET'])
+def ws_status():
+    return jsonify({'success': True, 'status': 'connected', 'connections': 0})
+
+
+@app.route('/api/sse/subscribe', methods=['GET', 'POST'])
+def sse_subscribe():
+    return jsonify({'success': True, 'message': 'SSE endpoint ready'})
+
+
+@app.route('/api/sse/test', methods=['GET'])
+def sse_test():
+    return jsonify({'success': True, 'message': 'SSE test successful'})
+
+
+@app.route('/api/translate/query', methods=['POST'])
+def translate_query():
+    data = request.json or {}
+    text = data.get('text', '')
+    return jsonify({'success': True, 'original': text, 'translated': f"[翻译]{text}"})
+
+
+@app.route('/api/frontend/page-view', methods=['POST'])
+def frontend_page_view():
+    return jsonify({'success': True, 'recorded': True})
+
+
+@app.route('/api/frontend/error', methods=['POST'])
+def frontend_error():
+    return jsonify({'success': True, 'recorded': True})
+
+
+@app.route('/api/user/data-request', methods=['POST'])
+def user_data_request():
+    return jsonify({'success': True, 'request_id': 'req_001', 'status': 'pending'})
+
+
+@app.route('/api/developer/upload', methods=['POST'])
+def developer_upload():
+    return jsonify({'success': True, 'message': 'Upload endpoint ready'})
+
+
+@app.route('/api/admin/pending', methods=['GET'])
+def admin_pending():
+    return jsonify({'success': True, 'pending': []})
+
+
+@app.route('/api/admin/approve', methods=['POST'])
+def admin_approve():
+    return jsonify({'success': True, 'approved': True})
+
+
+@app.route('/api/admin/reject', methods=['POST'])
+def admin_reject():
+    return jsonify({'success': True, 'rejected': True})
+
+
+@app.route('/api/meeting/create', methods=['POST'])
+def meeting_create():
+    return jsonify({'success': True, 'meeting_id': 'meet_001'})
+
+
+@app.route('/api/meeting/list', methods=['GET'])
+def meeting_list():
+    return jsonify({'success': True, 'meetings': []})
+
+
+@app.route('/api/meeting/close', methods=['POST'])
+def meeting_close():
+    return jsonify({'success': True, 'closed': True})
+
+
+@app.route('/api/collaboration/start', methods=['POST'])
+def collaboration_start():
+    return jsonify({'success': True, 'session_id': 'collab_001'})
+
+
+@app.route('/api/collaboration/message', methods=['POST'])
+def collaboration_message():
+    return jsonify({'success': True, 'delivered': True})
+
+
+@app.route('/api/closed-loop/run', methods=['POST'])
+def closed_loop_run():
+    return jsonify({'success': True, 'loop_id': 'loop_001'})
+
+
+@app.route('/api/closed-loop/status', methods=['GET'])
+def closed_loop_status():
+    return jsonify({'success': True, 'status': 'running'})
+
+
+@app.route('/api/analyst/status', methods=['GET'])
+def analyst_status():
+    return jsonify({'success': True, 'status': 'active'})
+
+
+@app.route('/api/analyst/report', methods=['GET'])
+def analyst_report():
+    return jsonify({'success': True, 'report': {'total_analysis': 100, 'insights': []}})
+
+
+@app.route('/api/market/skills/export', methods=['POST'])
+def market_export_skill():
+    try:
+        data = request.json or {}
+        skill_name = data.get('skill_name', '')
+        if not skill_name:
+            return jsonify({'success': False, 'error': 'skill_name required'}), 400
+
+        from engine.openclaw.core import openclaw_engine
+        result = openclaw_engine.export_skill(skill_name, data.get('skill_data', {}))
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/market/skills/import', methods=['POST'])
+def market_import_skill():
+    try:
+        data = request.json or {}
+        skill_name = data.get('skill_name', '')
+        if not skill_name:
+            return jsonify({'success': False, 'error': 'skill_name required'}), 400
+
+        from engine.openclaw.core import openclaw_engine
+        result = openclaw_engine.import_skill(skill_name, data.get('source'))
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/market/skills/sync', methods=['POST'])
+def market_sync_skills():
+    try:
+        data = request.json or {}
+        direction = data.get('direction', 'both')
+
+        from engine.openclaw.core import openclaw_engine
+        result = openclaw_engine.sync_with_community(direction)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/market/skills/list', methods=['GET'])
+def market_list_skills():
+    try:
+        from engine.openclaw.core import openclaw_engine
+        return jsonify({
+            'success': True,
+            'exported': openclaw_engine.list_exported(),
+            'imported': openclaw_engine.list_imported(),
+            'stats': openclaw_engine.get_stats()
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ========== 启动入口 ==========
 if __name__ == "__main__":
     port = unified_config.get("services.gateway.port", 5002)
     smart_service.start()
@@ -978,71 +1074,3 @@ if __name__ == "__main__":
     print(f"   Workers: 4, Threads: 8, 并发: 32")
     print("=" * 50)
     app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
-
-# ========== YouTube 经营 API ==========
-@app.route('/api/youtube/generate/script', methods=['POST'])
-def youtube_generate_script():
-    from core.agents.builtin.youtube_agent import youtube_agent
-    """生成视频脚本"""
-    data = request.json or {}
-    topic = data.get('topic', '')
-    result = youtube_agent.generate_script(topic)
-    return jsonify(result)
-
-@app.route('/api/youtube/generate/title', methods=['POST'])
-def youtube_generate_title():
-    from core.agents.builtin.youtube_agent import youtube_agent
-    """生成标题"""
-    data = request.json or {}
-    topic = data.get('topic', '')
-    result = youtube_agent.generate_title(f"生成标题：{topic}")
-    return jsonify(result)
-
-@app.route('/api/youtube/generate/description', methods=['POST'])
-def youtube_generate_description():
-    from core.agents.builtin.youtube_agent import youtube_agent
-    """生成描述"""
-    data = request.json or {}
-    topic = data.get('topic', '')
-    result = youtube_agent.generate_description(f"生成描述：{topic}")
-    return jsonify(result)
-
-@app.route('/api/youtube/channel/stats', methods=['GET'])
-def youtube_channel_stats():
-    from core.agents.builtin.youtube_agent import youtube_agent
-    """获取频道统计"""
-    result = youtube_agent.get_channel_stats()
-    return jsonify(result)
-
-@app.route('/api/youtube/ideas', methods=['GET'])
-def youtube_content_ideas():
-    from core.agents.builtin.youtube_agent import youtube_agent
-    """获取内容创意"""
-    niche = request.args.get('niche', 'AI')
-    ideas = youtube_agent.get_content_ideas(niche)
-    return jsonify({'success': True, 'ideas': ideas})
-
-
-@app.route('/api/debug/config', methods=['GET'])
-def debug_config():
-    """调试端点：查看配置"""
-    from core.lib.unified_config import unified_config
-    key = request.args.get('key', '')
-    if key:
-        value = unified_config.get(key, None)
-        return {"key": key, "value": value}
-    return {"config_keys": list(unified_config._config.keys())[:20]}
-
-# ========== 监控 API ==========
-@app.route('/api/metrics', methods=['GET'])
-def get_metrics():
-    """获取引擎性能指标"""
-    from core.lib.engine_metrics import engine_metrics
-    return jsonify(engine_metrics.get_summary())
-
-@app.route('/api/metrics/reset', methods=['POST'])
-def reset_metrics():
-    """重置指标"""
-    from core.lib.engine_metrics import engine_metrics
-    engine_metrics.reset()
-    return jsonify({"success": True, "message": "指标已重置"})
