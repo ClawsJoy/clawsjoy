@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """
 Add system_metadata and job_id columns to asset_references.
 Change preview_id FK from assets.id to asset_references.id.

@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 # Adapted from https://github.com/lodestone-rock/flow
 from functools import lru_cache
 

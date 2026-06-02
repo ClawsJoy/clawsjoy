@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 import math
 import comfy.samplers
 import comfy.sample

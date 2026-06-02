@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 # code adapted from https://github.com/exx8/differential-diffusion
 
 from typing_extensions import override

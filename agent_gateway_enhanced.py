@@ -335,7 +335,8 @@ def enhanced_chat():
         from core.agents.builtin.orchestrator import OrchestratorV6
         orchestrator = OrchestratorV6(user_id=user_id)
         target_agent = orchestrator.smart_route(message)
-
+        print(f"[社会协作] target_agent={target_agent}")
+        print(f"[DEBUG] target_agent = {target_agent}")  # 添加这行
         if target_agent != "chat_agent":
             module = __import__(f"core.agents.builtin.{target_agent}", fromlist=[target_agent])
             class_map = {
@@ -376,37 +377,42 @@ def enhanced_chat():
         print(f"Orchestrator 路由失败: {e}")
 
     # ===== 2. 原子技能和话本匹配 =====
-    try:
-        from core.agents.builtin.chat_agent import ChatAgent
-        chat_agent = ChatAgent(user_id=user_id)
+    # 社会契约：分析/决策/执行类请求跳过话本
+    social_keywords = ["分析", "报告", "统计", "决策", "执行", ".png", ".jpg", ".json", ".yaml"]
+    is_social = any(kw in message.lower() for kw in social_keywords)
+    
+    if not is_social:
+        try:
+            from core.agents.builtin.chat_agent import ChatAgent
+            chat_agent = ChatAgent(user_id=user_id)
 
-        atomic_result = chat_agent._check_atomic_skill(message)
-        if atomic_result:
-            save_memory(user_id, f"用户说: {message}")
-            save_memory(user_id, f"ClawsJoy说: {atomic_result[:200]}")
-            return jsonify({
-                "success": True,
-                "response": atomic_result,
-                "agent": "atomic_skill",
-                "enhanced": True,
-                "user_id": user_id
-            })
-
-        intent = chat_agent._match_intent(message)
-        if intent:
-            template = chat_agent._get_template(intent)
-            if template:
+            atomic_result = chat_agent._check_atomic_skill(message)
+            if atomic_result:
                 save_memory(user_id, f"用户说: {message}")
-                save_memory(user_id, f"ClawsJoy说: {template[:200]}")
+                save_memory(user_id, f"ClawsJoy说: {atomic_result[:200]}")
                 return jsonify({
                     "success": True,
-                    "response": template,
-                    "agent": "scriptbook",
+                    "response": atomic_result,
+                    "agent": "atomic_skill",
                     "enhanced": True,
                     "user_id": user_id
                 })
-    except Exception as e:
-        print(f"原子技能/话本匹配失败: {e}")
+
+            intent = chat_agent._match_intent(message)
+            if intent:
+                template = chat_agent._get_template(intent)
+                if template:
+                    save_memory(user_id, f"用户说: {message}")
+                    save_memory(user_id, f"ClawsJoy说: {template[:200]}")
+                    return jsonify({
+                        "success": True,
+                        "response": template,
+                        "agent": "scriptbook",
+                        "enhanced": True,
+                        "user_id": user_id
+                    })
+        except Exception as e:
+            print(f"原子技能/话本匹配失败: {e}")
 
     # ===== 3. 从状态回答 =====
     direct_answer = answer_from_state(message, user_id)

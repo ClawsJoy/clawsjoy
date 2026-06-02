@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 #Modified/simplified version of the node from: https://github.com/pamparamm/sd-perturbed-attention
 #If you want the one with more options see the above repo.
 

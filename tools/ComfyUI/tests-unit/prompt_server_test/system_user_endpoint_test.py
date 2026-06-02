@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """E2E Tests for System User Protection HTTP Endpoints
 
 Tests cover:

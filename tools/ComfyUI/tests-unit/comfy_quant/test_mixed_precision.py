@@ -5,7 +5,7 @@ import os
 import json
 
 # Add comfy to path
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 def has_gpu():

@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 import asyncio
 import time
 from comfy.comfy_types import IO, ComfyNodeABC, InputTypeDict

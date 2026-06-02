@@ -10,7 +10,7 @@ import logging
 import importlib
 
 # Add ComfyUI to path so we can import modules
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from comfy_api.internal.async_to_sync import AsyncToSyncConverter

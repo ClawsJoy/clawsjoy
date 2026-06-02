@@ -6,7 +6,7 @@ agent_capabilities:
     - 数据统计
     - 报表生成
     - 数据可视化
-    priority: 20
+    priority: 5
     requires_context: false
   analyst_agent:
     capable_of:

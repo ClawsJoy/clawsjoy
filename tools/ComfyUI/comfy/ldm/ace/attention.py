@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 # Original from: https://github.com/ace-step/ACE-Step/blob/main/models/attention.py
 # Copyright 2024 The HuggingFace Team. All rights reserved.
 #

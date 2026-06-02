@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 # SAM3 shared components: primitives, ViTDet backbone, FPN neck, position encodings.
 
 import math

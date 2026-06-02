@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 # Original from: https://github.com/ace-step/ACE-Step/blob/main/music_dcae/music_log_mel.py
 import torch
 import torch.nn as nn

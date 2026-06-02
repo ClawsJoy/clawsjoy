@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """Comfy-specific type hinting"""
 
 from __future__ import annotations

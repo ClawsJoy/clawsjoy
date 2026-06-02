@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """HiDream-O1 two-pass attention: tokens [0, ar_len) are causal, [ar_len, T)
 attend full K/V. Splitting Q at the boundary avoids the (B, 1, T, T) additive
 mask the general-purpose path would build (~500 MB at T~16K) and lets the

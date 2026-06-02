@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 from ._helpers import get_fs_object_size
 from .client import (
     ApiEndpoint,

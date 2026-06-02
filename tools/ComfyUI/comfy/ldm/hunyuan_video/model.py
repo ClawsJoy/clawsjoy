@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 #Based on Flux code because of weird hunyuan video code license.
 
 import torch

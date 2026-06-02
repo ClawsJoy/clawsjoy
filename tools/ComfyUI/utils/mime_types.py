@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """Centralized MIME type initialization.
 
 Call init_mime_types() once at startup to initialize the MIME type database

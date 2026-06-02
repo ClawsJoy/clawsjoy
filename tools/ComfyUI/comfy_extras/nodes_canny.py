@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 from kornia.filters import canny
 from typing_extensions import override
 

@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 import io
 from comfy_api.input_impl.video_types import (
     container_to_output_format,

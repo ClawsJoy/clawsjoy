@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 from .anima import Qwen3Tokenizer
 import comfy.text_encoders.llama
 from comfy import sd1_clip

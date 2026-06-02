@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """ComfyUI nodes for the native MoGe (Monocular Geometry Estimation) integration."""
 
 from __future__ import annotations

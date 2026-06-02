@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 import json
 from comfy.comfy_types.node_typing import IO
 import torch

@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 # Rewritten from diffusers
 import torch
 import torch.nn as nn

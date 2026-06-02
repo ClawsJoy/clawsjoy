@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 #Taken from: https://github.com/zju-pi/diff-sampler/blob/main/gits-main/solver_utils.py
 #under Apache 2 license
 import torch

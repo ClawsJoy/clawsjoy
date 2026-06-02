@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 #taken from: https://github.com/lllyasviel/ControlNet
 #and modified
 

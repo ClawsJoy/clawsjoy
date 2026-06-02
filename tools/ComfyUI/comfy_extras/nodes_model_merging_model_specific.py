@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 import comfy_extras.nodes_model_merging
 
 class ModelMergeSD1(comfy_extras.nodes_model_merging.ModelMergeBlocks):

@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 # https://github.com/QwenLM/Qwen-Image (Apache 2.0)
 import torch
 import torch.nn as nn

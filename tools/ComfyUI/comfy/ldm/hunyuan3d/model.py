@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 import torch
 from torch import nn
 from comfy.ldm.flux.layers import (

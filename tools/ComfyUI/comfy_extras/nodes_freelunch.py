@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 #code originally taken from: https://github.com/ChenyangSi/FreeU (under MIT License)
 
 import torch

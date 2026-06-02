@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """Tests for tagging services."""
 import pytest
 from sqlalchemy.orm import Session

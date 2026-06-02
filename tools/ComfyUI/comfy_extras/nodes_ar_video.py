@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """
 ComfyUI nodes for autoregressive video generation (Causal Forcing, Self-Forcing, etc.).
   - EmptyARVideoLatent: create 5D [B, C, T, H, W] video latent tensors

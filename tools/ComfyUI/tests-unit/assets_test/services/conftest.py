@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 import tempfile
 from pathlib import Path
 from unittest.mock import patch

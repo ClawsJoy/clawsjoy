@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 #!/usr/bin/env python3
 """
 Shader Blueprint Updater

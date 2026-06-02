@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 
 
 def model_options_long_clip(sd, tokenizer_data, model_options):

@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 import torch
 from typing import Callable, Protocol, TypedDict, Optional, List
 from .node_typing import IO, InputTypeDict, ComfyNodeABC, CheckLazyMixin, FileLocator

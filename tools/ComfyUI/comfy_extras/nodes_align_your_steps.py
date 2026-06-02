@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 #from: https://research.nvidia.com/labs/toronto-ai/AlignYourSteps/howto.html
 import numpy as np
 import torch

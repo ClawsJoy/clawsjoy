@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 from .video_types import VideoContainer, VideoCodec, VideoComponents
 from .geometry_types import VOXEL, MESH, File3D
 from .image_types import SVG

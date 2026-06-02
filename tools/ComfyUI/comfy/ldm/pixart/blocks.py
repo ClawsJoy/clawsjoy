@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 # Based on:
 # https://github.com/PixArt-alpha/PixArt-alpha [Apache 2.0 license]
 # https://github.com/PixArt-alpha/PixArt-sigma [Apache 2.0 license]

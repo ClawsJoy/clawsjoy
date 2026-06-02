@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """Metadata extraction for asset scanning.
 
 Tier 1: Filesystem metadata (zero parsing)

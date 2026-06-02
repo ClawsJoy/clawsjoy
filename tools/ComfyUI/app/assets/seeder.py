@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """Background asset seeder with thread management and cancellation support."""
 
 import logging

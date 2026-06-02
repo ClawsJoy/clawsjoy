@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 import torch
 import torch.nn as nn
 from typing import Tuple, Union, Optional

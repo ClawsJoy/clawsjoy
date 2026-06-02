@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 from comfy import sd1_clip
 from .qwen_image import QwenImageTokenizer, QwenImageTEModel
 from .llama import Qwen25_7BVLI

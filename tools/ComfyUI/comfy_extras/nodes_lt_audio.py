@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 import folder_paths
 import comfy.utils
 import comfy.model_management

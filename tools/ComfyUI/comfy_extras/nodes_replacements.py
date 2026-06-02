@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 from comfy_api.latest import ComfyExtension, io, ComfyAPI
 
 api = ComfyAPI()

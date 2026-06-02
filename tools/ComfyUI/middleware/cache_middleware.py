@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """Cache control middleware for ComfyUI server"""
 
 from aiohttp import web

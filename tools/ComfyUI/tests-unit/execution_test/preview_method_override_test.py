@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """
 Unit tests for Queue-specific Preview Method Override feature.
 

@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 from app.assets.services.asset_management import (
     asset_exists,
     delete_asset_reference,

@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """
 Job utilities for the /api/jobs endpoint.
 Provides normalization and helper functions for job status tracking.

@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """Unit tests for comfy_execution/jobs.py"""
 
 from comfy_execution.jobs import (

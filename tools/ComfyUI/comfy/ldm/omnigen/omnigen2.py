@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 # Original code: https://github.com/VectorSpaceLab/OmniGen2
 
 from typing import Optional, Tuple

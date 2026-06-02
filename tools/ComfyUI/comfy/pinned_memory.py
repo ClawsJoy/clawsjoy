@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 import comfy.model_management
 import comfy.memory_management
 import comfy_aimdo.host_buffer

@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """HiDream-O1 conditioning prep — ref-image dual path + extra_conds assembly.
 
 Each ref image goes through two paths: a 32x32 patchified stream concatenated

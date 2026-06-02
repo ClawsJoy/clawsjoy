@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 from app.assets.database.queries.asset import (
     asset_exists_by_hash,
     bulk_insert_assets,

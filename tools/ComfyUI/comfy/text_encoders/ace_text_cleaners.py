@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 # basic text cleaners for the ACE step model
 # I didn't copy the ones from the reference code because I didn't want to deal with the dependencies
 # TODO: more languages than english?

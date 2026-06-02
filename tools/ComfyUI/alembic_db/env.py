@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 

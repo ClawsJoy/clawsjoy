@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 # CogVideoX VAE - ported to ComfyUI native ops
 # Architecture reference: diffusers AutoencoderKLCogVideoX
 # Style reference: comfy/ldm/wan/vae.py

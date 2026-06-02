@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """Simplified tests for WebSocket feature flags functionality."""
 from comfy_api import feature_flags
 

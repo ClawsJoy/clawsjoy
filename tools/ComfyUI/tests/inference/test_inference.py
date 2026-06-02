@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 from copy import deepcopy
 from io import BytesIO
 import numpy

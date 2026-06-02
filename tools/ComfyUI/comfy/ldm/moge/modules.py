@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """Building blocks for MoGe: residual conv stack, resamplers, MLP, DINOv2 encoder, v1 head."""
 
 from __future__ import annotations

@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """
 Bypass mode implementation for weight adapters (LoRA, LoKr, LoHa, etc.)
 

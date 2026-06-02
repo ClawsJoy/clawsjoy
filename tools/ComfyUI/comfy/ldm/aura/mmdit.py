@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 #AuraFlow MMDiT
 #Originally written by the AuraFlow Authors
 

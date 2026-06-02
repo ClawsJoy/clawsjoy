@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 # Tiny AutoEncoder for HunyuanVideo and WanVideo https://github.com/madebyollin/taehv
 
 import torch

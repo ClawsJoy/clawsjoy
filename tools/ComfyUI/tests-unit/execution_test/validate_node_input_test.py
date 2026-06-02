@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 import pytest
 from comfy_execution.validation import validate_node_input
 

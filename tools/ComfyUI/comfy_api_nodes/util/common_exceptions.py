@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 class NetworkError(Exception):
     """Base exception for network-related errors with diagnostic information."""
 

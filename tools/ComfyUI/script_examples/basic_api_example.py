@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 import json
 from urllib import request
 
@@ -107,7 +107,7 @@ def queue_prompt(prompt):
     # Generate a key here: https://platform.comfy.org/login
 
     data = json.dumps(p).encode('utf-8')
-    req =  request.Request("http://smart_config.HOST:str(smart_config.get_port("comfyui"))/prompt", data=data)
+    req =  request.Request("http://None.HOST:str(None.get_port("comfyui"))/prompt", data=data)
     request.urlopen(req)
 
 

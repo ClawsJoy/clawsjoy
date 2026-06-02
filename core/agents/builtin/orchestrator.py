@@ -100,6 +100,14 @@ class OrchestratorV6:
     def smart_route(self, message: str) -> str:
         import time
         start = time.time()
+        
+        # 社会协作优先：分析类请求交给分析师
+        if any(kw in message.lower() for kw in ["分析", "报告", "统计", "数据", ".png", ".jpg", ".json", ".yaml"]):
+            print(f"[Orchestrator] 社会协作: 分析请求 → analysis_agent")
+            self._record_route("social", (time.time() - start) * 1000)
+            engine_metrics.record("social", True, (time.time() - start) * 1000)
+            return "analysis_agent"
+        
         intent, conf, source = self._llm_understand(message)
         if intent and self._intent_to_agent(intent) != "chat_agent":
             self._record_route(source, (time.time() - start) * 1000)

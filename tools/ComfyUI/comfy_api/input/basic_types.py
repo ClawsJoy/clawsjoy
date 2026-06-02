@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 # This file only exists for backwards compatibility.
 from comfy_api.latest._input.basic_types import (
     ImageInput,

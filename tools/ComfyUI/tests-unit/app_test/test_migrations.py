@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """Test that Alembic migrations run cleanly on a file-backed SQLite DB.
 
 This catches problems like unnamed FK constraints that prevent batch-mode

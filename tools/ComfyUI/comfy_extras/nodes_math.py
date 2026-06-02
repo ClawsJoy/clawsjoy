@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """Math expression node using simpleeval for safe evaluation.
 
 Provides a ComfyMathExpression node that evaluates math expressions

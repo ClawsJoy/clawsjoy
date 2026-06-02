@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 import os
 from typing import List, Union, TypedDict, Literal
 from typing_extensions import TypeGuard

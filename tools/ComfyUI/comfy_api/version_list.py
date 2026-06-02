@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 from comfy_api.latest import ComfyAPI_latest
 from comfy_api.v0_0_2 import ComfyAPIAdapter_v0_0_2
 from comfy_api.v0_0_1 import ComfyAPIAdapter_v0_0_1

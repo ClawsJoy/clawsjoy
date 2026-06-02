@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """HiDream-O1-Image tokenizer-only text encoder.
 
 The real Qwen3-VL backbone runs inside diffusion_model.* every step, so this

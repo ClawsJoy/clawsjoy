@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 from comfy import sd1_clip
 from transformers import T5TokenizerFast
 import comfy.text_encoders.t5

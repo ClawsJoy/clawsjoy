@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 from typing import NamedTuple
 from comfy_api.internal.singleton import ProxiedSingleton
 from packaging import version as packaging_version

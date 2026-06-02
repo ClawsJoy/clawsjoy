@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 import logging
 from spandrel import ModelLoader, ImageModelDescriptor
 from comfy import model_management

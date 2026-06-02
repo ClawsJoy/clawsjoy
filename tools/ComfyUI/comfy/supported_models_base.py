@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """
     This file is part of ComfyUI.
     Copyright (C) 2024 Comfy

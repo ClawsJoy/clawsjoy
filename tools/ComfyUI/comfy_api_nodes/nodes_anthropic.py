@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """API Nodes for Anthropic Claude (Messages API). See: https://docs.anthropic.com/en/api/messages"""
 
 from typing_extensions import override

@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 # CogVideoX 3D Transformer - ported to ComfyUI native ops
 # Architecture reference: diffusers CogVideoXTransformer3DModel
 # Style reference: comfy/ldm/wan/model.py

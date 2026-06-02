@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 from .wav2vec2 import Wav2Vec2Model
 from .whisper import WhisperLargeV3
 import comfy.model_management

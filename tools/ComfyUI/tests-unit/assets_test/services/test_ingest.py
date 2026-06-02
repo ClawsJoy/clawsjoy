@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """Tests for ingest services."""
 from contextlib import contextmanager
 from pathlib import Path

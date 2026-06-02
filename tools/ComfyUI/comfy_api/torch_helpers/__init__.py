@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 from .torch_compile import set_torch_compile_wrapper
 
 __all__ = [

@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """FILM: Frame Interpolation for Large Motion (ECCV 2022)."""
 
 import torch

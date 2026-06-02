@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 # Credits:
 # Original Flux code can be found on: https://github.com/black-forest-labs/flux
 # Chroma Radiance adaption referenced from https://github.com/lodestone-rock/flow

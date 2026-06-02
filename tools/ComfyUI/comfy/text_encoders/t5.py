@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 import torch
 import math
 from comfy.ldm.modules.attention import optimized_attention_for_device

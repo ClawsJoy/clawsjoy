@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 import comfy.text_encoders.sd3_clip
 from comfy import sd1_clip
 

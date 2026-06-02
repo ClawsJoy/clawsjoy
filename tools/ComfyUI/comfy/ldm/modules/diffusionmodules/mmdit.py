@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 from functools import partial
 from typing import Dict, Optional, List
 

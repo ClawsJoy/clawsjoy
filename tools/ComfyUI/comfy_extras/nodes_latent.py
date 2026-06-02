@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 import comfy.utils
 import comfy_extras.nodes_post_processing
 import torch

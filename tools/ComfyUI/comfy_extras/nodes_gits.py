@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 # from https://github.com/zju-pi/diff-sampler/tree/main/gits-main
 import numpy as np
 import torch

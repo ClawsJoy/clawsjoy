@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """Kling API Nodes
 
 For source of truth on the allowed permutations of request fields, please reference:

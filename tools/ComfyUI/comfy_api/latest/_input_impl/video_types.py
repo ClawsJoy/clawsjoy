@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 from __future__ import annotations
 from av.container import InputContainer
 from av.subtitles.stream import SubtitleStream

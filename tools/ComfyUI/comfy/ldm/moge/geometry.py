@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """Pure-torch + scipy geometry helpers for MoGe inference and mesh export."""
 
 from __future__ import annotations

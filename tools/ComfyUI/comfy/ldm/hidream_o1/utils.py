@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """HiDream-O1 input-prep helpers: image/resolution math and unified-sequence
 RoPE position-id assembly. The fix_point offset in get_rope_index_fix_point
 lets the target image and patchified ref images share spatial RoPE positions

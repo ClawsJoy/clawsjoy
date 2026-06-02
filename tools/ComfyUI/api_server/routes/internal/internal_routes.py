@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 from aiohttp import web
 from typing import Optional
 from folder_paths import folder_names_and_paths, get_directory_by_type

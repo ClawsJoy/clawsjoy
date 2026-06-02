@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """HiDream-O1-Image transformer.
 
 Pixel-space DiT built on Qwen3-VL: the vision tower (Qwen35VisionModel)

@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """Number Convert node for unified numeric type conversion.
 
 Provides a single node that converts INT, FLOAT, STRING, and BOOL

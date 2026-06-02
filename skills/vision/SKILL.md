@@ -1,10 +1,10 @@
 ---
 name: vision
+description: 图像识别技能，使用 moondream 模型识别图片内容
+category: image
 version: 1.0.0
-description: '图像识别技能，使用 llava:7b 模型识别图片内容'
 author: ClawsJoy
-security_grade: 🟢 A
-use_when: 用户需要识别图片内容、描述图片、分析图像
+use_when: 需要识别图片内容、描述图片、分析图像
 not_for: 视频处理、音频处理
 ---
 
@@ -22,12 +22,3 @@ not_for: 视频处理、音频处理
 | success | boolean | 是否成功 |
 | result | string | 图像描述 |
 | image | string | 图片路径 |
-
-## 示例
-```json
-{
-  "skill": "vision",
-  "params": {
-    "image_path": "/tmp/photo.jpg"
-  }
-}

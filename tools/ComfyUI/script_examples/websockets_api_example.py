@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 #This is an example that uses the websockets api to know when a prompt execution is done
 #Once the prompt execution is done it downloads the images using the /history endpoint
 
@@ -8,7 +8,7 @@ import json
 import urllib.request
 import urllib.parse
 
-server_address = "127.0.0.1:str(smart_config.get_port("comfyui"))"
+server_address = "127.0.0.1:str(None.get_port("comfyui"))"
 client_id = str(uuid.uuid4())
 
 def queue_prompt(prompt, prompt_id):

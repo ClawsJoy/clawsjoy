@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """Save-side 3D nodes: mesh packing/slicing helpers + GLB writer + SaveGLB node."""
 
 import json

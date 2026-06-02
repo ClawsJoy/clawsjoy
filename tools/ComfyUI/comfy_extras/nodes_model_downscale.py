@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 from typing_extensions import override
 import comfy.utils
 from comfy_api.latest import ComfyExtension, io

@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 # SAM3 detector: transformer encoder-decoder, segmentation head, geometry encoder, scoring.
 
 import math

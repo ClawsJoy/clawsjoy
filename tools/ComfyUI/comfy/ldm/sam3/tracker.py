@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 # SAM3 video tracker: memory encoder, memory attention, SAM mask decoder/prompt encoder.
 
 import numpy as np

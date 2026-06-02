@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 from .utils import load_torch_file, transformers_convert, state_dict_prefix_replace
 import os
 import json

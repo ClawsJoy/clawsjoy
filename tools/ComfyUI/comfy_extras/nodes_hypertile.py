@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 #Taken from: https://github.com/tfernd/HyperTile/
 
 import math

@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 # original code from: https://github.com/nvidia-cosmos/cosmos-predict2
 
 import torch

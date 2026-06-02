@@ -86,3 +86,9 @@ data/meta_learning.json
 Thumbs.db
 Modelfile.intent
 scripts/finetune_intent.py
+__pycache__/
+*.log
+nohup.out
+__pycache__/
+*.pyc
+*.pyo

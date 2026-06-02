@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 #taken from https://github.com/TencentARC/T2I-Adapter
 import torch
 import torch.nn as nn

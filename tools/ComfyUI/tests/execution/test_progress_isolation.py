@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """Test that progress updates are properly isolated between WebSocket clients."""
 
 import json

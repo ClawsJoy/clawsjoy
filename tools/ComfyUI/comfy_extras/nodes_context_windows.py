@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 from __future__ import annotations
 from comfy_api.latest import ComfyExtension, io
 import comfy.context_windows

@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 from comfy import sd1_clip
 from transformers import BertTokenizer
 from .spiece_tokenizer import SPieceTokenizer

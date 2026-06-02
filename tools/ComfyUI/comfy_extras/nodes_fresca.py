@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 # Code based on https://github.com/WikiChao/FreSca (MIT License)
 import torch
 import torch.fft as fft

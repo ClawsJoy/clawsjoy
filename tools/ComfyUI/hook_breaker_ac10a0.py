@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 # Prevent custom nodes from hooking anything important
 import comfy.model_management
 

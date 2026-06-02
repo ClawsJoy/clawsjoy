@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """MoGe v1 / v2 inference modules and a state-dict-driven builder.
 
 V1: DINOv2 backbone + multi-output head (points, mask).

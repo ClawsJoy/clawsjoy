@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 # SA-Solver: Stochastic Adams Solver (NeurIPS 2023, arXiv:2309.05019)
 # Conference: https://proceedings.neurips.cc/paper_files/paper/2023/file/f4a6806490d31216a3ba667eb240c897-Paper-Conference.pdf
 # Codebase ref: https://github.com/scxue/SA-Solver

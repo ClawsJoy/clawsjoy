@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """Tests for asset enrichment (mime_type and hash population)."""
 import os
 from pathlib import Path

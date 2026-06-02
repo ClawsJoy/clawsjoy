@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """Tests for cache_state (AssetReference file path) query functions."""
 import pytest
 from sqlalchemy.orm import Session

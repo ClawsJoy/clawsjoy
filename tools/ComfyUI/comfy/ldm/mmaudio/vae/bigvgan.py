@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 # Copyright (c) 2022 NVIDIA CORPORATION.
 #   Licensed under the MIT license.
 

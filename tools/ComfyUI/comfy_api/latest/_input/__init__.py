@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 from .basic_types import ImageInput, AudioInput, MaskInput, LatentInput
 from .curve_types import CurvePoint, CurveInput, MonotoneCubicCurve, LinearCurve
 from .range_types import RangeInput

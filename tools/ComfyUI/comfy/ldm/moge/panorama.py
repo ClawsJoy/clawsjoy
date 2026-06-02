@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """Panorama (equirectangular) inference helpers for MoGe.
 
 Splits an equirect into 12 perspective views via an icosahedron camera rig, runs

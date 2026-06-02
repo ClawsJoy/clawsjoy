@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """Query functions for the unified AssetReference table.
 
 This module replaces the separate asset_info.py and cache_state.py query modules,

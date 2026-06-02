@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 # code adapted from: https://github.com/Stability-AI/stable-audio-tools
 
 from comfy.ldm.modules.attention import optimized_attention

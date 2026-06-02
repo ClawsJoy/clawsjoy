@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 from comfy.ldm.cosmos.predict2 import MiniTrainDIT
 import torch
 from torch import nn

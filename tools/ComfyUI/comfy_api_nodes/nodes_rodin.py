@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """
 ComfyUI X Rodin3D(Deemos) API Nodes
 

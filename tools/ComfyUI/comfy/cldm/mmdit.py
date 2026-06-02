@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 import torch
 from typing import Optional
 import comfy.ldm.modules.diffusionmodules.mmdit

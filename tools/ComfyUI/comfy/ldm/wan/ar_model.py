@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 """
 CausalWanModel: Wan 2.1 backbone with KV-cached causal self-attention for
 autoregressive (frame-by-frame) video generation via Causal Forcing.

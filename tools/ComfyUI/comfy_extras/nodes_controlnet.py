@@ -1,4 +1,4 @@
-from lib.smart_config import smart_config
+# from comfy.smart_config import smart_config
 from comfy.cldm.control_types import UNION_CONTROLNET_TYPES
 import nodes
 import comfy.utils
