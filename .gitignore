@@ -95,3 +95,4 @@ __pycache__/
 .env
 *.db
 *.log
+.env

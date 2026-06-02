@@ -1,0 +1,13 @@
+# 推荐迁移到 PostgreSQL
+production:
+  host: localhost
+  port: 5432
+  database: clawsjoy
+  user: clawsjoy_user
+  
+# 当前 SQLite 文件列表:
+sqlite_files:
+  - data/auth.db
+  - data/tasks.db  
+  - data/memory/long_term_memory.db
+  - data/feedback.db
