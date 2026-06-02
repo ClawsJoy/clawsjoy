@@ -387,6 +387,29 @@ class BaseAgent:
         raise NotImplementedError("子类必须实现 process 方法")
 
 
+
+    def health_check(self) -> Dict:
+        """健康检查"""
+        return {
+            "name": self.name,
+            "agent_id": self.agent_id,
+            "user_id": self.user_id,
+            "status": "healthy",
+            "created_at": self.created_at.isoformat(),
+            "last_active": self.last_active.isoformat(),
+            "memory_count": len(self._memory),
+            "version": self.VERSION
+        }
+
+    def reload(self) -> Dict:
+        """热重载配置"""
+        self._load_config()
+        self._load_memory()
+        return {
+            "success": True,
+            "message": f"Agent {self.name} 配置已重载",
+            "timestamp": datetime.now().isoformat()
+        }
 def get_agent(agent_name: str, user_id: str = "default") -> Optional[BaseAgent]:
     """获取 Agent 实例（单例模式）"""
     key = f"{agent_name}_{user_id}"
@@ -599,6 +622,23 @@ def get_agent(agent_name: str, user_id: str = "default") -> Optional[BaseAgent]:
 
 
         return result
-
     # 全局实例管理
-_agent_instances: Dict[str, BaseAgent] = {}
+        """健康检查"""
+        return {
+            "name": self.name,
+            "agent_id": self.agent_id,
+            "user_id": self.user_id,
+            "status": "healthy",
+            "created_at": self.created_at.isoformat(),
+            "last_active": self.last_active.isoformat(),
+            "memory_count": len(self._memory),
+            "version": self.VERSION
+        }
+        """热重载配置"""
+        self._load_config()
+        self._load_memory()
+        return {
+            "success": True,
+            "message": f"Agent {self.name} 配置已重载",
+            "timestamp": datetime.now().isoformat()
+        }

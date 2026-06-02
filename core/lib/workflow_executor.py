@@ -1,135 +1,146 @@
 #!/usr/bin/env python3
-"""Workflow Executor - Workflow Executor 模块
+"""Workflow Executor - Agent 工作流执行器
 
-@version: 5.0.0
+@version: 2.0.0
 @author: ClawsJoy
-@date: 2026-05-31
-"""
-
-from core.lib.unified_config import unified_config
-
-from core.lib.unified_config import unified_config
-
-"""
-Agent 工作流执行器
-负责执行多 Agent 协作工作流
+@date: 2026-06-02
+@enhanced: 完整实现工作流执行、步骤依赖、变量传递、错误处理
 """
 
 import yaml
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from datetime import datetime
-
-from core.lib.agent_bus import get_bus
 
 
 class WorkflowExecutor:
-    """工作流执行器"""
+    """工作流执行器 - 执行多 Agent 协作工作流"""
     
-    def __init__(self):
-        self.workflows = self._load_workflows()
-        self.bus = get_bus()
-        self.running_workflows = {}
-
-    def _load_workflows(self) -> Dict:
-        """加载工作流配置"""
-        config_file = Path("config/agent_workflows.yaml")
-        if config_file.exists():
-            with open(config_file, 'r') as f:
-                data = unified_config.get("workflow_executor", {})
-                return data.get('workflows', {})
-        return {}
+    def __init__(self, workflows_dir: str = "config/workflows"):
+        self.workflows_dir = Path(workflows_dir)
+        self._workflows = {}
+        self._load_all()
     
-    def get_workflow(self, name: str) -> Dict:
+    def _load_all(self):
+        """加载所有工作流模板"""
+        if not self.workflows_dir.exists():
+            return
+        
+        for f in self.workflows_dir.glob("*.yaml"):
+            try:
+                with open(f, 'r') as fp:
+                    self._workflows[f.stem] = yaml.safe_load(fp)
+            except Exception as e:
+                print(f"⚠️ 加载工作流失败 {f.name}: {e}")
+    
+    def reload(self):
+        """热重载工作流配置"""
+        self._workflows.clear()
+        self._load_all()
+        return {"success": True, "loaded": len(self._workflows)}
+    
+    def list_workflows(self) -> List[Dict]:
+        """列出所有工作流"""
+        return [
+            {"name": name, "description": wf.get('description', ''), "version": wf.get('version', '1.0')}
+            for name, wf in self._workflows.items()
+        ]
+    
+    def get_workflow(self, name: str) -> Optional[Dict]:
         """获取工作流定义"""
-        return self.workflows.get(name)
+        return self._workflows.get(name)
     
-    def get_workflow_by_keyword(self, text: str) -> str:
-        """根据关键词匹配工作流"""
-        config_file = Path("config/agent_workflows.yaml")
-        if config_file.exists():
-            with open(config_file, 'r') as f:
-                data = unified_config.get("workflow_executor", {})
-                triggers = data.get('triggers', [])
-                
-                for trigger in triggers:
-                    for keyword in trigger.get('keyword', []):
-                        if keyword in text:
-                            return trigger.get('workflow')
-        return None
-    
-    def execute_workflow(self, workflow_name: str, input_data: Dict) -> Dict:
-        """执行工作流"""
-        workflow = self.get_workflow(workflow_name)
+    def execute(self, name: str, params: Dict[str, Any]) -> Dict[str, Any]:
+        """执行工作流
+        
+        Args:
+            name: 工作流名称
+            params: 输入参数
+        
+        Returns:
+            {"success": True, "results": {...}, "execution_id": "..."}
+        """
+        workflow = self._workflows.get(name)
         if not workflow:
-            return {"success": False, "error": f"工作流不存在: {workflow_name}"}
-
-        workflow_id = f"{workflow_name}_{datetime.now().timestamp()}"
-
-        print(f"\n🚀 开始执行工作流: {workflow['name']}")
-        print(f"   ID: {workflow_id}")
-
+            return {"success": False, "error": f"工作流不存在: {name}"}
+        
+        execution_id = f"{name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         results = {}
-        current_data = input_data
-
+        step_results = {}
+        
+        print(f"🚀 执行工作流: {workflow.get('name', name)} (ID: {execution_id})")
+        
         for step in workflow.get('steps', []):
-            step_num = step.get('step')
+            step_name = step.get('name')
             agent = step.get('agent')
-            action = step.get('action')
-
-            print(f"\n📌 步骤 {step_num}: {agent} -> {action}")
-
-            # 发送消息到 Agent
-            message_id = self.bus.publish(
-                "workflow_executor",
-                f"task.{action}",
-                {
-                    "action": action,
-                    "params": current_data,
-                    "workflow_id": workflow_id,
-                    "step": step_num
-                }
-            )
-
-            results[f"step_{step_num}"] = {
-                "agent": agent,
-                "action": action,
-                "message_id": message_id,
-                "status": "sent"
-            }
-
-            # 更新数据供下一步使用
-            current_data = {"previous_result": results}
-
-        self.running_workflows[workflow_id] = {
-            "name": workflow_name,
-            "status": "running",
-            "started_at": datetime.now().isoformat(),
-            "results": results
-        }
-
+            prompt_template = step.get('prompt', '')
+            output_key = step.get('output')
+            optional = step.get('optional', False)
+            
+            # 渲染 prompt（替换变量）
+            prompt = prompt_template
+            for key, value in {**params, **step_results}.items():
+                prompt = prompt.replace(f"{{{key}}}", str(value))
+            
+            print(f"  📍 步骤: {step_name} → {agent}")
+            
+            # 调用 Agent
+            result = self._call_agent(agent, prompt)
+            
+            if result.get('success'):
+                if output_key:
+                    step_results[output_key] = result.get('response', result)
+                    results[output_key] = result.get('response', result)
+                print(f"     ✅ 完成")
+            else:
+                error_msg = result.get('error', '未知错误')
+                if optional:
+                    print(f"     ⚠️ 可选步骤失败: {error_msg}")
+                    continue
+                else:
+                    print(f"     ❌ 失败: {error_msg}")
+                    return {
+                        "success": False,
+                        "error": error_msg,
+                        "step": step_name,
+                        "execution_id": execution_id
+                    }
+        
         return {
             "success": True,
-            "workflow_id": workflow_id,
-            "workflow_name": workflow_name,
-            "message": f"工作流已启动，共 {len(workflow.get('steps', []))} 个步骤"
+            "results": results,
+            "execution_id": execution_id,
+            "workflow": name
         }
     
-    def get_status(self, workflow_id: str = None) -> Dict:
-        """获取工作流状态"""
-        if workflow_id:
-            return self.running_workflows.get(workflow_id, {"status": "not_found"})
-        return {
-            "running": len(self.running_workflows),
-            "workflows": list(self.running_workflows.keys())
-        }
+    def _call_agent(self, agent_name: str, prompt: str) -> Dict:
+        """调用 Agent"""
+        try:
+            # 动态导入 Agent
+            module_name = f"core.agents.builtin.{agent_name}"
+            module = __import__(module_name, fromlist=[agent_name])
+            
+            # 获取 Agent 类
+            class_name = ''.join(word.capitalize() for word in agent_name.split('_'))
+            agent_class = getattr(module, class_name)
+            agent = agent_class("workflow")
+            
+            # 调用 process
+            result = agent.process(prompt)
+            return {"success": True, "response": result.get('response', str(result))}
+        except ImportError:
+            # 尝试另一种命名
+            try:
+                from core.agents.builtin.orchestrator import orchestrator
+                result = orchestrator.dispatch(prompt, agent_name)
+                if result.get('success'):
+                    return {"success": True, "response": result.get('result', '处理完成')}
+                return {"success": False, "error": result.get('error', 'Agent 调用失败')}
+            except Exception as e:
+                return {"success": False, "error": f"Agent 调用失败: {e}"}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
 
 
 # 全局实例
-_workflow_executor = None
-
-def get_workflow_executor() -> WorkflowExecutor:
-    global _workflow_executor
-    if _workflow_executor is None:
-        _workflow_executor = WorkflowExecutor()
-    return _workflow_executor
+workflow_executor = WorkflowExecutor()

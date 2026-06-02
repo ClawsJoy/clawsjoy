@@ -1,4 +1,5 @@
 categories:
+  3d: 3D渲染与建模
   audio: 音频处理
   auto_generated: 自动生成
   brand: 品牌管理
@@ -48,9 +49,11 @@ categories:
   social: 社交沟通
   sports: 健康运动
   study_plan: 学习计划
+  svg: SVG图表生成
   system: 系统信息
   text: 文本处理
   text_basic: 文本处理基础
+  threejs: 3D场景生成
   time: 时间日期
   todo: 待办事项
   tools: 工具集
@@ -61,5 +64,3 @@ categories:
   weather: 天气查询
   website: 网站维护
   wrappers: 包装器
-  threejs: 3D场景生成
-  svg: SVG图表生成

@@ -246,3 +246,9 @@ Agent名称: {self.name}
             print(f"[{self.name}] 能力已注册到向量库")
         except Exception as e:
             print(f"[{self.name}] 能力注册失败: {e}")
+
+
+    def can_handle(self, user_input: str) -> dict:
+        """判断是否能处理该请求（默认实现，子类可覆盖）"""
+        # 默认：让 Orchestrator 决定，Agent 自己不做判断
+        return {"can": False, "confidence": 0.0, "reason": "defer_to_orchestrator"}

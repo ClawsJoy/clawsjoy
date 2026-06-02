@@ -6,11 +6,14 @@
 @date: 2026-05-31
 """
 
-    
+
+class ToUpperSkill:
+    """文本转大写技能"""
+
     def __init__(self):
         self.name = "to_upper"
         self.version = "1.0.0"
-    
+
     def execute(self, params: dict) -> dict:
         """将字符串转为大写"""
         text = params.get('text', '')
@@ -20,5 +23,6 @@
             "result": result,
             "message": f"'{text}' -> '{result}'"
         }
+
 
 skill = ToUpperSkill()

@@ -1,37 +1,32 @@
 ---
 name: ai-image-gen
+description: AI 图像生成技能，使用 Stable Diffusion 生成高质量图像
+category: image
 version: 1.1.0
-description: >
-  AI 图像生成技能
-  Use when: 需要生成角色图像、场景图像
-  NOT for: 视频生成、图像编辑
 author: ClawsJoy
 security_grade: 🟢 A
+use_when: 需要生成图像、画图、AI绘画、图片创作
+not_for: 图像编辑、视频生成
 ---
 
 # AI Image Generator
 
 ## When to Run
 - 用户请求生成图像
-- 创建角色形象
-- 生成场景图片
+- 用户说"画一张..."、"生成图片"、"AI绘画"
 
-## Workflow
-1. 解析提示词
-2. 保存提示词到文件
-3. 等待真实AI模型生成
+## 参数
+| 参数 | 类型 | 必填 | 描述 |
+|------|------|------|------|
+| prompt | string | 是 | 图像描述提示词 |
+| negative_prompt | string | 否 | 负面提示词 |
+| width | int | 否 | 图像宽度，默认512 |
+| height | int | 否 | 图像高度，默认512 |
+| steps | int | 否 | 推理步数，默认20 |
 
-## Output Format
-```json
-{
-  "success": true,
-  "result": {
-    "prompt_file": "/path/to/prompt.txt",
-    "prompt": "原始提示词"
-  }
-}
-Changelog
-v1.1.0 (2026-05-17)
-独立模式，无外部依赖
-
-保存提示词供后续生成
+## 返回值
+| 字段 | 类型 | 描述 |
+|------|------|------|
+| success | boolean | 是否成功 |
+| image_url | string | 生成的图片URL |
+| image_path | string | 本地图片路径 |

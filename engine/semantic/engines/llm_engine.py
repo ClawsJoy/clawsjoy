@@ -26,6 +26,7 @@ class LLMEngine(BaseEngine):
         self._enabled = False
         self._ready = False
         self._warming_up = False
+        self._warmup_status = "未启动"
         self._model = "qwen2.5:3b"
         self._client = None
         self._system_context = None
@@ -84,14 +85,30 @@ class LLMEngine(BaseEngine):
         return "\n\n".join(context_parts)
     
     def _init(self):
-        """初始化LLM引擎"""
+        """初始化LLM引擎 - 使用智能适配器"""
         try:
             import requests
             self._client = requests.Session()
+            
+            # 使用智能适配器获取推荐模型
+            try:
+                from core.lib.smart_adapter import smart_adapter
+                # 检测任务类型
+                task_type = smart_adapter.detect_task_type("通用对话")
+                # 获取适配器推荐的模型
+                model_config = smart_adapter.get_recommended_model(task_type)
+                if model_config:
+                    self._model = model_config.get('model', self._model)
+                    print(f"✅ 智能适配器推荐模型: {self._model}")
+            except:
+                pass
+            
             resp = self._client.get("http://localhost:11434/api/tags", timeout=5)
             if resp.status_code == 200:
                 models = resp.json().get('models', [])
                 model_names = [m['name'] for m in models]
+                
+                # 检查模型是否可用
                 if self._model in model_names:
                     self._enabled = True
                     print(f"✅ LLM 引擎已启用: {self._model}")
@@ -100,12 +117,22 @@ class LLMEngine(BaseEngine):
                     print(f"   系统上下文已加载")
                     self._warmup_async()
                 else:
-                    print(f"⚠️ 模型 {self._model} 未安装")
+                    # 尝试其他模型
+                    fallback_models = ["llama3.2:3b", "qwen2.5:3b", "deepseek-coder:6.7b"]
+                    for fb in fallback_models:
+                        if fb in model_names:
+                            self._model = fb
+                            self._enabled = True
+                            print(f"✅ LLM 引擎使用备用模型: {self._model}")
+                            self._system_context = self._build_system_context()
+                            self._warmup_async()
+                            return
+                    print(f"⚠️ 模型不可用，请安装: ollama pull {self._model}")
             else:
                 print("⚠️ Ollama 服务未响应")
         except Exception as e:
             print(f"⚠️ LLM 引擎初始化失败: {e}")
-    
+
     def _warmup_async(self):
         """异步预热（不阻塞启动）"""
         if self._warming_up:
@@ -115,17 +142,19 @@ class LLMEngine(BaseEngine):
     
     def _warmup(self):
         """预热模型（首次60秒）"""
+        self._warmup_status = "预热中"
         print(f"🔥 LLM 引擎预热中（首次约 30-60 秒）...")
         start = time.time()
         try:
             self._call_llm("你好", timeout=60)
             self._ready = True
             elapsed = time.time() - start
-            print(f"✅ LLM 引擎预热完成，耗时 {elapsed:.1f} 秒")
+            self._warmup_status = f"已完成，耗时 {elapsed:.1f} 秒"
         except Exception as e:
             print(f"⚠️ LLM 引擎预热失败: {e}")
         finally:
             self._warming_up = False
+        self._warmup_status = "未启动"
     
     def _call_llm(self, text: str, timeout: int = 10) -> Optional[Tuple[str, float]]:
         """调用LLM，带熔断器"""
@@ -217,6 +246,14 @@ class LLMEngine(BaseEngine):
             "model": self._model,
             "circuit_breaker_open": self._circuit_breaker["open_until"] > time.time()
         }
+
+    def get_warmup_status(self) -> str:
+        """获取预热状态"""
+        if self._ready:
+            return "已就绪"
+        if self._warming_up:
+            return "预热中"
+        return "未启动"
     
     def get_capabilities(self) -> Dict:
         return self.get_stats()

@@ -570,12 +570,21 @@ def butler_todo():
 # ========== 工作流 ==========
 @app.route('/api/workflows/list', methods=['GET'])
 def list_workflows():
-    workflows_dir = Path("workflows")
-    workflows = []
-    if workflows_dir.exists():
-        for f in workflows_dir.glob("*.json"):
-            workflows.append({'name': f.stem, 'file': f.name})
+    from core.lib.workflow_executor import workflow_executor
+    workflows = workflow_executor.list_workflows()
     return jsonify({'success': True, 'total': len(workflows), 'workflows': workflows})
+
+
+
+@app.route('/api/workflows/execute/<name>', methods=['POST'])
+def execute_workflow(name):
+    from core.lib.workflow_executor import workflow_executor
+    """执行工作流"""
+    from core.lib.workflow_executor import workflow_executor
+    data = request.json or {}
+    result = workflow_executor.execute(name, data)
+    return jsonify(result)
+
 
 @app.route('/api/workflows/status', methods=['GET'])
 def workflow_status():
@@ -1023,3 +1032,17 @@ def debug_config():
         value = unified_config.get(key, None)
         return {"key": key, "value": value}
     return {"config_keys": list(unified_config._config.keys())[:20]}
+
+# ========== 监控 API ==========
+@app.route('/api/metrics', methods=['GET'])
+def get_metrics():
+    """获取引擎性能指标"""
+    from core.lib.engine_metrics import engine_metrics
+    return jsonify(engine_metrics.get_summary())
+
+@app.route('/api/metrics/reset', methods=['POST'])
+def reset_metrics():
+    """重置指标"""
+    from core.lib.engine_metrics import engine_metrics
+    engine_metrics.reset()
+    return jsonify({"success": True, "message": "指标已重置"})

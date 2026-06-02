@@ -36,12 +36,12 @@ class VisionSkill:
             response = requests.post(
                 "http://localhost:11434/api/generate",
                 json={
-                    "model": "llava:7b",
+                    "model": "moondream:1.8b",
                     "prompt": prompt,
                     "images": [image_base64],
                     "stream": False
                 },
-                timeout=120
+                timeout=30
             )
             
             if response.status_code == 200:

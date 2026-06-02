@@ -1,17 +1,24 @@
+# version: 2.0.0 - 光影引擎升级版
 name: math_chain
-description: 数学运算链
+description: 数学计算工作流 - 链式计算
+version: 2.0.0
 
 steps:
-  - skill: add
-    params:
-      a: "{a}"
-      b: "{b}"
-    output: add_result
+  - name: parse_expression
+    agent: code_agent
+    prompt: "解析数学表达式: {expression}"
+    output: parsed
+  
+  - name: calculate
+    agent: code_agent
+    prompt: "计算结果: {parsed}"
+    output: result
+  
+  - name: explain
+    agent: chat_agent
+    prompt: "解释计算过程: {expression} = {result}"
+    output: explanation
 
-  - skill: multiply
-    params:
-      a: "{add_result.result}"
-      b: 2
-    output: final_result
-
-output: "{final_result.result}"
+output:
+  - result
+  - explanation
