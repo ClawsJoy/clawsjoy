@@ -96,3 +96,6 @@ __pycache__/
 *.db
 *.log
 .env
+backup/*.tar.gz
+backup/*.tar.gz
+*.gz

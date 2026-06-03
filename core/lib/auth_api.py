@@ -6,26 +6,31 @@
 @date: 2026-05-31
 """
 
-from core.lib.config_helper import get_data_root, get_llm_endpoint, get_llm_model, get_embedding_model, get_gateway_port, get_timeout
+from core.lib.config_helper import (get_data_root, get_embedding_model,
+                                    get_gateway_port, get_llm_endpoint,
+                                    get_llm_model, get_timeout)
+
 """认证中心 - JWT Token 管理"""
 
-import jwt
 import hashlib
 import json
+import os
 from datetime import datetime, timedelta
-from pathlib import Path
 from functools import wraps
-from flask import request, jsonify
+from pathlib import Path
+
+import jwt
 import yaml
+from flask import jsonify, request
 
 # 加载 JWT 配置
 CONFIG_FILE = Path(__file__).parent.parent / "config/jwt.yaml"
 if CONFIG_FILE.exists():
-    with open(CONFIG_FILE, 'r') as f:
+    with open(CONFIG_FILE, "r") as f:
         jwt_config = yaml.safe_load(f)
-        JWT_SECRET = jwt_config.get('secret', 'clawsjoy-default-secret')
-        JWT_ALGORITHM = jwt_config.get('algorithm', 'HS256')
-        JWT_EXPIRY_HOURS = jwt_config.get('expire_hours', 24)
+        JWT_SECRET = jwt_config.get("secret", "clawsjoy-default-secret")
+        JWT_ALGORITHM = jwt_config.get("algorithm", "HS256")
+        JWT_EXPIRY_HOURS = jwt_config.get("expire_hours", 24)
 else:
     JWT_SECRET = os.getenv("JWT_SECRET", "change-me-in-production")
     JWT_ALGORITHM = "HS256"
@@ -44,13 +49,13 @@ class AuthManager:
 
     def _load_users(self):
         if USER_DB.exists():
-            with open(USER_DB, 'r') as f:
+            with open(USER_DB, "r") as f:
                 self.users = json.load(f)
         else:
             self.users = {}
 
     def _save_users(self):
-        with open(USER_DB, 'w') as f:
+        with open(USER_DB, "w") as f:
             json.dump(self.users, f, indent=2)
 
     def _hash_password(self, password: str) -> str:
@@ -61,7 +66,7 @@ class AuthManager:
             "user_id": user_id,
             "username": username,
             "role": role,
-            "exp": datetime.utcnow() + timedelta(hours=JWT_EXPIRY_HOURS)
+            "exp": datetime.utcnow() + timedelta(hours=JWT_EXPIRY_HOURS),
         }
         return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
@@ -72,7 +77,9 @@ class AuthManager:
         if not username or not password:
             return {"success": False, "error": "用户名和密码不能为空"}
 
-        user_id = hashlib.md5(f"{username}_{datetime.now().isoformat()}".encode()).hexdigest()[:16]
+        user_id = hashlib.md5(
+            f"{username}_{datetime.now().isoformat()}".encode()
+        ).hexdigest()[:16]
 
         self.users[username] = {
             "user_id": user_id,
@@ -81,7 +88,7 @@ class AuthManager:
             "role": role,
             "created_at": datetime.now().isoformat(),
             "last_login": None,
-            "status": "active"
+            "status": "active",
         }
 
         # 创建租户目录
@@ -96,7 +103,7 @@ class AuthManager:
             "user_id": user_id,
             "username": username,
             "role": role,
-            "token": token
+            "token": token,
         }
 
     def login(self, username: str, password: str) -> dict:
@@ -120,7 +127,7 @@ class AuthManager:
             "user_id": user["user_id"],
             "username": username,
             "role": user["role"],
-            "token": token
+            "token": token,
         }
 
     def verify_token(self, token: str) -> dict:
