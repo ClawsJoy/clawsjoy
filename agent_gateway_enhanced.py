@@ -27,7 +27,7 @@ from urllib3.util.retry import Retry
 
 from core.lib.unified_config import unified_config
 from engine.security import desensitizer
-import psutil
+
 
 # ========== Gunicorn post_fork 钩子 ==========
 def post_fork(server, worker):
@@ -234,25 +234,30 @@ def list_endpoints():
             endpoints.append({"path": rule.rule, "methods": list(rule.methods)})
     return jsonify({"endpoints": endpoints, "total": len(endpoints)})
 
+
 # 然后在健康检查端点附近添加
-@app.route('/metrics')
+@app.route("/metrics")
 def metrics():
     """监控指标端点 - 安全版本"""
     try:
-        return jsonify({
-            "cpu_percent": psutil.cpu_percent(interval=0.1),
-            "memory_percent": psutil.virtual_memory().percent,
-            "disk_usage": psutil.disk_usage("/").percent,
-            "connections": len(psutil.net_connections()),
-            "status": "ok"
-        })
+        return jsonify(
+            {
+                "cpu_percent": psutil.cpu_percent(interval=0.1),
+                "memory_percent": psutil.virtual_memory().percent,
+                "disk_usage": psutil.disk_usage("/").percent,
+                "connections": len(psutil.net_connections()),
+                "status": "ok",
+            }
+        )
     except Exception as e:
         # 如果失败，返回基本信息
-        return jsonify({
-            "status": "degraded",
-            "error": str(e),
-            "message": "部分指标不可用"
-        }), 200
+        return (
+            jsonify(
+                {"status": "degraded", "error": str(e), "message": "部分指标不可用"}
+            ),
+            200,
+        )
+
 
 # ========== 基础路由 ==========
 @app.route("/health", methods=["GET"])
@@ -1254,7 +1259,6 @@ def reload_agents():
         return jsonify({"success": True, "message": "Agent 已重载"})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
-
 
 
 # ========== 启动入口 ==========
