@@ -77,48 +77,38 @@ class OrchestratorAgent(BusinessAgentV2):
     def _decompose_task(self, task: str) -> List[Dict]:
         task_lower = task.lower()
 
+        # 分析 + 写作
         if "分析" in task_lower and ("写" in task_lower or "总结" in task_lower):
             return [
-                {
-                    "step": 1,
-                    "description": "数据分析",
-                    "agent": "analysis_agent",
-                    "input": task,
-                },
-                {
-                    "step": 2,
-                    "description": "撰写报告",
-                    "agent": "writer_agent",
-                    "input": "根据分析结果写总结报告",
-                },
+                {"step": 1, "description": "数据分析", "agent": "analysis_agent", "input": task},
+                {"step": 2, "description": "撰写报告", "agent": "writer_agent", "input": "根据分析结果写总结报告"},
             ]
-        elif "分析" in task_lower:
-            return [
-                {
-                    "step": 1,
-                    "description": "数据分析",
-                    "agent": "analysis_agent",
-                    "input": task,
-                }
-            ]
-        elif "翻译" in task_lower and len(task) > 50:
-            return [
-                {
-                    "step": 1,
-                    "description": "文本翻译",
-                    "agent": "translate_agent",
-                    "input": task,
-                }
-            ]
-        else:
-            return [
-                {
-                    "step": 1,
-                    "description": "任务处理",
-                    "agent": "analysis_agent",
-                    "input": task,
-                }
-            ]
+        # 纯分析
+        if "分析" in task_lower:
+            return [{"step": 1, "description": "数据分析", "agent": "analysis_agent", "input": task}]
+        
+        # 代码生成
+        if any(kw in task_lower for kw in ["代码", "函数", "写一个", "编程", "实现"]):
+            return [{"step": 1, "description": "代码生成", "agent": "code_agent", "input": task}]
+        
+        # 图像识别
+        if any(kw in task_lower for kw in ["识别", "描述图片", "看图", "图像识别", "vision"]):
+            return [{"step": 1, "description": "图像识别", "agent": "vision_agent", "input": task}]
+        
+        # 视频处理
+        if any(kw in task_lower for kw in ["裁剪", "转码", "截图", "合成", "视频", "video"]):
+            return [{"step": 1, "description": "视频处理", "agent": "video_agent", "input": task}]
+        
+        # 复杂计算
+        if any(kw in task_lower for kw in ["复杂计算", "科学计算", "矩阵", "微积分", "方程"]):
+            return [{"step": 1, "description": "数学计算", "agent": "calculator_agent", "input": task}]
+        
+        # 长文本翻译
+        if "翻译" in task_lower and len(task) > 50:
+            return [{"step": 1, "description": "文本翻译", "agent": "translate_agent", "input": task}]
+        
+        # 默认交给分析
+        return [{"step": 1, "description": "任务处理", "agent": "analysis_agent", "input": task}]
 
     def _get_agent(self, agent_name: str):
         cache_key = f"{agent_name}:{self.user_id}"

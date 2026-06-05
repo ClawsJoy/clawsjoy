@@ -1,17 +1,24 @@
 # 语义意图到 Agent 的映射配置
-# 语义引擎返回 intent，系统映射到对应 Agent
-
 intent_to_agent:
+  write: writer_agent
   calculate: calculator_agent
   weather: weather_skill
   translate: translate_agent
   code: code_agent
   analysis: analysis_agent
+  ai: analysis_agent
   dialect: dialect_agent
   video: video_agent
+  vision: vision_agent
   chat: chat_agent
   greeting: chat_agent
   farewell: chat_agent
 
-# 也可以让语义引擎直接返回 agent 名称
-# 在 semantic_engine.understand() 返回对象中添加 agent 字段
+# 关键词兜底（当语义引擎无法识别时使用）
+keyword_fallback:
+  write: ["写一篇", "写一个", "撰写", "创作", "文章", "写作"]
+  vision: ["识别", "描述图片", "看图", "图像识别", "vision", "图片", "OCR"]
+  video: ["裁剪", "转码", "截图", "合成", "视频", "剪辑"]
+  code: ["代码", "函数", "编程", "实现", "algorithm"]
+  translate: ["翻译", "译成", "translate"]
+  calculate: ["计算", "加", "减", "乘", "除"]
