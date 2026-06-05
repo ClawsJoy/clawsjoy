@@ -1,10 +1,10 @@
-from lib.smart_config import smart_config
 import torch
 import torch.distributed as dist
-from torch.nn import functional as F
-
 from lightx2v.utils.envs import *
 from lightx2v_platform.base.global_var import AI_DEVICE
+from torch.nn import functional as F
+
+from lib.smart_config import smart_config
 
 from .module_io import GridOutput, WanPreInferModuleOutput
 from .utils import guidance_scale_embedding, sinusoidal_embedding_1d
@@ -12,7 +12,9 @@ from .utils import guidance_scale_embedding, sinusoidal_embedding_1d
 
 class WanPreInfer:
     def __init__(self, config):
-        assert (config["dim"] % config["num_heads"]) == 0 and (config["dim"] // config["num_heads"]) % 2 == 0
+        assert (config["dim"] % config["num_heads"]) == 0 and (
+            config["dim"] // config["num_heads"]
+        ) % 2 == 0
         self.config = config
         self.clean_cuda_cache = config.get("clean_cuda_cache", False)
         self.task = config["task"]
@@ -24,7 +26,9 @@ class WanPreInfer:
         self.sensitive_layer_dtype = GET_SENSITIVE_DTYPE()
 
         if self.config["seq_parallel"]:
-            self.seq_p_group = self.config.get("device_mesh").get_group(mesh_dim="seq_p")
+            self.seq_p_group = self.config.get("device_mesh").get_group(
+                mesh_dim="seq_p"
+            )
         else:
             self.seq_p_group = None
 
@@ -112,13 +116,19 @@ class WanPreInfer:
                 clip_fea = inputs["image_encoder_output"]["clip_encoder_out"]
 
             if self.config.get("changing_resolution", False):
-                image_encoder = inputs["image_encoder_output"]["vae_encoder_out"][self.scheduler.changing_resolution_index]
+                image_encoder = inputs["image_encoder_output"]["vae_encoder_out"][
+                    self.scheduler.changing_resolution_index
+                ]
             else:
                 image_encoder = inputs["image_encoder_output"]["vae_encoder_out"]
 
             if image_encoder is not None:
-                frame_seq_length = (image_encoder.size(2) // 2) * (image_encoder.size(3) // 2)
-                if kv_end - kv_start >= frame_seq_length:  # 如果是CausalVid, image_encoder取片段
+                frame_seq_length = (image_encoder.size(2) // 2) * (
+                    image_encoder.size(3) // 2
+                )
+                if (
+                    kv_end - kv_start >= frame_seq_length
+                ):  # 如果是CausalVid, image_encoder取片段
                     idx_s = kv_start // frame_seq_length
                     idx_e = kv_end // frame_seq_length
                     image_encoder = image_encoder[:, idx_s:idx_e, :, :]
@@ -129,7 +139,12 @@ class WanPreInfer:
         x = weights.patch_embedding.apply(x.unsqueeze(0))
 
         if hasattr(self, "after_patch_embedding"):
-            x, motion_vec = self.after_patch_embedding(weights, x, inputs["image_encoder_output"]["pose_latents"], inputs["image_encoder_output"]["face_pixel_values"])
+            x, motion_vec = self.after_patch_embedding(
+                weights,
+                x,
+                inputs["image_encoder_output"]["pose_latents"],
+                inputs["image_encoder_output"]["face_pixel_values"],
+            )
         else:
             motion_vec = None
 
@@ -140,7 +155,13 @@ class WanPreInfer:
         embed = sinusoidal_embedding_1d(self.freq_dim, t.flatten())
         if self.enable_dynamic_cfg:
             s = torch.tensor([self.cfg_scale], dtype=torch.float32, device=x.device)
-            cfg_embed = guidance_scale_embedding(s, embedding_dim=256, cfg_range=(1.0, 6.0), target_range=1000.0, dtype=torch.float32).type_as(x)
+            cfg_embed = guidance_scale_embedding(
+                s,
+                embedding_dim=256,
+                cfg_range=(1.0, 6.0),
+                target_range=1000.0,
+                dtype=torch.float32,
+            ).type_as(x)
             cfg_embed = weights.cfg_cond_proj_1.apply(cfg_embed)
             cfg_embed = torch.nn.functional.silu(cfg_embed)
             cfg_embed = weights.cfg_cond_proj_2.apply(cfg_embed)
@@ -156,7 +177,9 @@ class WanPreInfer:
         if self.config["model_cls"] == "wan2.1_mean_flow_distill":
             embed_r = sinusoidal_embedding_1d(self.freq_dim, t_r.flatten())
             if self.sensitive_layer_dtype != self.infer_dtype:
-                embed_r = weights.time_embedding_r_0.apply(embed_r.to(self.sensitive_layer_dtype))
+                embed_r = weights.time_embedding_r_0.apply(
+                    embed_r.to(self.sensitive_layer_dtype)
+                )
             else:
                 embed_r = weights.time_embedding_r_0.apply(embed_r)
             embed_r = torch.nn.functional.silu(embed_r)
@@ -168,7 +191,9 @@ class WanPreInfer:
 
         # text embeddings
         if self.sensitive_layer_dtype != self.infer_dtype:
-            out = weights.text_embedding_0.apply(context.squeeze(0).to(self.sensitive_layer_dtype))
+            out = weights.text_embedding_0.apply(
+                context.squeeze(0).to(self.sensitive_layer_dtype)
+            )
         else:
             out = weights.text_embedding_0.apply(context.squeeze(0))
         out = torch.nn.functional.gelu(out, approximate="tanh")
@@ -177,7 +202,9 @@ class WanPreInfer:
             del out
             torch.cuda.empty_cache()
 
-        if self.task in ["i2v", "flf2v", "animate"] and self.config.get("use_image_encoder", True):
+        if self.task in ["i2v", "flf2v", "animate"] and self.config.get(
+            "use_image_encoder", True
+        ):
             if self.task == "flf2v":
                 _, n, d = clip_fea.shape
                 clip_fea = clip_fea.view(2 * n, d)
@@ -199,7 +226,14 @@ class WanPreInfer:
                 del context_clip
             torch.cuda.empty_cache()
 
-        grid_sizes = GridOutput(tensor=torch.tensor([[grid_sizes_t, grid_sizes_h, grid_sizes_w]], dtype=torch.int32, device=x.device), tuple=(grid_sizes_t, grid_sizes_h, grid_sizes_w))
+        grid_sizes = GridOutput(
+            tensor=torch.tensor(
+                [[grid_sizes_t, grid_sizes_h, grid_sizes_w]],
+                dtype=torch.int32,
+                device=x.device,
+            ),
+            tuple=(grid_sizes_t, grid_sizes_h, grid_sizes_w),
+        )
 
         if self.cos_sin is None or self.grid_sizes != grid_sizes.tuple:
             freqs = self.freqs.clone()  # self.freqs init param can not be changed

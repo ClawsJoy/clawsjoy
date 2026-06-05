@@ -1,12 +1,14 @@
-from lib.smart_config import smart_config
 import torch
 import torch.distributed as dist
 from einops import rearrange
-from torch.nn import functional as F
-
-from lightx2v.models.networks.hunyuan_video.infer.posemb_layers import get_nd_rotary_pos_embed
+from lightx2v.models.networks.hunyuan_video.infer.posemb_layers import (
+    get_nd_rotary_pos_embed,
+)
 from lightx2v.models.schedulers.scheduler import BaseScheduler
 from lightx2v_platform.base.global_var import AI_DEVICE
+from torch.nn import functional as F
+
+from lib.smart_config import smart_config
 
 
 class HunyuanVideo15Scheduler(BaseScheduler):
@@ -19,7 +21,9 @@ class HunyuanVideo15Scheduler(BaseScheduler):
         self.keep_latents_dtype_in_scheduler = True
         self.sample_guide_scale = self.config["sample_guide_scale"]
         if self.config["seq_parallel"]:
-            self.seq_p_group = self.config.get("device_mesh").get_group(mesh_dim="seq_p")
+            self.seq_p_group = self.config.get("device_mesh").get_group(
+                mesh_dim="seq_p"
+            )
         else:
             self.seq_p_group = None
 
@@ -29,8 +33,17 @@ class HunyuanVideo15Scheduler(BaseScheduler):
         rope_dim_list = self.config["rope_dim_list"]
         if rope_dim_list is None:
             rope_dim_list = [head_dim // target_ndim for _ in range(target_ndim)]
-        assert sum(rope_dim_list) == head_dim, "sum(rope_dim_list) should equal to head_dim of attention layer"
-        freqs_cos, freqs_sin = get_nd_rotary_pos_embed(rope_dim_list, rope_sizes, theta=self.config["rope_theta"], use_real=True, theta_rescale_factor=1, device=AI_DEVICE)
+        assert (
+            sum(rope_dim_list) == head_dim
+        ), "sum(rope_dim_list) should equal to head_dim of attention layer"
+        freqs_cos, freqs_sin = get_nd_rotary_pos_embed(
+            rope_dim_list,
+            rope_sizes,
+            theta=self.config["rope_theta"],
+            use_real=True,
+            theta_rescale_factor=1,
+            device=AI_DEVICE,
+        )
         cos_half = freqs_cos[:, ::2].contiguous()
         sin_half = freqs_sin[:, ::2].contiguous()
         cos_sin = torch.cat([cos_half, sin_half], dim=-1)
@@ -48,7 +61,15 @@ class HunyuanVideo15Scheduler(BaseScheduler):
         self.prepare_latents(seed, latent_shape, dtype=torch.bfloat16)
         self.set_timesteps(self.infer_steps, device=AI_DEVICE, shift=self.sample_shift)
         self.multitask_mask = self.get_task_mask(self.config["task"], latent_shape[-3])
-        self.cond_latents_concat, self.mask_concat = self._prepare_cond_latents_and_mask(self.config["task"], image_encoder_output["cond_latents"], self.latents, self.multitask_mask, self.reorg_token)
+        self.cond_latents_concat, self.mask_concat = (
+            self._prepare_cond_latents_and_mask(
+                self.config["task"],
+                image_encoder_output["cond_latents"],
+                self.latents,
+                self.multitask_mask,
+                self.reorg_token,
+            )
+        )
 
     def prepare_latents(self, seed, latent_shape, dtype=torch.bfloat16):
         self.generator = torch.Generator(device=AI_DEVICE).manual_seed(seed)
@@ -74,7 +95,9 @@ class HunyuanVideo15Scheduler(BaseScheduler):
             sigmas = 1 - sigmas
 
         self.sigmas = sigmas
-        self.timesteps = (sigmas[:-1] * self.num_train_timesteps).to(dtype=torch.float32, device=device)
+        self.timesteps = (sigmas[:-1] * self.num_train_timesteps).to(
+            dtype=torch.float32, device=device
+        )
 
     def sd3_time_shift(self, t: torch.Tensor, shift):
         return (shift * t) / (1 + (shift - 1) * t)
@@ -89,7 +112,9 @@ class HunyuanVideo15Scheduler(BaseScheduler):
             raise ValueError(f"{task_type} is not supported !")
         return mask
 
-    def _prepare_cond_latents_and_mask(self, task_type, cond_latents, latents, multitask_mask, reorg_token):
+    def _prepare_cond_latents_and_mask(
+        self, task_type, cond_latents, latents, multitask_mask, reorg_token
+    ):
         """
         Prepare multitask mask training logic.
 
@@ -111,13 +136,31 @@ class HunyuanVideo15Scheduler(BaseScheduler):
             latents_concat[:, :, 1:, :, :] = 0.0
         else:
             if reorg_token:
-                latents_concat = torch.zeros(latents.shape[0], latents.shape[1] // 2, latents.shape[2], latents.shape[3], latents.shape[4]).to(latents.device)
+                latents_concat = torch.zeros(
+                    latents.shape[0],
+                    latents.shape[1] // 2,
+                    latents.shape[2],
+                    latents.shape[3],
+                    latents.shape[4],
+                ).to(latents.device)
             else:
-                latents_concat = torch.zeros(latents.shape[0], latents.shape[1], latents.shape[2], latents.shape[3], latents.shape[4]).to(latents.device)
+                latents_concat = torch.zeros(
+                    latents.shape[0],
+                    latents.shape[1],
+                    latents.shape[2],
+                    latents.shape[3],
+                    latents.shape[4],
+                ).to(latents.device)
 
-        mask_zeros = torch.zeros(latents.shape[0], 1, latents.shape[2], latents.shape[3], latents.shape[4])
-        mask_ones = torch.ones(latents.shape[0], 1, latents.shape[2], latents.shape[3], latents.shape[4])
-        mask_concat = self.merge_tensor_by_mask(mask_zeros.cpu(), mask_ones.cpu(), mask=multitask_mask.cpu(), dim=2).to(device=latents.device)
+        mask_zeros = torch.zeros(
+            latents.shape[0], 1, latents.shape[2], latents.shape[3], latents.shape[4]
+        )
+        mask_ones = torch.ones(
+            latents.shape[0], 1, latents.shape[2], latents.shape[3], latents.shape[4]
+        )
+        mask_concat = self.merge_tensor_by_mask(
+            mask_zeros.cpu(), mask_ones.cpu(), mask=multitask_mask.cpu(), dim=2
+        ).to(device=latents.device)
 
         return latents_concat, mask_concat
 
@@ -146,7 +189,9 @@ class HunyuanVideo15SRScheduler(HunyuanVideo15Scheduler):
         super().__init__(config)
         self.noise_scale = 0.7
 
-    def prepare(self, seed, latent_shape, lq_latents, upsampler, image_encoder_output=None):
+    def prepare(
+        self, seed, latent_shape, lq_latents, upsampler, image_encoder_output=None
+    ):
         dtype = lq_latents.dtype
         self.prepare_latents(seed, latent_shape, lq_latents, dtype=dtype)
         self.set_timesteps(self.infer_steps, device=AI_DEVICE, shift=self.sample_shift)
@@ -154,7 +199,9 @@ class HunyuanVideo15SRScheduler(HunyuanVideo15Scheduler):
         tgt_shape = latent_shape[-2:]
         bsz = lq_latents.shape[0]
         lq_latents = rearrange(lq_latents, "b c f h w -> (b f) c h w")
-        lq_latents = F.interpolate(lq_latents, size=tgt_shape, mode="bilinear", align_corners=False)
+        lq_latents = F.interpolate(
+            lq_latents, size=tgt_shape, mode="bilinear", align_corners=False
+        )
         lq_latents = rearrange(lq_latents, "(b f) c h w -> b c f h w", b=bsz)
 
         lq_latents = upsampler(lq_latents.to(dtype=torch.float32, device=device))
@@ -162,7 +209,9 @@ class HunyuanVideo15SRScheduler(HunyuanVideo15Scheduler):
 
         lq_latents = self.add_noise_to_lq(lq_latents, self.noise_scale)
 
-        condition = self.get_condition(lq_latents, image_encoder_output["cond_latents"], self.config["task"])
+        condition = self.get_condition(
+            lq_latents, image_encoder_output["cond_latents"], self.config["task"]
+        )
         c = lq_latents.shape[1]
 
         zero_condition = condition.clone()
@@ -190,7 +239,9 @@ class HunyuanVideo15SRScheduler(HunyuanVideo15Scheduler):
         latents: shape (b c f h w)
         """
         b, c, f, h, w = self.latents.shape
-        cond = torch.zeros([b, c * 2 + 2, f, h, w], device=lq_latents.device, dtype=lq_latents.dtype)
+        cond = torch.zeros(
+            [b, c * 2 + 2, f, h, w], device=lq_latents.device, dtype=lq_latents.dtype
+        )
 
         cond[:, c + 1 : 2 * c + 1] = lq_latents
         cond[:, 2 * c + 1] = 1

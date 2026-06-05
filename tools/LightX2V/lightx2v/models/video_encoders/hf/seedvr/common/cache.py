@@ -1,5 +1,6 @@
-from lib.smart_config import smart_config
 from typing import Callable
+
+from lib.smart_config import smart_config
 
 
 class Cache:

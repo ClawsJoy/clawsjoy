@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import json
 import math
 import random
@@ -9,12 +8,18 @@ from typing import Any, List, Optional, Tuple, Union
 import numpy as np
 import torch
 import torch.distributed as dist
-from PIL import Image
 from diffusers.configuration_utils import ConfigMixin, register_to_config
-from diffusers.schedulers.scheduling_utils import KarrasDiffusionSchedulers, SchedulerMixin, SchedulerOutput
+from diffusers.schedulers.scheduling_utils import (
+    KarrasDiffusionSchedulers,
+    SchedulerMixin,
+    SchedulerOutput,
+)
 from diffusers.utils import deprecate
 from einops import rearrange
 from loguru import logger
+from PIL import Image
+
+from lib.smart_config import smart_config
 
 try:
     from scipy.interpolate import interp1d
@@ -24,11 +29,18 @@ except ImportError:
     Rotation = None
     Slerp = None
 
-from lightx2v.models.runners.wan.wan_runner import Wan22DenseRunner, build_wan_model_with_lora
+from lightx2v.models.runners.wan.wan_runner import (
+    Wan22DenseRunner,
+    build_wan_model_with_lora,
+)
 from lightx2v.models.schedulers.scheduler import BaseScheduler
 from lightx2v.server.metrics import monitor_cli
 from lightx2v.utils.envs import GET_DTYPE
-from lightx2v.utils.profiler import GET_RECORDER_MODE, ProfilingContext4DebugL1, ProfilingContext4DebugL2
+from lightx2v.utils.profiler import (
+    GET_RECORDER_MODE,
+    ProfilingContext4DebugL1,
+    ProfilingContext4DebugL2,
+)
 from lightx2v.utils.registry_factory import RUNNER_REGISTER
 from lightx2v_platform.base.global_var import AI_DEVICE
 
@@ -114,9 +126,13 @@ def _matrix_game3_combine_data(data, num_frames=57, keyboard_dim=4, mouse=True):
         else:
             rd_frame = min(rd_frame, num_frames - current_frame)
             repeat_time = rd_frame // 4
-            keyboard_condition[current_frame : current_frame + rd_frame] = keyboard_sample.repeat(repeat_time, 1)
+            keyboard_condition[current_frame : current_frame + rd_frame] = (
+                keyboard_sample.repeat(repeat_time, 1)
+            )
             if mouse:
-                mouse_condition[current_frame : current_frame + rd_frame] = mouse_sample.repeat(repeat_time, 1)
+                mouse_condition[current_frame : current_frame + rd_frame] = (
+                    mouse_sample.repeat(repeat_time, 1)
+                )
             current_frame += rd_frame
 
     if mouse:
@@ -142,7 +158,11 @@ def _matrix_game3_bench_actions_universal(num_frames, num_samples_per_action=4):
         "camera_l",
         "camera_r",
     ]
-    actions_to_test = actions_double_action * 5 + actions_single_camera * 5 + actions_single_action * 5
+    actions_to_test = (
+        actions_double_action * 5
+        + actions_single_camera * 5
+        + actions_single_action * 5
+    )
     for action in actions_single_action + actions_double_action:
         for camera in actions_single_camera:
             actions_to_test.append(f"{action}_{camera}")
@@ -175,7 +195,9 @@ def _matrix_game3_bench_actions_universal(num_frames, num_samples_per_action=4):
             if sub_action not in action_name:
                 continue
             if sub_action in camera_value_map:
-                mouse_condition = [camera_value_map[sub_action] for _ in range(num_samples_per_action)]
+                mouse_condition = [
+                    camera_value_map[sub_action] for _ in range(num_samples_per_action)
+                ]
             elif sub_action in keyboard_idx:
                 col = keyboard_idx[sub_action]
                 for row in keyboard_condition:
@@ -191,13 +213,23 @@ def _matrix_game3_bench_actions_universal(num_frames, num_samples_per_action=4):
     return _matrix_game3_combine_data(data, num_frames, keyboard_dim=6, mouse=True)
 
 
-def _matrix_game3_compute_next_pose_from_action(current_pose, keyboard_action, mouse_action):
+def _matrix_game3_compute_next_pose_from_action(
+    current_pose, keyboard_action, mouse_action
+):
     x, y, z, pitch, yaw = current_pose
     w, s, a, d = keyboard_action[:4]
     mouse_x, mouse_y = mouse_action[:2]
 
-    delta_pitch = _MATRIX_GAME3_MOUSE_PITCH_SENSITIVITY * mouse_x if abs(mouse_x) >= _MATRIX_GAME3_MOUSE_THRESHOLD else 0.0
-    delta_yaw = _MATRIX_GAME3_MOUSE_YAW_SENSITIVITY * mouse_y if abs(mouse_y) >= _MATRIX_GAME3_MOUSE_THRESHOLD else 0.0
+    delta_pitch = (
+        _MATRIX_GAME3_MOUSE_PITCH_SENSITIVITY * mouse_x
+        if abs(mouse_x) >= _MATRIX_GAME3_MOUSE_THRESHOLD
+        else 0.0
+    )
+    delta_yaw = (
+        _MATRIX_GAME3_MOUSE_YAW_SENSITIVITY * mouse_y
+        if abs(mouse_y) >= _MATRIX_GAME3_MOUSE_THRESHOLD
+        else 0.0
+    )
 
     new_pitch = pitch + delta_pitch
     new_yaw = yaw + delta_yaw
@@ -233,7 +265,9 @@ def _matrix_game3_compute_next_pose_from_action(current_pose, keyboard_action, m
     return np.array([x + delta_x, y + delta_y, z, new_pitch, new_yaw], dtype=np.float32)
 
 
-def _matrix_game3_compute_all_poses_from_actions(keyboard_conditions, mouse_conditions, first_pose=None, return_last_pose=False):
+def _matrix_game3_compute_all_poses_from_actions(
+    keyboard_conditions, mouse_conditions, first_pose=None, return_last_pose=False
+):
     total_frames = len(keyboard_conditions)
     all_poses = np.zeros((total_frames, 5), dtype=np.float32)
     if first_pose is not None:
@@ -256,7 +290,9 @@ def _matrix_game3_compute_all_poses_from_actions(keyboard_conditions, mouse_cond
     return all_poses
 
 
-def _matrix_game3_interpolate_camera_poses(src_indices, src_rot_mat, src_trans_vec, tgt_indices):
+def _matrix_game3_interpolate_camera_poses(
+    src_indices, src_rot_mat, src_trans_vec, tgt_indices
+):
     interp_func_trans = interp1d(
         src_indices,
         src_trans_vec,
@@ -289,18 +325,24 @@ def _matrix_game3_se3_inverse(transform):
     translation = transform[:, :3, 3:]
     rotation_inv = rotation.transpose(-1, -2)
     translation_inv = -torch.bmm(rotation_inv, translation)
-    inverse = torch.eye(4, device=transform.device, dtype=transform.dtype)[None, :, :].repeat(transform.shape[0], 1, 1)
+    inverse = torch.eye(4, device=transform.device, dtype=transform.dtype)[
+        None, :, :
+    ].repeat(transform.shape[0], 1, 1)
     inverse[:, :3, :3] = rotation_inv
     inverse[:, :3, 3:] = translation_inv
     return inverse
 
 
-def _matrix_game3_compute_relative_poses(c2ws_mat, framewise=False, normalize_trans=True):
+def _matrix_game3_compute_relative_poses(
+    c2ws_mat, framewise=False, normalize_trans=True
+):
     ref_w2cs = _matrix_game3_se3_inverse(c2ws_mat[0:1])
     relative_poses = torch.matmul(ref_w2cs, c2ws_mat)
     relative_poses[0] = torch.eye(4, device=c2ws_mat.device, dtype=c2ws_mat.dtype)
     if framewise:
-        relative_poses_framewise = torch.bmm(_matrix_game3_se3_inverse(relative_poses[:-1]), relative_poses[1:])
+        relative_poses_framewise = torch.bmm(
+            _matrix_game3_se3_inverse(relative_poses[:-1]), relative_poses[1:]
+        )
         relative_poses[1:] = relative_poses_framewise
     if normalize_trans:
         translations = relative_poses[:, :3, 3]
@@ -311,7 +353,9 @@ def _matrix_game3_compute_relative_poses(c2ws_mat, framewise=False, normalize_tr
 
 
 @torch.no_grad()
-def _matrix_game3_create_meshgrid(n_frames, height, width, bias=0.5, device="cuda", dtype=torch.float32):
+def _matrix_game3_create_meshgrid(
+    n_frames, height, width, bias=0.5, device="cuda", dtype=torch.float32
+):
     x_range = torch.arange(width, device=device, dtype=dtype)
     y_range = torch.arange(height, device=device, dtype=dtype)
     grid_y, grid_x = torch.meshgrid(y_range, x_range, indexing="ij")
@@ -321,7 +365,9 @@ def _matrix_game3_create_meshgrid(n_frames, height, width, bias=0.5, device="cud
 
 def _matrix_game3_get_plucker_embeddings(c2ws_mat, intrinsics, height, width):
     n_frames = c2ws_mat.shape[0]
-    grid_xy = _matrix_game3_create_meshgrid(n_frames, height, width, device=c2ws_mat.device, dtype=c2ws_mat.dtype)
+    grid_xy = _matrix_game3_create_meshgrid(
+        n_frames, height, width, device=c2ws_mat.device, dtype=c2ws_mat.dtype
+    )
     fx, fy, cx, cy = intrinsics.chunk(4, dim=-1)
     i = grid_xy[..., 0]
     j = grid_xy[..., 1]
@@ -337,11 +383,21 @@ def _matrix_game3_get_plucker_embeddings(c2ws_mat, intrinsics, height, width):
     return torch.cat([rays_o, rays_d], dim=-1).view([n_frames, height, width, 6])
 
 
-def _matrix_game3_select_memory_idx_fov(extrinsics_all, current_start_frame_idx, selected_index_base, return_confidence=False, use_gpu=False):
+def _matrix_game3_select_memory_idx_fov(
+    extrinsics_all,
+    current_start_frame_idx,
+    selected_index_base,
+    return_confidence=False,
+    use_gpu=False,
+):
     if not use_gpu:
         use_gpu = True
 
-    device = extrinsics_all.device if isinstance(extrinsics_all, torch.Tensor) else torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = (
+        extrinsics_all.device
+        if isinstance(extrinsics_all, torch.Tensor)
+        else torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    )
     if isinstance(extrinsics_all, np.ndarray):
         extrinsics_tensor = torch.from_numpy(extrinsics_all).to(device).float()
     else:
@@ -370,7 +426,9 @@ def _matrix_game3_select_memory_idx_fov(extrinsics_all, current_start_frame_idx,
     z_samples = torch.linspace(near, far, num_side, device=device)
     x_samples = torch.linspace(-1, 1, num_side, device=device)
     y_samples = torch.linspace(-1, 1, num_side, device=device)
-    grid_x, grid_y, grid_z = torch.meshgrid(x_samples, y_samples, z_samples, indexing="ij")
+    grid_x, grid_y, grid_z = torch.meshgrid(
+        x_samples, y_samples, z_samples, indexing="ij"
+    )
     points_cam_base = torch.stack(
         [
             grid_x.reshape(-1) * grid_z.reshape(-1) * (video_w / (2 * fx)),
@@ -384,7 +442,13 @@ def _matrix_game3_select_memory_idx_fov(extrinsics_all, current_start_frame_idx,
         extrinsics = extrinsics_tensor[base_idx]
         points_world = extrinsics[:3, :3] @ points_cam_base + extrinsics[:3, 3:4]
         points_world_batched = points_world.unsqueeze(0)
-        points_in_candidates = torch.bmm(rotation_inv, points_world_batched.expand(len(candidate_indices), -1, -1)) + translation_inv
+        points_in_candidates = (
+            torch.bmm(
+                rotation_inv,
+                points_world_batched.expand(len(candidate_indices), -1, -1),
+            )
+            + translation_inv
+        )
 
         x = points_in_candidates[:, 0, :]
         y = points_in_candidates[:, 1, :]
@@ -392,13 +456,22 @@ def _matrix_game3_select_memory_idx_fov(extrinsics_all, current_start_frame_idx,
         u = (x * fx / torch.clamp(z, min=1e-6)) + video_w / 2
         v = (y * fy / torch.clamp(z, min=1e-6)) + video_h / 2
 
-        in_view = (z > near) & (z < far) & (u >= 0) & (u <= video_w) & (v >= 0) & (v <= video_h)
+        in_view = (
+            (z > near)
+            & (z < far)
+            & (u >= 0)
+            & (u <= video_w)
+            & (v >= 0)
+            & (v <= video_h)
+        )
         ratios = in_view.float().mean(dim=1)
         best_idx = torch.argmax(ratios)
         selected_index.append(candidate_indices[best_idx].item())
         selected_confidence.append(ratios[best_idx].item())
 
-    return (selected_index, selected_confidence) if return_confidence else selected_index
+    return (
+        (selected_index, selected_confidence) if return_confidence else selected_index
+    )
 
 
 def _matrix_game3_get_extrinsics(video_rotation, video_position):
@@ -408,9 +481,23 @@ def _matrix_game3_get_extrinsics(video_rotation, video_position):
         roll, pitch, yaw = video_rotation[idx]
         roll, pitch, yaw = np.radians([roll, pitch, yaw])
 
-        rotation_z = np.array([[np.cos(yaw), -np.sin(yaw), 0], [np.sin(yaw), np.cos(yaw), 0], [0, 0, 1]])
-        rotation_y = np.array([[np.cos(pitch), 0, np.sin(pitch)], [0, 1, 0], [-np.sin(pitch), 0, np.cos(pitch)]])
-        rotation_x = np.array([[1, 0, 0], [0, np.cos(roll), -np.sin(roll)], [0, np.sin(roll), np.cos(roll)]])
+        rotation_z = np.array(
+            [[np.cos(yaw), -np.sin(yaw), 0], [np.sin(yaw), np.cos(yaw), 0], [0, 0, 1]]
+        )
+        rotation_y = np.array(
+            [
+                [np.cos(pitch), 0, np.sin(pitch)],
+                [0, 1, 0],
+                [-np.sin(pitch), 0, np.cos(pitch)],
+            ]
+        )
+        rotation_x = np.array(
+            [
+                [1, 0, 0],
+                [0, np.cos(roll), -np.sin(roll)],
+                [0, np.sin(roll), np.cos(roll)],
+            ]
+        )
         rotation = rotation_z @ rotation_y @ rotation_x
 
         extrinsics = np.eye(4, dtype=np.float32)
@@ -442,7 +529,9 @@ def _matrix_game3_get_intrinsics(height, width):
     return torch.tensor([fx, fy, cx, cy])
 
 
-def _matrix_game3_interpolate_camera_poses_handedness(src_indices, src_rot_mat, src_trans_vec, tgt_indices):
+def _matrix_game3_interpolate_camera_poses_handedness(
+    src_indices, src_rot_mat, src_trans_vec, tgt_indices
+):
     dets = np.linalg.det(src_rot_mat)
     flip_handedness = dets.size > 0 and np.median(dets) < 0.0
     if flip_handedness:
@@ -465,11 +554,15 @@ class _MatrixGame3ConditionsShim:
 
 
 class _MatrixGame3UtilsShim:
-    compute_all_poses_from_actions = staticmethod(_matrix_game3_compute_all_poses_from_actions)
+    compute_all_poses_from_actions = staticmethod(
+        _matrix_game3_compute_all_poses_from_actions
+    )
 
 
 class _MatrixGame3CamUtilsShim:
-    _interpolate_camera_poses_handedness = staticmethod(_matrix_game3_interpolate_camera_poses_handedness)
+    _interpolate_camera_poses_handedness = staticmethod(
+        _matrix_game3_interpolate_camera_poses_handedness
+    )
     compute_relative_poses = staticmethod(_matrix_game3_compute_relative_poses)
     get_plucker_embeddings = staticmethod(_matrix_game3_get_plucker_embeddings)
     select_memory_idx_fov = staticmethod(_matrix_game3_select_memory_idx_fov)
@@ -507,11 +600,15 @@ class FlowUniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
             if solver_type in ["midpoint", "heun", "logrho"]:
                 self.register_to_config(solver_type="bh2")
             else:
-                raise NotImplementedError(f"{solver_type} is not implemented for {self.__class__}")
+                raise NotImplementedError(
+                    f"{solver_type} is not implemented for {self.__class__}"
+                )
 
         self.predict_x0 = predict_x0
         self.num_inference_steps = None
-        alphas = np.linspace(1, 1 / num_train_timesteps, num_train_timesteps)[::-1].copy()
+        alphas = np.linspace(1, 1 / num_train_timesteps, num_train_timesteps)[
+            ::-1
+        ].copy()
         sigmas = 1.0 - alphas
         sigmas = torch.from_numpy(sigmas).to(dtype=torch.float32)
 
@@ -552,10 +649,14 @@ class FlowUniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
         shift: Optional[Union[float, None]] = None,
     ):
         if self.config.use_dynamic_shifting and mu is None:
-            raise ValueError("you have to pass a value for `mu` when `use_dynamic_shifting` is set to be `True`")
+            raise ValueError(
+                "you have to pass a value for `mu` when `use_dynamic_shifting` is set to be `True`"
+            )
 
         if sigmas is None:
-            sigmas = np.linspace(self.sigma_max, self.sigma_min, num_inference_steps + 1).copy()[:-1]
+            sigmas = np.linspace(
+                self.sigma_max, self.sigma_min, num_inference_steps + 1
+            ).copy()[:-1]
 
         if self.config.use_dynamic_shifting:
             sigmas = self.time_shift(mu, 1.0, sigmas)
@@ -569,12 +670,16 @@ class FlowUniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
         elif self.config.final_sigmas_type == "zero":
             sigma_last = 0
         else:
-            raise ValueError(f"`final_sigmas_type` must be one of 'zero', or 'sigma_min', but got {self.config.final_sigmas_type}")
+            raise ValueError(
+                f"`final_sigmas_type` must be one of 'zero', or 'sigma_min', but got {self.config.final_sigmas_type}"
+            )
 
         timesteps = sigmas * self.config.num_train_timesteps
         sigmas = np.concatenate([sigmas, [sigma_last]]).astype(np.float32)
         self.sigmas = torch.from_numpy(sigmas)
-        self.timesteps = torch.from_numpy(timesteps).to(device=device, dtype=torch.int64)
+        self.timesteps = torch.from_numpy(timesteps).to(
+            device=device, dtype=torch.int64
+        )
         self.num_inference_steps = len(timesteps)
         self.model_outputs = [None] * self.config.solver_order
         self.lower_order_nums = 0
@@ -608,7 +713,9 @@ class FlowUniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
     def time_shift(self, mu: float, sigma: float, t: torch.Tensor):
         return math.exp(mu) / (math.exp(mu) + (1 / t - 1) ** sigma)
 
-    def convert_model_output(self, model_output: torch.Tensor, *args, sample: torch.Tensor = None, **kwargs) -> torch.Tensor:
+    def convert_model_output(
+        self, model_output: torch.Tensor, *args, sample: torch.Tensor = None, **kwargs
+    ) -> torch.Tensor:
         timestep = args[0] if len(args) > 0 else kwargs.pop("timestep", None)
         if sample is None:
             if len(args) > 1:
@@ -630,7 +737,9 @@ class FlowUniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
                 sigma_t = self.sigmas[self.step_index]
                 x0_pred = sample - sigma_t * model_output
             else:
-                raise ValueError(f"prediction_type given as {self.config.prediction_type} must be one of `epsilon`, `sample`, `v_prediction` or `flow_prediction` for the UniPCMultistepScheduler.")
+                raise ValueError(
+                    f"prediction_type given as {self.config.prediction_type} must be one of `epsilon`, `sample`, `v_prediction` or `flow_prediction` for the UniPCMultistepScheduler."
+                )
             if self.config.thresholding:
                 x0_pred = self._threshold_sample(x0_pred)
             return x0_pred
@@ -639,7 +748,9 @@ class FlowUniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
             sigma_t = self.sigmas[self.step_index]
             epsilon = sample - (1 - sigma_t) * model_output
         else:
-            raise ValueError(f"prediction_type given as {self.config.prediction_type} must be one of `epsilon`, `sample`, `v_prediction` or `flow_prediction` for the UniPCMultistepScheduler.")
+            raise ValueError(
+                f"prediction_type given as {self.config.prediction_type} must be one of `epsilon`, `sample`, `v_prediction` or `flow_prediction` for the UniPCMultistepScheduler."
+            )
         if self.config.thresholding:
             sigma_t = self.sigmas[self.step_index]
             x0_pred = sample - sigma_t * model_output
@@ -647,7 +758,14 @@ class FlowUniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
             epsilon = model_output + x0_pred
         return epsilon
 
-    def multistep_uni_p_bh_update(self, model_output: torch.Tensor, *args, sample: torch.Tensor = None, order: int = None, **kwargs) -> torch.Tensor:
+    def multistep_uni_p_bh_update(
+        self,
+        model_output: torch.Tensor,
+        *args,
+        sample: torch.Tensor = None,
+        order: int = None,
+        **kwargs,
+    ) -> torch.Tensor:
         prev_timestep = args[0] if len(args) > 0 else kwargs.pop("prev_timestep", None)
         if sample is None:
             if len(args) > 1:
@@ -674,7 +792,10 @@ class FlowUniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
             x_t = self.solver_p.step(model_output, s0, x).prev_sample
             return x_t
 
-        sigma_t, sigma_s0 = self.sigmas[self.step_index + 1], self.sigmas[self.step_index]
+        sigma_t, sigma_s0 = (
+            self.sigmas[self.step_index + 1],
+            self.sigmas[self.step_index],
+        )
         alpha_t, sigma_t = self._sigma_to_alpha_sigma_t(sigma_t)
         alpha_s0, sigma_s0 = self._sigma_to_alpha_sigma_t(sigma_s0)
         lambda_t = torch.log(alpha_t) - torch.log(sigma_t)
@@ -723,17 +844,25 @@ class FlowUniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
             if order == 2:
                 rhos_p = torch.tensor([0.5], dtype=x.dtype, device=device)
             else:
-                rhos_p = torch.linalg.solve(matrix_r[:-1, :-1], vector_b[:-1]).to(device).to(x.dtype)
+                rhos_p = (
+                    torch.linalg.solve(matrix_r[:-1, :-1], vector_b[:-1])
+                    .to(device)
+                    .to(x.dtype)
+                )
         else:
             d1s = None
 
         if self.predict_x0:
             x_t_ = sigma_t / sigma_s0 * x - alpha_t * h_phi_1 * m0
-            pred_res = torch.einsum("k,bkc...->bc...", rhos_p, d1s) if d1s is not None else 0
+            pred_res = (
+                torch.einsum("k,bkc...->bc...", rhos_p, d1s) if d1s is not None else 0
+            )
             x_t = x_t_ - alpha_t * b_h * pred_res
         else:
             x_t_ = alpha_t / alpha_s0 * x - sigma_t * h_phi_1 * m0
-            pred_res = torch.einsum("k,bkc...->bc...", rhos_p, d1s) if d1s is not None else 0
+            pred_res = (
+                torch.einsum("k,bkc...->bc...", rhos_p, d1s) if d1s is not None else 0
+            )
             x_t = x_t_ - sigma_t * b_h * pred_res
         return x_t.to(x.dtype)
 
@@ -775,7 +904,10 @@ class FlowUniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
         x_t = this_sample
         model_t = this_model_output
 
-        sigma_t, sigma_s0 = self.sigmas[self.step_index], self.sigmas[self.step_index - 1]
+        sigma_t, sigma_s0 = (
+            self.sigmas[self.step_index],
+            self.sigmas[self.step_index - 1],
+        )
         alpha_t, sigma_t = self._sigma_to_alpha_sigma_t(sigma_t)
         alpha_s0, sigma_s0 = self._sigma_to_alpha_sigma_t(sigma_s0)
         lambda_t = torch.log(alpha_t) - torch.log(sigma_t)
@@ -827,12 +959,20 @@ class FlowUniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
 
         if self.predict_x0:
             x_t_ = sigma_t / sigma_s0 * x - alpha_t * h_phi_1 * m0
-            corr_res = torch.einsum("k,bkc...->bc...", rhos_c[:-1], d1s) if d1s is not None else 0
+            corr_res = (
+                torch.einsum("k,bkc...->bc...", rhos_c[:-1], d1s)
+                if d1s is not None
+                else 0
+            )
             d1_t = model_t - m0
             x_t = x_t_ - alpha_t * b_h * (corr_res + rhos_c[-1] * d1_t)
         else:
             x_t_ = alpha_t / alpha_s0 * x - sigma_t * h_phi_1 * m0
-            corr_res = torch.einsum("k,bkc...->bc...", rhos_c[:-1], d1s) if d1s is not None else 0
+            corr_res = (
+                torch.einsum("k,bkc...->bc...", rhos_c[:-1], d1s)
+                if d1s is not None
+                else 0
+            )
             d1_t = model_t - m0
             x_t = x_t_ - sigma_t * b_h * (corr_res + rhos_c[-1] * d1_t)
         return x_t.to(x.dtype)
@@ -861,12 +1001,18 @@ class FlowUniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
         generator=None,
     ) -> Union[SchedulerOutput, Tuple]:
         if self.num_inference_steps is None:
-            raise ValueError("Number of inference steps is 'None', you need to run 'set_timesteps' after creating the scheduler")
+            raise ValueError(
+                "Number of inference steps is 'None', you need to run 'set_timesteps' after creating the scheduler"
+            )
 
         if self.step_index is None:
             self._init_step_index(timestep)
 
-        use_corrector = self.step_index > 0 and self.step_index - 1 not in self.disable_corrector and self.last_sample is not None
+        use_corrector = (
+            self.step_index > 0
+            and self.step_index - 1 not in self.disable_corrector
+            and self.last_sample is not None
+        )
         model_output_convert = self.convert_model_output(model_output, sample=sample)
         if use_corrector:
             sample = self.multistep_uni_c_bh_update(
@@ -884,7 +1030,9 @@ class FlowUniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
         self.timestep_list[-1] = timestep
 
         if self.config.lower_order_final:
-            this_order = min(self.config.solver_order, len(self.timesteps) - self.step_index)
+            this_order = min(
+                self.config.solver_order, len(self.timesteps) - self.step_index
+            )
         else:
             this_order = self.config.solver_order
 
@@ -909,17 +1057,29 @@ class FlowUniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
     def scale_model_input(self, sample: torch.Tensor, *args, **kwargs) -> torch.Tensor:
         return sample
 
-    def add_noise(self, original_samples: torch.Tensor, noise: torch.Tensor, timesteps: torch.IntTensor) -> torch.Tensor:
-        sigmas = self.sigmas.to(device=original_samples.device, dtype=original_samples.dtype)
+    def add_noise(
+        self,
+        original_samples: torch.Tensor,
+        noise: torch.Tensor,
+        timesteps: torch.IntTensor,
+    ) -> torch.Tensor:
+        sigmas = self.sigmas.to(
+            device=original_samples.device, dtype=original_samples.dtype
+        )
         if original_samples.device.type == "mps" and torch.is_floating_point(timesteps):
-            schedule_timesteps = self.timesteps.to(original_samples.device, dtype=torch.float32)
+            schedule_timesteps = self.timesteps.to(
+                original_samples.device, dtype=torch.float32
+            )
             timesteps = timesteps.to(original_samples.device, dtype=torch.float32)
         else:
             schedule_timesteps = self.timesteps.to(original_samples.device)
             timesteps = timesteps.to(original_samples.device)
 
         if self.begin_index is None:
-            step_indices = [self.index_for_timestep(timestep, schedule_timesteps) for timestep in timesteps]
+            step_indices = [
+                self.index_for_timestep(timestep, schedule_timesteps)
+                for timestep in timesteps
+            ]
         elif self.step_index is not None:
             step_indices = [self.step_index] * timesteps.shape[0]
         else:
@@ -959,23 +1119,43 @@ class MatrixGame3OfficialSchedulerAdapter(BaseScheduler):
 
     def _reset_solver(self):
         self._solver = self.scheduler_cls()
-        self._solver.set_timesteps(self.infer_steps, device=AI_DEVICE, shift=self.sample_shift)
+        self._solver.set_timesteps(
+            self.infer_steps, device=AI_DEVICE, shift=self.sample_shift
+        )
 
     def prepare(self, seed, latent_shape, image_encoder_output=None):
         self._generator = torch.Generator(device=AI_DEVICE).manual_seed(seed)
-        self.latents = torch.randn(tuple(latent_shape), dtype=GET_DTYPE(), device=AI_DEVICE, generator=self._generator)
-        self.vae_encoder_out = image_encoder_output.get("vae_encoder_out") if image_encoder_output is not None else None
+        self.latents = torch.randn(
+            tuple(latent_shape),
+            dtype=GET_DTYPE(),
+            device=AI_DEVICE,
+            generator=self._generator,
+        )
+        self.vae_encoder_out = (
+            image_encoder_output.get("vae_encoder_out")
+            if image_encoder_output is not None
+            else None
+        )
         if self.vae_encoder_out is not None:
-            self.vae_encoder_out = self.vae_encoder_out.to(device=AI_DEVICE, dtype=GET_DTYPE())
+            self.vae_encoder_out = self.vae_encoder_out.to(
+                device=AI_DEVICE, dtype=GET_DTYPE()
+            )
         self.noise_pred = None
         self.mask = torch.ones_like(self.latents)
         self._reset_solver()
 
     def reset(self, seed, latent_shape, step_index=None):
         self._generator = torch.Generator(device=AI_DEVICE).manual_seed(seed)
-        self.latents = torch.randn(tuple(latent_shape), dtype=GET_DTYPE(), device=AI_DEVICE, generator=self._generator)
+        self.latents = torch.randn(
+            tuple(latent_shape),
+            dtype=GET_DTYPE(),
+            device=AI_DEVICE,
+            generator=self._generator,
+        )
         if self.vae_encoder_out is not None:
-            self.vae_encoder_out = self.vae_encoder_out.to(device=AI_DEVICE, dtype=GET_DTYPE())
+            self.vae_encoder_out = self.vae_encoder_out.to(
+                device=AI_DEVICE, dtype=GET_DTYPE()
+            )
         self.noise_pred = None
         if self.mask is not None:
             self.mask = self.mask.to(device=AI_DEVICE, dtype=GET_DTYPE())
@@ -986,10 +1166,14 @@ class MatrixGame3OfficialSchedulerAdapter(BaseScheduler):
     def step_pre(self, step_index):
         super().step_pre(step_index)
         self.noise_pred = None
-        self.timestep_input = torch.stack([self._solver.timesteps[self.step_index].to(device=AI_DEVICE)])
+        self.timestep_input = torch.stack(
+            [self._solver.timesteps[self.step_index].to(device=AI_DEVICE)]
+        )
 
     def step_post(self):
-        timestep = self._solver.timesteps[self.step_index].to(device=self.latents.device)
+        timestep = self._solver.timesteps[self.step_index].to(
+            device=self.latents.device
+        )
         prev_sample = self._solver.step(
             # Keep the model output in its original precision. The official MG3
             # pipeline feeds float32 noise predictions into UniPC even when the
@@ -1001,7 +1185,9 @@ class MatrixGame3OfficialSchedulerAdapter(BaseScheduler):
             return_dict=False,
         )[0]
         if self.mask is not None and self.vae_encoder_out is not None:
-            prev_sample = (1.0 - self.mask) * self.vae_encoder_out + self.mask * prev_sample
+            prev_sample = (
+                1.0 - self.mask
+            ) * self.vae_encoder_out + self.mask * prev_sample
         self.latents = prev_sample.to(dtype=GET_DTYPE())
 
     def clear(self):
@@ -1045,7 +1231,9 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
                 elif config["vae_type"] == "mg_lightvae_v2":
                     config["lightvae_pruning_rate"] = 0.75
             if "sub_model_folder" not in config:
-                config["sub_model_folder"] = "base_model" if config["use_base_model"] else "base_distilled_model"
+                config["sub_model_folder"] = (
+                    "base_model" if config["use_base_model"] else "base_distilled_model"
+                )
             config["num_channels_latents"] = int(config.get("num_channels_latents", 48))
             config["vae_stride"] = tuple(config.get("vae_stride", (4, 16, 16)))
             config["patch_size"] = tuple(config.get("patch_size", (1, 2, 2)))
@@ -1065,11 +1253,19 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
         action_config = self.config.get("action_config", {})
         self.first_clip_frame = int(self.config.get("first_clip_frame", 57))
         self.clip_frame = int(self.config.get("clip_frame", 56))
-        self.incremental_segment_frames = int(self.config.get("incremental_segment_frames", 40))
+        self.incremental_segment_frames = int(
+            self.config.get("incremental_segment_frames", 40)
+        )
         self.past_frame = int(self.config.get("past_frame", 16))
-        self.conditioning_latent_frames = int(self.config.get("conditioning_latent_frames", 4))
-        self.mouse_dim_in = int(self.config.get("mouse_dim_in", action_config.get("mouse_dim_in", 2)))
-        self.keyboard_dim_in = int(self.config.get("keyboard_dim_in", action_config.get("keyboard_dim_in", 6)))
+        self.conditioning_latent_frames = int(
+            self.config.get("conditioning_latent_frames", 4)
+        )
+        self.mouse_dim_in = int(
+            self.config.get("mouse_dim_in", action_config.get("mouse_dim_in", 2))
+        )
+        self.keyboard_dim_in = int(
+            self.config.get("keyboard_dim_in", action_config.get("keyboard_dim_in", 6))
+        )
 
         # Session-scoped caches filled by `_prepare_matrix_game3_session()` and then
         # consumed incrementally as each segment is initialized and decoded.
@@ -1099,7 +1295,9 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
         # Some callers still use `pose`, others use `action_path`. Mirror both so the
         # runner remains compatible with older LightX2V entry points.
         if "action_path" in self.input_info.__dataclass_fields__:
-            self.input_info.action_path = inputs.get("action_path", inputs.get("pose", ""))
+            self.input_info.action_path = inputs.get(
+                "action_path", inputs.get("pose", "")
+            )
         if "pose" in self.input_info.__dataclass_fields__:
             self.input_info.pose = inputs.get("pose", inputs.get("action_path", ""))
 
@@ -1107,9 +1305,15 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
         # Official Matrix-Game-3 base inference uses a non-empty default negative
         # prompt for CFG. If the caller leaves `--negative_prompt` empty, reuse the
         # official default so the unconditional branch matches the reference path.
-        if self.config.get("enable_cfg", False) and not getattr(input_info, "negative_prompt", ""):
-            input_info.negative_prompt = self.config.get("sample_neg_prompt", _MATRIX_GAME3_DEFAULT_NEGATIVE_PROMPT)
-            logger.info("[matrix-game-3] negative_prompt not provided; falling back to the official sample_neg_prompt for CFG.")
+        if self.config.get("enable_cfg", False) and not getattr(
+            input_info, "negative_prompt", ""
+        ):
+            input_info.negative_prompt = self.config.get(
+                "sample_neg_prompt", _MATRIX_GAME3_DEFAULT_NEGATIVE_PROMPT
+            )
+            logger.info(
+                "[matrix-game-3] negative_prompt not provided; falling back to the official sample_neg_prompt for CFG."
+            )
         return super().run_text_encoder(input_info)
 
     def load_transformer(self):
@@ -1124,9 +1328,14 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
         }
         lora_configs = self.config.get("lora_configs")
         if not lora_configs:
-            logger.info("[matrix-game-3] loading MG3 {} checkpoint with the LightX2V inference stack.", self._get_sub_model_folder())
+            logger.info(
+                "[matrix-game-3] loading MG3 {} checkpoint with the LightX2V inference stack.",
+                self._get_sub_model_folder(),
+            )
             return WanMtxg3Model(**model_kwargs)
-        return build_wan_model_with_lora(WanMtxg3Model, self.config, model_kwargs, lora_configs, model_type="wan2.2")
+        return build_wan_model_with_lora(
+            WanMtxg3Model, self.config, model_kwargs, lora_configs, model_type="wan2.2"
+        )
 
     def init_scheduler(self):
         # MG3 relies on a fixed latent prefix that must be re-injected after every
@@ -1134,8 +1343,12 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
         # per-step semantics while keeping the denoiser itself on the native
         # LightX2V path, so prefer it for both base and distilled checkpoints.
         try:
-            self.scheduler = MatrixGame3OfficialSchedulerAdapter(self.config, FlowUniPCMultistepScheduler)
-            logger.info("[matrix-game-3] using inlined FlowUniPCMultistepScheduler for MG3 sampling.")
+            self.scheduler = MatrixGame3OfficialSchedulerAdapter(
+                self.config, FlowUniPCMultistepScheduler
+            )
+            logger.info(
+                "[matrix-game-3] using inlined FlowUniPCMultistepScheduler for MG3 sampling."
+            )
             return
         except Exception as exc:
             logger.warning(
@@ -1146,7 +1359,16 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
 
     def _get_sub_model_folder(self) -> str:
         """Resolve which MG3 sub-model folder should be used for config lookup."""
-        return str(self.config.get("sub_model_folder", "base_model" if self.config.get("use_base_model", False) else "base_distilled_model"))
+        return str(
+            self.config.get(
+                "sub_model_folder",
+                (
+                    "base_model"
+                    if self.config.get("use_base_model", False)
+                    else "base_distilled_model"
+                ),
+            )
+        )
 
     def resolve_model_config_path(self) -> Path:
         """Resolve the MG3 base/distilled config.json with explicit override support."""
@@ -1170,7 +1392,12 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
                 candidate = candidate_root / sub_model_folder / "config.json"
                 if candidate not in candidates:
                     candidates.append(candidate)
-        candidates.append(_PROJECT_ROOT / _MATRIX_GAME3_CONFIG_ROOT_RELATIVE / sub_model_folder / "config.json")
+        candidates.append(
+            _PROJECT_ROOT
+            / _MATRIX_GAME3_CONFIG_ROOT_RELATIVE
+            / sub_model_folder
+            / "config.json"
+        )
 
         for candidate in candidates:
             if candidate.is_file():
@@ -1193,14 +1420,26 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
 
         with self.config.temporarily_unlocked():
             self.config.update(model_config)
-            self.config["num_channels_latents"] = int(model_config.get("in_dim", self.config.get("num_channels_latents", 48)))
-            self.config["vae_stride"] = tuple(self.config.get("vae_stride", (4, 16, 16)))
-            self.config["patch_size"] = tuple(model_config.get("patch_size", self.config.get("patch_size", (1, 2, 2))))
-            self.config["sample_neg_prompt"] = self.config.get("sample_neg_prompt", _MATRIX_GAME3_DEFAULT_NEGATIVE_PROMPT)
+            self.config["num_channels_latents"] = int(
+                model_config.get("in_dim", self.config.get("num_channels_latents", 48))
+            )
+            self.config["vae_stride"] = tuple(
+                self.config.get("vae_stride", (4, 16, 16))
+            )
+            self.config["patch_size"] = tuple(
+                model_config.get("patch_size", self.config.get("patch_size", (1, 2, 2)))
+            )
+            self.config["sample_neg_prompt"] = self.config.get(
+                "sample_neg_prompt", _MATRIX_GAME3_DEFAULT_NEGATIVE_PROMPT
+            )
 
         action_config = self.config.get("action_config", {})
-        self.keyboard_dim_in = int(self.config.get("keyboard_dim_in", action_config.get("keyboard_dim_in", 6)))
-        self.mouse_dim_in = int(self.config.get("mouse_dim_in", action_config.get("mouse_dim_in", 2)))
+        self.keyboard_dim_in = int(
+            self.config.get("keyboard_dim_in", action_config.get("keyboard_dim_in", 6))
+        )
+        self.mouse_dim_in = int(
+            self.config.get("mouse_dim_in", action_config.get("mouse_dim_in", 2))
+        )
 
     def _get_official_modules(self) -> dict[str, Any]:
         """Expose inlined Matrix-Game-3 helpers through a module-like interface."""
@@ -1215,7 +1454,9 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
         self._official_modules = modules
         return modules
 
-    def _get_expected_total_frames(self, raw_total_frames: Optional[int] = None) -> tuple[int, int]:
+    def _get_expected_total_frames(
+        self, raw_total_frames: Optional[int] = None
+    ) -> tuple[int, int]:
         """Resolve how many segments to run.
 
         Matrix-Game-3 only supports lengths of `57 + 40 * k`. If a control sequence
@@ -1224,7 +1465,11 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
         num_iterations = self.config.get("num_iterations", None)
         if num_iterations is not None:
             num_iterations = max(int(num_iterations), 1)
-            return num_iterations, self.first_clip_frame + (num_iterations - 1) * self.incremental_segment_frames
+            return (
+                num_iterations,
+                self.first_clip_frame
+                + (num_iterations - 1) * self.incremental_segment_frames,
+            )
 
         if raw_total_frames is None:
             return 1, self.first_clip_frame
@@ -1233,8 +1478,13 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
             return 1, self.first_clip_frame
 
         additional_frames = raw_total_frames - self.first_clip_frame
-        num_iterations = 1 + max(additional_frames // self.incremental_segment_frames, 0)
-        expected_total_frames = self.first_clip_frame + (num_iterations - 1) * self.incremental_segment_frames
+        num_iterations = 1 + max(
+            additional_frames // self.incremental_segment_frames, 0
+        )
+        expected_total_frames = (
+            self.first_clip_frame
+            + (num_iterations - 1) * self.incremental_segment_frames
+        )
         if additional_frames % self.incremental_segment_frames != 0:
             logger.warning(
                 "[matrix-game-3] raw control sequence has {} frames; truncating tail to {} frames so it matches 57 + 40*k.",
@@ -1243,7 +1493,9 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
             )
         return num_iterations, expected_total_frames
 
-    def _segment_latent_shape(self, lat_h: int, lat_w: int, frame_count: int) -> list[int]:
+    def _segment_latent_shape(
+        self, lat_h: int, lat_w: int, frame_count: int
+    ) -> list[int]:
         """Compute `[C, T, H, W]` latent shape for one segment window."""
         return [
             self.config.get("num_channels_latents", 48),
@@ -1275,7 +1527,9 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
         crop_x = int(round((input_w - crop_w) / 2.0))
         crop_y = int(round((input_h - crop_h) / 2.0))
         image_uint8 = torch.from_numpy(np.array(img)).unsqueeze(0).permute(0, 3, 1, 2)
-        image_uint8 = image_uint8[:, :, crop_y : crop_y + crop_h, crop_x : crop_x + crop_w]
+        image_uint8 = image_uint8[
+            :, :, crop_y : crop_y + crop_h, crop_x : crop_x + crop_w
+        ]
         image_tensor = image_uint8.float().div_(255.0)
         image_tensor = torch.nn.functional.interpolate(
             image_tensor,
@@ -1289,7 +1543,11 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
         lat_h = target_h // self.config["vae_stride"][1]
         lat_w = target_w // self.config["vae_stride"][2]
         latent_shape = self._segment_latent_shape(lat_h, lat_w, self.first_clip_frame)
-        vae_encoder_out = torch.zeros(latent_shape, device=first_frame_latent.device, dtype=first_frame_latent.dtype)
+        vae_encoder_out = torch.zeros(
+            latent_shape,
+            device=first_frame_latent.device,
+            dtype=first_frame_latent.dtype,
+        )
         vae_encoder_out[:, : first_frame_latent.shape[1]] = first_frame_latent
         return vae_encoder_out, latent_shape
 
@@ -1307,7 +1565,9 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
         torch_device_module.empty_cache()
         return self.get_encoder_output_i2v(None, vae_encoder_out, text_encoder_output)
 
-    def get_encoder_output_i2v(self, clip_encoder_out, vae_encoder_out, text_encoder_output, img=None):
+    def get_encoder_output_i2v(
+        self, clip_encoder_out, vae_encoder_out, text_encoder_output, img=None
+    ):
         # Keep the standard LightX2V output contract so downstream scheduler / model
         # code can stay unchanged. Segment-specific conditions are injected later.
         image_encoder_output = {
@@ -1320,7 +1580,12 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
             "image_encoder_output": image_encoder_output,
         }
 
-    def _prepare_matrix_game3_session(self, pil_image: Image.Image, latent_shape: list[int], vae_encoder_out: torch.Tensor):
+    def _prepare_matrix_game3_session(
+        self,
+        pil_image: Image.Image,
+        latent_shape: list[int],
+        vae_encoder_out: torch.Tensor,
+    ):
         # Official source:
         # - Non-interactive path mirrors pipeline/inference_pipeline.py
         # - Interactive segment refreshing mirrors pipeline/inference_interactive_pipeline.py
@@ -1348,7 +1613,10 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
         if self._mg3_interactive:
             num_iterations = self.config.get("num_iterations", 1)
             self._mg3_num_iterations = max(int(num_iterations), 1)
-            self._mg3_expected_total_frames = self.first_clip_frame + (self._mg3_num_iterations - 1) * self.incremental_segment_frames
+            self._mg3_expected_total_frames = (
+                self.first_clip_frame
+                + (self._mg3_num_iterations - 1) * self.incremental_segment_frames
+            )
             self._mg3_keyboard_all = None
             self._mg3_mouse_all = None
             self._mg3_extrinsics_all = None
@@ -1358,7 +1626,9 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
         action_path = self.input_info.action_path or self.input_info.pose or ""
         raw_controls = self._load_control_payload(action_path)
         raw_total_frames = self._infer_raw_total_frames(raw_controls)
-        self._mg3_num_iterations, self._mg3_expected_total_frames = self._get_expected_total_frames(raw_total_frames)
+        self._mg3_num_iterations, self._mg3_expected_total_frames = (
+            self._get_expected_total_frames(raw_total_frames)
+        )
 
         # Match the official Matrix-Game-3 demo pipeline: when the user does not
         # provide an external action file, fall back to the benchmark universal
@@ -1369,9 +1639,18 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
                 "[matrix-game-3] action_path missing or empty; falling back to official Bench_actions_universal({}).",
                 self._mg3_expected_total_frames,
             )
-            raw_controls = self._normalize_payload_keys(modules["conditions"].Bench_actions_universal(self._mg3_expected_total_frames))
+            raw_controls = self._normalize_payload_keys(
+                modules["conditions"].Bench_actions_universal(
+                    self._mg3_expected_total_frames
+                )
+            )
 
-        self._mg3_keyboard_all, self._mg3_mouse_all, self._mg3_extrinsics_all, self._mg3_intrinsics_all = self._build_noninteractive_controls(raw_controls)
+        (
+            self._mg3_keyboard_all,
+            self._mg3_mouse_all,
+            self._mg3_extrinsics_all,
+            self._mg3_intrinsics_all,
+        ) = self._build_noninteractive_controls(raw_controls)
 
     def _infer_raw_total_frames(self, payload: dict[str, Any]) -> Optional[int]:
         """Infer sequence length from whichever control tensor is present."""
@@ -1392,12 +1671,17 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
     def _load_control_payload(self, action_path: str) -> dict[str, Any]:
         """Load keyboard/mouse/pose/intrinsics controls from a file or a directory."""
         if not action_path:
-            logger.warning("[matrix-game-3] action_path missing, fallback to zero keyboard/mouse and identity poses.")
+            logger.warning(
+                "[matrix-game-3] action_path missing, fallback to zero keyboard/mouse and identity poses."
+            )
             return {}
 
         path = Path(action_path)
         if not path.exists():
-            logger.warning("[matrix-game-3] action_path not found: {}. Fallback to zero keyboard/mouse and identity poses.", action_path)
+            logger.warning(
+                "[matrix-game-3] action_path not found: {}. Fallback to zero keyboard/mouse and identity poses.",
+                action_path,
+            )
             return {}
 
         if path.is_dir():
@@ -1408,10 +1692,39 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
         """Best-effort directory loader that accepts several common file names."""
         payload: dict[str, Any] = {}
         name_groups = {
-            "keyboard_cond": ["keyboard_cond.npy", "keyboard_condition.npy", "keyboard_cond.pt", "keyboard_condition.pt", "keyboard_cond.json", "keyboard_condition.json"],
-            "mouse_cond": ["mouse_cond.npy", "mouse_condition.npy", "mouse_cond.pt", "mouse_condition.pt", "mouse_cond.json", "mouse_condition.json"],
-            "poses": ["poses.npy", "pose.npy", "poses.pt", "pose.pt", "poses.json", "pose.json", "c2ws.npy", "c2w.npy"],
-            "intrinsics": ["intrinsics.npy", "intrinsics.pt", "intrinsics.json", "Ks.npy", "K.npy"],
+            "keyboard_cond": [
+                "keyboard_cond.npy",
+                "keyboard_condition.npy",
+                "keyboard_cond.pt",
+                "keyboard_condition.pt",
+                "keyboard_cond.json",
+                "keyboard_condition.json",
+            ],
+            "mouse_cond": [
+                "mouse_cond.npy",
+                "mouse_condition.npy",
+                "mouse_cond.pt",
+                "mouse_condition.pt",
+                "mouse_cond.json",
+                "mouse_condition.json",
+            ],
+            "poses": [
+                "poses.npy",
+                "pose.npy",
+                "poses.pt",
+                "pose.pt",
+                "poses.json",
+                "pose.json",
+                "c2ws.npy",
+                "c2w.npy",
+            ],
+            "intrinsics": [
+                "intrinsics.npy",
+                "intrinsics.pt",
+                "intrinsics.json",
+                "Ks.npy",
+                "K.npy",
+            ],
         }
         for key, names in name_groups.items():
             for file_name in names:
@@ -1472,7 +1785,9 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
         """Generate the default camera intrinsics for the current output resolution."""
         modules = self._get_official_modules()
         assert self._mg3_target_h is not None and self._mg3_target_w is not None
-        return modules["cam_utils"].get_intrinsics(self._mg3_target_h, self._mg3_target_w)
+        return modules["cam_utils"].get_intrinsics(
+            self._mg3_target_h, self._mg3_target_w
+        )
 
     def _to_tensor(self, value: Any, dtype=torch.float32) -> Optional[torch.Tensor]:
         """Convert numpy/list/scalar inputs into CPU tensors for normalization."""
@@ -1486,7 +1801,9 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
             return torch.tensor(value, dtype=dtype)
         return torch.tensor(value, dtype=dtype)
 
-    def _resize_time_axis(self, tensor: torch.Tensor, total_frames: int) -> torch.Tensor:
+    def _resize_time_axis(
+        self, tensor: torch.Tensor, total_frames: int
+    ) -> torch.Tensor:
         # MG3 expects exact per-frame control lengths. To make the runner tolerant of
         # slightly malformed inputs, short sequences are padded by repeating the last
         # value and long sequences are truncated.
@@ -1495,7 +1812,9 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
         if tensor.shape[0] == 1:
             return tensor.repeat(total_frames, *([1] * (tensor.ndim - 1)))
         if tensor.shape[0] < total_frames:
-            pad = tensor[-1:].repeat(total_frames - tensor.shape[0], *([1] * (tensor.ndim - 1)))
+            pad = tensor[-1:].repeat(
+                total_frames - tensor.shape[0], *([1] * (tensor.ndim - 1))
+            )
             logger.warning(
                 "[matrix-game-3] control length {} shorter than expected {}, padding with the last value.",
                 tensor.shape[0],
@@ -1512,32 +1831,42 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
     def _normalize_keyboard_cond(self, value: Any, total_frames: int) -> torch.Tensor:
         """Normalize keyboard controls into `[1, T, keyboard_dim_in]`."""
         if value is None:
-            return torch.zeros((1, total_frames, self.keyboard_dim_in), dtype=torch.float32)
+            return torch.zeros(
+                (1, total_frames, self.keyboard_dim_in), dtype=torch.float32
+            )
         tensor = self._to_tensor(value)
         if tensor.ndim == 1:
             tensor = tensor.unsqueeze(0)
         if tensor.ndim == 3 and tensor.shape[0] == 1:
             tensor = tensor.squeeze(0)
         if tensor.ndim != 2 or tensor.shape[-1] != self.keyboard_dim_in:
-            raise ValueError(f"keyboard_cond shape mismatch, expected [T,{self.keyboard_dim_in}], got {tuple(tensor.shape)}")
+            raise ValueError(
+                f"keyboard_cond shape mismatch, expected [T,{self.keyboard_dim_in}], got {tuple(tensor.shape)}"
+            )
         tensor = self._resize_time_axis(tensor, total_frames)
         return tensor.unsqueeze(0)
 
     def _normalize_mouse_cond(self, value: Any, total_frames: int) -> torch.Tensor:
         """Normalize mouse controls into `[1, T, mouse_dim_in]`."""
         if value is None:
-            return torch.zeros((1, total_frames, self.mouse_dim_in), dtype=torch.float32)
+            return torch.zeros(
+                (1, total_frames, self.mouse_dim_in), dtype=torch.float32
+            )
         tensor = self._to_tensor(value)
         if tensor.ndim == 1:
             tensor = tensor.unsqueeze(0)
         if tensor.ndim == 3 and tensor.shape[0] == 1:
             tensor = tensor.squeeze(0)
         if tensor.ndim != 2 or tensor.shape[-1] != self.mouse_dim_in:
-            raise ValueError(f"mouse_cond shape mismatch, expected [T,{self.mouse_dim_in}], got {tuple(tensor.shape)}")
+            raise ValueError(
+                f"mouse_cond shape mismatch, expected [T,{self.mouse_dim_in}], got {tuple(tensor.shape)}"
+            )
         tensor = self._resize_time_axis(tensor, total_frames)
         return tensor.unsqueeze(0)
 
-    def _normalize_intrinsics(self, value: Any, total_frames: int) -> Optional[torch.Tensor]:
+    def _normalize_intrinsics(
+        self, value: Any, total_frames: int
+    ) -> Optional[torch.Tensor]:
         """Accept either flattened `[fx, fy, cx, cy]` or 3x3 intrinsics matrices."""
         if value is None:
             return None
@@ -1548,9 +1877,19 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
             elif tensor.shape[0] == 9:
                 tensor = tensor.view(3, 3).unsqueeze(0)
         if tensor.ndim == 3 and tensor.shape[-2:] == (3, 3):
-            tensor = torch.stack([tensor[..., 0, 0], tensor[..., 1, 1], tensor[..., 0, 2], tensor[..., 1, 2]], dim=-1)
+            tensor = torch.stack(
+                [
+                    tensor[..., 0, 0],
+                    tensor[..., 1, 1],
+                    tensor[..., 0, 2],
+                    tensor[..., 1, 2],
+                ],
+                dim=-1,
+            )
         if tensor.ndim != 2 or tensor.shape[-1] != 4:
-            raise ValueError(f"intrinsics shape mismatch, expected [T,4] or [T,3,3], got {tuple(tensor.shape)}")
+            raise ValueError(
+                f"intrinsics shape mismatch, expected [T,4] or [T,3,3], got {tuple(tensor.shape)}"
+            )
         return self._resize_time_axis(tensor, total_frames)
 
     def _normalize_poses(self, value: Any, total_frames: int) -> Optional[torch.Tensor]:
@@ -1562,15 +1901,29 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
             # The official action pipeline also uses a compact 5D pose
             # `[x, y, z, pitch, yaw]`. Convert it here to full extrinsics.
             modules = self._get_official_modules()
-            rotations = np.concatenate([np.zeros((tensor.shape[0], 1), dtype=np.float32), tensor[:, 3:5].numpy()], axis=1).tolist()
+            rotations = np.concatenate(
+                [
+                    np.zeros((tensor.shape[0], 1), dtype=np.float32),
+                    tensor[:, 3:5].numpy(),
+                ],
+                axis=1,
+            ).tolist()
             positions = tensor[:, :3].numpy().tolist()
-            tensor = modules["cam_utils"].get_extrinsics(rotations, positions).to(dtype=torch.float32)
+            tensor = (
+                modules["cam_utils"]
+                .get_extrinsics(rotations, positions)
+                .to(dtype=torch.float32)
+            )
         if tensor.ndim == 3 and tensor.shape[-2:] == (4, 4):
             tensor = self._resize_time_axis(tensor, total_frames)
             return tensor
-        raise ValueError(f"poses shape mismatch, expected [T,4,4] or [T,5], got {tuple(tensor.shape)}")
+        raise ValueError(
+            f"poses shape mismatch, expected [T,4,4] or [T,5], got {tuple(tensor.shape)}"
+        )
 
-    def _build_noninteractive_controls(self, payload: dict[str, Any]) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, Optional[torch.Tensor]]:
+    def _build_noninteractive_controls(
+        self, payload: dict[str, Any]
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, Optional[torch.Tensor]]:
         # Official source:
         # - utils/conditions.py defines keyboard_dim_in=6 and mouse_dim_in=2 semantics
         # - utils/utils.py computes poses from actions when explicit poses are absent
@@ -1578,16 +1931,24 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
         # Offline mode materializes the whole control trajectory up front so later
         # segments only need cheap slicing instead of re-reading user inputs.
         total_frames = self._mg3_expected_total_frames
-        keyboard_cond = self._normalize_keyboard_cond(payload.get("keyboard_cond"), total_frames)
+        keyboard_cond = self._normalize_keyboard_cond(
+            payload.get("keyboard_cond"), total_frames
+        )
         mouse_cond = self._normalize_mouse_cond(payload.get("mouse_cond"), total_frames)
-        intrinsics_all = self._normalize_intrinsics(payload.get("intrinsics"), total_frames)
+        intrinsics_all = self._normalize_intrinsics(
+            payload.get("intrinsics"), total_frames
+        )
 
         poses = self._normalize_poses(payload.get("poses"), total_frames)
         if poses is None:
             modules = self._get_official_modules()
             if not payload:
                 # No action file at all: keep the camera fixed at identity.
-                identity_pose = torch.eye(4, dtype=torch.float32).unsqueeze(0).repeat(total_frames, 1, 1)
+                identity_pose = (
+                    torch.eye(4, dtype=torch.float32)
+                    .unsqueeze(0)
+                    .repeat(total_frames, 1, 1)
+                )
                 poses = identity_pose
             else:
                 # Action file exists but explicit poses do not: reconstruct camera motion
@@ -1599,8 +1960,18 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
                     first_pose=first_pose,
                 )
                 positions = all_poses[:, :3].tolist()
-                rotations = np.concatenate([np.zeros((all_poses.shape[0], 1), dtype=np.float32), all_poses[:, 3:5]], axis=1).tolist()
-                poses = modules["cam_utils"].get_extrinsics(rotations, positions).to(dtype=torch.float32)
+                rotations = np.concatenate(
+                    [
+                        np.zeros((all_poses.shape[0], 1), dtype=np.float32),
+                        all_poses[:, 3:5],
+                    ],
+                    axis=1,
+                ).tolist()
+                poses = (
+                    modules["cam_utils"]
+                    .get_extrinsics(rotations, positions)
+                    .to(dtype=torch.float32)
+                )
         return keyboard_cond, mouse_cond, poses, intrinsics_all
 
     def get_video_segment_num(self):
@@ -1611,17 +1982,25 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
         # the scheduler state with the first segment's custom latent/mask setup.
         self.gen_video_final = None
         self.get_video_segment_num()
-        self._mg3_noise_generator = torch.Generator(device=AI_DEVICE).manual_seed(self.input_info.seed)
+        self._mg3_noise_generator = torch.Generator(device=AI_DEVICE).manual_seed(
+            self.input_info.seed
+        )
         self._mg3_generated_latent_history = []
         self._mg3_tail_latents = None
         self._mg3_current_segment_full_latents = None
         self._mg3_current_segment_state = None
 
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             self.model = self.load_transformer()
             self.model.set_scheduler(self.scheduler)
 
-        self.model.scheduler.prepare(seed=self.input_info.seed, latent_shape=self.input_info.latent_shape, image_encoder_output=self.inputs["image_encoder_output"])
+        self.model.scheduler.prepare(
+            seed=self.input_info.seed,
+            latent_shape=self.input_info.latent_shape,
+            image_encoder_output=self.inputs["image_encoder_output"],
+        )
         self._apply_segment_scheduler_state(self._build_or_get_segment_state(0))
         self.inputs["image_encoder_output"]["vae_encoder_out"] = None
 
@@ -1629,7 +2008,9 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
         """Collect one segment worth of controls from stdin in interactive mode."""
         modules = self._get_official_modules()
         first_clip = segment_idx == 0
-        action_frames = self.first_clip_frame if first_clip else self.incremental_segment_frames
+        action_frames = (
+            self.first_clip_frame if first_clip else self.incremental_segment_frames
+        )
 
         if not dist.is_initialized() or dist.get_rank() == 0:
             actions = self._prompt_current_action()
@@ -1648,8 +2029,18 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
                 return_last_pose=True,
             )
             positions = all_poses[:, :3].tolist()
-            rotations = np.concatenate([np.zeros((all_poses.shape[0], 1), dtype=np.float32), all_poses[:, 3:5]], axis=1).tolist()
-            extrinsics_curr = modules["cam_utils"].get_extrinsics(rotations, positions).to(dtype=torch.float32)
+            rotations = np.concatenate(
+                [
+                    np.zeros((all_poses.shape[0], 1), dtype=np.float32),
+                    all_poses[:, 3:5],
+                ],
+                axis=1,
+            ).tolist()
+            extrinsics_curr = (
+                modules["cam_utils"]
+                .get_extrinsics(rotations, positions)
+                .to(dtype=torch.float32)
+            )
             payload = [
                 keyboard_curr.numpy(),
                 mouse_curr.numpy(),
@@ -1662,7 +2053,9 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
         if dist.is_initialized():
             dist.broadcast_object_list(payload, src=0)
 
-        keyboard_curr = torch.from_numpy(payload[0]).to(dtype=torch.float32).unsqueeze(0)
+        keyboard_curr = (
+            torch.from_numpy(payload[0]).to(dtype=torch.float32).unsqueeze(0)
+        )
         mouse_curr = torch.from_numpy(payload[1]).to(dtype=torch.float32).unsqueeze(0)
         extrinsics_curr = torch.from_numpy(payload[2]).to(dtype=torch.float32)
         self._mg3_last_pose = np.array(payload[3], dtype=np.float32)
@@ -1673,9 +2066,13 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
             self._mg3_extrinsics_all = extrinsics_curr
         else:
             # Interactive mode grows the global control timeline as segments progress.
-            self._mg3_keyboard_all = torch.cat([self._mg3_keyboard_all, keyboard_curr], dim=1)
+            self._mg3_keyboard_all = torch.cat(
+                [self._mg3_keyboard_all, keyboard_curr], dim=1
+            )
             self._mg3_mouse_all = torch.cat([self._mg3_mouse_all, mouse_curr], dim=1)
-            self._mg3_extrinsics_all = torch.cat([self._mg3_extrinsics_all, extrinsics_curr], dim=0)
+            self._mg3_extrinsics_all = torch.cat(
+                [self._mg3_extrinsics_all, extrinsics_curr], dim=0
+            )
 
     def _prompt_current_action(self) -> dict[str, torch.Tensor]:
         """Minimal CLI UX for interactive MG3 generation."""
@@ -1703,19 +2100,34 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
             "q": [0, 0, 0, 0, 0, 0],
         }
         while True:
-            idx_mouse = input("Please input the mouse action (e.g. `U`):\n").strip().lower()
-            idx_keyboard = input("Please input the keyboard action (e.g. `W`):\n").strip().lower()
+            idx_mouse = (
+                input("Please input the mouse action (e.g. `U`):\n").strip().lower()
+            )
+            idx_keyboard = (
+                input("Please input the keyboard action (e.g. `W`):\n").strip().lower()
+            )
             if idx_mouse in camera_value_map and idx_keyboard in keyboard_idx:
                 return {
-                    "mouse": torch.tensor(camera_value_map[idx_mouse], dtype=torch.float32),
-                    "keyboard": torch.tensor(keyboard_idx[idx_keyboard], dtype=torch.float32),
+                    "mouse": torch.tensor(
+                        camera_value_map[idx_mouse], dtype=torch.float32
+                    ),
+                    "keyboard": torch.tensor(
+                        keyboard_idx[idx_keyboard], dtype=torch.float32
+                    ),
                 }
 
-    def _interpolate_intrinsics(self, intrinsics_seq: Optional[torch.Tensor], src_indices: np.ndarray, tgt_indices: np.ndarray) -> torch.Tensor:
+    def _interpolate_intrinsics(
+        self,
+        intrinsics_seq: Optional[torch.Tensor],
+        src_indices: np.ndarray,
+        tgt_indices: np.ndarray,
+    ) -> torch.Tensor:
         """Interpolate intrinsics onto the latent timeline used by the DiT."""
         assert self._mg3_base_intrinsics is not None
         if intrinsics_seq is None:
-            return self._mg3_base_intrinsics.to(dtype=torch.float32).repeat(len(tgt_indices), 1)
+            return self._mg3_base_intrinsics.to(dtype=torch.float32).repeat(
+                len(tgt_indices), 1
+            )
 
         intrinsics_seq = intrinsics_seq.to(dtype=torch.float32)
         if intrinsics_seq.shape[0] == 1:
@@ -1723,11 +2135,17 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
 
         src_indices = np.asarray(src_indices, dtype=np.float32)
         tgt_indices = np.asarray(tgt_indices, dtype=np.float32)
-        src_indices = np.clip(np.round(src_indices).astype(np.int64), 0, intrinsics_seq.shape[0] - 1)
+        src_indices = np.clip(
+            np.round(src_indices).astype(np.int64), 0, intrinsics_seq.shape[0] - 1
+        )
         src_intrinsics = intrinsics_seq[src_indices]
         out = []
         for column_idx in range(src_intrinsics.shape[-1]):
-            column = np.interp(tgt_indices, src_indices.astype(np.float32), src_intrinsics[:, column_idx].cpu().numpy())
+            column = np.interp(
+                tgt_indices,
+                src_indices.astype(np.float32),
+                src_intrinsics[:, column_idx].cpu().numpy(),
+            )
             out.append(torch.from_numpy(column).to(dtype=torch.float32))
         return torch.stack(out, dim=-1)
 
@@ -1761,9 +2179,15 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
         )
         # `framewise=True` means each timestep is represented relative to its own local
         # frame history, which matches the official per-segment conditioning path.
-        c2ws_infer = modules["cam_utils"].compute_relative_poses(c2ws_infer, framewise=framewise)
-        Ks = self._interpolate_intrinsics(intrinsics_seq, src_indices, tgt_indices).to(device=c2ws_infer.device, dtype=c2ws_infer.dtype)
-        plucker = modules["cam_utils"].get_plucker_embeddings(c2ws_infer, Ks, self._mg3_target_h, self._mg3_target_w)
+        c2ws_infer = modules["cam_utils"].compute_relative_poses(
+            c2ws_infer, framewise=framewise
+        )
+        Ks = self._interpolate_intrinsics(intrinsics_seq, src_indices, tgt_indices).to(
+            device=c2ws_infer.device, dtype=c2ws_infer.dtype
+        )
+        plucker = modules["cam_utils"].get_plucker_embeddings(
+            c2ws_infer, Ks, self._mg3_target_h, self._mg3_target_w
+        )
         c1 = self._mg3_target_h // self._mg3_lat_h
         c2 = self._mg3_target_w // self._mg3_lat_w
         plucker = rearrange(
@@ -1781,16 +2205,22 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
             w=self._mg3_lat_w,
         )
 
-    def _build_plucker_from_pose(self, c2ws_pose: torch.Tensor, intrinsics_seq: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def _build_plucker_from_pose(
+        self, c2ws_pose: torch.Tensor, intrinsics_seq: Optional[torch.Tensor] = None
+    ) -> torch.Tensor:
         """Build plucker embeddings when poses are already on the target timeline."""
         modules = self._get_official_modules()
         assert self._mg3_target_h is not None and self._mg3_target_w is not None
         assert self._mg3_lat_h is not None and self._mg3_lat_w is not None
         if intrinsics_seq is None:
-            Ks = self._mg3_base_intrinsics.to(device=c2ws_pose.device, dtype=c2ws_pose.dtype).repeat(c2ws_pose.shape[0], 1)
+            Ks = self._mg3_base_intrinsics.to(
+                device=c2ws_pose.device, dtype=c2ws_pose.dtype
+            ).repeat(c2ws_pose.shape[0], 1)
         else:
             Ks = intrinsics_seq.to(device=c2ws_pose.device, dtype=c2ws_pose.dtype)
-        plucker = modules["cam_utils"].get_plucker_embeddings(c2ws_pose, Ks, self._mg3_target_h, self._mg3_target_w)
+        plucker = modules["cam_utils"].get_plucker_embeddings(
+            c2ws_pose, Ks, self._mg3_target_h, self._mg3_target_w
+        )
         c1 = self._mg3_target_h // self._mg3_lat_h
         c2 = self._mg3_target_w // self._mg3_lat_w
         plucker = rearrange(
@@ -1842,7 +2272,9 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
         def get_latent_idx(frame_idx: int) -> int:
             return (frame_idx - 1) // 4 + 1 if frame_idx > 0 else 0
 
-        selected_index_base = [current_end_frame_idx - offset for offset in range(1, 34, 8)]
+        selected_index_base = [
+            current_end_frame_idx - offset for offset in range(1, 34, 8)
+        ]
         selected_index = modules["cam_utils"].select_memory_idx_fov(
             self._mg3_extrinsics_all,
             current_start_frame_idx,
@@ -1859,7 +2291,9 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
             latent_idx.append(get_latent_idx(mem_idx))
             mem_idx_aligned = align_frame_to_block(mem_idx)
             mem_block = self._mg3_extrinsics_all[mem_idx_aligned : mem_idx_aligned + 4]
-            mem_src = np.linspace(mem_idx_aligned, mem_idx_aligned + 3, mem_block.shape[0])
+            mem_src = np.linspace(
+                mem_idx_aligned, mem_idx_aligned + 3, mem_block.shape[0]
+            )
             mem_tgt = np.array([mem_idx_aligned + 3], dtype=np.float32)
             mem_pose = modules["cam_utils"]._interpolate_camera_poses_handedness(
                 src_indices=mem_src,
@@ -1869,13 +2303,25 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
             )
             reference_pose = self._mg3_extrinsics_all[reference_idx : reference_idx + 1]
             rel_pair = torch.cat([reference_pose, mem_pose], dim=0)
-            rel_pose = modules["cam_utils"].compute_relative_poses(rel_pair, framewise=False)[1:2]
-            memory_pluckers.append(self._build_plucker_from_pose(rel_pose.to(device=AI_DEVICE)).to(device=AI_DEVICE, dtype=GET_DTYPE()))
+            rel_pose = modules["cam_utils"].compute_relative_poses(
+                rel_pair, framewise=False
+            )[1:2]
+            memory_pluckers.append(
+                self._build_plucker_from_pose(rel_pose.to(device=AI_DEVICE)).to(
+                    device=AI_DEVICE, dtype=GET_DTYPE()
+                )
+            )
 
         if current_plucker is None:
             current_plucker = self._build_or_get_segment_camera_only(segment_idx)
         plucker_with_memory = (
-            torch.cat(memory_pluckers + [current_plucker.to(device=AI_DEVICE, dtype=GET_DTYPE())], dim=2) if memory_pluckers else current_plucker.to(device=AI_DEVICE, dtype=GET_DTYPE())
+            torch.cat(
+                memory_pluckers
+                + [current_plucker.to(device=AI_DEVICE, dtype=GET_DTYPE())],
+                dim=2,
+            )
+            if memory_pluckers
+            else current_plucker.to(device=AI_DEVICE, dtype=GET_DTYPE())
         )
         src = torch.cat(self._mg3_generated_latent_history, dim=1)
         valid_latent_idx = [idx for idx in latent_idx if 0 <= idx < src.shape[1]]
@@ -1885,15 +2331,31 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
                 latent_idx,
                 valid_latent_idx,
             )
-        x_memory = src[:, valid_latent_idx].unsqueeze(0).to(device=AI_DEVICE, dtype=GET_DTYPE()) if valid_latent_idx else None
+        x_memory = (
+            src[:, valid_latent_idx]
+            .unsqueeze(0)
+            .to(device=AI_DEVICE, dtype=GET_DTYPE())
+            if valid_latent_idx
+            else None
+        )
         if x_memory is None:
             timestep_memory = None
             keyboard_cond_memory = None
             mouse_cond_memory = None
         else:
-            timestep_memory = x_memory.new_zeros((1, x_memory.shape[2] * x_memory.shape[3] * x_memory.shape[4] // 4))
-            keyboard_cond_memory = -torch.ones((1, len(valid_latent_idx), self.keyboard_dim_in), device=x_memory.device, dtype=x_memory.dtype)
-            mouse_cond_memory = torch.ones((1, len(valid_latent_idx), self.mouse_dim_in), device=x_memory.device, dtype=x_memory.dtype)
+            timestep_memory = x_memory.new_zeros(
+                (1, x_memory.shape[2] * x_memory.shape[3] * x_memory.shape[4] // 4)
+            )
+            keyboard_cond_memory = -torch.ones(
+                (1, len(valid_latent_idx), self.keyboard_dim_in),
+                device=x_memory.device,
+                dtype=x_memory.dtype,
+            )
+            mouse_cond_memory = torch.ones(
+                (1, len(valid_latent_idx), self.mouse_dim_in),
+                device=x_memory.device,
+                dtype=x_memory.dtype,
+            )
 
         return {
             "x_memory": x_memory,
@@ -1924,7 +2386,11 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
         if segment_idx in self._segment_states:
             return self._segment_states[segment_idx]
 
-        if self._mg3_interactive and (self._mg3_keyboard_all is None or self._mg3_keyboard_all.shape[1] < self.first_clip_frame + segment_idx * self.incremental_segment_frames):
+        if self._mg3_interactive and (
+            self._mg3_keyboard_all is None
+            or self._mg3_keyboard_all.shape[1]
+            < self.first_clip_frame + segment_idx * self.incremental_segment_frames
+        ):
             self._append_interactive_segment_controls(segment_idx)
 
         assert self._mg3_keyboard_all is not None
@@ -1935,29 +2401,51 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
         def get_latent_idx(frame_idx: int) -> int:
             return (frame_idx - 1) // 4 + 1 if frame_idx > 0 else 0
 
-        current_end_frame_idx = self.first_clip_frame if first_clip else self.first_clip_frame + segment_idx * self.incremental_segment_frames
-        current_start_frame_idx = 0 if first_clip else current_end_frame_idx - self.clip_frame
+        current_end_frame_idx = (
+            self.first_clip_frame
+            if first_clip
+            else self.first_clip_frame + segment_idx * self.incremental_segment_frames
+        )
+        current_start_frame_idx = (
+            0 if first_clip else current_end_frame_idx - self.clip_frame
+        )
         frame_count = self.first_clip_frame if first_clip else self.clip_frame
         latent_start_idx = get_latent_idx(current_start_frame_idx)
         latent_end_idx = get_latent_idx(current_end_frame_idx)
         fixed_latent_frames = 1 if first_clip else self.conditioning_latent_frames
         # After decoding, the first RGB frames of every later segment correspond to
         # history that was already emitted by the previous segment, so they are dropped.
-        decode_trim_frames = 0 if first_clip else 1 + self.config["vae_stride"][0] * (fixed_latent_frames - 1)
+        decode_trim_frames = (
+            0
+            if first_clip
+            else 1 + self.config["vae_stride"][0] * (fixed_latent_frames - 1)
+        )
         append_latent_start = 0 if first_clip else fixed_latent_frames
 
-        c2ws_chunk = self._mg3_extrinsics_all[current_start_frame_idx:current_end_frame_idx].to(device=AI_DEVICE)
-        src_indices = np.linspace(current_start_frame_idx, current_end_frame_idx - 1, frame_count)
+        c2ws_chunk = self._mg3_extrinsics_all[
+            current_start_frame_idx:current_end_frame_idx
+        ].to(device=AI_DEVICE)
+        src_indices = np.linspace(
+            current_start_frame_idx, current_end_frame_idx - 1, frame_count
+        )
 
         intrinsics_chunk = None
         if self._mg3_intrinsics_all is not None:
-            intrinsics_chunk = self._mg3_intrinsics_all[current_start_frame_idx:current_end_frame_idx]
+            intrinsics_chunk = self._mg3_intrinsics_all[
+                current_start_frame_idx:current_end_frame_idx
+            ]
 
-        latent_shape = self._segment_latent_shape(self._mg3_lat_h, self._mg3_lat_w, frame_count)
+        latent_shape = self._segment_latent_shape(
+            self._mg3_lat_h, self._mg3_lat_w, frame_count
+        )
         # The latent timeline is coarser than RGB time because Wan2.2 uses a temporal
         # VAE stride of 4. Later segments start interpolation at `start + 3` so the
         # first 4 latent slots line up with the carried-over conditioning tail.
-        tgt_indices = np.linspace(0 if first_clip else current_start_frame_idx + 3, current_end_frame_idx - 1, latent_shape[1])
+        tgt_indices = np.linspace(
+            0 if first_clip else current_start_frame_idx + 3,
+            current_end_frame_idx - 1,
+            latent_shape[1],
+        )
 
         camera_only = self._build_plucker_from_c2ws(
             c2ws_chunk,
@@ -1967,19 +2455,29 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
             intrinsics_seq=intrinsics_chunk,
         ).to(device=AI_DEVICE, dtype=GET_DTYPE())
 
-        keyboard_cond = self._mg3_keyboard_all[:, current_start_frame_idx:current_end_frame_idx].to(device=AI_DEVICE, dtype=GET_DTYPE())
-        mouse_cond = self._mg3_mouse_all[:, current_start_frame_idx:current_end_frame_idx].to(device=AI_DEVICE, dtype=GET_DTYPE())
+        keyboard_cond = self._mg3_keyboard_all[
+            :, current_start_frame_idx:current_end_frame_idx
+        ].to(device=AI_DEVICE, dtype=GET_DTYPE())
+        mouse_cond = self._mg3_mouse_all[
+            :, current_start_frame_idx:current_end_frame_idx
+        ].to(device=AI_DEVICE, dtype=GET_DTYPE())
 
         vae_encoder_out = torch.zeros(latent_shape, device=AI_DEVICE, dtype=GET_DTYPE())
         if first_clip:
             # Segment 0 is anchored by the input image latent in the first temporal slot.
-            vae_encoder_out[:, :1] = self.inputs["image_encoder_output"]["vae_encoder_out"][:, :1]
+            vae_encoder_out[:, :1] = self.inputs["image_encoder_output"][
+                "vae_encoder_out"
+            ][:, :1]
         else:
             if self._mg3_tail_latents is None:
-                raise RuntimeError("matrix-game-3 segment requested without previous tail latents")
+                raise RuntimeError(
+                    "matrix-game-3 segment requested without previous tail latents"
+                )
             # Later segments are conditioned on the last 4 latent frames produced by the
             # previous segment, which creates temporal continuity across chunk boundaries.
-            vae_encoder_out[:, : self.conditioning_latent_frames] = self._mg3_tail_latents.to(device=AI_DEVICE, dtype=GET_DTYPE())
+            vae_encoder_out[:, : self.conditioning_latent_frames] = (
+                self._mg3_tail_latents.to(device=AI_DEVICE, dtype=GET_DTYPE())
+            )
 
         # Fields below intentionally stay in the standard LightX2V image_encoder_output["dit_cond_dict"]
         # container so downstream model / infer / weights code can consume them without a new top-level protocol.
@@ -2028,12 +2526,16 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
             dtype=GET_DTYPE(),
             generator=self._mg3_noise_generator,
         )
-        scheduler.vae_encoder_out = segment_state.vae_encoder_out.to(device=AI_DEVICE, dtype=GET_DTYPE())
+        scheduler.vae_encoder_out = segment_state.vae_encoder_out.to(
+            device=AI_DEVICE, dtype=GET_DTYPE()
+        )
         scheduler.mask = torch.ones_like(latents)
         # Mask value 0 means "keep the provided latent conditioning", while 1 means
         # "sample this slot from noise through the diffusion process".
         scheduler.mask[:, : segment_state.fixed_latent_frames] = 0
-        scheduler.latents = (1.0 - scheduler.mask) * scheduler.vae_encoder_out + scheduler.mask * latents
+        scheduler.latents = (
+            1.0 - scheduler.mask
+        ) * scheduler.vae_encoder_out + scheduler.mask * latents
 
     @ProfilingContext4DebugL1(
         "Init run segment",
@@ -2053,8 +2555,12 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
         segment_state = self._build_or_get_segment_state(segment_idx)
         self._mg3_current_segment_state = segment_state
         self.input_info.latent_shape = segment_state.latent_shape
-        self.inputs["image_encoder_output"]["dit_cond_dict"] = segment_state.dit_cond_dict
-        self.inputs["image_encoder_output"]["vae_encoder_out"] = segment_state.vae_encoder_out
+        self.inputs["image_encoder_output"][
+            "dit_cond_dict"
+        ] = segment_state.dit_cond_dict
+        self.inputs["image_encoder_output"][
+            "vae_encoder_out"
+        ] = segment_state.vae_encoder_out
         if segment_idx > 0:
             self.model.scheduler.reset(self.input_info.seed, segment_state.latent_shape)
             self._apply_segment_scheduler_state(segment_state)
@@ -2124,24 +2630,41 @@ class WanMatrixGame3Runner(Wan22DenseRunner):
 
     def end_run_segment(self, segment_idx=None):
         """Carry segment outputs forward and remove overlap from decoded frames."""
-        if self._mg3_current_segment_state is None or self._mg3_current_segment_full_latents is None:
-            raise RuntimeError("matrix-game-3 end_run_segment called before the current segment state was prepared")
+        if (
+            self._mg3_current_segment_state is None
+            or self._mg3_current_segment_full_latents is None
+        ):
+            raise RuntimeError(
+                "matrix-game-3 end_run_segment called before the current segment state was prepared"
+            )
 
         full_latents = self._mg3_current_segment_full_latents
         # full_latents follows Wan2.2 runner convention: [C, T, H, W].
         # Keep only the tail that should condition the next segment.
-        self._mg3_tail_latents = full_latents[:, -self.conditioning_latent_frames :].detach().clone()
+        self._mg3_tail_latents = (
+            full_latents[:, -self.conditioning_latent_frames :].detach().clone()
+        )
         # Only append genuinely new latent timesteps to history; the carried-over prefix
         # belongs to the previous segment and would otherwise duplicate memory entries.
-        new_latents = full_latents[:, self._mg3_current_segment_state.append_latent_start :].detach().clone()
+        new_latents = (
+            full_latents[:, self._mg3_current_segment_state.append_latent_start :]
+            .detach()
+            .clone()
+        )
         self._mg3_generated_latent_history.append(new_latents)
 
         segment_video = self.gen_video
         if self._mg3_current_segment_state.decode_trim_frames > 0:
             # Remove RGB frames that correspond to the reused latent prefix.
-            segment_video = segment_video[:, :, self._mg3_current_segment_state.decode_trim_frames :]
+            segment_video = segment_video[
+                :, :, self._mg3_current_segment_state.decode_trim_frames :
+            ]
         self.gen_video = segment_video
-        self.gen_video_final = segment_video if self.gen_video_final is None else torch.cat([self.gen_video_final, segment_video], dim=2)
+        self.gen_video_final = (
+            segment_video
+            if self.gen_video_final is None
+            else torch.cat([self.gen_video_final, segment_video], dim=2)
+        )
         self._mg3_current_segment_state = None
         self._mg3_current_segment_full_latents = None
 

@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import math
 import os
 from dataclasses import dataclass
@@ -13,9 +12,10 @@ from diffusers.models.autoencoders.vae import BaseOutput, DiagonalGaussianDistri
 from diffusers.models.modeling_outputs import AutoencoderKLOutput
 from diffusers.models.modeling_utils import ModelMixin
 from einops import rearrange
+from lightx2v_platform.base.global_var import AI_DEVICE
 from torch import Tensor, nn
 
-from lightx2v_platform.base.global_var import AI_DEVICE
+from lib.smart_config import smart_config
 
 torch_device_module = getattr(torch, AI_DEVICE)
 
@@ -41,7 +41,9 @@ def forward_with_checkpointing(module, *inputs, use_checkpointing=False):
         return custom_forward
 
     if use_checkpointing:
-        return torch.utils.checkpoint.checkpoint(create_custom_forward(module), *inputs, use_reentrant=False)
+        return torch.utils.checkpoint.checkpoint(
+            create_custom_forward(module), *inputs, use_reentrant=False
+        )
     else:
         return module(*inputs)
 
@@ -57,7 +59,9 @@ class PatchCausalConv3d(nn.Conv3d):
         selected_indices = []
 
         for i in range(1, part_num):
-            closest = min(possible_indices, key=lambda x: abs(x - round(i * ideal_interval)))
+            closest = min(
+                possible_indices, key=lambda x: abs(x - round(i * ideal_interval))
+            )
             if closest not in selected_indices:
                 selected_indices.append(closest)
 
@@ -77,9 +81,22 @@ class PatchCausalConv3d(nn.Conv3d):
             kernel_size = self.kernel_size[0]
             part_num = int(memory_count / 2) + 1
             split_indices = self.find_split_indices(T, part_num)
-            input_chunks = torch.tensor_split(input, split_indices, dim=2) if len(split_indices) > 0 else [input]
+            input_chunks = (
+                torch.tensor_split(input, split_indices, dim=2)
+                if len(split_indices) > 0
+                else [input]
+            )
             if kernel_size > 1:
-                input_chunks = [input_chunks[0]] + [torch.cat((input_chunks[i - 1][:, :, -kernel_size + 1 :], input_chunks[i]), dim=2) for i in range(1, len(input_chunks))]
+                input_chunks = [input_chunks[0]] + [
+                    torch.cat(
+                        (
+                            input_chunks[i - 1][:, :, -kernel_size + 1 :],
+                            input_chunks[i],
+                        ),
+                        dim=2,
+                    )
+                    for i in range(1, len(input_chunks))
+                ]
             output_chunks = []
             for input_chunk in input_chunks:
                 output_chunks.append(super().forward(input_chunk))
@@ -103,7 +120,12 @@ class RMS_norm(nn.Module):
         self.bias = nn.Parameter(torch.zeros(shape)) if bias else 0.0
 
     def forward(self, x):
-        return F.normalize(x, dim=(1 if self.channel_first else -1)) * self.scale * self.gamma + self.bias
+        return (
+            F.normalize(x, dim=(1 if self.channel_first else -1))
+            * self.scale
+            * self.gamma
+            + self.bias
+        )
 
 
 class Conv3d(nn.Conv3d):
@@ -121,13 +143,21 @@ class Conv3d(nn.Conv3d):
                     padded_chunk = F.pad(
                         chunks[i],
                         (0, 0, 0, 0, self.padding[0], self.padding[0]),
-                        mode="constant" if self.padding_mode == "zeros" else self.padding_mode,
+                        mode=(
+                            "constant"
+                            if self.padding_mode == "zeros"
+                            else self.padding_mode
+                        ),
                         value=0,
                     )
                     if i > 0:
-                        padded_chunk[:, :, : self.padding[0]] = chunks[i - 1][:, :, -self.padding[0] :]
+                        padded_chunk[:, :, : self.padding[0]] = chunks[i - 1][
+                            :, :, -self.padding[0] :
+                        ]
                     if i < len(chunks) - 1:
-                        padded_chunk[:, :, -self.padding[0] :] = chunks[i + 1][:, :, : self.padding[0]]
+                        padded_chunk[:, :, -self.padding[0] :] = chunks[i + 1][
+                            :, :, : self.padding[0]
+                        ]
                 else:
                     padded_chunk = chunks[i]
                 padded_chunks.append(padded_chunk)
@@ -161,22 +191,52 @@ class CausalConv3d(nn.Module):
 
         self.pad_mode = pad_mode
         if disable_causal:
-            padding = (kernel_size // 2, kernel_size // 2, kernel_size // 2, kernel_size // 2, kernel_size // 2, kernel_size // 2)
+            padding = (
+                kernel_size // 2,
+                kernel_size // 2,
+                kernel_size // 2,
+                kernel_size // 2,
+                kernel_size // 2,
+                kernel_size // 2,
+            )
         else:
-            padding = (kernel_size // 2, kernel_size // 2, kernel_size // 2, kernel_size // 2, kernel_size - 1, 0)  # W, H, T
+            padding = (
+                kernel_size // 2,
+                kernel_size // 2,
+                kernel_size // 2,
+                kernel_size // 2,
+                kernel_size - 1,
+                0,
+            )  # W, H, T
         self.time_causal_padding = padding
 
         if enable_patch_conv:
-            self.conv = PatchCausalConv3d(chan_in, chan_out, kernel_size, stride=stride, dilation=dilation, **kwargs)
+            self.conv = PatchCausalConv3d(
+                chan_in,
+                chan_out,
+                kernel_size,
+                stride=stride,
+                dilation=dilation,
+                **kwargs,
+            )
         else:
-            self.conv = nn.Conv3d(chan_in, chan_out, kernel_size, stride=stride, dilation=dilation, **kwargs)
+            self.conv = nn.Conv3d(
+                chan_in,
+                chan_out,
+                kernel_size,
+                stride=stride,
+                dilation=dilation,
+                **kwargs,
+            )
 
     def forward(self, x):
         x = F.pad(x, self.time_causal_padding, mode=self.pad_mode)
         return self.conv(x)
 
 
-def prepare_causal_attention_mask(n_frame: int, n_hw: int, dtype, device, batch_size: int = None):
+def prepare_causal_attention_mask(
+    n_frame: int, n_hw: int, dtype, device, batch_size: int = None
+):
     """Prepare a causal attention mask for 3D videos.
 
     Args:
@@ -223,8 +283,12 @@ class AttnBlock(nn.Module):
         q = rearrange(q, "b c f h w -> b 1 (f h w) c").contiguous()
         k = rearrange(k, "b c f h w -> b 1 (f h w) c").contiguous()
         v = rearrange(v, "b c f h w -> b 1 (f h w) c").contiguous()
-        attention_mask = prepare_causal_attention_mask(f, h * w, h_.dtype, h_.device, batch_size=b)
-        h_ = nn.functional.scaled_dot_product_attention(q, k, v, attn_mask=attention_mask.unsqueeze(1))
+        attention_mask = prepare_causal_attention_mask(
+            f, h * w, h_.dtype, h_.device, batch_size=b
+        )
+        h_ = nn.functional.scaled_dot_product_attention(
+            q, k, v, attn_mask=attention_mask.unsqueeze(1)
+        )
 
         return rearrange(h_, "b 1 (f h w) c -> b c f h w", f=f, h=h, w=w, c=c, b=b)
 
@@ -247,7 +311,9 @@ class ResnetBlock(nn.Module):
         self.norm2 = RMS_norm(out_channels, images=False)
         self.conv2 = CausalConv3d(out_channels, out_channels, kernel_size=3)
         if self.in_channels != self.out_channels:
-            self.nin_shortcut = Conv3d(in_channels, out_channels, kernel_size=1, stride=1, padding=0)
+            self.nin_shortcut = Conv3d(
+                in_channels, out_channels, kernel_size=1, stride=1, padding=0
+            )
 
     def forward(self, x):
         h = x
@@ -265,7 +331,9 @@ class ResnetBlock(nn.Module):
 
 
 class Downsample(nn.Module):
-    def __init__(self, in_channels: int, out_channels: int, add_temporal_downsample: bool = True):
+    def __init__(
+        self, in_channels: int, out_channels: int, add_temporal_downsample: bool = True
+    ):
         super().__init__()
         factor = 2 * 2 * 2 if add_temporal_downsample else 1 * 2 * 2
         assert out_channels % factor == 0
@@ -278,27 +346,51 @@ class Downsample(nn.Module):
         h = self.conv(x)
         if self.add_temporal_downsample:
             h_first = h[:, :, :1, :, :]
-            h_first = rearrange(h_first, "b c f (h r2) (w r3) -> b (r2 r3 c) f h w", r2=2, r3=2)
+            h_first = rearrange(
+                h_first, "b c f (h r2) (w r3) -> b (r2 r3 c) f h w", r2=2, r3=2
+            )
             h_first = torch.cat([h_first, h_first], dim=1)
             h_next = h[:, :, 1:, :, :]
-            h_next = rearrange(h_next, "b c (f r1) (h r2) (w r3) -> b (r1 r2 r3 c) f h w", r1=r1, r2=2, r3=2)
+            h_next = rearrange(
+                h_next,
+                "b c (f r1) (h r2) (w r3) -> b (r1 r2 r3 c) f h w",
+                r1=r1,
+                r2=2,
+                r3=2,
+            )
             h = torch.cat([h_first, h_next], dim=2)
             # shortcut computation
             x_first = x[:, :, :1, :, :]
-            x_first = rearrange(x_first, "b c f (h r2) (w r3) -> b (r2 r3 c) f h w", r2=2, r3=2)
+            x_first = rearrange(
+                x_first, "b c f (h r2) (w r3) -> b (r2 r3 c) f h w", r2=2, r3=2
+            )
             B, C, T, H, W = x_first.shape
-            x_first = x_first.view(B, h.shape[1], self.group_size // 2, T, H, W).mean(dim=2)
+            x_first = x_first.view(B, h.shape[1], self.group_size // 2, T, H, W).mean(
+                dim=2
+            )
 
             x_next = x[:, :, 1:, :, :]
-            x_next = rearrange(x_next, "b c (f r1) (h r2) (w r3) -> b (r1 r2 r3 c) f h w", r1=r1, r2=2, r3=2)
+            x_next = rearrange(
+                x_next,
+                "b c (f r1) (h r2) (w r3) -> b (r1 r2 r3 c) f h w",
+                r1=r1,
+                r2=2,
+                r3=2,
+            )
             B, C, T, H, W = x_next.shape
             x_next = x_next.view(B, h.shape[1], self.group_size, T, H, W).mean(dim=2)
             shortcut = torch.cat([x_first, x_next], dim=2)
         else:
-            h = rearrange(h, "b c (f r1) (h r2) (w r3) -> b (r1 r2 r3 c) f h w", r1=r1, r2=2, r3=2)
-            shortcut = rearrange(x, "b c (f r1) (h r2) (w r3) -> b (r1 r2 r3 c) f h w", r1=r1, r2=2, r3=2)
+            h = rearrange(
+                h, "b c (f r1) (h r2) (w r3) -> b (r1 r2 r3 c) f h w", r1=r1, r2=2, r3=2
+            )
+            shortcut = rearrange(
+                x, "b c (f r1) (h r2) (w r3) -> b (r1 r2 r3 c) f h w", r1=r1, r2=2, r3=2
+            )
             B, C, T, H, W = shortcut.shape
-            shortcut = shortcut.view(B, h.shape[1], self.group_size, T, H, W).mean(dim=2)
+            shortcut = shortcut.view(B, h.shape[1], self.group_size, T, H, W).mean(
+                dim=2
+            )
 
         return h + shortcut
 
@@ -306,7 +398,9 @@ class Downsample(nn.Module):
 class Upsample(nn.Module):
     """Hierarchical upsampling with temporal/ spatial support."""
 
-    def __init__(self, in_channels: int, out_channels: int, add_temporal_upsample: bool = True):
+    def __init__(
+        self, in_channels: int, out_channels: int, add_temporal_upsample: bool = True
+    ):
         super().__init__()
         factor = 2 * 2 * 2 if add_temporal_upsample else 1 * 2 * 2
         self.conv = CausalConv3d(in_channels, out_channels * factor, kernel_size=3)
@@ -318,26 +412,50 @@ class Upsample(nn.Module):
         h = self.conv(x)
         if self.add_temporal_upsample:
             h_first = h[:, :, :1, :, :]
-            h_first = rearrange(h_first, "b (r2 r3 c) f h w -> b c f (h r2) (w r3)", r2=2, r3=2)
+            h_first = rearrange(
+                h_first, "b (r2 r3 c) f h w -> b c f (h r2) (w r3)", r2=2, r3=2
+            )
             h_first = h_first[:, : h_first.shape[1] // 2]
             h_next = h[:, :, 1:, :, :]
-            h_next = rearrange(h_next, "b (r1 r2 r3 c) f h w -> b c (f r1) (h r2) (w r3)", r1=r1, r2=2, r3=2)
+            h_next = rearrange(
+                h_next,
+                "b (r1 r2 r3 c) f h w -> b c (f r1) (h r2) (w r3)",
+                r1=r1,
+                r2=2,
+                r3=2,
+            )
             h = torch.cat([h_first, h_next], dim=2)
 
             # shortcut computation
             x_first = x[:, :, :1, :, :]
-            x_first = rearrange(x_first, "b (r2 r3 c) f h w -> b c f (h r2) (w r3)", r2=2, r3=2)
+            x_first = rearrange(
+                x_first, "b (r2 r3 c) f h w -> b c f (h r2) (w r3)", r2=2, r3=2
+            )
             x_first = x_first.repeat_interleave(repeats=self.repeats // 2, dim=1)
 
             x_next = x[:, :, 1:, :, :]
-            x_next = rearrange(x_next, "b (r1 r2 r3 c) f h w -> b c (f r1) (h r2) (w r3)", r1=r1, r2=2, r3=2)
+            x_next = rearrange(
+                x_next,
+                "b (r1 r2 r3 c) f h w -> b c (f r1) (h r2) (w r3)",
+                r1=r1,
+                r2=2,
+                r3=2,
+            )
             x_next = x_next.repeat_interleave(repeats=self.repeats, dim=1)
             shortcut = torch.cat([x_first, x_next], dim=2)
 
         else:
-            h = rearrange(h, "b (r1 r2 r3 c) f h w -> b c (f r1) (h r2) (w r3)", r1=r1, r2=2, r3=2)
+            h = rearrange(
+                h, "b (r1 r2 r3 c) f h w -> b c (f r1) (h r2) (w r3)", r1=r1, r2=2, r3=2
+            )
             shortcut = x.repeat_interleave(repeats=self.repeats, dim=1)
-            shortcut = rearrange(shortcut, "b (r1 r2 r3 c) f h w -> b c (f r1) (h r2) (w r3)", r1=r1, r2=2, r3=2)
+            shortcut = rearrange(
+                shortcut,
+                "b (r1 r2 r3 c) f h w -> b c (f r1) (h r2) (w r3)",
+                r1=r1,
+                r2=2,
+                r3=2,
+            )
         return h + shortcut
 
 
@@ -376,11 +494,19 @@ class Encoder(nn.Module):
             down.block = block
 
             add_spatial_downsample = bool(i_level < np.log2(ffactor_spatial))
-            add_temporal_downsample = add_spatial_downsample and bool(i_level >= np.log2(ffactor_spatial // ffactor_temporal))
+            add_temporal_downsample = add_spatial_downsample and bool(
+                i_level >= np.log2(ffactor_spatial // ffactor_temporal)
+            )
             if add_spatial_downsample or add_temporal_downsample:
                 assert i_level < len(block_out_channels) - 1
-                block_out = block_out_channels[i_level + 1] if downsample_match_channel else block_in
-                down.downsample = Downsample(block_in, block_out, add_temporal_downsample)
+                block_out = (
+                    block_out_channels[i_level + 1]
+                    if downsample_match_channel
+                    else block_in
+                )
+                down.downsample = Downsample(
+                    block_in, block_out, add_temporal_downsample
+                )
                 block_in = block_out
             self.down.append(down)
 
@@ -404,18 +530,34 @@ class Encoder(nn.Module):
         h = self.conv_in(x)
         for i_level in range(len(self.block_out_channels)):
             for i_block in range(self.num_res_blocks):
-                h = forward_with_checkpointing(self.down[i_level].block[i_block], h, use_checkpointing=use_checkpointing)
+                h = forward_with_checkpointing(
+                    self.down[i_level].block[i_block],
+                    h,
+                    use_checkpointing=use_checkpointing,
+                )
             if hasattr(self.down[i_level], "downsample"):
-                h = forward_with_checkpointing(self.down[i_level].downsample, h, use_checkpointing=use_checkpointing)
+                h = forward_with_checkpointing(
+                    self.down[i_level].downsample,
+                    h,
+                    use_checkpointing=use_checkpointing,
+                )
 
         # middle
-        h = forward_with_checkpointing(self.mid.block_1, h, use_checkpointing=use_checkpointing)
-        h = forward_with_checkpointing(self.mid.attn_1, h, use_checkpointing=use_checkpointing)
-        h = forward_with_checkpointing(self.mid.block_2, h, use_checkpointing=use_checkpointing)
+        h = forward_with_checkpointing(
+            self.mid.block_1, h, use_checkpointing=use_checkpointing
+        )
+        h = forward_with_checkpointing(
+            self.mid.attn_1, h, use_checkpointing=use_checkpointing
+        )
+        h = forward_with_checkpointing(
+            self.mid.block_2, h, use_checkpointing=use_checkpointing
+        )
 
         # end
         group_size = self.block_out_channels[-1] // (2 * self.z_channels)
-        shortcut = rearrange(h, "b (c r) f h w -> b c r f h w", r=group_size).mean(dim=2)
+        shortcut = rearrange(h, "b (c r) f h w -> b c r f h w", r=group_size).mean(
+            dim=2
+        )
         h = self.norm_out(h)
         h = swish(h)
         h = self.conv_out(h)
@@ -467,7 +609,11 @@ class Decoder(nn.Module):
             add_temporal_upsample = bool(i_level < np.log2(ffactor_temporal))
             if add_spatial_upsample or add_temporal_upsample:
                 assert i_level < len(block_out_channels) - 1
-                block_out = block_out_channels[i_level + 1] if upsample_match_channel else block_in
+                block_out = (
+                    block_out_channels[i_level + 1]
+                    if upsample_match_channel
+                    else block_in
+                )
                 up.upsample = Upsample(block_in, block_out, add_temporal_upsample)
                 block_in = block_out
             self.up.append(up)
@@ -487,16 +633,28 @@ class Decoder(nn.Module):
         h = self.conv_in(z) + z.repeat_interleave(repeats=repeats, dim=1)
 
         # middle
-        h = forward_with_checkpointing(self.mid.block_1, h, use_checkpointing=use_checkpointing)
-        h = forward_with_checkpointing(self.mid.attn_1, h, use_checkpointing=use_checkpointing)
-        h = forward_with_checkpointing(self.mid.block_2, h, use_checkpointing=use_checkpointing)
+        h = forward_with_checkpointing(
+            self.mid.block_1, h, use_checkpointing=use_checkpointing
+        )
+        h = forward_with_checkpointing(
+            self.mid.attn_1, h, use_checkpointing=use_checkpointing
+        )
+        h = forward_with_checkpointing(
+            self.mid.block_2, h, use_checkpointing=use_checkpointing
+        )
 
         # upsampling
         for i_level in range(len(self.block_out_channels)):
             for i_block in range(self.num_res_blocks + 1):
-                h = forward_with_checkpointing(self.up[i_level].block[i_block], h, use_checkpointing=use_checkpointing)
+                h = forward_with_checkpointing(
+                    self.up[i_level].block[i_block],
+                    h,
+                    use_checkpointing=use_checkpointing,
+                )
             if hasattr(self.up[i_level], "upsample"):
-                h = forward_with_checkpointing(self.up[i_level].upsample, h, use_checkpointing=use_checkpointing)
+                h = forward_with_checkpointing(
+                    self.up[i_level].upsample, h, use_checkpointing=use_checkpointing
+                )
 
         # end
         h = self.norm_out(h)
@@ -598,21 +756,27 @@ class AutoencoderKLConv3D(ModelMixin, ConfigMixin):
         """Blend tensor b horizontally into a at blend_extent region."""
         blend_extent = min(a.shape[-1], b.shape[-1], blend_extent)
         for x in range(blend_extent):
-            b[:, :, :, :, x] = a[:, :, :, :, -blend_extent + x] * (1 - x / blend_extent) + b[:, :, :, :, x] * (x / blend_extent)
+            b[:, :, :, :, x] = a[:, :, :, :, -blend_extent + x] * (
+                1 - x / blend_extent
+            ) + b[:, :, :, :, x] * (x / blend_extent)
         return b
 
     def blend_v(self, a: torch.Tensor, b: torch.Tensor, blend_extent: int):
         """Blend tensor b vertically into a at blend_extent region."""
         blend_extent = min(a.shape[-2], b.shape[-2], blend_extent)
         for y in range(blend_extent):
-            b[:, :, :, y, :] = a[:, :, :, -blend_extent + y, :] * (1 - y / blend_extent) + b[:, :, :, y, :] * (y / blend_extent)
+            b[:, :, :, y, :] = a[:, :, :, -blend_extent + y, :] * (
+                1 - y / blend_extent
+            ) + b[:, :, :, y, :] * (y / blend_extent)
         return b
 
     def blend_t(self, a: torch.Tensor, b: torch.Tensor, blend_extent: int):
         """Blend tensor b temporally into a at blend_extent region."""
         blend_extent = min(a.shape[-3], b.shape[-3], blend_extent)
         for x in range(blend_extent):
-            b[:, :, x, :, :] = a[:, :, -blend_extent + x, :, :] * (1 - x / blend_extent) + b[:, :, x, :, :] * (x / blend_extent)
+            b[:, :, x, :, :] = a[:, :, -blend_extent + x, :, :] * (
+                1 - x / blend_extent
+            ) + b[:, :, x, :, :] * (x / blend_extent)
         return b
 
     def spatial_tiled_encode(self, x: torch.Tensor):
@@ -626,7 +790,13 @@ class AutoencoderKLConv3D(ModelMixin, ConfigMixin):
         for i in range(0, H, overlap_size):
             row = []
             for j in range(0, W, overlap_size):
-                tile = x[:, :, :, i : i + self.tile_sample_min_size, j : j + self.tile_sample_min_size]
+                tile = x[
+                    :,
+                    :,
+                    :,
+                    i : i + self.tile_sample_min_size,
+                    j : j + self.tile_sample_min_size,
+                ]
                 tile = self.encoder(tile)
                 row.append(tile)
             rows.append(row)
@@ -653,7 +823,10 @@ class AutoencoderKLConv3D(ModelMixin, ConfigMixin):
         row = []
         for i in range(0, T, overlap_size):
             tile = x[:, :, i : i + self.tile_sample_min_tsize + 1, :, :]
-            if self.use_spatial_tiling and (tile.shape[-1] > self.tile_sample_min_size or tile.shape[-2] > self.tile_sample_min_size):
+            if self.use_spatial_tiling and (
+                tile.shape[-1] > self.tile_sample_min_size
+                or tile.shape[-2] > self.tile_sample_min_size
+            ):
                 tile = self.spatial_tiled_encode(tile)
             else:
                 tile = self.encoder(tile)
@@ -681,7 +854,13 @@ class AutoencoderKLConv3D(ModelMixin, ConfigMixin):
         for i in range(0, H, overlap_size):
             row = []
             for j in range(0, W, overlap_size):
-                tile = z[:, :, :, i : i + self.tile_latent_min_size, j : j + self.tile_latent_min_size]
+                tile = z[
+                    :,
+                    :,
+                    :,
+                    i : i + self.tile_latent_min_size,
+                    j : j + self.tile_latent_min_size,
+                ]
                 decoded = self.decoder(tile)
                 row.append(decoded)
             rows.append(row)
@@ -710,7 +889,10 @@ class AutoencoderKLConv3D(ModelMixin, ConfigMixin):
         row = []
         for i in range(0, T, overlap_size):
             tile = z[:, :, i : i + self.tile_latent_min_tsize + 1, :, :]
-            if self.use_spatial_tiling and (tile.shape[-1] > self.tile_latent_min_size or tile.shape[-2] > self.tile_latent_min_size):
+            if self.use_spatial_tiling and (
+                tile.shape[-1] > self.tile_latent_min_size
+                or tile.shape[-2] > self.tile_latent_min_size
+            ):
                 decoded = self.spatial_tiled_decode(tile)
             else:
                 decoded = self.decoder(tile)
@@ -736,7 +918,10 @@ class AutoencoderKLConv3D(ModelMixin, ConfigMixin):
         def _encode(x):
             if self.use_temporal_tiling and x.shape[-3] > self.tile_sample_min_tsize:
                 return self.temporal_tiled_encode(x)
-            if self.use_spatial_tiling and (x.shape[-1] > self.tile_sample_min_size or x.shape[-2] > self.tile_sample_min_size):
+            if self.use_spatial_tiling and (
+                x.shape[-1] > self.tile_sample_min_size
+                or x.shape[-2] > self.tile_sample_min_size
+            ):
                 return self.spatial_tiled_encode(x)
             return self.encoder(x)
 
@@ -763,7 +948,10 @@ class AutoencoderKLConv3D(ModelMixin, ConfigMixin):
         def _decode(z):
             if self.use_temporal_tiling and z.shape[-3] > self.tile_latent_min_tsize:
                 return self.temporal_tiled_decode(z)
-            if self.use_spatial_tiling and (z.shape[-1] > self.tile_latent_min_size or z.shape[-2] > self.tile_latent_min_size):
+            if self.use_spatial_tiling and (
+                z.shape[-1] > self.tile_latent_min_size
+                or z.shape[-2] > self.tile_latent_min_size
+            ):
                 return self.spatial_tiled_decode(z)
             return self.decoder(z)
 
@@ -780,17 +968,38 @@ class AutoencoderKLConv3D(ModelMixin, ConfigMixin):
         return DecoderOutput(sample=decoded)
 
     @torch.no_grad()
-    def forward(self, sample: torch.Tensor, sample_posterior: bool = False, return_posterior: bool = True, return_dict: bool = True):
+    def forward(
+        self,
+        sample: torch.Tensor,
+        sample_posterior: bool = False,
+        return_posterior: bool = True,
+        return_dict: bool = True,
+    ):
         """Forward autoencoder pass. Returns both reconstruction and optionally the posterior."""
         posterior = self.encode(sample).latent_dist
         z = posterior.sample() if sample_posterior else posterior.mode()
         dec = self.decode(z).sample
-        return DecoderOutput(sample=dec, posterior=posterior) if return_dict else (dec, posterior)
+        return (
+            DecoderOutput(sample=dec, posterior=posterior)
+            if return_dict
+            else (dec, posterior)
+        )
 
 
 class HunyuanVideo15VAE:
-    def __init__(self, checkpoint_path=None, dtype=torch.float16, device="cuda", cpu_offload=False, parallel=False):
-        self.vae = AutoencoderKLConv3D.from_pretrained(os.path.join(checkpoint_path, "vae")).to(dtype).to(device)
+    def __init__(
+        self,
+        checkpoint_path=None,
+        dtype=torch.float16,
+        device="cuda",
+        cpu_offload=False,
+        parallel=False,
+    ):
+        self.vae = (
+            AutoencoderKLConv3D.from_pretrained(os.path.join(checkpoint_path, "vae"))
+            .to(dtype)
+            .to(device)
+        )
         self.vae.cpu_offload = cpu_offload
         self.parallel = parallel
         self.world_size_h, self.world_size_w = None, None
@@ -804,7 +1013,11 @@ class HunyuanVideo15VAE:
         z = z / self.vae.config.scaling_factor
 
         self.vae.enable_tiling()
-        if self.parallel and self.world_size_h is not None and self.world_size_w is not None:
+        if (
+            self.parallel
+            and self.world_size_h is not None
+            and self.world_size_w is not None
+        ):
             video_frames = self.decode_dist_2d(z, self.world_size_h, self.world_size_w)
             self.world_size_h, self.world_size_w = None, None
         else:
@@ -875,7 +1088,9 @@ class HunyuanVideo15VAE:
             decoded_w_start = padding_size * spatial_ratio
             decoded_w_end = images_chunk.shape[4] - padding_size * spatial_ratio
 
-        images_chunk = images_chunk[:, :, :, decoded_h_start:decoded_h_end, decoded_w_start:decoded_w_end].contiguous()
+        images_chunk = images_chunk[
+            :, :, :, decoded_h_start:decoded_h_end, decoded_w_start:decoded_w_end
+        ].contiguous()
 
         # Gather all chunks
         total_processes = world_size_h * world_size_w
@@ -905,7 +1120,11 @@ class HunyuanVideo15VAE:
 
 
 if __name__ == "__main__":
-    vae = HunyuanVideo15VAE(checkpoint_path="/data/nvme1/yongyang/models/HunyuanVideo-1.5/ckpts/hunyuanvideo-1.5", dtype=torch.float16, device="cuda")
+    vae = HunyuanVideo15VAE(
+        checkpoint_path="/data/nvme1/yongyang/models/HunyuanVideo-1.5/ckpts/hunyuanvideo-1.5",
+        dtype=torch.float16,
+        device="cuda",
+    )
     z = torch.randn(1, 32, 31, 30, 53, dtype=torch.float16, device="cuda")
     video_frames = vae.decode(z)
     print(video_frames.shape)

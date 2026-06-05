@@ -1,21 +1,30 @@
-from lib.smart_config import smart_config
 import torch
-from transformers import Gemma3Config
-from transformers.modeling_rope_utils import ROPE_INIT_FUNCTIONS
-from transformers.models.gemma3 import Gemma3ForConditionalGeneration
-
 from lightx2v.models.input_encoders.hf.ltx2.gemma.config import GEMMA3_CONFIG_FOR_LTX
 from lightx2v.models.input_encoders.hf.ltx2.gemma.embeddings_connector import (
     AudioEmbeddings1DConnectorConfigurator,
     Embeddings1DConnectorConfigurator,
 )
-from lightx2v.models.input_encoders.hf.ltx2.gemma.embeddings_processor import EmbeddingsProcessor
-from lightx2v.models.input_encoders.hf.ltx2.gemma.encoders.base_encoder import GemmaTextEncoder
+from lightx2v.models.input_encoders.hf.ltx2.gemma.embeddings_processor import (
+    EmbeddingsProcessor,
+)
+from lightx2v.models.input_encoders.hf.ltx2.gemma.encoders.base_encoder import (
+    GemmaTextEncoder,
+)
 from lightx2v.models.input_encoders.hf.ltx2.gemma.feature_extractor import (
     FeatureExtractorV1,
     FeatureExtractorV2,
 )
-from lightx2v.models.input_encoders.hf.ltx2.utils import KeyValueOperationResult, ModelConfigurator, ModuleOps, SDOps
+from lightx2v.models.input_encoders.hf.ltx2.utils import (
+    KeyValueOperationResult,
+    ModelConfigurator,
+    ModuleOps,
+    SDOps,
+)
+from transformers import Gemma3Config
+from transformers.modeling_rope_utils import ROPE_INIT_FUNCTIONS
+from transformers.models.gemma3 import Gemma3ForConditionalGeneration
+
+from lib.smart_config import smart_config
 
 
 class GemmaTextEncoderConfigurator(ModelConfigurator[GemmaTextEncoder]):
@@ -75,14 +84,30 @@ def _create_feature_extractor(transformer_config: dict) -> torch.nn.Module:
 
     missing_keys = _V2_EXPECTED_CONFIG.keys() - overlapping_keys
     if missing_keys:
-        raise NotImplementedError("Partial V2 config — missing keys: " + ", ".join(sorted(missing_keys)))
+        raise NotImplementedError(
+            "Partial V2 config — missing keys: " + ", ".join(sorted(missing_keys))
+        )
 
-    unexpected_value_keys = {k for k in overlapping_keys if transformer_config[k] != _V2_EXPECTED_CONFIG[k]}
+    unexpected_value_keys = {
+        k for k in overlapping_keys if transformer_config[k] != _V2_EXPECTED_CONFIG[k]
+    }
     if unexpected_value_keys:
-        raise NotImplementedError("Unknown config: " + ", ".join(f"{k}={transformer_config[k]!r} (expected {_V2_EXPECTED_CONFIG[k]!r})" for k in unexpected_value_keys))
+        raise NotImplementedError(
+            "Unknown config: "
+            + ", ".join(
+                f"{k}={transformer_config[k]!r} (expected {_V2_EXPECTED_CONFIG[k]!r})"
+                for k in unexpected_value_keys
+            )
+        )
 
-    video_inner_dim = transformer_config["num_attention_heads"] * transformer_config["attention_head_dim"]
-    audio_inner_dim = transformer_config["audio_num_attention_heads"] * transformer_config["audio_attention_head_dim"]
+    video_inner_dim = (
+        transformer_config["num_attention_heads"]
+        * transformer_config["attention_head_dim"]
+    )
+    audio_inner_dim = (
+        transformer_config["audio_num_attention_heads"]
+        * transformer_config["audio_attention_head_dim"]
+    )
     return FeatureExtractorV2(
         video_aggregate_embed=torch.nn.Linear(flat_dim, video_inner_dim, bias=True),
         embedding_dim=embedding_dim,
@@ -94,17 +119,32 @@ AV_GEMMA_TEXT_ENCODER_KEY_OPS = (
     SDOps("AV_GEMMA_TEXT_ENCODER_KEY_OPS")
     # 1. Map the feature extractor (V1: aggregate_embed inside feature_extractor)
     .with_matching(prefix="text_embedding_projection.aggregate_embed.")
-    .with_replacement("text_embedding_projection.aggregate_embed.", "feature_extractor.aggregate_embed.")
+    .with_replacement(
+        "text_embedding_projection.aggregate_embed.",
+        "feature_extractor.aggregate_embed.",
+    )
     # V2 dual aggregate embeds
     .with_matching(prefix="text_embedding_projection.video_aggregate_embed.")
-    .with_replacement("text_embedding_projection.video_aggregate_embed.", "feature_extractor.video_aggregate_embed.")
+    .with_replacement(
+        "text_embedding_projection.video_aggregate_embed.",
+        "feature_extractor.video_aggregate_embed.",
+    )
     .with_matching(prefix="text_embedding_projection.audio_aggregate_embed.")
-    .with_replacement("text_embedding_projection.audio_aggregate_embed.", "feature_extractor.audio_aggregate_embed.")
+    .with_replacement(
+        "text_embedding_projection.audio_aggregate_embed.",
+        "feature_extractor.audio_aggregate_embed.",
+    )
     # 2. Map the connectors
     .with_matching(prefix="model.diffusion_model.video_embeddings_connector.")
-    .with_replacement("model.diffusion_model.video_embeddings_connector.", "embeddings_processor.video_connector.")
+    .with_replacement(
+        "model.diffusion_model.video_embeddings_connector.",
+        "embeddings_processor.video_connector.",
+    )
     .with_matching(prefix="model.diffusion_model.audio_embeddings_connector.")
-    .with_replacement("model.diffusion_model.audio_embeddings_connector.", "embeddings_processor.audio_connector.")
+    .with_replacement(
+        "model.diffusion_model.audio_embeddings_connector.",
+        "embeddings_processor.audio_connector.",
+    )
     # 3. Map language model layers (note the double .model prefix)
     .with_matching(prefix="language_model.model.")
     .with_replacement("language_model.model.", "model.model.language_model.")
@@ -128,13 +168,22 @@ VIDEO_ONLY_GEMMA_TEXT_ENCODER_KEY_OPS = (
     SDOps("VIDEO_ONLY_GEMMA_TEXT_ENCODER_KEY_OPS")
     # 1. Map the feature extractor (V1: aggregate_embed inside feature_extractor)
     .with_matching(prefix="text_embedding_projection.aggregate_embed.")
-    .with_replacement("text_embedding_projection.aggregate_embed.", "feature_extractor.aggregate_embed.")
+    .with_replacement(
+        "text_embedding_projection.aggregate_embed.",
+        "feature_extractor.aggregate_embed.",
+    )
     # V2 video aggregate embed
     .with_matching(prefix="text_embedding_projection.video_aggregate_embed.")
-    .with_replacement("text_embedding_projection.video_aggregate_embed.", "feature_extractor.video_aggregate_embed.")
+    .with_replacement(
+        "text_embedding_projection.video_aggregate_embed.",
+        "feature_extractor.video_aggregate_embed.",
+    )
     # 2. Map the connectors
     .with_matching(prefix="model.diffusion_model.embeddings_connector.")
-    .with_replacement("model.diffusion_model.embeddings_connector.", "embeddings_processor.video_connector.")
+    .with_replacement(
+        "model.diffusion_model.embeddings_connector.",
+        "embeddings_processor.video_connector.",
+    )
 )
 
 
@@ -146,11 +195,15 @@ def create_and_populate(module: GemmaTextEncoder) -> GemmaTextEncoder:
     config = model.config.text_config
     dim = getattr(config, "head_dim", config.hidden_size // config.num_attention_heads)
     base = config.rope_local_base_freq
-    local_rope_freqs = 1.0 / (base ** (torch.arange(0, dim, 2, dtype=torch.int64).to(dtype=torch.float) / dim))
+    local_rope_freqs = 1.0 / (
+        base ** (torch.arange(0, dim, 2, dtype=torch.int64).to(dtype=torch.float) / dim)
+    )
     inv_freqs, _ = ROPE_INIT_FUNCTIONS[config.rope_scaling["rope_type"]](config)
 
     positions_length = len(v_model.embeddings.position_ids[0])
-    position_ids = torch.arange(positions_length, dtype=torch.long, device="cpu").unsqueeze(0)
+    position_ids = torch.arange(
+        positions_length, dtype=torch.long, device="cpu"
+    ).unsqueeze(0)
     v_model.embeddings.register_buffer("position_ids", position_ids)
     embed_scale = torch.tensor(model.config.text_config.hidden_size**0.5, device="cpu")
     l_model.embed_tokens.register_buffer("embed_scale", embed_scale)
@@ -162,6 +215,7 @@ def create_and_populate(module: GemmaTextEncoder) -> GemmaTextEncoder:
 
 GEMMA_MODEL_OPS = ModuleOps(
     name="GemmaModel",
-    matcher=lambda module: hasattr(module, "model") and isinstance(module.model, Gemma3ForConditionalGeneration),
+    matcher=lambda module: hasattr(module, "model")
+    and isinstance(module.model, Gemma3ForConditionalGeneration),
     mutator=create_and_populate,
 )

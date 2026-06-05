@@ -1,8 +1,5 @@
-from lib.smart_config import smart_config
 import logging
 import threading
-
-from loguru import logger
 
 from lightx2v.disagg.services.controller import ControllerService
 from lightx2v.disagg.services.decoder import DecoderService
@@ -10,6 +7,9 @@ from lightx2v.disagg.services.encoder import EncoderService
 from lightx2v.disagg.services.transformer import TransformerService
 from lightx2v.disagg.utils import set_config
 from lightx2v.utils.utils import seed_all
+from loguru import logger
+
+from lib.smart_config import smart_config
 
 # Setup basic logging
 logging.basicConfig(level=logging.INFO)

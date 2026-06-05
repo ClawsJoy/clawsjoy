@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 AMD ROCm optimized attention using aiter library.
 Provides significantly faster attention computation on AMD GPUs (2.5x-6x speedup).
@@ -6,10 +7,9 @@ Internally uses FA3 (fmha_v3) when conditions are met.
 """
 
 import torch
-from loguru import logger
-
 from lightx2v_platform.ops.attn.template import AttnWeightTemplate
 from lightx2v_platform.registry_factory import PLATFORM_ATTN_WEIGHT_REGISTER
+from loguru import logger
 
 # Detect AMD ROCm platform
 IS_AMD_ROCM = hasattr(torch.version, "hip") and torch.version.hip is not None
@@ -38,7 +38,9 @@ try:
 except ImportError as e:
     AITER_IMPORT_ERROR = str(e)
     if IS_AMD_ROCM:
-        logger.warning(f"aiter not found on AMD ROCm platform. For optimal performance, please install aiter:\n{AITER_INSTALL_CMD}")
+        logger.warning(
+            f"aiter not found on AMD ROCm platform. For optimal performance, please install aiter:\n{AITER_INSTALL_CMD}"
+        )
     else:
         logger.debug("aiter not found (only available on AMD ROCm platform)")
 
@@ -70,7 +72,9 @@ class AiterAttnWeight(AttnWeightTemplate):
 
         # Check aiter availability
         if not AITER_AVAILABLE:
-            raise ImportError(f"aiter is not installed on AMD ROCm platform.\nImport error: {AITER_IMPORT_ERROR}\nPlease install aiter for optimal performance:\n{AITER_INSTALL_CMD}")
+            raise ImportError(
+                f"aiter is not installed on AMD ROCm platform.\nImport error: {AITER_IMPORT_ERROR}\nPlease install aiter for optimal performance:\n{AITER_INSTALL_CMD}"
+            )
 
     def apply(
         self,

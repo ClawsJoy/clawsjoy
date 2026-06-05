@@ -1,10 +1,11 @@
-#!/usr/bin/env python3
-"""Init - Init 模块
-
-@version: 5.0.0
-@author: ClawsJoy
-@date: 2026-05-31
+"""
+math 技能模块
 """
 
-from lib.smart_config import smart_config
-"""ClawsJoy 数学技能包"""
+from .math_skill import DivideSkill
+
+
+def execute(params=None):
+    """统一执行入口"""
+    skill = DivideSkill()
+    return skill.execute(params)

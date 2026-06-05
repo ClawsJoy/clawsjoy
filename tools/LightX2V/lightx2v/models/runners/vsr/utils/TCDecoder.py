@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 #!/usr/bin/env python3
 """
 Tiny AutoEncoder for Hunyuan Video (Decoder-only, pruned)
@@ -48,8 +49,16 @@ class Clamp(nn.Module):
 class MemBlock(nn.Module):
     def __init__(self, n_in, n_out):
         super().__init__()
-        self.conv = nn.Sequential(conv(n_in * 2, n_out), nn.ReLU(inplace=True), conv(n_out, n_out), nn.ReLU(inplace=True), conv(n_out, n_out))
-        self.skip = nn.Conv2d(n_in, n_out, 1, bias=False) if n_in != n_out else nn.Identity()
+        self.conv = nn.Sequential(
+            conv(n_in * 2, n_out),
+            nn.ReLU(inplace=True),
+            conv(n_out, n_out),
+            nn.ReLU(inplace=True),
+            conv(n_out, n_out),
+        )
+        self.skip = (
+            nn.Conv2d(n_in, n_out, 1, bias=False) if n_in != n_out else nn.Identity()
+        )
         self.act = nn.ReLU(inplace=True)
 
     def forward(self, x, past):
@@ -92,7 +101,13 @@ class PixelShuffle3d(nn.Module):
         if F % self.ff != 0:
             first_frame = x[:, :, 0:1, :, :].repeat(1, 1, self.ff - F % self.ff, 1, 1)
             x = torch.cat([first_frame, x], dim=2)
-        return rearrange(x, "b c (f ff) (h hh) (w ww) -> b (c ff hh ww) f h w", ff=self.ff, hh=self.hh, ww=self.ww).transpose(1, 2)
+        return rearrange(
+            x,
+            "b c (f ff) (h hh) (w ww) -> b (c ff hh ww) f h w",
+            ff=self.ff,
+            hh=self.hh,
+            ww=self.ww,
+        ).transpose(1, 2)
 
 
 # ----------------------------
@@ -121,7 +136,9 @@ def apply_model_with_memblocks(model, x, parallel, show_progress_bar, mem=None):
                 NT, C, H, W = x.shape
                 T = NT // N
                 _x = x.reshape(N, T, C, H, W)
-                mem = F.pad(_x, (0, 0, 0, 0, 0, 0, 1, 0), value=0)[:, :T].reshape(x.shape)
+                mem = F.pad(_x, (0, 0, 0, 0, 0, 0, 1, 0), value=0)[:, :T].reshape(
+                    x.shape
+                )
                 x = b(x, mem)
             else:
                 x = b(x)
@@ -130,7 +147,10 @@ def apply_model_with_memblocks(model, x, parallel, show_progress_bar, mem=None):
         x = x.view(N, T, C, H, W)
     else:
         out = []
-        work_queue = [TWorkItem(xt, 0) for t, xt in enumerate(x.reshape(N, T * C, H, W).chunk(T, dim=1))]
+        work_queue = [
+            TWorkItem(xt, 0)
+            for t, xt in enumerate(x.reshape(N, T * C, H, W).chunk(T, dim=1))
+        ]
         progress_bar = tqdm(range(T), disable=not show_progress_bar)
         while work_queue:
             xt, i = work_queue.pop(0)
@@ -162,7 +182,9 @@ def apply_model_with_memblocks(model, x, parallel, show_progress_bar, mem=None):
                 elif isinstance(b, TGrow):
                     xt = b(xt)
                     NT, C_, H_, W_ = xt.shape
-                    for xt_next in reversed(xt.view(N, b.stride * C_, H_, W_).chunk(b.stride, 1)):
+                    for xt_next in reversed(
+                        xt.view(N, b.stride * C_, H_, W_).chunk(b.stride, 1)
+                    ):
                         work_queue.insert(0, TWorkItem(xt_next, i + 1))
                 else:
                     xt = b(xt)
@@ -180,7 +202,14 @@ def apply_model_with_memblocks(model, x, parallel, show_progress_bar, mem=None):
 class TAEHV(nn.Module):
     image_channels = 3
 
-    def __init__(self, checkpoint_path="taehv.pth", decoder_time_upscale=(True, True), decoder_space_upscale=(True, True, True), channels=[256, 128, 64, 64], latent_channels=16):
+    def __init__(
+        self,
+        checkpoint_path="taehv.pth",
+        decoder_time_upscale=(True, True),
+        decoder_space_upscale=(True, True, True),
+        channels=[256, 128, 64, 64],
+        latent_channels=16,
+    ):
         """Initialize TAEHV (decoder-only) with built-in deepening after every ReLU.
         Deepening config: how_many_each=1, k=3 (fixed as requested).
         """
@@ -222,14 +251,21 @@ class TAEHV(nn.Module):
         self.pixel_shuffle = PixelShuffle3d(4, 8, 8)
 
         if checkpoint_path is not None:
-            missing_keys = self.load_state_dict(self.patch_tgrow_layers(torch.load(checkpoint_path, map_location="cpu", weights_only=True)), strict=False)
+            missing_keys = self.load_state_dict(
+                self.patch_tgrow_layers(
+                    torch.load(checkpoint_path, map_location="cpu", weights_only=True)
+                ),
+                strict=False,
+            )
             print("missing_keys", missing_keys)
 
         # Initialize decoder mem state
         self.mem = [None] * len(self.decoder)
 
     @staticmethod
-    def _apply_identity_deepen(decoder: nn.Sequential, how_many_each=1, k=3) -> nn.Sequential:
+    def _apply_identity_deepen(
+        decoder: nn.Sequential, how_many_each=1, k=3
+    ) -> nn.Sequential:
         """Return a new Sequential where every nn.ReLU is followed by how_many_each*(IdentityConv2d(k)+ReLU)."""
         new_layers = []
         for b in decoder:
@@ -266,7 +302,9 @@ class TAEHV(nn.Module):
         if cond is not None:
             x = torch.cat([self.pixel_shuffle(cond), x], dim=2)
 
-        x, self.mem = apply_model_with_memblocks(self.decoder, x, parallel, show_progress_bar, mem=self.mem)
+        x, self.mem = apply_model_with_memblocks(
+            self.decoder, x, parallel, show_progress_bar, mem=self.mem
+        )
 
         if trim_flag:
             return x[:, self.frames_to_trim :]
@@ -291,15 +329,30 @@ class TAEW2_1DiffusersWrapper(nn.Module):
         self.device = "cuda"
         self.taehv = TAEHV(pretrained_path, channels=channels).to(self.dtype)
         self.temperal_downsample = [True, True, False]  # [sic]
-        self.config = DotDict(scaling_factor=1.0, latents_mean=torch.zeros(16), z_dim=16, latents_std=torch.ones(16))
+        self.config = DotDict(
+            scaling_factor=1.0,
+            latents_mean=torch.zeros(16),
+            z_dim=16,
+            latents_std=torch.ones(16),
+        )
 
     def decode(self, latents, return_dict=None):
         n, c, t, h, w = latents.shape
-        return (self.taehv.decode_video(latents.transpose(1, 2), parallel=False).transpose(1, 2).mul_(2).sub_(1),)
+        return (
+            self.taehv.decode_video(latents.transpose(1, 2), parallel=False)
+            .transpose(1, 2)
+            .mul_(2)
+            .sub_(1),
+        )
 
     def stream_decode_with_cond(self, latents, tiled=False, cond=None):
         n, c, t, h, w = latents.shape
-        return self.taehv.decode_video(latents.transpose(1, 2), parallel=False, cond=cond).transpose(1, 2).mul_(2).sub_(1)
+        return (
+            self.taehv.decode_video(latents.transpose(1, 2), parallel=False, cond=cond)
+            .transpose(1, 2)
+            .mul_(2)
+            .sub_(1)
+        )
 
     def clean_mem(self):
         self.taehv.clean_mem()
@@ -310,7 +363,12 @@ class TAEW2_1DiffusersWrapper(nn.Module):
 # ----------------------------
 
 
-def build_tcdecoder(new_channels=[512, 256, 128, 128], device="cuda", dtype=torch.bfloat16, new_latent_channels=None):
+def build_tcdecoder(
+    new_channels=[512, 256, 128, 128],
+    device="cuda",
+    dtype=torch.bfloat16,
+    new_latent_channels=None,
+):
     """
     构建“更宽”的 decoder；深度增强（IdentityConv2d+ReLU）已在 TAEHV 内部完成。
     - 不创建 small / 不做移植
@@ -319,9 +377,23 @@ def build_tcdecoder(new_channels=[512, 256, 128, 128], device="cuda", dtype=torc
     返回：big （单个模型）
     """
     if new_latent_channels is not None:
-        big = TAEHV(checkpoint_path=None, channels=new_channels, latent_channels=new_latent_channels).to(device).to(dtype).train()
+        big = (
+            TAEHV(
+                checkpoint_path=None,
+                channels=new_channels,
+                latent_channels=new_latent_channels,
+            )
+            .to(device)
+            .to(dtype)
+            .train()
+        )
     else:
-        big = TAEHV(checkpoint_path=None, channels=new_channels).to(device).to(dtype).train()
+        big = (
+            TAEHV(checkpoint_path=None, channels=new_channels)
+            .to(device)
+            .to(dtype)
+            .train()
+        )
 
     big.clean_mem()
     return big

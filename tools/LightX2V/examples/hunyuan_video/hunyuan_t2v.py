@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 HunyuanVideo-1.5 text-to-video generation example.
 This example demonstrates how to use LightX2V with HunyuanVideo-1.5 model for T2V generation.

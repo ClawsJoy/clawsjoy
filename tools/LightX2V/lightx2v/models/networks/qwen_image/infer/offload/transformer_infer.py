@@ -1,11 +1,11 @@
-from lib.smart_config import smart_config
 import torch
-
 from lightx2v.common.offload.manager import WeightAsyncStreamManager
 from lightx2v.models.networks.qwen_image.infer.transformer_infer import (
     QwenImageTransformerInfer,
 )
 from lightx2v_platform.base.global_var import AI_DEVICE
+
+from lib.smart_config import smart_config
 
 torch_device_module = getattr(torch, AI_DEVICE)
 
@@ -23,14 +23,20 @@ class QwenImageOffloadTransformerInfer(QwenImageTransformerInfer):
             offload_granularity = self.config.get("offload_granularity", "block")
             if offload_granularity == "block":
                 self.infer_func = self.infer_with_blocks_offload
-                self.offload_manager = WeightAsyncStreamManager(offload_granularity=offload_granularity)
+                self.offload_manager = WeightAsyncStreamManager(
+                    offload_granularity=offload_granularity
+                )
             elif offload_granularity == "phase":
                 self.infer_func = self.infer_with_phases_offload
-                self.offload_manager = WeightAsyncStreamManager(offload_granularity=offload_granularity)
+                self.offload_manager = WeightAsyncStreamManager(
+                    offload_granularity=offload_granularity
+                )
 
             self.lazy_load = self.config.get("lazy_load", False)
             if self.lazy_load:
-                self.offload_manager.init_lazy_load(num_workers=self.config.get("num_disk_workers", 4))
+                self.offload_manager.init_lazy_load(
+                    num_workers=self.config.get("num_disk_workers", 4)
+                )
 
     def infer_with_phases_offload(
         self,
@@ -53,32 +59,48 @@ class QwenImageOffloadTransformerInfer(QwenImageTransformerInfer):
                 if block_idx == 0 and phase_idx == 0:
                     self.offload_manager.init_first_buffer(blocks)
 
-                next_block_idx = (block_idx + 1) % len(blocks) if phase_idx == self.phases_num - 1 else block_idx
+                next_block_idx = (
+                    (block_idx + 1) % len(blocks)
+                    if phase_idx == self.phases_num - 1
+                    else block_idx
+                )
                 next_phase_idx = (phase_idx + 1) % self.phases_num
                 if self.lazy_load:
                     if phase_idx == self.phases_num - 1:
                         self.offload_manager.swap_cpu_buffers()
 
-                self.offload_manager.prefetch_phase(next_block_idx, next_phase_idx, blocks)
+                self.offload_manager.prefetch_phase(
+                    next_block_idx, next_phase_idx, blocks
+                )
                 with torch_device_module.stream(self.offload_manager.compute_stream):
                     if phase_idx == 0:
-                        img_query, img_key, img_value, img_gate1, img_mod2 = self.infer_img_qkv(
-                            img_attn_phase=self.offload_manager.cuda_buffers[phase_idx],
-                            hidden_states=hidden_states,
-                            temb_img_silu=temb_img_silu,
-                            img_freqs=image_rotary_emb[0],
-                            modulate_index=modulate_index,
+                        img_query, img_key, img_value, img_gate1, img_mod2 = (
+                            self.infer_img_qkv(
+                                img_attn_phase=self.offload_manager.cuda_buffers[
+                                    phase_idx
+                                ],
+                                hidden_states=hidden_states,
+                                temb_img_silu=temb_img_silu,
+                                img_freqs=image_rotary_emb[0],
+                                modulate_index=modulate_index,
+                            )
                         )
                     elif phase_idx == 1:
-                        txt_query, txt_key, txt_value, seq_txt, txt_gate1, txt_mod2 = self.infer_txt_qkv(
-                            txt_attn_phase=self.offload_manager.cuda_buffers[phase_idx],
-                            encoder_hidden_states=encoder_hidden_states,
-                            temb_txt_silu=temb_txt_silu,
-                            txt_freqs=image_rotary_emb[1],
+                        txt_query, txt_key, txt_value, seq_txt, txt_gate1, txt_mod2 = (
+                            self.infer_txt_qkv(
+                                txt_attn_phase=self.offload_manager.cuda_buffers[
+                                    phase_idx
+                                ],
+                                encoder_hidden_states=encoder_hidden_states,
+                                temb_txt_silu=temb_txt_silu,
+                                txt_freqs=image_rotary_emb[1],
+                            )
                         )
                     elif phase_idx == 2:
                         hidden_states, encoder_hidden_states = self.infer_cross_attn(
-                            cross_attn_phase=self.offload_manager.cuda_buffers[phase_idx],
+                            cross_attn_phase=self.offload_manager.cuda_buffers[
+                                phase_idx
+                            ],
                             seq_txt=seq_txt,
                             img_query=img_query,
                             img_key=img_key,
@@ -127,7 +149,9 @@ class QwenImageOffloadTransformerInfer(QwenImageTransformerInfer):
 
             if self.lazy_load:
                 self.offload_manager.swap_cpu_buffers()
-            self.offload_manager.prefetch_weights((block_idx + 1) % self.num_blocks, blocks)
+            self.offload_manager.prefetch_weights(
+                (block_idx + 1) % self.num_blocks, blocks
+            )
 
             with torch_device_module.stream(self.offload_manager.compute_stream):
                 encoder_hidden_states, hidden_states = self.infer_block(

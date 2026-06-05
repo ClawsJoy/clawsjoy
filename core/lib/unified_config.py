@@ -3,14 +3,15 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
-import yaml
 import os
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
+import yaml
 
 
 class UnifiedConfig:
@@ -36,7 +37,7 @@ class UnifiedConfig:
     def _load_yaml(self, path: Path, key: str = None):
         """加载 YAML 文件"""
         try:
-            with open(path, 'r') as f:
+            with open(path, "r") as f:
                 data = yaml.safe_load(f)
                 if key:
                     self._config[key] = data
@@ -56,26 +57,20 @@ class UnifiedConfig:
         main_paths = [
             "config/system/system_unified.yaml",
             "config/system.yaml",
-            "config/config.yaml"
+            "config/config.yaml",
         ]
         main_path = self._find_file(main_paths)
         if main_path:
             self._load_yaml(main_path)
 
         # 路由配置
-        routes_paths = [
-            "config/routes/routes.yaml",
-            "config/routes.yaml"
-        ]
+        routes_paths = ["config/routes/routes.yaml", "config/routes.yaml"]
         routes_path = self._find_file(routes_paths)
         if routes_path:
             self._load_yaml(routes_path, "routes")
 
         # Agent Soul 配置
-        soul_paths = [
-            "config/agents_soul/agents_soul.yaml",
-            "config/agents_soul.yaml"
-        ]
+        soul_paths = ["config/agents_soul/agents_soul.yaml", "config/agents_soul.yaml"]
         soul_path = self._find_file(soul_paths)
         if soul_path:
             self._load_yaml(soul_path, "agents_soul")
@@ -90,7 +85,7 @@ class UnifiedConfig:
 
     def get(self, path: str, default=None):
         """获取配置值，支持点号路径如 'llm.model'"""
-        keys = path.split('.')
+        keys = path.split(".")
         value = self._config
         for key in keys:
             if isinstance(value, dict):
@@ -121,4 +116,3 @@ class UnifiedConfig:
 
 # 全局单例
 unified_config = UnifiedConfig()
-

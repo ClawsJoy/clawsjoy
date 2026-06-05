@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import base64
 import os
 import threading
@@ -8,6 +7,8 @@ from typing import Any
 import requests
 from loguru import logger
 from tqdm import tqdm
+
+from lib.smart_config import smart_config
 
 
 def image_to_base64(image_path):
@@ -63,7 +64,9 @@ def send_and_monitor_task(url, message, task_index, complete_bar, complete_lock)
                     logger.error(f"Task {task_index + 1} (task_id: {task_id}) failed")
                     if complete_bar and complete_lock:
                         with complete_lock:
-                            complete_bar.update(1)  # Still update progress even if failed
+                            complete_bar.update(
+                                1
+                            )  # Still update progress even if failed
                     return False
                 else:
                     time.sleep(0.5)
@@ -129,7 +132,10 @@ def process_tasks_async(messages, available_urls, show_progress=True):
         server_url = find_idle_server(available_urls)
 
         # Create and start thread for sending and monitoring task
-        thread = threading.Thread(target=send_and_monitor_task, args=(server_url, message, idx, complete_bar, complete_lock))
+        thread = threading.Thread(
+            target=send_and_monitor_task,
+            args=(server_url, message, idx, complete_bar, complete_lock),
+        )
         thread.daemon = False
         thread.start()
         active_threads.append(thread)

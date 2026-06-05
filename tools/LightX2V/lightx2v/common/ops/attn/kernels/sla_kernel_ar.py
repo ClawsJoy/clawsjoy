@@ -1,7 +1,8 @@
-from lib.smart_config import smart_config
 import torch
 import triton
 import triton.language as tl
+
+from lib.smart_config import smart_config
 
 
 @triton.jit
@@ -103,8 +104,12 @@ def _attn_bwd_preprocess(
     offs_m = idx_m * BLOCK_M + tl.arange(0, BLOCK_M)
     offs_d = tl.arange(0, D)
 
-    o_s = tl.load(OS + offs_m[:, None] * (H * D) + offs_d[None, :], mask=offs_m[:, None] < LQ)
-    do_s = tl.load(DOS + offs_m[:, None] * (H * D) + offs_d[None, :], mask=offs_m[:, None] < LQ)
+    o_s = tl.load(
+        OS + offs_m[:, None] * (H * D) + offs_d[None, :], mask=offs_m[:, None] < LQ
+    )
+    do_s = tl.load(
+        DOS + offs_m[:, None] * (H * D) + offs_d[None, :], mask=offs_m[:, None] < LQ
+    )
 
     delta_s = tl.sum(o_s * do_s, axis=1).to(DELTAS.type.element_ty)
     tl.store(DELTAS + offs_m, delta_s, mask=offs_m < LQ)
@@ -287,7 +292,25 @@ class _attention_ar(torch.autograd.Function):
         lse = torch.empty((B, H, LQ), device=q.device, dtype=torch.float32)
 
         grid = (M_BLOCKS, B * H)
-        _attn_fwd[grid](q, k, v, qk_scale, topk, lut, lse, o_s, LQ, LK, M_BLOCKS, H, D, BLOCK_M, BLOCK_N, num_warps=4 if q.shape[-1] == 64 else 8, num_stages=3)
+        _attn_fwd[grid](
+            q,
+            k,
+            v,
+            qk_scale,
+            topk,
+            lut,
+            lse,
+            o_s,
+            LQ,
+            LK,
+            M_BLOCKS,
+            H,
+            D,
+            BLOCK_M,
+            BLOCK_N,
+            num_warps=4 if q.shape[-1] == 64 else 8,
+            num_stages=3,
+        )
 
         ctx.save_for_backward(q, k, v, k_block_id, lut, lse, o_s)
         ctx.qk_scale = qk_scale

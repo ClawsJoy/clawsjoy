@@ -1,8 +1,8 @@
-from lib.smart_config import smart_config
 import torch
-
 from lightx2v_platform.ops.rope.rope_template import RopeTemplate
 from lightx2v_platform.registry_factory import PLATFORM_ROPE_REGISTER
+
+from lib.smart_config import smart_config
 
 
 @PLATFORM_ROPE_REGISTER("gcu_wan_rope")
@@ -37,8 +37,12 @@ class GcuWanRope(RopeTemplate):
         xq_imag = xq_seq[..., 1]
         xk_real = xk_seq[..., 0]
         xk_imag = xk_seq[..., 1]
-        xq_rotated = torch.stack([xq_real * cos - xq_imag * sin, xq_real * sin + xq_imag * cos], dim=-1).flatten(2)
-        xk_rotated = torch.stack([xk_real * cos - xk_imag * sin, xk_real * sin + xk_imag * cos], dim=-1).flatten(2)
+        xq_rotated = torch.stack(
+            [xq_real * cos - xq_imag * sin, xq_real * sin + xq_imag * cos], dim=-1
+        ).flatten(2)
+        xk_rotated = torch.stack(
+            [xk_real * cos - xk_imag * sin, xk_real * sin + xk_imag * cos], dim=-1
+        ).flatten(2)
 
         # Concatenate rotated part with remaining part if any
         if xq.size(0) > seq_len:

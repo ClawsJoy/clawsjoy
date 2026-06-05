@@ -1,10 +1,12 @@
 """动态知识图谱引擎"""
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime
 from collections import defaultdict
-from engine.lib.logger import engine_logger
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
 from engine.embedding.local_embedding import local_embedding
+from engine.lib.logger import engine_logger
+
 
 class DynamicKnowledgeEngine:
     """动态知识图谱引擎"""
@@ -24,14 +26,21 @@ class DynamicKnowledgeEngine:
 
     def add_node(self, node_id: str, node_type: str, properties: Dict = None):
         if node_id not in self.nodes:
-            self.nodes[node_id] = {"id": node_id, "type": node_type, "properties": properties or {}}
+            self.nodes[node_id] = {
+                "id": node_id,
+                "type": node_type,
+                "properties": properties or {},
+            }
 
     def add_edge(self, source: str, target: str, relation: str, weight: float = 1.0):
-        self.edges.append({"source": source, "target": target, "relation": relation, "weight": weight})
+        self.edges.append(
+            {"source": source, "target": target, "relation": relation, "weight": weight}
+        )
 
     def learn_from_interaction(self, query: str, response: str, success: bool):
         import re
-        words = re.findall(r'[\u4e00-\u9fa5a-zA-Z]+', query)
+
+        words = re.findall(r"[\u4e00-\u9fa5a-zA-Z]+", query)
         for w in words[:3]:
             self.add_node(w, "concept", {})
         engine_logger.get().debug(f"   📚 学习: {query[:30]}...")
@@ -54,5 +63,6 @@ class DynamicKnowledgeEngine:
 
     def health_check(self) -> Dict:
         return {"name": "dynamic_knowledge_engine", "status": "healthy"}
+
 
 dynamic_knowledge_engine = DynamicKnowledgeEngine()

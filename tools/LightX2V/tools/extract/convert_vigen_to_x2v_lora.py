@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 ###  Using this script to convert ViGen-DiT Lora Format to Lightx2v
 ###
 ###  Cmd line:python convert_vigen_to_x2v_lora.py model_lora.pt model_lora_converted.safetensors
@@ -10,6 +9,8 @@ import sys
 
 import torch
 from safetensors.torch import load_file, save_file
+
+from lib.smart_config import smart_config
 
 if len(sys.argv) != 3:
     print("用法: python convert_lora.py <输入文件> <输出文件.safetensors>")
@@ -95,7 +96,9 @@ for k, v in state_dict.items():
                 continue
 
             lora_name = lora_map[lora_raw]
-            new_k = f"diffusion_model.blocks.{block_id}.ffn.{layer_id}.{lora_name}.weight"
+            new_k = (
+                f"diffusion_model.blocks.{block_id}.ffn.{layer_id}.{lora_name}.weight"
+            )
             mapped_dict[new_k] = v
             continue
     # === Text Embedding ===

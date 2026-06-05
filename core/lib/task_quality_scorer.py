@@ -3,10 +3,8 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
-
-from core.lib.unified_config import unified_config
 
 from core.lib.unified_config import unified_config
 
@@ -14,32 +12,37 @@ from core.lib.unified_config import unified_config
 """任务质量评分器 v1.0.02 - 配置驱动版"""
 
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
 
 from core.lib.config_loader import config
 
 
 class TaskQualityScorer:
     """任务质量评分器 - 配置驱动"""
-    
+
     VERSION = "1.0.02"
-    
+
     def __init__(self):
-        self.enabled = config.get('optimization.enable_quality_scoring', True)
-        self.min_score = config.get('thresholds.quality_min_score', 0.5)
-        self.skip_on_low = config.get('optimization.skip_on_low_quality', True)
-        self.low_quality_keywords = ['test', 'debug', 'temp', 'demo', 'tmp']
-    
+        self.enabled = config.get("optimization.enable_quality_scoring", True)
+        self.min_score = config.get("thresholds.quality_min_score", 0.5)
+        self.skip_on_low = config.get("optimization.skip_on_low_quality", True)
+        self.low_quality_keywords = ["test", "debug", "temp", "demo", "tmp"]
+
     def score(self, task_name: str, skill: str = "", params: Dict = None) -> Dict:
         if not self.enabled:
-            return {"score": 1.0, "should_skip": False, "reasons": ["评分器已禁用"], "enabled": False}
+            return {
+                "score": 1.0,
+                "should_skip": False,
+                "reasons": ["评分器已禁用"],
+                "enabled": False,
+            }
 
         params = params or {}
         score = 1.0
         reasons = []
 
-        if params.get('input_file'):
-            file_path = Path(params['input_file'])
+        if params.get("input_file"):
+            file_path = Path(params["input_file"])
             if not file_path.exists():
                 score -= 0.5
                 reasons.append(f"输入文件不存在: {params['input_file']}")
@@ -59,15 +62,15 @@ class TaskQualityScorer:
             "reasons": reasons,
             "min_threshold": self.min_score,
             "enabled": self.enabled,
-            "version": self.VERSION
+            "version": self.VERSION,
         }
-    
+
     def get_status(self) -> Dict:
         return {
             "version": self.VERSION,
             "enabled": self.enabled,
             "min_score": self.min_score,
-            "skip_on_low": self.skip_on_low
+            "skip_on_low": self.skip_on_low,
         }
 
 

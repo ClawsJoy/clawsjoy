@@ -3,12 +3,17 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
-from core.lib.config_helper import get_data_root, get_llm_endpoint, get_llm_model, get_embedding_model, get_gateway_port, get_timeout
-from core.lib.unified_config import unified_config
-
+from core.lib.config_helper import (
+    get_data_root,
+    get_embedding_model,
+    get_gateway_port,
+    get_llm_endpoint,
+    get_llm_model,
+    get_timeout,
+)
 from core.lib.unified_config import unified_config
 
 """
@@ -17,19 +22,20 @@ from core.lib.unified_config import unified_config
 """
 
 import json
-from pathlib import Path
-from typing import Dict, List, Any, Optional
-from datetime import datetime
 from collections import defaultdict
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 
 class ExperienceDecider:
     """经验决策器 - 基于历史经验影响决策"""
-    
+
     def __init__(self):
         self.knowledge_file = Path(f"{get_data_root()}/agent_knowledge.json")
         self.learning_patterns_collection = None
         self._init_knowledge()
-    
+
     def _init_knowledge(self):
         """初始化知识库连接"""
         try:
@@ -41,16 +47,17 @@ class ExperienceDecider:
 
             # 获取或创建 learning_patterns 集合
             try:
-                self.learning_patterns_collection = self.client.get_collection("learning_patterns")
-            except:
+                self.learning_patterns_collection = self.client.get_collection(
+                    "learning_patterns"
+                )
+            except Exception as e:
                 self.learning_patterns_collection = self.client.create_collection(
-                    name="learning_patterns",
-                    embedding_function=self.embedding_fn
+                    name="learning_patterns", embedding_function=self.embedding_fn
                 )
         except Exception as e:
             print(f"⚠️ 知识库连接失败: {e}")
             self.learning_patterns_collection = None
-    
+
     def query_similar_experiences(self, task: str, limit: int = 5) -> List[Dict]:
         """查询相似任务的历史经验"""
         if not self.learning_patterns_collection:
@@ -58,28 +65,27 @@ class ExperienceDecider:
 
         try:
             results = self.learning_patterns_collection.query(
-                query_texts=[task],
-                n_results=limit
+                query_texts=[task], n_results=limit
             )
 
             experiences = []
-            if results['metadatas']:
-                for meta in results['metadatas'][0]:
+            if results["metadatas"]:
+                for meta in results["metadatas"][0]:
                     experiences.append(meta)
             return experiences
         except Exception as e:
             print(f"⚠️ 查询失败: {e}")
             return []
-    
+
     def get_success_rate_for_skill(self, skill_name: str) -> float:
         """获取技能的历史成功率"""
         experiences = self.query_similar_experiences(skill_name, limit=20)
         if not experiences:
             return 0.5  # 无历史数据，中等置信度
 
-        success_count = sum(1 for e in experiences if e.get('success', False))
+        success_count = sum(1 for e in experiences if e.get("success", False))
         return success_count / len(experiences)
-    
+
     def adjust_priority(self, task: str, current_priority: int) -> int:
         """根据历史经验调整优先级"""
         similar = self.query_similar_experiences(task, limit=10)
@@ -87,7 +93,7 @@ class ExperienceDecider:
             return current_priority
 
         # 计算相似任务的平均成功率
-        success_rate = sum(1 for e in similar if e.get('success', False)) / len(similar)
+        success_rate = sum(1 for e in similar if e.get("success", False)) / len(similar)
 
         # 高成功率任务提权，低成功率降权
         if success_rate > 0.8:
@@ -96,7 +102,7 @@ class ExperienceDecider:
             return min(100, current_priority + 20)
 
         return current_priority
-    
+
     def should_auto_retry(self, skill_name: str, failure_count: int) -> bool:
         """判断是否应该自动重试"""
         success_rate = self.get_success_rate_for_skill(skill_name)
@@ -105,17 +111,22 @@ class ExperienceDecider:
         if success_rate > 0.7 and failure_count < 3:
             return True
         return False
-    
-    def record_experience(self, task: str, action: str, result: Dict, context: Dict = None):
+
+    def record_experience(
+        self, task: str, action: str, result: Dict, context: Dict = None
+    ):
         """记录经验到 learning_patterns"""
         if not self.learning_patterns_collection:
             return
 
         import hashlib
-        doc_id = hashlib.md5(f"{task}_{datetime.now().isoformat()}".encode()).hexdigest()[:16]
 
-        success = result.get('success', False)
-        error = result.get('error', '') if not success else ''
+        doc_id = hashlib.md5(
+            f"{task}_{datetime.now().isoformat()}".encode()
+        ).hexdigest()[:16]
+
+        success = result.get("success", False)
+        error = result.get("error", "") if not success else ""
 
         metadata = {
             "task": task[:200],
@@ -123,26 +134,26 @@ class ExperienceDecider:
             "success": success,
             "error": error[:100] if error else "",
             "timestamp": datetime.now().isoformat(),
-            "type": "experience"
+            "type": "experience",
         }
 
         if context:
             metadata["context"] = json.dumps(context)[:200]
 
-        document = f"任务: {task}\n动作: {action}\n结果: {'成功' if success else '失败'}"
+        document = (
+            f"任务: {task}\n动作: {action}\n结果: {'成功' if success else '失败'}"
+        )
         if error:
             document += f"\n错误: {error}"
 
         try:
             self.learning_patterns_collection.upsert(
-                ids=[doc_id],
-                documents=[document],
-                metadatas=[metadata]
+                ids=[doc_id], documents=[document], metadatas=[metadata]
             )
             print(f"📝 经验已记录: {task[:50]}...")
         except Exception as e:
             print(f"⚠️ 记录失败: {e}")
-    
+
     def get_recommendation(self, task: str) -> Dict:
         """获取任务执行建议"""
         similar = self.query_similar_experiences(task, limit=5)
@@ -151,17 +162,19 @@ class ExperienceDecider:
             return {
                 "has_experience": False,
                 "recommendation": "无历史经验，建议谨慎执行",
-                "confidence": 0.0
+                "confidence": 0.0,
             }
 
-        success_count = sum(1 for e in similar if e.get('success', False))
+        success_count = sum(1 for e in similar if e.get("success", False))
         success_rate = success_count / len(similar)
 
         # 找出最成功的动作
         action_counts = defaultdict(int)
         for e in similar:
-            action_counts[e.get('action', 'unknown')] += 1
-        best_action = max(action_counts, key=action_counts.get) if action_counts else None
+            action_counts[e.get("action", "unknown")] += 1
+        best_action = (
+            max(action_counts, key=action_counts.get) if action_counts else None
+        )
 
         if success_rate > 0.8:
             recommendation = f"建议执行，历史成功率 {success_rate*100:.0f}%"
@@ -180,9 +193,9 @@ class ExperienceDecider:
             "success_rate": success_rate,
             "similar_count": len(similar),
             "best_action": best_action,
-            "sample_experiences": similar[:3]
+            "sample_experiences": similar[:3],
         }
-    
+
     def get_stats(self) -> Dict:
         """获取统计信息"""
         if not self.learning_patterns_collection:
@@ -193,14 +206,15 @@ class ExperienceDecider:
             return {
                 "status": "connected",
                 "total_experiences": count,
-                "collection": "learning_patterns"
+                "collection": "learning_patterns",
             }
-        except:
+        except Exception as e:
             return {"status": "error", "total_experiences": 0}
 
 
 # 全局实例
 _experience_decider = None
+
 
 def get_experience_decider():
     global _experience_decider

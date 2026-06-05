@@ -1,17 +1,19 @@
-from lib.smart_config import smart_config
 import os
 import re
 from pathlib import Path
 
 import torch
+from lightx2v.utils.envs import *
+from lightx2v_platform.base.global_var import AI_DEVICE
 from loguru import logger
 from safetensors import safe_open
 
-from lightx2v.utils.envs import *
-from lightx2v_platform.base.global_var import AI_DEVICE
+from lib.smart_config import smart_config
 
 
-def resolve_block_name(name, block_index, adapter_block_index=None, is_post_adapter=False):
+def resolve_block_name(
+    name, block_index, adapter_block_index=None, is_post_adapter=False
+):
     """Resolve the name according to the block index, replacing the block index in the name with the specified block_index.
 
     Args:
@@ -33,7 +35,15 @@ def resolve_block_name(name, block_index, adapter_block_index=None, is_post_adap
         return re.sub(r"\.\d+", lambda m: f".{block_index}", name, count=1)
 
 
-def get_source_tensor(source_name, weight_dict, lazy_load, lazy_load_file, use_infer_dtype, scale_force_fp32, bias_force_fp32):
+def get_source_tensor(
+    source_name,
+    weight_dict,
+    lazy_load,
+    lazy_load_file,
+    use_infer_dtype,
+    scale_force_fp32,
+    bias_force_fp32,
+):
     """Get the source tensor from either weight dictionary or lazy loading safetensors file.
 
     Args:
@@ -56,7 +66,9 @@ def get_source_tensor(source_name, weight_dict, lazy_load, lazy_load_file, use_i
                 lazy_load_file,
                 f"block_{source_name.split('.')[1]}.safetensors",
             )
-        with safe_open(lazy_load_file_path, framework="pt", device="cpu") as lazy_load_file:
+        with safe_open(
+            lazy_load_file_path, framework="pt", device="cpu"
+        ) as lazy_load_file:
             if use_infer_dtype:
                 return lazy_load_file.get_tensor(source_name).to(GET_DTYPE())
             elif scale_force_fp32 and "weight_scale" in source_name:
@@ -90,7 +102,9 @@ def create_pin_tensor(tensor, transpose=False, dtype=None):
     try:
         pin_tensor = torch.empty(tensor.shape, pin_memory=True, dtype=dtype)
     except Exception as e:
-        logger.warning(f"Failed to allocate pinned memory (shape={tensor.shape}, dtype={dtype}): {e}. Falling back to regular CPU memory.")
+        logger.warning(
+            f"Failed to allocate pinned memory (shape={tensor.shape}, dtype={dtype}): {e}. Falling back to regular CPU memory."
+        )
         pin_tensor = torch.empty(tensor.shape, dtype=dtype)
     pin_tensor = pin_tensor.copy_(tensor)
     if transpose:
@@ -120,7 +134,15 @@ def get_lazy_load_file_path(lazy_load_file, weight_name_for_block=None):
         )
 
 
-def create_cuda_buffers(base_attrs, weight_dict, lazy_load, lazy_load_file, use_infer_dtype=None, scale_force_fp32=False, bias_force_fp32=False):
+def create_cuda_buffers(
+    base_attrs,
+    weight_dict,
+    lazy_load,
+    lazy_load_file,
+    use_infer_dtype=None,
+    scale_force_fp32=False,
+    bias_force_fp32=False,
+):
     """Create tensor buffers and move them to CUDA device (specified by AI_DEVICE).
 
     Args:
@@ -138,7 +160,15 @@ def create_cuda_buffers(base_attrs, weight_dict, lazy_load, lazy_load_file, use_
     """
     result = {}
     for name, attr_name, transpose in base_attrs:
-        tensor = get_source_tensor(name, weight_dict, lazy_load, lazy_load_file, use_infer_dtype, scale_force_fp32, bias_force_fp32)
+        tensor = get_source_tensor(
+            name,
+            weight_dict,
+            lazy_load,
+            lazy_load_file,
+            use_infer_dtype,
+            scale_force_fp32,
+            bias_force_fp32,
+        )
         if transpose:
             tensor = tensor.t()
         result[attr_name] = tensor.to(AI_DEVICE)
@@ -146,7 +176,13 @@ def create_cuda_buffers(base_attrs, weight_dict, lazy_load, lazy_load_file, use_
     return result
 
 
-def create_cpu_buffers(base_attrs, lazy_load_file, use_infer_dtype=False, scale_force_fp32=False, bias_force_fp32=False):
+def create_cpu_buffers(
+    base_attrs,
+    lazy_load_file,
+    use_infer_dtype=False,
+    scale_force_fp32=False,
+    bias_force_fp32=False,
+):
     """Create pinned memory tensor buffers on CPU for lazy loading scenario.
 
     Args:
@@ -164,7 +200,15 @@ def create_cpu_buffers(base_attrs, lazy_load_file, use_infer_dtype=False, scale_
 
     # Use get_source_tensor to load the tensor (weight_dict is not required when lazy_load=True)
     for name, attr_name, transpose in base_attrs:
-        tensor = get_source_tensor(name, {}, lazy_load=True, lazy_load_file=lazy_load_file, use_infer_dtype=use_infer_dtype, scale_force_fp32=scale_force_fp32, bias_force_fp32=bias_force_fp32)
+        tensor = get_source_tensor(
+            name,
+            {},
+            lazy_load=True,
+            lazy_load_file=lazy_load_file,
+            use_infer_dtype=use_infer_dtype,
+            scale_force_fp32=scale_force_fp32,
+            bias_force_fp32=bias_force_fp32,
+        )
         result[attr_name] = create_pin_tensor(tensor, transpose=transpose)
 
     return result
@@ -209,7 +253,9 @@ def create_default_tensors(base_attrs, weight_dict):
     return device_tensors, pin_tensors
 
 
-def move_tensor_to_device(obj, attr_name, target_device, non_blocking=False, use_copy=False):
+def move_tensor_to_device(
+    obj, attr_name, target_device, non_blocking=False, use_copy=False
+):
     """Move the specified tensor attribute of an object to the target device,
        with support for pinned memory tensors for faster transfer.
 
@@ -224,11 +270,23 @@ def move_tensor_to_device(obj, attr_name, target_device, non_blocking=False, use
     if hasattr(obj, pin_attr_name) and getattr(obj, pin_attr_name) is not None:
         pin_tensor = getattr(obj, pin_attr_name)
         if hasattr(obj, attr_name) and getattr(obj, attr_name) is not None and use_copy:
-            setattr(obj, attr_name, pin_tensor.copy_(getattr(obj, attr_name), non_blocking=non_blocking).to(target_device))
+            setattr(
+                obj,
+                attr_name,
+                pin_tensor.copy_(getattr(obj, attr_name), non_blocking=non_blocking).to(
+                    target_device
+                ),
+            )
         else:
-            setattr(obj, attr_name, pin_tensor.to(target_device, non_blocking=non_blocking))
+            setattr(
+                obj, attr_name, pin_tensor.to(target_device, non_blocking=non_blocking)
+            )
     elif hasattr(obj, attr_name) and getattr(obj, attr_name) is not None:
-        setattr(obj, attr_name, getattr(obj, attr_name).to(target_device, non_blocking=non_blocking))
+        setattr(
+            obj,
+            attr_name,
+            getattr(obj, attr_name).to(target_device, non_blocking=non_blocking),
+        )
 
 
 def build_lora_and_diff_names(weight_name, lora_prefix):
@@ -251,7 +309,13 @@ def build_lora_and_diff_names(weight_name, lora_prefix):
     lora_alpha_name = f"{lora_base}.alpha"
     weight_diff_name = f"{lora_base}.diff"
     bias_diff_name = f"{lora_base}.diff_b"
-    return lora_down_name, lora_up_name, lora_alpha_name, weight_diff_name, bias_diff_name
+    return (
+        lora_down_name,
+        lora_up_name,
+        lora_alpha_name,
+        weight_diff_name,
+        bias_diff_name,
+    )
 
 
 def move_attr_to_cuda(cls, base_attrs, lora_attrs, non_blocking=False):
@@ -269,7 +333,11 @@ def move_attr_to_cuda(cls, base_attrs, lora_attrs, non_blocking=False):
     # Lora
     for lora_attr, _ in lora_attrs.items():
         if hasattr(cls, lora_attr) and getattr(cls, lora_attr) is not None:
-            setattr(cls, lora_attr, getattr(cls, lora_attr).to(AI_DEVICE, non_blocking=non_blocking))
+            setattr(
+                cls,
+                lora_attr,
+                getattr(cls, lora_attr).to(AI_DEVICE, non_blocking=non_blocking),
+            )
 
 
 def move_attr_to_cpu(cls, base_attrs, lora_attrs, non_blocking=False):
@@ -287,7 +355,11 @@ def move_attr_to_cpu(cls, base_attrs, lora_attrs, non_blocking=False):
     # Lora
     for lora_attr, _ in lora_attrs.items():
         if hasattr(cls, lora_attr) and getattr(cls, lora_attr) is not None:
-            setattr(cls, lora_attr, getattr(cls, lora_attr).to("cpu", non_blocking=non_blocking))
+            setattr(
+                cls,
+                lora_attr,
+                getattr(cls, lora_attr).to("cpu", non_blocking=non_blocking),
+            )
 
 
 def state_dict(cls, base_attrs, lora_attrs, destination=None):
@@ -311,7 +383,9 @@ def state_dict(cls, base_attrs, lora_attrs, destination=None):
         name_attr = f"{base_attr}_name" if hasattr(cls, f"{base_attr}_name") else None
         if name_attr:
             name = getattr(cls, name_attr)
-            destination[name] = pin_base_attr if pin_base_attr is not None else device_attr
+            destination[name] = (
+                pin_base_attr if pin_base_attr is not None else device_attr
+            )
     # Lora
     for lora_attr, name_attr in lora_attrs.items():
         if hasattr(cls, lora_attr):
@@ -319,7 +393,9 @@ def state_dict(cls, base_attrs, lora_attrs, destination=None):
     return destination
 
 
-def load_state_dict(cls, base_attrs, lora_attrs, destination, block_index, adapter_block_index=None):
+def load_state_dict(
+    cls, base_attrs, lora_attrs, destination, block_index, adapter_block_index=None
+):
     """Load state dictionary into class instance, resolving block indices for base and LoRA attributes.
 
     Args:
@@ -332,15 +408,29 @@ def load_state_dict(cls, base_attrs, lora_attrs, destination, block_index, adapt
     """
     # Base
     for name, attr_name, _ in base_attrs:
-        actual_name = resolve_block_name(name, block_index, adapter_block_index, cls.is_post_adapter)
+        actual_name = resolve_block_name(
+            name, block_index, adapter_block_index, cls.is_post_adapter
+        )
         cuda_buffer_attr = f"{attr_name}_cuda_buffer"
         if actual_name in destination:
             if hasattr(cls, cuda_buffer_attr):
-                setattr(cls, attr_name, getattr(cls, cuda_buffer_attr).copy_(destination[actual_name], non_blocking=True))
+                setattr(
+                    cls,
+                    attr_name,
+                    getattr(cls, cuda_buffer_attr).copy_(
+                        destination[actual_name], non_blocking=True
+                    ),
+                )
         else:
             setattr(cls, attr_name, None)
     # Lora
     for lora_attr, lora_attr_name in lora_attrs.items():
         name = resolve_block_name(getattr(cls, lora_attr_name), block_index)
         if name in destination:
-            setattr(cls, lora_attr, getattr(cls, lora_attr).copy_(destination[name], non_blocking=True).to(AI_DEVICE))
+            setattr(
+                cls,
+                lora_attr,
+                getattr(cls, lora_attr)
+                .copy_(destination[name], non_blocking=True)
+                .to(AI_DEVICE),
+            )

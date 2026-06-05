@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 # Modified from ``https://github.com/wyhsirius/LIA``
 # Copyright 2024-2025 The Alibaba Wan Team Authors. All rights reserved.
 import math
@@ -6,6 +5,8 @@ import math
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
+
+from lib.smart_config import smart_config
 
 
 def custom_qr(input_tensor):
@@ -20,7 +21,9 @@ def fused_leaky_relu(input, bias, negative_slope=0.2, scale=2**0.5):
     return F.leaky_relu(input + bias, negative_slope) * scale
 
 
-def upfirdn2d_native(input, kernel, up_x, up_y, down_x, down_y, pad_x0, pad_x1, pad_y0, pad_y1):
+def upfirdn2d_native(
+    input, kernel, up_x, up_y, down_x, down_y, pad_x0, pad_x1, pad_y0, pad_y1
+):
     _, minor, in_h, in_w = input.shape
     kernel_h, kernel_w = kernel.shape
 
@@ -36,7 +39,9 @@ def upfirdn2d_native(input, kernel, up_x, up_y, down_x, down_y, pad_x0, pad_x1, 
         max(-pad_x0, 0) : out.shape[3] - max(-pad_x1, 0),
     ]
 
-    out = out.reshape([-1, 1, in_h * up_y + pad_y0 + pad_y1, in_w * up_x + pad_x0 + pad_x1])
+    out = out.reshape(
+        [-1, 1, in_h * up_y + pad_y0 + pad_y1, in_w * up_x + pad_x0 + pad_x1]
+    )
     w = torch.flip(kernel, [0, 1]).view(1, 1, kernel_h, kernel_w)
     out = F.conv2d(out, w)
     out = out.reshape(
@@ -49,7 +54,9 @@ def upfirdn2d_native(input, kernel, up_x, up_y, down_x, down_y, pad_x0, pad_x1, 
 
 
 def upfirdn2d(input, kernel, up=1, down=1, pad=(0, 0)):
-    return upfirdn2d_native(input, kernel, up, up, down, down, pad[0], pad[1], pad[0], pad[1])
+    return upfirdn2d_native(
+        input, kernel, up, up, down, down, pad[0], pad[1], pad[0], pad[1]
+    )
 
 
 def make_kernel(k):
@@ -100,10 +107,14 @@ class ScaledLeakyReLU(nn.Module):
 
 
 class EqualConv2d(nn.Module):
-    def __init__(self, in_channel, out_channel, kernel_size, stride=1, padding=0, bias=True):
+    def __init__(
+        self, in_channel, out_channel, kernel_size, stride=1, padding=0, bias=True
+    ):
         super().__init__()
 
-        self.weight = nn.Parameter(torch.randn(out_channel, in_channel, kernel_size, kernel_size))
+        self.weight = nn.Parameter(
+            torch.randn(out_channel, in_channel, kernel_size, kernel_size)
+        )
         self.scale = 1 / math.sqrt(in_channel * kernel_size**2)
 
         self.stride = stride
@@ -115,14 +126,22 @@ class EqualConv2d(nn.Module):
             self.bias = None
 
     def forward(self, input):
-        return F.conv2d(input, self.weight * self.scale, bias=self.bias, stride=self.stride, padding=self.padding)
+        return F.conv2d(
+            input,
+            self.weight * self.scale,
+            bias=self.bias,
+            stride=self.stride,
+            padding=self.padding,
+        )
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.weight.shape[1]}, {self.weight.shape[0]}, {self.weight.shape[2]}, stride={self.stride}, padding={self.padding})"
 
 
 class EqualLinear(nn.Module):
-    def __init__(self, in_dim, out_dim, bias=True, bias_init=0, lr_mul=1, activation=None):
+    def __init__(
+        self, in_dim, out_dim, bias=True, bias_init=0, lr_mul=1, activation=None
+    ):
         super().__init__()
 
         self.weight = nn.Parameter(torch.randn(out_dim, in_dim).div_(lr_mul))
@@ -142,12 +161,16 @@ class EqualLinear(nn.Module):
             out = F.linear(input, self.weight * self.scale)
             out = fused_leaky_relu(out, self.bias * self.lr_mul)
         else:
-            out = F.linear(input, self.weight * self.scale, bias=self.bias * self.lr_mul)
+            out = F.linear(
+                input, self.weight * self.scale, bias=self.bias * self.lr_mul
+            )
 
         return out
 
     def __repr__(self):
-        return f"{self.__class__.__name__}({self.weight.shape[1]}, {self.weight.shape[0]})"
+        return (
+            f"{self.__class__.__name__}({self.weight.shape[1]}, {self.weight.shape[0]})"
+        )
 
 
 class ConvLayer(nn.Sequential):
@@ -178,7 +201,16 @@ class ConvLayer(nn.Sequential):
             stride = 1
             self.padding = kernel_size // 2
 
-        layers.append(EqualConv2d(in_channel, out_channel, kernel_size, padding=self.padding, stride=stride, bias=bias and not activate))
+        layers.append(
+            EqualConv2d(
+                in_channel,
+                out_channel,
+                kernel_size,
+                padding=self.padding,
+                stride=stride,
+                bias=bias and not activate,
+            )
+        )
 
         if activate:
             if bias:
@@ -196,7 +228,9 @@ class ResBlock(nn.Module):
         self.conv1 = ConvLayer(in_channel, in_channel, 3)
         self.conv2 = ConvLayer(in_channel, out_channel, 3, downsample=True)
 
-        self.skip = ConvLayer(in_channel, out_channel, 1, downsample=True, activate=False, bias=False)
+        self.skip = ConvLayer(
+            in_channel, out_channel, 1, downsample=True, activate=False, bias=False
+        )
 
     def forward(self, input):
         out = self.conv1(input)
@@ -212,7 +246,17 @@ class EncoderApp(nn.Module):
     def __init__(self, size, w_dim=512):
         super(EncoderApp, self).__init__()
 
-        channels = {4: 512, 8: 512, 16: 512, 32: 512, 64: 256, 128: 128, 256: 64, 512: 32, 1024: 16}
+        channels = {
+            4: 512,
+            8: 512,
+            16: 512,
+            32: 512,
+            64: 256,
+            128: 128,
+            256: 64,
+            512: 32,
+            1024: 16,
+        }
 
         self.w_dim = w_dim
         log_size = int(math.log(size, 2))

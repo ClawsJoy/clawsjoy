@@ -1,13 +1,13 @@
-from lib.smart_config import smart_config
 from dataclasses import dataclass, field
 from typing import Any, Dict, Optional
 
 import torch
-
 from lightx2v.models.networks.wan.infer.module_io import GridOutput
 from lightx2v.models.networks.wan.infer.pre_infer import WanPreInfer
 from lightx2v.utils.envs import *
 from lightx2v_platform.base.global_var import AI_DEVICE
+
+from lib.smart_config import smart_config
 
 
 def sinusoidal_embedding_1d(dim, position):
@@ -17,14 +17,19 @@ def sinusoidal_embedding_1d(dim, position):
     position = position.type(torch.float64)
 
     # calculation
-    sinusoid = torch.outer(position, torch.pow(10000, -torch.arange(half).to(position).div(half)))
+    sinusoid = torch.outer(
+        position, torch.pow(10000, -torch.arange(half).to(position).div(half))
+    )
     x = torch.cat([torch.cos(sinusoid), torch.sin(sinusoid)], dim=1)
     return x
 
 
 def rope_params(max_seq_len, dim, theta=10000):
     assert dim % 2 == 0
-    freqs = torch.outer(torch.arange(max_seq_len), 1.0 / torch.pow(theta, torch.arange(0, dim, 2).to(torch.float64).div(dim)))
+    freqs = torch.outer(
+        torch.arange(max_seq_len),
+        1.0 / torch.pow(theta, torch.arange(0, dim, 2).to(torch.float64).div(dim)),
+    )
     freqs = torch.polar(torch.ones_like(freqs), freqs)
     return freqs
 
@@ -91,7 +96,9 @@ class WanSFPreInfer(WanPreInfer):
 
         # text embeddings
         if self.sensitive_layer_dtype != self.infer_dtype:  # False
-            out = weights.text_embedding_0.apply(context.squeeze(0).to(self.sensitive_layer_dtype))
+            out = weights.text_embedding_0.apply(
+                context.squeeze(0).to(self.sensitive_layer_dtype)
+            )
         else:
             out = weights.text_embedding_0.apply(context.squeeze(0))
         out = torch.nn.functional.gelu(out, approximate="tanh")
@@ -105,7 +112,14 @@ class WanSFPreInfer(WanPreInfer):
                 del context_clip
             torch.cuda.empty_cache()
 
-        grid_sizes = GridOutput(tensor=torch.tensor([[grid_sizes_t, grid_sizes_h, grid_sizes_w]], dtype=torch.int32, device=x.device), tuple=(grid_sizes_t, grid_sizes_h, grid_sizes_w))
+        grid_sizes = GridOutput(
+            tensor=torch.tensor(
+                [[grid_sizes_t, grid_sizes_h, grid_sizes_w]],
+                dtype=torch.int32,
+                device=x.device,
+            ),
+            tuple=(grid_sizes_t, grid_sizes_h, grid_sizes_w),
+        )
 
         if self.cos_sin is None or self.grid_sizes != grid_sizes.tuple:
             freqs = self.freqs.clone()  # self.freqs init param can not be changed

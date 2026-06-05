@@ -25,21 +25,28 @@ from typing import List
 import av
 import cv2
 import numpy as np
-from PIL import Image
 from decord import VideoReader
 from loguru import logger
+from PIL import Image
 
 from lib.smart_config import smart_config
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from dwpose_onnx import DWposeONNX
 from utils import get_frame_indices, padding_resize, resize_by_area
 
-MODE_DEFAULT_OUT = {"pose": "pose_skeleton.mp4", "canny": "canny_control.mp4", "depth": "depth_control.mp4"}
+MODE_DEFAULT_OUT = {
+    "pose": "pose_skeleton.mp4",
+    "canny": "canny_control.mp4",
+    "depth": "depth_control.mp4",
+}
 
 
 def get_preprocess_parser():
-    parser = argparse.ArgumentParser(description="LTX-2.3 IC-LoRA control-video preprocessing (pose / canny / depth) for v2av.")
+    parser = argparse.ArgumentParser(
+        description="LTX-2.3 IC-LoRA control-video preprocessing (pose / canny / depth) for v2av."
+    )
 
     parser.add_argument(
         "--mode",
@@ -56,7 +63,9 @@ def get_preprocess_parser():
         help="Required when --mode pose: DWPose ONNX root with det/yolox_l.onnx and pose2d/dw-ll_ucoco_384.onnx (see yzd-v/DWPose). Ignored for canny/depth.",
     )
 
-    parser.add_argument("--video_path", type=str, default=None, help="The path to the driving video.")
+    parser.add_argument(
+        "--video_path", type=str, default=None, help="The path to the driving video."
+    )
     parser.add_argument(
         "--refer_path",
         type=str,
@@ -161,7 +170,12 @@ def snap_to_8k_plus_1(n: int) -> int:
 
 
 class DWPosePipeline:
-    def __init__(self, det_checkpoint_path: str, pose2d_checkpoint_path: str, device: str = "cuda"):
+    def __init__(
+        self,
+        det_checkpoint_path: str,
+        pose2d_checkpoint_path: str,
+        device: str = "cuda",
+    ):
         self.detector = DWposeONNX(
             det_onnx_path=det_checkpoint_path,
             pose_onnx_path=pose2d_checkpoint_path,
@@ -186,7 +200,11 @@ class DWPosePipeline:
                 bg_mode=bg_mode,
             )
             if skeleton.shape[:2] != frame.shape[:2]:
-                skeleton = cv2.resize(skeleton, (frame.shape[1], frame.shape[0]), interpolation=cv2.INTER_NEAREST)
+                skeleton = cv2.resize(
+                    skeleton,
+                    (frame.shape[1], frame.shape[0]),
+                    interpolation=cv2.INTER_NEAREST,
+                )
             out.append(skeleton)
 
             if (idx + 1) % 50 == 0:
@@ -218,11 +236,15 @@ def run_canny_edges(
     return out
 
 
-def run_depth_midas_small(frames_rgb: List[np.ndarray], device: str) -> List[np.ndarray]:
+def run_depth_midas_small(
+    frames_rgb: List[np.ndarray], device: str
+) -> List[np.ndarray]:
     try:
         import torch
     except ImportError as e:
-        raise ImportError("depth mode requires PyTorch (torch). Install the project requirements.txt.") from e
+        raise ImportError(
+            "depth mode requires PyTorch (torch). Install the project requirements.txt."
+        ) from e
 
     if device.startswith("cuda") and torch.cuda.is_available():
         dev = torch.device(device)
@@ -232,7 +254,9 @@ def run_depth_midas_small(frames_rgb: List[np.ndarray], device: str) -> List[np.
     else:
         dev = torch.device(device)
 
-    logger.info("Loading MiDaS-small from torch.hub (first run may download weights)...")
+    logger.info(
+        "Loading MiDaS-small from torch.hub (first run may download weights)..."
+    )
     midas = torch.hub.load("intel-isl/MiDaS", "MiDaS_small", trust_repo=True)
     midas.to(dev).eval()
     midas_transforms = torch.hub.load("intel-isl/MiDaS", "transforms")
@@ -319,22 +343,30 @@ def _save_video(frames_rgb: List[np.ndarray], out_path: str, fps: float):
         return
 
     if written < expected:
-        logger.warning(f"PyAV/libx264 produced {written} frames but {expected} requested. Padding by repeating the last frame and re-encoding to keep the 1+8k contract.")
+        logger.warning(
+            f"PyAV/libx264 produced {written} frames but {expected} requested. Padding by repeating the last frame and re-encoding to keep the 1+8k contract."
+        )
         pad = expected - written
         padded = frames_rgb + [frames_rgb[-1]] * pad
         _encode(padded)
         new_written = _count_video_frames(out_path)
         if new_written != expected:
-            raise RuntimeError(f"Failed to write requested frame count after padding: requested={expected}, written={new_written}.")
+            raise RuntimeError(
+                f"Failed to write requested frame count after padding: requested={expected}, written={new_written}."
+            )
     else:
-        raise RuntimeError(f"PyAV wrote more frames than requested: requested={expected}, written={written}.")
+        raise RuntimeError(
+            f"PyAV wrote more frames than requested: requested={expected}, written={written}."
+        )
 
 
 def process_input_video(args):
     args_dict = vars(args)
     print(args_dict)
 
-    assert len(args.resolution_area) == 2, "resolution_area should be a list of two integers [width, height]"
+    assert (
+        len(args.resolution_area) == 2
+    ), "resolution_area should be a list of two integers [width, height]"
     assert args.video_path is not None, "--video_path is required"
     assert args.save_path is not None, "--save_path is required"
     if args.mode == "pose":
@@ -343,7 +375,9 @@ def process_input_video(args):
     pipeline = None
     if args.mode == "pose":
         det_checkpoint_path = os.path.join(args.ckpt_path, "det/yolox_l.onnx")
-        pose2d_checkpoint_path = os.path.join(args.ckpt_path, "pose2d/dw-ll_ucoco_384.onnx")
+        pose2d_checkpoint_path = os.path.join(
+            args.ckpt_path, "pose2d/dw-ll_ucoco_384.onnx"
+        )
         pipeline = DWPosePipeline(
             det_checkpoint_path=det_checkpoint_path,
             pose2d_checkpoint_path=pose2d_checkpoint_path,
@@ -360,7 +394,9 @@ def process_input_video(args):
     expected_frame_num = int(duration * video_fps + 0.5)
     ratio = abs((frame_num - expected_frame_num) / max(frame_num, 1))
     if ratio > 0.1:
-        print("Warning: actual frame count differs from expected by >10%; using duration-based estimate.")
+        print(
+            "Warning: actual frame count differs from expected by >10%; using duration-based estimate."
+        )
         frame_num = expected_frame_num
 
     target_fps = video_fps if args.fps == -1 else args.fps
@@ -388,11 +424,15 @@ def process_input_video(args):
         height, width = refer_rgb.shape[:2]
         # Fit each driving frame into the (height, width) canvas with letterboxing.
         frames = [padding_resize(f, height=height, width=width) for f in frames]
-        logger.info(f"Control canvas {width}x{height} (from reference image), {len(frames)} frames letterboxed into it.")
+        logger.info(
+            f"Control canvas {width}x{height} (from reference image), {len(frames)} frames letterboxed into it."
+        )
     else:
         frames = [resize_by_area(f, target_area, divisor=32) for f in frames]
         height, width = frames[0].shape[:2]
-        logger.info(f"Control canvas {width}x{height} (from driving video), {len(frames)} frames.")
+        logger.info(
+            f"Control canvas {width}x{height} (from driving video), {len(frames)} frames."
+        )
 
     if args.mode == "pose":
         assert pipeline is not None
@@ -404,7 +444,9 @@ def process_input_video(args):
             bg_mode=args.bg_mode,
         )
     elif args.mode == "canny":
-        logger.info(f"Running OpenCV Canny (--mode canny), blur={args.canny_blur}, thresholds=({args.canny_threshold1}, {args.canny_threshold2})")
+        logger.info(
+            f"Running OpenCV Canny (--mode canny), blur={args.canny_blur}, thresholds=({args.canny_threshold1}, {args.canny_threshold2})"
+        )
         out_frames = run_canny_edges(
             frames,
             blur_ksize=args.canny_blur,
@@ -422,7 +464,9 @@ def process_input_video(args):
         os.makedirs(args.save_path, exist_ok=True)
         out_path = os.path.join(args.save_path, default_name)
     else:
-        os.makedirs(os.path.dirname(os.path.abspath(args.save_path)) or ".", exist_ok=True)
+        os.makedirs(
+            os.path.dirname(os.path.abspath(args.save_path)) or ".", exist_ok=True
+        )
         out_path = args.save_path
 
     _save_video(out_frames, out_path, fps=target_fps)
@@ -438,7 +482,9 @@ def process_input_video(args):
         f.write(f"width={width}\n")
         f.write(f"height={height}\n")
 
-    logger.info(f"Control video ({args.mode}) saved to: {out_path}  (frames={written_frames}, fps={int(round(target_fps))})")
+    logger.info(
+        f"Control video ({args.mode}) saved to: {out_path}  (frames={written_frames}, fps={int(round(target_fps))})"
+    )
     logger.info(f"Sidecar metadata: {sidecar_path}")
     logger.info(
         "Feed this file as `--video_path` to LightX2V v2av with e.g.\n"

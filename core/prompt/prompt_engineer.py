@@ -3,14 +3,13 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
-
 
 
 class PromptEngineer:
     """提示词工程师"""
-    
+
     @staticmethod
     def reasoning_prompt(question: str) -> str:
         """推理类提示词"""

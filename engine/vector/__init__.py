@@ -2,4 +2,4 @@
 
 from engine.vector.enhanced import EnhancedVectorSearch, enhanced_vector_search
 
-__all__ = ['EnhancedVectorSearch', 'enhanced_vector_search']
+__all__ = ["EnhancedVectorSearch", "enhanced_vector_search"]

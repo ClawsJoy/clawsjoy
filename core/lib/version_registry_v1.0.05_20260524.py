@@ -3,22 +3,23 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 from core.lib.unified_config import unified_config
 
 """版本注册中心 v1.0.05 - 配置驱动改造完成版"""
 
-import os
 import json
+import os
 import re
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, Optional
 
 try:
     import yaml
+
     YAML_AVAILABLE = True
 except ImportError:
     YAML_AVAILABLE = False
@@ -38,7 +39,7 @@ class VersionRegistry:
 
     def _load_registry(self) -> Dict:
         if self.json_file.exists():
-            with open(self.json_file, 'r') as f:
+            with open(self.json_file, "r") as f:
                 return json.load(f)
         return {
             "version": self.VERSION,
@@ -46,13 +47,13 @@ class VersionRegistry:
             "modules": {},
             "created_at": datetime.now().isoformat(),
             "last_updated": None,
-            "format": "json"
+            "format": "json",
         }
 
     def _save_registry(self):
         self.registry["last_updated"] = datetime.now().isoformat()
         self.registry["system_version"] = self._get_system_version()
-        with open(self.json_file, 'w') as f:
+        with open(self.json_file, "w") as f:
             json.dump(self.registry, f, indent=2, ensure_ascii=False)
         self._export_yaml()
 
@@ -60,8 +61,10 @@ class VersionRegistry:
         if not YAML_AVAILABLE:
             return
         try:
-            with open(self.yaml_file, 'w') as f:
-                yaml.dump(self.registry, f, default_flow_style=False, allow_unicode=True)
+            with open(self.yaml_file, "w") as f:
+                yaml.dump(
+                    self.registry, f, default_flow_style=False, allow_unicode=True
+                )
         except Exception:
             pass
 
@@ -70,7 +73,9 @@ class VersionRegistry:
             return self.system_version_file.read_text().strip()
         return "5.0.0"
 
-    def register_module(self, module_name: str, module_path: str, module_type: str = "core") -> Dict:
+    def register_module(
+        self, module_name: str, module_path: str, module_type: str = "core"
+    ) -> Dict:
         """注册模块"""
         version = f"v1.0.05_20260524"
         self.registry["modules"][module_name] = {
@@ -78,7 +83,7 @@ class VersionRegistry:
             "type": module_type,
             "version": version,
             "registered_at": datetime.now().isoformat(),
-            "status": "active"
+            "status": "active",
         }
         self._save_registry()
         return self.registry["modules"][module_name]

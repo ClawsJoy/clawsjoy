@@ -1,5 +1,8 @@
+from lightx2v.models.networks.hunyuan_video.weights.post_weights import (
+    HunyuanVideo15PostWeights,
+)
+
 from lib.smart_config import smart_config
-from lightx2v.models.networks.hunyuan_video.weights.post_weights import HunyuanVideo15PostWeights
 
 
 class WorldPlayPostWeights(HunyuanVideo15PostWeights):

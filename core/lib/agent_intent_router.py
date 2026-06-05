@@ -1,92 +1,58 @@
 #!/usr/bin/env python3
-"""Agent Intent Router - Agent Intent Router 模块
+"""Agent Intent Router - 从 AgentManager 加载能力"""
 
-@version: 5.0.0
-@author: ClawsJoy
-@date: 2026-05-31
-"""
-
-from core.lib.unified_config import unified_config
-
-from core.lib.unified_config import unified_config
-
-"""Agent 意图路由器 - 帮助 Agent 理解用户意图并自动路由"""
-from core.lib.memory_vector import vector_memory
-from core.lib.clawsjoy_config import clawsjoy_config
+from core.agents.builtin.agent_manager import get_agent_manager
 
 
 class AgentIntentRouter:
-    """Agent 意图路由器"""
-    
     _instance = None
-    
+    _agents = []
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._instance._init()
+            cls._instance._load_agent_capabilities()
         return cls._instance
-    
-    def _init(self):
-        """初始化路由向量库"""
-        self._ensure_routes_vectorized()
-    
-    def _ensure_routes_vectorized(self):
-        """确保所有路由已向量化"""
-        # 检查是否已有路由向量
-        results = vector_memory.search("route", category="route", n=1)
-        if not results:
-            self._vectorize_all_routes()
-    
-    def _vectorize_all_routes(self):
-        """向量化所有路由（供 Agent 使用）"""
-        routes_config = clawsjoy_config.get('registry.routes.routes', [])
 
-        for route in routes_config:
-            path = route.get('path')
-            method = route.get('method')
-            handler = route.get('handler')
-            description = route.get('description', '')
+    def _load_agent_capabilities(self):
+        """从 AgentManager 加载 Agent 能力"""
+        self._agents = []
 
-            # 构建 Agent 可理解的描述
-            text = f"{method} {path}: {description}"
+        for agent_name, agent_config in get_agent_manager().agents.items():
+            capable_of = agent_config.get("capable_of", [])
+            priority = agent_config.get("priority", 10)
+            requires_context = agent_config.get("requires_context", False)
 
-            vector_memory.add(
-                text=text,
-                category="route",
-                metadata={
-                    "path": path,
-                    "method": method,
-                    "handler": handler,
-                    "description": description
-                }
-            )
-        print(f"✅ 已向量化 {len(routes_config)} 条路由，供 Agent 使用")
-    
-    def route(self, user_intent: str) -> dict:
-        """根据用户意图路由到合适的 API"""
-        results = vector_memory.search(user_intent, category="route", n=3)
+            for keyword in capable_of:
+                self._agents.append(
+                    {
+                        "agent": agent_name,
+                        "keyword": keyword,
+                        "priority": priority,
+                        "requires_context": requires_context,
+                    }
+                )
 
-        for r in results:
-            if r['similarity'] >= 0.3:
-                return {
-                    "success": True,
-                    "path": r['metadata'].get('path'),
-                    "method": r['metadata'].get('method'),
-                    "handler": r['metadata'].get('handler'),
-                    "confidence": r['similarity'],
-                    "description": r['metadata'].get('description')
-                }
+        self._agents.sort(key=lambda x: x["priority"], reverse=True)
+        print(
+            f"✅ AgentIntentRouter: 加载了 {len(self._agents)} 条能力映射，涉及 {len(get_agent_manager().agents)} 个 Agent"
+        )
 
-        return {
-            "success": False,
-            "message": f"无法理解意图: {user_intent}",
-            "suggestions": [r['metadata'].get('description') for r in results[:2]] if results else []
-        }
-    
-    def suggest(self, user_intent: str) -> str:
-        """返回建议的路由路径"""
-        result = self.route(user_intent)
-        return result.get('path') if result.get('success') else None
+    def route(self, user_input: str) -> dict:
+        if not user_input or not user_input.strip():
+            return {"success": True, "agent": "chat_agent"}
+
+        user_input_lower = user_input.lower()
+        for agent_info in self._agents:
+            if agent_info["keyword"].lower() in user_input_lower:
+                return {"success": True, "agent": agent_info["agent"]}
+
+        return {"success": True, "agent": "chat_agent"}
+
+    def reload(self):
+        agent_manager.reload()
+        self._load_agent_capabilities()
 
 
-agent_router = AgentIntentRouter()
+def smart_route(user_input: str) -> str:
+    return AgentIntentRouter().route(user_input)["agent"]

@@ -2,4 +2,4 @@
 
 from engine.causal.core import CausalReasoningEngine, causal_engine
 
-__all__ = ['CausalReasoningEngine', 'causal_engine']
+__all__ = ["CausalReasoningEngine", "causal_engine"]

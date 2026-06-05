@@ -1,6 +1,4 @@
-from lib.smart_config import smart_config
 import torch
-
 from lightx2v.models.networks.wan.infer.lingbot.pre_infer import WanLingbotPreInfer
 from lightx2v.models.networks.wan.infer.module_io import GridOutput
 from lightx2v.models.networks.wan.infer.self_forcing.pre_infer import (
@@ -9,6 +7,8 @@ from lightx2v.models.networks.wan.infer.self_forcing.pre_infer import (
     sinusoidal_embedding_1d,
 )
 from lightx2v_platform.base.global_var import AI_DEVICE
+
+from lib.smart_config import smart_config
 
 
 class WanLingbotFastPreInfer(WanLingbotPreInfer):
@@ -37,7 +37,9 @@ class WanLingbotFastPreInfer(WanLingbotPreInfer):
         embed0 = weights.time_projection_1.apply(embed0).unflatten(1, (6, self.dim))
         return embed0
 
-    def _build_lingbot_conditional_dict(self, weights, inputs, x_tokens: torch.Tensor) -> dict:
+    def _build_lingbot_conditional_dict(
+        self, weights, inputs, x_tokens: torch.Tensor
+    ) -> dict:
         image_encoder_output = inputs.get("image_encoder_output") or {}
         dit_cond_dict = image_encoder_output.get("dit_cond_dict") or {}
         c2ws_plucker_emb = dit_cond_dict.get("c2ws_plucker_emb", None)
@@ -97,7 +99,9 @@ class WanLingbotFastPreInfer(WanLingbotPreInfer):
         embed0 = self.time_projection(weights, embed)
 
         if self.sensitive_layer_dtype != self.infer_dtype:
-            out = weights.text_embedding_0.apply(context.squeeze(0).to(self.sensitive_layer_dtype))
+            out = weights.text_embedding_0.apply(
+                context.squeeze(0).to(self.sensitive_layer_dtype)
+            )
         else:
             out = weights.text_embedding_0.apply(context.squeeze(0))
         out = torch.nn.functional.gelu(out, approximate="tanh")
@@ -134,7 +138,9 @@ class WanLingbotFastPreInfer(WanLingbotPreInfer):
             cos_sin=self.cos_sin,
         )
 
-        result.conditional_dict = self._build_lingbot_conditional_dict(weights, inputs, result.x)
+        result.conditional_dict = self._build_lingbot_conditional_dict(
+            weights, inputs, result.x
+        )
         # print(result.conditional_dict)
         # exit()
 

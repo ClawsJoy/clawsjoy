@@ -1,14 +1,14 @@
-from lib.smart_config import smart_config
 from dataclasses import dataclass
 
 import numpy as np
 import torch
-from PIL import Image
 from diffusers import AutoencoderKL, LongCatImagePipeline
 from diffusers.models.transformers import LongCatImageTransformer2DModel
 from diffusers.pipelines.longcat_image.pipeline_longcat_image import prepare_pos_ids
-
 from lightx2v_train.utils.registry import MODEL_REGISTER
+from PIL import Image
+
+from lib.smart_config import smart_config
 
 from .base import BaseModel
 
@@ -33,8 +33,12 @@ class LongCatImageModel(BaseModel):
             vae=None,
             torch_dtype=self.running_dtype,
         ).to(self.device)
-        self.vae = AutoencoderKL.from_pretrained(model_path, subfolder="vae").to(self.device, dtype=self.running_dtype)
-        self.transformer = LongCatImageTransformer2DModel.from_pretrained(model_path, subfolder="transformer").to(self.device, dtype=self.running_dtype)
+        self.vae = AutoencoderKL.from_pretrained(model_path, subfolder="vae").to(
+            self.device, dtype=self.running_dtype
+        )
+        self.transformer = LongCatImageTransformer2DModel.from_pretrained(
+            model_path, subfolder="transformer"
+        ).to(self.device, dtype=self.running_dtype)
         self.vae.requires_grad_(False)
 
     @property
@@ -62,11 +66,16 @@ class LongCatImageModel(BaseModel):
     def prepare_denoiser_input(self, noisy_latent, sample, condition):
         n = noisy_latent.shape[0]
         h, w = noisy_latent.shape[2], noisy_latent.shape[3]
-        packed = LongCatImagePipeline._pack_latents(noisy_latent, n, noisy_latent.shape[1], h, w)
+        packed = LongCatImagePipeline._pack_latents(
+            noisy_latent, n, noisy_latent.shape[1], h, w
+        )
         img_ids = prepare_pos_ids(
             modality_id=1,
             type="image",
-            start=(self.text_pipeline.tokenizer_max_length, self.text_pipeline.tokenizer_max_length),
+            start=(
+                self.text_pipeline.tokenizer_max_length,
+                self.text_pipeline.tokenizer_max_length,
+            ),
             height=h // 2,
             width=w // 2,
         ).to(self.device)
@@ -101,7 +110,9 @@ class LongCatImageModel(BaseModel):
         latent_w = width // self.vae_scale_factor
         # latent shape: (batch=1, latent_channels, latent_h, latent_w)
         shape = (1, self.vae.config.latent_channels, latent_h, latent_w)
-        return torch.randn(shape, generator=generator, device=self.device, dtype=self.running_dtype)
+        return torch.randn(
+            shape, generator=generator, device=self.device, dtype=self.running_dtype
+        )
 
     def decode_latent(self, latent):
         # Reverse the normalization from encode_to_latent:

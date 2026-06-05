@@ -1,13 +1,13 @@
-from lib.smart_config import smart_config
-# References:
-#   https://github.com/facebookresearch/dino/blob/master/vision_transformer.py
-#   https://github.com/rwightman/pytorch-image-models/tree/master/timm/layers/mlp.py
-
-
 from typing import Callable, Optional
 
 import torch
 from torch import Tensor, nn
+
+from lib.smart_config import smart_config
+
+# References:
+#   https://github.com/facebookresearch/dino/blob/master/vision_transformer.py
+#   https://github.com/rwightman/pytorch-image-models/tree/master/timm/layers/mlp.py
 
 
 class Mlp(nn.Module):
@@ -40,7 +40,9 @@ class Mlp(nn.Module):
 class MlpFP32(Mlp):
     @staticmethod
     def map_to_args_to_float(args, kwargs):
-        args = tuple(torch.float32 if isinstance(arg, torch.dtype) else arg for arg in args)
+        args = tuple(
+            torch.float32 if isinstance(arg, torch.dtype) else arg for arg in args
+        )
         kwargs = dict(kwargs)
         for key in kwargs:
             if key == "dtype":

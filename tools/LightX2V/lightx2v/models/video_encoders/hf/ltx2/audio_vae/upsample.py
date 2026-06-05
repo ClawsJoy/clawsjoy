@@ -1,13 +1,18 @@
-from lib.smart_config import smart_config
 from typing import Set, Tuple
 
 import torch
-
-from lightx2v.models.video_encoders.hf.ltx2.audio_vae.attention import AttentionType, make_attn
+from lightx2v.models.video_encoders.hf.ltx2.audio_vae.attention import (
+    AttentionType,
+    make_attn,
+)
 from lightx2v.models.video_encoders.hf.ltx2.audio_vae.causal_conv_2d import make_conv2d
-from lightx2v.models.video_encoders.hf.ltx2.audio_vae.causality_axis import CausalityAxis
+from lightx2v.models.video_encoders.hf.ltx2.audio_vae.causality_axis import (
+    CausalityAxis,
+)
 from lightx2v.models.video_encoders.hf.ltx2.audio_vae.resnet import ResnetBlock
 from lightx2v.models.video_encoders.hf.ltx2.video_vae.normalization import NormType
+
+from lib.smart_config import smart_config
 
 
 class Upsample(torch.nn.Module):
@@ -21,7 +26,13 @@ class Upsample(torch.nn.Module):
         self.with_conv = with_conv
         self.causality_axis = causality_axis
         if self.with_conv:
-            self.conv = make_conv2d(in_channels, in_channels, kernel_size=3, stride=1, causality_axis=causality_axis)
+            self.conv = make_conv2d(
+                in_channels,
+                in_channels,
+                kernel_size=3,
+                stride=1,
+                causality_axis=causality_axis,
+            )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = torch.nn.functional.interpolate(x, scale_factor=2.0, mode="nearest")
@@ -96,10 +107,14 @@ def build_upsampling_path(  # noqa: PLR0913
             )
             block_in = block_out
             if curr_res in attn_resolutions:
-                stage.attn.append(make_attn(block_in, attn_type=attn_type, norm_type=norm_type))
+                stage.attn.append(
+                    make_attn(block_in, attn_type=attn_type, norm_type=norm_type)
+                )
 
         if level != 0:
-            stage.upsample = Upsample(block_in, resamp_with_conv, causality_axis=causality_axis)
+            stage.upsample = Upsample(
+                block_in, resamp_with_conv, causality_axis=causality_axis
+            )
             curr_res *= 2
 
         up_modules.insert(0, stage)

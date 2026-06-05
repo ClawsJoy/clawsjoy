@@ -1,5 +1,6 @@
-from lib.smart_config import smart_config
 import torch
+
+from lib.smart_config import smart_config
 
 try:
     from sageattention.triton.quant_per_thread import quant_key_per_thread_int8_kernel
@@ -52,7 +53,9 @@ class CalibRollingKVCachePool(RollingKVCachePool):
         BLK = self._BLKK
         max_blks = (self._cache_size + BLK - 1) // BLK
         self._km = torch.zeros(S, L, 1, H, D, dtype=torch.float32, device=self._device)
-        self._v_channel_max = torch.zeros(S, L, H, D, dtype=torch.float32, device=self._device)
+        self._v_channel_max = torch.zeros(
+            S, L, H, D, dtype=torch.float32, device=self._device
+        )
         self._k_block_scale_calib = torch.zeros(
             S,
             L,
@@ -64,7 +67,13 @@ class CalibRollingKVCachePool(RollingKVCachePool):
         )
         self._capture_flag = torch.zeros(S, L, dtype=torch.bool, device=self._device)
 
-    def _quant_key(self, k: torch.Tensor, km: torch.Tensor | None = None, BLKK: int = 128, WARPK: int = 128):
+    def _quant_key(
+        self,
+        k: torch.Tensor,
+        km: torch.Tensor | None = None,
+        BLKK: int = 128,
+        WARPK: int = 128,
+    ):
         """Run sage's per_thread int8 K-quantisation kernel on ``k``.
 
         Returns ``(k_int8, k_scale)`` where ``k`` is ``[B, kv_len, H, D]`` (NHD).
@@ -142,7 +151,9 @@ class CalibRollingKVCachePool(RollingKVCachePool):
         aligned_start = (attn_start // BLK) * BLK
         step, layer = self.current_step, layer_id
 
-        k_full = self._k_buffer[layer_id, aligned_start:local_end]  # [kv_len_a, H, D] bf16
+        k_full = self._k_buffer[
+            layer_id, aligned_start:local_end
+        ]  # [kv_len_a, H, D] bf16
         kv_len_a = k_full.size(0)
         if kv_len_a == 0:
             return
@@ -156,7 +167,9 @@ class CalibRollingKVCachePool(RollingKVCachePool):
             self._capture_turboquant_marginals(layer_id, k_full)
             return
 
-        v_full = self._v_buffer[layer_id, aligned_start:local_end]  # [kv_len_a, H, D] bf16
+        v_full = self._v_buffer[
+            layer_id, aligned_start:local_end
+        ]  # [kv_len_a, H, D] bf16
 
         # ---- km (bf16 mean to match sage) ----
         km_lowp = k_full.mean(dim=0, keepdim=True)  # bf16 [1, H, D]
@@ -166,9 +179,15 @@ class CalibRollingKVCachePool(RollingKVCachePool):
         k_batch = k_full.unsqueeze(0).contiguous()  # [1, kv_len_a, H, D]
         _, k_scale_raw = self._quant_key(k_batch, km_lowp)  # [1, H, num_blk*4]
         num_blk_local = (kv_len_a + BLK - 1) // BLK
-        k_scale_local = k_scale_raw[0].reshape(self._num_heads, num_blk_local, self._SCALES_PER_BLK).permute(1, 0, 2)  # [num_blk_local, H, 4]
+        k_scale_local = (
+            k_scale_raw[0]
+            .reshape(self._num_heads, num_blk_local, self._SCALES_PER_BLK)
+            .permute(1, 0, 2)
+        )  # [num_blk_local, H, 4]
         blk_offset = aligned_start // BLK
-        self._k_block_scale_calib[step, layer, blk_offset : blk_offset + num_blk_local] = k_scale_local
+        self._k_block_scale_calib[
+            step, layer, blk_offset : blk_offset + num_blk_local
+        ] = k_scale_local
         self._v_channel_max[step, layer] = v_full.float().abs().amax(dim=0)  # [H, D]
         self._capture_flag[step, layer] = True
 
@@ -182,7 +201,11 @@ class CalibRollingKVCachePool(RollingKVCachePool):
         dev = self._device
         nb = self._tq_hist_k.numel()
 
-        seed_k = self._turboquant_seed + layer_id * 7 if self._tq_per_layer else self._turboquant_seed
+        seed_k = (
+            self._turboquant_seed + layer_id * 7
+            if self._tq_per_layer
+            else self._turboquant_seed
+        )
         Pi_k = tq_fw_generate_rotation_matrix(D, dev, torch.float32, seed=seed_k)
         x = k_full.float()
         norms = x.norm(dim=-1, keepdim=True).clamp(min=1e-10)

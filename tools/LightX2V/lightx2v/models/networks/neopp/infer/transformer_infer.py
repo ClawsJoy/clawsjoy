@@ -1,6 +1,7 @@
-from lib.smart_config import smart_config
 import torch
 import torch.nn.functional as F
+
+from lib.smart_config import smart_config
 
 # from flashinfer.activation import silu_and_mul as flashinfer_silu_and_mul
 try:
@@ -24,7 +25,9 @@ from lightx2v.utils.profiler import *
 # a known extra dispatch overhead when mutates_args is set (PyTorch #139500).
 # torch.library.define + impl does not suffer from this overhead.
 _LIB = torch.library.Library("neopp", "FRAGMENT")
-_LIB.define("kv_update(Tensor kv_buf, int layer_idx, Tensor key_states, Tensor value_states) -> (Tensor, Tensor)")
+_LIB.define(
+    "kv_update(Tensor kv_buf, int layer_idx, Tensor key_states, Tensor value_states) -> (Tensor, Tensor)"
+)
 
 
 @torch.library.impl(_LIB, "kv_update", "CUDA")
@@ -79,7 +82,9 @@ class NeoppTransformerInfer(BaseTransformerInfer, torch.nn.Module):
         else:
             self._mlp_forward = self._dense_mlp
         if self.config["seq_parallel"]:
-            self.seq_p_group = self.config.get("device_mesh").get_group(mesh_dim="seq_p")
+            self.seq_p_group = self.config.get("device_mesh").get_group(
+                mesh_dim="seq_p"
+            )
         else:
             self.seq_p_group = None
         self.kv_cache = KVCacheManager()
@@ -87,17 +92,23 @@ class NeoppTransformerInfer(BaseTransformerInfer, torch.nn.Module):
     @torch.no_grad()
     def infer(self, weights, pre_infer_out, inputs):
         pass_key = "cond" if self.scheduler.infer_condition else "uncond"
-        past_key_values = inputs[f"past_key_values_{pass_key}"]  # [layers, 2, past_seq, num_kv_heads, head_dim]
+        past_key_values = inputs[
+            f"past_key_values_{pass_key}"
+        ]  # [layers, 2, past_seq, num_kv_heads, head_dim]
         cos_sin = inputs[f"cos_sin_{pass_key}"]
         hidden_states = pre_infer_out.image_embeds.squeeze(0)  # [seq, hidden]
 
-        hidden_states = self.infer_without_offload(weights.blocks, hidden_states, cos_sin, past_key_values)
+        hidden_states = self.infer_without_offload(
+            weights.blocks, hidden_states, cos_sin, past_key_values
+        )
 
         hidden_states = weights.norm_mot_gen.apply(hidden_states)
         hidden_states = self._fm_head(weights.fm_head, hidden_states)
         return hidden_states.unsqueeze(0)
 
-    def _infer_without_offload_impl(self, blocks, hidden_states, cos_sin, past_key_values):
+    def _infer_without_offload_impl(
+        self, blocks, hidden_states, cos_sin, past_key_values
+    ):
         seq_len_q = hidden_states.shape[0]
         kvcache_len = past_key_values.shape[2]
         seq_len_k = kvcache_len + seq_len_q
@@ -114,7 +125,9 @@ class NeoppTransformerInfer(BaseTransformerInfer, torch.nn.Module):
         self._kvcache_len = kvcache_len
 
         for layer_idx, block_weight in enumerate(blocks):
-            hidden_states = self._decoder_layer(block_weight, layer_idx, hidden_states, cos_sin)
+            hidden_states = self._decoder_layer(
+                block_weight, layer_idx, hidden_states, cos_sin
+            )
         return hidden_states
 
     if magi_compile is not None:
@@ -128,19 +141,30 @@ class NeoppTransformerInfer(BaseTransformerInfer, torch.nn.Module):
                 }
             ),
         )
-        def infer_without_offload(self, blocks, hidden_states, cos_sin, past_key_values):
-            return self._infer_without_offload_impl(blocks, hidden_states, cos_sin, past_key_values)
+        def infer_without_offload(
+            self, blocks, hidden_states, cos_sin, past_key_values
+        ):
+            return self._infer_without_offload_impl(
+                blocks, hidden_states, cos_sin, past_key_values
+            )
+
     else:
 
-        def infer_without_offload(self, blocks, hidden_states, cos_sin, past_key_values):
-            return self._infer_without_offload_impl(blocks, hidden_states, cos_sin, past_key_values)
+        def infer_without_offload(
+            self, blocks, hidden_states, cos_sin, past_key_values
+        ):
+            return self._infer_without_offload_impl(
+                blocks, hidden_states, cos_sin, past_key_values
+            )
 
     # @ProfilingContext4DebugL1("Decoder Layer")
     def _decoder_layer(self, block_weight, layer_idx, hidden_states, cos_sin):
         residual = hidden_states
         hidden_states = block_weight.input_layernorm_mot_gen.apply(hidden_states)
 
-        hidden_states = self._self_attn(block_weight.self_attn, layer_idx, hidden_states, cos_sin)
+        hidden_states = self._self_attn(
+            block_weight.self_attn, layer_idx, hidden_states, cos_sin
+        )
         hidden_states = residual + hidden_states
 
         residual = hidden_states
@@ -153,24 +177,34 @@ class NeoppTransformerInfer(BaseTransformerInfer, torch.nn.Module):
     # @ProfilingContext4DebugL1("Self Attn")
     def _self_attn(self, attn_w, layer_idx, hidden_states, cos_sin):
         query_states = attn_w.q_proj_mot_gen.apply(hidden_states)
-        query_states = query_states.view(-1, self.num_heads, self.head_dim)  # [seq, num_heads, head_dim]
+        query_states = query_states.view(
+            -1, self.num_heads, self.head_dim
+        )  # [seq, num_heads, head_dim]
 
         key_states = attn_w.k_proj_mot_gen.apply(hidden_states)
-        key_states = key_states.view(-1, self.num_kv_heads, self.head_dim)  # [seq, num_kv_heads, head_dim]
+        key_states = key_states.view(
+            -1, self.num_kv_heads, self.head_dim
+        )  # [seq, num_kv_heads, head_dim]
 
         if self.use_triton_qknorm_rope:
             # Triton fused path: dual-RMSNorm + 3D Neox-RoPE in one kernel launch (in-place).
             attn_w.qk_norm.apply(query_states, key_states, cos_sin)
         else:
             # Pure torch path: expanded dual-RMSNorm + 3D Neox-RoPE.
-            query_states, key_states = self._qk_norm_rope_torch(attn_w, query_states, key_states, cos_sin, hidden_states.dtype)
+            query_states, key_states = self._qk_norm_rope_torch(
+                attn_w, query_states, key_states, cos_sin, hidden_states.dtype
+            )
 
         value_states = attn_w.v_proj_mot_gen.apply(hidden_states)
-        value_states = value_states.view(-1, self.num_kv_heads, self.head_dim)  # [seq, num_kv_heads, head_dim]
+        value_states = value_states.view(
+            -1, self.num_kv_heads, self.head_dim
+        )  # [seq, num_kv_heads, head_dim]
 
         # Custom op: forces MagiCompiler to split the FX graph at this op,
         # isolating the slice-scatter from the surrounding compiled regions.
-        key_states, value_states = torch.ops.neopp.kv_update(self.kv_cache._kv_buf, layer_idx, key_states, value_states)
+        key_states, value_states = torch.ops.neopp.kv_update(
+            self.kv_cache._kv_buf, layer_idx, key_states, value_states
+        )
 
         attn_output = self._compute_attn(attn_w, query_states, key_states, value_states)
 
@@ -203,7 +237,9 @@ class NeoppTransformerInfer(BaseTransformerInfer, torch.nn.Module):
 
         def _norm_rope(x, norm_t, norm_hw):
             x_t = norm_t.apply(x[..., :half])  # RMSNorm t-segment  → [seq, heads, half]
-            x_hw = norm_hw.apply(x[..., half:])  # RMSNorm hw-segment → [seq, heads, half]
+            x_hw = norm_hw.apply(
+                x[..., half:]
+            )  # RMSNorm hw-segment → [seq, heads, half]
             x_t_h1, x_t_h2 = x_t[..., :quarter].float(), x_t[..., quarter:].float()
             x_h = x_hw[..., :quarter]
             x_w = x_hw[..., quarter:]
@@ -221,8 +257,12 @@ class NeoppTransformerInfer(BaseTransformerInfer, torch.nn.Module):
                 dim=-1,
             ).to(out_dtype)
 
-        query_states = _norm_rope(query_states, attn_w.q_norm_mot_gen, attn_w.q_norm_hw_mot_gen)
-        key_states = _norm_rope(key_states, attn_w.k_norm_mot_gen, attn_w.k_norm_hw_mot_gen)
+        query_states = _norm_rope(
+            query_states, attn_w.q_norm_mot_gen, attn_w.q_norm_hw_mot_gen
+        )
+        key_states = _norm_rope(
+            key_states, attn_w.k_norm_mot_gen, attn_w.k_norm_hw_mot_gen
+        )
         return query_states, key_states
 
     # @ProfilingContext4DebugL1("Compute Attn")
@@ -266,14 +306,24 @@ class NeoppTransformerInfer(BaseTransformerInfer, torch.nn.Module):
     def _sparse_moe(self, moe_w, hidden_states):
         router_logits = moe_w.gate.apply(hidden_states)
         if self.norm_topk_prob:
-            _, selected_experts = torch.topk(router_logits, self.num_experts_per_tok, dim=-1, sorted=False)
-            routing_weights = F.softmax(router_logits.gather(1, selected_experts).float(), dim=-1)
+            _, selected_experts = torch.topk(
+                router_logits, self.num_experts_per_tok, dim=-1, sorted=False
+            )
+            routing_weights = F.softmax(
+                router_logits.gather(1, selected_experts).float(), dim=-1
+            )
         else:
             routing_weights = F.softmax(router_logits, dim=1, dtype=torch.float)
-            routing_weights, selected_experts = torch.topk(routing_weights, self.num_experts_per_tok, dim=-1)
+            routing_weights, selected_experts = torch.topk(
+                routing_weights, self.num_experts_per_tok, dim=-1
+            )
 
         output = flashinfer_cutlass_fused_moe(
-            hidden_states if hidden_states.is_contiguous() else hidden_states.contiguous(),
+            (
+                hidden_states
+                if hidden_states.is_contiguous()
+                else hidden_states.contiguous()
+            ),
             selected_experts.to(torch.int32),
             routing_weights,
             moe_w._fi_fc1_weight,

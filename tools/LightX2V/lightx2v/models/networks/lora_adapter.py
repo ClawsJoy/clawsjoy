@@ -1,13 +1,13 @@
-from lib.smart_config import smart_config
 import gc
 
 import torch
-from loguru import logger
-from safetensors import safe_open
-
 from lightx2v.utils.envs import *
 from lightx2v.utils.lora_loader import LoRALoader
 from lightx2v_platform.base.global_var import AI_DEVICE
+from loguru import logger
+from safetensors import safe_open
+
+from lib.smart_config import smart_config
 
 
 class LoraAdapter:
@@ -15,16 +15,25 @@ class LoraAdapter:
         self.model = model
         self.lora_metadata = {}
         self.lora_loader = LoRALoader(model_prefix=model_prefix)
-        self.device = torch.device(AI_DEVICE) if not self.model.config.get("cpu_offload", False) else torch.device("cpu")
+        self.device = (
+            torch.device(AI_DEVICE)
+            if not self.model.config.get("cpu_offload", False)
+            else torch.device("cpu")
+        )
 
     def _load_lora_file(self, file_path):
         with safe_open(file_path, framework="pt") as f:
-            tensor_dict = {key: f.get_tensor(key).to(GET_DTYPE()).to(self.device) for key in f.keys()}
+            tensor_dict = {
+                key: f.get_tensor(key).to(GET_DTYPE()).to(self.device)
+                for key in f.keys()
+            }
         return tensor_dict
 
     def apply_lora(self, lora_configs, model_type=None):
         if not hasattr(self.model, "original_weight_dict"):
-            logger.error("Model does not have 'original_weight_dict'. Cannot apply LoRA.")
+            logger.error(
+                "Model does not have 'original_weight_dict'. Cannot apply LoRA."
+            )
             return False
 
         for lora_config in lora_configs:
@@ -36,9 +45,13 @@ class LoraAdapter:
                 strength=lora_strength,
             )
             if model_type is not None:
-                logger.info(f"Successfully applied LoRA to {model_type} model: {lora_config['path']} (strength: {lora_strength})")
+                logger.info(
+                    f"Successfully applied LoRA to {model_type} model: {lora_config['path']} (strength: {lora_strength})"
+                )
             else:
-                logger.info(f"Successfully applied LoRA to model: {lora_config['path']} (strength: {lora_strength})")
+                logger.info(
+                    f"Successfully applied LoRA to model: {lora_config['path']} (strength: {lora_strength})"
+                )
             del lora_weights
             gc.collect()
 

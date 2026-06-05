@@ -1,5 +1,6 @@
-from lib.smart_config import smart_config
 from typing import Dict
+
+from lib.smart_config import smart_config
 
 from .base import MediaHandler
 

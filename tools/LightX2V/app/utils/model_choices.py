@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """模型选择相关函数模块"""
 
 import os
@@ -16,12 +17,24 @@ def _get_models_from_repos(repo_ids, prefix_filter=None, keyword_filter=None):
     """从多个仓库获取模型并合并"""
     all_models = []
     for repo_id in repo_ids:
-        models = get_hf_models(repo_id, prefix_filter=prefix_filter, keyword_filter=keyword_filter) if HF_AVAILABLE else []
+        models = (
+            get_hf_models(
+                repo_id, prefix_filter=prefix_filter, keyword_filter=keyword_filter
+            )
+            if HF_AVAILABLE
+            else []
+        )
         all_models.extend(models)
     return list(set(all_models))
 
 
-def _filter_and_format_models(hf_models, model_path, is_valid_func, require_safetensors=True, additional_filters=None):
+def _filter_and_format_models(
+    hf_models,
+    model_path,
+    is_valid_func,
+    require_safetensors=True,
+    additional_filters=None,
+):
     """通用的模型过滤和格式化函数"""
     # 延迟导入避免循环依赖
     from utils.model_utils import is_fp8_supported_gpu
@@ -44,9 +57,20 @@ def _filter_and_format_models(hf_models, model_path, is_valid_func, require_safe
 
     local_models = []
     if require_safetensors:
-        dir_choices = [d for d in contents["dirs"] if is_valid_func(d, fp8_supported) and ("_split" in d.lower() or d in contents["safetensors_dirs"])]
-        safetensors_choices = [f for f in contents["files"] if f.endswith(".safetensors") and is_valid_func(f, fp8_supported)]
-        safetensors_dir_choices = [d for d in contents["safetensors_dirs"] if is_valid_func(d, fp8_supported)]
+        dir_choices = [
+            d
+            for d in contents["dirs"]
+            if is_valid_func(d, fp8_supported)
+            and ("_split" in d.lower() or d in contents["safetensors_dirs"])
+        ]
+        safetensors_choices = [
+            f
+            for f in contents["files"]
+            if f.endswith(".safetensors") and is_valid_func(f, fp8_supported)
+        ]
+        safetensors_dir_choices = [
+            d for d in contents["safetensors_dirs"] if is_valid_func(d, fp8_supported)
+        ]
         local_models = dir_choices + safetensors_choices + safetensors_dir_choices
     else:
         for item in contents["dirs"] + contents["files"]:
@@ -78,14 +102,20 @@ def get_dit_choices(model_path, model_type="wan2.1", task_type=None, is_distill=
         elif is_distill is False:
             repo_ids = ["lightx2v/wan2.1-Official-Models"]
         else:
-            repo_ids = ["lightx2v/wan2.1-Distill-Models", "lightx2v/wan2.1-Official-Models"]
+            repo_ids = [
+                "lightx2v/wan2.1-Distill-Models",
+                "lightx2v/wan2.1-Official-Models",
+            ]
     else:  # wan2.2
         if is_distill is True:
             repo_ids = ["lightx2v/wan2.2-Distill-Models"]
         elif is_distill is False:
             repo_ids = ["lightx2v/wan2.2-Official-Models"]
         else:
-            repo_ids = ["lightx2v/wan2.2-Distill-Models", "lightx2v/wan2.2-Official-Models"]
+            repo_ids = [
+                "lightx2v/wan2.2-Distill-Models",
+                "lightx2v/wan2.2-Official-Models",
+            ]
 
     hf_models = _get_models_from_repos(repo_ids, prefix_filter=model_type)
 
@@ -108,7 +138,9 @@ def get_dit_choices(model_path, model_type="wan2.1", task_type=None, is_distill=
     return _filter_and_format_models(hf_models, model_path, is_valid)
 
 
-def get_high_noise_choices(model_path, model_type="wan2.2", task_type=None, is_distill=None):
+def get_high_noise_choices(
+    model_path, model_type="wan2.2", task_type=None, is_distill=None
+):
     """获取高噪模型可选项"""
     if is_distill is True:
         repo_ids = ["lightx2v/wan2.2-Distill-Models"]
@@ -134,7 +166,9 @@ def get_high_noise_choices(model_path, model_type="wan2.2", task_type=None, is_d
     return _filter_and_format_models(hf_models, model_path, is_valid)
 
 
-def get_low_noise_choices(model_path, model_type="wan2.2", task_type=None, is_distill=None):
+def get_low_noise_choices(
+    model_path, model_type="wan2.2", task_type=None, is_distill=None
+):
     """获取低噪模型可选项"""
     if is_distill is True:
         repo_ids = ["lightx2v/wan2.2-Distill-Models"]
@@ -210,7 +244,9 @@ def get_clip_model_choices(model_path):
 def get_clip_tokenizer_choices(model_path):
     """获取 CLIP Tokenizer 可选项"""
     contents = scan_model_path_contents(model_path)
-    dir_choices = ["xlm-roberta-large"] if "xlm-roberta-large" in contents["dirs"] else []
+    dir_choices = (
+        ["xlm-roberta-large"] if "xlm-roberta-large" in contents["dirs"] else []
+    )
 
     repo_id = "lightx2v/Encoders"
     hf_models = get_hf_models(repo_id) if HF_AVAILABLE else []
@@ -245,7 +281,11 @@ def get_qwen_image_dit_choices(model_path):
             return False
         if "qwen_image_edit_2511" not in name_lower:
             return False
-        return name.endswith("lightning.safetensors") or name.endswith("_split") or "lightning_split" in name_lower
+        return (
+            name.endswith("lightning.safetensors")
+            or name.endswith("_split")
+            or "lightning_split" in name_lower
+        )
 
     # 筛选 HF 模型
     from utils.model_utils import is_fp8_supported_gpu
@@ -360,10 +400,18 @@ def get_qwen25vl_encoder_choices(model_path):
     repo_id = "lightx2v/Encoders"
     hf_models = get_hf_models(repo_id) if HF_AVAILABLE else []
 
-    valid_hf_models = [m for m in hf_models if "qwen25-vl-4bit-gptq" in m.lower() or "qwen25_vl_4bit_gptq" in m.lower()]
+    valid_hf_models = [
+        m
+        for m in hf_models
+        if "qwen25-vl-4bit-gptq" in m.lower() or "qwen25_vl_4bit_gptq" in m.lower()
+    ]
 
     contents = scan_model_path_contents(model_path)
-    local_models = [d for d in contents["dirs"] if "qwen25-vl-4bit-gptq" in d.lower() or "qwen25_vl_4bit_gptq" in d.lower()]
+    local_models = [
+        d
+        for d in contents["dirs"]
+        if "qwen25-vl-4bit-gptq" in d.lower() or "qwen25_vl_4bit_gptq" in d.lower()
+    ]
 
     all_models = sorted(set(valid_hf_models + local_models))
     formatted_choices = [format_model_choice(m, model_path) for m in all_models]
@@ -395,7 +443,12 @@ def get_qwen_image_2512_dit_choices(model_path):
         # 只包含 "qwen_image_2512" 字段的模型
         if "qwen_image_2512" not in name_lower:
             return False
-        return name.endswith("lightning.safetensors") or name.endswith("_split") or "lightning_split" in name_lower or name.endswith(".safetensors")
+        return (
+            name.endswith("lightning.safetensors")
+            or name.endswith("_split")
+            or "lightning_split" in name_lower
+            or name.endswith(".safetensors")
+        )
 
     # 筛选 HF 模型
     from utils.model_utils import is_fp8_supported_gpu
@@ -522,7 +575,11 @@ def get_z_image_turbo_dit_choices(model_path):
             return False
         if "z_image_turbo" not in name_lower and "z-image-turbo" not in name_lower:
             return False
-        return name.endswith(".safetensors") or name.endswith("_split") or "_split" in name_lower
+        return (
+            name.endswith(".safetensors")
+            or name.endswith("_split")
+            or "_split" in name_lower
+        )
 
     # 筛选 HF 模型
     from utils.model_utils import is_fp8_supported_gpu

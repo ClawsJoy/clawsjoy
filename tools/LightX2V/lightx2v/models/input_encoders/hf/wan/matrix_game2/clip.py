@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 # Modified from ``https://github.com/openai/CLIP'' and ``https://github.com/mlfoundations/open_clip''
 # Copyright 2024-2025 The Alibaba Wan Team Authors. All rights reserved.
 import logging
@@ -9,9 +8,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.transforms as T
 from diffusers.models import ModelMixin
-
-from lightx2v.models.input_encoders.hf.wan.matrix_game2.tokenizers import HuggingfaceTokenizer
+from lightx2v.models.input_encoders.hf.wan.matrix_game2.tokenizers import (
+    HuggingfaceTokenizer,
+)
 from lightx2v.models.input_encoders.hf.wan.xlm_roberta.model import VisionTransformer
+
+from lib.smart_config import smart_config
 
 
 class SelfAttention(nn.Module):
@@ -63,7 +65,12 @@ class AttentionBlock(nn.Module):
         # layers
         self.attn = SelfAttention(dim, num_heads, dropout, eps)
         self.norm1 = nn.LayerNorm(dim, eps=eps)
-        self.ffn = nn.Sequential(nn.Linear(dim, dim * 4), nn.GELU(), nn.Linear(dim * 4, dim), nn.Dropout(dropout))
+        self.ffn = nn.Sequential(
+            nn.Linear(dim, dim * 4),
+            nn.GELU(),
+            nn.Linear(dim * 4, dim),
+            nn.Dropout(dropout),
+        )
         self.norm2 = nn.LayerNorm(dim, eps=eps)
 
     def forward(self, x, mask):
@@ -81,7 +88,19 @@ class XLMRoberta(nn.Module):
     XLMRobertaModel with no pooler and no LM head.
     """
 
-    def __init__(self, vocab_size=250002, max_seq_len=514, type_size=1, pad_id=1, dim=1024, num_heads=16, num_layers=24, post_norm=True, dropout=0.1, eps=1e-5):
+    def __init__(
+        self,
+        vocab_size=250002,
+        max_seq_len=514,
+        type_size=1,
+        pad_id=1,
+        dim=1024,
+        num_heads=16,
+        num_layers=24,
+        post_norm=True,
+        dropout=0.1,
+        eps=1e-5,
+    ):
         super().__init__()
         self.vocab_size = vocab_size
         self.max_seq_len = max_seq_len
@@ -100,7 +119,12 @@ class XLMRoberta(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
         # blocks
-        self.blocks = nn.ModuleList([AttentionBlock(dim, num_heads, post_norm, dropout, eps) for _ in range(num_layers)])
+        self.blocks = nn.ModuleList(
+            [
+                AttentionBlock(dim, num_heads, post_norm, dropout, eps)
+                for _ in range(num_layers)
+            ]
+        )
 
         # norm layer
         self.norm = nn.LayerNorm(dim, eps=eps)
@@ -113,7 +137,11 @@ class XLMRoberta(nn.Module):
         mask = ids.ne(self.pad_id).long()
 
         # embeddings
-        x = self.token_embedding(ids) + self.type_embedding(torch.zeros_like(ids)) + self.pos_embedding(self.pad_id + torch.cumsum(mask, dim=1) * mask)
+        x = (
+            self.token_embedding(ids)
+            + self.type_embedding(torch.zeros_like(ids))
+            + self.pos_embedding(self.pad_id + torch.cumsum(mask, dim=1) * mask)
+        )
         if self.post_norm:
             x = self.norm(x)
         x = self.dropout(x)
@@ -136,7 +164,11 @@ class XLMRobertaWithHead(XLMRoberta):
 
         # head
         mid_dim = (self.dim + self.out_dim) // 2
-        self.head = nn.Sequential(nn.Linear(self.dim, mid_dim, bias=False), nn.GELU(), nn.Linear(mid_dim, self.out_dim, bias=False))
+        self.head = nn.Sequential(
+            nn.Linear(self.dim, mid_dim, bias=False),
+            nn.GELU(),
+            nn.Linear(mid_dim, self.out_dim, bias=False),
+        )
 
     def forward(self, ids):
         # xlm-roberta
@@ -235,7 +267,17 @@ class XLMRobertaCLIP(nn.Module):
         self.log_scale = nn.Parameter(math.log(1 / 0.07) * torch.ones([]))
 
 
-def _clip(pretrained=False, pretrained_name=None, model_cls=XLMRobertaCLIP, return_transforms=False, return_tokenizer=False, tokenizer_padding="eos", dtype=torch.float32, device="cpu", **kwargs):
+def _clip(
+    pretrained=False,
+    pretrained_name=None,
+    model_cls=XLMRobertaCLIP,
+    return_transforms=False,
+    return_tokenizer=False,
+    tokenizer_padding="eos",
+    dtype=torch.float32,
+    device="cpu",
+    **kwargs,
+):
     # init a model on device
     with torch.device(device):
         model = model_cls(**kwargs)
@@ -254,12 +296,25 @@ def _clip(pretrained=False, pretrained_name=None, model_cls=XLMRobertaCLIP, retu
             std = [0.26862954, 0.26130258, 0.27577711]
 
         # transforms
-        transforms = T.Compose([T.Resize((model.image_size, model.image_size), interpolation=T.InterpolationMode.BICUBIC), T.ToTensor(), T.Normalize(mean=mean, std=std)])
+        transforms = T.Compose(
+            [
+                T.Resize(
+                    (model.image_size, model.image_size),
+                    interpolation=T.InterpolationMode.BICUBIC,
+                ),
+                T.ToTensor(),
+                T.Normalize(mean=mean, std=std),
+            ]
+        )
         output += (transforms,)
     return output[0] if len(output) == 1 else output
 
 
-def clip_xlm_roberta_vit_h_14(pretrained=False, pretrained_name="open-clip-xlm-roberta-large-vit-huge-14", **kwargs):
+def clip_xlm_roberta_vit_h_14(
+    pretrained=False,
+    pretrained_name="open-clip-xlm-roberta-large-vit-huge-14",
+    **kwargs,
+):
     cfg = dict(
         embed_dim=1024,
         image_size=224,
@@ -303,7 +358,9 @@ class CLIPModel(ModelMixin):
         logging.info(f"loading {checkpoint_path}")
         self.model.load_state_dict(torch.load(checkpoint_path, map_location="cpu"))
         # init tokenizer
-        self.tokenizer = HuggingfaceTokenizer(name=tokenizer_path, seq_len=self.model.max_text_len - 2, clean="whitespace")
+        self.tokenizer = HuggingfaceTokenizer(
+            name=tokenizer_path, seq_len=self.model.max_text_len - 2, clean="whitespace"
+        )
 
     def encode_video(self, video):
         # preprocess
@@ -324,7 +381,14 @@ class CLIPModel(ModelMixin):
     def forward(self, videos):
         # preprocess
         size = (self.model.image_size,) * 2
-        videos = torch.cat([F.interpolate(u.transpose(0, 1), size=size, mode="bicubic", align_corners=False) for u in videos])
+        videos = torch.cat(
+            [
+                F.interpolate(
+                    u.transpose(0, 1), size=size, mode="bicubic", align_corners=False
+                )
+                for u in videos
+            ]
+        )
         videos = self.transforms.transforms[-1](videos.mul_(0.5).add_(0.5))
 
         # forward

@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 LongCat Image Edit (I2I) generation example.
 This example demonstrates how to use LightX2V with LongCat-Image-Edit model for I2I generation.
@@ -14,7 +15,9 @@ pipe = LightX2VPipeline(
 )
 
 # Create generator from config JSON file
-pipe.create_generator(config_json="/workspace/configs/longcat_image/longcat_image_i2i.json")
+pipe.create_generator(
+    config_json="/workspace/configs/longcat_image/longcat_image_i2i.json"
+)
 
 # Generation parameters
 seed = 43

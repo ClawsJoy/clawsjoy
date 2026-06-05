@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """国际化支持模块"""
 
 import os

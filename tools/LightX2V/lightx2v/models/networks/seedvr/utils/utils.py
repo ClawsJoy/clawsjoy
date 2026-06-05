@@ -1,7 +1,8 @@
-from lib.smart_config import smart_config
 from typing import Callable
 
 import torch
+
+from lib.smart_config import smart_config
 
 
 def expand_dims(tensor: torch.Tensor, ndim: int):

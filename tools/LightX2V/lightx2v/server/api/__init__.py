@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 from .router import create_api_router
 from .server import ApiServer
 

@@ -1,7 +1,13 @@
-from lib.smart_config import smart_config
 from lightx2v import LightX2VPipeline
 
-pipe = LightX2VPipeline(model_path="Lightricks/LTX-2/", model_cls="ltx2", task="i2av", dit_original_ckpt="Lightricks/LTX-2/ltx-2-19b-dev.safetensors")
+from lib.smart_config import smart_config
+
+pipe = LightX2VPipeline(
+    model_path="Lightricks/LTX-2/",
+    model_cls="ltx2",
+    task="i2av",
+    dit_original_ckpt="Lightricks/LTX-2/ltx-2-19b-dev.safetensors",
+)
 
 # pipe.enable_offload(
 #     cpu_offload=True,

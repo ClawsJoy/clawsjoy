@@ -2,4 +2,4 @@
 
 from engine.market.core import EngineMarket, engine_market
 
-__all__ = ['EngineMarket', 'engine_market']
+__all__ = ["EngineMarket", "engine_market"]

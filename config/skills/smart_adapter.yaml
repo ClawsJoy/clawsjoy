@@ -1,169 +1,58 @@
-agents:
-  analysis_agent:
-    max_tokens: 1500
-    model: qwen2.5:3b
-    output_format: json
-    temperature: 0.2
-  butler:
-    max_tokens: 800
-    model: qwen2.5:3b
-    system_prompt: 你是私人管家小管，回答亲切、温暖、有帮助。
-    temperature: 0.6
-  chat_agent:
-    max_tokens: 1000
-    model: qwen2.5:3b
-    temperature: 0.7
-  code_agent:
-    max_tokens: 2000
-    model: deepseek-coder:6.7b
-    temperature: 0.2
-butler:
-  allow_rename: true
-  default_name: 小管
-  name_reminder: 我是 {name}，随时为您服务
-  rename_response: 好的，以后请叫我 {new_name}
-context:
-  enabled: true
-  max_window: 10
-  vector_retrieve: 3
-decomposition:
-  enabled: true
-  max_subtasks: 5
-  prompt_template: '将以下任务分解为子任务列表：
+# 智能适配器配置
 
-    任务: {task}
-
-
-    可用任务类型: {task_types}
-
-
-    输出JSON格式，只输出数组：
-
-    ["子任务1", "子任务2", "子任务3"]
-
-    '
-  use_task_types: true
 default:
-  max_tokens: 2000
   model: qwen2.5:3b
   provider: ollama
-  stream: false
-  temperature: 0.3
-models:
-  deepseek-coder:6.7b:
-    description: 专业代码
-    max_tokens: 3000
-    priority: 9
-    temperature_range:
-    - 0.1
-    - 0.3
-    use_cases:
-    - 代码生成
-    - 代码审查
-    - 调试
-  llama3.2:3b:
-    description: 英文优化
-    max_tokens: 2000
-    priority: 5
-    temperature_range:
-    - 0.2
-    - 0.7
-    use_cases:
-    - 英文对话
-    - 翻译
-  qwen2.5:3b:
-    description: 快速响应
-    max_tokens: 1000
-    priority: 6
-    temperature_range:
-    - 0.1
-    - 0.5
-    use_cases:
-    - 简单问答
-    - 分类
-    - 提取
-  qwen2.5:7b:
-    description: 平衡性能
-    max_tokens: 2000
-    priority: 8
-    temperature_range:
-    - 0.2
-    - 0.7
-    use_cases:
-    - 日常对话
-    - 问答
-    - 分析
+  timeout: 60
+
 performance:
-  batch_size: 5
-  cache_ttl: 3600
-  concurrent_requests: 4
-  timeout: 120
-preference_learning:
-  auto_apply: true
-  categories:
-  - preference
-  - habit
-  enabled: true
-  retrieve_count: 5
-  trigger_keywords:
-  - 喜欢
-  - 偏好
-  - 不喜欢
-  - 讨厌
-  - 习惯
+  timeout: 60
+  max_retries: 3
+
 task_types:
   code:
     keywords:
-    - 代码
-    - 编程
-    - python
-    - 函数
-    - 写一个
-    - 实现
-    - 快速排序
-    - 冒泡排序
-    - 算法
-    - debug
-    - 修复
-    - 代码审查
-    - 重构
-    - 优化
-    max_tokens: 4096
+      - 写代码
+      - 编程
+      - python
+      - java
+      - javascript
+      - 函数
+      - 算法
     model: deepseek-coder:6.7b
-    system_prompt: '你是专业的代码助手。只输出高质量、可执行的代码。
-
-      使用 ```语言 标记代码块，包含必要的注释。
-
-      '
-    temperature: 0.2
-    timeout: 120
-  creative:
-    max_tokens: 2000
-    model: qwen2.5:3b
-    system_prompt: 发挥想象力，创作有趣的内容。
-    temperature: 0.8
-  embedding:
-    dimension: 768
-    model: nomic-embed-text
-    type: embedding
-  english:
-    max_tokens: 800
-    model: llama3.2:3b
-    system_prompt: Respond in English naturally.
-    temperature: 0.5
-  math:
-    max_tokens: 500
-    model: qwen2.5:3b
-    system_prompt: 只输出数字结果，不要解释，一步一步计算。
-    temperature: 0.1
-  qa:
-    max_tokens: 800
-    model: qwen2.5:3b
-    system_prompt: 简短回答，准确清晰。
-    temperature: 0.5
-  reasoning:
-    max_tokens: 1500
-    model: qwen2.5:3b
-    system_prompt: 请逐步推理，输出结构化分析。
+    provider: ollama
     temperature: 0.3
-version: 2.0.0
+    max_tokens: 4096
+    timeout: 120
+    system_prompt: "你是一个代码生成助手，只输出代码，不要解释。"
+
+  translate:
+    keywords:
+      - 翻译
+      - 译成
+      - translate
+    model: qwen2.5:3b
+    provider: ollama
+    temperature: 0.5
+    max_tokens: 1024
+    timeout: 30
+
+  analysis:
+    keywords:
+      - 分析
+      - 统计
+      - 总结
+      - 优缺点
+    model: qwen2.5:7b
+    provider: ollama
+    temperature: 0.4
+    max_tokens: 2048
+    timeout: 60
+
+  qa:
+    keywords: []
+    model: qwen2.5:3b
+    provider: ollama
+    temperature: 0.7
+    max_tokens: 1024
+    timeout: 30

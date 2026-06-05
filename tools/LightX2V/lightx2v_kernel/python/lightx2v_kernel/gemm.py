@@ -1,11 +1,14 @@
-from lib.smart_config import smart_config
 import torch
+
+from lib.smart_config import smart_config
 
 
 def cutlass_scaled_nvfp4_mm(mat_a, mat_b, scales_a, scales_b, alpha, bias=None):
     m, n = mat_a.shape[0], mat_b.shape[0]
     out = torch.empty((m, n), dtype=torch.bfloat16, device=mat_a.device)
-    torch.ops.lightx2v_kernel.cutlass_scaled_nvfp4_mm_sm120.default(out, mat_a, mat_b, scales_a, scales_b, alpha, bias)
+    torch.ops.lightx2v_kernel.cutlass_scaled_nvfp4_mm_sm120.default(
+        out, mat_a, mat_b, scales_a, scales_b, alpha, bias
+    )
     return out
 
 
@@ -49,9 +52,15 @@ def scaled_nvfp4_quant(input: torch.Tensor, input_global_scale: torch.Tensor):
     # rounded_m = ((m + 128 - 1) // 128) * 128
     # scale_n = n // block_size
     # rounded_n = ((scale_n + 4 - 1) // 4) * 4
-    output_scale = torch.zeros((((m + 128 - 1) // 128) * 128, (n // block_size + 4 - 1) // 4), device=device, dtype=torch.int32)
+    output_scale = torch.zeros(
+        (((m + 128 - 1) // 128) * 128, (n // block_size + 4 - 1) // 4),
+        device=device,
+        dtype=torch.int32,
+    )
 
-    torch.ops.lightx2v_kernel.scaled_nvfp4_quant_sm120.default(output, input, output_scale, input_global_scale)
+    torch.ops.lightx2v_kernel.scaled_nvfp4_quant_sm120.default(
+        output, input, output_scale, input_global_scale
+    )
     output_scale = output_scale.view(torch.float8_e4m3fn)
     return output, output_scale
 
@@ -62,9 +71,15 @@ def scaled_mxfp4_quant(input: torch.Tensor):
     device = input.device
 
     output = torch.empty((m, n // 2), device=device, dtype=torch.uint8)
-    output_scale = torch.zeros(((m + 128 - 1) // 128 * 128, (n // block_size + 4 - 1) // 4), device=device, dtype=torch.int32)
+    output_scale = torch.zeros(
+        ((m + 128 - 1) // 128 * 128, (n // block_size + 4 - 1) // 4),
+        device=device,
+        dtype=torch.int32,
+    )
 
-    torch.ops.lightx2v_kernel.scaled_mxfp4_quant_sm120.default(output, input, output_scale)
+    torch.ops.lightx2v_kernel.scaled_mxfp4_quant_sm120.default(
+        output, input, output_scale
+    )
     output_scale = output_scale.view(torch.float8_e8m0fnu)
     return output, output_scale
 
@@ -75,9 +90,15 @@ def scaled_mxfp6_quant(input: torch.Tensor):
     device = input.device
 
     output = torch.empty((m, 3 * n // 4), device=device, dtype=torch.uint8)
-    output_scale = torch.zeros(((m + 128 - 1) // 128 * 128, (n // block_size + 4 - 1) // 4), device=device, dtype=torch.int32)
+    output_scale = torch.zeros(
+        ((m + 128 - 1) // 128 * 128, (n // block_size + 4 - 1) // 4),
+        device=device,
+        dtype=torch.int32,
+    )
 
-    torch.ops.lightx2v_kernel.scaled_mxfp6_quant_sm120.default(output, input, output_scale)
+    torch.ops.lightx2v_kernel.scaled_mxfp6_quant_sm120.default(
+        output, input, output_scale
+    )
     output_scale = output_scale.view(torch.float8_e8m0fnu)
     return output, output_scale
 
@@ -88,9 +109,15 @@ def scaled_mxfp8_quant(input: torch.Tensor):
     device = input.device
 
     output = torch.empty((m, n), device=device, dtype=torch.uint8)
-    output_scale = torch.empty(((m + 128 - 1) // 128 * 128, (n // block_size + 4 - 1) // 4), device=device, dtype=torch.int32)
+    output_scale = torch.empty(
+        ((m + 128 - 1) // 128 * 128, (n // block_size + 4 - 1) // 4),
+        device=device,
+        dtype=torch.int32,
+    )
 
-    torch.ops.lightx2v_kernel.scaled_mxfp8_quant_sm120.default(output, input, output_scale)
+    torch.ops.lightx2v_kernel.scaled_mxfp8_quant_sm120.default(
+        output, input, output_scale
+    )
     output_scale = output_scale.view(torch.float8_e8m0fnu)
     return output, output_scale
 
@@ -98,19 +125,25 @@ def scaled_mxfp8_quant(input: torch.Tensor):
 def cutlass_scaled_mxfp4_mm(mat_a, mat_b, scales_a, scales_b, alpha, bias=None):
     m, n = mat_a.shape[0], mat_b.shape[0]
     out = torch.empty((m, n), dtype=torch.bfloat16, device=mat_a.device)
-    torch.ops.lightx2v_kernel.cutlass_scaled_mxfp4_mm_sm120.default(out, mat_a, mat_b, scales_a, scales_b, alpha, bias)
+    torch.ops.lightx2v_kernel.cutlass_scaled_mxfp4_mm_sm120.default(
+        out, mat_a, mat_b, scales_a, scales_b, alpha, bias
+    )
     return out
 
 
 def cutlass_scaled_mxfp6_mxfp8_mm(mat_a, mat_b, scales_a, scales_b, alpha, bias=None):
     m, n = mat_a.shape[0], mat_b.shape[0]
     out = torch.empty((m, n), dtype=torch.bfloat16, device=mat_a.device)
-    torch.ops.lightx2v_kernel.cutlass_scaled_mxfp6_mxfp8_mm_sm120.default(out, mat_a, mat_b, scales_a, scales_b, alpha, bias)
+    torch.ops.lightx2v_kernel.cutlass_scaled_mxfp6_mxfp8_mm_sm120.default(
+        out, mat_a, mat_b, scales_a, scales_b, alpha, bias
+    )
     return out
 
 
 def cutlass_scaled_mxfp8_mm(mat_a, mat_b, scales_a, scales_b, alpha, bias=None):
     m, n = mat_a.shape[0], mat_b.shape[0]
     out = torch.empty((m, n), dtype=torch.bfloat16, device=mat_a.device)
-    torch.ops.lightx2v_kernel.cutlass_scaled_mxfp8_mm_sm120.default(out, mat_a, mat_b, scales_a, scales_b, alpha, bias)
+    torch.ops.lightx2v_kernel.cutlass_scaled_mxfp8_mm_sm120.default(
+        out, mat_a, mat_b, scales_a, scales_b, alpha, bias
+    )
     return out

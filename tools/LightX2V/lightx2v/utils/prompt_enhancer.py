@@ -1,11 +1,11 @@
-from lib.smart_config import smart_config
 import argparse
 
 import torch
+from lightx2v.utils.profiler import *
 from loguru import logger
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from lightx2v.utils.profiler import *
+from lib.smart_config import smart_config
 
 sys_prompt = """
 Transform the short prompt into a detailed video-generation caption using this structure:
@@ -46,8 +46,13 @@ class PromptEnhancer:
     def __call__(self, prompt):
         prompt = prompt.strip()
         prompt = sys_prompt.format(prompt)
-        messages = [{"role": "system", "content": "You are a helpful assistant."}, {"role": "user", "content": prompt}]
-        text = self.tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+        messages = [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": prompt},
+        ]
+        text = self.tokenizer.apply_chat_template(
+            messages, tokenize=False, add_generation_prompt=True
+        )
         model_inputs = self.tokenizer([text], return_tensors="pt").to(self.model.device)
         generated_ids = self.model.generate(
             **model_inputs,
@@ -61,9 +66,13 @@ class PromptEnhancer:
         else:
             index = 0
 
-        thinking_content = self.tokenizer.decode(output_ids[:index], skip_special_tokens=True).strip("\n")
+        thinking_content = self.tokenizer.decode(
+            output_ids[:index], skip_special_tokens=True
+        ).strip("\n")
         logger.info(f"[Enhanced] thinking content: {thinking_content}")
-        rewritten_prompt = self.tokenizer.decode(output_ids[index:], skip_special_tokens=True).strip("\n")
+        rewritten_prompt = self.tokenizer.decode(
+            output_ids[index:], skip_special_tokens=True
+        ).strip("\n")
         logger.info(f"[Enhanced] rewritten prompt: {rewritten_prompt}")
         return rewritten_prompt
 

@@ -3,13 +3,13 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
 import json
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, Optional
 
 
@@ -24,18 +24,18 @@ class DialectLearner:
     def _load(self):
         """加载映射库"""
         if self.storage_file.exists():
-            with open(self.storage_file, 'r') as f:
+            with open(self.storage_file, "r") as f:
                 self.mappings = json.load(f)
         else:
             self.mappings = {
-                "user_mappings": {},      # 用户级映射
-                "global_mappings": {},    # 全局映射
-                "learning_history": []    # 学习历史
+                "user_mappings": {},  # 用户级映射
+                "global_mappings": {},  # 全局映射
+                "learning_history": [],  # 学习历史
             }
 
     def _save(self):
         """保存映射库"""
-        with open(self.storage_file, 'w') as f:
+        with open(self.storage_file, "w") as f:
             json.dump(self.mappings, f, indent=2, ensure_ascii=False)
 
     def learn(self, user_id: str, dialect_word: str, standard_word: str):
@@ -46,16 +46,18 @@ class DialectLearner:
         self.mappings["user_mappings"][user_id][dialect_word] = {
             "standard": standard_word,
             "learned_at": datetime.now().isoformat(),
-            "use_count": 1
+            "use_count": 1,
         }
 
         # 记录学习历史
-        self.mappings["learning_history"].append({
-            "user_id": user_id,
-            "dialect": dialect_word,
-            "standard": standard_word,
-            "timestamp": datetime.now().isoformat()
-        })
+        self.mappings["learning_history"].append(
+            {
+                "user_id": user_id,
+                "dialect": dialect_word,
+                "standard": standard_word,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
 
         # 如果同一词汇被多个用户学习，提升为全局
         self._promote_to_global(dialect_word, standard_word)
@@ -95,8 +97,10 @@ class DialectLearner:
         """获取统计信息"""
         return {
             "total_mappings": len(self.mappings["global_mappings"]),
-            "user_mappings": sum(len(v) for v in self.mappings["user_mappings"].values()),
-            "learning_count": len(self.mappings["learning_history"])
+            "user_mappings": sum(
+                len(v) for v in self.mappings["user_mappings"].values()
+            ),
+            "learning_count": len(self.mappings["learning_history"]),
         }
 
 

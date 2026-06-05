@@ -1,8 +1,10 @@
 """增强语义理解引擎"""
 
-from typing import Dict, Any, List, Optional
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
 from engine.semantic.enhanced import enhanced_semantic
+
 
 class EnhancedSemanticEngine:
     """增强语义理解引擎"""
@@ -20,15 +22,15 @@ class EnhancedSemanticEngine:
 
     def _process_string(self, text: str, **kwargs) -> Dict:
         """处理字符串"""
-        user_id = kwargs.get('user_id', 'default')
-        history = kwargs.get('history', [])
+        user_id = kwargs.get("user_id", "default")
+        history = kwargs.get("history", [])
         return self._engine.understand_with_context(text, user_id, history)
 
     def _process_dict(self, data: dict, **kwargs) -> Dict:
         """处理字典"""
-        text = data.get('text', '')
-        user_id = data.get('user_id', 'default')
-        history = data.get('history', [])
+        text = data.get("text", "")
+        user_id = data.get("user_id", "default")
+        history = data.get("history", [])
         return self._engine.understand_with_context(text, user_id, history)
 
     def get_stats(self) -> Dict:
@@ -39,5 +41,6 @@ class EnhancedSemanticEngine:
 
     def health_check(self) -> Dict:
         return {"name": "enhanced_semantic_engine", "status": "healthy"}
+
 
 enhanced_semantic_engine = EnhancedSemanticEngine()

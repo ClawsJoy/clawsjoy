@@ -1,20 +1,22 @@
-from lib.smart_config import smart_config
 import gc
 import os
 
 import torch
-from loguru import logger
-
 from lightx2v.models.input_encoders.hf.hunyuan15.byt5.model import (
     ByT5TextEncoderForBI,
 )
 from lightx2v.models.networks.worldplay.bi_model import WorldPlayBIModel
 from lightx2v.models.networks.worldplay.pose_utils import pose_to_input
-from lightx2v.models.runners.hunyuan_video.hunyuan_video_15_runner import HunyuanVideo15Runner
+from lightx2v.models.runners.hunyuan_video.hunyuan_video_15_runner import (
+    HunyuanVideo15Runner,
+)
 from lightx2v.models.schedulers.worldplay.bi_scheduler import WorldPlayBIScheduler
 from lightx2v.utils.profiler import ProfilingContext4DebugL2
 from lightx2v.utils.registry_factory import RUNNER_REGISTER
 from lightx2v_platform.base.global_var import AI_DEVICE
+from loguru import logger
+
+from lib.smart_config import smart_config
 
 torch_device_module = getattr(torch, AI_DEVICE)
 
@@ -71,7 +73,9 @@ def select_aligned_memory_frames(
 
     # For simplicity, use temporal proximity for additional frames
     # Full FOV overlap calculation can be added if needed
-    historical_clip_indices = list(range(4, current_frame_idx - temporal_context_size, 4))
+    historical_clip_indices = list(
+        range(4, current_frame_idx - temporal_context_size, 4)
+    )
 
     remaining_slots = memory_frames - temporal_context_size - len(memory_frames_indices)
     if remaining_slots > 0 and historical_clip_indices:
@@ -82,7 +86,9 @@ def select_aligned_memory_frames(
                 break
             start_idx = historical_clip_indices[i]
             if start_idx not in memory_frames_indices:
-                memory_frames_indices.extend(range(start_idx, min(start_idx + 4, current_frame_idx)))
+                memory_frames_indices.extend(
+                    range(start_idx, min(start_idx + 4, current_frame_idx))
+                )
 
     # Combine and deduplicate
     selected_frames_set = set(context_frames_indices)
@@ -114,18 +120,27 @@ class WorldPlayBIRunner(HunyuanVideo15Runner):
 
     def __init__(self, config):
         # BI-specific parameters
-        self.chunk_latent_frames = config.get("chunk_latent_frames", 16)  # BI uses 16 by default
+        self.chunk_latent_frames = config.get(
+            "chunk_latent_frames", 16
+        )  # BI uses 16 by default
         self.model_type = config.get("model_type", "bi")
         self.action_ckpt = config.get("action_ckpt", None)
         self.use_prope = config.get("use_prope", True)
 
         # Validate action_ckpt if provided
         if self.action_ckpt is not None and not os.path.exists(self.action_ckpt):
-            raise FileNotFoundError(f"Action checkpoint not found: {self.action_ckpt}. Please provide a valid path to the action model checkpoint.")
+            raise FileNotFoundError(
+                f"Action checkpoint not found: {self.action_ckpt}. Please provide a valid path to the action model checkpoint."
+            )
 
         # Validate chunk_latent_frames
-        if not isinstance(self.chunk_latent_frames, int) or self.chunk_latent_frames <= 0:
-            raise ValueError(f"chunk_latent_frames must be a positive integer, got {self.chunk_latent_frames}")
+        if (
+            not isinstance(self.chunk_latent_frames, int)
+            or self.chunk_latent_frames <= 0
+        ):
+            raise ValueError(
+                f"chunk_latent_frames must be a positive integer, got {self.chunk_latent_frames}"
+            )
 
         # Memory frame selection parameters
         self.memory_frames = config.get("memory_frames", 20)
@@ -141,7 +156,9 @@ class WorldPlayBIRunner(HunyuanVideo15Runner):
         self.scheduler = WorldPlayBIScheduler(self.config)
 
         if self.sr_version is not None:
-            from lightx2v.models.schedulers.hunyuan_video.scheduler import HunyuanVideo15SRScheduler
+            from lightx2v.models.schedulers.hunyuan_video.scheduler import (
+                HunyuanVideo15SRScheduler,
+            )
 
             self.scheduler_sr = HunyuanVideo15SRScheduler(self.config_sr)
         else:
@@ -153,10 +170,16 @@ class WorldPlayBIRunner(HunyuanVideo15Runner):
         For BI model with use_bi_model_as_main=True, load byt5_in weights
         from the action_ckpt instead of the base model path.
         """
-        from lightx2v.models.input_encoders.hf.hunyuan15.byt5.model import ByT5TextEncoder
-        from lightx2v.models.input_encoders.hf.hunyuan15.qwen25.model import Qwen25VL_TextEncoder
+        from lightx2v.models.input_encoders.hf.hunyuan15.byt5.model import (
+            ByT5TextEncoder,
+        )
+        from lightx2v.models.input_encoders.hf.hunyuan15.qwen25.model import (
+            Qwen25VL_TextEncoder,
+        )
 
-        qwen25vl_offload = self.config.get("qwen25vl_cpu_offload", self.config.get("cpu_offload"))
+        qwen25vl_offload = self.config.get(
+            "qwen25vl_cpu_offload", self.config.get("cpu_offload")
+        )
         if qwen25vl_offload:
             qwen25vl_device = torch.device("cpu")
         else:
@@ -177,7 +200,9 @@ class WorldPlayBIRunner(HunyuanVideo15Runner):
             qwen25vl_quant_ckpt=qwen25vl_quantized_ckpt,
         )
 
-        byt5_offload = self.config.get("byt5_cpu_offload", self.config.get("cpu_offload"))
+        byt5_offload = self.config.get(
+            "byt5_cpu_offload", self.config.get("cpu_offload")
+        )
         if byt5_offload:
             byt5_device = torch.device("cpu")
         else:
@@ -217,9 +242,13 @@ class WorldPlayBIRunner(HunyuanVideo15Runner):
         if self.sr_version is not None:
             from lightx2v.models.networks.hunyuan_video.model import HunyuanVideo15Model
 
-            self.config_sr["transformer_model_path"] = os.path.join(os.path.dirname(self.config.transformer_model_path), self.sr_version)
+            self.config_sr["transformer_model_path"] = os.path.join(
+                os.path.dirname(self.config.transformer_model_path), self.sr_version
+            )
             self.config_sr["is_sr_running"] = True
-            model_sr = HunyuanVideo15Model(self.config_sr["model_path"], self.config_sr, self.init_device)
+            model_sr = HunyuanVideo15Model(
+                self.config_sr["model_path"], self.config_sr, self.init_device
+            )
             self.config_sr["is_sr_running"] = False
         else:
             model_sr = None
@@ -233,16 +262,24 @@ class WorldPlayBIRunner(HunyuanVideo15Runner):
         img_ori = self.read_image_input(self.input_info.image_path)
         if self.sr_version and self.config_sr["is_sr_running"]:
             self.latent_sr_shape = self.get_sr_latent_shape_with_target_hw()
-        self.input_info.latent_shape = self.get_latent_shape_with_target_hw(origin_size=img_ori.size)
+        self.input_info.latent_shape = self.get_latent_shape_with_target_hw(
+            origin_size=img_ori.size
+        )
 
-        siglip_output, siglip_mask = self.run_image_encoder(img_ori) if self.config.get("use_image_encoder", True) else (None, None)
+        siglip_output, siglip_mask = (
+            self.run_image_encoder(img_ori)
+            if self.config.get("use_image_encoder", True)
+            else (None, None)
+        )
         cond_latents = self.run_vae_encoder(img_ori)
         text_encoder_output = self.run_text_encoder(self.input_info)
 
         # Process pose input if available
         pose_output = None
         if hasattr(self.input_info, "pose") and self.input_info.pose is not None:
-            pose_output = self._process_pose_input(self.input_info.pose, self.input_info.latent_shape[1])
+            pose_output = self._process_pose_input(
+                self.input_info.pose, self.input_info.latent_shape[1]
+            )
 
         torch_device_module.empty_cache()
         gc.collect()
@@ -263,13 +300,25 @@ class WorldPlayBIRunner(HunyuanVideo15Runner):
         self.input_info.latent_shape = self.get_latent_shape_with_target_hw()
         text_encoder_output = self.run_text_encoder(self.input_info)
 
-        siglip_output = torch.zeros(1, self.vision_num_semantic_tokens, self.config["hidden_size"], dtype=torch.bfloat16).to(AI_DEVICE)
-        siglip_mask = torch.zeros(1, self.vision_num_semantic_tokens, dtype=torch.bfloat16, device=torch.device(AI_DEVICE))
+        siglip_output = torch.zeros(
+            1,
+            self.vision_num_semantic_tokens,
+            self.config["hidden_size"],
+            dtype=torch.bfloat16,
+        ).to(AI_DEVICE)
+        siglip_mask = torch.zeros(
+            1,
+            self.vision_num_semantic_tokens,
+            dtype=torch.bfloat16,
+            device=torch.device(AI_DEVICE),
+        )
 
         # Process pose input if available
         pose_output = None
         if hasattr(self.input_info, "pose") and self.input_info.pose is not None:
-            pose_output = self._process_pose_input(self.input_info.pose, self.input_info.latent_shape[1])
+            pose_output = self._process_pose_input(
+                self.input_info.pose, self.input_info.latent_shape[1]
+            )
 
         torch_device_module.empty_cache()
         gc.collect()
@@ -308,7 +357,9 @@ class WorldPlayBIRunner(HunyuanVideo15Runner):
                 "action": action,
             }
         except Exception as e:
-            logger.warning(f"Failed to process pose input: {e}. Continuing without pose conditioning.")
+            logger.warning(
+                f"Failed to process pose input: {e}. Continuing without pose conditioning."
+            )
             return None
 
     def init_run(self):
@@ -316,7 +367,9 @@ class WorldPlayBIRunner(HunyuanVideo15Runner):
         self.gen_video_final = None
         self.get_video_segment_num()
 
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             self.model = self.load_transformer()
             self.model.set_scheduler(self.scheduler)
 
@@ -351,7 +404,9 @@ class WorldPlayBIRunner(HunyuanVideo15Runner):
             logger.info(f"Generating chunk {chunk_idx + 1}/{total_chunks}")
 
             # Prepare chunk data
-            (chunk_latents, chunk_viewmats, chunk_Ks, chunk_action) = self.scheduler.prepare_chunk(chunk_idx)
+            (chunk_latents, chunk_viewmats, chunk_Ks, chunk_action) = (
+                self.scheduler.prepare_chunk(chunk_idx)
+            )
 
             # Update scheduler with chunk-specific pose data
             if chunk_viewmats is not None:
@@ -378,13 +433,22 @@ class WorldPlayBIRunner(HunyuanVideo15Runner):
                         device=AI_DEVICE,
                     )
                     # Remove current chunk frames from context
-                    to_remove = list(range(current_frame_idx, current_frame_idx + self.chunk_latent_frames))
-                    context_frame_indices = [x for x in context_frame_indices if x not in to_remove]
+                    to_remove = list(
+                        range(
+                            current_frame_idx,
+                            current_frame_idx + self.chunk_latent_frames,
+                        )
+                    )
+                    context_frame_indices = [
+                        x for x in context_frame_indices if x not in to_remove
+                    ]
 
             self.scheduler.set_context_frame_indices(context_frame_indices)
 
             # Run denoising for this chunk
-            chunk_output = self._denoise_chunk_bi(chunk_idx, chunk_latents, context_frame_indices)
+            chunk_output = self._denoise_chunk_bi(
+                chunk_idx, chunk_latents, context_frame_indices
+            )
 
             # Update latents with generated chunk
             self.scheduler.update_chunk_latents(chunk_idx, chunk_output)
@@ -471,7 +535,9 @@ class WorldPlayBIRunner(HunyuanVideo15Runner):
                 timestep_input = torch.cat([t_ctx, t_now], dim=0)
 
                 # Concatenate context and current latents
-                latent_model_input = torch.cat([context_latents, self.scheduler.latents], dim=2)
+                latent_model_input = torch.cat(
+                    [context_latents, self.scheduler.latents], dim=2
+                )
 
             # Update scheduler with concatenated data for this step
             if chunk_idx > 0 and context_frame_indices:
@@ -483,13 +549,25 @@ class WorldPlayBIRunner(HunyuanVideo15Runner):
                 if full_pose is not None:
                     if full_pose.get("viewmats") is not None:
                         chunk_viewmats = full_pose["viewmats"][:, start_idx:end_idx]
-                        self.scheduler.viewmats = torch.cat([context_viewmats, chunk_viewmats], dim=1) if context_viewmats is not None else chunk_viewmats
+                        self.scheduler.viewmats = (
+                            torch.cat([context_viewmats, chunk_viewmats], dim=1)
+                            if context_viewmats is not None
+                            else chunk_viewmats
+                        )
                     if full_pose.get("Ks") is not None:
                         chunk_Ks = full_pose["Ks"][:, start_idx:end_idx]
-                        self.scheduler.Ks = torch.cat([context_Ks, chunk_Ks], dim=1) if context_Ks is not None else chunk_Ks
+                        self.scheduler.Ks = (
+                            torch.cat([context_Ks, chunk_Ks], dim=1)
+                            if context_Ks is not None
+                            else chunk_Ks
+                        )
                     if full_pose.get("action") is not None:
                         chunk_action = full_pose["action"][:, start_idx:end_idx]
-                        self.scheduler.action = torch.cat([context_action, chunk_action], dim=1) if context_action is not None else chunk_action
+                        self.scheduler.action = (
+                            torch.cat([context_action, chunk_action], dim=1)
+                            if context_action is not None
+                            else chunk_action
+                        )
 
             # Store timestep for model
             self.scheduler.timestep_input = timestep_input

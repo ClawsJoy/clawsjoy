@@ -1,12 +1,13 @@
-from lib.smart_config import smart_config
 import asyncio
 import io
 from pathlib import Path
 from typing import Union
 
 import aiofiles
-from PIL import Image
 from loguru import logger
+from PIL import Image
+
+from lib.smart_config import smart_config
 
 
 async def load_image_async(path: Union[str, Path]) -> Image.Image:
@@ -14,7 +15,9 @@ async def load_image_async(path: Union[str, Path]) -> Image.Image:
         async with aiofiles.open(path, "rb") as f:
             data = await f.read()
 
-        return await asyncio.to_thread(lambda: Image.open(io.BytesIO(data)).convert("RGB"))
+        return await asyncio.to_thread(
+            lambda: Image.open(io.BytesIO(data)).convert("RGB")
+        )
     except Exception as e:
         logger.error(f"Failed to load image from {path}: {e}")
         raise
@@ -43,7 +46,9 @@ async def read_text_async(path: Union[str, Path], encoding: str = "utf-8") -> st
         raise
 
 
-async def write_text_async(path: Union[str, Path], content: str, encoding: str = "utf-8"):
+async def write_text_async(
+    path: Union[str, Path], content: str, encoding: str = "utf-8"
+):
     try:
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)

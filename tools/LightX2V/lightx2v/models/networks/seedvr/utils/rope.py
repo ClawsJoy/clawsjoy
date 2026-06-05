@@ -1,10 +1,11 @@
-from lib.smart_config import smart_config
 from functools import lru_cache
 from typing import Optional, Tuple
 
 import torch
 from einops import rearrange
 from torch import nn
+
+from lib.smart_config import smart_config
 
 from .cache import Cache
 from .rotary_embedding_torch import RotaryEmbedding, apply_rotary_emb

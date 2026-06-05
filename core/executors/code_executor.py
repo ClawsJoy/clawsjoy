@@ -3,21 +3,21 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
+import re
 import subprocess
 import tempfile
-import re
 from pathlib import Path
 
 
 class CodeExecutor:
     """动态代码执行器"""
-    
+
     name = "code_executor"
-    
+
     def execute(self, goal: str, params: dict = None) -> dict:
         """动态生成并执行代码"""
 
@@ -35,6 +35,7 @@ class CodeExecutor:
 代码:"""
 
         from core.lib.smart_adapter import smart_adapter
+
         code = smart_adapter.generate(prompt, auto_select=True)
 
         # 提取代码
@@ -47,36 +48,38 @@ class CodeExecutor:
         # 执行代码
         try:
             result = self._run_code(code)
-            return {"success": True, "result": result, "code_generated": True, "source": "code_executor"}
+            return {
+                "success": True,
+                "result": result,
+                "code_generated": True,
+                "source": "code_executor",
+            }
         except Exception as e:
             return {"success": False, "error": str(e)}
-    
+
     def _extract_code(self, text: str) -> str:
         """提取代码块"""
         # 匹配 ```python ... ``` 或直接代码
-        pattern = r'```(?:python)?\s*(.*?)```'
+        pattern = r"```(?:python)?\s*(.*?)```"
         match = re.search(pattern, text, re.DOTALL)
         if match:
             return match.group(1).strip()
 
         # 检查是否已经是代码
-        if 'def ' in text or 'import ' in text or 'print(' in text:
+        if "def " in text or "import " in text or "print(" in text:
             return text.strip()
 
         return None
-    
+
     def _run_code(self, code: str) -> str:
         """在沙箱中执行代码"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
             f.write(code)
             temp_file = f.name
 
         try:
             result = subprocess.run(
-                ['python3', temp_file],
-                capture_output=True,
-                text=True,
-                timeout=30
+                ["python3", temp_file], capture_output=True, text=True, timeout=30
             )
             output = result.stdout
             if result.stderr:

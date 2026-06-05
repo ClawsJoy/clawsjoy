@@ -1,8 +1,13 @@
-from lib.smart_config import smart_config
 from lightx2v.common.modules.weight_module import WeightModule
 from lightx2v.utils.registry_factory import LN_WEIGHT_REGISTER, TENSOR_REGISTER
 
-from ._shared import SequentialLinearWeights, load_prefixed_submodules, projector_layer_prefixes
+from lib.smart_config import smart_config
+
+from ._shared import (
+    SequentialLinearWeights,
+    load_prefixed_submodules,
+    projector_layer_prefixes,
+)
 from .pre_weights import build_motus_expert_configs
 
 
@@ -19,10 +24,14 @@ class MotusActionPostWeights(WeightModule):
                 config,
             ),
         )
-        self.register_parameter("modulation", TENSOR_REGISTER["Default"]("decoder.modulation"))
+        self.register_parameter(
+            "modulation", TENSOR_REGISTER["Default"]("decoder.modulation")
+        )
 
     def apply_output(self, action_tokens, time_emb):
-        shift, scale = (self.modulation.tensor.unsqueeze(0) + time_emb.unsqueeze(2)).chunk(2, dim=2)
+        shift, scale = (
+            self.modulation.tensor.unsqueeze(0) + time_emb.unsqueeze(2)
+        ).chunk(2, dim=2)
         hidden = self.norm.apply(action_tokens)
         hidden = hidden * (1 + scale.squeeze(2)) + shift.squeeze(2)
         return self.action_head.apply(hidden)

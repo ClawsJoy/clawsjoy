@@ -1,10 +1,11 @@
-#!/usr/bin/env python3
-"""Init - Init 模块
-
-@version: 5.0.0
-@author: ClawsJoy
-@date: 2026-05-31
+"""
+video 技能模块
 """
 
-from lib.smart_config import smart_config
-# ClawsJoy skill package
+from .video_skill import VideoSkill
+
+
+def execute(params=None):
+    """统一执行入口"""
+    skill = VideoSkill()
+    return skill.execute(params)

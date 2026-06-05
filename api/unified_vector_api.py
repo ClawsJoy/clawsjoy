@@ -3,111 +3,128 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
-from flask import Blueprint, request, jsonify
 from pathlib import Path
+
 import chromadb
+from flask import Blueprint, jsonify, request
 
-unified_vector_bp = Blueprint('unified_vector', __name__, url_prefix='/api/vector')
+unified_vector_bp = Blueprint("unified_vector", __name__, url_prefix="/api/vector")
 
 
-@unified_vector_bp.route('/search', methods=['POST'])
+@unified_vector_bp.route("/search", methods=["POST"])
 def search_all():
     """统一向量检索"""
     data = request.get_json() or {}
-    query = data.get('query', '')
-    sources = data.get('sources', ['memory', 'skills', 'knowledge'])
-    n = data.get('n', 5)
-    
+    query = data.get("query", "")
+    sources = data.get("sources", ["memory", "skills", "knowledge"])
+    n = data.get("n", 5)
+
     if not query:
         return jsonify({"success": False, "error": "query required"}), 400
-    
+
     results = []
-    
+
     # 1. 记忆向量
-    if 'memory' in sources:
+    if "memory" in sources:
         try:
             client = chromadb.PersistentClient(path="data/chroma/memory")
             collection = client.get_collection("memory_vectors")
             res = collection.query(query_texts=[query], n_results=n)
-            if res.get('documents') and res['documents'][0]:
-                for i, doc in enumerate(res['documents'][0]):
-                    results.append({
-                        "source": "memory",
-                        "text": doc,
-                        "similarity": 1 / (1 + res['distances'][0][i]) if res.get('distances') else 0
-                    })
-        except:
+            if res.get("documents") and res["documents"][0]:
+                for i, doc in enumerate(res["documents"][0]):
+                    results.append(
+                        {
+                            "source": "memory",
+                            "text": doc,
+                            "similarity": (
+                                1 / (1 + res["distances"][0][i])
+                                if res.get("distances")
+                                else 0
+                            ),
+                        }
+                    )
+        except Exception as e:
             pass
-    
+
     # 2. 技能向量
-    if 'skills' in sources:
+    if "skills" in sources:
         try:
             client = chromadb.PersistentClient(path="data/skill_vectors")
             collection = client.get_collection("skill_vectors")
             res = collection.query(query_texts=[query], n_results=n)
-            if res.get('documents') and res['documents'][0]:
-                for i, doc in enumerate(res['documents'][0]):
-                    results.append({
-                        "source": "skills",
-                        "text": doc,
-                        "similarity": 1 / (1 + res['distances'][0][i]) if res.get('distances') else 0
-                    })
-        except:
+            if res.get("documents") and res["documents"][0]:
+                for i, doc in enumerate(res["documents"][0]):
+                    results.append(
+                        {
+                            "source": "skills",
+                            "text": doc,
+                            "similarity": (
+                                1 / (1 + res["distances"][0][i])
+                                if res.get("distances")
+                                else 0
+                            ),
+                        }
+                    )
+        except Exception as e:
             pass
-    
+
     # 3. 知识向量
-    if 'knowledge' in sources:
+    if "knowledge" in sources:
         try:
             from lib.knowledge_registry import knowledge_registry
+
             res = knowledge_registry.search(query, n=n)
             for r in res:
-                results.append({
-                    "source": "knowledge",
-                    "text": r.get('content', ''),
-                    "title": r.get('title', ''),
-                    "similarity": r.get('similarity', 0)
-                })
-        except:
+                results.append(
+                    {
+                        "source": "knowledge",
+                        "text": r.get("content", ""),
+                        "title": r.get("title", ""),
+                        "similarity": r.get("similarity", 0),
+                    }
+                )
+        except Exception as e:
             pass
-    
-    results.sort(key=lambda x: x.get('similarity', 0), reverse=True)
+
+    results.sort(key=lambda x: x.get("similarity", 0), reverse=True)
     return jsonify({"success": True, "query": query, "results": results[:n]})
 
 
-@unified_vector_bp.route('/stats', methods=['GET'])
+@unified_vector_bp.route("/stats", methods=["GET"])
 def get_stats():
     """获取向量统计"""
     stats = {}
-    
+
     # 记忆向量
     try:
         client = chromadb.PersistentClient(path="data/chroma/memory")
         collection = client.get_collection("memory_vectors")
-        stats['memory'] = collection.count()
-    except:
-        stats['memory'] = 0
-    
+        stats["memory"] = collection.count()
+    except Exception as e:
+        stats["memory"] = 0
+
     # 技能向量
     try:
         client = chromadb.PersistentClient(path="data/skill_vectors")
         collection = client.get_collection("skill_vectors")
-        stats['skills'] = collection.count()
-    except:
-        stats['skills'] = 0
-    
+        stats["skills"] = collection.count()
+    except Exception as e:
+        stats["skills"] = 0
+
     # 知识向量 - 从 knowledge_registry 获取真实数量
     try:
         from lib.knowledge_registry import knowledge_registry
-        stats['knowledge'] = knowledge_registry.get_stats().get('total_knowledge', 0)
-    except:
-        stats['knowledge'] = 0
-    
-    stats['total'] = sum(stats.values())
-    
+
+        stats["knowledge"] = knowledge_registry.get_stats().get("total_knowledge", 0)
+    except Exception as e:
+        stats["knowledge"] = 0
+
+    stats["total"] = sum(stats.values())
+
     return jsonify({"success": True, "stats": stats})
 
 

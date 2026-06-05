@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
@@ -6,6 +5,8 @@ from typing import Callable, Tuple, Union
 
 import torch
 from tqdm import tqdm
+
+from lib.smart_config import smart_config
 
 
 class PredictionType(str, Enum):
@@ -52,11 +53,19 @@ class Schedule(ABC):
     def is_continuous(self) -> bool:
         return isinstance(self.T, float)
 
-    def forward(self, x_0: torch.Tensor, x_T: torch.Tensor, t: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self, x_0: torch.Tensor, x_T: torch.Tensor, t: torch.Tensor
+    ) -> torch.Tensor:
         t = expand_dims(t, x_0.ndim)
         return self.A(t) * x_0 + self.B(t) * x_T
 
-    def convert_from_pred(self, pred: torch.Tensor, pred_type: PredictionType, x_t: torch.Tensor, t: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def convert_from_pred(
+        self,
+        pred: torch.Tensor,
+        pred_type: PredictionType,
+        x_t: torch.Tensor,
+        t: torch.Tensor,
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         t = expand_dims(t, x_t.ndim)
         a_t = self.A(t)
         b_t = self.B(t)
@@ -78,7 +87,13 @@ class Schedule(ABC):
 
         return pred_x_0, pred_x_t
 
-    def convert_to_pred(self, x_0: torch.Tensor, x_T: torch.Tensor, t: torch.Tensor, pred_type: PredictionType) -> torch.Tensor:
+    def convert_to_pred(
+        self,
+        x_0: torch.Tensor,
+        x_T: torch.Tensor,
+        t: torch.Tensor,
+        pred_type: PredictionType,
+    ) -> torch.Tensor:
         t = expand_dims(t, x_0.ndim)
         a_t = self.A(t)
         b_t = self.B(t)
@@ -269,7 +284,9 @@ class EulerSampler(Sampler):
         t = expand_dims(t, x_t.ndim)
         s = expand_dims(s, x_t.ndim)
         T = self.schedule.T
-        pred_x_0, pred_x_T = self.schedule.convert_from_pred(pred, self.prediction_type, x_t, t)
+        pred_x_0, pred_x_T = self.schedule.convert_from_pred(
+            pred, self.prediction_type, x_t, t
+        )
         pred_x_s = self.schedule.forward(pred_x_0, pred_x_T, s.clamp(0, T))
         pred_x_s = pred_x_s.where(s >= 0, pred_x_0)
         pred_x_s = pred_x_s.where(s <= T, pred_x_T)

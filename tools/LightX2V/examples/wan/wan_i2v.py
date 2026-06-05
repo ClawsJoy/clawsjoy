@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 Wan2.2 image-to-video generation example.
 This example demonstrates how to use LightX2V with Wan2.2 model for I2V generation.

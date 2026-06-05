@@ -1,10 +1,13 @@
-from lib.smart_config import smart_config
 import torch
 from einops import rearrange
 from torch import nn
 
+from lib.smart_config import smart_config
 
-def patchify(x: torch.Tensor, patch_size_hw: int, patch_size_t: int = 1) -> torch.Tensor:
+
+def patchify(
+    x: torch.Tensor, patch_size_hw: int, patch_size_t: int = 1
+) -> torch.Tensor:
     """
     Rearrange spatial dimensions into channels. Divides image into patch_size x patch_size blocks
     and moves pixels from each block into separate channels (space-to-depth).
@@ -18,7 +21,9 @@ def patchify(x: torch.Tensor, patch_size_hw: int, patch_size_t: int = 1) -> torc
     if patch_size_hw == 1 and patch_size_t == 1:
         return x
     if x.dim() == 4:
-        x = rearrange(x, "b c (h q) (w r) -> b (c r q) h w", q=patch_size_hw, r=patch_size_hw)
+        x = rearrange(
+            x, "b c (h q) (w r) -> b (c r q) h w", q=patch_size_hw, r=patch_size_hw
+        )
     elif x.dim() == 5:
         x = rearrange(
             x,
@@ -33,7 +38,9 @@ def patchify(x: torch.Tensor, patch_size_hw: int, patch_size_t: int = 1) -> torc
     return x
 
 
-def unpatchify(x: torch.Tensor, patch_size_hw: int, patch_size_t: int = 1) -> torch.Tensor:
+def unpatchify(
+    x: torch.Tensor, patch_size_hw: int, patch_size_t: int = 1
+) -> torch.Tensor:
     """
     Rearrange channels back into spatial dimensions. Inverse of patchify - moves pixels from
     channels back into patch_size x patch_size blocks (depth-to-space).
@@ -48,7 +55,9 @@ def unpatchify(x: torch.Tensor, patch_size_hw: int, patch_size_t: int = 1) -> to
         return x
 
     if x.dim() == 4:
-        x = rearrange(x, "b (c r q) h w -> b c (h q) (w r)", q=patch_size_hw, r=patch_size_hw)
+        x = rearrange(
+            x, "b (c r q) h w -> b c (h q) (w r)", q=patch_size_hw, r=patch_size_hw
+        )
     elif x.dim() == 5:
         x = rearrange(
             x,
@@ -73,7 +82,11 @@ class PerChannelStatistics(nn.Module):
         self.register_buffer("mean-of-means", torch.empty(latent_channels))
 
     def un_normalize(self, x: torch.Tensor) -> torch.Tensor:
-        return (x * self.get_buffer("std-of-means").view(1, -1, 1, 1, 1).to(x)) + self.get_buffer("mean-of-means").view(1, -1, 1, 1, 1).to(x)
+        return (
+            x * self.get_buffer("std-of-means").view(1, -1, 1, 1, 1).to(x)
+        ) + self.get_buffer("mean-of-means").view(1, -1, 1, 1, 1).to(x)
 
     def normalize(self, x: torch.Tensor) -> torch.Tensor:
-        return (x - self.get_buffer("mean-of-means").view(1, -1, 1, 1, 1).to(x)) / self.get_buffer("std-of-means").view(1, -1, 1, 1, 1).to(x)
+        return (
+            x - self.get_buffer("mean-of-means").view(1, -1, 1, 1, 1).to(x)
+        ) / self.get_buffer("std-of-means").view(1, -1, 1, 1, 1).to(x)

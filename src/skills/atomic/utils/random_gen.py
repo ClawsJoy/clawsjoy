@@ -3,23 +3,25 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 from lib.smart_config import smart_config
+
 """随机数生成器"""
 import random
 import string
+
 
 class RandomGenSkill:
     name = "random_gen"
     description = "生成随机数或随机字符串"
     version = "1.0.0"
     category = "utils"
-    
+
     def execute(self, params):
         type = params.get("type", "int")
-        
+
         if type == "int":
             min_val = params.get("min", 0)
             max_val = params.get("max", 100)
@@ -31,10 +33,11 @@ class RandomGenSkill:
         elif type == "string":
             length = params.get("length", 10)
             chars = string.ascii_letters + string.digits
-            result = ''.join(random.choices(chars, k=length))
+            result = "".join(random.choices(chars, k=length))
         else:
             result = random.random()
-        
+
         return {"success": True, "result": result, "type": type}
+
 
 skill = RandomGenSkill()

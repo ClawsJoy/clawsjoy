@@ -3,15 +3,18 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 import json
-from datetime import datetime
 import sys
+from datetime import datetime
+
 from core.lib.unified_config import unified_config
+
 sys.path.insert(0, smart_config.ROOT)
 from agent_core.brain_enhanced import brain
+
 
 class ReportGenerator:
     def generate(self):
@@ -20,13 +23,13 @@ class ReportGenerator:
         report = {
             "timestamp": datetime.now().isoformat(),
             "brain": {
-                "experiences": stats.get('total_experiences', 0),
-                "success_rate": stats.get('success_rate', 0),
-                "knowledge_nodes": stats.get('knowledge_graph_nodes', 0)
-            }
+                "experiences": stats.get("total_experiences", 0),
+                "success_rate": stats.get("success_rate", 0),
+                "knowledge_nodes": stats.get("knowledge_graph_nodes", 0),
+            },
         }
 
-        with open(f"{config_helper.get_data_root()}/full_report.json", 'w') as f:
+        with open(f"{config_helper.get_data_root()}/full_report.json", "w") as f:
             json.dump(report, f, indent=2)
 
         print("\n" + "=" * 50)
@@ -38,6 +41,7 @@ class ReportGenerator:
         print("=" * 50)
 
         return report
+
 
 if __name__ == "__main__":
     gen = ReportGenerator()

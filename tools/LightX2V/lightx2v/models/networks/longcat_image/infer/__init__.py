@@ -1,9 +1,16 @@
-from lib.smart_config import smart_config
 # LongCat Image Infer
-from lightx2v.models.networks.longcat_image.infer.module_io import LongCatImagePreInferModuleOutput
-from lightx2v.models.networks.longcat_image.infer.post_infer import LongCatImagePostInfer
+from lightx2v.models.networks.longcat_image.infer.module_io import (
+    LongCatImagePreInferModuleOutput,
+)
+from lightx2v.models.networks.longcat_image.infer.post_infer import (
+    LongCatImagePostInfer,
+)
 from lightx2v.models.networks.longcat_image.infer.pre_infer import LongCatImagePreInfer
-from lightx2v.models.networks.longcat_image.infer.transformer_infer import LongCatImageTransformerInfer
+from lightx2v.models.networks.longcat_image.infer.transformer_infer import (
+    LongCatImageTransformerInfer,
+)
+
+from lib.smart_config import smart_config
 
 __all__ = [
     "LongCatImagePreInfer",

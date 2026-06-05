@@ -3,15 +3,16 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
-import yaml
 import json
-from pathlib import Path
-from typing import Dict, Any, Optional
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, Optional
+
+import yaml
 
 
 class ConfigUnifiedManager:
@@ -73,7 +74,7 @@ class ConfigUnifiedManager:
     def _merge_config(self, config_file: Path, priority: int):
         """合并配置文件"""
         try:
-            with open(config_file, 'r', encoding='utf-8') as f:
+            with open(config_file, "r", encoding="utf-8") as f:
                 data = yaml.safe_load(f)
 
             if not data:
@@ -88,7 +89,11 @@ class ConfigUnifiedManager:
     def _deep_merge(self, target: Dict, source: Dict, priority: int, source_file: str):
         """深度合并配置，高优先级覆盖低优先级"""
         for key, value in source.items():
-            if key in target and isinstance(target[key], dict) and isinstance(value, dict):
+            if (
+                key in target
+                and isinstance(target[key], dict)
+                and isinstance(value, dict)
+            ):
                 self._deep_merge(target[key], value, priority, source_file)
             else:
                 # 记录配置来源
@@ -101,8 +106,15 @@ class ConfigUnifiedManager:
             from core.lib.config_watcher import config_watcher
 
             # 监听所有配置目录
-            watch_dirs = ["config/system", "config/llm", "config/security", 
-                        "config/vector", "config/routes", "config/butler", "config/driver"]
+            watch_dirs = [
+                "config/system",
+                "config/llm",
+                "config/security",
+                "config/vector",
+                "config/routes",
+                "config/butler",
+                "config/driver",
+            ]
 
             for watch_dir in watch_dirs:
                 path = Path(watch_dir)
@@ -126,7 +138,7 @@ class ConfigUnifiedManager:
 
     def get(self, key: str, default=None):
         """获取配置值（支持点号路径）"""
-        keys = key.split('.')
+        keys = key.split(".")
         value = self._config
         for k in keys:
             if isinstance(value, dict):
@@ -150,10 +162,9 @@ class ConfigUnifiedManager:
         print("\n📋 配置摘要:")
         print(f"   总配置项: {len(self._config)}")
         print(f"   主要配置:")
-        for key in ['system', 'llm', 'services', 'security', 'vector']:
+        for key in ["system", "llm", "services", "security", "vector"]:
             if key in self._config:
                 print(f"      - {key}: {list(self._config[key].keys())[:3]}...")
-
 
     # 配置路径别名（兼容旧代码）
     def get_port(self, service: str = "gateway") -> int:
@@ -173,8 +184,12 @@ class ConfigUnifiedManager:
         return {
             "provider": llm.get("provider", "ollama"),
             "model": llm.get("model", "qwen2.5:3b"),
-            "endpoint": llm.get("endpoint", unified_config.get("llm.endpoint", "http://localhost:11434"))
+            "endpoint": llm.get(
+                "endpoint", unified_config.get("llm.endpoint", "http://localhost:11434")
+            ),
         }
 
         # 全局实例
+
+
 config_manager = ConfigUnifiedManager()

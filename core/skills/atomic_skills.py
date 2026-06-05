@@ -3,14 +3,14 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
-import random
 import datetime
-import re
 import json
+import random
+import re
 from typing import Dict, Optional
 
 
@@ -23,7 +23,14 @@ class AtomicSkills:
         "上海话": {"你好": "侬好", "谢谢": "谢谢", "再见": "再会", "我是": "吾是"},
         "四川话": {"你好": "你好", "谢谢": "谢了", "再见": "拜拜", "我是": "我是"},
         "东北话": {"你好": "你好", "谢谢": "谢谢啊", "再见": "再见", "我是": "咱是"},
-        "宁波话": {"你好": "侬好", "谢谢": "谢谢", "再见": "再会", "累死了": "要死嘞", "什么": "啥", "哪里": "阿里"},
+        "宁波话": {
+            "你好": "侬好",
+            "谢谢": "谢谢",
+            "再见": "再会",
+            "累死了": "要死嘞",
+            "什么": "啥",
+            "哪里": "阿里",
+        },
     }
 
     # 天气城市列表
@@ -78,7 +85,7 @@ class AtomicSkills:
         return {
             "skill": "weather",
             "city": city,
-            "result": f"{city}天气：{random.choice(weather_conditions)} {random.randint(-5, 35)}°C"
+            "result": f"{city}天气：{random.choice(weather_conditions)} {random.randint(-5, 35)}°C",
         }
 
     @classmethod
@@ -90,7 +97,7 @@ class AtomicSkills:
             "skill": "dialect",
             "dialect": dialect,
             "original": text,
-            "converted": converted
+            "converted": converted,
         }
 
     @classmethod
@@ -99,32 +106,22 @@ class AtomicSkills:
         try:
             # 安全计算
             result = eval(expression)
+            return {"skill": "calculator", "expression": expression, "result": result}
+        except Exception as e:
             return {
                 "skill": "calculator",
                 "expression": expression,
-                "result": result
-            }
-        except:
-            return {
-                "skill": "calculator",
-                "expression": expression,
-                "error": "无法计算"
+                "error": "无法计算",
             }
 
     @classmethod
     def current_time(cls) -> Dict:
         """当前时间"""
         now = datetime.datetime.now()
-        return {
-            "skill": "time",
-            "result": now.strftime("%H:%M:%S")
-        }
+        return {"skill": "time", "result": now.strftime("%H:%M:%S")}
 
     @classmethod
     def current_date(cls) -> Dict:
         """当前日期"""
         now = datetime.datetime.now()
-        return {
-            "skill": "date",
-            "result": now.strftime("%Y年%m月%d日 %A")
-        }
+        return {"skill": "date", "result": now.strftime("%Y年%m月%d日 %A")}

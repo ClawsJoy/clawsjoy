@@ -1,9 +1,17 @@
 from lib.smart_config import smart_config
+
 """Shared pyverbs imports and thin RDMA types for client/server."""
 
 from __future__ import annotations
 
 import pyverbs.enums as e
+from lightx2v.disagg.rdma_utils import (
+    recv_json_from_stream,
+    resolve_gid_index,
+    rtr_ah_dest_dlid,
+    rtr_path_mtu,
+    rtr_path_mtu_negotiated,
+)
 from pyverbs.addr import GID, AHAttr, GlobalRoute
 from pyverbs.cq import CQ
 from pyverbs.device import Context, get_device_list
@@ -12,14 +20,6 @@ from pyverbs.pd import PD
 from pyverbs.qp import QP, QPAttr, QPCap, QPInitAttr
 from pyverbs.wr import SGE
 from pyverbs.wr import SendWR as WR
-
-from lightx2v.disagg.rdma_utils import (
-    recv_json_from_stream,
-    resolve_gid_index,
-    rtr_ah_dest_dlid,
-    rtr_path_mtu,
-    rtr_path_mtu_negotiated,
-)
 
 
 class IBDevice:

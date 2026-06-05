@@ -1,5 +1,6 @@
-from lib.smart_config import smart_config
 from transformers import AutoTokenizer
+
+from lib.smart_config import smart_config
 
 
 class LTXVGemmaTokenizer:
@@ -16,7 +17,9 @@ class LTXVGemmaTokenizer:
             tokenizer_path (str): Path to the pretrained tokenizer files or model directory.
             max_length (int, optional): Max sequence length for encoding. Defaults to 256.
         """
-        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_path, local_files_only=True, model_max_length=max_length)
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            tokenizer_path, local_files_only=True, model_max_length=max_length
+        )
         # Gemma expects left padding for chat-style prompts; for plain text it doesn't matter much.
         self.tokenizer.padding_side = "left"
         if self.tokenizer.pad_token is None:
@@ -24,7 +27,9 @@ class LTXVGemmaTokenizer:
 
         self.max_length = max_length
 
-    def tokenize_with_weights(self, text: str, return_word_ids: bool = False) -> dict[str, list[tuple[int, int]]]:
+    def tokenize_with_weights(
+        self, text: str, return_word_ids: bool = False
+    ) -> dict[str, list[tuple[int, int]]]:
         """
         Tokenize the given text and return token IDs and attention weights.
         Args:
@@ -51,7 +56,12 @@ class LTXVGemmaTokenizer:
         )
         input_ids = encoded.input_ids
         attention_mask = encoded.attention_mask
-        tuples = [(token_id, attn, i) for i, (token_id, attn) in enumerate(zip(input_ids[0], attention_mask[0], strict=True))]
+        tuples = [
+            (token_id, attn, i)
+            for i, (token_id, attn) in enumerate(
+                zip(input_ids[0], attention_mask[0], strict=True)
+            )
+        ]
         out = {"gemma": tuples}
 
         if not return_word_ids:

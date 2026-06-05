@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 Shared Memory Client for LightLLM Hidden States
 
@@ -86,7 +87,9 @@ class ShmClient:
             logger.debug(f"Zero-copy read from shm '{shm_name}': shape={shape}")
             return arr, shm
         except Exception as e:
-            logger.error(f"Failed to zero-copy read from shared memory '{shm_name}': {e}")
+            logger.error(
+                f"Failed to zero-copy read from shared memory '{shm_name}': {e}"
+            )
             raise
 
     def is_shm_available(self, shm_name: str) -> bool:

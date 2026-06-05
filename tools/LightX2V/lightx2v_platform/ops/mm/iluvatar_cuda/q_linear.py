@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 Iluvatar GPU quantized linear layers for text encoders (T5, CLIP, etc.)
 
@@ -38,10 +39,14 @@ class IluvatarQuantLinearInt8(nn.Module):
         self.dtype = dtype
         assert ixf is not None, "iluvatar ixformer is not installed."
         # Register INT8 weight buffer
-        self.register_buffer("weight", torch.empty((out_features, in_features), dtype=torch.int8))
+        self.register_buffer(
+            "weight", torch.empty((out_features, in_features), dtype=torch.int8)
+        )
 
         # Register FP32 scale buffer (per-channel)
-        self.register_buffer("weight_scale", torch.empty((out_features, 1), dtype=torch.float32))
+        self.register_buffer(
+            "weight_scale", torch.empty((out_features, 1), dtype=torch.float32)
+        )
 
         # Register bias buffer
         if bias:
@@ -65,7 +70,14 @@ class IluvatarQuantLinearInt8(nn.Module):
             squeeze_output = True
 
         input_tensor_quant, input_tensor_scale = self.act_quant_func(input_tensor)
-        output = ixf.w8a8(input=input_tensor_quant, weight=self.weight, i_scales=input_tensor_scale, w_scales=self.weight_scale.reshape(-1), bias=self.bias, out_dtype=dtype)
+        output = ixf.w8a8(
+            input=input_tensor_quant,
+            weight=self.weight,
+            i_scales=input_tensor_scale,
+            w_scales=self.weight_scale.reshape(-1),
+            bias=self.bias,
+            out_dtype=dtype,
+        )
 
         if squeeze_output:
             output = output.unsqueeze(0)

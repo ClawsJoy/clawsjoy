@@ -1,9 +1,6 @@
-from lib.smart_config import smart_config
 import logging
 
 import torch
-from loguru import logger
-
 from lightx2v.disagg.utils import (
     load_wan_text_encoder,
     load_wan_transformer,
@@ -13,6 +10,9 @@ from lightx2v.disagg.utils import (
 from lightx2v.models.schedulers.wan.scheduler import WanScheduler
 from lightx2v.utils.envs import GET_DTYPE
 from lightx2v.utils.utils import save_to_video, seed_all, wan_vae_to_comfy
+from loguru import logger
+
+from lib.smart_config import smart_config
 
 # Setup basic logging
 logging.basicConfig(level=logging.INFO)
@@ -80,12 +80,19 @@ def main():
 
     # Context (Prompt)
     context = text_encoder.infer([prompt])
-    context = torch.stack([torch.cat([u, u.new_zeros(text_len - u.size(0), u.size(1))]) for u in context])
+    context = torch.stack(
+        [torch.cat([u, u.new_zeros(text_len - u.size(0), u.size(1))]) for u in context]
+    )
 
     # Context Null (Negative Prompt) for CFG
     if config.get("enable_cfg", False):
         context_null = text_encoder.infer([negative_prompt])
-        context_null = torch.stack([torch.cat([u, u.new_zeros(text_len - u.size(0), u.size(1))]) for u in context_null])
+        context_null = torch.stack(
+            [
+                torch.cat([u, u.new_zeros(text_len - u.size(0), u.size(1))])
+                for u in context_null
+            ]
+        )
     else:
         context_null = None
 
@@ -147,7 +154,9 @@ def main():
     gen_video_final = wan_vae_to_comfy(gen_video)
 
     logger.info(f"Saving video to {save_result_path}...")
-    save_to_video(gen_video_final, save_result_path, fps=config.get("fps", 16), method="ffmpeg")
+    save_to_video(
+        gen_video_final, save_result_path, fps=config.get("fps", 16), method="ffmpeg"
+    )
     logger.info("Done!")
 
 

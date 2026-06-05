@@ -1,9 +1,10 @@
-from lib.smart_config import smart_config
 from typing import Tuple
 
 import torch
 import torch.nn.functional as F
 from einops import rearrange
+
+from lib.smart_config import smart_config
 
 try:
     from flashinfer.rope import apply_rope_with_cos_sin_cache_inplace
@@ -102,10 +103,14 @@ class HunyuanVideo15TransformerInfer(BaseTransformerInfer):
         self.double_blocks_num = config["mm_double_blocks_depth"]
         self.heads_num = config["heads_num"]
         if self.config["seq_parallel"]:
-            self.seq_p_group = self.config.get("device_mesh").get_group(mesh_dim="seq_p")
+            self.seq_p_group = self.config.get("device_mesh").get_group(
+                mesh_dim="seq_p"
+            )
             self.seq_p_fp8_comm = self.config["parallel"].get("seq_p_fp8_comm", False)
             self.seq_p_fp4_comm = self.config["parallel"].get("seq_p_fp4_comm", False)
-            self.enable_head_parallel = self.config["parallel"].get("seq_p_head_parallel", False)
+            self.enable_head_parallel = self.config["parallel"].get(
+                "seq_p_head_parallel", False
+            )
         else:
             self.seq_p_group = None
             self.seq_p_fp8_comm = False
@@ -134,24 +139,42 @@ class HunyuanVideo15TransformerInfer(BaseTransformerInfer):
     @torch.no_grad()
     def infer_without_offload(self, weights, infer_module_out):
         for i in range(self.double_blocks_num):
-            infer_module_out.img, infer_module_out.txt = self.infer_double_block(weights.double_blocks[i], infer_module_out)
+            infer_module_out.img, infer_module_out.txt = self.infer_double_block(
+                weights.double_blocks[i], infer_module_out
+            )
 
     @torch.no_grad()
     def infer_final_layer(self, weights, infer_module_out):
         x = torch.cat((infer_module_out.img, infer_module_out.txt), 1)
         img = x[:, : infer_module_out.img.shape[1], ...]
-        shift, scale = weights.final_layer.adaLN_modulation.apply(infer_module_out.vec).chunk(2, dim=1)
-        img = self.modulate_func(weights.final_layer.norm_final.apply(img.squeeze(0)), scale=scale, shift=shift).squeeze(0)
+        shift, scale = weights.final_layer.adaLN_modulation.apply(
+            infer_module_out.vec
+        ).chunk(2, dim=1)
+        img = self.modulate_func(
+            weights.final_layer.norm_final.apply(img.squeeze(0)),
+            scale=scale,
+            shift=shift,
+        ).squeeze(0)
         img = weights.final_layer.linear.apply(img)
         return img.unsqueeze(0)
 
     @torch.no_grad()
     def infer_double_block(self, weights, infer_module_out):
-        img_q, img_k, img_v, img_branch_out = self._infer_img_branch_before_attn(weights, infer_module_out)
-        txt_q, txt_k, txt_v, txt_branch_out = self._infer_txt_branch_before_attn(weights, infer_module_out)
-        img_attn, txt_attn = self._infer_attn(weights, img_q, img_k, img_v, txt_q, txt_k, txt_v)
-        img = self._infer_img_branch_after_attn(weights, img_attn, infer_module_out.img, img_branch_out)
-        txt = self._infer_txt_branch_after_attn(weights, txt_attn, infer_module_out.txt, txt_branch_out)
+        img_q, img_k, img_v, img_branch_out = self._infer_img_branch_before_attn(
+            weights, infer_module_out
+        )
+        txt_q, txt_k, txt_v, txt_branch_out = self._infer_txt_branch_before_attn(
+            weights, infer_module_out
+        )
+        img_attn, txt_attn = self._infer_attn(
+            weights, img_q, img_k, img_v, txt_q, txt_k, txt_v
+        )
+        img = self._infer_img_branch_after_attn(
+            weights, img_attn, infer_module_out.img, img_branch_out
+        )
+        txt = self._infer_txt_branch_after_attn(
+            weights, txt_attn, infer_module_out.txt, txt_branch_out
+        )
         return img, txt
 
     @torch.no_grad()
@@ -164,8 +187,12 @@ class HunyuanVideo15TransformerInfer(BaseTransformerInfer):
             img_mod2_scale,
             img_mod2_gate,
         ) = weights.img_branch.img_mod.apply(infer_module_out.vec).chunk(6, dim=-1)
-        img_modulated = weights.img_branch.img_norm1.apply(infer_module_out.img.squeeze(0))
-        img_modulated = self.modulate_func(img_modulated, scale=img_mod1_scale, shift=img_mod1_shift).squeeze(0)
+        img_modulated = weights.img_branch.img_norm1.apply(
+            infer_module_out.img.squeeze(0)
+        )
+        img_modulated = self.modulate_func(
+            img_modulated, scale=img_mod1_scale, shift=img_mod1_shift
+        ).squeeze(0)
         img_q = weights.img_branch.img_attn_q.apply(img_modulated)
         img_k = weights.img_branch.img_attn_k.apply(img_modulated)
         img_v = weights.img_branch.img_attn_v.apply(img_modulated)
@@ -174,7 +201,11 @@ class HunyuanVideo15TransformerInfer(BaseTransformerInfer):
         img_v = rearrange(img_v, "L (H D) -> L H D", H=self.heads_num)
         img_q = weights.img_branch.img_attn_q_norm.apply(img_q)
         img_k = weights.img_branch.img_attn_k_norm.apply(img_k)
-        img_q, img_k = self.apply_rope_func(img_q.unsqueeze(0), img_k.unsqueeze(0), cos_sin_cache=infer_module_out.cos_sin)
+        img_q, img_k = self.apply_rope_func(
+            img_q.unsqueeze(0),
+            img_k.unsqueeze(0),
+            cos_sin_cache=infer_module_out.cos_sin,
+        )
         return (
             img_q,
             img_k,
@@ -197,8 +228,12 @@ class HunyuanVideo15TransformerInfer(BaseTransformerInfer):
             txt_mod2_scale,
             txt_mod2_gate,
         ) = weights.txt_branch.txt_mod.apply(infer_module_out.vec).chunk(6, dim=-1)
-        txt_modulated = weights.txt_branch.txt_norm1.apply(infer_module_out.txt.squeeze(0))
-        txt_modulated = self.modulate_func(txt_modulated, scale=txt_mod1_scale, shift=txt_mod1_shift).squeeze(0)
+        txt_modulated = weights.txt_branch.txt_norm1.apply(
+            infer_module_out.txt.squeeze(0)
+        )
+        txt_modulated = self.modulate_func(
+            txt_modulated, scale=txt_mod1_scale, shift=txt_mod1_shift
+        ).squeeze(0)
         txt_q = weights.txt_branch.txt_attn_q.apply(txt_modulated)
         txt_k = weights.txt_branch.txt_attn_k.apply(txt_modulated)
         txt_v = weights.txt_branch.txt_attn_v.apply(txt_modulated)
@@ -242,16 +277,31 @@ class HunyuanVideo15TransformerInfer(BaseTransformerInfer):
                 enable_head_parallel=self.enable_head_parallel,
             )
         else:
-            attn_out = weights.self_attention.apply(q=query, k=key, v=value, cu_seqlens_q=cu_seqlens_qkv, cu_seqlens_kv=cu_seqlens_qkv, max_seqlen_q=seqlen, max_seqlen_kv=seqlen)
+            attn_out = weights.self_attention.apply(
+                q=query,
+                k=key,
+                v=value,
+                cu_seqlens_q=cu_seqlens_qkv,
+                cu_seqlens_kv=cu_seqlens_qkv,
+                max_seqlen_q=seqlen,
+                max_seqlen_kv=seqlen,
+            )
 
         img_attn, txt_attn = attn_out[:img_seqlen], attn_out[img_seqlen:]
         return img_attn, txt_attn
 
     @torch.no_grad()
     def _infer_img_branch_after_attn(self, weights, img_attn, img, img_branch_out):
-        img = img + apply_gate(weights.img_branch.img_attn_proj.apply(img_attn).unsqueeze(0), gate=img_branch_out.img_mod1_gate)
+        img = img + apply_gate(
+            weights.img_branch.img_attn_proj.apply(img_attn).unsqueeze(0),
+            gate=img_branch_out.img_mod1_gate,
+        )
         out = weights.img_branch.img_mlp_fc1.apply(
-            self.modulate_func(weights.img_branch.img_norm2.apply(img.squeeze(0)), scale=img_branch_out.img_mod2_scale, shift=img_branch_out.img_mod2_shift).squeeze(0)
+            self.modulate_func(
+                weights.img_branch.img_norm2.apply(img.squeeze(0)),
+                scale=img_branch_out.img_mod2_scale,
+                shift=img_branch_out.img_mod2_shift,
+            ).squeeze(0)
         )
         out = weights.img_branch.img_mlp_fc2.apply(F.gelu(out, approximate="tanh"))
         img = img + apply_gate(out.unsqueeze(0), gate=img_branch_out.img_mod2_gate)
@@ -259,9 +309,16 @@ class HunyuanVideo15TransformerInfer(BaseTransformerInfer):
 
     @torch.no_grad()
     def _infer_txt_branch_after_attn(self, weights, txt_attn, txt, txt_branch_out):
-        txt = txt + apply_gate(weights.txt_branch.txt_attn_proj.apply(txt_attn).unsqueeze(0), gate=txt_branch_out.txt_mod1_gate)
+        txt = txt + apply_gate(
+            weights.txt_branch.txt_attn_proj.apply(txt_attn).unsqueeze(0),
+            gate=txt_branch_out.txt_mod1_gate,
+        )
         out = weights.txt_branch.txt_mlp_fc1.apply(
-            self.modulate_func(weights.txt_branch.txt_norm2.apply(txt.squeeze(0)), scale=txt_branch_out.txt_mod2_scale, shift=txt_branch_out.txt_mod2_shift).squeeze(0)
+            self.modulate_func(
+                weights.txt_branch.txt_norm2.apply(txt.squeeze(0)),
+                scale=txt_branch_out.txt_mod2_scale,
+                shift=txt_branch_out.txt_mod2_shift,
+            ).squeeze(0)
         )
         out = weights.txt_branch.txt_mlp_fc2.apply(F.gelu(out, approximate="tanh"))
         txt = txt + apply_gate(out.unsqueeze(0), gate=txt_branch_out.txt_mod2_gate)

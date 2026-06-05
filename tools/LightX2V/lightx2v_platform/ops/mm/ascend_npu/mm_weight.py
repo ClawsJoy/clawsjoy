@@ -1,6 +1,7 @@
-from lib.smart_config import smart_config
 from lightx2v_platform.ops.mm.template import MMWeightQuantTemplate
 from lightx2v_platform.registry_factory import PLATFORM_MM_WEIGHT_REGISTER
+
+from lib.smart_config import smart_config
 
 try:
     import torch_npu
@@ -31,7 +32,17 @@ class MMWeightWint8channelAint8channeldynamicNpu(MMWeightQuantTemplate):
         lora_prefix="diffusion_model.blocks",
         lora_path="",
     ):
-        super().__init__(weight_name, bias_name, create_cuda_buffer, create_cpu_buffer, lazy_load, lazy_load_file, is_post_adapter, lora_prefix, lora_path)
+        super().__init__(
+            weight_name,
+            bias_name,
+            create_cuda_buffer,
+            create_cpu_buffer,
+            lazy_load,
+            lazy_load_file,
+            is_post_adapter,
+            lora_prefix,
+            lora_path,
+        )
         self.load_func = self.load_int8_perchannel_sym
         self.weight_need_transpose = True
         self.act_quant_func = self.act_quant_int8_perchannel_sym_npu
@@ -44,6 +55,12 @@ class MMWeightWint8channelAint8channeldynamicNpu(MMWeightQuantTemplate):
         dtype = input_tensor.dtype
         input_tensor_quant, input_tensor_scale = self.act_quant_func(input_tensor)
         output_tensor = torch_npu.npu_quant_matmul(
-            input_tensor_quant, self.weight, self.weight_scale.reshape(-1), offset=None, bias=self.bias, pertoken_scale=input_tensor_scale.reshape(-1), output_dtype=dtype
+            input_tensor_quant,
+            self.weight,
+            self.weight_scale.reshape(-1),
+            offset=None,
+            bias=self.bias,
+            pertoken_scale=input_tensor_scale.reshape(-1),
+            output_dtype=dtype,
         )
         return output_tensor

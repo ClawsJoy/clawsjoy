@@ -1,32 +1,38 @@
-from core.lib.config_helper import get_data_root, get_llm_endpoint, get_llm_model, get_embedding_model, get_gateway_port, get_timeout
+from core.lib.config_helper import (
+    get_data_root,
+    get_embedding_model,
+    get_gateway_port,
+    get_llm_endpoint,
+    get_llm_model,
+    get_timeout,
+)
 from core.lib.unified_config import unified_config
 
-from core.lib.unified_config import unified_config
-
-from core.lib.unified_config import unified_config
 #!/usr/bin/env python3
 """生命闭环 Agent - 修复版"""
 
+import hashlib
+import json
+import math
+import re
 import sys
 import time
-import json
-import re
-import math
-import hashlib
-import requests
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, List
+
+import requests
+
 from core.lib.config_manager import config_manager
 
-sys.path.insert(0, 'unified_config.ROOT')
+sys.path.insert(0, "unified_config.ROOT")
 
 
 class LifeCycleAgentFixed:
     """修复版 - 真正有生命的 Agent"""
-    
+
     VERSION = "2.1.0"
-    
+
     def __init__(self, agent_id: str = "default"):
         self.agent_id = agent_id
         self.agent_dir = Path(f"{get_data_root()}/agents/{agent_id}/life_cycle_fixed")
@@ -38,36 +44,41 @@ class LifeCycleAgentFixed:
         self.birth_time = datetime.now()
 
         print(f"🎂 生命闭环 Agent {agent_id} v{self.VERSION} 诞生")
-    
+
     def _load_state(self):
         """加载所有状态"""
         state_file = self.agent_dir / "state.json"
         if state_file.exists():
-            with open(state_file, 'r') as f:
+            with open(state_file, "r") as f:
                 data = json.load(f)
-                self.memory = data.get("memory", {"short_term": [], "long_term": [], "user": {}})
+                self.memory = data.get(
+                    "memory", {"short_term": [], "long_term": [], "user": {}}
+                )
                 self.stats = data.get("stats", {"total": 0, "dreaming_cycles": 0})
-                self.learning = data.get("learning", {"success_rate": 0.5, "patterns": {}})
+                self.learning = data.get(
+                    "learning", {"success_rate": 0.5, "patterns": {}}
+                )
         else:
             self.memory = {"short_term": [], "long_term": [], "user": {}}
             self.stats = {"total": 0, "dreaming_cycles": 0}
             self.learning = {"success_rate": 0.5, "patterns": {}}
-    
+
     def _save_state(self):
-        with open(self.agent_dir / "state.json", 'w') as f:
-            json.dump({
-                "memory": self.memory,
-                "stats": self.stats,
-                "learning": self.learning
-            }, f, indent=2, ensure_ascii=False)
-    
+        with open(self.agent_dir / "state.json", "w") as f:
+            json.dump(
+                {"memory": self.memory, "stats": self.stats, "learning": self.learning},
+                f,
+                indent=2,
+                ensure_ascii=False,
+            )
+
     def _extract_user_info(self, text: str):
         """精确提取用户信息"""
         # 提取名字 - 更精确
         name_patterns = [
-            r'[我][叫][\s]*([^\s，。！？]{2,4})',
-            r'[我][是][\s]*([^\s，。！？]{2,4})',
-            r'名字[叫是][\s]*([^\s，。！？]{2,4})'
+            r"[我][叫][\s]*([^\s，。！？]{2,4})",
+            r"[我][是][\s]*([^\s，。！？]{2,4})",
+            r"名字[叫是][\s]*([^\s，。！？]{2,4})",
         ]
         for pattern in name_patterns:
             match = re.search(pattern, text)
@@ -79,15 +90,17 @@ class LifeCycleAgentFixed:
                     return
 
         # 提取偏好
-        pref_match = re.search(r'喜欢[\s]*([^，。！？]{2,10})', text)
+        pref_match = re.search(r"喜欢[\s]*([^，。！？]{2,10})", text)
         if pref_match:
             pref = pref_match.group(1).strip()
             if pref and len(pref) < 15:
-                self.memory["user"]["preferences"] = self.memory["user"].get("preferences", [])
+                self.memory["user"]["preferences"] = self.memory["user"].get(
+                    "preferences", []
+                )
                 if pref not in self.memory["user"]["preferences"]:
                     self.memory["user"]["preferences"].append(pref)
                     print(f"   📝 学到偏好: {pref}")
-    
+
     def _get_user_context(self) -> str:
         """获取用户上下文"""
         ctx = []
@@ -95,8 +108,8 @@ class LifeCycleAgentFixed:
             ctx.append(f"用户名字: {self.memory['user']['name']}")
         if self.memory["user"].get("preferences"):
             ctx.append(f"用户偏好: {', '.join(self.memory['user']['preferences'])}")
-        return '\n'.join(ctx)
-    
+        return "\n".join(ctx)
+
     def _fast_response(self, user_input: str) -> tuple | None:
         """快速响应（不调用 LLM）"""
         lower = user_input.lower()
@@ -116,15 +129,18 @@ class LifeCycleAgentFixed:
             return ("你还没告诉我你的偏好呢", "query_pref")
 
         # Agent 列表
-        if 'agent' in lower and ('有哪些' in lower or '列表' in lower):
-            return ("系统有决策Agent、聊天Agent、执行Agent、采集Agent、安全Agent、分析Agent", "list_agents")
+        if "agent" in lower and ("有哪些" in lower or "列表" in lower):
+            return (
+                "系统有决策Agent、聊天Agent、执行Agent、采集Agent、安全Agent、分析Agent",
+                "list_agents",
+            )
 
         # 生成图表
-        if any(g in lower for g in ['图', '架构图']):
+        if any(g in lower for g in ["图", "架构图"]):
             return ("好的，正在生成架构图...", "generate_chart")
 
         return None
-    
+
     def _llm_response(self, user_input: str) -> str:
         """LLM 响应（带用户上下文）"""
         context = self._get_user_context()
@@ -144,15 +160,20 @@ class LifeCycleAgentFixed:
         try:
             resp = requests.post(
                 f"{self.ollama_url}/api/generate",
-                json={"model": self.model, "prompt": prompt, "stream": False, "options": {"num_predict": 100, "temperature": 0.5}},
-                timeout=20
+                json={
+                    "model": self.model,
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {"num_predict": 100, "temperature": 0.5},
+                },
+                timeout=20,
             )
             if resp.status_code == 200:
-                return resp.json().get('response', '').strip()
-        except:
+                return resp.json().get("response", "").strip()
+        except Exception as e:
             pass
         return "让我想想..."
-    
+
     def process(self, user_input: str) -> Dict:
         start = time.time()
 
@@ -170,11 +191,13 @@ class LifeCycleAgentFixed:
             used_llm = True
 
         # 3. 存储短期记忆
-        self.memory["short_term"].append({
-            "user": user_input[:200],
-            "assistant": response[:200],
-            "time": datetime.now().isoformat()
-        })
+        self.memory["short_term"].append(
+            {
+                "user": user_input[:200],
+                "assistant": response[:200],
+                "time": datetime.now().isoformat(),
+            }
+        )
         if len(self.memory["short_term"]) > 20:
             # 旧的转入长期记忆
             old = self.memory["short_term"].pop(0)
@@ -200,10 +223,10 @@ class LifeCycleAgentFixed:
                 "name": self.memory["user"].get("name"),
                 "prefs": self.memory["user"].get("preferences", []),
                 "short": len(self.memory["short_term"]),
-                "long": len(self.memory["long_term"])
-            }
+                "long": len(self.memory["long_term"]),
+            },
         }
-    
+
     def _dreaming_cycle(self):
         """梦境循环 - 记忆晋升"""
         self.stats["dreaming_cycles"] += 1
@@ -221,7 +244,7 @@ class LifeCycleAgentFixed:
             self.memory["short_term"] = self.memory["short_term"][-15:]
 
         print(f"   ✨ 晋升 {promoted} 条记忆到长期")
-    
+
     def get_status(self) -> Dict:
         return {
             "agent_id": self.agent_id,
@@ -232,7 +255,7 @@ class LifeCycleAgentFixed:
             "long_term": len(self.memory["long_term"]),
             "dreaming_cycles": self.stats["dreaming_cycles"],
             "total": self.stats["total"],
-            "known_user": self.memory["user"].get("name")
+            "known_user": self.memory["user"].get("name"),
         }
 
 
@@ -240,9 +263,9 @@ if __name__ == "__main__":
     print("=" * 60)
     print("生命闭环 Agent 修复版 v2.1")
     print("=" * 60)
-    
+
     agent = LifeCycleAgentFixed("life_fixed")
-    
+
     conversations = [
         "你好",
         "我叫李华",
@@ -251,15 +274,17 @@ if __name__ == "__main__":
         "你还记得我叫什么吗？",
         "我喜欢什么风格？",
         "生成架构图",
-        "谢谢"
+        "谢谢",
     ]
-    
+
     for msg in conversations:
         print(f"\n👤 {msg}")
         result = agent.process(msg)
         print(f"🤖 {result['response']}")
-        print(f"   [记忆: 短期={result['memory']['short']}, 长期={result['memory']['long']}, 名字={result['memory']['name']}]")
-    
+        print(
+            f"   [记忆: 短期={result['memory']['short']}, 长期={result['memory']['long']}, 名字={result['memory']['name']}]"
+        )
+
     print("\n" + "=" * 60)
     print("📊 最终状态:")
     print(json.dumps(agent.get_status(), indent=2, ensure_ascii=False))

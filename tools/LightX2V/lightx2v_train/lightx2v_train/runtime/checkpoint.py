@@ -1,6 +1,7 @@
-from lib.smart_config import smart_config
 import os
 import shutil
+
+from lib.smart_config import smart_config
 
 
 def prune_checkpoints(output_dir, total_limit):
@@ -9,7 +10,9 @@ def prune_checkpoints(output_dir, total_limit):
     if not os.path.exists(output_dir):
         return
 
-    checkpoints = [name for name in os.listdir(output_dir) if name.startswith("checkpoint-")]
+    checkpoints = [
+        name for name in os.listdir(output_dir) if name.startswith("checkpoint-")
+    ]
     checkpoints = sorted(checkpoints, key=lambda name: int(name.split("-")[-1]))
     if len(checkpoints) < total_limit:
         return
@@ -22,7 +25,9 @@ def find_latest_checkpoint(output_dir):
     if not os.path.exists(output_dir):
         return None, 0
 
-    checkpoints = [name for name in os.listdir(output_dir) if name.startswith("checkpoint-")]
+    checkpoints = [
+        name for name in os.listdir(output_dir) if name.startswith("checkpoint-")
+    ]
     if not checkpoints:
         return None, 0
 

@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import os
 import signal
 import sys
@@ -6,6 +5,8 @@ from pathlib import Path
 
 import uvicorn
 from loguru import logger
+
+from lib.smart_config import smart_config
 
 from .api import ApiServer
 from .config import server_config
@@ -71,8 +72,12 @@ def run_server(args):
 
             app = api_server.get_app()
 
-            logger.info(f"Starting FastAPI server on {server_config.host}:{server_config.port}")
-            uvicorn.run(app, host=server_config.host, port=server_config.port, log_level="info")
+            logger.info(
+                f"Starting FastAPI server on {server_config.host}:{server_config.port}"
+            )
+            uvicorn.run(
+                app, host=server_config.host, port=server_config.port, log_level="info"
+            )
         else:
             logger.info(f"Rank {rank}: Starting worker loop")
             import asyncio

@@ -3,43 +3,42 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
-
-from core.lib.unified_config import unified_config
 
 from core.lib.unified_config import unified_config
 
 """Three.js 知识库 - RAG 检索"""
 
-import json
 import hashlib
+import json
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any, Dict, List
+
 
 class ThreeJSKnowledgeBase:
     """Three.js 知识库管理器"""
-    
+
     def __init__(self):
-        self.knowledge_dir = Path(__file__).parent.parent / 'knowledge' / 'threejs'
+        self.knowledge_dir = Path(__file__).parent.parent / "knowledge" / "threejs"
         self.knowledge_dir.mkdir(parents=True, exist_ok=True)
         self._load_index()
         self._init_knowledge()
-    
+
     def _load_index(self):
         """加载知识索引"""
-        index_file = self.knowledge_dir / 'index.json'
+        index_file = self.knowledge_dir / "index.json"
         if index_file.exists():
-            with open(index_file, 'r') as f:
+            with open(index_file, "r") as f:
                 self.index = json.load(f)
         else:
             self.index = {}
-    
+
     def _save_index(self):
-        index_file = self.knowledge_dir / 'index.json'
-        with open(index_file, 'w') as f:
+        index_file = self.knowledge_dir / "index.json"
+        with open(index_file, "w") as f:
             json.dump(self.index, f, indent=2)
-    
+
     def _init_knowledge(self):
         """初始化 Three.js 知识"""
         knowledge_items = [
@@ -59,7 +58,7 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
                 """,
-                "tags": ["基础", "scene", "camera", "renderer"]
+                "tags": ["基础", "scene", "camera", "renderer"],
             },
             {
                 "topic": "环抱座舱 - 穹顶弧形",
@@ -82,7 +81,7 @@ document.body.appendChild(renderer.domElement);
     background: radial-gradient(ellipse, rgba(0,243,255,0.06), transparent);
 }
                 """,
-                "tags": ["座舱", "穹顶", "弧形"]
+                "tags": ["座舱", "穹顶", "弧形"],
             },
             {
                 "topic": "环抱座舱 - 左右舱壁",
@@ -94,7 +93,7 @@ document.body.appendChild(renderer.domElement);
 配合渐变增强纵深感：
 background: linear-gradient(90deg, rgba(0,0,0,0.8), rgba(0,243,255,0.05));
                 """,
-                "tags": ["座舱", "舱壁", "3D变换"]
+                "tags": ["座舱", "舱壁", "3D变换"],
             },
             {
                 "topic": "环抱座舱 - 中央曲面巨幕",
@@ -114,7 +113,7 @@ background: linear-gradient(90deg, rgba(0,0,0,0.8), rgba(0,243,255,0.05));
     perspective-origin: 50% 35%;
 }
                 """,
-                "tags": ["座舱", "巨幕", "曲面"]
+                "tags": ["座舱", "巨幕", "曲面"],
             },
             {
                 "topic": "全息扫描线动画",
@@ -135,7 +134,7 @@ background: linear-gradient(90deg, rgba(0,0,0,0.8), rgba(0,243,255,0.05));
     100% { transform: translateY(100%); }
 }
                 """,
-                "tags": ["动画", "全息", "扫描线"]
+                "tags": ["动画", "全息", "扫描线"],
             },
             {
                 "topic": "Three.js 环抱座舱完整示例",
@@ -150,18 +149,18 @@ Three.js 实现环抱座舱的完整思路：
 
 相机位置：camera.position.set(0, 2, 5); camera.lookAt(0, 0, 0);
                 """,
-                "tags": ["three.js", "完整示例", "座舱"]
-            }
+                "tags": ["three.js", "完整示例", "座舱"],
+            },
         ]
 
         for item in knowledge_items:
-            doc_id = hashlib.md5(item['topic'].encode()).hexdigest()[:16]
+            doc_id = hashlib.md5(item["topic"].encode()).hexdigest()[:16]
             if doc_id not in self.index:
                 self.index[doc_id] = item
                 print(f"📚 加载知识: {item['topic']}")
 
         self._save_index()
-    
+
     def retrieve(self, query: str, top_k: int = 3) -> List[Dict]:
         """检索相关知识"""
         query_lower = query.lower()
@@ -171,12 +170,12 @@ Three.js 实现环抱座舱的完整思路：
             score = 0
             # 关键词匹配
             for word in query_lower.split():
-                if word in doc['topic'].lower():
+                if word in doc["topic"].lower():
                     score += 5
-                if word in doc['content'].lower():
+                if word in doc["content"].lower():
                     score += 2
-                if doc.get('tags'):
-                    for tag in doc['tags']:
+                if doc.get("tags"):
+                    for tag in doc["tags"]:
                         if word in tag.lower():
                             score += 3
 
@@ -185,9 +184,10 @@ Three.js 实现环抱座舱的完整思路：
 
         scored.sort(key=lambda x: x[0], reverse=True)
         return scored[:top_k]
-    
+
     def get_all(self) -> List[Dict]:
         return list(self.index.values())
+
 
 # 全局实例
 threejs_kb = ThreeJSKnowledgeBase()

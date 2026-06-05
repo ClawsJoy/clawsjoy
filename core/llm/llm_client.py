@@ -2,7 +2,8 @@
 """Llm Client - Llm Client 模块"""
 
 import requests
-from core.lib.config_helper import get_llm_model, get_llm_endpoint, get_timeout
+
+from core.lib.config_helper import get_llm_endpoint, get_llm_model, get_timeout
 
 
 class LLMClient:
@@ -15,7 +16,7 @@ class LLMClient:
             response = requests.post(
                 self.url,
                 json={"model": self.model, "prompt": prompt, "stream": False},
-                timeout=get_timeout("llm")
+                timeout=get_timeout("llm"),
             )
             if response.status_code == 200:
                 return response.json().get("response", "无响应内容")

@@ -1,8 +1,9 @@
-from lib.smart_config import smart_config
 import os
 
 import torch
 from PIL import Image
+
+from lib.smart_config import smart_config
 
 from .autoencoder import load_ae
 
@@ -18,12 +19,27 @@ class BagelVae:
         latents = latents.split((decode_info["packed_seqlens"] - 2).tolist())
 
         H, W = decode_info["image_shape"]
-        h, w = H // decode_info["latent_downsample"], W // decode_info["latent_downsample"]
+        h, w = (
+            H // decode_info["latent_downsample"],
+            W // decode_info["latent_downsample"],
+        )
 
         latents = latents[0]
-        latents = latents.reshape(1, h, w, decode_info["latent_patch_size"], decode_info["latent_patch_size"], decode_info["latent_channel"])
+        latents = latents.reshape(
+            1,
+            h,
+            w,
+            decode_info["latent_patch_size"],
+            decode_info["latent_patch_size"],
+            decode_info["latent_channel"],
+        )
         latents = torch.einsum("nhwpqc->nchpwq", latents)
-        latents = latents.reshape(1, decode_info["latent_channel"], h * decode_info["latent_patch_size"], w * decode_info["latent_patch_size"])
+        latents = latents.reshape(
+            1,
+            decode_info["latent_channel"],
+            h * decode_info["latent_patch_size"],
+            w * decode_info["latent_patch_size"],
+        )
 
         image = self.vae_model.decode(latents)
         image = (image * 0.5 + 0.5).clamp(0, 1)[0].permute(1, 2, 0) * 255

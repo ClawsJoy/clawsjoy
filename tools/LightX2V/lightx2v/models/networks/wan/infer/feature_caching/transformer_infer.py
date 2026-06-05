@@ -1,14 +1,18 @@
-from lib.smart_config import smart_config
 import gc
 import json
 
 import numpy as np
 import torch
 import torch.nn.functional as F
-
-from lightx2v.common.transformer_infer.transformer_infer import BaseTaylorCachingTransformerInfer
-from lightx2v.models.networks.wan.infer.offload.transformer_infer import WanOffloadTransformerInfer
+from lightx2v.common.transformer_infer.transformer_infer import (
+    BaseTaylorCachingTransformerInfer,
+)
+from lightx2v.models.networks.wan.infer.offload.transformer_infer import (
+    WanOffloadTransformerInfer,
+)
 from lightx2v_platform.base.global_var import AI_DEVICE
+
+from lib.smart_config import smart_config
 
 
 class WanTransformerInferCaching(WanOffloadTransformerInfer):
@@ -53,13 +57,23 @@ class WanTransformerInferTeaCaching(WanTransformerInferCaching):
         # 2. L1 calculate
         should_calc = False
         if self.scheduler.infer_condition:
-            if self.scheduler.step_index < self.ret_steps or self.scheduler.step_index >= self.cutoff_steps:
+            if (
+                self.scheduler.step_index < self.ret_steps
+                or self.scheduler.step_index >= self.cutoff_steps
+            ):
                 should_calc = True
                 self.accumulated_rel_l1_distance_even = 0
             else:
                 rescale_func = np.poly1d(self.coefficients)
                 self.accumulated_rel_l1_distance_even += rescale_func(
-                    ((modulated_inp - self.previous_e0_even.to(AI_DEVICE)).abs().mean() / self.previous_e0_even.to(AI_DEVICE).abs().mean()).cpu().item()
+                    (
+                        (modulated_inp - self.previous_e0_even.to(AI_DEVICE))
+                        .abs()
+                        .mean()
+                        / self.previous_e0_even.to(AI_DEVICE).abs().mean()
+                    )
+                    .cpu()
+                    .item()
                 )
                 if self.accumulated_rel_l1_distance_even < self.teacache_thresh:
                     should_calc = False
@@ -71,12 +85,24 @@ class WanTransformerInferTeaCaching(WanTransformerInferCaching):
                 self.previous_e0_even = self.previous_e0_even.cpu()
 
         else:
-            if self.scheduler.step_index < self.ret_steps or self.scheduler.step_index >= self.cutoff_steps:
+            if (
+                self.scheduler.step_index < self.ret_steps
+                or self.scheduler.step_index >= self.cutoff_steps
+            ):
                 should_calc = True
                 self.accumulated_rel_l1_distance_odd = 0
             else:
                 rescale_func = np.poly1d(self.coefficients)
-                self.accumulated_rel_l1_distance_odd += rescale_func(((modulated_inp - self.previous_e0_odd.to(AI_DEVICE)).abs().mean() / self.previous_e0_odd.to(AI_DEVICE).abs().mean()).cpu().item())
+                self.accumulated_rel_l1_distance_odd += rescale_func(
+                    (
+                        (modulated_inp - self.previous_e0_odd.to(AI_DEVICE))
+                        .abs()
+                        .mean()
+                        / self.previous_e0_odd.to(AI_DEVICE).abs().mean()
+                    )
+                    .cpu()
+                    .item()
+                )
                 if self.accumulated_rel_l1_distance_odd < self.teacache_thresh:
                     should_calc = False
                 else:
@@ -105,7 +131,9 @@ class WanTransformerInferTeaCaching(WanTransformerInferCaching):
             index = self.scheduler.step_index
             caching_records = self.scheduler.caching_records
             if index <= self.scheduler.infer_steps - 1:
-                should_calc = self.calculate_should_calc(pre_infer_out.embed, pre_infer_out.embed0)
+                should_calc = self.calculate_should_calc(
+                    pre_infer_out.embed, pre_infer_out.embed0
+                )
                 self.scheduler.caching_records[index] = should_calc
 
             if caching_records[index] or self.must_calc(index):
@@ -117,7 +145,9 @@ class WanTransformerInferTeaCaching(WanTransformerInferCaching):
             index = self.scheduler.step_index
             caching_records_2 = self.scheduler.caching_records_2
             if index <= self.scheduler.infer_steps - 1:
-                should_calc = self.calculate_should_calc(pre_infer_out.embed, pre_infer_out.embed0)
+                should_calc = self.calculate_should_calc(
+                    pre_infer_out.embed, pre_infer_out.embed0
+                )
                 self.scheduler.caching_records_2[index] = should_calc
 
             if caching_records_2[index] or self.must_calc(index):
@@ -176,7 +206,9 @@ class WanTransformerInferTeaCaching(WanTransformerInferCaching):
         torch.cuda.empty_cache()
 
 
-class WanTransformerInferTaylorCaching(WanTransformerInferCaching, BaseTaylorCachingTransformerInfer):
+class WanTransformerInferTaylorCaching(
+    WanTransformerInferCaching, BaseTaylorCachingTransformerInfer
+):
     def __init__(self, config):
         super().__init__(config)
 
@@ -189,13 +221,19 @@ class WanTransformerInferTaylorCaching(WanTransformerInferCaching, BaseTaylorCac
         if self.infer_conditional:
             current_step = self.scheduler.step_index
             last_calc_step = current_step - 1
-            while last_calc_step >= 0 and not self.scheduler.caching_records[last_calc_step]:
+            while (
+                last_calc_step >= 0
+                and not self.scheduler.caching_records[last_calc_step]
+            ):
                 last_calc_step -= 1
             step_diff = current_step - last_calc_step
         else:
             current_step = self.scheduler.step_index
             last_calc_step = current_step - 1
-            while last_calc_step >= 0 and not self.scheduler.caching_records_2[last_calc_step]:
+            while (
+                last_calc_step >= 0
+                and not self.scheduler.caching_records_2[last_calc_step]
+            ):
                 last_calc_step -= 1
             step_diff = current_step - last_calc_step
 
@@ -207,58 +245,116 @@ class WanTransformerInferTaylorCaching(WanTransformerInferCaching, BaseTaylorCac
             caching_records = self.scheduler.caching_records
 
             if caching_records[index] or self.must_calc(index):
-                x = self.infer_calculating(weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context)
+                x = self.infer_calculating(
+                    weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context
+                )
             else:
-                x = self.infer_using_cache(weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context)
+                x = self.infer_using_cache(
+                    weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context
+                )
 
         else:
             index = self.scheduler.step_index
             caching_records_2 = self.scheduler.caching_records_2
 
             if caching_records_2[index] or self.must_calc(index):
-                x = self.infer_calculating(weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context)
+                x = self.infer_calculating(
+                    weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context
+                )
             else:
-                x = self.infer_using_cache(weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context)
+                x = self.infer_using_cache(
+                    weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context
+                )
 
         if self.config["enable_cfg"]:
             self.switch_status()
 
         return x
 
-    def infer_calculating(self, weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context):
+    def infer_calculating(
+        self, weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context
+    ):
         for block_idx in range(self.blocks_num):
-            shift_msa, scale_msa, gate_msa, c_shift_msa, c_scale_msa, c_gate_msa = self.infer_modulation(weights.blocks[block_idx].compute_phases[0], embed0)
+            shift_msa, scale_msa, gate_msa, c_shift_msa, c_scale_msa, c_gate_msa = (
+                self.infer_modulation(
+                    weights.blocks[block_idx].compute_phases[0], embed0
+                )
+            )
 
-            y_out = self.infer_self_attn(weights.blocks[block_idx].compute_phases[1], grid_sizes, x, seq_lens, freqs, shift_msa, scale_msa)
+            y_out = self.infer_self_attn(
+                weights.blocks[block_idx].compute_phases[1],
+                grid_sizes,
+                x,
+                seq_lens,
+                freqs,
+                shift_msa,
+                scale_msa,
+            )
             if self.infer_conditional:
-                self.derivative_approximation(self.blocks_cache_even[block_idx], "self_attn_out", y_out)
+                self.derivative_approximation(
+                    self.blocks_cache_even[block_idx], "self_attn_out", y_out
+                )
             else:
-                self.derivative_approximation(self.blocks_cache_odd[block_idx], "self_attn_out", y_out)
+                self.derivative_approximation(
+                    self.blocks_cache_odd[block_idx], "self_attn_out", y_out
+                )
 
-            x, attn_out = self.infer_cross_attn(weights.blocks[block_idx].compute_phases[2], x, context, y_out, gate_msa)
+            x, attn_out = self.infer_cross_attn(
+                weights.blocks[block_idx].compute_phases[2], x, context, y_out, gate_msa
+            )
             if self.infer_conditional:
-                self.derivative_approximation(self.blocks_cache_even[block_idx], "cross_attn_out", attn_out)
+                self.derivative_approximation(
+                    self.blocks_cache_even[block_idx], "cross_attn_out", attn_out
+                )
             else:
-                self.derivative_approximation(self.blocks_cache_odd[block_idx], "cross_attn_out", attn_out)
+                self.derivative_approximation(
+                    self.blocks_cache_odd[block_idx], "cross_attn_out", attn_out
+                )
 
-            y_out = self.infer_ffn(weights.blocks[block_idx].compute_phases[3], x, attn_out, c_shift_msa, c_scale_msa)
+            y_out = self.infer_ffn(
+                weights.blocks[block_idx].compute_phases[3],
+                x,
+                attn_out,
+                c_shift_msa,
+                c_scale_msa,
+            )
             if self.infer_conditional:
-                self.derivative_approximation(self.blocks_cache_even[block_idx], "ffn_out", y_out)
+                self.derivative_approximation(
+                    self.blocks_cache_even[block_idx], "ffn_out", y_out
+                )
             else:
-                self.derivative_approximation(self.blocks_cache_odd[block_idx], "ffn_out", y_out)
+                self.derivative_approximation(
+                    self.blocks_cache_odd[block_idx], "ffn_out", y_out
+                )
 
             x = self.post_process(x, y_out, c_gate_msa)
         return x
 
-    def infer_using_cache(self, weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context):
+    def infer_using_cache(
+        self, weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context
+    ):
         for block_idx in range(self.blocks_num):
-            x = self.infer_block(weights.blocks[block_idx], grid_sizes, embed, x, embed0, seq_lens, freqs, context, block_idx)
+            x = self.infer_block(
+                weights.blocks[block_idx],
+                grid_sizes,
+                embed,
+                x,
+                embed0,
+                seq_lens,
+                freqs,
+                context,
+                block_idx,
+            )
         return x
 
     # 1. taylor using caching
-    def infer_block(self, weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context, i):
+    def infer_block(
+        self, weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context, i
+    ):
         # 1. shift, scale, gate
-        _, _, gate_msa, _, _, c_gate_msa = self.infer_modulation(weights.compute_phases[0], embed0)
+        _, _, gate_msa, _, _, c_gate_msa = self.infer_modulation(
+            weights.compute_phases[0], embed0
+        )
 
         # 2. residual and taylor
         if self.infer_conditional:
@@ -330,27 +426,37 @@ class WanTransformerInferAdaCaching(WanTransformerInferCaching):
             caching_records = self.scheduler.caching_records
 
             if caching_records[index] or self.must_calc(index):
-                x = self.infer_calculating(weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context)
+                x = self.infer_calculating(
+                    weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context
+                )
 
                 # 1. calculate the skipped step length
                 if index <= self.scheduler.infer_steps - 2:
-                    self.args_even.skipped_step_length = self.calculate_skip_step_length()
+                    self.args_even.skipped_step_length = (
+                        self.calculate_skip_step_length()
+                    )
                     for i in range(1, self.args_even.skipped_step_length):
                         if (index + i) <= self.scheduler.infer_steps - 1:
                             self.scheduler.caching_records[index + i] = False
             else:
-                x = self.infer_using_cache(weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context)
+                x = self.infer_using_cache(
+                    weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context
+                )
 
         else:
             index = self.scheduler.step_index
             caching_records = self.scheduler.caching_records_2
 
             if caching_records[index] or self.must_calc(index):
-                x = self.infer_calculating(weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context)
+                x = self.infer_calculating(
+                    weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context
+                )
 
                 # 1. calculate the skipped step length
                 if index <= self.scheduler.infer_steps - 2:
-                    self.args_odd.skipped_step_length = self.calculate_skip_step_length()
+                    self.args_odd.skipped_step_length = (
+                        self.calculate_skip_step_length()
+                    )
                     for i in range(1, self.args_odd.skipped_step_length):
                         if (index + i) <= self.scheduler.infer_steps - 1:
                             self.scheduler.caching_records_2[index + i] = False
@@ -362,21 +468,43 @@ class WanTransformerInferAdaCaching(WanTransformerInferCaching):
 
         return x
 
-    def infer_calculating(self, weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context):
+    def infer_calculating(
+        self, weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context
+    ):
         ori_x = x.clone()
 
         for block_idx in range(self.blocks_num):
-            shift_msa, scale_msa, gate_msa, c_shift_msa, c_scale_msa, c_gate_msa = self.infer_modulation(weights.blocks[block_idx].compute_phases[0], embed0)
+            shift_msa, scale_msa, gate_msa, c_shift_msa, c_scale_msa, c_gate_msa = (
+                self.infer_modulation(
+                    weights.blocks[block_idx].compute_phases[0], embed0
+                )
+            )
 
-            y_out = self.infer_self_attn(weights.blocks[block_idx].compute_phases[1], grid_sizes, x, seq_lens, freqs, shift_msa, scale_msa)
+            y_out = self.infer_self_attn(
+                weights.blocks[block_idx].compute_phases[1],
+                grid_sizes,
+                x,
+                seq_lens,
+                freqs,
+                shift_msa,
+                scale_msa,
+            )
             if block_idx == self.decisive_double_block_id:
                 if self.infer_conditional:
                     self.args_even.now_residual_tiny = y_out * gate_msa.squeeze(0)
                 else:
                     self.args_odd.now_residual_tiny = y_out * gate_msa.squeeze(0)
 
-            x, attn_out = self.infer_cross_attn(weights.blocks[block_idx].compute_phases[2], x, context, y_out, gate_msa)
-            y_out = self.infer_ffn(weights.blocks[block_idx].compute_phases[3], x, attn_out, c_shift_msa, c_scale_msa)
+            x, attn_out = self.infer_cross_attn(
+                weights.blocks[block_idx].compute_phases[2], x, context, y_out, gate_msa
+            )
+            y_out = self.infer_ffn(
+                weights.blocks[block_idx].compute_phases[3],
+                x,
+                attn_out,
+                c_shift_msa,
+                c_scale_msa,
+            )
             x = self.post_process(x, y_out, c_gate_msa)
 
         if self.infer_conditional:
@@ -401,26 +529,46 @@ class WanTransformerInferAdaCaching(WanTransformerInferCaching):
                 cache = self.args_even.previous_residual_tiny
                 res = self.args_even.now_residual_tiny
                 norm_ord = self.args_even.norm_ord
-                cache_diff = (cache - res).norm(dim=(0, 1), p=norm_ord) / cache.norm(dim=(0, 1), p=norm_ord)
+                cache_diff = (cache - res).norm(dim=(0, 1), p=norm_ord) / cache.norm(
+                    dim=(0, 1), p=norm_ord
+                )
                 cache_diff = cache_diff / self.args_even.skipped_step_length
 
-                if self.args_even.moreg_steps[0] <= self.scheduler.step_index <= self.args_even.moreg_steps[1]:
+                if (
+                    self.args_even.moreg_steps[0]
+                    <= self.scheduler.step_index
+                    <= self.args_even.moreg_steps[1]
+                ):
                     moreg = 0
                     for i in self.args_even.moreg_strides:
-                        moreg_i = (res[i * self.args_even.spatial_dim :, :] - res[: -i * self.args_even.spatial_dim, :]).norm(p=norm_ord)
-                        moreg_i /= res[i * self.args_even.spatial_dim :, :].norm(p=norm_ord) + res[: -i * self.args_even.spatial_dim, :].norm(p=norm_ord)
+                        moreg_i = (
+                            res[i * self.args_even.spatial_dim :, :]
+                            - res[: -i * self.args_even.spatial_dim, :]
+                        ).norm(p=norm_ord)
+                        moreg_i /= res[i * self.args_even.spatial_dim :, :].norm(
+                            p=norm_ord
+                        ) + res[: -i * self.args_even.spatial_dim, :].norm(p=norm_ord)
                         moreg += moreg_i
                     moreg = moreg / len(self.args_even.moreg_strides)
-                    moreg = ((1 / self.args_even.moreg_hyp[0] * moreg) ** self.args_even.moreg_hyp[1]) / self.args_even.moreg_hyp[2]
+                    moreg = (
+                        (1 / self.args_even.moreg_hyp[0] * moreg)
+                        ** self.args_even.moreg_hyp[1]
+                    ) / self.args_even.moreg_hyp[2]
                 else:
                     moreg = 1.0
 
-                mograd = self.args_even.mograd_mul * (moreg - self.args_even.previous_moreg) / self.args_even.skipped_step_length
+                mograd = (
+                    self.args_even.mograd_mul
+                    * (moreg - self.args_even.previous_moreg)
+                    / self.args_even.skipped_step_length
+                )
                 self.args_even.previous_moreg = moreg
                 moreg = moreg + abs(mograd)
                 cache_diff = cache_diff * moreg
 
-                metric_thres, cache_rates = list(self.codebook.keys()), list(self.codebook.values())
+                metric_thres, cache_rates = list(self.codebook.keys()), list(
+                    self.codebook.values()
+                )
                 if cache_diff < metric_thres[0]:
                     new_rate = cache_rates[0]
                 elif cache_diff < metric_thres[1]:
@@ -445,26 +593,46 @@ class WanTransformerInferAdaCaching(WanTransformerInferCaching):
                 cache = self.args_odd.previous_residual_tiny
                 res = self.args_odd.now_residual_tiny
                 norm_ord = self.args_odd.norm_ord
-                cache_diff = (cache - res).norm(dim=(0, 1), p=norm_ord) / cache.norm(dim=(0, 1), p=norm_ord)
+                cache_diff = (cache - res).norm(dim=(0, 1), p=norm_ord) / cache.norm(
+                    dim=(0, 1), p=norm_ord
+                )
                 cache_diff = cache_diff / self.args_odd.skipped_step_length
 
-                if self.args_odd.moreg_steps[0] <= self.scheduler.step_index <= self.args_odd.moreg_steps[1]:
+                if (
+                    self.args_odd.moreg_steps[0]
+                    <= self.scheduler.step_index
+                    <= self.args_odd.moreg_steps[1]
+                ):
                     moreg = 0
                     for i in self.args_odd.moreg_strides:
-                        moreg_i = (res[i * self.args_odd.spatial_dim :, :] - res[: -i * self.args_odd.spatial_dim, :]).norm(p=norm_ord)
-                        moreg_i /= res[i * self.args_odd.spatial_dim :, :].norm(p=norm_ord) + res[: -i * self.args_odd.spatial_dim, :].norm(p=norm_ord)
+                        moreg_i = (
+                            res[i * self.args_odd.spatial_dim :, :]
+                            - res[: -i * self.args_odd.spatial_dim, :]
+                        ).norm(p=norm_ord)
+                        moreg_i /= res[i * self.args_odd.spatial_dim :, :].norm(
+                            p=norm_ord
+                        ) + res[: -i * self.args_odd.spatial_dim, :].norm(p=norm_ord)
                         moreg += moreg_i
                     moreg = moreg / len(self.args_odd.moreg_strides)
-                    moreg = ((1 / self.args_odd.moreg_hyp[0] * moreg) ** self.args_odd.moreg_hyp[1]) / self.args_odd.moreg_hyp[2]
+                    moreg = (
+                        (1 / self.args_odd.moreg_hyp[0] * moreg)
+                        ** self.args_odd.moreg_hyp[1]
+                    ) / self.args_odd.moreg_hyp[2]
                 else:
                     moreg = 1.0
 
-                mograd = self.args_odd.mograd_mul * (moreg - self.args_odd.previous_moreg) / self.args_odd.skipped_step_length
+                mograd = (
+                    self.args_odd.mograd_mul
+                    * (moreg - self.args_odd.previous_moreg)
+                    / self.args_odd.skipped_step_length
+                )
                 self.args_odd.previous_moreg = moreg
                 moreg = moreg + abs(mograd)
                 cache_diff = cache_diff * moreg
 
-                metric_thres, cache_rates = list(self.codebook.keys()), list(self.codebook.values())
+                metric_thres, cache_rates = list(self.codebook.keys()), list(
+                    self.codebook.values()
+                )
                 if cache_diff < metric_thres[0]:
                     new_rate = cache_rates[0]
                 elif cache_diff < metric_thres[1]:
@@ -485,14 +653,18 @@ class WanTransformerInferAdaCaching(WanTransformerInferCaching):
         if self.args_even.previous_residual is not None:
             self.args_even.previous_residual = self.args_even.previous_residual.cpu()
         if self.args_even.previous_residual_tiny is not None:
-            self.args_even.previous_residual_tiny = self.args_even.previous_residual_tiny.cpu()
+            self.args_even.previous_residual_tiny = (
+                self.args_even.previous_residual_tiny.cpu()
+            )
         if self.args_even.now_residual_tiny is not None:
             self.args_even.now_residual_tiny = self.args_even.now_residual_tiny.cpu()
 
         if self.args_odd.previous_residual is not None:
             self.args_odd.previous_residual = self.args_odd.previous_residual.cpu()
         if self.args_odd.previous_residual_tiny is not None:
-            self.args_odd.previous_residual_tiny = self.args_odd.previous_residual_tiny.cpu()
+            self.args_odd.previous_residual_tiny = (
+                self.args_odd.previous_residual_tiny.cpu()
+            )
         if self.args_odd.now_residual_tiny is not None:
             self.args_odd.now_residual_tiny = self.args_odd.now_residual_tiny.cpu()
 
@@ -519,13 +691,18 @@ class AdaArgs:
         # Moreg related attributes
         self.previous_moreg = 1.0
         self.moreg_strides = [1]
-        self.moreg_steps = [int(0.1 * config["infer_steps"]), int(0.9 * config["infer_steps"])]
+        self.moreg_steps = [
+            int(0.1 * config["infer_steps"]),
+            int(0.9 * config["infer_steps"]),
+        ]
         self.moreg_hyp = [0.385, 8, 1, 2]
         self.mograd_mul = 10
         self.spatial_dim = 1536
 
 
-class WanTransformerInferCustomCaching(WanTransformerInferCaching, BaseTaylorCachingTransformerInfer):
+class WanTransformerInferCustomCaching(
+    WanTransformerInferCaching, BaseTaylorCachingTransformerInfer
+):
     def __init__(self, config):
         super().__init__(config)
         self.cnt = 0
@@ -554,20 +731,28 @@ class WanTransformerInferCustomCaching(WanTransformerInferCaching, BaseTaylorCac
         if self.infer_conditional:
             current_step = self.scheduler.step_index
             last_calc_step = current_step - 1
-            while last_calc_step >= 0 and not self.scheduler.caching_records[last_calc_step]:
+            while (
+                last_calc_step >= 0
+                and not self.scheduler.caching_records[last_calc_step]
+            ):
                 last_calc_step -= 1
             step_diff = current_step - last_calc_step
         else:
             current_step = self.scheduler.step_index
             last_calc_step = current_step - 1
-            while last_calc_step >= 0 and not self.scheduler.caching_records_2[last_calc_step]:
+            while (
+                last_calc_step >= 0
+                and not self.scheduler.caching_records_2[last_calc_step]
+            ):
                 last_calc_step -= 1
             step_diff = current_step - last_calc_step
 
         return step_diff
 
     # calculate should_calc
-    def calculate_should_calc(self, weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context):
+    def calculate_should_calc(
+        self, weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context
+    ):
         # 1. timestep embedding
         modulated_inp = embed0 if self.use_ret_steps else embed
 
@@ -579,7 +764,14 @@ class WanTransformerInferCustomCaching(WanTransformerInferCaching, BaseTaylorCac
                 self.accumulated_rel_l1_distance_even = 0
             else:
                 rescale_func = np.poly1d(self.coefficients)
-                self.accumulated_rel_l1_distance_even += rescale_func(((modulated_inp - self.previous_e0_even).abs().mean() / self.previous_e0_even.abs().mean()).cpu().item())
+                self.accumulated_rel_l1_distance_even += rescale_func(
+                    (
+                        (modulated_inp - self.previous_e0_even).abs().mean()
+                        / self.previous_e0_even.abs().mean()
+                    )
+                    .cpu()
+                    .item()
+                )
                 if self.accumulated_rel_l1_distance_even < self.teacache_thresh:
                     should_calc = False
                 else:
@@ -593,7 +785,14 @@ class WanTransformerInferCustomCaching(WanTransformerInferCaching, BaseTaylorCac
                 self.accumulated_rel_l1_distance_odd = 0
             else:
                 rescale_func = np.poly1d(self.coefficients)
-                self.accumulated_rel_l1_distance_odd += rescale_func(((modulated_inp - self.previous_e0_odd).abs().mean() / self.previous_e0_odd.abs().mean()).cpu().item())
+                self.accumulated_rel_l1_distance_odd += rescale_func(
+                    (
+                        (modulated_inp - self.previous_e0_odd).abs().mean()
+                        / self.previous_e0_odd.abs().mean()
+                    )
+                    .cpu()
+                    .item()
+                )
                 if self.accumulated_rel_l1_distance_odd < self.teacache_thresh:
                     should_calc = False
                 else:
@@ -609,11 +808,15 @@ class WanTransformerInferCustomCaching(WanTransformerInferCaching, BaseTaylorCac
             index = self.scheduler.step_index
             caching_records = self.scheduler.caching_records
             if index <= self.scheduler.infer_steps - 1:
-                should_calc = self.calculate_should_calc(weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context)
+                should_calc = self.calculate_should_calc(
+                    weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context
+                )
                 self.scheduler.caching_records[index] = should_calc
 
             if caching_records[index] or self.must_calc(index):
-                x = self.infer_calculating(weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context)
+                x = self.infer_calculating(
+                    weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context
+                )
             else:
                 x = self.infer_using_cache(x)
 
@@ -621,11 +824,15 @@ class WanTransformerInferCustomCaching(WanTransformerInferCaching, BaseTaylorCac
             index = self.scheduler.step_index
             caching_records_2 = self.scheduler.caching_records_2
             if index <= self.scheduler.infer_steps - 1:
-                should_calc = self.calculate_should_calc(weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context)
+                should_calc = self.calculate_should_calc(
+                    weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context
+                )
                 self.scheduler.caching_records_2[index] = should_calc
 
             if caching_records_2[index] or self.must_calc(index):
-                x = self.infer_calculating(weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context)
+                x = self.infer_calculating(
+                    weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context
+                )
             else:
                 x = self.infer_using_cache(x)
 
@@ -636,23 +843,49 @@ class WanTransformerInferCustomCaching(WanTransformerInferCaching, BaseTaylorCac
 
         return x
 
-    def infer_calculating(self, weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context):
+    def infer_calculating(
+        self, weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context
+    ):
         ori_x = x.clone()
 
         for block_idx in range(self.blocks_num):
-            shift_msa, scale_msa, gate_msa, c_shift_msa, c_scale_msa, c_gate_msa = self.infer_modulation(weights.blocks[block_idx].compute_phases[0], embed0)
+            shift_msa, scale_msa, gate_msa, c_shift_msa, c_scale_msa, c_gate_msa = (
+                self.infer_modulation(
+                    weights.blocks[block_idx].compute_phases[0], embed0
+                )
+            )
 
-            y_out = self.infer_self_attn(weights.blocks[block_idx].compute_phases[1], grid_sizes, x, seq_lens, freqs, shift_msa, scale_msa)
-            x, attn_out = self.infer_cross_attn(weights.blocks[block_idx].compute_phases[2], x, context, y_out, gate_msa)
-            y_out = self.infer_ffn(weights.blocks[block_idx].compute_phases[3], x, attn_out, c_shift_msa, c_scale_msa)
+            y_out = self.infer_self_attn(
+                weights.blocks[block_idx].compute_phases[1],
+                grid_sizes,
+                x,
+                seq_lens,
+                freqs,
+                shift_msa,
+                scale_msa,
+            )
+            x, attn_out = self.infer_cross_attn(
+                weights.blocks[block_idx].compute_phases[2], x, context, y_out, gate_msa
+            )
+            y_out = self.infer_ffn(
+                weights.blocks[block_idx].compute_phases[3],
+                x,
+                attn_out,
+                c_shift_msa,
+                c_scale_msa,
+            )
             x = self.post_process(x, y_out, c_gate_msa)
 
         if self.infer_conditional:
             self.previous_residual_even = x - ori_x
-            self.derivative_approximation(self.cache_even, "previous_residual", self.previous_residual_even)
+            self.derivative_approximation(
+                self.cache_even, "previous_residual", self.previous_residual_even
+            )
         else:
             self.previous_residual_odd = x - ori_x
-            self.derivative_approximation(self.cache_odd, "previous_residual", self.previous_residual_odd)
+            self.derivative_approximation(
+                self.cache_odd, "previous_residual", self.previous_residual_odd
+            )
         return x
 
     def infer_using_cache(self, x):
@@ -673,7 +906,9 @@ class WanTransformerInferCustomCaching(WanTransformerInferCaching, BaseTaylorCac
             self.previous_e0_odd = self.previous_e0_odd.cpu()
 
         for key in self.cache_even:
-            if self.cache_even[key] is not None and hasattr(self.cache_even[key], "cpu"):
+            if self.cache_even[key] is not None and hasattr(
+                self.cache_even[key], "cpu"
+            ):
                 self.cache_even[key] = self.cache_even[key].cpu()
         self.cache_even.clear()
 
@@ -703,7 +938,9 @@ class WanTransformerInferFirstBlock(WanTransformerInferCaching):
 
     def infer(self, weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context):
         ori_x = x.clone()
-        x = super().infer_block(weights.blocks[0], grid_sizes, embed, x, embed0, seq_lens, freqs, context)
+        x = super().infer_block(
+            weights.blocks[0], grid_sizes, embed, x, embed0, seq_lens, freqs, context
+        )
         x_residual = x - ori_x
         del ori_x
 
@@ -715,7 +952,9 @@ class WanTransformerInferFirstBlock(WanTransformerInferCaching):
                 self.scheduler.caching_records[index] = should_calc
 
             if caching_records[index] or self.must_calc(index):
-                x = self.infer_calculating(weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context)
+                x = self.infer_calculating(
+                    weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context
+                )
             else:
                 x = self.infer_using_cache(x)
 
@@ -727,7 +966,9 @@ class WanTransformerInferFirstBlock(WanTransformerInferCaching):
                 self.scheduler.caching_records_2[index] = should_calc
 
             if caching_records_2[index] or self.must_calc(index):
-                x = self.infer_calculating(weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context)
+                x = self.infer_calculating(
+                    weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context
+                )
             else:
                 x = self.infer_using_cache(x)
 
@@ -758,7 +999,9 @@ class WanTransformerInferFirstBlock(WanTransformerInferCaching):
 
         return diff >= self.residual_diff_threshold
 
-    def infer_calculating(self, weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context):
+    def infer_calculating(
+        self, weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context
+    ):
         ori_x = x.clone()
 
         for block_idx in range(1, self.blocks_num):
@@ -830,7 +1073,9 @@ class WanTransformerInferDualBlock(WanTransformerInferCaching):
                 self.scheduler.caching_records[index] = should_calc
 
             if caching_records[index] or self.must_calc(index):
-                x = self.infer_calculating(weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context)
+                x = self.infer_calculating(
+                    weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context
+                )
             else:
                 x = self.infer_using_cache(x)
 
@@ -842,7 +1087,9 @@ class WanTransformerInferDualBlock(WanTransformerInferCaching):
                 self.scheduler.caching_records_2[index] = should_calc
 
             if caching_records_2[index] or self.must_calc(index):
-                x = self.infer_calculating(weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context)
+                x = self.infer_calculating(
+                    weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context
+                )
             else:
                 x = self.infer_using_cache(x)
 
@@ -885,7 +1132,9 @@ class WanTransformerInferDualBlock(WanTransformerInferCaching):
 
         return diff >= self.residual_diff_threshold
 
-    def infer_calculating(self, weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context):
+    def infer_calculating(
+        self, weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context
+    ):
         ori_x = x.clone()
 
         for block_idx in range(5, self.blocks_num - 5):
@@ -935,23 +1184,41 @@ class WanTransformerInferDynamicBlock(WanTransformerInferCaching):
 
     def infer(self, weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context):
         for block_idx in range(self.blocks_num):
-            x = self.infer_block(weights.blocks[block_idx], grid_sizes, embed, x, embed0, seq_lens, freqs, context, block_idx)
+            x = self.infer_block(
+                weights.blocks[block_idx],
+                grid_sizes,
+                embed,
+                x,
+                embed0,
+                seq_lens,
+                freqs,
+                context,
+                block_idx,
+            )
 
         return x
 
-    def infer_block(self, weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context, block_idx):
+    def infer_block(
+        self, weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context, block_idx
+    ):
         ori_x = x.clone()
 
         if self.infer_conditional:
             if self.block_in_cache_even[block_idx] is not None:
-                should_calc = self.are_two_tensor_similar(self.block_in_cache_even[block_idx], x)
+                should_calc = self.are_two_tensor_similar(
+                    self.block_in_cache_even[block_idx], x
+                )
                 if should_calc or self.must_calc(block_idx):
-                    x = super().infer_block(weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context)
+                    x = super().infer_block(
+                        weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context
+                    )
                 else:
                     x += self.block_residual_cache_even[block_idx]
 
             else:
-                x = super().infer_block(weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context)
+                x = super().infer_block(
+                    weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context
+                )
 
             self.block_in_cache_even[block_idx] = ori_x
             self.block_residual_cache_even[block_idx] = x - ori_x
@@ -959,14 +1226,20 @@ class WanTransformerInferDynamicBlock(WanTransformerInferCaching):
 
         else:
             if self.block_in_cache_odd[block_idx] is not None:
-                should_calc = self.are_two_tensor_similar(self.block_in_cache_odd[block_idx], x)
+                should_calc = self.are_two_tensor_similar(
+                    self.block_in_cache_odd[block_idx], x
+                )
                 if should_calc or self.must_calc(block_idx):
-                    x = super().infer_block(weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context)
+                    x = super().infer_block(
+                        weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context
+                    )
                 else:
                     x += self.block_residual_cache_odd[block_idx]
 
             else:
-                x = super().infer_block(weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context)
+                x = super().infer_block(
+                    weights, grid_sizes, embed, x, embed0, seq_lens, freqs, context
+                )
 
             self.block_in_cache_odd[block_idx] = ori_x
             self.block_residual_cache_odd[block_idx] = x - ori_x
@@ -1020,16 +1293,25 @@ class WanTransformerInferMagCaching(WanTransformerInferCaching):
         else:
             if step_index >= int(self.config["infer_steps"] * self.retention_ratio):
                 # conditional and unconditional in one list
-                cur_mag_ratio = self.mag_ratios[0][step_index] if infer_condition else self.mag_ratios[1][step_index]
+                cur_mag_ratio = (
+                    self.mag_ratios[0][step_index]
+                    if infer_condition
+                    else self.mag_ratios[1][step_index]
+                )
                 # magnitude ratio between current step and the cached step
-                self.accumulated_ratio[infer_condition] = self.accumulated_ratio[infer_condition] * cur_mag_ratio
+                self.accumulated_ratio[infer_condition] = (
+                    self.accumulated_ratio[infer_condition] * cur_mag_ratio
+                )
                 self.accumulated_steps[infer_condition] += 1  # skip steps plus 1
                 # skip error of current steps
                 cur_skip_err = np.abs(1 - self.accumulated_ratio[infer_condition])
                 # accumulated error of multiple steps
                 self.accumulated_err[infer_condition] += cur_skip_err
 
-                if self.accumulated_err[infer_condition] < self.magcache_thresh and self.accumulated_steps[infer_condition] <= self.K:
+                if (
+                    self.accumulated_err[infer_condition] < self.magcache_thresh
+                    and self.accumulated_steps[infer_condition] <= self.K
+                ):
                     skip_forward = True
                 else:
                     self.accumulated_err[infer_condition] = 0
@@ -1059,14 +1341,40 @@ class WanTransformerInferMagCaching(WanTransformerInferCaching):
             previous_residual = previous_residual.cpu()
 
         if self.config["magcache_calibration"] and step_index >= 1:
-            norm_ratio = ((previous_residual.norm(dim=-1) / self.residual_cache[infer_condition].norm(dim=-1)).mean()).item()
-            norm_std = (previous_residual.norm(dim=-1) / self.residual_cache[infer_condition].norm(dim=-1)).std().item()
-            cos_dis = (1 - F.cosine_similarity(previous_residual, self.residual_cache[infer_condition], dim=-1, eps=1e-8)).mean().item()
+            norm_ratio = (
+                (
+                    previous_residual.norm(dim=-1)
+                    / self.residual_cache[infer_condition].norm(dim=-1)
+                ).mean()
+            ).item()
+            norm_std = (
+                (
+                    previous_residual.norm(dim=-1)
+                    / self.residual_cache[infer_condition].norm(dim=-1)
+                )
+                .std()
+                .item()
+            )
+            cos_dis = (
+                (
+                    1
+                    - F.cosine_similarity(
+                        previous_residual,
+                        self.residual_cache[infer_condition],
+                        dim=-1,
+                        eps=1e-8,
+                    )
+                )
+                .mean()
+                .item()
+            )
             _index = int(not infer_condition)
             self.norm_ratio[_index].append(round(norm_ratio, 5))
             self.norm_std[_index].append(round(norm_std, 5))
             self.cos_dis[_index].append(round(cos_dis, 5))
-            print(f"time: {step_index}, infer_condition: {infer_condition}, norm_ratio: {norm_ratio}, norm_std: {norm_std}, cos_dis: {cos_dis}")
+            print(
+                f"time: {step_index}, infer_condition: {infer_condition}, norm_ratio: {norm_ratio}, norm_std: {norm_std}, cos_dis: {cos_dis}"
+            )
 
         self.residual_cache[infer_condition] = previous_residual
 

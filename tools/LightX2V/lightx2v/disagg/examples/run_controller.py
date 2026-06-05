@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import argparse
 import copy
 import json
@@ -11,11 +10,17 @@ import time
 from pathlib import Path
 from typing import Any
 
-from loguru import logger
-
 from lightx2v.disagg.conn import MONITOR_POLLING_PORT, REQUEST_POLLING_PORT, ReqManager
 from lightx2v.disagg.monitor import Monitor, Reporter
-from lightx2v.disagg.workload import build_payload, current_stage, load_stage_specs, start_workload_clock
+from lightx2v.disagg.workload import (
+    build_payload,
+    current_stage,
+    load_stage_specs,
+    start_workload_clock,
+)
+from loguru import logger
+
+from lib.smart_config import smart_config
 
 
 def _parse_gpus(raw: str) -> list[int]:
@@ -47,16 +52,28 @@ def _load_base_config_json(path: str) -> dict[str, Any]:
 
 
 def _make_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Dispatch baseline infer requests and collect latency/GPU metrics")
+    parser = argparse.ArgumentParser(
+        description="Dispatch baseline infer requests and collect latency/GPU metrics"
+    )
 
-    parser.add_argument("--mode", choices=["controller", "worker"], default="controller")
+    parser.add_argument(
+        "--mode", choices=["controller", "worker"], default="controller"
+    )
 
     # Controller mode
-    parser.add_argument("--request_source", choices=["run_user", "generate"], default="run_user")
-    parser.add_argument("--controller_request_port", type=int, default=REQUEST_POLLING_PORT - 2)
+    parser.add_argument(
+        "--request_source", choices=["run_user", "generate"], default="run_user"
+    )
+    parser.add_argument(
+        "--controller_request_port", type=int, default=REQUEST_POLLING_PORT - 2
+    )
     parser.add_argument("--result_port", type=int, default=REQUEST_POLLING_PORT - 1)
-    parser.add_argument("--worker_base_port", type=int, default=REQUEST_POLLING_PORT + 100)
-    parser.add_argument("--worker_monitor_base_port", type=int, default=MONITOR_POLLING_PORT + 100)
+    parser.add_argument(
+        "--worker_base_port", type=int, default=REQUEST_POLLING_PORT + 100
+    )
+    parser.add_argument(
+        "--worker_monitor_base_port", type=int, default=MONITOR_POLLING_PORT + 100
+    )
     parser.add_argument("--monitor_poll_interval_s", type=float, default=2.0)
     parser.add_argument("--request_poll_sleep_s", type=float, default=0.02)
     parser.add_argument("--completion_timeout_s", type=float, default=7200.0)
@@ -69,9 +86,19 @@ def _make_parser() -> argparse.ArgumentParser:
 
     parser.add_argument("--model_cls", type=str, default="wan2.2_moe")
     parser.add_argument("--task", type=str, default="i2v")
-    parser.add_argument("--model_path", type=str, default="/root/zht/LightX2V/models/Wan-AI/Wan2.2-I2V-A14B")
-    parser.add_argument("--base_config_json", type=str, default="/root/zht/LightX2V/configs/disagg/baseline/wan22_moe_i2v_baseline.json")
-    parser.add_argument("--save_dir", type=str, default="/root/zht/LightX2V/save_results")
+    parser.add_argument(
+        "--model_path",
+        type=str,
+        default="/root/zht/LightX2V/models/Wan-AI/Wan2.2-I2V-A14B",
+    )
+    parser.add_argument(
+        "--base_config_json",
+        type=str,
+        default="/root/zht/LightX2V/configs/disagg/baseline/wan22_moe_i2v_baseline.json",
+    )
+    parser.add_argument(
+        "--save_dir", type=str, default="/root/zht/LightX2V/save_results"
+    )
     parser.add_argument("--save_result_path", type=str, default="")
     parser.add_argument("--prompt", type=str, default="")
     parser.add_argument("--negative_prompt", type=str, default="")
@@ -82,7 +109,11 @@ def _make_parser() -> argparse.ArgumentParser:
     parser.add_argument("--generate_requests", type=int, default=10)
     parser.add_argument("--generate_interval_s", type=float, default=0.0)
 
-    parser.add_argument("--metrics_output_json", type=str, default="/root/zht/LightX2V/save_results/baseline_controller_metrics.json")
+    parser.add_argument(
+        "--metrics_output_json",
+        type=str,
+        default="/root/zht/LightX2V/save_results/baseline_controller_metrics.json",
+    )
 
     # Worker mode
     parser.add_argument("--worker_id", type=int, default=-1)
@@ -91,12 +122,16 @@ def _make_parser() -> argparse.ArgumentParser:
     parser.add_argument("--worker_monitor_port", type=int, default=0)
     parser.add_argument("--worker_dist_rank", type=int, default=0)
     parser.add_argument("--worker_dist_world_size", type=int, default=1)
-    parser.add_argument("--worker_cooperative_parallel", action="store_true", default=False)
+    parser.add_argument(
+        "--worker_cooperative_parallel", action="store_true", default=False
+    )
 
     return parser
 
 
-def _write_request_config(payload: dict[str, Any], request_id: int, keep_parallel_config: bool) -> tuple[str, str]:
+def _write_request_config(
+    payload: dict[str, Any], request_id: int, keep_parallel_config: bool
+) -> tuple[str, str]:
     temp_dir = tempfile.mkdtemp(prefix=f"baseline_req_{request_id}_")
     config_path = str(Path(temp_dir) / "request_config.json")
 
@@ -116,12 +151,20 @@ def _effective_keep_parallel(args: argparse.Namespace) -> bool:
     return bool(args.keep_parallel_config) and not bool(args.drop_parallel_config)
 
 
-def _run_infer_once(args: argparse.Namespace, payload: dict[str, Any], worker_id: int) -> tuple[int, str]:
-    request_metrics = payload.get("request_metrics", {}) if isinstance(payload.get("request_metrics"), dict) else {}
+def _run_infer_once(
+    args: argparse.Namespace, payload: dict[str, Any], worker_id: int
+) -> tuple[int, str]:
+    request_metrics = (
+        payload.get("request_metrics", {})
+        if isinstance(payload.get("request_metrics"), dict)
+        else {}
+    )
     request_id = int(request_metrics.get("request_id", int(time.time() * 1000)))
 
     keep_parallel = _effective_keep_parallel(args)
-    temp_dir, config_json = _write_request_config(payload, request_id, keep_parallel_config=keep_parallel)
+    temp_dir, config_json = _write_request_config(
+        payload, request_id, keep_parallel_config=keep_parallel
+    )
     save_path = payload.get("save_path") or payload.get("save_result_path")
     if not save_path:
         save_dir = Path(args.save_dir)
@@ -158,9 +201,15 @@ def _run_infer_once(args: argparse.Namespace, payload: dict[str, Any], worker_id
     # Keep execution path aligned with `lightx2v.disagg.examples.infer`:
     # one request uses one worker process, and when parallel is enabled this
     # single request is launched by torchrun on all visible devices.
-    parallel_world_size = _parallel_world_size_from_config(payload) if keep_parallel else 1
+    parallel_world_size = (
+        _parallel_world_size_from_config(payload) if keep_parallel else 1
+    )
     worker_world_size = int(args.worker_dist_world_size or 1)
-    cooperative_parallel = bool(args.worker_cooperative_parallel) and worker_world_size > 1 and parallel_world_size > 1
+    cooperative_parallel = (
+        bool(args.worker_cooperative_parallel)
+        and worker_world_size > 1
+        and parallel_world_size > 1
+    )
     if cooperative_parallel:
         cmd = [args.python_executable, *infer_argv]
     elif parallel_world_size > 1:
@@ -203,7 +252,11 @@ def _worker_main(args: argparse.Namespace) -> None:
         gpu_id=int(args.worker_gpu),
         bind_address=f"tcp://*:{args.worker_monitor_port}",
     )
-    reporter_thread = threading.Thread(target=reporter.serve_forever, name=f"worker-{args.worker_id}-reporter", daemon=True)
+    reporter_thread = threading.Thread(
+        target=reporter.serve_forever,
+        name=f"worker-{args.worker_id}-reporter",
+        daemon=True,
+    )
     reporter_thread.start()
 
     logger.info(
@@ -220,7 +273,11 @@ def _worker_main(args: argparse.Namespace) -> None:
             break
 
         payload = msg if isinstance(msg, dict) else {}
-        req_metrics = payload.get("request_metrics", {}) if isinstance(payload.get("request_metrics"), dict) else {}
+        req_metrics = (
+            payload.get("request_metrics", {})
+            if isinstance(payload.get("request_metrics"), dict)
+            else {}
+        )
         request_id = int(req_metrics.get("request_id", int(time.time() * 1000)))
         client_send_ts = float(req_metrics.get("client_send_ts", time.time()))
 
@@ -249,7 +306,9 @@ def _worker_main(args: argparse.Namespace) -> None:
     reporter.stop()
 
 
-def _launch_worker_processes(args: argparse.Namespace, gpus: list[int]) -> tuple[list[subprocess.Popen], int, bool]:
+def _launch_worker_processes(
+    args: argparse.Namespace, gpus: list[int]
+) -> tuple[list[subprocess.Popen], int, bool]:
     procs: list[subprocess.Popen] = []
     keep_parallel = _effective_keep_parallel(args)
     base_config = _load_base_config_json(args.base_config_json)
@@ -261,7 +320,9 @@ def _launch_worker_processes(args: argparse.Namespace, gpus: list[int]) -> tuple
     cooperative_parallel = bool(keep_parallel and world_size > 1)
     if cooperative_parallel:
         if len(gpus) < world_size:
-            raise RuntimeError(f"cooperative model-parallel requires at least {world_size} gpus, got {len(gpus)} from --gpus={args.gpus}")
+            raise RuntimeError(
+                f"cooperative model-parallel requires at least {world_size} gpus, got {len(gpus)} from --gpus={args.gpus}"
+            )
         if requested_workers != world_size:
             logger.warning(
                 "parallel_world_size={} enabled; forcing num_workers {} -> {} (one worker per rank for one request)",
@@ -388,12 +449,19 @@ def _controller_main(args: argparse.Namespace) -> None:
     gpus = _parse_gpus(args.gpus)
     req_mgr = ReqManager()
 
-    worker_procs, worker_count, cooperative_parallel = _launch_worker_processes(args, gpus)
+    worker_procs, worker_count, cooperative_parallel = _launch_worker_processes(
+        args, gpus
+    )
     logger.info("launched {} workers", worker_count)
     if worker_count <= 0:
-        raise RuntimeError("no workers launched, please check --num_workers / --gpus / parallel config")
+        raise RuntimeError(
+            "no workers launched, please check --num_workers / --gpus / parallel config"
+        )
 
-    monitor_nodes = [f"tcp://127.0.0.1:{args.worker_monitor_base_port + i}" for i in range(worker_count)]
+    monitor_nodes = [
+        f"tcp://127.0.0.1:{args.worker_monitor_base_port + i}"
+        for i in range(worker_count)
+    ]
     monitor = Monitor(monitor_nodes)
     monitor_samples: list[dict[str, Any]] = []
     monitor_stop_event = threading.Event()
@@ -404,7 +472,9 @@ def _controller_main(args: argparse.Namespace) -> None:
         for item in results:
             sample = dict(item)
             sample["sample_ts"] = ts
-            sample["sample_ts_from_global_start_s"] = ts - global_first_send_ts if global_first_send_ts is not None else None
+            sample["sample_ts_from_global_start_s"] = (
+                ts - global_first_send_ts if global_first_send_ts is not None else None
+            )
             monitor_samples.append(sample)
             status = sample.get("status")
             # if status == "ok":
@@ -452,7 +522,11 @@ def _controller_main(args: argparse.Namespace) -> None:
                 "dispatch_ts": dispatch_ts,
                 "payload": payload,
             }
-            logger.info("[dispatch] request_id={} -> cooperative workers [0..{}]", request_id, worker_count - 1)
+            logger.info(
+                "[dispatch] request_id={} -> cooperative workers [0..{}]",
+                request_id,
+                worker_count - 1,
+            )
             return
 
         worker_id = next_worker % worker_count
@@ -466,7 +540,12 @@ def _controller_main(args: argparse.Namespace) -> None:
             "dispatch_ts": dispatch_ts,
             "payload": payload,
         }
-        logger.info("[dispatch] request_id={} -> worker={} port={}", request_id, worker_id, recv_port)
+        logger.info(
+            "[dispatch] request_id={} -> worker={} port={}",
+            request_id,
+            worker_id,
+            recv_port,
+        )
 
     if args.request_source == "generate":
         for payload in _build_generated_requests(args):
@@ -474,7 +553,9 @@ def _controller_main(args: argparse.Namespace) -> None:
             if args.generate_interval_s > 0:
                 time.sleep(args.generate_interval_s)
     else:
-        logger.info("waiting run_user requests on port={}", args.controller_request_port)
+        logger.info(
+            "waiting run_user requests on port={}", args.controller_request_port
+        )
         workload_end = False
         while not workload_end:
             payload = req_mgr.receive_non_block(args.controller_request_port)
@@ -493,7 +574,9 @@ def _controller_main(args: argparse.Namespace) -> None:
         msg = req_mgr.receive_non_block(args.result_port)
         if msg is None:
             if time.time() - wait_start > args.completion_timeout_s:
-                logger.warning("timeout waiting completions, pending={}", sorted(pending_ids))
+                logger.warning(
+                    "timeout waiting completions, pending={}", sorted(pending_ids)
+                )
                 break
             time.sleep(args.request_poll_sleep_s)
             continue
@@ -503,7 +586,11 @@ def _controller_main(args: argparse.Namespace) -> None:
 
         request_id = int(msg.get("request_id", -1))
         finish_ts = float(msg.get("finish_ts", 0.0))
-        elapsed_from_global_start_s = finish_ts - global_first_send_ts if global_first_send_ts is not None else None
+        elapsed_from_global_start_s = (
+            finish_ts - global_first_send_ts
+            if global_first_send_ts is not None
+            else None
+        )
         if elapsed_from_global_start_s is not None:
             msg["elapsed_from_global_start_s"] = elapsed_from_global_start_s
         if request_id in pending_ids:
@@ -517,12 +604,18 @@ def _controller_main(args: argparse.Namespace) -> None:
             float(msg.get("start_ts", 0.0)),
             finish_ts,
             float(msg.get("e2e_latency_s", 0.0)),
-            float(elapsed_from_global_start_s if elapsed_from_global_start_s is not None else -1.0),
+            float(
+                elapsed_from_global_start_s
+                if elapsed_from_global_start_s is not None
+                else -1.0
+            ),
             msg.get("return_code"),
         )
 
     for worker_id in range(worker_count):
-        req_mgr.send("127.0.0.1", args.worker_base_port + worker_id, {"__control__": "stop"})
+        req_mgr.send(
+            "127.0.0.1", args.worker_base_port + worker_id, {"__control__": "stop"}
+        )
 
     for proc in worker_procs:
         try:

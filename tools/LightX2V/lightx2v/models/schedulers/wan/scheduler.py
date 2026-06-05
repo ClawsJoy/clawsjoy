@@ -1,12 +1,12 @@
-from lib.smart_config import smart_config
 from typing import List, Optional, Union
 
 import numpy as np
 import torch
-
 from lightx2v.models.schedulers.scheduler import BaseScheduler
 from lightx2v.utils.utils import masks_like
 from lightx2v_platform.base.global_var import AI_DEVICE
+
+from lib.smart_config import smart_config
 
 
 class WanScheduler(BaseScheduler):
@@ -16,7 +16,9 @@ class WanScheduler(BaseScheduler):
         self.target_video_length = self.config["target_video_length"]
         self.sample_shift = self.config["sample_shift"]
         if self.config["seq_parallel"]:
-            self.seq_p_group = self.config.get("device_mesh").get_group(mesh_dim="seq_p")
+            self.seq_p_group = self.config.get("device_mesh").get_group(
+                mesh_dim="seq_p"
+            )
         else:
             self.seq_p_group = None
         self.patch_size = (1, 2, 2)
@@ -54,11 +56,17 @@ class WanScheduler(BaseScheduler):
 
     def prepare(self, seed, latent_shape, image_encoder_output=None):
         if self._uses_conditioned_latent_prefix():
-            self.vae_encoder_out = image_encoder_output["vae_encoder_out"] if image_encoder_output is not None else None
+            self.vae_encoder_out = (
+                image_encoder_output["vae_encoder_out"]
+                if image_encoder_output is not None
+                else None
+            )
 
         self.prepare_latents(seed, latent_shape, dtype=torch.float32)
 
-        alphas = np.linspace(1, 1 / self.num_train_timesteps, self.num_train_timesteps)[::-1].copy()
+        alphas = np.linspace(1, 1 / self.num_train_timesteps, self.num_train_timesteps)[
+            ::-1
+        ].copy()
         sigmas = 1.0 - alphas
         sigmas = torch.from_numpy(sigmas).to(dtype=torch.float32)
 
@@ -90,7 +98,9 @@ class WanScheduler(BaseScheduler):
         )
         if self._uses_conditioned_latent_prefix() and self.vae_encoder_out is not None:
             self.mask = masks_like(self.latents, zero=True)
-            self.latents = (1.0 - self.mask) * self.vae_encoder_out + self.mask * self.latents
+            self.latents = (
+                1.0 - self.mask
+            ) * self.vae_encoder_out + self.mask * self.latents
 
     def set_timesteps(
         self,
@@ -100,7 +110,9 @@ class WanScheduler(BaseScheduler):
         mu: Optional[Union[float, None]] = None,
         shift: Optional[Union[float, None]] = None,
     ):
-        sigmas = np.linspace(self.sigma_max, self.sigma_min, infer_steps + 1).copy()[:-1]
+        sigmas = np.linspace(self.sigma_max, self.sigma_min, infer_steps + 1).copy()[
+            :-1
+        ]
 
         if shift is None:
             shift = self.shift
@@ -112,7 +124,9 @@ class WanScheduler(BaseScheduler):
         sigmas = np.concatenate([sigmas, [sigma_last]]).astype(np.float32)
 
         self.sigmas = torch.from_numpy(sigmas)
-        self.timesteps = torch.from_numpy(timesteps).to(device=device, dtype=torch.int64)
+        self.timesteps = torch.from_numpy(timesteps).to(
+            device=device, dtype=torch.int64
+        )
         self.model_outputs = [
             None,
         ] * self.solver_order
@@ -351,14 +365,20 @@ class WanScheduler(BaseScheduler):
         super().step_pre(step_index)
         self.timestep_input = torch.stack([self.timesteps[self.step_index]])
         if self._uses_conditioned_latent_prefix() and self.mask is not None:
-            self.timestep_input = (self.mask[0][:, ::2, ::2] * self.timestep_input).flatten()
+            self.timestep_input = (
+                self.mask[0][:, ::2, ::2] * self.timestep_input
+            ).flatten()
 
     def step_post(self):
         model_output = self.noise_pred.to(torch.float32)
         timestep = self.timesteps[self.step_index]
         sample = self.latents.to(torch.float32)
 
-        use_corrector = self.step_index > 0 and self.step_index - 1 not in self.disable_corrector and self.last_sample is not None
+        use_corrector = (
+            self.step_index > 0
+            and self.step_index - 1 not in self.disable_corrector
+            and self.last_sample is not None
+        )
 
         model_output_convert = self.convert_model_output(model_output, sample=sample)
         if use_corrector:
@@ -378,7 +398,9 @@ class WanScheduler(BaseScheduler):
 
         this_order = min(self.solver_order, len(self.timesteps) - self.step_index)
 
-        self.this_order = min(this_order, self.lower_order_nums + 1)  # warmup for multistep
+        self.this_order = min(
+            this_order, self.lower_order_nums + 1
+        )  # warmup for multistep
         assert self.this_order > 0
 
         self.last_sample = sample
@@ -392,5 +414,11 @@ class WanScheduler(BaseScheduler):
             self.lower_order_nums += 1
 
         self.latents = prev_sample
-        if self._uses_conditioned_latent_prefix() and self.mask is not None and self.vae_encoder_out is not None:
-            self.latents = (1.0 - self.mask) * self.vae_encoder_out + self.mask * self.latents
+        if (
+            self._uses_conditioned_latent_prefix()
+            and self.mask is not None
+            and self.vae_encoder_out is not None
+        ):
+            self.latents = (
+                1.0 - self.mask
+            ) * self.vae_encoder_out + self.mask * self.latents

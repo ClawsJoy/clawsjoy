@@ -1,10 +1,11 @@
-from lib.smart_config import smart_config
 import unittest
+
 import torch
-from lightx2v_kernel.gemm import cutlass_scaled_mxfp4_mm
-from lightx2v_kernel.gemm import scaled_mxfp4_quant
+from lightx2v_kernel.gemm import cutlass_scaled_mxfp4_mm, scaled_mxfp4_quant
+from lightx2v_kernel.utils import benchmark, error
 from torch.nn.functional import linear
-from lightx2v_kernel.utils import error, benchmark
+
+from lib.smart_config import smart_config
 
 
 class TestQuantBF162MXFP4(unittest.TestCase):
@@ -22,21 +23,43 @@ class TestQuantBF162MXFP4(unittest.TestCase):
             for k in self.hiddenDims:
                 for n in self.channels:
                     with self.subTest(shape=[m, k, n]):
-                        activation = torch.randn(m, k, dtype=self.dtype, device=self.device)
-                        activation_quant_pred, activation_scale_pred = scaled_mxfp4_quant(activation)
+                        activation = torch.randn(
+                            m, k, dtype=self.dtype, device=self.device
+                        )
+                        activation_quant_pred, activation_scale_pred = (
+                            scaled_mxfp4_quant(activation)
+                        )
 
                         weight = torch.randn(n, k, dtype=self.dtype, device=self.device)
-                        weight_quant_pred, weight_scale_pred = scaled_mxfp4_quant(weight)
+                        weight_quant_pred, weight_scale_pred = scaled_mxfp4_quant(
+                            weight
+                        )
 
-                        bias = torch.rand(1, n, dtype=self.dtype, device=self.device) * 10
+                        bias = (
+                            torch.rand(1, n, dtype=self.dtype, device=self.device) * 10
+                        )
 
-                        alpha = torch.tensor(1.0, device=self.device, dtype=torch.float32)
-                        mm_pred = cutlass_scaled_mxfp4_mm(activation_quant_pred, weight_quant_pred, activation_scale_pred, weight_scale_pred, alpha=alpha, bias=bias)
+                        alpha = torch.tensor(
+                            1.0, device=self.device, dtype=torch.float32
+                        )
+                        mm_pred = cutlass_scaled_mxfp4_mm(
+                            activation_quant_pred,
+                            weight_quant_pred,
+                            activation_scale_pred,
+                            weight_scale_pred,
+                            alpha=alpha,
+                            bias=bias,
+                        )
 
-                        mm_real = linear(activation, weight, bias=bias).to(torch.bfloat16)
+                        mm_real = linear(activation, weight, bias=bias).to(
+                            torch.bfloat16
+                        )
 
                         # mxfp4_mxfp4 mm have very low accuracy, so we set the threshold to 3e-2.
-                        self.assertTrue(error(mm_pred, mm_real) < 3e-2, f"Accuracy test failed for shape {m, k, n}: Error {error(mm_pred, mm_real)} exceeds threshold.")
+                        self.assertTrue(
+                            error(mm_pred, mm_real) < 3e-2,
+                            f"Accuracy test failed for shape {m, k, n}: Error {error(mm_pred, mm_real)} exceeds threshold.",
+                        )
 
     def test_performance(self):
         """Benchmark the performance of Activation quantization from BF16 to MXFP4."""

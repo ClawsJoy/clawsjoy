@@ -1,8 +1,9 @@
-from lib.smart_config import smart_config
 from pathlib import Path
 
 import yaml
 from omegaconf import OmegaConf
+
+from lib.smart_config import smart_config
 
 
 def load_config(path: str):

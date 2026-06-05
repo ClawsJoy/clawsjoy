@@ -1,8 +1,9 @@
-from lib.smart_config import smart_config
 import random
 import string
 import time
 from datetime import datetime
+
+from lib.smart_config import smart_config
 
 
 def generate_task_id():
@@ -28,7 +29,9 @@ def generate_task_id():
         for _ in range(5):
             # Mix new time factor for each group
             time_mix = int(datetime.now().timestamp())
-            local_random.seed(time_mix + local_random.getstate()[1][0] + time.perf_counter_ns())
+            local_random.seed(
+                time_mix + local_random.getstate()[1][0] + time.perf_counter_ns()
+            )
 
             groups.append("".join(local_random.choices(characters, k=4)))
 

@@ -1,8 +1,11 @@
-#!/usr/bin/env python3
-"""Init - Init 模块
-
-@version: 5.0.0
-@author: ClawsJoy
-@date: 2026-05-31
+"""
+svg_generator 技能模块
 """
 
+from .svg_generator_skill import SvgGenerator
+
+
+def execute(params=None):
+    """统一执行入口"""
+    skill = SvgGenerator()
+    return skill.execute(params)

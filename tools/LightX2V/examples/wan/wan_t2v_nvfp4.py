@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 Wan2.1 text-to-video generation example.
 This example demonstrates how to use LightX2V with Wan2.1 model for T2V generation.
@@ -16,7 +17,11 @@ pipe = LightX2VPipeline(
 # Alternative: create generator from config JSON file
 # pipe.create_generator(config_json="../configs/wan/wan_t2v.json")
 
-pipe.enable_quantize(dit_quantized=True, dit_quantized_ckpt="lightx2v/Wan-NVFP4/wan2.1_t2v_1_3b_nvfp4_lightx2v_4step.safetensors", quant_scheme="nvfp4")
+pipe.enable_quantize(
+    dit_quantized=True,
+    dit_quantized_ckpt="lightx2v/Wan-NVFP4/wan2.1_t2v_1_3b_nvfp4_lightx2v_4step.safetensors",
+    quant_scheme="nvfp4",
+)
 
 # Create generator with specified parameters
 pipe.create_generator(

@@ -3,32 +3,33 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
-from core.lib.unified_config import unified_config
-
-from core.lib.unified_config import unified_config
-from core.lib.unified_config import unified_config
-
 from core.lib.constants import PROJECT_ROOT
+from core.lib.unified_config import unified_config
+
 #!/usr/bin/env python3
 """技能组合指引器 v5.0.0 - 增强意图匹配"""
 
-import yaml
 import json
 import logging
-from pathlib import Path
-from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+import yaml
+
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class SkillCapability:
     """技能能力描述"""
+
     name: str
     description: str
     use_when: List[str] = field(default_factory=list)
@@ -40,12 +41,21 @@ class SkillCapability:
 
 class SkillComposer:
     """技能组合指引器 - 增强意图匹配"""
-    
+
     VERSION = "5.0.0"
-    
+
     # 预定义的技能关键词映射
     SKILL_KEYWORDS = {
-        "ai-image-gen": ["图片", "图像", "生成", "绘画", "画图", "image", "picture", "generate"],
+        "ai-image-gen": [
+            "图片",
+            "图像",
+            "生成",
+            "绘画",
+            "画图",
+            "image",
+            "picture",
+            "generate",
+        ],
         "video": ["视频", "影片", "编辑", "剪辑", "video", "edit"],
         "scheduler": ["定时", "调度", "周期", "每天", "定时任务", "schedule", "cron"],
         "text": ["文本", "文字", "字符串", "处理", "text", "string"],
@@ -66,16 +76,16 @@ class SkillComposer:
         "tools": ["工具", "辅助", "tools"],
         "wrappers": ["包装", "适配", "wrapper"],
     }
-    
+
     def __init__(self, skills_path: Path = None):
         self.skills_path = skills_path or Path("skills")
         self.skills: Dict[str, SkillCapability] = {}
         self._load_all_skills()
-    
+
     def _load_all_skills(self):
         """加载所有技能的能力描述"""
         for skill_dir in self.skills_path.iterdir():
-            if not skill_dir.is_dir() or skill_dir.name.startswith('__'):
+            if not skill_dir.is_dir() or skill_dir.name.startswith("__"):
                 continue
 
             # 获取预定义关键词
@@ -84,32 +94,48 @@ class SkillComposer:
             skill_md = skill_dir / "SKILL.md"
             if skill_md.exists():
                 try:
-                    content = skill_md.read_text(encoding='utf-8')
-                    if content.startswith('---'):
-                        parts = content.split('---', 2)
+                    content = skill_md.read_text(encoding="utf-8")
+                    if content.startswith("---"):
+                        parts = content.split("---", 2)
                         if len(parts) >= 2:
                             metadata = unified_config.get("skill_metadata", {})
-                            
-                            use_when = metadata.get('use_when', '')
-                            not_for = metadata.get('not_for', '')
-                            
+
+                            use_when = metadata.get("use_when", "")
+                            not_for = metadata.get("not_for", "")
+
                             # 从 use_when 中提取额外关键词
                             extra_keywords = []
                             if use_when:
-                                for word in use_when.replace(',', ' ').split():
+                                for word in use_when.replace(",", " ").split():
                                     if len(word) > 1:
                                         extra_keywords.append(word.lower())
-                            
+
                             all_keywords = list(set(keywords + extra_keywords))
-                            
+
                             self.skills[skill_dir.name] = SkillCapability(
                                 name=skill_dir.name,
-                                description=metadata.get('description', '')[:200],
-                                use_when=[u.strip() for u in use_when.split('\n') if u.strip()] if use_when else [],
-                                not_for=[n.strip() for n in not_for.split('\n') if n.strip()] if not_for else [],
+                                description=metadata.get("description", "")[:200],
+                                use_when=(
+                                    [
+                                        u.strip()
+                                        for u in use_when.split("\n")
+                                        if u.strip()
+                                    ]
+                                    if use_when
+                                    else []
+                                ),
+                                not_for=(
+                                    [
+                                        n.strip()
+                                        for n in not_for.split("\n")
+                                        if n.strip()
+                                    ]
+                                    if not_for
+                                    else []
+                                ),
                                 keywords=all_keywords,
-                                dependencies=metadata.get('dependencies', []),
-                                security_grade=metadata.get('security_grade', 'A')
+                                dependencies=metadata.get("dependencies", []),
+                                security_grade=metadata.get("security_grade", "A"),
                             )
                 except Exception as e:
                     logger.warning(f"Failed to load {skill_dir.name}: {e}")
@@ -119,9 +145,9 @@ class SkillComposer:
                     name=skill_dir.name,
                     description=f"{skill_dir.name} skill",
                     keywords=keywords,
-                    security_grade="A"
+                    security_grade="A",
                 )
-    
+
     def find_skills_for_intent(self, intent: str) -> List[tuple]:
         """根据意图匹配技能，返回 (技能名, 匹配分数)"""
         intent_lower = intent.lower()
@@ -151,23 +177,19 @@ class SkillComposer:
         # 按分数排序
         matches.sort(key=lambda x: x[1], reverse=True)
         return matches[:10]
-    
+
     def get_best_skill(self, intent: str) -> Optional[str]:
         """获取最匹配的技能"""
         matches = self.find_skills_for_intent(intent)
         if matches:
             return matches[0][0]
         return None
-    
+
     def compose_workflow(self, intent: str) -> Dict:
         """自动组合工作流"""
         matches = self.find_skills_for_intent(intent)
 
-        workflow = {
-            "intent": intent,
-            "steps": [],
-            "estimated_success_rate": 0.8
-        }
+        workflow = {"intent": intent, "steps": [], "estimated_success_rate": 0.8}
 
         for i, (skill_name, score) in enumerate(matches[:5]):
             skill = self.skills.get(skill_name)
@@ -176,12 +198,12 @@ class SkillComposer:
                 "skill": skill_name,
                 "confidence": score / 10,
                 "description": skill.description if skill else "Unknown",
-                "keywords": skill.keywords[:5] if skill else []
+                "keywords": skill.keywords[:5] if skill else [],
             }
             workflow["steps"].append(step)
 
         return workflow
-    
+
     def get_skill_guide(self) -> str:
         """获取技能指引"""
         guide = []
@@ -195,12 +217,12 @@ class SkillComposer:
             guide.append(f"| {skill.name} | {keywords_str} | {skill.security_grade} |")
 
         return "\n".join(guide)
-    
+
     def get_stats(self) -> Dict:
         return {
             "version": self.VERSION,
             "total_skills": len(self.skills),
-            "skills": list(self.skills.keys())[:10]
+            "skills": list(self.skills.keys())[:10],
         }
 
 
@@ -210,16 +232,16 @@ composer = SkillComposer()
 if __name__ == "__main__":
     print(f"技能组合指引器 v{composer.VERSION}")
     print(f"已加载 {len(composer.skills)} 个技能")
-    
+
     test_intents = [
         "生成一张图片",
         "制作视频并发布",
         "定时执行任务",
         "处理文本文件",
         "数据分析",
-        "检查视频状态"
+        "检查视频状态",
     ]
-    
+
     for intent in test_intents:
         matches = composer.find_skills_for_intent(intent)
         print(f"\n意图: {intent}")

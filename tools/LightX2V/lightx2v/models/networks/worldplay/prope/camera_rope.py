@@ -1,4 +1,10 @@
+from functools import partial
+from typing import Callable, List, Optional, Tuple
+
+import torch
+
 from lib.smart_config import smart_config
+
 # MIT License
 #
 # Copyright (c) Authors of
@@ -21,11 +27,6 @@ from lib.smart_config import smart_config
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
-from functools import partial
-from typing import Callable, List, Optional, Tuple
-
-import torch
 
 
 def prope_qkv(

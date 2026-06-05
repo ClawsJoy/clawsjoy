@@ -1,5 +1,6 @@
-from lib.smart_config import smart_config
 import json
+
+from lib.smart_config import smart_config
 
 
 def closest_color(requested_color):
@@ -58,7 +59,9 @@ class MultilingualPromptFormat:
 
             # format font
             if style["font-family"] is not None:
-                attr_list.append(f"<{style['font-family'][:2]}-font-{self.font_dict[style['font-family']]}>")
+                attr_list.append(
+                    f"<{style['font-family'][:2]}-font-{self.font_dict[style['font-family']]}>"
+                )
                 attr_suffix = ", ".join(attr_list)
                 text_prompt += " in " + attr_suffix
                 text_prompt += ". "

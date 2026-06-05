@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import glob
 import os
 from dataclasses import dataclass
@@ -7,11 +6,12 @@ from typing import Optional, Tuple
 import numpy as np
 import torch
 import torch.nn as nn
+from lightx2v_platform.base.global_var import AI_DEVICE
 from safetensors.torch import safe_open
 from transformers import SiglipImageProcessor, SiglipVisionModel
 from transformers.utils import ModelOutput
 
-from lightx2v_platform.base.global_var import AI_DEVICE
+from lib.smart_config import smart_config
 
 PRECISION_TO_TYPE = {
     "fp32": torch.float32,
@@ -37,13 +37,17 @@ def load_vision_encoder(
         vision_encoder_path = VISION_ENCODER_PATH[vision_encoder_type]
 
     if vision_encoder_type == "siglip":
-        vision_encoder = SiglipVisionModel.from_pretrained(vision_encoder_path, subfolder="image_encoder")
+        vision_encoder = SiglipVisionModel.from_pretrained(
+            vision_encoder_path, subfolder="image_encoder"
+        )
     else:
         raise ValueError(f"Unsupported vision encoder type: {vision_encoder_type}")
 
     # from_pretrained will ensure that the model is in eval mode.
     if vision_encoder_precision is not None:
-        vision_encoder = vision_encoder.to(dtype=PRECISION_TO_TYPE[vision_encoder_precision])
+        vision_encoder = vision_encoder.to(
+            dtype=PRECISION_TO_TYPE[vision_encoder_precision]
+        )
 
     vision_encoder.requires_grad_(False)
 
@@ -58,7 +62,9 @@ def load_image_processor(processor_type, processor_path=None, logger=None):
         processor_path = VISION_ENCODER_PATH[processor_type]
 
     if processor_type == "siglip":
-        processor = SiglipImageProcessor.from_pretrained(processor_path, subfolder="feature_extractor")
+        processor = SiglipImageProcessor.from_pretrained(
+            processor_path, subfolder="feature_extractor"
+        )
     else:
         raise ValueError(f"Unsupported processor type: {processor_type}")
 
@@ -105,8 +111,12 @@ class VisionEncoder(nn.Module):
         self.vision_encoder_type = vision_encoder_type
         self.precision = vision_encoder_precision
         self.model_path = vision_encoder_path
-        self.processor_type = processor_type if processor_type is not None else vision_encoder_type
-        self.processor_path = processor_path if processor_path is not None else vision_encoder_path
+        self.processor_type = (
+            processor_type if processor_type is not None else vision_encoder_type
+        )
+        self.processor_path = (
+            processor_path if processor_path is not None else vision_encoder_path
+        )
         self.logger = logger
 
         if "siglip" in vision_encoder_type:
@@ -145,10 +155,14 @@ class VisionEncoder(nn.Module):
             images: Decoded images as numpy array
         """
         # Handle both 4D and 5D latents (for video, take first frame)
-        first_image_latents = latents[:, :, 0, ...] if len(latents.shape) == 5 else latents
+        first_image_latents = (
+            latents[:, :, 0, ...] if len(latents.shape) == 5 else latents
+        )
         first_image_latents = 1 / vae.config.scaling_factor * first_image_latents
 
-        first_image = vae.decode(first_image_latents.unsqueeze(2).to(vae.dtype), return_dict=False)[0].cpu()
+        first_image = vae.decode(
+            first_image_latents.unsqueeze(2).to(vae.dtype), return_dict=False
+        )[0].cpu()
 
         first_image = first_image[:, :, 0, :, :]
         first_image = (first_image / 2 + 0.5).clamp(0, 1)
@@ -179,7 +193,9 @@ class VisionEncoder(nn.Module):
 
         if isinstance(images, np.ndarray):
             # Preprocess images if they're numpy arrays
-            preprocessed = self.processor.preprocess(images=images, return_tensors="pt").to(device=AI_DEVICE, dtype=self.model.dtype)
+            preprocessed = self.processor.preprocess(
+                images=images, return_tensors="pt"
+            ).to(device=AI_DEVICE, dtype=self.model.dtype)
         else:
             # Assume already preprocessed
             preprocessed = images
@@ -193,8 +209,12 @@ class VisionEncoder(nn.Module):
 
         return VisionEncoderModelOutput(
             last_hidden_state=outputs.last_hidden_state,
-            pooler_output=outputs.pooler_output if hasattr(outputs, "pooler_output") else None,
-            hidden_states=outputs.hidden_states if hasattr(outputs, "hidden_states") else None,
+            pooler_output=(
+                outputs.pooler_output if hasattr(outputs, "pooler_output") else None
+            ),
+            hidden_states=(
+                outputs.hidden_states if hasattr(outputs, "hidden_states") else None
+            ),
         )
 
     def encode_latents(self, latents, vae, reorg_token=False):
@@ -256,14 +276,30 @@ class SiglipVisionEncoder:
             cpu_offload=self.cpu_offload,
         )
 
-        self.vision_in = VisionProjection(in_dim=self.vision_states_dim, out_dim=self.config["hidden_size"], flf_pos_emb=False).to(torch.bfloat16)
+        self.vision_in = VisionProjection(
+            in_dim=self.vision_states_dim,
+            out_dim=self.config["hidden_size"],
+            flf_pos_emb=False,
+        ).to(torch.bfloat16)
 
-        vision_in_model_path = os.path.join(checkpoint_path, "transformer", self.config["transformer_model_name"])
-        safetensors_files = glob.glob(os.path.join(vision_in_model_path, "*.safetensors"))
+        vision_in_model_path = os.path.join(
+            checkpoint_path, "transformer", self.config["transformer_model_name"]
+        )
+        safetensors_files = glob.glob(
+            os.path.join(vision_in_model_path, "*.safetensors")
+        )
         vision_in_state_dict = {}
         for safetensor_path in safetensors_files:
             with safe_open(safetensor_path, framework="pt", device="cpu") as f:
-                vision_in_state_dict.update({key.replace("vision_in.", ""): f.get_tensor(key).to(torch.bfloat16) for key in f.keys() if "vision_in" in key})
+                vision_in_state_dict.update(
+                    {
+                        key.replace("vision_in.", ""): f.get_tensor(key).to(
+                            torch.bfloat16
+                        )
+                        for key in f.keys()
+                        if "vision_in" in key
+                    }
+                )
         self.vision_in.load_state_dict(vision_in_state_dict)
         self.vision_in.to(device=device)
 
@@ -291,10 +327,18 @@ class VisionProjection(torch.nn.Module):
     def __init__(self, in_dim, out_dim, flf_pos_emb=False):
         super().__init__()
 
-        self.proj = torch.nn.Sequential(torch.nn.LayerNorm(in_dim), torch.nn.Linear(in_dim, in_dim), torch.nn.GELU(), torch.nn.Linear(in_dim, out_dim), torch.nn.LayerNorm(out_dim))
+        self.proj = torch.nn.Sequential(
+            torch.nn.LayerNorm(in_dim),
+            torch.nn.Linear(in_dim, in_dim),
+            torch.nn.GELU(),
+            torch.nn.Linear(in_dim, out_dim),
+            torch.nn.LayerNorm(out_dim),
+        )
 
         if flf_pos_emb:  # NOTE: we only use this for `flf2v`
-            self.emb_pos = nn.Parameter(torch.zeros(1, FIRST_LAST_FRAME_CONTEXT_TOKEN_NUMBER, 1280))
+            self.emb_pos = nn.Parameter(
+                torch.zeros(1, FIRST_LAST_FRAME_CONTEXT_TOKEN_NUMBER, 1280)
+            )
 
     @torch.no_grad()
     def forward(self, image_embeds):

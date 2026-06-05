@@ -1,5 +1,8 @@
+from lightx2v.models.networks.hunyuan_video.infer.post_infer import (
+    HunyuanVideo15PostInfer,
+)
+
 from lib.smart_config import smart_config
-from lightx2v.models.networks.hunyuan_video.infer.post_infer import HunyuanVideo15PostInfer
 
 
 class WorldPlayPostInfer(HunyuanVideo15PostInfer):

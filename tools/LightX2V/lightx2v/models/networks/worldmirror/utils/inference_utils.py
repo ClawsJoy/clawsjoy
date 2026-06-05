@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 Inference utilities for WorldMirror pipeline.
 
@@ -89,7 +90,9 @@ def prepare_images_to_tensor(file_paths, resize_strategy="crop", target_size=518
         img_data = Image.open(file_path)
         img_data = _handle_alpha_channel(img_data)
         orig_w, orig_h = img_data.size
-        new_w, new_h = _calculate_resize_dims(orig_w, orig_h, target_size, resize_strategy)
+        new_w, new_h = _calculate_resize_dims(
+            orig_w, orig_h, target_size, resize_strategy
+        )
 
         img_data = img_data.resize((new_w, new_h), Image.Resampling.BICUBIC)
         tensor_img = converter(img_data)
@@ -108,7 +111,9 @@ def prepare_images_to_tensor(file_paths, resize_strategy="crop", target_size=518
 
     shapes = set((t.shape[1], t.shape[2]) for t in tensor_list)
     if len(shapes) > 1:
-        raise ValueError(f"Inconsistent resolutions after preprocessing: {shapes}. All input images must have the same aspect ratio.")
+        raise ValueError(
+            f"Inconsistent resolutions after preprocessing: {shapes}. All input images must have the same aspect ratio."
+        )
 
     batch_tensor = torch.stack(tensor_list)
     if batch_tensor.dim() == 3:
@@ -121,7 +126,15 @@ def prepare_images_to_tensor(file_paths, resize_strategy="crop", target_size=518
 # ============================================================
 
 
-def prepare_input(input_path, target_size=518, fps=1, video_strategy="new", min_frames=1, max_frames=64, temp_dir=None):
+def prepare_input(
+    input_path,
+    target_size=518,
+    fps=1,
+    video_strategy="new",
+    min_frames=1,
+    max_frames=64,
+    temp_dir=None,
+):
     """Read images or extract video frames. Returns (img_paths, subdir_name)."""
     input_path = Path(input_path)
     video_exts = [".mp4", ".avi", ".mov", ".webm", ".gif"]
@@ -158,7 +171,12 @@ def prepare_input(input_path, target_size=518, fps=1, video_strategy="new", min_
             raise FileNotFoundError(f"No images found in {input_path}")
         img_paths = sorted(img_paths)
         print(f"[Input] Loaded {len(img_paths)} images from: {input_path}")
-    elif input_path.is_file() and input_path.suffix.lower() in [".jpg", ".jpeg", ".png", ".webp"]:
+    elif input_path.is_file() and input_path.suffix.lower() in [
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".webp",
+    ]:
         subdir_name = input_path.stem
         img_paths = [str(input_path)]
         print(f"[Input] Single image input: {input_path}")
@@ -193,7 +211,9 @@ def compute_preprocessing_transform(img_paths, target_size, patch_size=14):
     """
     first_img = Image.open(img_paths[0])
     orig_w, orig_h = first_img.size
-    new_w, new_h = _calculate_resize_dims(orig_w, orig_h, target_size, "crop", patch_size)
+    new_w, new_h = _calculate_resize_dims(
+        orig_w, orig_h, target_size, "crop", patch_size
+    )
 
     crop_y = (new_h - target_size) // 2 if new_h > target_size else 0
     crop_x = (new_w - target_size) // 2 if new_w > target_size else 0
@@ -278,7 +298,9 @@ def _read_depth_file(depth_path):
         if depthmap.ndim == 3:
             depthmap = depthmap[:, :, 0]
     elif ext == ".exr":
-        depthmap = cv2.imread(depth_path, cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH).astype(np.float32)
+        depthmap = cv2.imread(
+            depth_path, cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH
+        ).astype(np.float32)
         if depthmap.ndim == 3:
             depthmap = depthmap[:, :, 0]
     elif ext == ".png":
@@ -295,7 +317,9 @@ def _read_depth_file(depth_path):
     return np.nan_to_num(depthmap, nan=0, posinf=0, neginf=0)
 
 
-def load_prior_depth(prior_depth_path, img_paths, target_h, target_w, preprocess_transform=None):
+def load_prior_depth(
+    prior_depth_path, img_paths, target_h, target_w, preprocess_transform=None
+):
     """Load depth priors from a folder. Returns [1, N, H, W] or None."""
     depth_dir = Path(prior_depth_path)
     if not depth_dir.is_dir():
@@ -327,11 +351,15 @@ def load_prior_depth(prior_depth_path, img_paths, target_h, target_w, preprocess
             cx, cy = preprocess_transform["crop_x"], preprocess_transform["crop_y"]
             fw, fh = preprocess_transform["final_w"], preprocess_transform["final_h"]
             if depthmap.shape[:2] != (nh, nw):
-                depthmap = cv2.resize(depthmap, (nw, nh), interpolation=cv2.INTER_LINEAR)
+                depthmap = cv2.resize(
+                    depthmap, (nw, nh), interpolation=cv2.INTER_LINEAR
+                )
             depthmap = depthmap[cy : cy + fh, cx : cx + fw]
         else:
             if depthmap.shape[:2] != (target_h, target_w):
-                depthmap = cv2.resize(depthmap, (target_w, target_h), interpolation=cv2.INTER_LINEAR)
+                depthmap = cv2.resize(
+                    depthmap, (target_w, target_h), interpolation=cv2.INTER_LINEAR
+                )
         depth_maps.append(depthmap)
 
     depth_tensor = torch.from_numpy(np.stack(depth_maps, axis=0)).unsqueeze(0)
@@ -375,15 +403,27 @@ def create_filter_mask(
         pre_edge_mask = final_mask
 
         if apply_edge_mask:
-            n_edges = normals_edge(normal_preds[i], tol=edge_normal_threshold, mask=pre_edge_mask)
-            d_edges = depth_edge(depth_preds[i, :, :, 0], rtol=edge_depth_threshold, mask=pre_edge_mask)
+            n_edges = normals_edge(
+                normal_preds[i], tol=edge_normal_threshold, mask=pre_edge_mask
+            )
+            d_edges = depth_edge(
+                depth_preds[i, :, :, 0], rtol=edge_depth_threshold, mask=pre_edge_mask
+            )
             edge_mask = ~(d_edges & n_edges)
             final_mask = edge_mask if final_mask is None else final_mask & edge_mask
 
             if gs_depth_preds is not None:
-                gs_d_edges = depth_edge(gs_depth_preds[i, :, :, 0], rtol=edge_depth_threshold, mask=pre_edge_mask)
+                gs_d_edges = depth_edge(
+                    gs_depth_preds[i, :, :, 0],
+                    rtol=edge_depth_threshold,
+                    mask=pre_edge_mask,
+                )
                 gs_edge_mask = ~(gs_d_edges & n_edges)
-                gs_frame_mask = gs_edge_mask if pre_edge_mask is None else pre_edge_mask & gs_edge_mask
+                gs_frame_mask = (
+                    gs_edge_mask
+                    if pre_edge_mask is None
+                    else pre_edge_mask & gs_edge_mask
+                )
 
         if apply_sky_mask:
             final_mask = sky_mask[i] if final_mask is None else final_mask & sky_mask[i]
@@ -395,7 +435,11 @@ def create_filter_mask(
             gs_mask_list.append(gs_frame_mask if apply_edge_mask else final_mask)
 
     def _stack(ml):
-        return np.stack(ml, axis=0) if ml[0] is not None else np.ones((S, H, W), dtype=bool)
+        return (
+            np.stack(ml, axis=0)
+            if ml[0] is not None
+            else np.ones((S, H, W), dtype=bool)
+        )
 
     pts_mask = _stack(final_mask_list)
     if gs_mask_list is not None:
@@ -405,7 +449,12 @@ def create_filter_mask(
 
 def _compute_sky_mask_from_model(predictions, H, W, S, threshold=0.5):
     """Build sky mask from model predictions. Returns [S,H,W] bool or None."""
-    for key in ("gs_depth_mask_logits", "gs_depth_mask", "depth_mask_logits", "depth_mask"):
+    for key in (
+        "gs_depth_mask_logits",
+        "gs_depth_mask",
+        "depth_mask_logits",
+        "depth_mask",
+    ):
         if key in predictions:
             prob = predictions[key].sigmoid() if "logits" in key else predictions[key]
             dm = prob[0].detach().cpu()
@@ -415,15 +464,39 @@ def _compute_sky_mask_from_model(predictions, H, W, S, threshold=0.5):
                 return None
             mask = (dm > threshold).numpy().astype(bool)
             if mask.shape[1] != H or mask.shape[2] != W:
-                mask = np.stack([cv2.resize(mask[i].astype(np.uint8), (W, H), interpolation=cv2.INTER_NEAREST) > 0 for i in range(S)], axis=0)
+                mask = np.stack(
+                    [
+                        cv2.resize(
+                            mask[i].astype(np.uint8),
+                            (W, H),
+                            interpolation=cv2.INTER_NEAREST,
+                        )
+                        > 0
+                        for i in range(S)
+                    ],
+                    axis=0,
+                )
             return mask
     return None
 
 
-def compute_sky_mask(img_paths, H, W, S, predictions=None, source="auto", model_threshold=0.5, processed_aspect_ratio=None):
+def compute_sky_mask(
+    img_paths,
+    H,
+    W,
+    S,
+    predictions=None,
+    source="auto",
+    model_threshold=0.5,
+    processed_aspect_ratio=None,
+):
     """Compute sky segmentation mask [S,H,W] (True=non-sky, False=sky)."""
     if source == "model":
-        mask = _compute_sky_mask_from_model(predictions, H, W, S, model_threshold) if predictions else None
+        mask = (
+            _compute_sky_mask_from_model(predictions, H, W, S, model_threshold)
+            if predictions
+            else None
+        )
         return mask if mask is not None else np.ones((S, H, W), dtype=bool)
 
     skyseg_path = "skyseg.onnx"
@@ -448,7 +521,9 @@ def compute_sky_mask(img_paths, H, W, S, predictions=None, source="auto", model_
                 ch = int(round(sw / processed_aspect_ratio))
             left, top = (sw - cw) // 2, (sh - ch) // 2
             pil_img = pil_img.crop((left, top, left + cw, top + ch))
-            frame = segment_sky(cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR), session)
+            frame = segment_sky(
+                cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR), session
+            )
         else:
             frame = segment_sky(img_paths[i], session)
         if frame.shape[:2] != (H, W):
@@ -519,7 +594,9 @@ def compute_filter_mask(
     if gs_depth_np is not None:
         pts_mask, gs_mask = result
         total = pts_mask.size
-        print(f"[Mask] Filter: pts kept {pts_mask.sum()}/{total}, gs kept {gs_mask.sum()}/{total}")
+        print(
+            f"[Mask] Filter: pts kept {pts_mask.sum()}/{total}, gs kept {gs_mask.sum()}/{total}"
+        )
         return pts_mask, gs_mask
 
     print(f"[Mask] Filter: kept {result.sum()}/{result.size} points")
@@ -550,8 +627,14 @@ def _save_conf_parallel(depth_conf_cpu, conf_dir, S):
     def _save_one(i):
         conf = depth_conf_cpu[i]
         c_min, c_max = conf.min(), conf.max()
-        norm = (conf - c_min) / (c_max - c_min) if c_max - c_min > 1e-8 else torch.ones_like(conf)
-        Image.fromarray((norm.clamp(0, 1) * 255).to(torch.uint8).numpy(), mode="L").save(str(conf_dir / f"conf_{i + 1:04d}.png"))
+        norm = (
+            (conf - c_min) / (c_max - c_min)
+            if c_max - c_min > 1e-8
+            else torch.ones_like(conf)
+        )
+        Image.fromarray(
+            (norm.clamp(0, 1) * 255).to(torch.uint8).numpy(), mode="L"
+        ).save(str(conf_dir / f"conf_{i + 1:04d}.png"))
 
     with ThreadPoolExecutor(max_workers=_IO_WORKERS) as pool:
         list(pool.map(_save_one, range(S)))
@@ -567,13 +650,17 @@ def _save_normal_parallel(normals_cpu, normal_dir, S):
 
 def _save_sky_mask_parallel(sky_mask, sky_mask_dir, S):
     def _save_one(i):
-        Image.fromarray((~sky_mask[i]).astype(np.uint8) * 255, mode="L").save(str(sky_mask_dir / f"sky_mask_{i:04d}.png"))
+        Image.fromarray((~sky_mask[i]).astype(np.uint8) * 255, mode="L").save(
+            str(sky_mask_dir / f"sky_mask_{i:04d}.png")
+        )
 
     with ThreadPoolExecutor(max_workers=_IO_WORKERS) as pool:
         list(pool.map(_save_one, range(S)))
 
 
-def _voxel_prune_gaussians(means, scales, quats, colors, opacities, weights, voxel_size=0.002):
+def _voxel_prune_gaussians(
+    means, scales, quats, colors, opacities, weights, voxel_size=0.002
+):
     """Voxel-based merging of Gaussian splats via weighted average."""
     N = means.shape[0]
     if N == 0:
@@ -582,7 +669,11 @@ def _voxel_prune_gaussians(means, scales, quats, colors, opacities, weights, vox
     voxel_idx = (means / voxel_size).floor().long()
     voxel_idx = voxel_idx - voxel_idx.min(dim=0)[0]
     vmax = voxel_idx.max(dim=0)[0] + 1
-    flat = voxel_idx[:, 0] * vmax[1] * vmax[2] + voxel_idx[:, 1] * vmax[2] + voxel_idx[:, 2]
+    flat = (
+        voxel_idx[:, 0] * vmax[1] * vmax[2]
+        + voxel_idx[:, 1] * vmax[2]
+        + voxel_idx[:, 2]
+    )
 
     unique, inv = torch.unique(flat, return_inverse=True)
     K = len(unique)
@@ -608,7 +699,9 @@ def _voxel_prune_gaussians(means, scales, quats, colors, opacities, weights, vox
     return _wavg(means), _wavg(scales), m_quats, _wavg(colors), m_opa
 
 
-def _compress_points_voxel_then_sample(pts_np, cols_np, max_points=2_000_000, voxel_size=0.005):
+def _compress_points_voxel_then_sample(
+    pts_np, cols_np, max_points=2_000_000, voxel_size=0.005
+):
     """Compress point cloud: voxel merge then uniform random sampling."""
     n_in = int(pts_np.shape[0])
     if n_in == 0:
@@ -621,24 +714,66 @@ def _compress_points_voxel_then_sample(pts_np, cols_np, max_points=2_000_000, vo
         k = int(inv.max()) + 1
         if k < n_in:
             counts = np.maximum(np.bincount(inv, minlength=k).astype(np.float32), 1.0)
-            pts_np = np.stack([np.bincount(inv, weights=pts_np[:, d], minlength=k) for d in range(3)], axis=1).astype(np.float32) / counts[:, None]
-            cols_np = np.clip(np.round(np.stack([np.bincount(inv, weights=cols_np[:, d].astype(np.float32), minlength=k) for d in range(3)], axis=1) / counts[:, None]), 0, 255).astype(np.uint8)
+            pts_np = (
+                np.stack(
+                    [
+                        np.bincount(inv, weights=pts_np[:, d], minlength=k)
+                        for d in range(3)
+                    ],
+                    axis=1,
+                ).astype(np.float32)
+                / counts[:, None]
+            )
+            cols_np = np.clip(
+                np.round(
+                    np.stack(
+                        [
+                            np.bincount(
+                                inv,
+                                weights=cols_np[:, d].astype(np.float32),
+                                minlength=k,
+                            )
+                            for d in range(3)
+                        ],
+                        axis=1,
+                    )
+                    / counts[:, None]
+                ),
+                0,
+                255,
+            ).astype(np.uint8)
 
     if max_points > 0 and pts_np.shape[0] > max_points:
-        idx = np.random.default_rng(42).choice(pts_np.shape[0], size=max_points, replace=False)
+        idx = np.random.default_rng(42).choice(
+            pts_np.shape[0], size=max_points, replace=False
+        )
         pts_np, cols_np = pts_np[idx], cols_np[idx]
     return pts_np, cols_np
 
 
-def _compute_points_from_depth(depth_pred, imgs, extrinsics, intrinsics, S, H, W, filter_mask=None):
+def _compute_points_from_depth(
+    depth_pred, imgs, extrinsics, intrinsics, S, H, W, filter_mask=None
+):
     """Derive 3D point cloud from depth + camera outputs."""
-    depth_pred, extrinsics, intrinsics = depth_pred.float(), extrinsics.float(), intrinsics.float()
+    depth_pred, extrinsics, intrinsics = (
+        depth_pred.float(),
+        extrinsics.float(),
+        intrinsics.float(),
+    )
     points_list, colors_list = [], []
     for i in range(S):
         d = depth_pred[0, i, :, :, 0]
-        w2c = torch.cat([extrinsics[i][:3, :4], torch.tensor([[0, 0, 0, 1]], device=extrinsics.device)], dim=0)
+        w2c = torch.cat(
+            [
+                extrinsics[i][:3, :4],
+                torch.tensor([[0, 0, 0, 1]], device=extrinsics.device),
+            ],
+            dim=0,
+        )
         c2w = torch.linalg.inv(w2c)[:3, :4]
-        pts_i, _, mask = depth_to_world_coords_points(d[None], c2w[None], intrinsics[i][None])
+        pts_i, _, mask = depth_to_world_coords_points(
+            d[None], c2w[None], intrinsics[i][None]
+        )
         img_colors = (imgs[0, i].permute(1, 2, 0) * 255).to(torch.uint8)
         valid = mask[0]
         if filter_mask is not None:
@@ -649,10 +784,15 @@ def _compute_points_from_depth(depth_pred, imgs, extrinsics, intrinsics, S, H, W
 
     if not points_list:
         return np.empty((0, 3), dtype=np.float32), np.empty((0, 3), dtype=np.uint8)
-    return (torch.cat(points_list).detach().cpu().float().numpy(), torch.cat(colors_list).detach().cpu().to(torch.uint8).numpy())
+    return (
+        torch.cat(points_list).detach().cpu().float().numpy(),
+        torch.cat(colors_list).detach().cpu().to(torch.uint8).numpy(),
+    )
 
 
-def _save_colmap_lightweight(extrinsics, intrinsics, outdir, final_w, final_h, S, image_names):
+def _save_colmap_lightweight(
+    extrinsics, intrinsics, outdir, final_w, final_h, S, image_names
+):
     """Save lightweight COLMAP reconstruction (cameras + images only)."""
     import pycolmap
 
@@ -669,8 +809,15 @@ def _save_colmap_lightweight(extrinsics, intrinsics, outdir, final_w, final_h, S
             camera_id=i + 1,
         )
         scene.add_camera(camera)
-        cam_from_world = pycolmap.Rigid3d(pycolmap.Rotation3d(extrinsics[i][:3, :3]), extrinsics[i][:3, 3])
-        img = pycolmap.Image(id=i + 1, name=image_names[i], camera_id=i + 1, cam_from_world=cam_from_world)
+        cam_from_world = pycolmap.Rigid3d(
+            pycolmap.Rotation3d(extrinsics[i][:3, :3]), extrinsics[i][:3, 3]
+        )
+        img = pycolmap.Image(
+            id=i + 1,
+            name=image_names[i],
+            camera_id=i + 1,
+            cam_from_world=cam_from_world,
+        )
         img.registered = True
         scene.add_image(img)
     scene.write(str(sparse_dir))
@@ -717,11 +864,15 @@ def save_results(
     new_h -= new_h % 2
     image_names = [f"image_{i + 1:04d}.jpg" for i in range(S)]
 
-    depth_cpu = predictions["depth"][0].detach().cpu() if "depth" in predictions else None
+    depth_cpu = (
+        predictions["depth"][0].detach().cpu() if "depth" in predictions else None
+    )
     conf_cpu = predictions.get("depth_conf", [None])[0]
     if conf_cpu is not None:
         conf_cpu = conf_cpu.detach().cpu()
-    normals_cpu = predictions["normals"][0].detach().cpu() if "normals" in predictions else None
+    normals_cpu = (
+        predictions["normals"][0].detach().cpu() if "normals" in predictions else None
+    )
 
     futures = {}
     executor = ThreadPoolExecutor(max_workers=_IO_WORKERS)
@@ -729,31 +880,48 @@ def save_results(
     if save_depth and depth_cpu is not None:
         d_dir = outdir / "depth"
         d_dir.mkdir(exist_ok=True)
-        futures["save_depth"] = executor.submit(_timed_call, _save_depth_parallel, depth_cpu, d_dir, S)
+        futures["save_depth"] = executor.submit(
+            _timed_call, _save_depth_parallel, depth_cpu, d_dir, S
+        )
 
     if save_conf and conf_cpu is not None:
         c_dir = outdir / "depth_conf"
         c_dir.mkdir(exist_ok=True)
-        futures["save_conf"] = executor.submit(_timed_call, _save_conf_parallel, conf_cpu, c_dir, S)
+        futures["save_conf"] = executor.submit(
+            _timed_call, _save_conf_parallel, conf_cpu, c_dir, S
+        )
 
     if save_normal and normals_cpu is not None:
         n_dir = outdir / "normal"
         n_dir.mkdir(exist_ok=True)
-        futures["save_normal"] = executor.submit(_timed_call, _save_normal_parallel, normals_cpu, n_dir, S)
+        futures["save_normal"] = executor.submit(
+            _timed_call, _save_normal_parallel, normals_cpu, n_dir, S
+        )
 
     if save_sky_mask and sky_mask is not None:
         sm_dir = outdir / "sky_mask"
         sm_dir.mkdir(exist_ok=True)
-        futures["save_sky_mask"] = executor.submit(_timed_call, _save_sky_mask_parallel, sky_mask, sm_dir, S)
+        futures["save_sky_mask"] = executor.submit(
+            _timed_call, _save_sky_mask_parallel, sky_mask, sm_dir, S
+        )
 
     if save_gs and "splats" in predictions:
         sp = predictions["splats"]
         means = sp["means"][0].reshape(-1, 3).detach().cpu()
         scales = sp["scales"][0].reshape(-1, 3).detach().cpu()
         quats = sp["quats"][0].reshape(-1, 4).detach().cpu()
-        colors = (sp["sh"][0] if "sh" in sp else sp["colors"][0]).reshape(-1, 3).detach().cpu()
+        colors = (
+            (sp["sh"][0] if "sh" in sp else sp["colors"][0])
+            .reshape(-1, 3)
+            .detach()
+            .cpu()
+        )
         opacities = sp["opacities"][0].reshape(-1).detach().cpu()
-        weights = sp["weights"][0].reshape(-1).detach().cpu() if "weights" in sp else torch.ones_like(opacities)
+        weights = (
+            sp["weights"][0].reshape(-1).detach().cpu()
+            if "weights" in sp
+            else torch.ones_like(opacities)
+        )
 
         keep = None
         if gs_filter_mask is not None:
@@ -764,27 +932,80 @@ def save_results(
             means, scales, quats = means[keep], scales[keep], quats[keep]
             colors, opacities, weights = colors[keep], opacities[keep], weights[keep]
 
-        means, scales, quats, colors, opacities = _voxel_prune_gaussians(means, scales, quats, colors, opacities, weights)
+        means, scales, quats, colors, opacities = _voxel_prune_gaussians(
+            means, scales, quats, colors, opacities, weights
+        )
         if compress_gs_max_points > 0 and means.shape[0] > compress_gs_max_points:
-            idx = torch.from_numpy(np.random.default_rng(42).choice(means.shape[0], size=compress_gs_max_points, replace=False)).long()
-            means, scales, quats, colors, opacities = means[idx], scales[idx], quats[idx], colors[idx], opacities[idx]
+            idx = torch.from_numpy(
+                np.random.default_rng(42).choice(
+                    means.shape[0], size=compress_gs_max_points, replace=False
+                )
+            ).long()
+            means, scales, quats, colors, opacities = (
+                means[idx],
+                scales[idx],
+                quats[idx],
+                colors[idx],
+                opacities[idx],
+            )
 
-        futures["save_gs_ply"] = executor.submit(_timed_call, save_gs_ply, outdir / "gaussians.ply", means, scales, quats, colors, opacities)
+        futures["save_gs_ply"] = executor.submit(
+            _timed_call,
+            save_gs_ply,
+            outdir / "gaussians.ply",
+            means,
+            scales,
+            quats,
+            colors,
+            opacities,
+        )
 
     if save_camera and "camera_poses" in predictions and "camera_intrs" in predictions:
         cam_p = predictions["camera_poses"][0].detach().cpu().float().numpy()
         cam_i = predictions["camera_intrs"][0].detach().cpu().float().numpy()
-        futures["save_camera"] = executor.submit(_timed_call, save_camera_params, cam_p, cam_i, str(outdir))
+        futures["save_camera"] = executor.submit(
+            _timed_call, save_camera_params, cam_p, cam_i, str(outdir)
+        )
 
     if save_points and "depth" in predictions and "camera_params" in predictions:
-        e3x4, intr = vector_to_camera_matrices(predictions["camera_params"], image_hw=(H, W))
-        pts_np, cols_np = _compute_points_from_depth(predictions["depth"], imgs, e3x4[0], intr[0], S, H, W, filter_mask=filter_mask)
-        futures["save_points"] = executor.submit(_timed_call, _save_points_artifacts, outdir / "points.ply", pts_np, cols_np, compress_pts, compress_pts_max_points, compress_pts_voxel_size)
+        e3x4, intr = vector_to_camera_matrices(
+            predictions["camera_params"], image_hw=(H, W)
+        )
+        pts_np, cols_np = _compute_points_from_depth(
+            predictions["depth"],
+            imgs,
+            e3x4[0],
+            intr[0],
+            S,
+            H,
+            W,
+            filter_mask=filter_mask,
+        )
+        futures["save_points"] = executor.submit(
+            _timed_call,
+            _save_points_artifacts,
+            outdir / "points.ply",
+            pts_np,
+            cols_np,
+            compress_pts,
+            compress_pts_max_points,
+            compress_pts_voxel_size,
+        )
 
     if save_colmap and "camera_params" in predictions:
-        e3x4, intr = vector_to_camera_matrices(predictions["camera_params"], image_hw=(new_h, new_w))
+        e3x4, intr = vector_to_camera_matrices(
+            predictions["camera_params"], image_hw=(new_h, new_w)
+        )
         futures["save_colmap"] = executor.submit(
-            _timed_call, _save_colmap_lightweight, e3x4[0].detach().cpu().float().numpy(), intr[0].detach().cpu().float().numpy(), outdir, new_w, new_h, S, image_names
+            _timed_call,
+            _save_colmap_lightweight,
+            e3x4[0].detach().cpu().float().numpy(),
+            intr[0].detach().cpu().float().numpy(),
+            outdir,
+            new_w,
+            new_h,
+            S,
+            image_names,
         )
 
     for key, future in futures.items():
@@ -798,11 +1019,15 @@ def save_results(
     return timings
 
 
-def _save_points_artifacts(path, pts_np, cols_np, compress=False, max_points=2_000_000, voxel_size=0.005):
+def _save_points_artifacts(
+    path, pts_np, cols_np, compress=False, max_points=2_000_000, voxel_size=0.005
+):
     timings = {}
     if compress:
         t0 = time.perf_counter()
-        pts_np, cols_np = _compress_points_voxel_then_sample(pts_np, cols_np, max_points, voxel_size)
+        pts_np, cols_np = _compress_points_voxel_then_sample(
+            pts_np, cols_np, max_points, voxel_size
+        )
         timings["compress_points"] = time.perf_counter() - t0
     save_points_ply(path, pts_np, cols_np)
     return timings
@@ -822,7 +1047,12 @@ def print_and_save_timings(timings, outdir):
     print(f"\n{'=' * 72}\n  TIMING REPORT\n{'=' * 72}")
 
     print("  [Serial Stages]")
-    for key, label in [("data_loading", "Data loading"), ("inference_preprocess", "Inference preprocess"), ("inference", "Model inference"), ("compute_mask", "Compute filter mask")]:
+    for key, label in [
+        ("data_loading", "Data loading"),
+        ("inference_preprocess", "Inference preprocess"),
+        ("inference", "Model inference"),
+        ("compute_mask", "Compute filter mask"),
+    ]:
         if key in timings:
             _p(label, timings[key], 1)
 

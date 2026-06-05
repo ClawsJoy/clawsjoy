@@ -1,10 +1,11 @@
-from lib.smart_config import smart_config
 import argparse
 import base64
 from pathlib import Path
 from typing import Any
 
 import requests
+
+from lib.smart_config import smart_config
 
 try:
     from openai import OpenAI  # pyright: ignore[reportMissingImports]
@@ -83,22 +84,66 @@ def run_edit(client: Any, args: argparse.Namespace) -> Path:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Test OpenAI-compatible image APIs on LightX2V server.")
-    parser.add_argument("--base_url", type=str, default="http://smart_config.HOST:8000/v1", help="OpenAI-compatible base URL")
-    parser.add_argument("--api_key", type=str, default="dummy-key", help="OpenAI API key placeholder")
-    parser.add_argument("--model", type=str, default="gpt-image-1", help="Model name (for compatibility only)")
-    parser.add_argument("--mode", choices=["generate", "edit", "all"], default="all", help="Test mode")
-    parser.add_argument("--prompt", type=str, default="a futuristic city at sunset", help="Prompt for generation")
-    parser.add_argument("--edit_prompt", type=str, default="", help="Prompt for edit (defaults to --prompt)")
-    parser.add_argument("--size", type=str, default="1024x1024", help="Image size, e.g. 1024x1024")
-    parser.add_argument("--response_format", choices=["url", "b64_json"], default="url", help="OpenAI response format")
-    parser.add_argument("--image", type=str, default="", help="Input image path for edit mode")
-    parser.add_argument("--mask", type=str, default="", help="Optional mask image path for edit mode")
-    parser.add_argument("--output_dir", type=str, default="outputs/openai_images_test", help="Directory to save outputs")
+    parser = argparse.ArgumentParser(
+        description="Test OpenAI-compatible image APIs on LightX2V server."
+    )
+    parser.add_argument(
+        "--base_url",
+        type=str,
+        default="http://smart_config.HOST:8000/v1",
+        help="OpenAI-compatible base URL",
+    )
+    parser.add_argument(
+        "--api_key", type=str, default="dummy-key", help="OpenAI API key placeholder"
+    )
+    parser.add_argument(
+        "--model",
+        type=str,
+        default="gpt-image-1",
+        help="Model name (for compatibility only)",
+    )
+    parser.add_argument(
+        "--mode", choices=["generate", "edit", "all"], default="all", help="Test mode"
+    )
+    parser.add_argument(
+        "--prompt",
+        type=str,
+        default="a futuristic city at sunset",
+        help="Prompt for generation",
+    )
+    parser.add_argument(
+        "--edit_prompt",
+        type=str,
+        default="",
+        help="Prompt for edit (defaults to --prompt)",
+    )
+    parser.add_argument(
+        "--size", type=str, default="1024x1024", help="Image size, e.g. 1024x1024"
+    )
+    parser.add_argument(
+        "--response_format",
+        choices=["url", "b64_json"],
+        default="url",
+        help="OpenAI response format",
+    )
+    parser.add_argument(
+        "--image", type=str, default="", help="Input image path for edit mode"
+    )
+    parser.add_argument(
+        "--mask", type=str, default="", help="Optional mask image path for edit mode"
+    )
+    parser.add_argument(
+        "--output_dir",
+        type=str,
+        default="outputs/openai_images_test",
+        help="Directory to save outputs",
+    )
     args = parser.parse_args()
 
     if OpenAI is None:
-        raise RuntimeError("Missing dependency: openai. Please install it with `pip install openai`.")
+        raise RuntimeError(
+            "Missing dependency: openai. Please install it with `pip install openai`."
+        )
 
     client = OpenAI(api_key=args.api_key, base_url=args.base_url)
 

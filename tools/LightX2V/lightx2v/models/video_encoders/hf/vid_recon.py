@@ -1,13 +1,13 @@
-from lib.smart_config import smart_config
 import argparse
 
 import cv2
 import torch
-from loguru import logger
-
 from lightx2v.models.video_encoders.hf.wan.vae import WanVAE
 from lightx2v.models.video_encoders.hf.wan.vae_2_2 import Wan2_2_VAE
 from lightx2v.models.video_encoders.hf.wan.vae_tiny import Wan2_2_VAE_tiny, WanVAE_tiny
+from loguru import logger
+
+from lib.smart_config import smart_config
 
 
 class VideoTensorReader:
@@ -24,17 +24,25 @@ class VideoTensorReader:
         if not ret:
             self.cap.release()
             raise StopIteration  # End of video or error
-        return torch.from_numpy(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)).permute(2, 0, 1)  # BGR HWC -> RGB CHW
+        return torch.from_numpy(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)).permute(
+            2, 0, 1
+        )  # BGR HWC -> RGB CHW
 
 
 class VideoTensorWriter:
     def __init__(self, video_file_path, width_height, fps=30):
-        self.writer = cv2.VideoWriter(video_file_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, width_height)
+        self.writer = cv2.VideoWriter(
+            video_file_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, width_height
+        )
         assert self.writer.isOpened(), f"Could not create writer for {video_file_path}"
 
     def write(self, frame_tensor):
-        assert frame_tensor.ndim == 3 and frame_tensor.shape[0] == 3, f"{frame_tensor.shape}??"
-        self.writer.write(cv2.cvtColor(frame_tensor.permute(1, 2, 0).numpy(), cv2.COLOR_RGB2BGR))  # RGB CHW -> BGR HWC
+        assert (
+            frame_tensor.ndim == 3 and frame_tensor.shape[0] == 3
+        ), f"{frame_tensor.shape}??"
+        self.writer.write(
+            cv2.cvtColor(frame_tensor.permute(1, 2, 0).numpy(), cv2.COLOR_RGB2BGR)
+        )  # RGB CHW -> BGR HWC
 
     def __del__(self):
         if hasattr(self, "writer"):
@@ -42,12 +50,31 @@ class VideoTensorWriter:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Encode and decode videos using the TaeHV model for reconstruction")
-    parser.add_argument("video_paths", nargs="+", help="Paths to input video files (multiple allowed)")
+    parser = argparse.ArgumentParser(
+        description="Encode and decode videos using the TaeHV model for reconstruction"
+    )
+    parser.add_argument(
+        "video_paths", nargs="+", help="Paths to input video files (multiple allowed)"
+    )
     parser.add_argument("--checkpoint", "-c", help=f"Path to the model checkpoint file")
-    parser.add_argument("--device", "-d", default="cuda", help=f'Computing device (e.g., "cuda", "mps", "cpu"; default: auto-detect available device)')
-    parser.add_argument("--dtype", default="bfloat16", choices=["bfloat16", "float32"], help="Data type for model computation (default: bfloat16)")
-    parser.add_argument("--model_type", choices=["taew2_1", "taew2_2", "vaew2_1", "vaew2_2"], required=True, help="Type of the model to use (choices: taew2_1, taew2_2)")
+    parser.add_argument(
+        "--device",
+        "-d",
+        default="cuda",
+        help=f'Computing device (e.g., "cuda", "mps", "cpu"; default: auto-detect available device)',
+    )
+    parser.add_argument(
+        "--dtype",
+        default="bfloat16",
+        choices=["bfloat16", "float32"],
+        help="Data type for model computation (default: bfloat16)",
+    )
+    parser.add_argument(
+        "--model_type",
+        choices=["taew2_1", "taew2_2", "vaew2_1", "vaew2_2"],
+        required=True,
+        help="Type of the model to use (choices: taew2_1, taew2_2)",
+    )
     parser.add_argument("--use_lightvae", default=False, action="store_true")
 
     args = parser.parse_args()
@@ -57,10 +84,19 @@ if __name__ == "__main__":
     if args.device:
         dev = torch.device(args.device)
     else:
-        dev = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
+        dev = torch.device(
+            "cuda"
+            if torch.cuda.is_available()
+            else "mps" if torch.backends.mps.is_available() else "cpu"
+        )
 
     dtype_map = {"bfloat16": torch.bfloat16, "float32": torch.float32}
-    model_map = {"taew2_1": WanVAE_tiny, "taew2_2": Wan2_2_VAE_tiny, "vaew2_1": WanVAE, "vaew2_2": Wan2_2_VAE}
+    model_map = {
+        "taew2_1": WanVAE_tiny,
+        "taew2_2": Wan2_2_VAE_tiny,
+        "vaew2_1": WanVAE,
+        "vaew2_2": Wan2_2_VAE,
+    }
 
     dtype = dtype_map[args.dtype]
 

@@ -3,15 +3,16 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
 import json
-import requests
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, List, Optional
+
+import requests
 
 from core.lib.config_helper import get_data_root
 
@@ -29,7 +30,7 @@ class ServiceRegistry:
         """加载服务注册表"""
         try:
             if self.registry_file.exists():
-                with open(self.registry_file, 'r') as f:
+                with open(self.registry_file, "r") as f:
                     content = f.read().strip()
                     if not content:
                         return {}
@@ -46,12 +47,18 @@ class ServiceRegistry:
         """保存服务注册表"""
         try:
             self.registry_file.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.registry_file, 'w') as f:
+            with open(self.registry_file, "w") as f:
                 json.dump(self.services, f, indent=2, ensure_ascii=False)
         except Exception as e:
             print(f"⚠️ 保存服务注册表失败: {e}")
 
-    def register(self, name: str, port: int, host: str = "localhost", health_path: str = "/api/health"):
+    def register(
+        self,
+        name: str,
+        port: int,
+        host: str = "localhost",
+        health_path: str = "/api/health",
+    ):
         """注册服务"""
         self.services[name] = {
             "name": name,
@@ -60,7 +67,7 @@ class ServiceRegistry:
             "health_path": health_path,
             "url": f"http://{host}:{port}",
             "registered_at": datetime.now().isoformat(),
-            "status": "active"
+            "status": "active",
         }
         self._save()
         print(f"✅ 服务已注册: {name} -> {self.services[name]['url']}")

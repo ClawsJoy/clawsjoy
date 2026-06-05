@@ -1,7 +1,7 @@
-from lib.smart_config import smart_config
 import torch
-
 from lightx2v_platform.base.global_var import AI_DEVICE
+
+from lib.smart_config import smart_config
 
 
 class WanScheduler4ChangingResolutionInterface:
@@ -20,7 +20,9 @@ class WanScheduler4ChangingResolution:
             config["resolution_rate"] = [0.75]
         if "changing_resolution_steps" not in config:
             config["changing_resolution_steps"] = [config.infer_steps // 2]
-        assert len(config["resolution_rate"]) == len(config["changing_resolution_steps"])
+        assert len(config["resolution_rate"]) == len(
+            config["changing_resolution_steps"]
+        )
 
     def prepare_latents(self, seed, latent_shape, dtype=torch.float32):
         self.generator = torch.Generator(device=AI_DEVICE).manual_seed(seed)
@@ -73,12 +75,20 @@ class WanScheduler4ChangingResolution:
         # 2. upsample clean noise to target shape
         denoised_sample_5d = denoised_sample.unsqueeze(0)  # (C,T,H,W) -> (1,C,T,H,W)
 
-        shape_to_upsampled = self.latents_list[self.changing_resolution_index + 1].shape[1:]
-        clean_noise = torch.nn.functional.interpolate(denoised_sample_5d, size=shape_to_upsampled, mode="trilinear")
+        shape_to_upsampled = self.latents_list[
+            self.changing_resolution_index + 1
+        ].shape[1:]
+        clean_noise = torch.nn.functional.interpolate(
+            denoised_sample_5d, size=shape_to_upsampled, mode="trilinear"
+        )
         clean_noise = clean_noise.squeeze(0)  # (1,C,T,H,W) -> (C,T,H,W)
 
         # 3. add noise to clean noise
-        noisy_sample = self.add_noise(clean_noise, self.latents_list[self.changing_resolution_index + 1], self.timesteps[self.step_index + 1])
+        noisy_sample = self.add_noise(
+            clean_noise,
+            self.latents_list[self.changing_resolution_index + 1],
+            self.timesteps[self.step_index + 1],
+        )
 
         # 4. update latents
         self.latents = noisy_sample
@@ -86,7 +96,11 @@ class WanScheduler4ChangingResolution:
         # self.disable_corrector = [24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37] # maybe not needed
 
         # 5. update timesteps using shift + self.changing_resolution_index + 1 更激进的去噪
-        self.set_timesteps(self.infer_steps, device=AI_DEVICE, shift=self.sample_shift + self.changing_resolution_index + 1)
+        self.set_timesteps(
+            self.infer_steps,
+            device=AI_DEVICE,
+            shift=self.sample_shift + self.changing_resolution_index + 1,
+        )
 
     def add_noise(self, original_samples, noise, timesteps):
         sigma = self.sigmas[self.step_index]

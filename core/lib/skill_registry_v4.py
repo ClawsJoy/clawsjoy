@@ -3,32 +3,33 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
-from core.lib.unified_config import unified_config
-
-from core.lib.unified_config import unified_config
-from core.lib.unified_config import unified_config
-
 from core.lib.constants import PROJECT_ROOT
+from core.lib.unified_config import unified_config
+
 #!/usr/bin/env python3
 """OpenClaw 兼容技能注册中心 v4.0.0 - 修复版"""
 
 import json
-import yaml
 import logging
-from pathlib import Path
-from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+import yaml
+
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class SkillMetadata:
     """技能元数据"""
+
     name: str
     version: str
     description: str
@@ -44,14 +45,14 @@ class SkillMetadata:
 
 class SkillRegistry:
     """技能注册中心 - 直接扫描目录"""
-    
+
     VERSION = "4.0.0"
-    
+
     def __init__(self, skills_path: Optional[Path] = None):
         self.skills_path = skills_path or Path("skills")
         self.skills: Dict[str, SkillMetadata] = {}
         self._discover_skills()
-    
+
     def _discover_skills(self):
         """直接扫描技能目录"""
         logger.info(f"扫描技能目录: {self.skills_path}")
@@ -59,7 +60,7 @@ class SkillRegistry:
         for skill_dir in self.skills_path.iterdir():
             if not skill_dir.is_dir():
                 continue
-            if skill_dir.name.startswith('__'):
+            if skill_dir.name.startswith("__"):
                 continue
 
             skill_name = skill_dir.name
@@ -79,16 +80,17 @@ class SkillRegistry:
 
             if skill_md.exists():
                 try:
-                    content = skill_md.read_text(encoding='utf-8')
-                    if content.startswith('---'):
-                        parts = content.split('---', 2)
+                    content = skill_md.read_text(encoding="utf-8")
+                    if content.startswith("---"):
+                        parts = content.split("---", 2)
                         if len(parts) >= 2:
                             import yaml
+
                             metadata = unified_config.get("skill_metadata", {})
-                            description = metadata.get('description', description)
-                            use_when = metadata.get('use_when', '')
-                            not_for = metadata.get('not_for', '')
-                            version = metadata.get('version', version)
+                            description = metadata.get("description", description)
+                            use_when = metadata.get("use_when", "")
+                            not_for = metadata.get("not_for", "")
+                            version = metadata.get("version", version)
                 except Exception as e:
                     logger.warning(f"解析 {skill_name} SKILL.md 失败: {e}")
 
@@ -99,16 +101,16 @@ class SkillRegistry:
                 use_when=use_when,
                 not_for=not_for,
                 enabled=True,
-                path=str(skill_dir)
+                path=str(skill_dir),
             )
             logger.info(f"✅ 注册技能: {skill_name} v{version}")
 
         logger.info(f"共注册 {len(self.skills)} 个技能")
-    
+
     def get_skill(self, name: str) -> Optional[SkillMetadata]:
         """获取技能元数据"""
         return self.skills.get(name)
-    
+
     def list_skills(self) -> List[Dict]:
         """列出所有技能"""
         return [
@@ -117,11 +119,11 @@ class SkillRegistry:
                 "version": s.version,
                 "description": s.description[:100],
                 "security_grade": s.security_grade,
-                "enabled": s.enabled
+                "enabled": s.enabled,
             }
             for s in self.skills.values()
         ]
-    
+
     def execute_skill(self, name: str, params: Dict[str, Any]) -> Dict[str, Any]:
         """执行技能"""
         if name not in self.skills:
@@ -135,24 +137,25 @@ class SkillRegistry:
 
         try:
             import importlib.util
+
             spec = importlib.util.spec_from_file_location(name, script_path)
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
 
-            if hasattr(module, 'execute'):
+            if hasattr(module, "execute"):
                 return module.execute(params)
             else:
                 return {"success": False, "error": f"技能 {name} 没有 execute 函数"}
         except Exception as e:
             logger.error(f"执行技能 {name} 失败: {e}")
             return {"success": False, "error": str(e)}
-    
+
     def get_stats(self) -> Dict:
         """获取统计"""
         return {
             "version": self.VERSION,
             "total_skills": len(self.skills),
-            "skills": [s.name for s in self.skills.values()][:20]
+            "skills": [s.name for s in self.skills.values()][:20],
         }
 
 

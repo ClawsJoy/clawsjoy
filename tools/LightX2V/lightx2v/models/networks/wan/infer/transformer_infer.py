@@ -1,15 +1,20 @@
-from lib.smart_config import smart_config
 from functools import partial
 
 import torch
-
 from lightx2v.common.transformer_infer.transformer_infer import BaseTransformerInfer
 from lightx2v.utils.envs import *
 from lightx2v.utils.registry_factory import *
 from lightx2v_platform.base.global_var import AI_DEVICE
 
+from lib.smart_config import smart_config
+
 from .triton_ops import fuse_scale_shift_kernel
-from .utils import apply_wan_rope_with_chunk, apply_wan_rope_with_flashinfer, apply_wan_rope_with_torch, apply_wan_rope_with_torch_naive
+from .utils import (
+    apply_wan_rope_with_chunk,
+    apply_wan_rope_with_flashinfer,
+    apply_wan_rope_with_torch,
+    apply_wan_rope_with_torch_naive,
+)
 
 torch_device_module = getattr(torch, AI_DEVICE)
 
@@ -53,7 +58,11 @@ class WanTransformerInfer(BaseTransformerInfer):
             # Fallback to hardcoded functions
             rope_func = rope_funcs.get(rope_type, apply_wan_rope_with_torch)
         if self.config.get("rope_chunk", False):
-            self.apply_rope_func = partial(apply_wan_rope_with_chunk, chunk_size=self.config.get("rope_chunk_size", 100), rope_func=rope_func)
+            self.apply_rope_func = partial(
+                apply_wan_rope_with_chunk,
+                chunk_size=self.config.get("rope_chunk_size", 100),
+                rope_func=rope_func,
+            )
         else:
             self.apply_rope_func = rope_func
         self.clean_cuda_cache = self.config.get("clean_cuda_cache", False)
@@ -61,11 +70,17 @@ class WanTransformerInfer(BaseTransformerInfer):
         self.sensitive_layer_dtype = GET_SENSITIVE_DTYPE()
 
         if self.config["seq_parallel"]:
-            self.seq_p_group = self.config.get("device_mesh").get_group(mesh_dim="seq_p")
+            self.seq_p_group = self.config.get("device_mesh").get_group(
+                mesh_dim="seq_p"
+            )
             self.seq_p_fp8_comm = self.config["parallel"].get("seq_p_fp8_comm", False)
             self.seq_p_fp4_comm = self.config["parallel"].get("seq_p_fp4_comm", False)
-            self.enable_head_parallel = self.config["parallel"].get("seq_p_head_parallel", False)
-            self.seq_p_tensor_fusion = self.config["parallel"].get("seq_p_tensor_fusion", False)
+            self.enable_head_parallel = self.config["parallel"].get(
+                "seq_p_head_parallel", False
+            )
+            self.seq_p_tensor_fusion = self.config["parallel"].get(
+                "seq_p_tensor_fusion", False
+            )
         else:
             self.seq_p_group = None
             self.seq_p_fp8_comm = False
@@ -130,12 +145,17 @@ class WanTransformerInfer(BaseTransformerInfer):
         return x
 
     def infer_block(self, block, x, pre_infer_out):
-        if hasattr(block.compute_phases[0], "before_proj") and block.compute_phases[0].before_proj.weight is not None:
+        if (
+            hasattr(block.compute_phases[0], "before_proj")
+            and block.compute_phases[0].before_proj.weight is not None
+        ):
             x = block.compute_phases[0].before_proj.apply(x) + pre_infer_out.x
 
-        shift_msa, scale_msa, gate_msa, c_shift_msa, c_scale_msa, c_gate_msa = self.pre_process(
-            block.compute_phases[0].modulation,
-            pre_infer_out.embed0,
+        shift_msa, scale_msa, gate_msa, c_shift_msa, c_scale_msa, c_gate_msa = (
+            self.pre_process(
+                block.compute_phases[0].modulation,
+                pre_infer_out.embed0,
+            )
         )
         y_out = self.infer_self_attn(
             block.compute_phases[0],
@@ -150,10 +170,14 @@ class WanTransformerInfer(BaseTransformerInfer):
             y_out,
             gate_msa,
         )
-        y = self.infer_ffn(block.compute_phases[2], x, attn_out, c_shift_msa, c_scale_msa)
+        y = self.infer_ffn(
+            block.compute_phases[2], x, attn_out, c_shift_msa, c_scale_msa
+        )
         x = self.post_process(x, y, c_gate_msa, pre_infer_out)
         if hasattr(block.compute_phases[2], "after_proj"):
-            pre_infer_out.adapter_args["hints"].append(block.compute_phases[2].after_proj.apply(x))
+            pre_infer_out.adapter_args["hints"].append(
+                block.compute_phases[2].after_proj.apply(x)
+            )
 
         if self.has_post_adapter:
             x = self.infer_post_adapter(block.compute_phases[3], x, pre_infer_out)
@@ -164,9 +188,13 @@ class WanTransformerInfer(BaseTransformerInfer):
         if embed0.dim() == 3 and embed0.shape[2] == 1:
             modulation = modulation.tensor.unsqueeze(2)
             embed0 = (modulation + embed0).chunk(6, dim=1)
-            shift_msa, scale_msa, gate_msa, c_shift_msa, c_scale_msa, c_gate_msa = [ei.squeeze(1) for ei in embed0]
+            shift_msa, scale_msa, gate_msa, c_shift_msa, c_scale_msa, c_gate_msa = [
+                ei.squeeze(1) for ei in embed0
+            ]
         else:
-            shift_msa, scale_msa, gate_msa, c_shift_msa, c_scale_msa, c_gate_msa = (modulation.tensor + embed0).chunk(6, dim=1)
+            shift_msa, scale_msa, gate_msa, c_shift_msa, c_scale_msa, c_gate_msa = (
+                modulation.tensor + embed0
+            ).chunk(6, dim=1)
 
         if self.clean_cuda_cache:
             del embed0
@@ -187,19 +215,27 @@ class WanTransformerInfer(BaseTransformerInfer):
             norm1_out = phase.norm1.apply(x)
             if self.sensitive_layer_dtype != self.infer_dtype:
                 norm1_out = norm1_out.to(self.sensitive_layer_dtype)
-            norm1_out = self.modulate_func(norm1_out, scale=scale_msa, shift=shift_msa).squeeze()
+            norm1_out = self.modulate_func(
+                norm1_out, scale=scale_msa, shift=shift_msa
+            ).squeeze()
 
         if self.sensitive_layer_dtype != self.infer_dtype:
             norm1_out = norm1_out.to(self.infer_dtype)
 
         s, n, d = *norm1_out.shape[:1], self.num_heads, self.head_dim
-        q = phase.self_attn_norm_q.apply(phase.self_attn_q.apply(norm1_out)).view(s, n, d)
-        k = phase.self_attn_norm_k.apply(phase.self_attn_k.apply(norm1_out)).view(s, n, d)
+        q = phase.self_attn_norm_q.apply(phase.self_attn_q.apply(norm1_out)).view(
+            s, n, d
+        )
+        k = phase.self_attn_norm_k.apply(phase.self_attn_k.apply(norm1_out)).view(
+            s, n, d
+        )
         v = phase.self_attn_v.apply(norm1_out).view(s, n, d)
         q, k = self.apply_rope_func(q, k, cos_sin)
         img_qkv_len = q.shape[0]
         if self.self_attn_cu_seqlens_qkv is None:
-            self.self_attn_cu_seqlens_qkv = torch.tensor([0, q.shape[0]]).cumsum(0, dtype=torch.int32)
+            self.self_attn_cu_seqlens_qkv = torch.tensor([0, q.shape[0]]).cumsum(
+                0, dtype=torch.int32
+            )
 
         if self.clean_cuda_cache:
             del norm1_out, shift_msa, scale_msa
@@ -247,12 +283,17 @@ class WanTransformerInfer(BaseTransformerInfer):
 
     def infer_cross_attn(self, phase, x, context, y_out, gate_msa):
         if self.sensitive_layer_dtype != self.infer_dtype:
-            x = x.to(self.sensitive_layer_dtype) + y_out.to(self.sensitive_layer_dtype) * gate_msa.squeeze()
+            x = (
+                x.to(self.sensitive_layer_dtype)
+                + y_out.to(self.sensitive_layer_dtype) * gate_msa.squeeze()
+            )
         else:
             x.add_(y_out * gate_msa.squeeze())
 
         norm3_out = phase.norm3.apply(x)
-        if self.task in ["i2v", "flf2v", "animate", "s2v", "rs2v"] and self.config.get("use_image_encoder", True):
+        if self.task in ["i2v", "flf2v", "animate", "s2v", "rs2v"] and self.config.get(
+            "use_image_encoder", True
+        ):
             context_img = context[:257]
             context = context[257:]
         else:
@@ -260,18 +301,32 @@ class WanTransformerInfer(BaseTransformerInfer):
 
         if self.sensitive_layer_dtype != self.infer_dtype:
             context = context.to(self.infer_dtype)
-            if self.task in ["i2v", "flf2v", "animate", "s2v", "rs2v"] and self.config.get("use_image_encoder", True):
+            if self.task in [
+                "i2v",
+                "flf2v",
+                "animate",
+                "s2v",
+                "rs2v",
+            ] and self.config.get("use_image_encoder", True):
                 context_img = context_img.to(self.infer_dtype)
 
         n, d = self.num_heads, self.head_dim
-        q = phase.cross_attn_norm_q.apply(phase.cross_attn_q.apply(norm3_out)).view(-1, n, d)
-        k = phase.cross_attn_norm_k.apply(phase.cross_attn_k.apply(context)).view(-1, n, d)
+        q = phase.cross_attn_norm_q.apply(phase.cross_attn_q.apply(norm3_out)).view(
+            -1, n, d
+        )
+        k = phase.cross_attn_norm_k.apply(phase.cross_attn_k.apply(context)).view(
+            -1, n, d
+        )
         v = phase.cross_attn_v.apply(context).view(-1, n, d)
 
         if self.cross_attn_cu_seqlens_q is None:
-            self.cross_attn_cu_seqlens_q = torch.tensor([0, q.shape[0]]).cumsum(0, dtype=torch.int32)
+            self.cross_attn_cu_seqlens_q = torch.tensor([0, q.shape[0]]).cumsum(
+                0, dtype=torch.int32
+            )
         if self.cross_attn_cu_seqlens_kv is None:
-            self.cross_attn_cu_seqlens_kv = torch.tensor([0, k.shape[0]]).cumsum(0, dtype=torch.int32)
+            self.cross_attn_cu_seqlens_kv = torch.tensor([0, k.shape[0]]).cumsum(
+                0, dtype=torch.int32
+            )
         attn_out = phase.cross_attn_1.apply(
             q=q,
             k=k,
@@ -282,12 +337,20 @@ class WanTransformerInfer(BaseTransformerInfer):
             max_seqlen_kv=k.size(0),
         )
 
-        if self.task in ["i2v", "flf2v", "animate", "s2v", "rs2v"] and self.config.get("use_image_encoder", True) and context_img is not None:
-            k_img = phase.cross_attn_norm_k_img.apply(phase.cross_attn_k_img.apply(context_img)).view(-1, n, d)
+        if (
+            self.task in ["i2v", "flf2v", "animate", "s2v", "rs2v"]
+            and self.config.get("use_image_encoder", True)
+            and context_img is not None
+        ):
+            k_img = phase.cross_attn_norm_k_img.apply(
+                phase.cross_attn_k_img.apply(context_img)
+            ).view(-1, n, d)
             v_img = phase.cross_attn_v_img.apply(context_img).view(-1, n, d)
 
             if self.cross_attn_cu_seqlens_kv_img is None:
-                self.cross_attn_cu_seqlens_kv_img = torch.tensor([0, k_img.shape[0]]).cumsum(0, dtype=torch.int32)
+                self.cross_attn_cu_seqlens_kv_img = torch.tensor(
+                    [0, k_img.shape[0]]
+                ).cumsum(0, dtype=torch.int32)
 
             img_attn_out = phase.cross_attn_2.apply(
                 q=q,
@@ -319,7 +382,9 @@ class WanTransformerInfer(BaseTransformerInfer):
             torch_device_module.empty_cache()
 
         if hasattr(phase, "smooth_norm2_weight"):
-            norm2_weight = (1 + c_scale_msa.squeeze()) * phase.smooth_norm2_weight.tensor
+            norm2_weight = (
+                1 + c_scale_msa.squeeze()
+            ) * phase.smooth_norm2_weight.tensor
             norm2_bias = c_shift_msa.squeeze() * phase.smooth_norm2_bias.tensor
             norm2_out = phase.norm2.apply(x)
             if self.sensitive_layer_dtype != self.infer_dtype:
@@ -329,7 +394,9 @@ class WanTransformerInfer(BaseTransformerInfer):
             norm2_out = phase.norm2.apply(x)
             if self.sensitive_layer_dtype != self.infer_dtype:
                 norm2_out = norm2_out.to(self.sensitive_layer_dtype)
-            norm2_out = self.modulate_func(norm2_out, scale=c_scale_msa, shift=c_shift_msa).squeeze()
+            norm2_out = self.modulate_func(
+                norm2_out, scale=c_scale_msa, shift=c_shift_msa
+            ).squeeze()
 
         if self.sensitive_layer_dtype != self.infer_dtype:
             norm2_out = norm2_out.to(self.infer_dtype)
@@ -347,7 +414,10 @@ class WanTransformerInfer(BaseTransformerInfer):
 
     def post_process(self, x, y, c_gate_msa, pre_infer_out=None):
         if self.sensitive_layer_dtype != self.infer_dtype:
-            x = x.to(self.sensitive_layer_dtype) + y.to(self.sensitive_layer_dtype) * c_gate_msa.squeeze()
+            x = (
+                x.to(self.sensitive_layer_dtype)
+                + y.to(self.sensitive_layer_dtype) * c_gate_msa.squeeze()
+            )
         else:
             x.add_(y * c_gate_msa.squeeze())
 

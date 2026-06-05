@@ -1,10 +1,11 @@
-from lib.smart_config import smart_config
 import json
 from dataclasses import dataclass, replace
 from typing import Any, Callable, NamedTuple, Protocol, TypeVar
 
 import safetensors
 import torch
+
+from lib.smart_config import smart_config
 
 
 def check_config_value(config: dict, key: str, expected: Any) -> None:  # noqa: ANN401
@@ -54,7 +55,9 @@ class KeyValueOperation(Protocol):
     Used to apply operations to a specific key and value in a state dict.
     """
 
-    def __call__(self, tensor_key: str, tensor_value: torch.Tensor) -> list[KeyValueOperationResult]: ...
+    def __call__(
+        self, tensor_key: str, tensor_value: torch.Tensor
+    ) -> list[KeyValueOperationResult]: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -73,7 +76,9 @@ class SDOps:
     """Immutable class representing state dict key operations."""
 
     name: str
-    mapping: tuple[ContentReplacement | ContentMatching | SDKeyValueOperation, ...] = ()  # Immutable tuple of (key, value) pairs
+    mapping: tuple[
+        ContentReplacement | ContentMatching | SDKeyValueOperation, ...
+    ] = ()  # Immutable tuple of (key, value) pairs
 
     def with_replacement(self, content: str, replacement: str) -> "SDOps":
         """Create a new SDOps instance with the specified replacement added to the mapping."""
@@ -101,8 +106,12 @@ class SDOps:
 
     def apply_to_key(self, key: str) -> str | None:
         """Apply the mapping to the given name."""
-        matchers = [content for content in self.mapping if isinstance(content, ContentMatching)]
-        valid = any(key.startswith(f.prefix) and key.endswith(f.suffix) for f in matchers)
+        matchers = [
+            content for content in self.mapping if isinstance(content, ContentMatching)
+        ]
+        valid = any(
+            key.startswith(f.prefix) and key.endswith(f.suffix) for f in matchers
+        )
         if not valid:
             return None
 
@@ -113,12 +122,16 @@ class SDOps:
                 key = key.replace(replacement.content, replacement.replacement)
         return key
 
-    def apply_to_key_value(self, key: str, value: torch.Tensor) -> list[KeyValueOperationResult]:
+    def apply_to_key_value(
+        self, key: str, value: torch.Tensor
+    ) -> list[KeyValueOperationResult]:
         """Apply the value operation to the given name and associated value."""
         for operation in self.mapping:
             if not isinstance(operation, SDKeyValueOperation):
                 continue
-            if key.startswith(operation.key_matcher.prefix) and key.endswith(operation.key_matcher.suffix):
+            if key.startswith(operation.key_matcher.prefix) and key.endswith(
+                operation.key_matcher.suffix
+            ):
                 return operation.kv_operation(key, value)
         return [KeyValueOperationResult(key, value)]
 
@@ -172,7 +185,12 @@ class StateDictLoader(Protocol):
     def metadata(self, path: str) -> dict:
         """Load metadata from path"""
 
-    def load(self, path: str | list[str], sd_ops: SDOps | None = None, device: torch.device | None = None) -> StateDict:
+    def load(
+        self,
+        path: str | list[str],
+        sd_ops: SDOps | None = None,
+        device: torch.device | None = None,
+    ) -> StateDict:
         """Load state dict from path or paths (for sharded model storage) and apply sd_ops"""
 
 
@@ -186,7 +204,12 @@ class SafetensorsStateDictLoader(StateDictLoader):
     def metadata(self, path: str) -> dict:
         raise NotImplementedError("Not implemented")
 
-    def load(self, path: str | list[str], sd_ops: SDOps | None = None, device: torch.device | None = None) -> StateDict:
+    def load(
+        self,
+        path: str | list[str],
+        sd_ops: SDOps | None = None,
+        device: torch.device | None = None,
+    ) -> StateDict:
         """
         Load state dict from path or paths (for sharded model storage) and apply sd_ops
         """
@@ -196,16 +219,24 @@ class SafetensorsStateDictLoader(StateDictLoader):
         device = device or torch.device("cpu")
         model_paths = path if isinstance(path, list) else [path]
         for shard_path in model_paths:
-            with safetensors.safe_open(shard_path, framework="pt", device=str(device)) as f:
+            with safetensors.safe_open(
+                shard_path, framework="pt", device=str(device)
+            ) as f:
                 safetensor_keys = f.keys()
                 for name in safetensor_keys:
-                    expected_name = name if sd_ops is None else sd_ops.apply_to_key(name)
+                    expected_name = (
+                        name if sd_ops is None else sd_ops.apply_to_key(name)
+                    )
                     if expected_name is None:
                         continue
-                    value = f.get_tensor(name).to(device=device, non_blocking=True, copy=False)
+                    value = f.get_tensor(name).to(
+                        device=device, non_blocking=True, copy=False
+                    )
                     key_value_pairs = ((expected_name, value),)
                     if sd_ops is not None:
-                        key_value_pairs = sd_ops.apply_to_key_value(expected_name, value)
+                        key_value_pairs = sd_ops.apply_to_key_value(
+                            expected_name, value
+                        )
                     for key, value in key_value_pairs:
                         size += value.nbytes
                         dtype.add(value.dtype)
@@ -222,19 +253,34 @@ class SafetensorsModelStateDictLoader(StateDictLoader):
     """
 
     def __init__(self, weight_loader: SafetensorsStateDictLoader | None = None):
-        self.weight_loader = weight_loader if weight_loader is not None else SafetensorsStateDictLoader()
+        self.weight_loader = (
+            weight_loader if weight_loader is not None else SafetensorsStateDictLoader()
+        )
 
     def metadata(self, path: str) -> dict:
         with safetensors.safe_open(path, framework="pt") as f:
             return json.loads(f.metadata()["config"])
 
-    def load(self, path: str | list[str], sd_ops: SDOps | None = None, device: torch.device | None = None) -> StateDict:
+    def load(
+        self,
+        path: str | list[str],
+        sd_ops: SDOps | None = None,
+        device: torch.device | None = None,
+    ) -> StateDict:
         return self.weight_loader.load(path, sd_ops, device)
 
 
 # Predefined SDOps instances
-LTXV_LORA_COMFY_RENAMING_MAP = SDOps("LTXV_LORA_COMFY_PREFIX_MAP").with_matching().with_replacement("diffusion_model.", "")
+LTXV_LORA_COMFY_RENAMING_MAP = (
+    SDOps("LTXV_LORA_COMFY_PREFIX_MAP")
+    .with_matching()
+    .with_replacement("diffusion_model.", "")
+)
 
 LTXV_LORA_COMFY_TARGET_MAP = (
-    SDOps("LTXV_LORA_COMFY_TARGET_MAP").with_matching().with_replacement("diffusion_model.", "").with_replacement(".lora_A.weight", ".weight").with_replacement(".lora_B.weight", ".weight")
+    SDOps("LTXV_LORA_COMFY_TARGET_MAP")
+    .with_matching()
+    .with_replacement("diffusion_model.", "")
+    .with_replacement(".lora_A.weight", ".weight")
+    .with_replacement(".lora_B.weight", ".weight")
 )

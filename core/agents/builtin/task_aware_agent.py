@@ -3,28 +3,25 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 import logging
 
 from core.lib.unified_config import unified_config
 
-from core.lib.unified_config import unified_config
-
-from core.lib.unified_config import unified_config
 #!/usr/bin/env python3
 """任务感知 Agent - 通用任务识别 + 增强检索"""
 
-import sys
-import re
 import json
-import requests
+import re
+import sys
 from typing import Dict, Tuple
 
+import requests
 
-from core.lib.memory_vector import vector_memory
 from core.lib.cross_session_memory import CrossSessionMemory
+from core.lib.memory_vector import vector_memory
 
 
 class TaskAwareAgent:
@@ -32,14 +29,15 @@ class TaskAwareAgent:
     通用任务感知 Agent
     核心：先识别任务类型，再执行，不混合
     """
+
     VERSION = "6.0.0"
-    
+
     def __init__(self, user_id: str = "default"):
         self.user_id = user_id
         self.memory = CrossSessionMemory(user_id)
         self.ollama_url = "config_loader.get_ollama_url()"
         self.model = model_config.get_fast_model()
-    
+
     # ========== 任务识别（不依赖 LLM 的规则）==========
     def _classify_task(self, user_input: str) -> Tuple[str, str]:
         """识别任务类型，提取关键词"""
@@ -61,7 +59,7 @@ class TaskAwareAgent:
             return "greeting", ""
 
         # 3. 自我介绍
-        if re.match(r'^[我][叫][\s]*', user_input):
+        if re.match(r"^[我][叫][\s]*", user_input):
             return "self_intro", user_input
 
         # 4. 问身份
@@ -70,7 +68,7 @@ class TaskAwareAgent:
 
         # 5. 默认聊天
         return "chat", user_input
-    
+
     # ========== 增强检索 ==========
     def _search(self, query: str) -> str:
         """增强检索：多策略召回"""
@@ -85,7 +83,7 @@ class TaskAwareAgent:
 
         # 策略2：关键词扩展
         # 将用户输入拆分为关键词
-        keywords = re.findall(r'[\u4e00-\u9fa5a-zA-Z]+', query)
+        keywords = re.findall(r"[\u4e00-\u9fa5a-zA-Z]+", query)
         for kw in keywords[:3]:
             kw_results = vector_memory.search(kw, n=2)
             results.extend(kw_results)
@@ -99,17 +97,19 @@ class TaskAwareAgent:
         seen = set()
         unique_results = []
         for r in results:
-            text = r.get('text', '')[:200]
+            text = r.get("text", "")[:200]
             if text and text not in seen:
                 seen.add(text)
                 unique_results.append(r)
 
         # 返回最相关的前3条
         if unique_results:
-            return "\n\n---\n\n".join([r.get('text', '')[:800] for r in unique_results[:3]])
+            return "\n\n---\n\n".join(
+                [r.get("text", "")[:800] for r in unique_results[:3]]
+            )
 
         return ""
-    
+
     # ========== 任务执行 ==========
     def _execute_search(self, query: str) -> str:
         """执行搜索任务"""
@@ -122,22 +122,22 @@ class TaskAwareAgent:
             return f"找到了相关资料：\n\n{results[:1500]}"
         else:
             return f"没有找到关于「{query}」的资料。可以尝试换个关键词，或者告诉我更具体的信息。"
-    
+
     def _execute_greeting(self) -> str:
         name = self.memory.recall().get("name")
         return f"你好{f'，{name}' if name else ''}！我是 ClawsJoy"
-    
+
     def _execute_self_intro(self, user_input: str) -> str:
-        match = re.search(r'叫[\s]*([^\s，。]{2,4})', user_input)
+        match = re.search(r"叫[\s]*([^\s，。]{2,4})", user_input)
         if match:
             name = match.group(1)
             self.memory.remember("name", name)
             return f"你好，{name}！我是 ClawsJoy"
         return "你好！请告诉我你的名字"
-    
+
     def _execute_ask_who(self) -> str:
         return "我是 ClawsJoy，你的智能助手！"
-    
+
     def _execute_chat(self, user_input: str) -> str:
         """聊天任务 - 调用 LLM"""
         name = self.memory.recall().get("name", "")
@@ -151,17 +151,22 @@ class TaskAwareAgent:
         try:
             resp = requests.post(
                 f"{self.ollama_url}/api/generate",
-                json={"model": self.model, "prompt": prompt, "stream": False, "options": {"num_predict": 150}},
-                timeout=20
+                json={
+                    "model": self.model,
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {"num_predict": 150},
+                },
+                timeout=20,
             )
             if resp.status_code == 200:
-                return resp.json().get('response', '').strip()
+                return resp.json().get("response", "").strip()
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error(f"Unexpected error: {e}", exc_info=True)
             pass
         return f"收到：{user_input[:50]}"
-    
+
     # ========== 主入口 ==========
     def process(self, user_input: str) -> Dict:
         # 1. 识别任务
@@ -189,11 +194,11 @@ class TaskAwareAgent:
 
 if __name__ == "__main__":
     agent = TaskAwareAgent("John")
-    
+
     print("=" * 60)
     print("任务感知 Agent v6.0 - 测试")
     print("=" * 60)
-    
+
     tests = [
         "你好",
         "我叫 John",
@@ -203,7 +208,7 @@ if __name__ == "__main__":
         "ClawsJoy 是怎么开始的",
         "今天天气怎么样",
     ]
-    
+
     for t in tests:
         print(f"\n👤 {t}")
         result = agent.process(t)

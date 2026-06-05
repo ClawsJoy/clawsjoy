@@ -1,17 +1,23 @@
-from lib.smart_config import smart_config
 import json
 import os
 
-from safetensors import safe_open
-
 from lightx2v.models.networks.wan.infer.matrix_game3.post_infer import WanMtxg3PostInfer
 from lightx2v.models.networks.wan.infer.matrix_game3.pre_infer import WanMtxg3PreInfer
-from lightx2v.models.networks.wan.infer.matrix_game3.transformer_infer import WanMtxg3TransformerInfer
+from lightx2v.models.networks.wan.infer.matrix_game3.transformer_infer import (
+    WanMtxg3TransformerInfer,
+)
 from lightx2v.models.networks.wan.model import WanModel
-from lightx2v.models.networks.wan.weights.matrix_game3.pre_weights import WanMtxg3PreWeights
-from lightx2v.models.networks.wan.weights.matrix_game3.transformer_weights import WanMtxg3TransformerWeights
+from lightx2v.models.networks.wan.weights.matrix_game3.pre_weights import (
+    WanMtxg3PreWeights,
+)
+from lightx2v.models.networks.wan.weights.matrix_game3.transformer_weights import (
+    WanMtxg3TransformerWeights,
+)
 from lightx2v.utils.envs import *
 from lightx2v.utils.utils import *
+from safetensors import safe_open
+
+from lib.smart_config import smart_config
 
 
 class WanMtxg3Model(WanModel):
@@ -31,14 +37,26 @@ class WanMtxg3Model(WanModel):
     transformer_weight_class = WanMtxg3TransformerWeights
     # replace the module
 
-    def __init__(self, model_path, config, device, model_type="wan2.2", lora_path=None, lora_strength=1.0):
-        super().__init__(model_path, config, device, model_type, lora_path, lora_strength)
+    def __init__(
+        self,
+        model_path,
+        config,
+        device,
+        model_type="wan2.2",
+        lora_path=None,
+        lora_strength=1.0,
+    ):
+        super().__init__(
+            model_path, config, device, model_type, lora_path, lora_strength
+        )
 
     def _init_infer_class(self):
         # Merge the official MG3 model config so that all dimension / action fields
         # are available for weight and infer construction.
         sub_model_folder = self.config.get("sub_model_folder", "base_distilled_model")
-        config_path = os.path.join(self.config["model_path"], sub_model_folder, "config.json")
+        config_path = os.path.join(
+            self.config["model_path"], sub_model_folder, "config.json"
+        )
         if os.path.exists(config_path):
             with open(config_path) as f:
                 model_config = json.load(f)
@@ -60,9 +78,13 @@ class WanMtxg3Model(WanModel):
         model_dir = os.path.join(self.config["model_path"], sub_model_folder)
 
         # Find safetensor files
-        safetensor_files = [f for f in os.listdir(model_dir) if f.endswith(".safetensors")]
+        safetensor_files = [
+            f for f in os.listdir(model_dir) if f.endswith(".safetensors")
+        ]
         if not safetensor_files:
-            raise FileNotFoundError(f"No safetensors files found in {model_dir}. Please download the Matrix-Game-3.0 model weights.")
+            raise FileNotFoundError(
+                f"No safetensors files found in {model_dir}. Please download the Matrix-Game-3.0 model weights."
+            )
 
         weight_dict = {}
         for sf_file in sorted(safetensor_files):

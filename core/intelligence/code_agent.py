@@ -3,31 +3,34 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 import readline
 import sys
 from pathlib import Path
+
 from core.lib.unified_config import unified_config
+
 sys.path.insert(0, smart_config.ROOT)
 
 from intelligence.code_agent_trainer import CodeAgentTrainer
 
+
 class CodeAgent:
     """智能命令行助手"""
-    
+
     def __init__(self):
         self.trainer = CodeAgentTrainer()
         self.command_history = []
 
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("🤖 Code Agent 已启动")
-        print("="*60)
+        print("=" * 60)
         print("功能: 意图理解 | 命令补全 | 智能纠错")
         print("输入命令，或输入 'exit' 退出")
-        print("="*60)
-    
+        print("=" * 60)
+
     def process_input(self, user_input):
         """处理用户输入"""
         print(f"\n💭 分析: {user_input}")
@@ -52,27 +55,28 @@ class CodeAgent:
         self.trainer.learn_from_conversation(user_input, "助手响应")
 
         return intent
-    
+
     def run(self):
         """运行交互式"""
         while True:
             try:
                 user_input = input("\n> ").strip()
-                
-                if user_input.lower() == 'exit':
+
+                if user_input.lower() == "exit":
                     print("再见!")
                     break
-                
+
                 if not user_input:
                     continue
-                
+
                 self.process_input(user_input)
-                
+
             except KeyboardInterrupt:
                 print("\n\n再见!")
                 break
             except Exception as e:
                 print(f"错误: {e}")
+
 
 if __name__ == "__main__":
     agent = CodeAgent()

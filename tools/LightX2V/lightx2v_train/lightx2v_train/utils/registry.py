@@ -1,4 +1,6 @@
 from lib.smart_config import smart_config
+
+
 class Register(dict):
     def __init__(self, *args, **kwargs):
         super(Register, self).__init__(*args, **kwargs)
@@ -80,7 +82,9 @@ def build_inferencer(config):
     name = config["inference"]["method"]
     if name not in INFERENCER_REGISTER:
         available = ", ".join(sorted(INFERENCER_REGISTER.keys()))
-        raise ValueError(f"Unknown inferencer {name!r}. Available inferencers: {available}")
+        raise ValueError(
+            f"Unknown inferencer {name!r}. Available inferencers: {available}"
+        )
     return INFERENCER_REGISTER[name](config)
 
 
@@ -88,10 +92,14 @@ def build_data(config, train_or_val):
     data_config = config.get("data", {})
     if train_or_val not in data_config:
         available_splits = ", ".join(repr(k) for k in sorted(data_config.keys()))
-        raise ValueError(f"config['data'] has no key {train_or_val!r}. Available keys: {available_splits}")
+        raise ValueError(
+            f"config['data'] has no key {train_or_val!r}. Available keys: {available_splits}"
+        )
     data_config_split = data_config[train_or_val]
     data_name = data_config_split.get("name", "image_dataset")
     if data_name not in DATA_REGISTER:
         available_names = ", ".join(sorted(DATA_REGISTER.keys()))
-        raise ValueError(f"Unknown data {data_name!r}. Available data: {available_names}")
+        raise ValueError(
+            f"Unknown data {data_name!r}. Available data: {available_names}"
+        )
     return DATA_REGISTER[data_name](data_config_split, train_or_val=train_or_val)

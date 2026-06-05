@@ -1,17 +1,28 @@
-from lib.smart_config import smart_config
 from dataclasses import replace
 from typing import Any, Callable, Iterator, List, NamedTuple, Tuple
 
 import torch
 from einops import rearrange
-from torch import nn
-
 from lightx2v.models.video_encoders.hf.ltx2.video_vae.convolution import make_conv_nd
-from lightx2v.models.video_encoders.hf.ltx2.video_vae.enums import LogVarianceType, NormLayerType, PaddingModeType
+from lightx2v.models.video_encoders.hf.ltx2.video_vae.enums import (
+    LogVarianceType,
+    NormLayerType,
+    PaddingModeType,
+)
 from lightx2v.models.video_encoders.hf.ltx2.video_vae.normalization import PixelNorm
-from lightx2v.models.video_encoders.hf.ltx2.video_vae.ops import PerChannelStatistics, patchify, unpatchify
-from lightx2v.models.video_encoders.hf.ltx2.video_vae.resnet import ResnetBlock3D, UNetMidBlock3D
-from lightx2v.models.video_encoders.hf.ltx2.video_vae.sampling import DepthToSpaceUpsample, SpaceToDepthDownsample
+from lightx2v.models.video_encoders.hf.ltx2.video_vae.ops import (
+    PerChannelStatistics,
+    patchify,
+    unpatchify,
+)
+from lightx2v.models.video_encoders.hf.ltx2.video_vae.resnet import (
+    ResnetBlock3D,
+    UNetMidBlock3D,
+)
+from lightx2v.models.video_encoders.hf.ltx2.video_vae.sampling import (
+    DepthToSpaceUpsample,
+    SpaceToDepthDownsample,
+)
 from lightx2v.models.video_encoders.hf.ltx2.video_vae.tiling import (
     DEFAULT_MAPPING_OPERATION,
     DEFAULT_SPLIT_OPERATION,
@@ -23,7 +34,12 @@ from lightx2v.models.video_encoders.hf.ltx2.video_vae.tiling import (
     compute_trapezoidal_mask_1d,
     create_tiles,
 )
-from lightx2v.models.video_encoders.hf.ltx2.video_vae.timestep_embedding import PixArtAlphaCombinedTimestepSizeEmbeddings
+from lightx2v.models.video_encoders.hf.ltx2.video_vae.timestep_embedding import (
+    PixArtAlphaCombinedTimestepSizeEmbeddings,
+)
+from torch import nn
+
+from lib.smart_config import smart_config
 
 
 class SpatioTemporalScaleFactors(NamedTuple):
@@ -71,7 +87,9 @@ class VideoLatentShape(NamedTuple):
     width: int
 
     def to_torch_shape(self) -> torch.Size:
-        return torch.Size([self.batch, self.channels, self.frames, self.height, self.width])
+        return torch.Size(
+            [self.batch, self.channels, self.frames, self.height, self.width]
+        )
 
     @staticmethod
     def from_torch_shape(shape: torch.Size) -> "VideoLatentShape":
@@ -104,7 +122,9 @@ class VideoLatentShape(NamedTuple):
             width=width,
         )
 
-    def upscale(self, scale_factors: SpatioTemporalScaleFactors = VIDEO_SCALE_FACTORS) -> "VideoLatentShape":
+    def upscale(
+        self, scale_factors: SpatioTemporalScaleFactors = VIDEO_SCALE_FACTORS
+    ) -> "VideoLatentShape":
         return self._replace(
             channels=3,
             frames=(self.frames - 1) * scale_factors.time + 1,
@@ -271,7 +291,9 @@ class VideoEncoder(nn.Module):
         convolution_dimensions: int = 3,
         in_channels: int = 3,
         out_channels: int = 128,
-        encoder_blocks: List[Tuple[str, int]] | List[Tuple[str, dict[str, Any]]] = [],  # noqa: B006
+        encoder_blocks: (
+            List[Tuple[str, int]] | List[Tuple[str, dict[str, Any]]]
+        ) = [],  # noqa: B006
         patch_size: int = 4,
         norm_layer: NormLayerType = NormLayerType.PIXEL_NORM,
         latent_log_var: LogVarianceType = LogVarianceType.UNIFORM,
@@ -306,7 +328,11 @@ class VideoEncoder(nn.Module):
 
         for block_name, block_params in encoder_blocks:
             # Convert int to dict format for uniform handling
-            block_config = {"num_layers": block_params} if isinstance(block_params, int) else block_params
+            block_config = (
+                {"num_layers": block_params}
+                if isinstance(block_params, int)
+                else block_params
+            )
 
             block, feature_channels = _make_encoder_block(
                 block_name=block_name,
@@ -322,7 +348,11 @@ class VideoEncoder(nn.Module):
 
         # out
         if norm_layer == NormLayerType.GROUP_NORM:
-            self.conv_norm_out = nn.GroupNorm(num_channels=feature_channels, num_groups=self._norm_num_groups, eps=1e-6)
+            self.conv_norm_out = nn.GroupNorm(
+                num_channels=feature_channels,
+                num_groups=self._norm_num_groups,
+                eps=1e-6,
+            )
         elif norm_layer == NormLayerType.PIXEL_NORM:
             self.conv_norm_out = PixelNorm()
 
@@ -358,7 +388,9 @@ class VideoEncoder(nn.Module):
         # Validate frame count
         frames_count = sample.shape[2]
         if ((frames_count - 1) % 8) != 0:
-            raise ValueError("Invalid number of frames: Encode input must have 1 + 8 * x frames (e.g., 1, 9, 17, ...). Please check your input.")
+            raise ValueError(
+                "Invalid number of frames: Encode input must have 1 + 8 * x frames (e.g., 1, 9, 17, ...). Please check your input."
+            )
 
         # Initial spatial compression: trade spatial resolution for channel depth
         # This reduces H,W by patch_size and increases channels, making convolutions more efficient
@@ -381,7 +413,9 @@ class VideoEncoder(nn.Module):
             # Target shape: (B, 2*N, ...) where first N are means, last N are logvar
 
             if sample.shape[1] < 2:
-                raise ValueError(f"Invalid channel count for UNIFORM mode: expected at least 2 channels (N means + 1 logvar), got {sample.shape[1]}")
+                raise ValueError(
+                    f"Invalid channel count for UNIFORM mode: expected at least 2 channels (N means + 1 logvar), got {sample.shape[1]}"
+                )
 
             # Extract means (first N channels) and logvar (last 1 channel)
             means = sample[:, :-1, ...]  # (B, N, ...)
@@ -397,7 +431,9 @@ class VideoEncoder(nn.Module):
             sample = torch.cat([means, repeated_logvar], dim=1)
         elif self.latent_log_var == LogVarianceType.CONSTANT:
             sample = sample[:, :-1, ...]
-            approx_ln_0 = -30  # this is the minimal clamp value in DiagonalGaussianDistribution objects
+            approx_ln_0 = (
+                -30
+            )  # this is the minimal clamp value in DiagonalGaussianDistribution objects
             sample = torch.cat(
                 [sample, torch.ones_like(sample, device=sample.device) * approx_ln_0],
                 dim=1,
@@ -578,7 +614,11 @@ class VideoDecoder(nn.Module):
 
         for block_name, block_params in list(reversed(decoder_blocks)):
             # Convert int to dict format for uniform handling
-            block_config = {"num_layers": block_params} if isinstance(block_params, int) else block_params
+            block_config = (
+                {"num_layers": block_params}
+                if isinstance(block_params, int)
+                else block_params
+            )
 
             block, feature_channels = _make_decoder_block(
                 block_name=block_name,
@@ -594,7 +634,11 @@ class VideoDecoder(nn.Module):
             self.up_blocks.append(block)
 
         if norm_layer == NormLayerType.GROUP_NORM:
-            self.conv_norm_out = nn.GroupNorm(num_channels=feature_channels, num_groups=self._norm_num_groups, eps=1e-6)
+            self.conv_norm_out = nn.GroupNorm(
+                num_channels=feature_channels,
+                num_groups=self._norm_num_groups,
+                eps=1e-6,
+            )
         elif norm_layer == NormLayerType.PIXEL_NORM:
             self.conv_norm_out = PixelNorm()
 
@@ -611,7 +655,9 @@ class VideoDecoder(nn.Module):
 
         if timestep_conditioning:
             self.timestep_scale_multiplier = nn.Parameter(torch.tensor(1000.0))
-            self.last_time_embedder = PixArtAlphaCombinedTimestepSizeEmbeddings(embedding_dim=feature_channels * 2, size_emb_dim=0)
+            self.last_time_embedder = PixArtAlphaCombinedTimestepSizeEmbeddings(
+                embedding_dim=feature_channels * 2, size_emb_dim=0
+            )
             self.last_scale_shift_table = nn.Parameter(torch.empty(2, feature_channels))
 
     def forward(
@@ -653,14 +699,21 @@ class VideoDecoder(nn.Module):
 
         # Use default decode_timestep if timestep not provided
         if timestep is None and self.timestep_conditioning:
-            timestep = torch.full((batch_size,), self.decode_timestep, device=sample.device, dtype=sample.dtype)
+            timestep = torch.full(
+                (batch_size,),
+                self.decode_timestep,
+                device=sample.device,
+                dtype=sample.dtype,
+            )
 
         sample = self.conv_in(sample, causal=self.causal)
 
         scaled_timestep = None
         if self.timestep_conditioning:
             if timestep is None:
-                raise ValueError("'timestep' parameter must be provided when 'timestep_conditioning' is True")
+                raise ValueError(
+                    "'timestep' parameter must be provided when 'timestep_conditioning' is True"
+                )
             scaled_timestep = timestep * self.timestep_scale_multiplier.to(sample)
 
         for up_block in self.up_blocks:
@@ -683,8 +736,12 @@ class VideoDecoder(nn.Module):
                 timestep=scaled_timestep.flatten(),
                 hidden_dtype=sample.dtype,
             )
-            embedded_timestep = embedded_timestep.view(batch_size, embedded_timestep.shape[-1], 1, 1, 1)
-            ada_values = self.last_scale_shift_table[None, ..., None, None, None].to(device=sample.device, dtype=sample.dtype) + embedded_timestep.reshape(
+            embedded_timestep = embedded_timestep.view(
+                batch_size, embedded_timestep.shape[-1], 1, 1, 1
+            )
+            ada_values = self.last_scale_shift_table[None, ..., None, None, None].to(
+                device=sample.device, dtype=sample.dtype
+            ) + embedded_timestep.reshape(
                 batch_size,
                 2,
                 -1,
@@ -733,7 +790,9 @@ class VideoDecoder(nn.Module):
             tile_size = cfg.tile_size_in_frames // self.video_downscale_factors.time
             overlap = cfg.tile_overlap_in_frames // self.video_downscale_factors.time
             splitters[2] = split_in_temporal(tile_size, overlap)
-            mappers[2] = to_mapping_operation(map_temporal_slice, self.video_downscale_factors.time)
+            mappers[2] = to_mapping_operation(
+                map_temporal_slice, self.video_downscale_factors.time
+            )
 
         return create_tiles(latent.shape, splitters, mappers)
 
@@ -758,7 +817,9 @@ class VideoDecoder(nn.Module):
         """
 
         # Calculate full video shape from latent shape to get spatial dimensions
-        full_video_shape = VideoLatentShape.from_torch_shape(latent.shape).upscale(self.video_downscale_factors)
+        full_video_shape = VideoLatentShape.from_torch_shape(latent.shape).upscale(
+            self.video_downscale_factors
+        )
         tiles = self._prepare_tiles(latent, tiling_config)
 
         temporal_groups = self._group_tiles_by_temporal_slice(tiles)
@@ -798,18 +859,30 @@ class VideoDecoder(nn.Module):
             if previous_chunk is not None:
                 # Check if current temporal slice overlaps with previous temporal slice
                 if previous_temporal_slice.stop > curr_temporal_slice.start:
-                    overlap_len = previous_temporal_slice.stop - curr_temporal_slice.start
-                    temporal_overlap_slice = slice(curr_temporal_slice.start - previous_temporal_slice.start, None)
+                    overlap_len = (
+                        previous_temporal_slice.stop - curr_temporal_slice.start
+                    )
+                    temporal_overlap_slice = slice(
+                        curr_temporal_slice.start - previous_temporal_slice.start, None
+                    )
 
                     # The overlap is already masked before it reaches this step. Each tile is accumulated into buffer
                     # with its trapezoidal mask, and curr_weights accumulates the same mask. In the overlap blend we add
                     # the masked values (buffer[...]) and the corresponding weights (curr_weights[...]) into the
                     # previous buffers, then later normalize by weights.
-                    previous_chunk[:, :, temporal_overlap_slice, :, :] += buffer[:, :, slice(0, overlap_len), :, :]
-                    previous_weights[:, :, temporal_overlap_slice, :, :] += curr_weights[:, :, slice(0, overlap_len), :, :]
+                    previous_chunk[:, :, temporal_overlap_slice, :, :] += buffer[
+                        :, :, slice(0, overlap_len), :, :
+                    ]
+                    previous_weights[
+                        :, :, temporal_overlap_slice, :, :
+                    ] += curr_weights[:, :, slice(0, overlap_len), :, :]
 
-                    buffer[:, :, slice(0, overlap_len), :, :] = previous_chunk[:, :, temporal_overlap_slice, :, :]
-                    curr_weights[:, :, slice(0, overlap_len), :, :] = previous_weights[:, :, temporal_overlap_slice, :, :]
+                    buffer[:, :, slice(0, overlap_len), :, :] = previous_chunk[
+                        :, :, temporal_overlap_slice, :, :
+                    ]
+                    curr_weights[:, :, slice(0, overlap_len), :, :] = previous_weights[
+                        :, :, temporal_overlap_slice, :, :
+                    ]
 
                 # Yield the non-overlapping part of the previous chunk
                 previous_weights = previous_weights.clamp(min=1e-8)
@@ -877,7 +950,11 @@ class VideoDecoder(nn.Module):
             decoded_temporal_len = decoded_tile.shape[2]
 
             # Ensure we don't exceed the buffer or decoded tile bounds
-            actual_temporal_len = min(expected_temporal_len, decoded_temporal_len, buffer.shape[2] - temporal_offset)
+            actual_temporal_len = min(
+                expected_temporal_len,
+                decoded_temporal_len,
+                buffer.shape[2] - temporal_offset,
+            )
 
             chunk_coords = (
                 slice(None),  # batch
@@ -889,7 +966,9 @@ class VideoDecoder(nn.Module):
 
             # Slice decoded_tile and mask to match the actual length we're writing
             decoded_slice = decoded_tile[:, :, :actual_temporal_len, :, :]
-            mask_slice = mask[:, :, :actual_temporal_len, :, :] if mask.shape[2] > 1 else mask
+            mask_slice = (
+                mask[:, :, :actual_temporal_len, :, :] if mask.shape[2] > 1 else mask
+            )
 
             buffer[chunk_coords] += decoded_slice * mask_slice
             weights[chunk_coords] += mask_slice
@@ -920,14 +999,18 @@ def decode_video(
         return frames
 
     if tiling_config is not None:
-        for frames in video_decoder.tiled_decode(latent, tiling_config, generator=generator):
+        for frames in video_decoder.tiled_decode(
+            latent, tiling_config, generator=generator
+        ):
             yield convert_to_uint8(frames)
     else:
         decoded_video = video_decoder(latent, generator=generator)
         yield convert_to_uint8(decoded_video)
 
 
-def get_video_chunks_number(num_frames: int, tiling_config: TilingConfig | None = None) -> int:
+def get_video_chunks_number(
+    num_frames: int, tiling_config: TilingConfig | None = None
+) -> int:
     """
     Get the number of video chunks for a given number of frames and tiling configuration.
     Args:
@@ -953,7 +1036,9 @@ def split_in_spatial(size: int, overlap: int) -> SplitOperation:
         ends[-1] = dimension_size
         left_ramps = [0] + [overlap] * (amount - 1)
         right_ramps = [overlap] * (amount - 1) + [0]
-        return DimensionIntervals(starts=starts, ends=ends, left_ramps=left_ramps, right_ramps=right_ramps)
+        return DimensionIntervals(
+            starts=starts, ends=ends, left_ramps=left_ramps, right_ramps=right_ramps
+        )
 
     return split
 
@@ -978,7 +1063,9 @@ def to_mapping_operation(
     map_func: Callable[[int, int, int, int, int], Tuple[slice, torch.Tensor]],
     scale: int,
 ) -> MappingOperation:
-    def map_op(intervals: DimensionIntervals) -> tuple[list[slice], list[torch.Tensor | None]]:
+    def map_op(
+        intervals: DimensionIntervals,
+    ) -> tuple[list[slice], list[torch.Tensor | None]]:
         output_slices: list[slice] = []
         masks_1d: list[torch.Tensor | None] = []
         number_of_slices = len(intervals.starts)
@@ -995,19 +1082,27 @@ def to_mapping_operation(
     return map_op
 
 
-def map_temporal_slice(begin: int, end: int, left_ramp: int, right_ramp: int, scale: int) -> Tuple[slice, torch.Tensor]:
+def map_temporal_slice(
+    begin: int, end: int, left_ramp: int, right_ramp: int, scale: int
+) -> Tuple[slice, torch.Tensor]:
     start = begin * scale
     stop = 1 + (end - 1) * scale
     left_ramp = 1 + (left_ramp - 1) * scale
     right_ramp = right_ramp * scale
 
-    return slice(start, stop), compute_trapezoidal_mask_1d(stop - start, left_ramp, right_ramp, True)
+    return slice(start, stop), compute_trapezoidal_mask_1d(
+        stop - start, left_ramp, right_ramp, True
+    )
 
 
-def map_spatial_slice(begin: int, end: int, left_ramp: int, right_ramp: int, scale: int) -> Tuple[slice, torch.Tensor]:
+def map_spatial_slice(
+    begin: int, end: int, left_ramp: int, right_ramp: int, scale: int
+) -> Tuple[slice, torch.Tensor]:
     start = begin * scale
     stop = end * scale
     left_ramp = left_ramp * scale
     right_ramp = right_ramp * scale
 
-    return slice(start, stop), compute_trapezoidal_mask_1d(stop - start, left_ramp, right_ramp, False)
+    return slice(start, stop), compute_trapezoidal_mask_1d(
+        stop - start, left_ramp, right_ramp, False
+    )

@@ -2,4 +2,4 @@
 
 from engine.audit.core import AuditEngine, audit_engine
 
-__all__ = ['AuditEngine', 'audit_engine']
+__all__ = ["AuditEngine", "audit_engine"]

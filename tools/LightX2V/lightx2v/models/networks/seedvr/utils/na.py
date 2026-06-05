@@ -1,9 +1,10 @@
-from lib.smart_config import smart_config
 from itertools import chain
 from typing import Callable, Dict, List, Tuple
 
 import einops
 import torch
+
+from lib.smart_config import smart_config
 
 
 def flatten(
@@ -53,7 +54,9 @@ def concat_idx(
     src_idx = torch.argsort(tgt_idx)
     return (
         lambda vid, txt: torch.index_select(torch.cat([vid, txt]), 0, tgt_idx),
-        lambda all: torch.index_select(all, 0, src_idx).split([len(vid_idx), len(txt_idx)]),
+        lambda all: torch.index_select(all, 0, src_idx).split(
+            [len(vid_idx), len(txt_idx)]
+        ),
     )
 
 
@@ -137,7 +140,9 @@ def rearrange(
     torch.FloatTensor,
     torch.LongTensor,
 ]:
-    return flatten([einops.rearrange(h, pattern, **kwargs) for h in unflatten(hid, hid_shape)])
+    return flatten(
+        [einops.rearrange(h, pattern, **kwargs) for h in unflatten(hid, hid_shape)]
+    )
 
 
 def rearrange_idx(
@@ -145,7 +150,9 @@ def rearrange_idx(
     pattern: str,
     **kwargs: Dict[str, int],
 ) -> Tuple[Callable, Callable, torch.LongTensor]:
-    hid_idx = torch.arange(hid_shape.prod(-1).sum(), device=hid_shape.device).unsqueeze(-1)
+    hid_idx = torch.arange(hid_shape.prod(-1).sum(), device=hid_shape.device).unsqueeze(
+        -1
+    )
     tgt_idx, tgt_shape = rearrange(hid_idx, hid_shape, pattern, **kwargs)
     tgt_idx = tgt_idx.squeeze(-1)
     src_idx = torch.argsort(tgt_idx)
@@ -217,7 +224,9 @@ def window_idx(
     hid_shape: torch.LongTensor,  # (b n)
     window_fn: Callable[[torch.Tensor], List[torch.Tensor]],
 ):
-    hid_idx = torch.arange(hid_shape.prod(-1).sum(), device=hid_shape.device).unsqueeze(-1)
+    hid_idx = torch.arange(hid_shape.prod(-1).sum(), device=hid_shape.device).unsqueeze(
+        -1
+    )
     tgt_idx, tgt_shape, tgt_windows = window(hid_idx, hid_shape, window_fn)
     tgt_idx = tgt_idx.squeeze(-1)
     src_idx = torch.argsort(tgt_idx)

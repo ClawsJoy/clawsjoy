@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 #!/usr/bin/env python3
 from __future__ import annotations
 
@@ -7,6 +6,8 @@ import csv
 import json
 from collections import defaultdict
 from pathlib import Path
+
+from lib.smart_config import smart_config
 
 
 def _fmt_float3(value):
@@ -17,7 +18,9 @@ def _fmt_float3(value):
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Extract average GPU utilization rows from baseline_controller_metrics.json")
+    parser = argparse.ArgumentParser(
+        description="Extract average GPU utilization rows from baseline_controller_metrics.json"
+    )
     parser.add_argument(
         "--metrics",
         default="/root/zht/LightX2V/save_results/baseline_controller_metrics_4steps_p8.json",
@@ -44,7 +47,9 @@ def main() -> int:
 
     samples = payload.get("monitor_samples", [])
     if not isinstance(samples, list):
-        raise ValueError(f"invalid metrics format: monitor_samples must be a list, got {type(samples)}")
+        raise ValueError(
+            f"invalid metrics format: monitor_samples must be a list, got {type(samples)}"
+        )
 
     grouped_samples = defaultdict(list)
     for item in samples:
@@ -81,7 +86,9 @@ def main() -> int:
             {
                 "time_from_start_s": _fmt_float3(sample_ts),
                 "avg_gpu_utilization": _fmt_float3(sum(gpu_utils) / len(gpu_utils)),
-                "avg_gpu_memory_occupancy_rate": _fmt_float3(sum(mem_utils) / len(mem_utils)),
+                "avg_gpu_memory_occupancy_rate": _fmt_float3(
+                    sum(mem_utils) / len(mem_utils)
+                ),
             }
         )
 

@@ -3,7 +3,7 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
@@ -24,16 +24,16 @@ class CommunicationMixin:
 
     def publish(self, topic: str, content: dict, priority: int = 0):
         """发布消息"""
-        if hasattr(self, 'bus') and self.bus:
+        if hasattr(self, "bus") and self.bus:
             return self.bus.publish(self.agent_name, topic, content, priority)
         return None
 
     def subscribe(self, topic: str):
         """订阅主题"""
-        if hasattr(self, 'bus') and self.bus:
+        if hasattr(self, "bus") and self.bus:
             self.bus.subscribe(self.agent_name, topic)
 
     def register_handler(self, topic: str, handler):
         """注册消息处理器"""
-        if hasattr(self, 'bus') and self.bus:
+        if hasattr(self, "bus") and self.bus:
             self.bus.register_handler(topic, handler)

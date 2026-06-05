@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import asyncio
 import uuid
 from pathlib import Path
@@ -7,6 +6,8 @@ from urllib.parse import urlparse
 
 import httpx
 from loguru import logger
+
+from lib.smart_config import smart_config
 
 
 class FileService:
@@ -39,11 +40,19 @@ class FileService:
                     write=10.0,
                     pool=5.0,
                 )
-                limits = httpx.Limits(max_keepalive_connections=5, max_connections=10, keepalive_expiry=30.0)
-                self._http_client = httpx.AsyncClient(verify=False, timeout=timeout, limits=limits, follow_redirects=True)
+                limits = httpx.Limits(
+                    max_keepalive_connections=5,
+                    max_connections=10,
+                    keepalive_expiry=30.0,
+                )
+                self._http_client = httpx.AsyncClient(
+                    verify=False, timeout=timeout, limits=limits, follow_redirects=True
+                )
             return self._http_client
 
-    async def _download_with_retry(self, url: str, max_retries: Optional[int] = None) -> httpx.Response:
+    async def _download_with_retry(
+        self, url: str, max_retries: Optional[int] = None
+    ) -> httpx.Response:
         if max_retries is None:
             max_retries = self.max_retries
 
@@ -58,13 +67,29 @@ class FileService:
                 if response.status_code == 200:
                     return response
                 elif response.status_code >= 500:
-                    logger.warning(f"Server error {response.status_code} for {url}, attempt {attempt + 1}/{max_retries}")
-                    last_exception = httpx.HTTPStatusError(f"Server returned {response.status_code}", request=response.request, response=response)
+                    logger.warning(
+                        f"Server error {response.status_code} for {url}, attempt {attempt + 1}/{max_retries}"
+                    )
+                    last_exception = httpx.HTTPStatusError(
+                        f"Server returned {response.status_code}",
+                        request=response.request,
+                        response=response,
+                    )
                 else:
-                    raise httpx.HTTPStatusError(f"Client error {response.status_code}", request=response.request, response=response)
+                    raise httpx.HTTPStatusError(
+                        f"Client error {response.status_code}",
+                        request=response.request,
+                        response=response,
+                    )
 
-            except (httpx.ConnectError, httpx.TimeoutException, httpx.NetworkError) as e:
-                logger.warning(f"Connection error for {url}, attempt {attempt + 1}/{max_retries}: {str(e)}")
+            except (
+                httpx.ConnectError,
+                httpx.TimeoutException,
+                httpx.NetworkError,
+            ) as e:
+                logger.warning(
+                    f"Connection error for {url}, attempt {attempt + 1}/{max_retries}: {str(e)}"
+                )
                 last_exception = e
             except httpx.HTTPStatusError as e:
                 if e.response and e.response.status_code < 500:
@@ -107,11 +132,15 @@ class FileService:
             with open(media_path, "wb") as f:
                 f.write(response.content)
 
-            logger.info(f"Successfully downloaded {media_type} from {url} to {media_path}")
+            logger.info(
+                f"Successfully downloaded {media_type} from {url} to {media_path}"
+            )
             return media_path
 
         except httpx.ConnectError as e:
-            logger.error(f"Connection error downloading {media_type} from {url}: {str(e)}")
+            logger.error(
+                f"Connection error downloading {media_type} from {url}: {str(e)}"
+            )
             raise ValueError(f"Failed to connect to {url}: {str(e)}")
         except httpx.TimeoutException as e:
             logger.error(f"Timeout downloading {media_type} from {url}: {str(e)}")
@@ -122,7 +151,9 @@ class FileService:
         except ValueError:
             raise
         except Exception as e:
-            logger.error(f"Unexpected error downloading {media_type} from {url}: {str(e)}")
+            logger.error(
+                f"Unexpected error downloading {media_type} from {url}: {str(e)}"
+            )
             raise ValueError(f"Failed to download {media_type} from {url}: {str(e)}")
 
     async def download_image(self, image_url: str) -> Path:
@@ -157,10 +188,14 @@ class FileService:
                     headers={"Content-Type": content_type},
                 )
                 if 200 <= response.status_code < 300:
-                    logger.info(f"Successfully uploaded result to presigned URL, status: {response.status_code}")
+                    logger.info(
+                        f"Successfully uploaded result to presigned URL, status: {response.status_code}"
+                    )
                     return
                 if response.status_code >= 500:
-                    logger.warning(f"Presigned upload server error {response.status_code}, attempt {attempt + 1}/{max_retries}")
+                    logger.warning(
+                        f"Presigned upload server error {response.status_code}, attempt {attempt + 1}/{max_retries}"
+                    )
                     last_exception = httpx.HTTPStatusError(
                         f"Server returned {response.status_code}",
                         request=response.request,
@@ -172,12 +207,20 @@ class FileService:
                         request=response.request,
                         response=response,
                     )
-            except (httpx.ConnectError, httpx.TimeoutException, httpx.NetworkError) as e:
-                logger.warning(f"Connection error uploading to presigned URL, attempt {attempt + 1}/{max_retries}: {str(e)}")
+            except (
+                httpx.ConnectError,
+                httpx.TimeoutException,
+                httpx.NetworkError,
+            ) as e:
+                logger.warning(
+                    f"Connection error uploading to presigned URL, attempt {attempt + 1}/{max_retries}: {str(e)}"
+                )
                 last_exception = e
             except httpx.HTTPStatusError as e:
                 if e.response and e.response.status_code < 500:
-                    raise ValueError(f"Failed to upload to presigned URL: HTTP {e.response.status_code}")
+                    raise ValueError(
+                        f"Failed to upload to presigned URL: HTTP {e.response.status_code}"
+                    )
                 last_exception = e
             except Exception as e:
                 logger.error(f"Unexpected error uploading to presigned URL: {str(e)}")

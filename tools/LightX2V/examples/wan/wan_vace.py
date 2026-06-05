@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 Wan2.1 VACE (Video Animate Character Exchange) generation example.
 This example demonstrates how to use LightX2V with Wan2.1 VACE model for character exchange in videos.

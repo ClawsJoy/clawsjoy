@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """Top-level WorldMirror model for LightX2V.
 
 Wraps the raw ``hyworldmirror.WorldMirror`` nn.Module and a side-car
@@ -21,10 +22,9 @@ from typing import Dict, List, Sequence
 
 import torch
 import torch.nn as nn
-from loguru import logger
-
 from lightx2v.common.ops.utils import move_attr_to_cpu, move_attr_to_cuda
 from lightx2v_platform.base.global_var import AI_DEVICE
+from loguru import logger
 
 from .models.layers.mlp import MlpFP32
 from .models.models.worldmirror import WorldMirror
@@ -65,7 +65,9 @@ class _MMLinearAdapter(nn.Module):
         flat = x.reshape(-1, x.shape[-1])
         w = self.mm_weight.weight
         if w is None:
-            raise RuntimeError(f"MMWeight for {self.mm_weight.weight_name!r} has no loaded weight; did the state_dict load miss this key?")
+            raise RuntimeError(
+                f"MMWeight for {self.mm_weight.weight_name!r} has no loaded weight; did the state_dict load miss this key?"
+            )
 
         if self._is_default:
             b = getattr(self.mm_weight, "bias", None)
@@ -73,7 +75,10 @@ class _MMLinearAdapter(nn.Module):
             # fp32 weight ⇒ cast the weight down to the activation dtype,
             # as ``nn.Linear`` does under ``torch.amp.autocast``.
             if flat.dtype != w.dtype:
-                if flat.is_floating_point() and flat.dtype in (torch.float16, torch.bfloat16):
+                if flat.is_floating_point() and flat.dtype in (
+                    torch.float16,
+                    torch.bfloat16,
+                ):
                     w_use = w.to(flat.dtype)
                     b_use = b.to(flat.dtype) if b is not None else None
                 else:
@@ -122,7 +127,12 @@ class _LNAdapter(nn.Module):
         # Match autocast semantics for a bf16/fp16 activation meeting an
         # fp32 LN weight — cast the weight down so the LN runs in the
         # activation dtype (what ``nn.LayerNorm`` does under autocast).
-        if w is not None and x.is_floating_point() and w.dtype != x.dtype and x.dtype in (torch.float16, torch.bfloat16):
+        if (
+            w is not None
+            and x.is_floating_point()
+            and w.dtype != x.dtype
+            and x.dtype in (torch.float16, torch.bfloat16)
+        ):
             w = w.to(x.dtype)
             if b is not None:
                 b = b.to(x.dtype)
@@ -144,7 +154,17 @@ class _LNAdapter(nn.Module):
 class _Conv2dAdapter(nn.Module):
     """Drop-in replacement for ``nn.Conv2d`` that routes through a Conv2dWeight."""
 
-    def __init__(self, conv_weight, *, in_channels: int, out_channels: int, kernel_size, stride, padding, has_bias: bool):
+    def __init__(
+        self,
+        conv_weight,
+        *,
+        in_channels: int,
+        out_channels: int,
+        kernel_size,
+        stride,
+        padding,
+        has_bias: bool,
+    ):
         super().__init__()
         self.conv_weight = conv_weight
         self.in_channels = in_channels
@@ -241,7 +261,11 @@ class WorldMirrorWeightModel:
         self.inner_model: WorldMirror = WorldMirror(**model_cfg)
         # Peek at actual depths so WeightModule names track WorldMirror.
         depth = self.inner_model.depth
-        cam_trunk_depth = getattr(self.inner_model.cam_head, "depth", 4) if getattr(self.inner_model, "enable_cam", False) else 4
+        cam_trunk_depth = (
+            getattr(self.inner_model.cam_head, "depth", 4)
+            if getattr(self.inner_model, "enable_cam", False)
+            else 4
+        )
         # Footgun guard: ``wm_extended_scope=true`` brings
         # ``cam_head.param_predictor.fc1`` into the WM tree under the
         # global ``dit_quant_scheme``. fp8-pertensor wants a per-layer
@@ -276,7 +300,9 @@ class WorldMirrorWeightModel:
         # the pin_weight buffers at the cost of a safetensors mmap read
         # per block per forward (cheap in practice for single-scene
         # inference).
-        self._lazy_load = bool(self.runtime_cfg.get("lazy_load", False)) and self._cpu_offload
+        self._lazy_load = (
+            bool(self.runtime_cfg.get("lazy_load", False)) and self._cpu_offload
+        )
         self._lazy_load_file = None  # populated by load_from_safetensors
         self._lazy_file_handle = None  # persistent safe_open handle, lazy_load only
         self._lazy_file_keys = None  # cached key set for the handle
@@ -287,7 +313,11 @@ class WorldMirrorWeightModel:
         # ~200 MB extra GPU peak but shaves ~300 ms off inference. Opt
         # out via ``lazy_cam_resident=false`` to recover the GPU memory
         # at the cost of latency.
-        self._lazy_cam_resident = bool(self.runtime_cfg.get("lazy_cam_resident", True)) if self._lazy_load else False
+        self._lazy_cam_resident = (
+            bool(self.runtime_cfg.get("lazy_cam_resident", True))
+            if self._lazy_load
+            else False
+        )
         # Extended WM scope (task δ/ε): also wrap ``cam_head.param_predictor``
         # and every DPT head's ``scratch.output_conv2[0/2]`` with adapters
         # that delegate to WM leaves. These layers are always fp32 in the
@@ -337,7 +367,9 @@ class WorldMirrorWeightModel:
                 with safe_open(scale_file, framework="pt", device="cpu") as f:
                     has_key = self._PP_FC1_INPUT_SCALE_KEY in set(f.keys())
             except Exception as exc:
-                logger.warning(f"[WorldMirror] could not inspect input_scale_file {scale_file!r} ({exc}); assuming missing fc1 input_scale and forcing use_fp32_param_predictor_fc1=true.")
+                logger.warning(
+                    f"[WorldMirror] could not inspect input_scale_file {scale_file!r} ({exc}); assuming missing fc1 input_scale and forcing use_fp32_param_predictor_fc1=true."
+                )
         if has_key:
             return
         logger.warning(
@@ -444,7 +476,12 @@ class WorldMirrorWeightModel:
         """
         wanted = set()  # keys that must go to GPU
         wanted_cpu = set()  # keys that stay on CPU under cpu_offload
-        scale_attrs = ("weight_name", "bias_name", "input_scale_name", "weight_scale_name")
+        scale_attrs = (
+            "weight_name",
+            "bias_name",
+            "input_scale_name",
+            "weight_scale_name",
+        )
         block_swap_prefixes = ("frame_blocks.", "global_blocks.", "cam_refine_blocks.")
         for leaf_name, leaf in self.transformer_weights._walk_leaves():
             is_block_swap = leaf_name.startswith(block_swap_prefixes)
@@ -478,7 +515,9 @@ class WorldMirrorWeightModel:
                 current[key] = src
                 matched += 1
         self.inner_model.load_state_dict(current, strict=True)
-        logger.info(f"[WorldMirror] Loaded {matched}/{len(current)} keys into nn.Module")
+        logger.info(
+            f"[WorldMirror] Loaded {matched}/{len(current)} keys into nn.Module"
+        )
 
     # ------------------------------------------------------------------
     # True-lazy load: never materialize the full safetensors into Python
@@ -494,7 +533,9 @@ class WorldMirrorWeightModel:
     # ------------------------------------------------------------------
     def load_from_safetensors_lazy(self, safetensors_path: str):
         if not self._lazy_load:
-            raise RuntimeError("load_from_safetensors_lazy called without cpu_offload + lazy_load; use load_from_safetensors(state) for the default path.")
+            raise RuntimeError(
+                "load_from_safetensors_lazy called without cpu_offload + lazy_load; use load_from_safetensors(state) for the default path."
+            )
         from safetensors import safe_open
 
         self._lazy_load_file = safetensors_path
@@ -519,7 +560,9 @@ class WorldMirrorWeightModel:
                     del src
         self.inner_model.load_state_dict(current, strict=True)
         del current
-        logger.info(f"[WorldMirror] Lazy-loaded {matched} nn.Module keys (skipped WM keys)")
+        logger.info(
+            f"[WorldMirror] Lazy-loaded {matched} nn.Module keys (skipped WM keys)"
+        )
 
         # 2. WM side: don't populate block-swap weights. Pre-set the
         #    attribute names so the adapter forward doesn't AttributeError
@@ -761,7 +804,9 @@ class WorldMirrorWeightModel:
         # between the pre-hook's disk read and the post-hook's release.
         if self._lazy_load:
             if self._lazy_load_file is None:
-                raise RuntimeError("lazy_load=true but no safetensors path was exposed on the model; runner must set model._lazy_load_file before load_from_safetensors().")
+                raise RuntimeError(
+                    "lazy_load=true but no safetensors path was exposed on the model; runner must set model._lazy_load_file before load_from_safetensors()."
+                )
             self._release_pin_buffers()
             # Open the safetensors file once and keep the handle alive
             # for the whole model lifetime. Reopening in every block's
@@ -793,7 +838,9 @@ class WorldMirrorWeightModel:
                 # ``lazy_cam_resident`` (on by default) keeps them GPU-
                 # resident under lazy: +200 MB peak, -300 ms wall-clock.
                 if self._lazy_cam_resident:
-                    self._eager_load_block_to_gpu(self.transformer_weights.cam_refine_blocks[i])
+                    self._eager_load_block_to_gpu(
+                        self.transformer_weights.cam_refine_blocks[i]
+                    )
                     continue
                 self._register_swap_hooks(
                     im.cam_head.refine_net[i],
@@ -967,14 +1014,18 @@ class WorldMirrorWeightModel:
                 if leaf is None:
                     continue
                 if hasattr(leaf, "base_attrs"):
-                    move_attr_to_cuda(leaf, leaf.base_attrs, leaf.lora_attrs, non_blocking=True)
+                    move_attr_to_cuda(
+                        leaf, leaf.base_attrs, leaf.lora_attrs, non_blocking=True
+                    )
 
         def post(module, args, output):
             for leaf in wm_block._modules.values():
                 if leaf is None:
                     continue
                 if hasattr(leaf, "base_attrs"):
-                    move_attr_to_cpu(leaf, leaf.base_attrs, leaf.lora_attrs, non_blocking=True)
+                    move_attr_to_cpu(
+                        leaf, leaf.base_attrs, leaf.lora_attrs, non_blocking=True
+                    )
 
         nn_block.register_forward_pre_hook(pre)
         nn_block.register_forward_hook(post)
@@ -986,7 +1037,9 @@ class WorldMirrorWeightModel:
         """Disable and free the given output heads."""
         unknown = [n for n in head_names if n not in _HEAD_MAPPING]
         if unknown:
-            raise ValueError(f"Unknown head name(s): {unknown}. Valid heads are {list(HEAD_NAMES)}.")
+            raise ValueError(
+                f"Unknown head name(s): {unknown}. Valid heads are {list(HEAD_NAMES)}."
+            )
         freed = 0
         for name in head_names:
             attr, modules = _HEAD_MAPPING[name]
@@ -1002,7 +1055,9 @@ class WorldMirrorWeightModel:
             gc.collect()
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
-            logger.info(f"[WorldMirror] Disabled heads: {list(head_names)}, freed ~{freed / 1e6:.1f}M params")
+            logger.info(
+                f"[WorldMirror] Disabled heads: {list(head_names)}, freed ~{freed / 1e6:.1f}M params"
+            )
 
     # ------------------------------------------------------------------
     # BF16 cast — kept here so the runner doesn't need to reach into

@@ -1,8 +1,10 @@
-from lib.smart_config import smart_config
-# torchrun --nproc_per_node=8 run_lightx2v_wan22_t2v_8gpu_with_warmup.py
-
 import sys
 from datetime import datetime
+
+from lib.smart_config import smart_config
+
+# torchrun --nproc_per_node=8 run_lightx2v_wan22_t2v_8gpu_with_warmup.py
+
 
 lightx2v_path = "/path/to/LightX2V"
 model_path = "/path/to/Wan-AI/Wan2.2-T2V-A14B"
@@ -24,7 +26,9 @@ pipe = LightX2VPipeline(
     task=task,
 )
 
-pipe.create_generator(config_json=f"{lightx2v_path}/configs/dist_infer/wan22_moe_t2v_cfg_ulysses.json")
+pipe.create_generator(
+    config_json=f"{lightx2v_path}/configs/dist_infer/wan22_moe_t2v_cfg_ulysses.json"
+)
 
 
 # Generation parameters

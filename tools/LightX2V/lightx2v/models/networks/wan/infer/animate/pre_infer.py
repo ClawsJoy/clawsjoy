@@ -1,11 +1,11 @@
-from lib.smart_config import smart_config
 import math
 
 import torch
-
 from lightx2v.models.networks.wan.infer.pre_infer import WanPreInfer
 from lightx2v.utils.envs import *
 from lightx2v_platform.base.global_var import AI_DEVICE
+
+from lib.smart_config import smart_config
 
 
 class WanAnimatePreInfer(WanPreInfer):
@@ -24,10 +24,22 @@ class WanAnimatePreInfer(WanPreInfer):
 
         face_pixel_values_tmp = []
         for i in range(math.ceil(face_pixel_values.shape[0] / self.encode_bs)):
-            face_pixel_values_tmp.append(self.motion_encoder.get_motion(face_pixel_values[i * self.encode_bs : (i + 1) * self.encode_bs]))
+            face_pixel_values_tmp.append(
+                self.motion_encoder.get_motion(
+                    face_pixel_values[i * self.encode_bs : (i + 1) * self.encode_bs]
+                )
+            )
 
         motion_vec = torch.cat(face_pixel_values_tmp)
-        motion_vec = self.face_encoder(motion_vec.unsqueeze(0).to(GET_DTYPE())).squeeze(0)
-        pad_face = torch.zeros(1, motion_vec.shape[1], motion_vec.shape[2], dtype=motion_vec.dtype, device=AI_DEVICE)
+        motion_vec = self.face_encoder(motion_vec.unsqueeze(0).to(GET_DTYPE())).squeeze(
+            0
+        )
+        pad_face = torch.zeros(
+            1,
+            motion_vec.shape[1],
+            motion_vec.shape[2],
+            dtype=motion_vec.dtype,
+            device=AI_DEVICE,
+        )
         motion_vec = torch.cat([pad_face, motion_vec], dim=0)
         return x, motion_vec

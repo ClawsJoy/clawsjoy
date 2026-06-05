@@ -1,6 +1,7 @@
-from lib.smart_config import smart_config
 import json
 import os
+
+from lib.smart_config import smart_config
 
 os.environ["PROFILING_DEBUG_LEVEL"] = "2"
 os.environ["DTYPE"] = "BF16"
@@ -12,28 +13,61 @@ import torch.distributed as dist
 from loguru import logger
 
 try:
-    from lightx2v.models.runners.flux2.flux2_runner import Flux2DevRunner, Flux2KleinRunner  # noqa: F401
+    from lightx2v.models.runners.flux2.flux2_runner import (  # noqa: F401
+        Flux2DevRunner,
+        Flux2KleinRunner,
+    )
 except (ImportError, ModuleNotFoundError) as e:
     logger.warning(f"Flux2 runners not available: {e}")
-from lightx2v.models.runners.hunyuan_video.hunyuan_video_15_runner import HunyuanVideo15Runner  # noqa: F401
-from lightx2v.models.runners.longcat_image.longcat_image_runner import LongCatImageRunner  # noqa: F401
+from lightx2v.models.runners.hunyuan_video.hunyuan_video_15_runner import (  # noqa: F401
+    HunyuanVideo15Runner,
+)
+from lightx2v.models.runners.longcat_image.longcat_image_runner import (  # noqa: F401
+    LongCatImageRunner,
+)
 from lightx2v.models.runners.ltx2.ltx2_runner import LTX2Runner  # noqa: F401
 from lightx2v.models.runners.neopp.neopp_runner import NeoppRunner  # noqa: F401
-from lightx2v.models.runners.qwen_image.qwen_image_runner import QwenImageRunner  # noqa: F401
+from lightx2v.models.runners.qwen_image.qwen_image_runner import (  # noqa: F401
+    QwenImageRunner,
+)
 from lightx2v.models.runners.seedvr.seedvr_runner import SeedVRRunner  # noqa: F401
-from lightx2v.models.runners.wan.wan_animate_runner import WanAnimateRunner  # noqa: F401
-from lightx2v.models.runners.wan.wan_audio_runner import Wan22AudioRunner, WanAudioRunner  # noqa: F401
-from lightx2v.models.runners.wan.wan_distill_runner import WanDistillRunner  # noqa: F401
-from lightx2v.models.runners.wan.wan_lingbot_fast_runner import LingbotFastRunner  # noqa: F401
-from lightx2v.models.runners.wan.wan_matrix_game2_runner import WanSFMtxg2Runner  # noqa: F401
-from lightx2v.models.runners.wan.wan_matrix_game3_runner import WanMatrixGame3Runner  # noqa: F401
-from lightx2v.models.runners.wan.wan_runner import Wan22MoeRunner, WanRunner  # noqa: F401
+from lightx2v.models.runners.wan.wan_animate_runner import (  # noqa: F401
+    WanAnimateRunner,
+)
+from lightx2v.models.runners.wan.wan_audio_runner import (  # noqa: F401
+    Wan22AudioRunner,
+    WanAudioRunner,
+)
+from lightx2v.models.runners.wan.wan_distill_runner import (  # noqa: F401
+    WanDistillRunner,
+)
+from lightx2v.models.runners.wan.wan_lingbot_fast_runner import (  # noqa: F401
+    LingbotFastRunner,
+)
+from lightx2v.models.runners.wan.wan_matrix_game2_runner import (  # noqa: F401
+    WanSFMtxg2Runner,
+)
+from lightx2v.models.runners.wan.wan_matrix_game3_runner import (  # noqa: F401
+    WanMatrixGame3Runner,
+)
+from lightx2v.models.runners.wan.wan_runner import (  # noqa: F401
+    Wan22MoeRunner,
+    WanRunner,
+)
 from lightx2v.models.runners.wan.wan_sf_runner import WanSFRunner  # noqa: F401
 from lightx2v.models.runners.wan.wan_vace_runner import WanVaceRunner  # noqa: F401
-from lightx2v.models.runners.worldmirror.worldmirror_runner import WorldMirrorRunner  # noqa: F401
-from lightx2v.models.runners.worldplay.worldplay_ar_runner import WorldPlayARRunner  # noqa: F401
-from lightx2v.models.runners.worldplay.worldplay_bi_runner import WorldPlayBIRunner  # noqa: F401
-from lightx2v.models.runners.worldplay.worldplay_distill_runner import WorldPlayDistillRunner  # noqa: F401
+from lightx2v.models.runners.worldmirror.worldmirror_runner import (  # noqa: F401
+    WorldMirrorRunner,
+)
+from lightx2v.models.runners.worldplay.worldplay_ar_runner import (  # noqa: F401
+    WorldPlayARRunner,
+)
+from lightx2v.models.runners.worldplay.worldplay_bi_runner import (  # noqa: F401
+    WorldPlayBIRunner,
+)
+from lightx2v.models.runners.worldplay.worldplay_distill_runner import (  # noqa: F401
+    WorldPlayDistillRunner,
+)
 from lightx2v.models.runners.z_image.z_image_runner import ZImageRunner  # noqa: F401
 from lightx2v.utils.input_info import init_empty_input_info, update_input_info_from_dict
 from lightx2v.utils.registry_factory import RUNNER_REGISTER
@@ -120,7 +154,13 @@ class LightX2VPipeline:
             self.num_channels_latents = 128
             self.audio_mel_bins = 16
 
-        if model_cls in ["qwen-image", "qwen-image-2512", "qwen-image-edit", "qwen-image-edit-2509", "qwen-image-edit-2511"]:
+        if model_cls in [
+            "qwen-image",
+            "qwen-image-2512",
+            "qwen-image-edit",
+            "qwen-image-edit-2509",
+            "qwen-image-edit-2511",
+        ]:
             self.CONDITION_IMAGE_SIZE = 147456
             self.USE_IMAGE_ID_IN_PROMPT = True
             if model_cls == "qwen-image-edit":
@@ -192,7 +232,9 @@ class LightX2VPipeline:
         validate_config_paths(config)
 
         if config["parallel"]:
-            platform_device = PLATFORM_DEVICE_REGISTER.get(os.getenv("PLATFORM", "cuda"), None)
+            platform_device = PLATFORM_DEVICE_REGISTER.get(
+                os.getenv("PLATFORM", "cuda"), None
+            )
             platform_device.init_parallel_env()
             set_parallel_config(config)
 
@@ -224,7 +266,11 @@ class LightX2VPipeline:
     ):
         if self.model_cls == "ltx2":
             self.distilled_sigma_values = distilled_sigma_values
-            self.infer_steps = len(distilled_sigma_values) - 1 if distilled_sigma_values is not None else infer_steps
+            self.infer_steps = (
+                len(distilled_sigma_values) - 1
+                if distilled_sigma_values is not None
+                else infer_steps
+            )
         else:
             self.infer_steps = infer_steps
         self.target_width = width
@@ -232,7 +278,9 @@ class LightX2VPipeline:
         self.target_video_length = num_frames
         self.sample_guide_scale = guidance_scale
         self.sample_shift = sample_shift
-        if self.sample_guide_scale == 1 or (self.model_cls == "z_image" and self.sample_guide_scale == 0):
+        if self.sample_guide_scale == 1 or (
+            self.model_cls == "z_image" and self.sample_guide_scale == 0
+        ):
             self.enable_cfg = False
         else:
             self.enable_cfg = True
@@ -248,7 +296,14 @@ class LightX2VPipeline:
             self.self_attn_1_type = attn_mode
             self.cross_attn_1_type = attn_mode
             self.cross_attn_2_type = attn_mode
-        elif self.model_cls in ["hunyuan_video_1.5", "hunyuan_video_1.5_distill", "qwen_image", "longcat_image", "ltx2", "z_image"]:
+        elif self.model_cls in [
+            "hunyuan_video_1.5",
+            "hunyuan_video_1.5_distill",
+            "qwen_image",
+            "longcat_image",
+            "ltx2",
+            "z_image",
+        ]:
             self.attn_type = attn_mode
         self.norm_modulate_backend = norm_modulate_backend
 
@@ -300,7 +355,11 @@ class LightX2VPipeline:
             self.clip_quant_scheme = quant_scheme
             self.clip_quantized = image_encoder_quantized
             self.clip_quantized_ckpt = image_encoder_quantized_ckpt
-        elif self.model_cls in ["hunyuan_video_1.5", "hunyuan_video_1.5_distill", "qwen_image"]:
+        elif self.model_cls in [
+            "hunyuan_video_1.5",
+            "hunyuan_video_1.5_distill",
+            "qwen_image",
+        ]:
             self.qwen25vl_quantized = text_encoder_quantized
             self.qwen25vl_quantized_ckpt = text_encoder_quantized_ckpt
             self.qwen25vl_quant_scheme = text_encoder_quant_scheme

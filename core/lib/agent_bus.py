@@ -3,7 +3,7 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 from core.lib.unified_config import unified_config
@@ -16,32 +16,35 @@ Agent 消息总线 v2.0
 import json
 import queue
 import threading
+from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import Dict, Any, List, Optional
-from dataclasses import dataclass, asdict
+from typing import Any, Dict, List, Optional
+
 
 @dataclass
 class Message:
     """消息结构"""
+
     id: str
     sender: str
     topic: str
     content: Dict
     timestamp: str
     priority: int = 0
-    
+
     def __lt__(self, other) -> Dict:
         """支持优先级队列比较"""
         return self.priority < other.priority
-    
+
     def __le__(self, other) -> Dict:
         return self.priority <= other.priority
-    
+
     def __gt__(self, other) -> Dict:
         return self.priority > other.priority
-    
+
     def __ge__(self, other) -> Dict:
         return self.priority >= other.priority
+
 
 class AgentBus:
     """Agent 消息总线 - 支持发布/订阅和消息队列"""
@@ -58,9 +61,12 @@ class AgentBus:
     def _generate_id(self) -> str:
         """生成消息ID"""
         import uuid
+
         return str(uuid.uuid4())
 
-    def publish(self, sender: str, topic: str, content: Dict, priority: int = 0) -> Dict:
+    def publish(
+        self, sender: str, topic: str, content: Dict, priority: int = 0
+    ) -> Dict:
         """发布消息到主题"""
         message = Message(
             id=self._generate_id(),
@@ -68,13 +74,13 @@ class AgentBus:
             topic=topic,
             content=content,
             timestamp=datetime.now().isoformat(),
-            priority=priority
+            priority=priority,
         )
 
         self.message_queue.put((priority, message))
         self.message_history.append(message)
         if len(self.message_history) > self.max_history:
-            self.message_history = self.message_history[-self.max_history:]
+            self.message_history = self.message_history[-self.max_history :]
 
         if topic in self.subscribers:
             for subscriber in self.subscribers[topic]:
@@ -173,12 +179,13 @@ class AgentBus:
             "queue_size": self.message_queue.qsize(),
             "history_size": len(self.message_history),
             "handlers": len(self._handlers),
-            "subscribers": {t: s for t, s in self.subscribers.items()}
+            "subscribers": {t: s for t, s in self.subscribers.items()},
         }
 
 
 # 全局单例
 _bus_instance = None
+
 
 def get_bus() -> AgentBus:
     """获取全局总线实例"""

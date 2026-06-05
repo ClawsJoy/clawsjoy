@@ -1,6 +1,7 @@
-from lib.smart_config import smart_config
 import ctypes
 import os
+
+from lib.smart_config import smart_config
 
 _pkg_dir = os.path.dirname(os.path.abspath(__file__))
 

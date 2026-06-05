@@ -1,12 +1,9 @@
-from lib.smart_config import smart_config
 import json
 import os
 from pathlib import Path
 
 import numpy as np
 import torch
-from loguru import logger
-
 from lightx2v.models.input_encoders.hf.wan.t5.model import T5EncoderModel
 from lightx2v.models.networks.motus.model import MotusModel
 from lightx2v.models.runners.wan.wan_runner import Wan22DenseRunner
@@ -19,6 +16,9 @@ from lightx2v.utils.profiler import *
 from lightx2v.utils.registry_factory import RUNNER_REGISTER
 from lightx2v.utils.utils import find_torch_model_path, save_to_video, wan_vae_to_comfy
 from lightx2v_platform.base.global_var import AI_DEVICE
+from loguru import logger
+
+from lib.smart_config import smart_config
 
 
 def _merge_wan_dense_defaults(config):
@@ -68,7 +68,9 @@ class MotusRunner(Wan22DenseRunner):
     def load_text_encoder(self):
         wan_lookup_config = self._wan_lookup_config()
         tokenizer_path = os.path.join(self.config["wan_path"], "google", "umt5-xxl")
-        t5_original_ckpt = find_torch_model_path(wan_lookup_config, "t5_original_ckpt", "models_t5_umt5-xxl-enc-bf16.pth")
+        t5_original_ckpt = find_torch_model_path(
+            wan_lookup_config, "t5_original_ckpt", "models_t5_umt5-xxl-enc-bf16.pth"
+        )
         text_encoder = T5EncoderModel(
             text_len=self.config["text_len"],
             dtype=torch.bfloat16,
@@ -87,7 +89,9 @@ class MotusRunner(Wan22DenseRunner):
     def load_vae_encoder(self):
         wan_lookup_config = self._wan_lookup_config()
         vae_config = {
-            "vae_path": find_torch_model_path(wan_lookup_config, "vae_path", self.vae_name),
+            "vae_path": find_torch_model_path(
+                wan_lookup_config, "vae_path", self.vae_name
+            ),
             "device": torch.device(AI_DEVICE),
             "parallel": self.get_vae_parallel(),
             "use_tiling": self.config.get("use_tiling_vae", False),
@@ -100,7 +104,9 @@ class MotusRunner(Wan22DenseRunner):
     def load_vae_decoder(self):
         wan_lookup_config = self._wan_lookup_config()
         vae_config = {
-            "vae_path": find_torch_model_path(wan_lookup_config, "vae_path", self.vae_name),
+            "vae_path": find_torch_model_path(
+                wan_lookup_config, "vae_path", self.vae_name
+            ),
             "device": torch.device(AI_DEVICE),
             "parallel": self.get_vae_parallel(),
             "use_tiling": self.config.get("use_tiling_vae", False),
@@ -109,8 +115,14 @@ class MotusRunner(Wan22DenseRunner):
             "load_from_rank0": self.config.get("load_from_rank0", False),
         }
         if self.config.get("use_tae", False):
-            tae_path = find_torch_model_path(wan_lookup_config, "tae_path", self.tiny_vae_name)
-            return Wan2_2_VAE_tiny(vae_path=tae_path, device=self.init_device, need_scaled=self.config.get("need_scaled", False)).to(AI_DEVICE)
+            tae_path = find_torch_model_path(
+                wan_lookup_config, "tae_path", self.tiny_vae_name
+            )
+            return Wan2_2_VAE_tiny(
+                vae_path=tae_path,
+                device=self.init_device,
+                need_scaled=self.config.get("need_scaled", False),
+            ).to(AI_DEVICE)
         return Wan2_2_VAE(**vae_config)
 
     def _load_state_value(self, state_path: str):
@@ -141,23 +153,40 @@ class MotusRunner(Wan22DenseRunner):
     def _resolve_action_output_path(self):
         if self.input_info.save_action_path:
             return str(Path(self.input_info.save_action_path).expanduser().resolve())
-        return str(Path(self.input_info.save_result_path).expanduser().resolve().with_suffix(".actions.json"))
+        return str(
+            Path(self.input_info.save_result_path)
+            .expanduser()
+            .resolve()
+            .with_suffix(".actions.json")
+        )
 
     def _save_outputs(self, decoded_video: torch.Tensor, pred_actions: torch.Tensor):
         video = wan_vae_to_comfy(decoded_video)
         video_path = str(Path(self.input_info.save_result_path).expanduser().resolve())
         action_path = self._resolve_action_output_path()
 
-        save_to_video(video, video_path, fps=float(self.config.get("fps", 4)), method="ffmpeg")
+        save_to_video(
+            video, video_path, fps=float(self.config.get("fps", 4)), method="ffmpeg"
+        )
 
         Path(action_path).parent.mkdir(parents=True, exist_ok=True)
         with open(action_path, "w") as f:
-            json.dump(pred_actions.detach().cpu().float().tolist(), f, ensure_ascii=False, indent=2)
+            json.dump(
+                pred_actions.detach().cpu().float().tolist(),
+                f,
+                ensure_ascii=False,
+                indent=2,
+            )
 
         logger.info(f"Saved Motus video to {video_path}")
         logger.info(f"Saved Motus actions to {action_path}")
 
-    @ProfilingContext4DebugL1("RUN pipeline", recorder_mode=GET_RECORDER_MODE(), metrics_func=monitor_cli.lightx2v_worker_request_duration, metrics_labels=["MotusRunner"])
+    @ProfilingContext4DebugL1(
+        "RUN pipeline",
+        recorder_mode=GET_RECORDER_MODE(),
+        metrics_func=monitor_cli.lightx2v_worker_request_duration,
+        metrics_labels=["MotusRunner"],
+    )
     def run_pipeline(self, input_info):
         self.input_info = input_info
 
@@ -183,7 +212,11 @@ class MotusRunner(Wan22DenseRunner):
             seed=self.input_info.seed,
             latent_shape=self.input_info.latent_shape,
             image_encoder_output=self.inputs["image_encoder_output"],
-            action_shape=(prepared_state.shape[0], self.model.action_chunk_size, self.model.action_dim),
+            action_shape=(
+                prepared_state.shape[0],
+                self.model.action_chunk_size,
+                self.model.action_dim,
+            ),
         )
 
         with ProfilingContext4DebugL1("Run Motus DiT"):

@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 #!/usr/bin/env python3
 """
 Iris test runner - verifies inference correctness against reference images.
@@ -66,7 +67,7 @@ FULL_TESTS = [
         "height": 1024,
         "expect_stderr": "reference image resized",
         "visual_check": "a blue sports car on a rainy city street at night, "
-                        "output is 1024x1024",
+        "output is 1024x1024",
     },
 ]
 
@@ -128,13 +129,20 @@ def run_test(binary: str, test: dict, model_dir: str) -> tuple[bool, str]:
 
     cmd = [
         binary,
-        "-d", model_dir,
-        "-p", test["prompt"],
-        "--seed", str(test["seed"]),
-        "--steps", str(test["steps"]),
-        "-W", str(test["width"]),
-        "-H", str(test["height"]),
-        "-o", output_path,
+        "-d",
+        model_dir,
+        "-p",
+        test["prompt"],
+        "--seed",
+        str(test["seed"]),
+        "--steps",
+        str(test["steps"]),
+        "-W",
+        str(test["width"]),
+        "-H",
+        str(test["height"]),
+        "-o",
+        output_path,
     ]
 
     # Add input image for img2img tests
@@ -144,7 +152,10 @@ def run_test(binary: str, test: dict, model_dir: str) -> tuple[bool, str]:
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
         if result.returncode != 0:
-            return False, f"process exited with code {result.returncode}: {result.stderr}"
+            return (
+                False,
+                f"process exited with code {result.returncode}: {result.stderr}",
+            )
     except subprocess.TimeoutExpired:
         return False, "timeout (300s)"
     except FileNotFoundError:
@@ -158,14 +169,17 @@ def run_test(binary: str, test: dict, model_dir: str) -> tuple[bool, str]:
         except Exception as e:
             return False, f"failed to load output: {e}"
         if out.width != test["width"] or out.height != test["height"]:
-            return False, (f"wrong output size: {out.width}x{out.height}, "
-                           f"expected {test['width']}x{test['height']}")
+            return False, (
+                f"wrong output size: {out.width}x{out.height}, "
+                f"expected {test['width']}x{test['height']}"
+            )
 
         # Check expected stderr substring (e.g. the resize note).
         if "expect_stderr" in test:
             if test["expect_stderr"] not in result.stderr:
-                return False, (f"expected '{test['expect_stderr']}' in "
-                               f"stderr but not found")
+                return False, (
+                    f"expected '{test['expect_stderr']}' in " f"stderr but not found"
+                )
 
         return True, f"output saved to {output_path}"
 
@@ -194,11 +208,19 @@ def main():
     parser = argparse.ArgumentParser(description="Run Iris inference tests")
     parser.add_argument("--flux-binary", default="./iris", help="Path to iris binary")
     parser.add_argument("--model-dir", default="flux-klein-4b", help="Path to model")
-    parser.add_argument("--zimage-model-dir", default=None,
-                        help="Optional Z-Image model dir (auto-detected if omitted)")
-    parser.add_argument("--quick", action="store_true", help="Run only the quick 64x64 test")
-    parser.add_argument("--full", action="store_true",
-                        help="Also run slow tests that require visual inspection")
+    parser.add_argument(
+        "--zimage-model-dir",
+        default=None,
+        help="Optional Z-Image model dir (auto-detected if omitted)",
+    )
+    parser.add_argument(
+        "--quick", action="store_true", help="Run only the quick 64x64 test"
+    )
+    parser.add_argument(
+        "--full",
+        action="store_true",
+        help="Also run slow tests that require visual inspection",
+    )
     args = parser.parse_args()
 
     if args.quick:
@@ -208,17 +230,23 @@ def main():
     full_tests_to_run = list(FULL_TESTS) if args.full else []
 
     # Optional zImage coverage: run only in non-quick mode.
-    scheduled_tests: list[tuple[dict, str]] = [(t, args.model_dir) for t in tests_to_run]
+    scheduled_tests: list[tuple[dict, str]] = [
+        (t, args.model_dir) for t in tests_to_run
+    ]
     zimage_dir = detect_zimage_model_dir(args.zimage_model_dir)
     if not args.quick:
         if zimage_dir:
             print(f"Detected Z-Image model dir: {zimage_dir}")
             scheduled_tests.append((ZIMAGE_SMOKE_TEST, str(zimage_dir)))
         elif args.zimage_model_dir:
-            print(f"Warning: --zimage-model-dir '{args.zimage_model_dir}' is not a valid Z-Image model dir")
+            print(
+                f"Warning: --zimage-model-dir '{args.zimage_model_dir}' is not a valid Z-Image model dir"
+            )
             print("Skipping optional Z-Image smoke test.")
         else:
-            print("No Z-Image model dir detected; skipping optional Z-Image smoke test.")
+            print(
+                "No Z-Image model dir detected; skipping optional Z-Image smoke test."
+            )
 
     total = len(scheduled_tests) + len(full_tests_to_run)
     print(f"Running {total} test(s)...\n")
@@ -245,14 +273,24 @@ def main():
         ref_path = "/tmp/iris_test_ref_1024.png"
         print(f"    Step 1: Generating 1024x1024 reference image...")
         ref_cmd = [
-            args.flux_binary, "-d", args.model_dir,
-            "-p", "A red sports car parked on a sunny city street",
-            "--seed", "42", "--steps", "4",
-            "-W", "1024", "-H", "1024", "-o", ref_path,
+            args.flux_binary,
+            "-d",
+            args.model_dir,
+            "-p",
+            "A red sports car parked on a sunny city street",
+            "--seed",
+            "42",
+            "--steps",
+            "4",
+            "-W",
+            "1024",
+            "-H",
+            "1024",
+            "-o",
+            ref_path,
         ]
         try:
-            r = subprocess.run(ref_cmd, capture_output=True, text=True,
-                               timeout=300)
+            r = subprocess.run(ref_cmd, capture_output=True, text=True, timeout=300)
             if r.returncode != 0:
                 print(f"    FAIL: could not generate reference: {r.stderr}")
                 failed += 1
@@ -266,8 +304,10 @@ def main():
         # Step 2: Run img2img with the reference — this should trigger
         # the attention budget shrinking and print a resize note.
         output_path = "/tmp/iris_test_img2img_1024.png"
-        print(f"    Step 2: Running img2img with attention budget "
-              f"shrinking (reference should be auto-resized)...")
+        print(
+            f"    Step 2: Running img2img with attention budget "
+            f"shrinking (reference should be auto-resized)..."
+        )
         test_with_input = dict(test)
         test_with_input["input"] = ref_path
         test_with_input["output"] = output_path
@@ -278,8 +318,7 @@ def main():
             print(f"    PASS: {msg}")
             passed += 1
             if "visual_check" in test:
-                visual_checks.append((test["name"], output_path,
-                                      test["visual_check"]))
+                visual_checks.append((test["name"], output_path, test["visual_check"]))
         else:
             print(f"    FAIL: {msg}")
             failed += 1

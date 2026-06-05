@@ -1,7 +1,8 @@
-from lib.smart_config import smart_config
 import torch
 import zmq
 from mooncake.engine import TransferEngine
+
+from lib.smart_config import smart_config
 
 
 def main():
@@ -21,7 +22,9 @@ def main():
     session_id = f"{HOSTNAME}:{server_engine.get_rpc_port()}"
 
     # Allocate memory on server side (1MB buffer)
-    server_buffer = torch.zeros(1024 * 1024, dtype=torch.uint8, device=torch.device("cuda:1"))
+    server_buffer = torch.zeros(
+        1024 * 1024, dtype=torch.uint8, device=torch.device("cuda:1")
+    )
     server_ptr = server_buffer.data_ptr()
     server_len = server_buffer.element_size() * server_buffer.nelement()
 

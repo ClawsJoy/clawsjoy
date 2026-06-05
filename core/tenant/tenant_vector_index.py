@@ -3,16 +3,19 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 from core.lib.unified_config import unified_config
+
 """租户向量索引器"""
 
-import chromadb
-from pathlib import Path
 import hashlib
-from typing import List, Dict
+from pathlib import Path
+from typing import Dict, List
+
+import chromadb
+
 from core.lib.unified_config import unified_config
 
 
@@ -26,8 +29,11 @@ class TenantVectorIndex:
 
         embedding_model = vector_config.get("embedding_model", "nomic-embed-text")
         from chromadb.utils.embedding_functions import OllamaEmbeddingFunction
+
         ollama_url = unified_config.get("llm.endpoint", "http://localhost:11434")
-        self.embedding_fn = OllamaEmbeddingFunction(url=ollama_url, model_name=embedding_model)
+        self.embedding_fn = OllamaEmbeddingFunction(
+            url=ollama_url, model_name=embedding_model
+        )
 
         self.client = chromadb.PersistentClient(path=str(self.persist_dir))
         try:
@@ -36,30 +42,41 @@ class TenantVectorIndex:
             self.skill_collection = self.client.create_collection(
                 name="tenant_skills",
                 embedding_function=self.embedding_fn,
-                metadata={"tenant_id": tenant_id, "type": "skills"}
+                metadata={"tenant_id": tenant_id, "type": "skills"},
             )
 
-    def index_skill(self, skill_id: str, name: str, description: str, category: str = "general"):
+    def index_skill(
+        self, skill_id: str, name: str, description: str, category: str = "general"
+    ):
         doc_id = hashlib.md5(f"{self.tenant_id}:skill:{skill_id}".encode()).hexdigest()
         self.skill_collection.upsert(
             ids=[doc_id],
             documents=[f"{name}: {description}"],
-            metadatas=[{"skill_id": skill_id, "name": name, "category": category, "tenant_id": self.tenant_id}]
+            metadatas=[
+                {
+                    "skill_id": skill_id,
+                    "name": name,
+                    "category": category,
+                    "tenant_id": self.tenant_id,
+                }
+            ],
         )
         return True
 
     def search_skill(self, query: str, n: int = 5) -> List[Dict]:
         results = self.skill_collection.query(query_texts=[query], n_results=n)
         items = []
-        if results.get('documents') and results['documents'][0]:
-            for i, doc in enumerate(results['documents'][0]):
-                distance = results['distances'][0][i] if results.get('distances') else 0
+        if results.get("documents") and results["documents"][0]:
+            for i, doc in enumerate(results["documents"][0]):
+                distance = results["distances"][0][i] if results.get("distances") else 0
                 similarity = 1 / (1 + distance)
-                items.append({
-                    'skill_id': results['metadatas'][0][i].get('skill_id'),
-                    'name': results['metadatas'][0][i].get('name'),
-                    'similarity': similarity
-                })
+                items.append(
+                    {
+                        "skill_id": results["metadatas"][0][i].get("skill_id"),
+                        "name": results["metadatas"][0][i].get("name"),
+                        "similarity": similarity,
+                    }
+                )
         return items
 
     def get_stats(self) -> Dict:
@@ -69,7 +86,7 @@ class TenantVectorIndex:
 class TenantIndexManager:
     def __init__(self):
         self._indexes = {}
-    
+
     def get_index(self, tenant_id: str) -> TenantVectorIndex:
         if tenant_id not in self._indexes:
             self._indexes[tenant_id] = TenantVectorIndex(tenant_id)

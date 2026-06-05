@@ -1,12 +1,12 @@
-from lib.smart_config import smart_config
 import gc
 import os
 
 import torch
 import torch.distributed as dist
-
 from lightx2v.utils.envs import *
 from lightx2v_platform.base.global_var import AI_DEVICE
+
+from lib.smart_config import smart_config
 
 try:
     from diffusers import AutoencoderKLQwenImage
@@ -26,21 +26,65 @@ class AutoencoderKLQwenImageVAE:
             self.layers = config.get("layers", 4)
 
         self.vae_decode_parallel = config.get("vae_decode_parallel", False)
-        self.cpu_offload = config.get("vae_cpu_offload", config.get("cpu_offload", False))
+        self.cpu_offload = config.get(
+            "vae_cpu_offload", config.get("cpu_offload", False)
+        )
         if self.cpu_offload:
             self.device = torch.device("cpu")
         else:
             self.device = torch.device(AI_DEVICE)
         self.dtype = GET_DTYPE()
         self.latent_channels = 16
-        self.vae_latents_mean = [-0.7571, -0.7089, -0.9113, 0.1075, -0.1745, 0.9653, -0.1517, 1.5508, 0.4134, -0.0715, 0.5517, -0.3632, -0.1922, -0.9497, 0.2503, -0.2921]
-        self.vae_latents_std = [2.8184, 1.4541, 2.3275, 2.6558, 1.2196, 1.7708, 2.6052, 2.0743, 3.2687, 2.1526, 2.8652, 1.5579, 1.6382, 1.1253, 2.8251, 1.916]
+        self.vae_latents_mean = [
+            -0.7571,
+            -0.7089,
+            -0.9113,
+            0.1075,
+            -0.1745,
+            0.9653,
+            -0.1517,
+            1.5508,
+            0.4134,
+            -0.0715,
+            0.5517,
+            -0.3632,
+            -0.1922,
+            -0.9497,
+            0.2503,
+            -0.2921,
+        ]
+        self.vae_latents_std = [
+            2.8184,
+            1.4541,
+            2.3275,
+            2.6558,
+            1.2196,
+            1.7708,
+            2.6052,
+            2.0743,
+            3.2687,
+            2.1526,
+            2.8652,
+            1.5579,
+            1.6382,
+            1.1253,
+            2.8251,
+            1.916,
+        ]
         self.load()
 
     def load(self):
-        vae_path = self.config.get("vae_path", os.path.join(self.config["model_path"], "vae"))
-        self.model = AutoencoderKLQwenImage.from_pretrained(vae_path).to(self.device).to(self.dtype)
-        self.image_processor = VaeImageProcessor(vae_scale_factor=self.config["vae_scale_factor"] * 2)
+        vae_path = self.config.get(
+            "vae_path", os.path.join(self.config["model_path"], "vae")
+        )
+        self.model = (
+            AutoencoderKLQwenImage.from_pretrained(vae_path)
+            .to(self.device)
+            .to(self.dtype)
+        )
+        self.image_processor = VaeImageProcessor(
+            vae_scale_factor=self.config["vae_scale_factor"] * 2
+        )
         if self.config.get("use_tiling_vae", False):
             self.model.enable_tiling()
 
@@ -53,12 +97,18 @@ class AutoencoderKLQwenImageVAE:
         height = 2 * (int(height) // (vae_scale_factor * 2))
         width = 2 * (int(width) // (vae_scale_factor * 2))
         if layers:
-            latents = latents.view(batchsize, layers + 1, height // 2, width // 2, channels // 4, 2, 2)
+            latents = latents.view(
+                batchsize, layers + 1, height // 2, width // 2, channels // 4, 2, 2
+            )
             latents = latents.permute(0, 1, 4, 2, 5, 3, 6)
-            latents = latents.reshape(batchsize, layers + 1, channels // (2 * 2), height, width)
+            latents = latents.reshape(
+                batchsize, layers + 1, channels // (2 * 2), height, width
+            )
             latents = latents.permute(0, 2, 1, 3, 4)  # (b, c, f, h, w)
         else:
-            latents = latents.view(batchsize, height // 2, width // 2, channels // 4, 2, 2)
+            latents = latents.view(
+                batchsize, height // 2, width // 2, channels // 4, 2, 2
+            )
             latents = latents.permute(0, 3, 1, 4, 2, 5)
             latents = latents.reshape(batchsize, channels // (2 * 2), 1, height, width)
 
@@ -93,14 +143,20 @@ class AutoencoderKLQwenImageVAE:
         elif cur_rank_h == world_size_h - 1:
             h_start, h_end = total_h - chunk_h - 2 * padding, total_h
         else:
-            h_start, h_end = cur_rank_h * chunk_h - padding, (cur_rank_h + 1) * chunk_h + padding
+            h_start, h_end = (
+                cur_rank_h * chunk_h - padding,
+                (cur_rank_h + 1) * chunk_h + padding,
+            )
 
         if cur_rank_w == 0:
             w_start, w_end = 0, chunk_w + 2 * padding
         elif cur_rank_w == world_size_w - 1:
             w_start, w_end = total_w - chunk_w - 2 * padding, total_w
         else:
-            w_start, w_end = cur_rank_w * chunk_w - padding, (cur_rank_w + 1) * chunk_w + padding
+            w_start, w_end = (
+                cur_rank_w * chunk_w - padding,
+                (cur_rank_w + 1) * chunk_w + padding,
+            )
 
         chunk = latents[:, :, :, h_start:h_end, w_start:w_end].contiguous()
         decoded = self.model.decode(chunk, return_dict=False)[0]  # (b, c, 1, H', W')
@@ -109,22 +165,40 @@ class AutoencoderKLQwenImageVAE:
         if cur_rank_h == 0:
             dh_start, dh_end = 0, chunk_h * spatial_ratio
         elif cur_rank_h == world_size_h - 1:
-            dh_start, dh_end = decoded.shape[3] - chunk_h * spatial_ratio, decoded.shape[3]
+            dh_start, dh_end = (
+                decoded.shape[3] - chunk_h * spatial_ratio,
+                decoded.shape[3],
+            )
         else:
-            dh_start, dh_end = padding * spatial_ratio, decoded.shape[3] - padding * spatial_ratio
+            dh_start, dh_end = (
+                padding * spatial_ratio,
+                decoded.shape[3] - padding * spatial_ratio,
+            )
 
         if cur_rank_w == 0:
             dw_start, dw_end = 0, chunk_w * spatial_ratio
         elif cur_rank_w == world_size_w - 1:
-            dw_start, dw_end = decoded.shape[4] - chunk_w * spatial_ratio, decoded.shape[4]
+            dw_start, dw_end = (
+                decoded.shape[4] - chunk_w * spatial_ratio,
+                decoded.shape[4],
+            )
         else:
-            dw_start, dw_end = padding * spatial_ratio, decoded.shape[4] - padding * spatial_ratio
+            dw_start, dw_end = (
+                padding * spatial_ratio,
+                decoded.shape[4] - padding * spatial_ratio,
+            )
 
         piece = decoded[:, :, :, dh_start:dh_end, dw_start:dw_end].contiguous()
         full = [torch.empty_like(piece) for _ in range(world_size_h * world_size_w)]
         dist.all_gather(full, piece)
 
-        rows = [torch.cat([full[h_idx * world_size_w + w_idx] for w_idx in range(world_size_w)], dim=4) for h_idx in range(world_size_h)]
+        rows = [
+            torch.cat(
+                [full[h_idx * world_size_w + w_idx] for w_idx in range(world_size_w)],
+                dim=4,
+            )
+            for h_idx in range(world_size_h)
+        ]
         return torch.cat(rows, dim=3)
 
     @torch.no_grad()
@@ -133,26 +207,53 @@ class AutoencoderKLQwenImageVAE:
             self.model.to(AI_DEVICE)
         width, height = input_info.auto_width, input_info.auto_height
         if self.is_layered:
-            latents = self._unpack_latents(latents, height, width, self.config["vae_scale_factor"], self.layers)
+            latents = self._unpack_latents(
+                latents, height, width, self.config["vae_scale_factor"], self.layers
+            )
         else:
-            latents = self._unpack_latents(latents, height, width, self.config["vae_scale_factor"])
+            latents = self._unpack_latents(
+                latents, height, width, self.config["vae_scale_factor"]
+            )
         latents = latents.to(self.dtype)
-        latents_mean = torch.tensor(self.vae_latents_mean).view(1, self.latent_channels, 1, 1, 1).to(latents.device, latents.dtype)
-        latents_std = 1.0 / torch.tensor(self.vae_latents_std).view(1, self.latent_channels, 1, 1, 1).to(latents.device, latents.dtype)
+        latents_mean = (
+            torch.tensor(self.vae_latents_mean)
+            .view(1, self.latent_channels, 1, 1, 1)
+            .to(latents.device, latents.dtype)
+        )
+        latents_std = 1.0 / torch.tensor(self.vae_latents_std).view(
+            1, self.latent_channels, 1, 1, 1
+        ).to(latents.device, latents.dtype)
         latents = latents / latents_std + latents_mean
 
-        use_vae_decode_parallel = self.vae_decode_parallel and dist.is_initialized() and dist.get_world_size() > 1
+        use_vae_decode_parallel = (
+            self.vae_decode_parallel
+            and dist.is_initialized()
+            and dist.get_world_size() > 1
+        )
 
         if self.is_layered:
             b, c, f, h, w = latents.shape
             latents = latents[:, :, 1:].permute(0, 2, 1, 3, 4).view(-1, c, 1, h, w)
-            image = self._decode_dist(latents) if use_vae_decode_parallel else self.model.decode(latents, return_dict=False)[0]
+            image = (
+                self._decode_dist(latents)
+                if use_vae_decode_parallel
+                else self.model.decode(latents, return_dict=False)[0]
+            )
             image = image.squeeze(2)
-            image = self.image_processor.postprocess(image, output_type="pt" if input_info.return_result_tensor else "pil")
+            image = self.image_processor.postprocess(
+                image, output_type="pt" if input_info.return_result_tensor else "pil"
+            )
             images = [image[bidx * f : (bidx + 1) * f] for bidx in range(b)]
         else:
-            image = self._decode_dist(latents) if use_vae_decode_parallel else self.model.decode(latents, return_dict=False)[0]
-            images = self.image_processor.postprocess(image[:, :, 0], output_type="pt" if input_info.return_result_tensor else "pil")
+            image = (
+                self._decode_dist(latents)
+                if use_vae_decode_parallel
+                else self.model.decode(latents, return_dict=False)[0]
+            )
+            images = self.image_processor.postprocess(
+                image[:, :, 0],
+                output_type="pt" if input_info.return_result_tensor else "pil",
+            )
 
         if self.cpu_offload:
             self.model.to(torch.device("cpu"))
@@ -162,22 +263,42 @@ class AutoencoderKLQwenImageVAE:
 
     @staticmethod
     # Copied from diffusers.pipelines.qwenimage.pipeline_qwenimage.QwenImagePipeline._pack_latents
-    def _pack_latents(latents, batchsize, num_channels_latents, height, width, layers=None):
+    def _pack_latents(
+        latents, batchsize, num_channels_latents, height, width, layers=None
+    ):
         if not layers:
-            latents = latents.view(batchsize, num_channels_latents, height // 2, 2, width // 2, 2)
+            latents = latents.view(
+                batchsize, num_channels_latents, height // 2, 2, width // 2, 2
+            )
             latents = latents.permute(0, 2, 4, 1, 3, 5)
-            latents = latents.reshape(batchsize, (height // 2) * (width // 2), num_channels_latents * 4)
+            latents = latents.reshape(
+                batchsize, (height // 2) * (width // 2), num_channels_latents * 4
+            )
         else:
             latents = latents.permute(0, 2, 1, 3, 4)
-            latents = latents.view(batchsize, layers, num_channels_latents, height // 2, 2, width // 2, 2)
+            latents = latents.view(
+                batchsize, layers, num_channels_latents, height // 2, 2, width // 2, 2
+            )
             latents = latents.permute(0, 1, 3, 5, 2, 4, 6)
-            latents = latents.reshape(batchsize, layers * (height // 2) * (width // 2), num_channels_latents * 4)
+            latents = latents.reshape(
+                batchsize,
+                layers * (height // 2) * (width // 2),
+                num_channels_latents * 4,
+            )
         return latents
 
     def _encode_vae_image(self, image: torch.Tensor):
         image_latents = self.model.encode(image).latent_dist.mode()
-        latents_mean = torch.tensor(self.model.config["latents_mean"]).view(1, self.latent_channels, 1, 1, 1).to(image_latents.device, image_latents.dtype)
-        latents_std = torch.tensor(self.model.config["latents_std"]).view(1, self.latent_channels, 1, 1, 1).to(image_latents.device, image_latents.dtype)
+        latents_mean = (
+            torch.tensor(self.model.config["latents_mean"])
+            .view(1, self.latent_channels, 1, 1, 1)
+            .to(image_latents.device, image_latents.dtype)
+        )
+        latents_std = (
+            torch.tensor(self.model.config["latents_std"])
+            .view(1, self.latent_channels, 1, 1, 1)
+            .to(image_latents.device, image_latents.dtype)
+        )
         image_latents = (image_latents - latents_mean) / latents_std
 
         return image_latents
@@ -197,9 +318,22 @@ class AutoencoderKLQwenImageVAE:
         image_latents = torch.cat([image_latents], dim=0)
         image_latent_height, image_latent_width = image_latents.shape[3:]
         if not self.is_layered:
-            image_latents = self._pack_latents(image_latents, 1, num_channels_latents, image_latent_height, image_latent_width)
+            image_latents = self._pack_latents(
+                image_latents,
+                1,
+                num_channels_latents,
+                image_latent_height,
+                image_latent_width,
+            )
         else:
-            image_latents = self._pack_latents(image_latents, 1, num_channels_latents, image_latent_height, image_latent_width, 1)
+            image_latents = self._pack_latents(
+                image_latents,
+                1,
+                num_channels_latents,
+                image_latent_height,
+                image_latent_width,
+                1,
+            )
 
         if self.cpu_offload:
             self.model.to(torch.device("cpu"))

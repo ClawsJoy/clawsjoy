@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import gc
 import inspect
 import json
@@ -8,10 +7,6 @@ from typing import Any
 
 import numpy as np
 import torch
-from PIL import Image
-from loguru import logger
-from transformers import AutoConfig, AutoProcessor, Qwen3VLForConditionalGeneration
-
 from lightx2v.models.networks.base_model import BaseTransformerModel
 from lightx2v.models.networks.motus.image_utils import resize_with_padding
 from lightx2v.models.networks.motus.infer.post_infer import MotusPostInfer
@@ -28,14 +23,23 @@ from lightx2v.models.networks.wan.weights.motus._shared import apply_time_embedd
 from lightx2v.utils.custom_compiler import compiled_method
 from lightx2v.utils.envs import GET_DTYPE, GET_SENSITIVE_DTYPE
 from lightx2v.utils.utils import load_weights
+from loguru import logger
+from PIL import Image
+from transformers import AutoConfig, AutoProcessor, Qwen3VLForConditionalGeneration
+
+from lib.smart_config import smart_config
 
 
 def unpatchify_video(x, grid_sizes, patch_size, out_dim):
     outputs = []
     for sample, sample_grid in zip(x, grid_sizes.tolist()):
-        sample = sample[: math.prod(sample_grid)].view(*sample_grid, *patch_size, out_dim)
+        sample = sample[: math.prod(sample_grid)].view(
+            *sample_grid, *patch_size, out_dim
+        )
         sample = torch.einsum("fhwpqrc->cfphqwr", sample)
-        sample = sample.reshape(out_dim, *[grid * patch for grid, patch in zip(sample_grid, patch_size)])
+        sample = sample.reshape(
+            out_dim, *[grid * patch for grid, patch in zip(sample_grid, patch_size)]
+        )
         outputs.append(sample)
     return torch.stack([sample.float() for sample in outputs], dim=0)
 
@@ -85,11 +89,15 @@ class MotusVideoBackbone:
 
     def compute_adaln_modulation(self, video_adaln_params, layer_idx):
         block = self.transformer_weights.blocks[layer_idx]
-        return (block.compute_phases[0].modulation.tensor.unsqueeze(0) + video_adaln_params).chunk(6, dim=2)
+        return (
+            block.compute_phases[0].modulation.tensor.unsqueeze(0) + video_adaln_params
+        ).chunk(6, dim=2)
 
     def apply_output_head(self, video_tokens, video_time_emb, grid_sizes):
         modulation = self.transformer_weights.head_modulation.tensor
-        head_shift, head_scale = (modulation.unsqueeze(0) + video_time_emb.unsqueeze(2)).chunk(2, dim=2)
+        head_shift, head_scale = (
+            modulation.unsqueeze(0) + video_time_emb.unsqueeze(2)
+        ).chunk(2, dim=2)
         head_input = self.transformer_weights.norm.apply(video_tokens)
         head_input = head_input * (1 + head_scale.squeeze(2)) + head_shift.squeeze(2)
         head_output = apply_mm(self.transformer_weights.head, head_input)
@@ -119,7 +127,15 @@ class MotusActionExpert:
 
 
 class MotusUndExpert:
-    def __init__(self, pre_weights, transformer_weights, image_context_weights, vlm_model, device, dtype):
+    def __init__(
+        self,
+        pre_weights,
+        transformer_weights,
+        image_context_weights,
+        vlm_model,
+        device,
+        dtype,
+    ):
         self.pre_weights = pre_weights
         self.transformer_weights = transformer_weights
         self.image_context_weights = image_context_weights
@@ -130,10 +146,16 @@ class MotusUndExpert:
     def _parse_vision_outputs(self, vision_outputs):
         if hasattr(vision_outputs, "pooler_output"):
             image_embeds = vision_outputs.pooler_output
-            deepstack_image_embeds = vision_outputs.get("hidden_states", None) if hasattr(vision_outputs, "get") else getattr(vision_outputs, "hidden_states", None)
+            deepstack_image_embeds = (
+                vision_outputs.get("hidden_states", None)
+                if hasattr(vision_outputs, "get")
+                else getattr(vision_outputs, "hidden_states", None)
+            )
         elif isinstance(vision_outputs, tuple):
             image_embeds = vision_outputs[0]
-            deepstack_image_embeds = vision_outputs[1] if len(vision_outputs) > 1 else None
+            deepstack_image_embeds = (
+                vision_outputs[1] if len(vision_outputs) > 1 else None
+            )
         else:
             image_embeds = vision_outputs
             deepstack_image_embeds = None
@@ -141,15 +163,26 @@ class MotusUndExpert:
         if torch.is_tensor(image_embeds):
             return image_embeds.to(self.device, self.dtype), deepstack_image_embeds
         if isinstance(image_embeds, (list, tuple)):
-            return torch.cat(list(image_embeds), dim=0).to(self.device, self.dtype), deepstack_image_embeds
+            return (
+                torch.cat(list(image_embeds), dim=0).to(self.device, self.dtype),
+                deepstack_image_embeds,
+            )
         raise TypeError(f"Unsupported image feature output type: {type(image_embeds)}")
 
     def _process_vlm_inputs_to_tokens(self, vlm_inputs):
         if isinstance(vlm_inputs, list):
-            input_ids_batch = torch.cat([item["input_ids"] for item in vlm_inputs], dim=0).to(self.device)
-            attention_mask_batch = torch.cat([item["attention_mask"] for item in vlm_inputs], dim=0).to(self.device)
-            pixel_values_batch = torch.cat([item["pixel_values"] for item in vlm_inputs], dim=0).to(self.device)
-            image_grid_thw_batch = torch.cat([item["image_grid_thw"] for item in vlm_inputs], dim=0).to(self.device)
+            input_ids_batch = torch.cat(
+                [item["input_ids"] for item in vlm_inputs], dim=0
+            ).to(self.device)
+            attention_mask_batch = torch.cat(
+                [item["attention_mask"] for item in vlm_inputs], dim=0
+            ).to(self.device)
+            pixel_values_batch = torch.cat(
+                [item["pixel_values"] for item in vlm_inputs], dim=0
+            ).to(self.device)
+            image_grid_thw_batch = torch.cat(
+                [item["image_grid_thw"] for item in vlm_inputs], dim=0
+            ).to(self.device)
         else:
             input_ids_batch = vlm_inputs["input_ids"].to(self.device)
             attention_mask_batch = vlm_inputs["attention_mask"].to(self.device)
@@ -157,9 +190,15 @@ class MotusUndExpert:
             image_grid_thw_batch = vlm_inputs["image_grid_thw"].to(self.device)
 
         inputs_embeds = self.vlm_model.get_input_embeddings()(input_ids_batch)
-        vision_outputs = self.vlm_model.get_image_features(pixel_values_batch, image_grid_thw_batch)
-        image_embeds, deepstack_image_embeds = self._parse_vision_outputs(vision_outputs)
-        image_mask, _ = self.vlm_model.model.get_placeholder_mask(input_ids_batch, inputs_embeds=inputs_embeds, image_features=image_embeds)
+        vision_outputs = self.vlm_model.get_image_features(
+            pixel_values_batch, image_grid_thw_batch
+        )
+        image_embeds, deepstack_image_embeds = self._parse_vision_outputs(
+            vision_outputs
+        )
+        image_mask, _ = self.vlm_model.model.get_placeholder_mask(
+            input_ids_batch, inputs_embeds=inputs_embeds, image_features=image_embeds
+        )
         inputs_embeds = inputs_embeds.masked_scatter(image_mask, image_embeds)
         visual_pos_masks = image_mask[..., 0]
         position_ids, _ = self.vlm_model.model.get_rope_index(
@@ -168,10 +207,22 @@ class MotusUndExpert:
             video_grid_thw=None,
             attention_mask=attention_mask_batch,
         )
-        return inputs_embeds, attention_mask_batch, visual_pos_masks, deepstack_image_embeds, position_ids
+        return (
+            inputs_embeds,
+            attention_mask_batch,
+            visual_pos_masks,
+            deepstack_image_embeds,
+            position_ids,
+        )
 
     def extract_und_features(self, vlm_inputs):
-        inputs_embeds, attention_mask, visual_pos_masks, deepstack_image_embeds, position_ids = self._process_vlm_inputs_to_tokens(vlm_inputs)
+        (
+            inputs_embeds,
+            attention_mask,
+            visual_pos_masks,
+            deepstack_image_embeds,
+            position_ids,
+        ) = self._process_vlm_inputs_to_tokens(vlm_inputs)
         kwargs = {
             "inputs_embeds": inputs_embeds,
             "attention_mask": attention_mask,
@@ -188,19 +239,27 @@ class MotusUndExpert:
             kwargs["deepstack_visual_embeds"] = deepstack_image_embeds
         with torch.no_grad():
             vlm_output = self.vlm_model.model.language_model(**kwargs)
-        return self.pre_weights.vlm_adapter.apply(vlm_output.hidden_states[-1].to(self.dtype))
+        return self.pre_weights.vlm_adapter.apply(
+            vlm_output.hidden_states[-1].to(self.dtype)
+        )
 
     def extract_image_context(self, vlm_inputs):
         if self.image_context_weights is None:
             return None
         if isinstance(vlm_inputs, list):
-            pixel_values = torch.cat([item["pixel_values"] for item in vlm_inputs], dim=0).to(self.device)
-            image_grid_thw = torch.cat([item["image_grid_thw"] for item in vlm_inputs], dim=0).to(self.device)
+            pixel_values = torch.cat(
+                [item["pixel_values"] for item in vlm_inputs], dim=0
+            ).to(self.device)
+            image_grid_thw = torch.cat(
+                [item["image_grid_thw"] for item in vlm_inputs], dim=0
+            ).to(self.device)
         else:
             pixel_values = vlm_inputs["pixel_values"].to(self.device)
             image_grid_thw = vlm_inputs["image_grid_thw"].to(self.device)
         with torch.no_grad():
-            vision_outputs = self.vlm_model.get_image_features(pixel_values, image_grid_thw)
+            vision_outputs = self.vlm_model.get_image_features(
+                pixel_values, image_grid_thw
+            )
         image_embeds, _ = self._parse_vision_outputs(vision_outputs)
         return self.image_context_weights.apply(image_embeds)
 
@@ -217,7 +276,9 @@ class MotusModel(BaseTransformerModel):
         # Seed config early so property access is safe before super() assigns it.
         self.config = config
         self._cached_vlm_state = None
-        super().__init__(model_path=model_path, config=config, device=device, model_type="motus")
+        super().__init__(
+            model_path=model_path, config=config, device=device, model_type="motus"
+        )
         self.motus_root = Path(self.model_path).expanduser().resolve()
         if self.motus_root.is_file():
             self.motus_root = self.motus_root.parent
@@ -232,14 +293,27 @@ class MotusModel(BaseTransformerModel):
         logger.info("[Motus] Loading VLM model")
         self.vlm_model = self._load_vlm_model().eval()
         logger.info("[Motus] Loading VLM processor")
-        self.vlm_processor = AutoProcessor.from_pretrained(self.config["vlm_path"], trust_remote_code=True)
+        self.vlm_processor = AutoProcessor.from_pretrained(
+            self.config["vlm_path"], trust_remote_code=True
+        )
         self._load_normalization_stats()
         self._rope_cos_sin_cache = {}
         self._patch_qwen3_vl_rope_index(self.vlm_model)
         logger.info("[Motus] Building Motus backbone helpers")
-        self.video_backbone = MotusVideoBackbone(self.config, self.pre_weight.video, self.transformer_weights.video)
-        self.action_backbone = MotusActionExpert(self.action_config, self.pre_weight.action, self.transformer_weights.action, self.post_weight.action)
-        image_context_weights = self.pre_weight.image_context if getattr(self.pre_weight.image_context, "available", True) else None
+        self.video_backbone = MotusVideoBackbone(
+            self.config, self.pre_weight.video, self.transformer_weights.video
+        )
+        self.action_backbone = MotusActionExpert(
+            self.action_config,
+            self.pre_weight.action,
+            self.transformer_weights.action,
+            self.post_weight.action,
+        )
+        image_context_weights = (
+            self.pre_weight.image_context
+            if getattr(self.pre_weight.image_context, "available", True)
+            else None
+        )
         self.und_backbone = MotusUndExpert(
             self.pre_weight.und,
             self.transformer_weights.und,
@@ -257,13 +331,19 @@ class MotusModel(BaseTransformerModel):
         lat_h = self.config["video_height"] // 32
         lat_w = self.config["video_width"] // 32
         batch_size = int(self.config.get("batch_size", 1))
-        self.grid_sizes = torch.tensor([lat_t, lat_h, lat_w], dtype=torch.long, device=self.device).unsqueeze(0).expand(batch_size, -1)
+        self.grid_sizes = (
+            torch.tensor([lat_t, lat_h, lat_w], dtype=torch.long, device=self.device)
+            .unsqueeze(0)
+            .expand(batch_size, -1)
+        )
         self.scheduler = None
 
     @property
     def action_chunk_size(self):
         config = getattr(self, "config", None) or {}
-        return config.get("num_video_frames", 0) * config.get("video_action_freq_ratio", 2)
+        return config.get("num_video_frames", 0) * config.get(
+            "video_action_freq_ratio", 2
+        )
 
     @property
     def action_dim(self):
@@ -279,9 +359,20 @@ class MotusModel(BaseTransformerModel):
         config.setdefault("seq_parallel", False)
         config.setdefault("parallel", {})
         config.setdefault("rms_norm_type", "torch")
-        config.setdefault("self_attn_1_type", config.get("self_joint_attn_type", config.get("attention_type", "flash_attn2")))
-        config.setdefault("cross_attn_1_type", config.get("cross_attn_type", config.get("attention_type", "flash_attn2")))
-        config.setdefault("cross_attn_2_type", config.get("cross_attn_type", config.get("attention_type", "flash_attn2")))
+        config.setdefault(
+            "self_attn_1_type",
+            config.get(
+                "self_joint_attn_type", config.get("attention_type", "flash_attn2")
+            ),
+        )
+        config.setdefault(
+            "cross_attn_1_type",
+            config.get("cross_attn_type", config.get("attention_type", "flash_attn2")),
+        )
+        config.setdefault(
+            "cross_attn_2_type",
+            config.get("cross_attn_type", config.get("attention_type", "flash_attn2")),
+        )
         return config
 
     def _should_load_pretrained_backbones(self):
@@ -307,10 +398,14 @@ class MotusModel(BaseTransformerModel):
         if isinstance(modules, dict) or isinstance(parameters, dict):
             if isinstance(parameters, dict):
                 for parameter in parameters.values():
-                    self._move_weight_tree(parameter, move_to_cuda, non_blocking=non_blocking)
+                    self._move_weight_tree(
+                        parameter, move_to_cuda, non_blocking=non_blocking
+                    )
             if isinstance(modules, dict):
                 for module in modules.values():
-                    self._move_weight_tree(module, move_to_cuda, non_blocking=non_blocking)
+                    self._move_weight_tree(
+                        module, move_to_cuda, non_blocking=non_blocking
+                    )
             return
 
         move_fn = getattr(node, "to_cuda" if move_to_cuda else "to_cpu", None)
@@ -398,7 +493,12 @@ class MotusModel(BaseTransformerModel):
             if key.startswith("video_model.vae."):
                 continue
             if tensor.is_floating_point():
-                target_dtype = GET_DTYPE() if unified_dtype or all(pattern not in key for pattern in sensitive_layer) else GET_SENSITIVE_DTYPE()
+                target_dtype = (
+                    GET_DTYPE()
+                    if unified_dtype
+                    or all(pattern not in key for pattern in sensitive_layer)
+                    else GET_SENSITIVE_DTYPE()
+                )
                 weight_dict[key] = tensor.to(target_dtype)
             else:
                 weight_dict[key] = tensor
@@ -424,15 +524,23 @@ class MotusModel(BaseTransformerModel):
                     trust_remote_code=True,
                 )
         else:
-            vlm_cfg = AutoConfig.from_pretrained(self.config["vlm_path"], trust_remote_code=True)
-            vlm_model = Qwen3VLForConditionalGeneration._from_config(vlm_cfg, torch_dtype=self.model_dtype)
+            vlm_cfg = AutoConfig.from_pretrained(
+                self.config["vlm_path"], trust_remote_code=True
+            )
+            vlm_model = Qwen3VLForConditionalGeneration._from_config(
+                vlm_cfg, torch_dtype=self.model_dtype
+            )
             vlm_model.to(device=self.device, dtype=self.model_dtype)
 
         vlm_state = self._cached_vlm_state
         if vlm_state is None:
             logger.info("[Motus] Reading checkpoint again for VLM weights")
             checkpoint_state = self._load_checkpoint_state()
-            vlm_state = {key[len("vlm_model.") :]: value for key, value in checkpoint_state.items() if key.startswith("vlm_model.")}
+            vlm_state = {
+                key[len("vlm_model.") :]: value
+                for key, value in checkpoint_state.items()
+                if key.startswith("vlm_model.")
+            }
         if vlm_state:
             logger.info("[Motus] Loading cached VLM state dict")
             vlm_model.load_state_dict(vlm_state, strict=False)
@@ -464,7 +572,9 @@ class MotusModel(BaseTransformerModel):
                             if input_ids is None and args:
                                 input_ids = args[0]
                             if torch.is_tensor(input_ids):
-                                kwargs["mm_token_type_ids"] = torch.zeros_like(input_ids, dtype=torch.long)
+                                kwargs["mm_token_type_ids"] = torch.zeros_like(
+                                    input_ids, dtype=torch.long
+                                )
                         return __orig(*args, **kwargs)
 
                     setattr(obj, "get_rope_index", wrapped_get_rope_index)
@@ -487,14 +597,24 @@ class MotusModel(BaseTransformerModel):
                 stat_data = json.load(f)
             stats = stat_data.get(self.config.get("stats_key", "robotwin2"), {})
             if stats:
-                self.action_min = torch.tensor(stats["min"], dtype=torch.float32, device=self.device)
-                self.action_max = torch.tensor(stats["max"], dtype=torch.float32, device=self.device)
+                self.action_min = torch.tensor(
+                    stats["min"], dtype=torch.float32, device=self.device
+                )
+                self.action_max = torch.tensor(
+                    stats["max"], dtype=torch.float32, device=self.device
+                )
                 self.action_range = self.action_max - self.action_min
                 return
         action_dim = self.config.get("action_dim", 14)
-        self.action_min = torch.zeros(action_dim, dtype=torch.float32, device=self.device)
-        self.action_max = torch.ones(action_dim, dtype=torch.float32, device=self.device)
-        self.action_range = torch.ones(action_dim, dtype=torch.float32, device=self.device)
+        self.action_min = torch.zeros(
+            action_dim, dtype=torch.float32, device=self.device
+        )
+        self.action_max = torch.ones(
+            action_dim, dtype=torch.float32, device=self.device
+        )
+        self.action_range = torch.ones(
+            action_dim, dtype=torch.float32, device=self.device
+        )
 
     def denormalize_actions(self, actions):
         shape = actions.shape
@@ -536,7 +656,9 @@ class MotusModel(BaseTransformerModel):
         )
         if resized_np.dtype == np.uint8:
             resized_np = resized_np.astype(np.float32) / 255.0
-        return torch.from_numpy(resized_np).permute(2, 0, 1).unsqueeze(0).to(self.device)
+        return (
+            torch.from_numpy(resized_np).permute(2, 0, 1).unsqueeze(0).to(self.device)
+        )
 
     def prepare_state(self, state_value):
         if isinstance(state_value, torch.Tensor):
@@ -563,19 +685,39 @@ class MotusModel(BaseTransformerModel):
 
     def build_vlm_inputs(self, instruction, first_frame):
         image = self._tensor_to_pil(first_frame.squeeze(0))
-        messages = [{"role": "user", "content": [{"type": "text", "text": instruction}, {"type": "image", "image": image}]}]
-        text = self.vlm_processor.apply_chat_template(messages, add_generation_prompt=False, tokenize=False)
+        messages = [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": instruction},
+                    {"type": "image", "image": image},
+                ],
+            }
+        ]
+        text = self.vlm_processor.apply_chat_template(
+            messages, add_generation_prompt=False, tokenize=False
+        )
         encoded = self.vlm_processor(text=[text], images=[image], return_tensors="pt")
 
         vlm_inputs = {}
-        for key in ("input_ids", "attention_mask", "pixel_values", "image_grid_thw", "video_grid_thw", "second_per_grid_ts", "mm_token_type_ids"):
+        for key in (
+            "input_ids",
+            "attention_mask",
+            "pixel_values",
+            "image_grid_thw",
+            "video_grid_thw",
+            "second_per_grid_ts",
+            "mm_token_type_ids",
+        ):
             value = encoded.get(key)
             if torch.is_tensor(value):
                 vlm_inputs[key] = value.to(self.device)
             elif value is not None:
                 vlm_inputs[key] = value
         if "mm_token_type_ids" not in vlm_inputs and "input_ids" in vlm_inputs:
-            vlm_inputs["mm_token_type_ids"] = torch.zeros_like(vlm_inputs["input_ids"], dtype=torch.long)
+            vlm_inputs["mm_token_type_ids"] = torch.zeros_like(
+                vlm_inputs["input_ids"], dtype=torch.long
+            )
         return vlm_inputs
 
     @torch.no_grad()
@@ -608,7 +750,9 @@ class MotusModel(BaseTransformerModel):
     def _infer_cond_uncond(self, inputs, infer_condition=True):
         del infer_condition
         pre_infer_out = self.pre_infer.infer(self.pre_weight, inputs)
-        video_velocity, action_velocity = self.transformer_infer.infer(self.transformer_weights, pre_infer_out)
+        video_velocity, action_velocity = self.transformer_infer.infer(
+            self.transformer_weights, pre_infer_out
+        )
         self.scheduler.noise_pred = video_velocity.squeeze(0)
         self.scheduler.action_noise_pred = action_velocity
         return video_velocity
@@ -631,5 +775,7 @@ class MotusModel(BaseTransformerModel):
     @torch.no_grad()
     def postprocess_actions(self):
         if self.scheduler is None:
-            raise RuntimeError("MotusModel requires a scheduler before postprocess_actions().")
+            raise RuntimeError(
+                "MotusModel requires a scheduler before postprocess_actions()."
+            )
         return self.post_infer.infer(self.scheduler.action_latents, None)

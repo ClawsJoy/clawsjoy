@@ -1,10 +1,14 @@
-from lib.smart_config import smart_config
 import torch
 from einops import repeat
-
-from lightx2v.models.networks.hunyuan_video.infer.module_io import HunyuanVideo15InferModuleOutput
-from lightx2v.models.networks.hunyuan_video.infer.pre_infer import HunyuanVideo15PreInfer
+from lightx2v.models.networks.hunyuan_video.infer.module_io import (
+    HunyuanVideo15InferModuleOutput,
+)
+from lightx2v.models.networks.hunyuan_video.infer.pre_infer import (
+    HunyuanVideo15PreInfer,
+)
 from lightx2v_platform.base.global_var import AI_DEVICE
+
+from lib.smart_config import smart_config
 
 
 class WorldPlayPreInfer(HunyuanVideo15PreInfer):
@@ -36,12 +40,24 @@ class WorldPlayPreInfer(HunyuanVideo15PreInfer):
         t = timesteps[self.scheduler.step_index]
 
         if self.scheduler.infer_condition:
-            txt, text_mask = inputs["text_encoder_output"]["context"][0], inputs["text_encoder_output"]["context"][1]
+            txt, text_mask = (
+                inputs["text_encoder_output"]["context"][0],
+                inputs["text_encoder_output"]["context"][1],
+            )
         else:
-            txt, text_mask = inputs["text_encoder_output"]["context_null"][0], inputs["text_encoder_output"]["context_null"][1]
+            txt, text_mask = (
+                inputs["text_encoder_output"]["context_null"][0],
+                inputs["text_encoder_output"]["context_null"][1],
+            )
 
-        byt5_txt, byt5_text_mask = inputs["text_encoder_output"]["byt5_features"], inputs["text_encoder_output"]["byt5_masks"]
-        siglip_output, siglip_mask = inputs["image_encoder_output"]["siglip_output"], inputs["image_encoder_output"]["siglip_mask"]
+        byt5_txt, byt5_text_mask = (
+            inputs["text_encoder_output"]["byt5_features"],
+            inputs["text_encoder_output"]["byt5_masks"],
+        )
+        siglip_output, siglip_mask = (
+            inputs["image_encoder_output"]["siglip_output"],
+            inputs["image_encoder_output"]["siglip_mask"],
+        )
         txt = txt.to(torch.bfloat16)
 
         if self.config.get("is_sr_running", False):
@@ -54,7 +70,9 @@ class WorldPlayPreInfer(HunyuanVideo15PreInfer):
         else:
             cond_latents_concat = self.scheduler.cond_latents_concat
             mask_concat = self.scheduler.mask_concat
-            img = x = latent_model_input = torch.concat([latents, cond_latents_concat, mask_concat], dim=1)
+            img = x = latent_model_input = torch.concat(
+                [latents, cond_latents_concat, mask_concat], dim=1
+            )
 
         img = img.to(torch.bfloat16)
 
@@ -79,14 +97,18 @@ class WorldPlayPreInfer(HunyuanVideo15PreInfer):
             if timestep_input is not None and timestep_input.numel() > 1:
                 # timestep_input is [T] with per-frame timesteps
                 # Compute per-frame time embeddings
-                t_freq = self.timestep_embedding(timestep_input, self.frequency_embedding_size, self.max_period).to(torch.bfloat16)
+                t_freq = self.timestep_embedding(
+                    timestep_input, self.frequency_embedding_size, self.max_period
+                ).to(torch.bfloat16)
                 vec_per_frame = weights.time_in_0.apply(t_freq)  # [T, C]
                 vec_per_frame = torch.nn.functional.silu(vec_per_frame)
                 vec_per_frame = weights.time_in_2.apply(vec_per_frame)  # [T, C]
             else:
                 # Global timestep - expand to per-frame
                 t_expand = t.repeat(latent_model_input.shape[0])
-                t_freq = self.timestep_embedding(t_expand, self.frequency_embedding_size, self.max_period).to(torch.bfloat16)
+                t_freq = self.timestep_embedding(
+                    t_expand, self.frequency_embedding_size, self.max_period
+                ).to(torch.bfloat16)
                 vec = weights.time_in_0.apply(t_freq)
                 vec = torch.nn.functional.silu(vec)
                 vec = weights.time_in_2.apply(vec)
@@ -97,7 +119,9 @@ class WorldPlayPreInfer(HunyuanVideo15PreInfer):
             action_flat = action.reshape(-1).float()  # [T]
 
             # Compute per-frame action embeddings: [T, C]
-            action_emb = self._compute_action_embedding(weights.action_weights, action_flat)
+            action_emb = self._compute_action_embedding(
+                weights.action_weights, action_flat
+            )
 
             # Add per-frame action embedding to per-frame time embedding
             vec_per_frame = vec_per_frame + action_emb  # [T, C]
@@ -111,14 +135,18 @@ class WorldPlayPreInfer(HunyuanVideo15PreInfer):
         else:
             # No action conditioning - use global timestep
             t_expand = t.repeat(latent_model_input.shape[0])
-            t_freq = self.timestep_embedding(t_expand, self.frequency_embedding_size, self.max_period).to(torch.bfloat16)
+            t_freq = self.timestep_embedding(
+                t_expand, self.frequency_embedding_size, self.max_period
+            ).to(torch.bfloat16)
             vec = weights.time_in_0.apply(t_freq)
             vec = torch.nn.functional.silu(vec)
             vec = weights.time_in_2.apply(vec)
             self.scheduler.vec_is_per_token = False
 
         if self.config.get("is_sr_running", False):
-            use_meanflow = self.config.get("video_super_resolution", {}).get("use_meanflow", False)
+            use_meanflow = self.config.get("video_super_resolution", {}).get(
+                "use_meanflow", False
+            )
             if use_meanflow:
                 if self.scheduler.step_index == len(timesteps) - 1:
                     timesteps_r = torch.tensor([0.0], device=latent_model_input.device)
@@ -129,35 +157,64 @@ class WorldPlayPreInfer(HunyuanVideo15PreInfer):
                 timesteps_r = None
 
             if timesteps_r is not None:
-                t_freq = self.timestep_embedding(timesteps_r, self.frequency_embedding_size, self.max_period).to(torch.bfloat16)
+                t_freq = self.timestep_embedding(
+                    timesteps_r, self.frequency_embedding_size, self.max_period
+                ).to(torch.bfloat16)
                 vec_res = weights.time_r_in_0.apply(t_freq)
                 vec_res = torch.nn.functional.silu(vec_res)
                 vec_res = weights.time_r_in_2.apply(vec_res)
                 vec = vec + vec_res
 
-        t_freq = self.timestep_embedding(t_expand, self.frequency_embedding_size, self.max_period).to(torch.bfloat16)
+        t_freq = self.timestep_embedding(
+            t_expand, self.frequency_embedding_size, self.max_period
+        ).to(torch.bfloat16)
         timestep_aware_representations = weights.txt_in_t_embedder_0.apply(t_freq)
-        timestep_aware_representations = torch.nn.functional.silu(timestep_aware_representations)
-        timestep_aware_representations = weights.txt_in_t_embedder_2.apply(timestep_aware_representations)
+        timestep_aware_representations = torch.nn.functional.silu(
+            timestep_aware_representations
+        )
+        timestep_aware_representations = weights.txt_in_t_embedder_2.apply(
+            timestep_aware_representations
+        )
 
         mask_float = text_mask.float().unsqueeze(-1)
-        context_aware_representations = (txt * mask_float).sum(dim=1) / mask_float.sum(dim=1)
+        context_aware_representations = (txt * mask_float).sum(dim=1) / mask_float.sum(
+            dim=1
+        )
         context_aware_representations = context_aware_representations.to(torch.bfloat16)
-        context_aware_representations = weights.txt_in_c_embedder_0.apply(context_aware_representations)
-        context_aware_representations = torch.nn.functional.silu(context_aware_representations)
-        context_aware_representations = weights.txt_in_c_embedder_2.apply(context_aware_representations)
+        context_aware_representations = weights.txt_in_c_embedder_0.apply(
+            context_aware_representations
+        )
+        context_aware_representations = torch.nn.functional.silu(
+            context_aware_representations
+        )
+        context_aware_representations = weights.txt_in_c_embedder_2.apply(
+            context_aware_representations
+        )
 
         c = timestep_aware_representations + context_aware_representations
         out = weights.txt_in_input_embedder.apply(txt[0].to(torch.bfloat16))
         txt = self.run_individual_token_refiner(weights, out, text_mask, c)
 
         txt = txt.unsqueeze(0)
-        txt = txt + weights.cond_type_embedding.apply(torch.zeros_like(txt[:, :, 0], device=txt.device, dtype=torch.long))
-        byt5_txt = byt5_txt + weights.cond_type_embedding.apply(torch.ones_like(byt5_txt[:, :, 0], device=byt5_txt.device, dtype=torch.long))
-        txt, text_mask = self.reorder_txt_token(byt5_txt, txt, byt5_text_mask, text_mask, zero_feat=True)
+        txt = txt + weights.cond_type_embedding.apply(
+            torch.zeros_like(txt[:, :, 0], device=txt.device, dtype=torch.long)
+        )
+        byt5_txt = byt5_txt + weights.cond_type_embedding.apply(
+            torch.ones_like(byt5_txt[:, :, 0], device=byt5_txt.device, dtype=torch.long)
+        )
+        txt, text_mask = self.reorder_txt_token(
+            byt5_txt, txt, byt5_text_mask, text_mask, zero_feat=True
+        )
 
-        siglip_output = siglip_output + weights.cond_type_embedding.apply(2 * torch.ones_like(siglip_output[:, :, 0], dtype=torch.long, device=AI_DEVICE))
-        txt, text_mask = self.reorder_txt_token(siglip_output, txt, siglip_mask, text_mask)
+        siglip_output = siglip_output + weights.cond_type_embedding.apply(
+            2
+            * torch.ones_like(
+                siglip_output[:, :, 0], dtype=torch.long, device=AI_DEVICE
+            )
+        )
+        txt, text_mask = self.reorder_txt_token(
+            siglip_output, txt, siglip_mask, text_mask
+        )
         txt = txt[:, : text_mask.sum(), :]
 
         # Apply silu to vec only if NOT per-token (per-token vec already has silu applied in embedders)
@@ -184,7 +241,9 @@ class WorldPlayPreInfer(HunyuanVideo15PreInfer):
             Action embedding tensor [N, hidden_size]
         """
         # Convert discrete action to embedding using sinusoidal embedding
-        action_freq = self.timestep_embedding(action, self.frequency_embedding_size, self.max_period).to(torch.bfloat16)
+        action_freq = self.timestep_embedding(
+            action, self.frequency_embedding_size, self.max_period
+        ).to(torch.bfloat16)
 
         # Pass through MLP
         action_emb = action_weights.action_in_0.apply(action_freq)

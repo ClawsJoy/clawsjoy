@@ -1,9 +1,10 @@
-from lib.smart_config import smart_config
 from lightx2v.models.networks.wan.weights.transformer_weights import (
     WanTransformerAttentionBlock,
     WanTransformerWeights,
 )
 from lightx2v.utils.registry_factory import MM_WEIGHT_REGISTER
+
+from lib.smart_config import smart_config
 
 
 class WanLingbotTransformerWeights(WanTransformerWeights):
@@ -15,10 +16,20 @@ class WanLingbotTransformerWeights(WanTransformerWeights):
 
     def _register_lingbot_cam_layers(self, lora_path=None):
         self._register_cam_for_blocks(self.blocks, lora_path=lora_path)
-        if hasattr(self, "offload_block_cuda_buffers") and self.offload_block_cuda_buffers is not None:
-            self._register_cam_for_blocks(self.offload_block_cuda_buffers, lora_path=lora_path)
-        if hasattr(self, "offload_block_cpu_buffers") and self.offload_block_cpu_buffers is not None:
-            self._register_cam_for_blocks(self.offload_block_cpu_buffers, lora_path=lora_path)
+        if (
+            hasattr(self, "offload_block_cuda_buffers")
+            and self.offload_block_cuda_buffers is not None
+        ):
+            self._register_cam_for_blocks(
+                self.offload_block_cuda_buffers, lora_path=lora_path
+            )
+        if (
+            hasattr(self, "offload_block_cpu_buffers")
+            and self.offload_block_cpu_buffers is not None
+        ):
+            self._register_cam_for_blocks(
+                self.offload_block_cpu_buffers, lora_path=lora_path
+            )
 
     def _register_cam_for_blocks(self, blocks, lora_path=None):
         for block in blocks:

@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import copy
 import gc
 import os
@@ -6,23 +5,33 @@ import os
 import numpy as np
 import torch
 import torchvision.transforms as transforms
-from PIL import Image
-from loguru import logger
-
 from lightx2v.models.input_encoders.hf.hunyuan15.byt5.model import ByT5TextEncoder
-from lightx2v.models.input_encoders.hf.hunyuan15.qwen25.model import Qwen25VL_TextEncoder
+from lightx2v.models.input_encoders.hf.hunyuan15.qwen25.model import (
+    Qwen25VL_TextEncoder,
+)
 from lightx2v.models.input_encoders.hf.hunyuan15.siglip.model import SiglipVisionEncoder
 from lightx2v.models.networks.hunyuan_video.model import HunyuanVideo15Model
 from lightx2v.models.runners.default_runner import DefaultRunner
-from lightx2v.models.schedulers.hunyuan_video.feature_caching.scheduler import HunyuanVideo15SchedulerCaching
-from lightx2v.models.schedulers.hunyuan_video.scheduler import HunyuanVideo15SRScheduler, HunyuanVideo15Scheduler
-from lightx2v.models.video_encoders.hf.hunyuanvideo15.hunyuanvideo_15_vae import HunyuanVideo15VAE
+from lightx2v.models.schedulers.hunyuan_video.feature_caching.scheduler import (
+    HunyuanVideo15SchedulerCaching,
+)
+from lightx2v.models.schedulers.hunyuan_video.scheduler import (
+    HunyuanVideo15Scheduler,
+    HunyuanVideo15SRScheduler,
+)
+from lightx2v.models.video_encoders.hf.hunyuanvideo15.hunyuanvideo_15_vae import (
+    HunyuanVideo15VAE,
+)
 from lightx2v.models.video_encoders.hf.hunyuanvideo15.lighttae_hy15 import LightTaeHy15
 from lightx2v.server.metrics import monitor_cli
 from lightx2v.utils.profiler import *
 from lightx2v.utils.registry_factory import RUNNER_REGISTER
 from lightx2v.utils.utils import *
 from lightx2v_platform.base.global_var import AI_DEVICE
+from loguru import logger
+from PIL import Image
+
+from lib.smart_config import smart_config
 
 torch_device_module = getattr(torch, AI_DEVICE)
 
@@ -32,7 +41,10 @@ class HunyuanVideo15Runner(DefaultRunner):
     def __init__(self, config):
         config["is_sr_running"] = False
 
-        if "video_super_resolution" in config and "sr_version" in config["video_super_resolution"]:
+        if (
+            "video_super_resolution" in config
+            and "sr_version" in config["video_super_resolution"]
+        ):
             self.sr_version = config["video_super_resolution"]["sr_version"]
         else:
             self.sr_version = None
@@ -40,9 +52,15 @@ class HunyuanVideo15Runner(DefaultRunner):
         if self.sr_version is not None:
             self.config_sr = copy.deepcopy(config)
             self.config_sr["is_sr_running"] = False
-            self.config_sr["sample_shift"] = config["video_super_resolution"]["flow_shift"]  # for SR model
-            self.config_sr["sample_guide_scale"] = config["video_super_resolution"]["guidance_scale"]  # for SR model
-            self.config_sr["infer_steps"] = config["video_super_resolution"]["num_inference_steps"]
+            self.config_sr["sample_shift"] = config["video_super_resolution"][
+                "flow_shift"
+            ]  # for SR model
+            self.config_sr["sample_guide_scale"] = config["video_super_resolution"][
+                "guidance_scale"
+            ]  # for SR model
+            self.config_sr["infer_steps"] = config["video_super_resolution"][
+                "num_inference_steps"
+            ]
 
         super().__init__(config)
         self.target_size_config = {
@@ -62,7 +80,9 @@ class HunyuanVideo15Runner(DefaultRunner):
         elif self.config.feature_caching in ["Mag", "Tea"]:
             scheduler_class = HunyuanVideo15SchedulerCaching
         else:
-            raise NotImplementedError(f"Unsupported feature_caching type: {self.config.feature_caching}")
+            raise NotImplementedError(
+                f"Unsupported feature_caching type: {self.config.feature_caching}"
+            )
         self.scheduler = scheduler_class(self.config)
 
         if self.sr_version is not None:
@@ -71,7 +91,9 @@ class HunyuanVideo15Runner(DefaultRunner):
             self.scheduler_sr = None
 
     def load_text_encoder(self):
-        qwen25vl_offload = self.config.get("qwen25vl_cpu_offload", self.config.get("cpu_offload"))
+        qwen25vl_offload = self.config.get(
+            "qwen25vl_cpu_offload", self.config.get("cpu_offload")
+        )
         if qwen25vl_offload:
             qwen25vl_device = torch.device("cpu")
         else:
@@ -93,22 +115,35 @@ class HunyuanVideo15Runner(DefaultRunner):
             qwen25vl_quant_ckpt=qwen25vl_quantized_ckpt,
         )
 
-        byt5_offload = self.config.get("byt5_cpu_offload", self.config.get("cpu_offload"))
+        byt5_offload = self.config.get(
+            "byt5_cpu_offload", self.config.get("cpu_offload")
+        )
         if byt5_offload:
             byt5_device = torch.device("cpu")
         else:
             byt5_device = torch.device(AI_DEVICE)
 
-        byt5 = ByT5TextEncoder(config=self.config, device=byt5_device, checkpoint_path=self.config["model_path"], cpu_offload=byt5_offload)
+        byt5 = ByT5TextEncoder(
+            config=self.config,
+            device=byt5_device,
+            checkpoint_path=self.config["model_path"],
+            cpu_offload=byt5_offload,
+        )
         text_encoders = [text_encoder, byt5]
         return text_encoders
 
     def load_transformer(self):
-        model = HunyuanVideo15Model(self.config["model_path"], self.config, self.init_device)
+        model = HunyuanVideo15Model(
+            self.config["model_path"], self.config, self.init_device
+        )
         if self.sr_version is not None:
-            self.config_sr["transformer_model_path"] = os.path.join(os.path.dirname(self.config.transformer_model_path), self.sr_version)
+            self.config_sr["transformer_model_path"] = os.path.join(
+                os.path.dirname(self.config.transformer_model_path), self.sr_version
+            )
             self.config_sr["is_sr_running"] = True
-            model_sr = HunyuanVideo15Model(self.config_sr["model_path"], self.config_sr, self.init_device)
+            model_sr = HunyuanVideo15Model(
+                self.config_sr["model_path"], self.config_sr, self.init_device
+            )
             self.config_sr["is_sr_running"] = False
         else:
             model_sr = None
@@ -122,19 +157,28 @@ class HunyuanVideo15Runner(DefaultRunner):
         else:
             width, height = origin_size
         target_size = self.config["transformer_model_name"].split("_")[0]
-        target_height, target_width = self.get_closest_resolution_given_original_size((int(width), int(height)), target_size)
+        target_height, target_width = self.get_closest_resolution_given_original_size(
+            (int(width), int(height)), target_size
+        )
         latent_shape = [
             self.config.get("in_channels", 32),
-            (self.config["target_video_length"] - 1) // self.config["vae_stride"][0] + 1,
+            (self.config["target_video_length"] - 1) // self.config["vae_stride"][0]
+            + 1,
             target_height // self.config["vae_stride"][1],
             target_width // self.config["vae_stride"][2],
         ]
 
         ori_latent_h, ori_latent_w = latent_shape[2], latent_shape[3]
         if dist.is_initialized() and dist.get_world_size() > 1:
-            latent_h, latent_w, world_size_h, world_size_w = self._adjust_latent_for_grid_splitting(ori_latent_h, ori_latent_w, dist.get_world_size())
+            latent_h, latent_w, world_size_h, world_size_w = (
+                self._adjust_latent_for_grid_splitting(
+                    ori_latent_h, ori_latent_w, dist.get_world_size()
+                )
+            )
             latent_shape[2], latent_shape[3] = latent_h, latent_w
-            logger.info(f"ori latent: {ori_latent_h}x{ori_latent_w}, adjust_latent: {latent_h}x{latent_w}, grid: {world_size_h}x{world_size_w}")
+            logger.info(
+                f"ori latent: {ori_latent_h}x{ori_latent_w}, adjust_latent: {latent_h}x{latent_w}, grid: {world_size_h}x{world_size_w}"
+            )
         else:
             latent_shape[2], latent_shape[3] = ori_latent_h, ori_latent_w
             world_size_h, world_size_w = None, None
@@ -209,11 +253,18 @@ class HunyuanVideo15Runner(DefaultRunner):
         base_size = SizeMap[self.config_sr["video_super_resolution"]["base_resolution"]]
         sr_size = SizeMap[self.sr_version.split("_")[0]]
         lr_video_height, lr_video_width = [x * 16 for x in self.lq_latents_shape[-2:]]
-        hr_bucket_map = self.build_bucket_map(lr_base_size=base_size, hr_base_size=sr_size, lr_patch_size=16, hr_patch_size=sr_stride)
+        hr_bucket_map = self.build_bucket_map(
+            lr_base_size=base_size,
+            hr_base_size=sr_size,
+            lr_patch_size=16,
+            hr_patch_size=sr_stride,
+        )
         target_width, target_height = hr_bucket_map((lr_video_width, lr_video_height))
         latent_shape = [
             self.config_sr.get("in_channels", 32),
-            (self.config_sr["target_video_length"] - 1) // self.config_sr["vae_stride"][0] + 1,
+            (self.config_sr["target_video_length"] - 1)
+            // self.config_sr["vae_stride"][0]
+            + 1,
             target_height // self.config_sr["vae_stride"][1],
             target_width // self.config_sr["vae_stride"][2],
         ]
@@ -222,14 +273,33 @@ class HunyuanVideo15Runner(DefaultRunner):
         return latent_shape
 
     def get_closest_resolution_given_original_size(self, origin_size, target_size):
-        bucket_hw_base_size = self.target_size_config[target_size]["bucket_hw_base_size"]
-        bucket_hw_bucket_stride = self.target_size_config[target_size]["bucket_hw_bucket_stride"]
+        bucket_hw_base_size = self.target_size_config[target_size][
+            "bucket_hw_base_size"
+        ]
+        bucket_hw_bucket_stride = self.target_size_config[target_size][
+            "bucket_hw_bucket_stride"
+        ]
 
-        assert bucket_hw_base_size in [128, 256, 480, 512, 640, 720, 960, 1440], f"bucket_hw_base_size must be in [128, 256, 480, 512, 640, 720, 960], but got {bucket_hw_base_size}"
+        assert bucket_hw_base_size in [
+            128,
+            256,
+            480,
+            512,
+            640,
+            720,
+            960,
+            1440,
+        ], f"bucket_hw_base_size must be in [128, 256, 480, 512, 640, 720, 960], but got {bucket_hw_base_size}"
 
-        crop_size_list = self.generate_crop_size_list(bucket_hw_base_size, bucket_hw_bucket_stride)
-        aspect_ratios = np.array([round(float(h) / float(w), 5) for h, w in crop_size_list])
-        closest_size, closest_ratio = self.get_closest_ratio(origin_size[1], origin_size[0], aspect_ratios, crop_size_list)
+        crop_size_list = self.generate_crop_size_list(
+            bucket_hw_base_size, bucket_hw_bucket_stride
+        )
+        aspect_ratios = np.array(
+            [round(float(h) / float(w), 5) for h, w in crop_size_list]
+        )
+        closest_size, closest_ratio = self.get_closest_ratio(
+            origin_size[1], origin_size[0], aspect_ratios, crop_size_list
+        )
 
         height = closest_size[0]
         width = closest_size[1]
@@ -250,7 +320,9 @@ class HunyuanVideo15Runner(DefaultRunner):
                 wp -= 1
         return crop_size_list
 
-    def get_closest_ratio(self, height: float, width: float, ratios: list, buckets: list):
+    def get_closest_ratio(
+        self, height: float, width: float, ratios: list, buckets: list
+    ):
         aspect_ratio = float(height) / float(width)
         diff_ratios = ratios - aspect_ratio
 
@@ -266,7 +338,11 @@ class HunyuanVideo15Runner(DefaultRunner):
         return closest_size, closest_ratio
 
     def run_text_encoder(self, input_info):
-        prompt = input_info.prompt_enhanced if self.config["use_prompt_enhancer"] else input_info.prompt
+        prompt = (
+            input_info.prompt_enhanced
+            if self.config["use_prompt_enhancer"]
+            else input_info.prompt
+        )
         neg_prompt = input_info.negative_prompt
 
         # run qwen25vl
@@ -281,7 +357,11 @@ class HunyuanVideo15Runner(DefaultRunner):
                 text_encoder_output = {"context_null": context_null}
         else:
             context = self.text_encoders[0].infer([prompt])
-            context_null = self.text_encoders[0].infer([neg_prompt]) if self.config.get("enable_cfg", False) else None
+            context_null = (
+                self.text_encoders[0].infer([neg_prompt])
+                if self.config.get("enable_cfg", False)
+                else None
+            )
             text_encoder_output = {
                 "context": context,
                 "context_null": context_null,
@@ -289,14 +369,20 @@ class HunyuanVideo15Runner(DefaultRunner):
 
         # run byt5
         byt5_features, byt5_masks = self.text_encoders[1].infer([prompt])
-        text_encoder_output.update({"byt5_features": byt5_features, "byt5_masks": byt5_masks})
+        text_encoder_output.update(
+            {"byt5_features": byt5_features, "byt5_masks": byt5_masks}
+        )
 
         return text_encoder_output
 
     def load_image_encoder(self):
         image_encoder = None
-        if self.config["task"] in ["i2v", "flf2v"] and self.config.get("use_image_encoder", True):
-            siglip_offload = self.config.get("siglip_cpu_offload", self.config.get("cpu_offload"))
+        if self.config["task"] in ["i2v", "flf2v"] and self.config.get(
+            "use_image_encoder", True
+        ):
+            siglip_offload = self.config.get(
+                "siglip_cpu_offload", self.config.get("cpu_offload")
+            )
             if siglip_offload:
                 siglip_device = torch.device("cpu")
             else:
@@ -346,7 +432,9 @@ class HunyuanVideo15Runner(DefaultRunner):
         }
         if self.config.get("use_tae", False):
             tae_path = self.config["tae_path"]
-            vae_decoder = self.tae_cls(vae_path=tae_path, dtype=GET_DTYPE()).to(AI_DEVICE)
+            vae_decoder = self.tae_cls(vae_path=tae_path, dtype=GET_DTYPE()).to(
+                AI_DEVICE
+            )
         else:
             vae_decoder = self.vae_cls(**vae_config)
         return vae_decoder
@@ -361,20 +449,33 @@ class HunyuanVideo15Runner(DefaultRunner):
 
     def load_vsr_model(self):
         if self.sr_version:
-            from lightx2v.models.runners.vsr.vsr_wrapper_hy15 import SRModel3DV2, Upsampler
+            from lightx2v.models.runners.vsr.vsr_wrapper_hy15 import (
+                SRModel3DV2,
+                Upsampler,
+            )
 
             upsampler_cls = SRModel3DV2 if "720p" in self.sr_version else Upsampler
-            upsampler_path = os.path.join(self.config["model_path"], "upsampler", self.sr_version)
+            upsampler_path = os.path.join(
+                self.config["model_path"], "upsampler", self.sr_version
+            )
             logger.info("Loading VSR model from {}".format(upsampler_path))
-            upsampler = upsampler_cls.from_pretrained(upsampler_path).to(self.init_device)
+            upsampler = upsampler_cls.from_pretrained(upsampler_path).to(
+                self.init_device
+            )
 
             return upsampler
         else:
             return None
 
-    def build_bucket_map(self, lr_base_size, hr_base_size, lr_patch_size, hr_patch_size):
-        lr_buckets = self.generate_crop_size_list(base_size=lr_base_size, patch_size=lr_patch_size)
-        hr_buckets = self.generate_crop_size_list(base_size=hr_base_size, patch_size=hr_patch_size)
+    def build_bucket_map(
+        self, lr_base_size, hr_base_size, lr_patch_size, hr_patch_size
+    ):
+        lr_buckets = self.generate_crop_size_list(
+            base_size=lr_base_size, patch_size=lr_patch_size
+        )
+        hr_buckets = self.generate_crop_size_list(
+            base_size=hr_base_size, patch_size=hr_patch_size
+        )
 
         lr_aspect_ratios = np.array([w / h for w, h in lr_buckets])
         hr_aspect_ratios = np.array([w / h for w, h in hr_buckets])
@@ -399,7 +500,11 @@ class HunyuanVideo15Runner(DefaultRunner):
         self.config_sr["is_sr_running"] = True
 
         self.model_sr.scheduler.prepare(
-            seed=self.input_info.seed, latent_shape=self.latent_sr_shape, lq_latents=lq_latents, upsampler=self.vsr_model, image_encoder_output=self.inputs_sr["image_encoder_output"]
+            seed=self.input_info.seed,
+            latent_shape=self.latent_sr_shape,
+            lq_latents=lq_latents,
+            upsampler=self.vsr_model,
+            image_encoder_output=self.inputs_sr["image_encoder_output"],
         )
 
         total_steps = self.model_sr.scheduler.infer_steps
@@ -435,12 +540,24 @@ class HunyuanVideo15Runner(DefaultRunner):
 
     @ProfilingContext4DebugL2("Run Encoders")
     def _run_input_encoder_local_t2v(self):
-        self.input_info.latent_shape = self.get_latent_shape_with_target_hw()  # Important: set latent_shape in input_info
+        self.input_info.latent_shape = (
+            self.get_latent_shape_with_target_hw()
+        )  # Important: set latent_shape in input_info
         text_encoder_output = self.run_text_encoder(self.input_info)
 
         # vision_states is all zero, because we don't have any image input
-        siglip_output = torch.zeros(1, self.vision_num_semantic_tokens, self.config["hidden_size"], dtype=torch.bfloat16).to(AI_DEVICE)
-        siglip_mask = torch.zeros(1, self.vision_num_semantic_tokens, dtype=torch.bfloat16, device=torch.device(AI_DEVICE))
+        siglip_output = torch.zeros(
+            1,
+            self.vision_num_semantic_tokens,
+            self.config["hidden_size"],
+            dtype=torch.bfloat16,
+        ).to(AI_DEVICE)
+        siglip_mask = torch.zeros(
+            1,
+            self.vision_num_semantic_tokens,
+            dtype=torch.bfloat16,
+            device=torch.device(AI_DEVICE),
+        )
 
         torch_device_module.empty_cache()
         gc.collect()
@@ -465,8 +582,14 @@ class HunyuanVideo15Runner(DefaultRunner):
         img_ori = self.read_image_input(self.input_info.image_path)
         if self.sr_version and self.config_sr["is_sr_running"]:
             self.latent_sr_shape = self.get_sr_latent_shape_with_target_hw()
-        self.input_info.latent_shape = self.get_latent_shape_with_target_hw(origin_size=img_ori.size)  # Important: set latent_shape in input_info
-        siglip_output, siglip_mask = self.run_image_encoder(img_ori) if self.config.get("use_image_encoder", True) else None
+        self.input_info.latent_shape = self.get_latent_shape_with_target_hw(
+            origin_size=img_ori.size
+        )  # Important: set latent_shape in input_info
+        siglip_output, siglip_mask = (
+            self.run_image_encoder(img_ori)
+            if self.config.get("use_image_encoder", True)
+            else None
+        )
         cond_latents = self.run_vae_encoder(img_ori)
         text_encoder_output = self.run_text_encoder(self.input_info)
         torch_device_module.empty_cache()
@@ -494,10 +617,18 @@ class HunyuanVideo15Runner(DefaultRunner):
             target_width = self.target_width
             target_height = self.target_height
 
-        input_image_np = self.resize_and_center_crop(first_frame, target_width=target_width, target_height=target_height)
-        vision_states = self.image_encoder.encode_images(input_image_np).last_hidden_state.to(device=torch.device(AI_DEVICE), dtype=torch.bfloat16)
+        input_image_np = self.resize_and_center_crop(
+            first_frame, target_width=target_width, target_height=target_height
+        )
+        vision_states = self.image_encoder.encode_images(
+            input_image_np
+        ).last_hidden_state.to(device=torch.device(AI_DEVICE), dtype=torch.bfloat16)
         image_encoder_output = self.image_encoder.infer(vision_states)
-        image_encoder_mask = torch.ones((1, image_encoder_output.shape[1]), dtype=torch.bfloat16, device=torch.device(AI_DEVICE))
+        image_encoder_mask = torch.ones(
+            (1, image_encoder_output.shape[1]),
+            dtype=torch.bfloat16,
+            device=torch.device(AI_DEVICE),
+        )
         return image_encoder_output, image_encoder_mask
 
     def resize_and_center_crop(self, image, target_width, target_height):
@@ -507,7 +638,9 @@ class HunyuanVideo15Runner(DefaultRunner):
 
         pil_image = Image.fromarray(image)
         original_width, original_height = pil_image.size
-        scale_factor = max(target_width / original_width, target_height / original_height)
+        scale_factor = max(
+            target_width / original_width, target_height / original_height
+        )
         resized_width = int(round(original_width * scale_factor))
         resized_height = int(round(original_height * scale_factor))
         resized_image = pil_image.resize((resized_width, resized_height), Image.LANCZOS)
@@ -535,19 +668,26 @@ class HunyuanVideo15Runner(DefaultRunner):
             target_width = self.target_width
             target_height = self.target_height
 
-        scale_factor = max(target_width / original_width, self.target_height / original_height)
+        scale_factor = max(
+            target_width / original_width, self.target_height / original_height
+        )
         resize_width = int(round(original_width * scale_factor))
         resize_height = int(round(original_height * scale_factor))
 
         ref_image_transform = transforms.Compose(
             [
-                transforms.Resize((resize_height, resize_width), interpolation=transforms.InterpolationMode.LANCZOS),
+                transforms.Resize(
+                    (resize_height, resize_width),
+                    interpolation=transforms.InterpolationMode.LANCZOS,
+                ),
                 transforms.CenterCrop((target_height, target_width)),
                 transforms.ToTensor(),
                 transforms.Normalize([0.5], [0.5]),
             ]
         )
 
-        ref_images_pixel_values = ref_image_transform(first_frame).unsqueeze(0).unsqueeze(2).to(AI_DEVICE)
+        ref_images_pixel_values = (
+            ref_image_transform(first_frame).unsqueeze(0).unsqueeze(2).to(AI_DEVICE)
+        )
         cond_latents = self.vae_encoder.encode(ref_images_pixel_values.to(GET_DTYPE()))
         return cond_latents

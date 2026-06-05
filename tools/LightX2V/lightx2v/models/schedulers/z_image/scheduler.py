@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import functools
 import inspect
 import json
@@ -10,12 +9,15 @@ from typing import List, Optional, Tuple, Union
 import numpy as np
 import torch
 import torch.distributed as dist
-from diffusers.schedulers.scheduling_flow_match_euler_discrete import FlowMatchEulerDiscreteScheduler
+from diffusers.schedulers.scheduling_flow_match_euler_discrete import (
+    FlowMatchEulerDiscreteScheduler,
+)
+from lightx2v.models.schedulers.scheduler import BaseScheduler
+from lightx2v_platform.base.global_var import AI_DEVICE, PLATFORM
 from torch import nn
 from torch.nn import functional as F
 
-from lightx2v.models.schedulers.scheduler import BaseScheduler
-from lightx2v_platform.base.global_var import AI_DEVICE, PLATFORM
+from lib.smart_config import smart_config
 
 try:
     from sgl_kernel.elementwise import timestep_embedding as timestep_embedding_cuda
@@ -71,9 +73,13 @@ def retrieve_timesteps(
         second element is the number of inference steps.
     """
     if timesteps is not None and sigmas is not None:
-        raise ValueError("Only one of `timesteps` or `sigmas` can be passed. Please choose one to set custom values")
+        raise ValueError(
+            "Only one of `timesteps` or `sigmas` can be passed. Please choose one to set custom values"
+        )
     if timesteps is not None:
-        accepts_timesteps = "timesteps" in set(inspect.signature(scheduler.set_timesteps).parameters.keys())
+        accepts_timesteps = "timesteps" in set(
+            inspect.signature(scheduler.set_timesteps).parameters.keys()
+        )
         if not accepts_timesteps:
             raise ValueError(
                 f"The current scheduler class {scheduler.__class__}'s `set_timesteps` does not support custom timestep schedules. Please check whether you are using the correct scheduler."
@@ -82,9 +88,13 @@ def retrieve_timesteps(
         timesteps = scheduler.timesteps
         num_inference_steps = len(timesteps)
     elif sigmas is not None:
-        accept_sigmas = "sigmas" in set(inspect.signature(scheduler.set_timesteps).parameters.keys())
+        accept_sigmas = "sigmas" in set(
+            inspect.signature(scheduler.set_timesteps).parameters.keys()
+        )
         if not accept_sigmas:
-            raise ValueError(f"The current scheduler class {scheduler.__class__}'s `set_timesteps` does not support custom sigmas schedules. Please check whether you are using the correct scheduler.")
+            raise ValueError(
+                f"The current scheduler class {scheduler.__class__}'s `set_timesteps` does not support custom sigmas schedules. Please check whether you are using the correct scheduler."
+            )
         scheduler.set_timesteps(sigmas=sigmas, device=device, **kwargs)
         timesteps = scheduler.timesteps
         num_inference_steps = len(timesteps)
@@ -94,7 +104,11 @@ def retrieve_timesteps(
     return timesteps, num_inference_steps
 
 
-def retrieve_latents(encoder_output: torch.Tensor, generator: Optional[torch.Generator] = None, sample_mode: str = "sample"):
+def retrieve_latents(
+    encoder_output: torch.Tensor,
+    generator: Optional[torch.Generator] = None,
+    sample_mode: str = "sample",
+):
     """Retrieve latents from VAE encoder output."""
     if hasattr(encoder_output, "latent_dist") and sample_mode == "sample":
         return encoder_output.latent_dist.sample(generator)
@@ -127,7 +141,11 @@ def randn_tensor(
     device = device or torch.device("cpu")
 
     if generator is not None:
-        gen_device_type = generator.device.type if not isinstance(generator, list) else generator[0].device.type
+        gen_device_type = (
+            generator.device.type
+            if not isinstance(generator, list)
+            else generator[0].device.type
+        )
         if gen_device_type != device.type and gen_device_type == "cpu":
             rand_device = "cpu"
             if device != "mps":
@@ -137,7 +155,9 @@ def randn_tensor(
                     f" slightly speed up this function by passing a generator that was created on the {device} device."
                 )
         elif gen_device_type != device.type and gen_device_type == "cuda":
-            raise ValueError(f"Cannot generate a {device} tensor from a generator of type {gen_device_type}.")
+            raise ValueError(
+                f"Cannot generate a {device} tensor from a generator of type {gen_device_type}."
+            )
 
     # make sure generator list of length 1 is treated like a non-list
     if isinstance(generator, list) and len(generator) == 1:
@@ -145,10 +165,21 @@ def randn_tensor(
 
     if isinstance(generator, list):
         shape = (1,) + shape[1:]
-        latents = [torch.randn(shape, generator=generator[i], device=rand_device, dtype=dtype, layout=layout) for i in range(batch_size)]
+        latents = [
+            torch.randn(
+                shape,
+                generator=generator[i],
+                device=rand_device,
+                dtype=dtype,
+                layout=layout,
+            )
+            for i in range(batch_size)
+        ]
         latents = torch.cat(latents, dim=0).to(device)
     else:
-        latents = torch.randn(shape, generator=generator, device=rand_device, dtype=dtype, layout=layout).to(device)
+        latents = torch.randn(
+            shape, generator=generator, device=rand_device, dtype=dtype, layout=layout
+        ).to(device)
 
     return latents
 
@@ -194,7 +225,9 @@ def get_timestep_embedding(
     assert len(timesteps.shape) == 1, "Timesteps should be a 1d-array"
 
     half_dim = embedding_dim // 2
-    exponent = -math.log(max_period) * torch.arange(start=0, end=half_dim, dtype=torch.float32, device=timesteps.device)
+    exponent = -math.log(max_period) * torch.arange(
+        start=0, end=half_dim, dtype=torch.float32, device=timesteps.device
+    )
     exponent = exponent / (half_dim - downscale_freq_shift)
 
     emb = torch.exp(exponent)
@@ -250,7 +283,10 @@ class ZEmbedRope(nn.Module):
             index: [0, 1, 2, 3] 1D Tensor representing the position index of the token
         """
         assert dim % 2 == 0
-        freqs = torch.outer(index, 1.0 / torch.pow(theta, torch.arange(0, dim, 2).to(torch.float32).div(dim)))
+        freqs = torch.outer(
+            index,
+            1.0 / torch.pow(theta, torch.arange(0, dim, 2).to(torch.float32).div(dim)),
+        )
         freqs = torch.polar(torch.ones_like(freqs), freqs)
         return freqs
 
@@ -276,7 +312,9 @@ class ZEmbedRope(nn.Module):
 
             if not torch.compiler.is_compiling():
                 if rope_key not in self.rope_cache:
-                    self.rope_cache[rope_key] = self._compute_video_freqs(frame, height, width, idx)
+                    self.rope_cache[rope_key] = self._compute_video_freqs(
+                        frame, height, width, idx
+                    )
                 video_freq = self.rope_cache[rope_key]
             else:
                 video_freq = self._compute_video_freqs(frame, height, width, idx)
@@ -300,17 +338,41 @@ class ZEmbedRope(nn.Module):
         freqs_pos = self.pos_freqs.split([x // 2 for x in self.axes_dim], dim=1)
         freqs_neg = self.neg_freqs.split([x // 2 for x in self.axes_dim], dim=1)
 
-        freqs_frame = freqs_pos[0][idx : idx + frame].view(frame, 1, 1, -1).expand(frame, height, width, -1)
+        freqs_frame = (
+            freqs_pos[0][idx : idx + frame]
+            .view(frame, 1, 1, -1)
+            .expand(frame, height, width, -1)
+        )
         if self.scale_rope:
-            freqs_height = torch.cat([freqs_neg[1][-(height - height // 2) :], freqs_pos[1][: height // 2]], dim=0)
-            freqs_height = freqs_height.view(1, height, 1, -1).expand(frame, height, width, -1)
-            freqs_width = torch.cat([freqs_neg[2][-(width - width // 2) :], freqs_pos[2][: width // 2]], dim=0)
-            freqs_width = freqs_width.view(1, 1, width, -1).expand(frame, height, width, -1)
+            freqs_height = torch.cat(
+                [freqs_neg[1][-(height - height // 2) :], freqs_pos[1][: height // 2]],
+                dim=0,
+            )
+            freqs_height = freqs_height.view(1, height, 1, -1).expand(
+                frame, height, width, -1
+            )
+            freqs_width = torch.cat(
+                [freqs_neg[2][-(width - width // 2) :], freqs_pos[2][: width // 2]],
+                dim=0,
+            )
+            freqs_width = freqs_width.view(1, 1, width, -1).expand(
+                frame, height, width, -1
+            )
         else:
-            freqs_height = freqs_pos[1][:height].view(1, height, 1, -1).expand(frame, height, width, -1)
-            freqs_width = freqs_pos[2][:width].view(1, 1, width, -1).expand(frame, height, width, -1)
+            freqs_height = (
+                freqs_pos[1][:height]
+                .view(1, height, 1, -1)
+                .expand(frame, height, width, -1)
+            )
+            freqs_width = (
+                freqs_pos[2][:width]
+                .view(1, 1, width, -1)
+                .expand(frame, height, width, -1)
+            )
 
-        freqs = torch.cat([freqs_frame, freqs_height, freqs_width], dim=-1).reshape(seq_lens, -1)
+        freqs = torch.cat([freqs_frame, freqs_height, freqs_width], dim=-1).reshape(
+            seq_lens, -1
+        )
         return freqs.clone().contiguous()
 
 
@@ -324,7 +386,9 @@ class RopeEmbedder:
         self.theta = theta
         self.axes_dims = axes_dims
         self.axes_lens = axes_lens
-        assert len(axes_dims) == len(axes_lens), "axes_dims and axes_lens must have the same length"
+        assert len(axes_dims) == len(
+            axes_lens
+        ), "axes_dims and axes_lens must have the same length"
         self.freqs_cis = None
 
     @staticmethod
@@ -333,13 +397,18 @@ class RopeEmbedder:
             freqs_cis = []
             for i, (d, e) in enumerate(zip(dim, end)):
                 # Compute base frequencies: [1/theta^0, 1/theta^(2/d), 1/theta^(4/d), ...]
-                freqs = 1.0 / (theta ** (torch.arange(0, d, 2, dtype=torch.float64, device="cpu") / d))
+                freqs = 1.0 / (
+                    theta
+                    ** (torch.arange(0, d, 2, dtype=torch.float64, device="cpu") / d)
+                )
                 # Compute timestep positions: [0, 1, 2, ..., e-1]
                 timestep = torch.arange(e, device=freqs.device, dtype=torch.float64)
                 # Outer product: [e, d//2]
                 freqs = torch.outer(timestep, freqs).float()
                 # Convert to complex: polar(1, angle) = e^(i*angle)
-                freqs_cis_i = torch.polar(torch.ones_like(freqs), freqs).to(torch.complex64)
+                freqs_cis_i = torch.polar(torch.ones_like(freqs), freqs).to(
+                    torch.complex64
+                )
                 freqs_cis.append(freqs_cis_i)
             return freqs_cis
 
@@ -351,7 +420,9 @@ class RopeEmbedder:
         use_cpu_freqs_index = (PLATFORM or "") == "ascend_npu"
 
         if self.freqs_cis is None:
-            self.freqs_cis = self.precompute_freqs_cis(self.axes_dims, self.axes_lens, theta=self.theta)
+            self.freqs_cis = self.precompute_freqs_cis(
+                self.axes_dims, self.axes_lens, theta=self.theta
+            )
             if not use_cpu_freqs_index:
                 self.freqs_cis = [freqs_cis.to(device) for freqs_cis in self.freqs_cis]
         elif not use_cpu_freqs_index and self.freqs_cis[0].device != device:
@@ -374,14 +445,21 @@ class ZImageScheduler(BaseScheduler):
     def __init__(self, config):
         super().__init__(config)
         self.config = config
-        self.scheduler = FlowMatchEulerDiscreteScheduler.from_pretrained(os.path.join(config["model_path"], "scheduler"))
-        with open(os.path.join(config["model_path"], "scheduler", "scheduler_config.json"), "r") as f:
+        self.scheduler = FlowMatchEulerDiscreteScheduler.from_pretrained(
+            os.path.join(config["model_path"], "scheduler")
+        )
+        with open(
+            os.path.join(config["model_path"], "scheduler", "scheduler_config.json"),
+            "r",
+        ) as f:
             self.scheduler_config = json.load(f)
         self.dtype = torch.bfloat16
         self.sample_guide_scale = self.config["sample_guide_scale"]
         self.zero_cond_t = config.get("zero_cond_t", False)
         if self.config["seq_parallel"]:
-            self.seq_p_group = self.config.get("device_mesh").get_group(mesh_dim="seq_p")
+            self.seq_p_group = self.config.get("device_mesh").get_group(
+                mesh_dim="seq_p"
+            )
         else:
             self.seq_p_group = None
         self.pos_embed = ZEmbedRope(theta=10000, axes_dim=[16, 56, 56], scale_rope=True)
@@ -398,9 +476,15 @@ class ZImageScheduler(BaseScheduler):
 
     @staticmethod
     def _pack_latents(latents, batch_size, num_channels_latents, height, width):
-        latents = latents.view(batch_size, num_channels_latents, 1, 1, height // 2, 2, width // 2, 2)
+        latents = latents.view(
+            batch_size, num_channels_latents, 1, 1, height // 2, 2, width // 2, 2
+        )
         latents = latents.permute(0, 2, 4, 6, 3, 5, 7, 1)
-        latents = latents.reshape(batch_size, 1 * (height // 2) * (width // 2), 1 * 2 * 2 * num_channels_latents)
+        latents = latents.reshape(
+            batch_size,
+            1 * (height // 2) * (width // 2),
+            1 * 2 * 2 * num_channels_latents,
+        )
         return latents
 
     @staticmethod
@@ -423,11 +507,19 @@ class ZImageScheduler(BaseScheduler):
     def _prepare_latent_image_ids(batch_size, height, width, device, dtype):
         latent_image_ids = torch.zeros(height, width, 3)
 
-        latent_image_ids[..., 1] = latent_image_ids[..., 1] + torch.arange(height)[:, None]
-        latent_image_ids[..., 2] = latent_image_ids[..., 2] + torch.arange(width)[None, :]
+        latent_image_ids[..., 1] = (
+            latent_image_ids[..., 1] + torch.arange(height)[:, None]
+        )
+        latent_image_ids[..., 2] = (
+            latent_image_ids[..., 2] + torch.arange(width)[None, :]
+        )
 
-        latent_image_id_height, latent_image_id_width, latent_image_id_channels = latent_image_ids.shape
-        latent_image_ids = latent_image_ids.reshape(latent_image_id_height * latent_image_id_width, latent_image_id_channels)
+        latent_image_id_height, latent_image_id_width, latent_image_id_channels = (
+            latent_image_ids.shape
+        )
+        latent_image_ids = latent_image_ids.reshape(
+            latent_image_id_height * latent_image_id_width, latent_image_id_channels
+        )
 
         return latent_image_ids.to(device=device, dtype=dtype)
 
@@ -436,7 +528,10 @@ class ZImageScheduler(BaseScheduler):
         """Create a 3D coordinate grid."""
         if start is None:
             start = (0 for _ in size)
-        axes = [torch.arange(x0, x0 + span, dtype=torch.int32, device=device) for x0, span in zip(start, size)]
+        axes = [
+            torch.arange(x0, x0 + span, dtype=torch.int32, device=device)
+            for x0, span in zip(start, size)
+        ]
         grids = torch.meshgrid(axes, indexing="ij")
         return torch.stack(grids, dim=-1)
 
@@ -445,19 +540,27 @@ class ZImageScheduler(BaseScheduler):
         shape = input_info.target_shape
 
         if len(shape) != 4:
-            raise ValueError(f"target_shape must be 4D [B, C, H, W], got {len(shape)}D: {shape}")
+            raise ValueError(
+                f"target_shape must be 4D [B, C, H, W], got {len(shape)}D: {shape}"
+            )
 
         batch_size, num_channels, height, width = shape
 
-        latents = randn_tensor(shape, generator=self.generator, device=AI_DEVICE, dtype=self.dtype)
+        latents = randn_tensor(
+            shape, generator=self.generator, device=AI_DEVICE, dtype=self.dtype
+        )
 
-        latent_image_ids = self._prepare_latent_image_ids(1, height // 2, width // 2, AI_DEVICE, self.dtype)
+        latent_image_ids = self._prepare_latent_image_ids(
+            1, height // 2, width // 2, AI_DEVICE, self.dtype
+        )
 
         self.latents = latents
         self.latent_image_ids = latent_image_ids
         self.noise_pred = None
 
-    def generate_freqs_cis_from_position_ids(self, position_ids: torch.Tensor, device: torch.device = None) -> torch.Tensor:
+    def generate_freqs_cis_from_position_ids(
+        self, position_ids: torch.Tensor, device: torch.device = None
+    ) -> torch.Tensor:
         if device is None:
             device = position_ids.device
 
@@ -479,7 +582,9 @@ class ZImageScheduler(BaseScheduler):
         return timesteps, num_inference_steps - t_start
 
     def set_timesteps(self):
-        sigmas = np.linspace(1.0, 1 / self.config["infer_steps"], self.config["infer_steps"])
+        sigmas = np.linspace(
+            1.0, 1 / self.config["infer_steps"], self.config["infer_steps"]
+        )
         image_seq_len = self.latents.shape[1]
         mu = calculate_shift(
             image_seq_len,
@@ -504,8 +609,12 @@ class ZImageScheduler(BaseScheduler):
         if self.config["task"] == "i2i" and hasattr(self.input_info, "strength"):
             strength = getattr(self.input_info, "strength", 0.6)
             if strength < 0.0 or strength > 1.0:
-                raise ValueError(f"The value of strength should be in [0.0, 1.0] but is {strength}")
-            timesteps, num_inference_steps = self.get_timesteps(num_inference_steps, strength, AI_DEVICE)
+                raise ValueError(
+                    f"The value of strength should be in [0.0, 1.0] but is {strength}"
+                )
+            timesteps, num_inference_steps = self.get_timesteps(
+                num_inference_steps, strength, AI_DEVICE
+            )
             if num_inference_steps < 1:
                 raise ValueError(
                     f"After adjusting the num_inference_steps by strength parameter: {strength}, the number of pipeline "
@@ -514,7 +623,9 @@ class ZImageScheduler(BaseScheduler):
             self.timesteps = timesteps
             self.infer_steps = num_inference_steps
 
-        num_warmup_steps = max(len(timesteps) - num_inference_steps * self.scheduler.order, 0)
+        num_warmup_steps = max(
+            len(timesteps) - num_inference_steps * self.scheduler.order, 0
+        )
         self._num_timesteps = len(timesteps)
         self.num_warmup_steps = num_warmup_steps
 
@@ -523,31 +634,69 @@ class ZImageScheduler(BaseScheduler):
         self.prepare_latents(input_info)
         self.set_timesteps()
 
-        if self.config["task"] == "i2i" and hasattr(input_info, "image_encoder_output") and input_info.image_encoder_output is not None:
+        if (
+            self.config["task"] == "i2i"
+            and hasattr(input_info, "image_encoder_output")
+            and input_info.image_encoder_output is not None
+        ):
             strength = getattr(input_info, "strength", 0.6)
             if strength > 0.0:
-                image_latents_list = [item["image_latents"] for item in input_info.image_encoder_output]
+                image_latents_list = [
+                    item["image_latents"] for item in input_info.image_encoder_output
+                ]
                 if len(image_latents_list) > 0:
-                    image_latents = torch.cat(image_latents_list, dim=0) if len(image_latents_list) > 1 else image_latents_list[0]
+                    image_latents = (
+                        torch.cat(image_latents_list, dim=0)
+                        if len(image_latents_list) > 1
+                        else image_latents_list[0]
+                    )
                     batch_size = self.latents.shape[0]
-                    if batch_size > image_latents.shape[0] and batch_size % image_latents.shape[0] == 0:
-                        additional_image_per_prompt = batch_size // image_latents.shape[0]
-                        image_latents = torch.cat([image_latents] * additional_image_per_prompt, dim=0)
-                    elif batch_size > image_latents.shape[0] and batch_size % image_latents.shape[0] != 0:
-                        raise ValueError(f"Cannot duplicate `image` of batch size {image_latents.shape[0]} to {batch_size} text prompts.")
+                    if (
+                        batch_size > image_latents.shape[0]
+                        and batch_size % image_latents.shape[0] == 0
+                    ):
+                        additional_image_per_prompt = (
+                            batch_size // image_latents.shape[0]
+                        )
+                        image_latents = torch.cat(
+                            [image_latents] * additional_image_per_prompt, dim=0
+                        )
+                    elif (
+                        batch_size > image_latents.shape[0]
+                        and batch_size % image_latents.shape[0] != 0
+                    ):
+                        raise ValueError(
+                            f"Cannot duplicate `image` of batch size {image_latents.shape[0]} to {batch_size} text prompts."
+                        )
 
                     _, _, height, width = self.latents.shape
                     if image_latents.shape[2:] != (height, width):
-                        image_latents = F.interpolate(image_latents, size=(height, width), mode="bilinear", align_corners=False)
+                        image_latents = F.interpolate(
+                            image_latents,
+                            size=(height, width),
+                            mode="bilinear",
+                            align_corners=False,
+                        )
                     latent_timestep = self.timesteps[:1].repeat(self.latents.shape[0])
 
-                    noise = randn_tensor(self.latents.shape, generator=self.generator, device=AI_DEVICE, dtype=self.dtype)
+                    noise = randn_tensor(
+                        self.latents.shape,
+                        generator=self.generator,
+                        device=AI_DEVICE,
+                        dtype=self.dtype,
+                    )
                     if image_latents.shape[1] != self.latents.shape[1]:
-                        repeat_factor = self.latents.shape[1] // image_latents.shape[1]  # 64 // 16 = 4
+                        repeat_factor = (
+                            self.latents.shape[1] // image_latents.shape[1]
+                        )  # 64 // 16 = 4
                         image_latents = image_latents.repeat(1, repeat_factor, 1, 1)
-                    self.latents = self.scheduler.scale_noise(image_latents, latent_timestep, noise)
+                    self.latents = self.scheduler.scale_noise(
+                        image_latents, latent_timestep, noise
+                    )
 
-        self.image_rotary_emb = self.pos_embed(self.input_info.image_shapes, input_info.txt_seq_lens[0], device=AI_DEVICE)
+        self.image_rotary_emb = self.pos_embed(
+            self.input_info.image_shapes, input_info.txt_seq_lens[0], device=AI_DEVICE
+        )
 
         if self.config.get("rope_type", "flashinfer") == "flashinfer":
             cos_half_img = self.image_rotary_emb[0].real.contiguous()
@@ -562,29 +711,52 @@ class ZImageScheduler(BaseScheduler):
             seqlen = self.image_rotary_emb[0].shape[0]
             padding_size = (world_size - (seqlen % world_size)) % world_size
             if padding_size > 0:
-                self.image_rotary_emb[0] = F.pad(self.image_rotary_emb[0], (0, 0, 0, padding_size))
-            self.image_rotary_emb[0] = torch.chunk(self.image_rotary_emb[0], world_size, dim=0)[cur_rank]
+                self.image_rotary_emb[0] = F.pad(
+                    self.image_rotary_emb[0], (0, 0, 0, padding_size)
+                )
+            self.image_rotary_emb[0] = torch.chunk(
+                self.image_rotary_emb[0], world_size, dim=0
+            )[cur_rank]
 
         if self.config["enable_cfg"]:
-            self.negative_image_rotary_emb = self.pos_embed(self.input_info.image_shapes, input_info.txt_seq_lens[1], device=AI_DEVICE)
+            self.negative_image_rotary_emb = self.pos_embed(
+                self.input_info.image_shapes,
+                input_info.txt_seq_lens[1],
+                device=AI_DEVICE,
+            )
             if self.config.get("rope_type", "flashinfer") == "flashinfer":
                 cos_half_img = self.negative_image_rotary_emb[0].real.contiguous()
                 sin_half_img = self.negative_image_rotary_emb[0].imag.contiguous()
                 cos_half_txt = self.negative_image_rotary_emb[1].real.contiguous()
                 sin_half_txt = self.negative_image_rotary_emb[1].imag.contiguous()
-                self.negative_image_rotary_emb[0] = torch.cat([cos_half_img, sin_half_img], dim=-1)
-                self.negative_image_rotary_emb[1] = torch.cat([cos_half_txt, sin_half_txt], dim=-1)
+                self.negative_image_rotary_emb[0] = torch.cat(
+                    [cos_half_img, sin_half_img], dim=-1
+                )
+                self.negative_image_rotary_emb[1] = torch.cat(
+                    [cos_half_txt, sin_half_txt], dim=-1
+                )
             if self.seq_p_group is not None:
                 world_size = dist.get_world_size(self.seq_p_group)
                 cur_rank = dist.get_rank(self.seq_p_group)
                 seqlen = self.negative_image_rotary_emb[0].shape[0]
                 padding_size = (world_size - (seqlen % world_size)) % world_size
                 if padding_size > 0:
-                    self.negative_image_rotary_emb[0] = F.pad(self.negative_image_rotary_emb[0], (0, 0, 0, padding_size))
-                self.negative_image_rotary_emb[0] = torch.chunk(self.negative_image_rotary_emb[0], world_size, dim=0)[cur_rank]
+                    self.negative_image_rotary_emb[0] = F.pad(
+                        self.negative_image_rotary_emb[0], (0, 0, 0, padding_size)
+                    )
+                self.negative_image_rotary_emb[0] = torch.chunk(
+                    self.negative_image_rotary_emb[0], world_size, dim=0
+                )[cur_rank]
 
         if self.zero_cond_t:
-            self.modulate_index = torch.tensor([[0] * prod(sample[0]) + [1] * sum([prod(s) for s in sample[1:]]) for sample in self.input_info.image_shapes], device=AI_DEVICE, dtype=torch.int)
+            self.modulate_index = torch.tensor(
+                [
+                    [0] * prod(sample[0]) + [1] * sum([prod(s) for s in sample[1:]])
+                    for sample in self.input_info.image_shapes
+                ],
+                device=AI_DEVICE,
+                dtype=torch.int,
+            )
             if self.seq_p_group is not None:
                 world_size = dist.get_world_size(self.seq_p_group)
                 cur_rank = dist.get_rank(self.seq_p_group)
@@ -592,14 +764,18 @@ class ZImageScheduler(BaseScheduler):
                 padding_size = (world_size - (seqlen % world_size)) % world_size
                 if padding_size > 0:
                     self.modulate_index = F.pad(self.modulate_index, (0, padding_size))
-                self.modulate_index = torch.chunk(self.modulate_index, world_size, dim=1)[cur_rank]
+                self.modulate_index = torch.chunk(
+                    self.modulate_index, world_size, dim=1
+                )[cur_rank]
         else:
             self.modulate_index = None
 
     def step_pre(self, step_index):
         super().step_pre(step_index)
         timestep_value = self.timesteps[self.step_index].item()
-        timestep_input = torch.tensor([1000.0 - timestep_value], device=AI_DEVICE, dtype=torch.float32)
+        timestep_input = torch.tensor(
+            [1000.0 - timestep_value], device=AI_DEVICE, dtype=torch.float32
+        )
         if self.zero_cond_t:
             timestep_input = torch.cat([timestep_input, timestep_input * 0], dim=0)
 

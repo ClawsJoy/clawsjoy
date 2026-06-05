@@ -1,5 +1,6 @@
-from lib.smart_config import smart_config
 from lightx2v_train.utils.registry import build_model
+
+from lib.smart_config import smart_config
 
 from .longcat_image import LongCatImageModel
 from .qwen_image import QwenImageModel

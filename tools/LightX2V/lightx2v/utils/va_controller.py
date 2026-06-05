@@ -1,13 +1,13 @@
-from lib.smart_config import smart_config
 import math
 import os
 
 import torch
 import torch.distributed as dist
-from loguru import logger
-
 from lightx2v.models.runners.vsr.vsr_wrapper import compute_scaled_and_target_dims
 from lightx2v_platform.base.global_var import AI_DEVICE
+from loguru import logger
+
+from lib.smart_config import smart_config
 
 
 class NextControl:
@@ -31,15 +31,24 @@ class VAController:
             self.rank = dist.get_rank()
             self.world_size = dist.get_world_size()
         self.target_reader_rank = int(os.getenv("READER_RANK", "0")) % self.world_size
-        self.target_recorder_rank = int(os.getenv("RECORDER_RANK", "0")) % self.world_size
-        self.init_base(model_runner.config, model_runner.input_info, model_runner.vfi_model is not None, model_runner.vsr_model is not None)
+        self.target_recorder_rank = (
+            int(os.getenv("RECORDER_RANK", "0")) % self.world_size
+        )
+        self.init_base(
+            model_runner.config,
+            model_runner.input_info,
+            model_runner.vfi_model is not None,
+            model_runner.vsr_model is not None,
+        )
         self.init_recorder()
         self.init_reader(model_runner)
 
     def init_base(self, config, input_info, has_vfi_model, has_vsr_model):
         if "stream_config" in input_info.__dataclass_fields__:
             self.stream_config = input_info.stream_config
-            logger.info(f"VAController init base with stream config: {self.stream_config}")
+            logger.info(
+                f"VAController init base with stream config: {self.stream_config}"
+            )
         self.audio_path = input_info.audio_path
         self.output_video_path = input_info.save_result_path
         if isinstance(self.output_video_path, dict):
@@ -76,10 +85,18 @@ class VAController:
         est_max_switch_action_secs = config.get("est_max_switch_action_secs", 0)
 
         self.est_infer_end_idx = math.ceil(est_max_infer_secs / slice_interval)
-        self.est_switch_image_end_idx = math.ceil(est_max_switch_image_secs / slice_interval)
-        self.est_switch_action_end_idx = math.ceil(est_max_switch_action_secs / slice_interval)
+        self.est_switch_image_end_idx = math.ceil(
+            est_max_switch_image_secs / slice_interval
+        )
+        self.est_switch_action_end_idx = math.ceil(
+            est_max_switch_action_secs / slice_interval
+        )
 
-        max_end_idx = max(self.est_infer_end_idx, self.est_switch_image_end_idx, self.est_switch_action_end_idx)
+        max_end_idx = max(
+            self.est_infer_end_idx,
+            self.est_switch_image_end_idx,
+            self.est_switch_action_end_idx,
+        )
         self.min_stay_queue_num = max_end_idx * 2 + 1
 
     def init_recorder(self):
@@ -113,7 +130,9 @@ class VAController:
     def init_reader(self, model_runner=None):
         if not isinstance(self.audio_path, dict):
             return
-        assert self.audio_path["type"] == "stream", f"unexcept audio_path: {self.audio_path}"
+        assert (
+            self.audio_path["type"] == "stream"
+        ), f"unexcept audio_path: {self.audio_path}"
         segment_duration = self.max_num_frames / self.target_fps
         prev_duration = self.prev_frame_length / self.target_fps
         omni_work_dir = os.getenv("OMNI_WORK_DIR", None)
@@ -129,7 +148,9 @@ class VAController:
                 prev_duration=prev_duration,
                 target_rank=self.target_reader_rank,
                 model_runner=model_runner,
-                huoshan_tts_voice_type=self.audio_path.get("huoshan_tts_voice_type", None),
+                huoshan_tts_voice_type=self.audio_path.get(
+                    "huoshan_tts_voice_type", None
+                ),
                 stream_config=self.stream_config,
                 va_recorder=self.recorder,
             )
@@ -149,7 +170,9 @@ class VAController:
     def start(self):
         self.reader.start()
         if self.rank == self.target_recorder_rank:
-            assert self.recorder is not None, f"recorder is required for stream audio input for rank {self.rank}"
+            assert (
+                self.recorder is not None
+            ), f"recorder is required for stream audio input for rank {self.rank}"
             self.recorder.start(self.record_w, self.record_h)
         if self.world_size > 1:
             dist.barrier()
@@ -173,7 +196,11 @@ class VAController:
         if isinstance(self.reader, OmniVAReader):
             self.len_tensor = torch.tensor([0], dtype=torch.int32, device=AI_DEVICE)
             self.flag_tensor = torch.tensor([0], dtype=torch.int32, device=AI_DEVICE)
-            self.prev_tensor = torch.zeros((1, 3, self.prev_frame_length, self.tgt_h, self.tgt_w), dtype=torch.float, device=AI_DEVICE)
+            self.prev_tensor = torch.zeros(
+                (1, 3, self.prev_frame_length, self.tgt_h, self.tgt_w),
+                dtype=torch.float,
+                device=AI_DEVICE,
+            )
 
     def omni_reader_next_control(self):
         immediate_switch = self.reader.get_immediate_switch()
@@ -182,7 +209,9 @@ class VAController:
             # and broadcast the prev video tensor to all ranks
             if self.rank == self.target_recorder_rank:
                 logger.warning(f"runner recv immediate switch, truncate stream buffer")
-                video_tensor = self.recorder.truncate_stream_buffer(self.est_infer_end_idx)
+                video_tensor = self.recorder.truncate_stream_buffer(
+                    self.est_infer_end_idx
+                )
                 if video_tensor is not None:
                     self.flag_tensor.fill_(1)
                     self.prev_tensor.copy_(video_tensor)
@@ -227,9 +256,17 @@ class VAController:
             self.recorder.truncate_stream_buffer(self.est_switch_action_end_idx)
         return NextControl(action="perform_action", data=action_switch)
 
-    def pub_livestream(self, images: torch.Tensor, audios: torch.Tensor, gen_video: torch.Tensor, valid_duration=1e9):
+    def pub_livestream(
+        self,
+        images: torch.Tensor,
+        audios: torch.Tensor,
+        gen_video: torch.Tensor,
+        valid_duration=1e9,
+    ):
         if self.recorder.realtime:
-            self.recorder.buffer_stream(images, audios, gen_video, valid_duration=valid_duration)
+            self.recorder.buffer_stream(
+                images, audios, gen_video, valid_duration=valid_duration
+            )
         else:
             self.recorder.pub_livestream(images, audios)
 

@@ -3,10 +3,8 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
-
-from core.lib.unified_config import unified_config
 
 from core.lib.unified_config import unified_config
 
@@ -14,6 +12,7 @@ from core.lib.unified_config import unified_config
 
 import importlib.util
 from pathlib import Path
+
 
 def _get_latest():
     lib_dir = Path(__file__).parent
@@ -29,8 +28,9 @@ def _get_latest():
     spec.loader.exec_module(module)
     return module
 
+
 _module = _get_latest()
 smart_scheduler = _module.smart_scheduler
 SmartScheduler = _module.SmartScheduler
 
-__all__ = ['smart_scheduler', 'SmartScheduler']
+__all__ = ["smart_scheduler", "SmartScheduler"]

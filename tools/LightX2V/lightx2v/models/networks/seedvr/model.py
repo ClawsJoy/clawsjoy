@@ -1,19 +1,25 @@
-from lib.smart_config import smart_config
 import os
 
 import torch
-
 from lightx2v.models.networks.base_model import BaseTransformerModel
 from lightx2v.models.networks.seedvr.infer.post_infer import SeedVRPostInfer
 from lightx2v.models.networks.seedvr.infer.pre_infer import SeedVRPreInfer
-from lightx2v.models.networks.seedvr.infer.transformer_infer import SeedVRTransformerInfer
+from lightx2v.models.networks.seedvr.infer.transformer_infer import (
+    SeedVRTransformerInfer,
+)
 from lightx2v.models.networks.seedvr.utils import na as na_utils
-from lightx2v.models.networks.seedvr.utils.utils import classifier_free_guidance_dispatcher
+from lightx2v.models.networks.seedvr.utils.utils import (
+    classifier_free_guidance_dispatcher,
+)
 from lightx2v.models.networks.seedvr.weights.post_weights import SeedVRPostWeights
 from lightx2v.models.networks.seedvr.weights.pre_weights import SeedVRPreWeights
-from lightx2v.models.networks.seedvr.weights.transformer_weights import SeedVRTransformerWeights
+from lightx2v.models.networks.seedvr.weights.transformer_weights import (
+    SeedVRTransformerWeights,
+)
 from lightx2v.utils.envs import GET_DTYPE, GET_SENSITIVE_DTYPE
 from lightx2v_platform.base.global_var import AI_DEVICE
+
+from lib.smart_config import smart_config
 
 
 class SeedVRNaDiTModel(BaseTransformerModel):
@@ -23,8 +29,18 @@ class SeedVRNaDiTModel(BaseTransformerModel):
     transformer_weight_class = SeedVRTransformerWeights
     post_weight_class = SeedVRPostWeights
 
-    def __init__(self, model_path, config, device, model_type="seedvr", lora_path=None, lora_strength=1.0):
-        super().__init__(model_path, config, device, model_type, lora_path, lora_strength)
+    def __init__(
+        self,
+        model_path,
+        config,
+        device,
+        model_type="seedvr",
+        lora_path=None,
+        lora_strength=1.0,
+    ):
+        super().__init__(
+            model_path, config, device, model_type, lora_path, lora_strength
+        )
         self._apply_seedvr_defaults()
         self._init_infer_class()
         self._init_weights()
@@ -91,7 +107,9 @@ class SeedVRNaDiTModel(BaseTransformerModel):
                     state = torch.load(ckpt_path, map_location=AI_DEVICE)
                     if isinstance(state, dict) and "state_dict" in state:
                         state = state["state_dict"]
-                    remove_keys = self.remove_keys if hasattr(self, "remove_keys") else []
+                    remove_keys = (
+                        self.remove_keys if hasattr(self, "remove_keys") else []
+                    )
                     weight_dict = {}
                     for key, tensor in state.items():
                         if any(remove_key in key for remove_key in remove_keys):
@@ -185,7 +203,12 @@ class SeedVRNaDiTModel(BaseTransformerModel):
                     txt_shape=text_neg_shapes,
                     timestep=args.t.repeat(batch_size),
                 ),
-                scale=(cfg_scale if (args.i + 1) / len(self.scheduler.sampler.timesteps) <= cfg_partial else 1.0),
+                scale=(
+                    cfg_scale
+                    if (args.i + 1) / len(self.scheduler.sampler.timesteps)
+                    <= cfg_partial
+                    else 1.0
+                ),
                 rescale=cfg_rescale,
             ),
         )

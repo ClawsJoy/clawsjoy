@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 Copyright (c) 2025 by SpargeAttn team.
 
@@ -28,7 +29,9 @@ except ImportError:
 
 SAGE2PP_ENABLED = True
 try:
-    from spas_sage_attn._qattn import qk_int8_sv_f8_accum_f16_block_sparse_attn_inst_buf_fuse_v_scale_with_pv_threshold
+    from spas_sage_attn._qattn import (
+        qk_int8_sv_f8_accum_f16_block_sparse_attn_inst_buf_fuse_v_scale_with_pv_threshold,
+    )
 except ImportError:
     SAGE2PP_ENABLED = False
 
@@ -40,7 +43,9 @@ def hyperparameter_check(hyper, H, device):
         assert len(hyper.shape) <= 1, "Hyperparameter tensor must be 1D"
         if len(hyper.shape) == 0:
             hyper = torch.full((H,), hyper.item(), device=device)
-        assert hyper.numel() == H, f"Hyperparameter tensor must have {H} elements, but has {hyper.numel()}"
+        assert (
+            hyper.numel() == H
+        ), f"Hyperparameter tensor must have {H} elements, but has {hyper.numel()}"
         hyper = hyper.to(device)
     else:
         print(hyper)
@@ -49,7 +54,9 @@ def hyperparameter_check(hyper, H, device):
 
 
 @triton.jit
-def triton_block_map_to_incremental_lut_kernel(map_ptr, lut_ptr, valid_block_num_ptr, num_block_k):
+def triton_block_map_to_incremental_lut_kernel(
+    map_ptr, lut_ptr, valid_block_num_ptr, num_block_k
+):
     b, h, q = tl.program_id(0), tl.program_id(1), tl.program_id(2)
     B, H, Q = tl.num_programs(0), tl.num_programs(1), tl.num_programs(2)
     valid_block_num = 0
@@ -87,7 +94,9 @@ def block_map_incremental_lut_triton(block_map):
 
 
 @triton.jit
-def triton_block_map_to_ordinal_lut_kernel(map_ptr, lut_ptr, valid_block_num_ptr, num_block_k):
+def triton_block_map_to_ordinal_lut_kernel(
+    map_ptr, lut_ptr, valid_block_num_ptr, num_block_k
+):
     b, h, q = tl.program_id(0), tl.program_id(1), tl.program_id(2)
     B, H, Q = tl.num_programs(0), tl.num_programs(1), tl.num_programs(2)
     valid_block_num = 0
@@ -123,13 +132,23 @@ def block_map_ordinal_lut_triton(block_map):
 
 
 @triton.jit
-def triton_bmm_pool_sim_simmean(x_ptr, pool_ptr, sim_ptr, simthreshd1, N: tl.constexpr, D: tl.constexpr, BS: tl.constexpr):
+def triton_bmm_pool_sim_simmean(
+    x_ptr,
+    pool_ptr,
+    sim_ptr,
+    simthreshd1,
+    N: tl.constexpr,
+    D: tl.constexpr,
+    BS: tl.constexpr,
+):
     b, h, nb = tl.program_id(0), tl.program_id(1), tl.program_id(2)
     B, H, NB = tl.num_programs(0), tl.num_programs(1), tl.num_programs(2)
 
     block_offset = b * H * N * D + h * N * D + nb * BS * D
     xmask = (nb * BS + tl.arange(0, BS)[:, None]) < N
-    x_ptrs = x_ptr + block_offset + tl.arange(0, BS)[:, None] * D + tl.arange(0, D)[None, :]
+    x_ptrs = (
+        x_ptr + block_offset + tl.arange(0, BS)[:, None] * D + tl.arange(0, D)[None, :]
+    )
     x = tl.load(x_ptrs, mask=xmask)
     BS_ = BS if (N - nb * BS) >= BS else (N - nb * BS)
 
@@ -157,18 +176,24 @@ def get_pool_sim_triton_simmean(x, block_size, simthreshd1):
     sim_blocks = torch.empty((B, H, nblock), device=x.device, dtype=torch.bool)
     grid = (B, H, nblock)
     # Launch kernel
-    triton_bmm_pool_sim_simmean[grid](x, pool, sim_blocks, simthreshd1, N=N, D=D, BS=block_size)
+    triton_bmm_pool_sim_simmean[grid](
+        x, pool, sim_blocks, simthreshd1, N=N, D=D, BS=block_size
+    )
     return pool, sim_blocks
 
 
 @triton.jit
-def triton_fill_block_map_kernel(final_map, num_to_select, sorted_indices, NK: tl.constexpr):
+def triton_fill_block_map_kernel(
+    final_map, num_to_select, sorted_indices, NK: tl.constexpr
+):
     b, h, q = tl.program_id(0), tl.program_id(1), tl.program_id(2)
     B, H, Q = tl.num_programs(0), tl.num_programs(1), tl.num_programs(2)
     cur_num_to_select = tl.load(num_to_select + b * H * Q + h * Q + q)
     cur_sorted_idx_ptr = sorted_indices + b * H * Q * NK + h * Q * NK + q * NK
     cur_final_map_ptr = final_map + b * H * Q * NK + h * Q * NK + q * NK
-    cur_num_to_select = (cur_num_to_select + 1) if cur_num_to_select == 0 else cur_num_to_select
+    cur_num_to_select = (
+        (cur_num_to_select + 1) if cur_num_to_select == 0 else cur_num_to_select
+    )
     for i in range(cur_num_to_select):
         cur_idx = tl.load(cur_sorted_idx_ptr + i)
         tl.store(cur_final_map_ptr + cur_idx, 1)
@@ -200,8 +225,21 @@ def fill_causal_mask_triton(mask, BqdivBk: float):
     return mask
 
 
-def get_block_map_meansim(q, k, is_causal=False, BLKQ=128, BLKK=64, simthreshd1=0.1, cdfthreshd=0.9, topk=None, return_lut=False, attention_sink=False):
-    assert (cdfthreshd is None and topk is not None) or (cdfthreshd is not None and topk is None), "Only one of cdfthreshd and topk can be set."
+def get_block_map_meansim(
+    q,
+    k,
+    is_causal=False,
+    BLKQ=128,
+    BLKK=64,
+    simthreshd1=0.1,
+    cdfthreshd=0.9,
+    topk=None,
+    return_lut=False,
+    attention_sink=False,
+):
+    assert (cdfthreshd is None and topk is not None) or (
+        cdfthreshd is not None and topk is None
+    ), "Only one of cdfthreshd and topk can be set."
 
     Headnum = q.size(1)
     simthreshd1 = hyperparameter_check(simthreshd1, Headnum, q.device)
@@ -218,21 +256,27 @@ def get_block_map_meansim(q, k, is_causal=False, BLKQ=128, BLKK=64, simthreshd1=
     num_q_heads = q.size(1)
     num_kv_heads = k.size(1)
     if num_q_heads != num_kv_heads:
-        assert num_q_heads % num_kv_heads == 0, f"Number of Q heads ({num_q_heads}) must be divisible by number of KV heads ({num_kv_heads})"
+        assert (
+            num_q_heads % num_kv_heads == 0
+        ), f"Number of Q heads ({num_q_heads}) must be divisible by number of KV heads ({num_kv_heads})"
         repeat_factor = num_q_heads // num_kv_heads
         pooled_kblocks = pooled_kblocks.repeat_interleave(repeat_factor, dim=1)
         sim_kblocks = sim_kblocks.repeat_interleave(repeat_factor, dim=1)
 
     sim_kblocks = sim_kblocks.unsqueeze(-2).expand(-1, -1, nq, -1)  # faster than repeat
     sim_qblocks = sim_qblocks.unsqueeze(-1).expand(-1, -1, -1, nk)
-    pooled_score = pooled_qblocks @ pooled_kblocks.transpose(-1, -2) * q.shape[-1] ** -0.5
+    pooled_score = (
+        pooled_qblocks @ pooled_kblocks.transpose(-1, -2) * q.shape[-1] ** -0.5
+    )
     pooled_score[~sim_kblocks] = -torch.inf
     if is_causal:
         nq = pooled_qblocks.shape[-2]
         nk = pooled_kblocks.shape[-2]
         empty_mask = torch.empty(nq, nk, device=q.device, dtype=torch.bool)
         causal_mask = fill_causal_mask_triton(empty_mask, BLKQ / BLKK)
-        pooled_score = pooled_score.masked_fill(~causal_mask[None, None, ...], -torch.inf)
+        pooled_score = pooled_score.masked_fill(
+            ~causal_mask[None, None, ...], -torch.inf
+        )
     pooled_score = pooled_score.softmax(-1)
     sorted_score = torch.sort(pooled_score, dim=-1, descending=True)
     cdf = torch.cumsum(sorted_score.values, dim=-1)
@@ -242,7 +286,9 @@ def get_block_map_meansim(q, k, is_causal=False, BLKQ=128, BLKK=64, simthreshd1=
         cdfthreshd_ts = cdfthreshd_ts.expand(B, -1, Q, 1).contiguous()
         num_to_select = torch.searchsorted(cdf, cdfthreshd_ts, right=True).squeeze(-1)
     else:
-        num_to_select = (topk * K).to(torch.int64).view(1, H, 1).expand(B, -1, Q).contiguous()
+        num_to_select = (
+            (topk * K).to(torch.int64).view(1, H, 1).expand(B, -1, Q).contiguous()
+        )
 
     final_map = torch.zeros_like(pooled_score, dtype=torch.bool)
     final_map[~sim_kblocks] = 1
@@ -263,7 +309,10 @@ def get_block_map_meansim(q, k, is_causal=False, BLKQ=128, BLKK=64, simthreshd1=
 
 def sage2_block_sparse_attn(q, k, v, lut, valid_block_num, BLKQ, BLKK, arch):
     headdim = q.size(-1)
-    assert headdim in [64, 128], "headdim should be in [64, 128]. For other headdim, you can use padding and specify the softmax scale."
+    assert headdim in [
+        64,
+        128,
+    ], "headdim should be in [64, 128]. For other headdim, you can use padding and specify the softmax scale."
 
     km = k.mean(dim=-2, keepdim=True)
     q_int8, q_scale, k_int8, k_scale = get_vanilla_qk_quant(q, k, km, BLKQ, BLKK)
@@ -271,28 +320,95 @@ def sage2_block_sparse_attn(q, k, v, lut, valid_block_num, BLKQ, BLKK, arch):
 
     o_s = torch.empty_like(q)
     if arch in ("sm80", "sm86", "sm87"):
-        pvthreshold = torch.full((q.shape[-3],), 1e6, dtype=torch.float32, device=q.device)
+        pvthreshold = torch.full(
+            (q.shape[-3],), 1e6, dtype=torch.float32, device=q.device
+        )
         v_fp16 = v.to(torch.float16)
-        qattn.qk_int8_sv_f16_accum_f16_block_sparse_attn_inst_buf_with_pv_threshold(q_int8, k_int8, v_fp16, o_s, lut, valid_block_num, pvthreshold, q_scale, k_scale, 1, False, 1, scale, 0)
+        qattn.qk_int8_sv_f16_accum_f16_block_sparse_attn_inst_buf_with_pv_threshold(
+            q_int8,
+            k_int8,
+            v_fp16,
+            o_s,
+            lut,
+            valid_block_num,
+            pvthreshold,
+            q_scale,
+            k_scale,
+            1,
+            False,
+            1,
+            scale,
+            0,
+        )
     else:
         b, h_kv, kv_len, head_dim = v.shape
         padded_len = (kv_len + 127) // 128 * 128
-        v_transposed_permutted = torch.empty((b, h_kv, head_dim, padded_len), dtype=v.dtype, device=v.device)
+        v_transposed_permutted = torch.empty(
+            (b, h_kv, head_dim, padded_len), dtype=v.dtype, device=v.device
+        )
         fused.transpose_pad_permute_cuda(v, v_transposed_permutted, 1)
-        v_fp8 = torch.empty(v_transposed_permutted.shape, dtype=torch.float8_e4m3fn, device=v.device)
+        v_fp8 = torch.empty(
+            v_transposed_permutted.shape, dtype=torch.float8_e4m3fn, device=v.device
+        )
         v_scale = torch.empty((b, h_kv, head_dim), dtype=torch.float32, device=v.device)
-        fused.scale_fuse_quant_cuda(v_transposed_permutted, v_fp8, v_scale, kv_len, 2.25, 1)
+        fused.scale_fuse_quant_cuda(
+            v_transposed_permutted, v_fp8, v_scale, kv_len, 2.25, 1
+        )
 
         if arch == "sm90":
-            qattn.qk_int8_sv_f8_accum_f32_block_sparse_attn_inst_buf_fuse_v_scale_sm90(q_int8, k_int8, v_fp8, o_s, lut, valid_block_num, q_scale, k_scale, v_scale, 1, False, 1, scale)
+            qattn.qk_int8_sv_f8_accum_f32_block_sparse_attn_inst_buf_fuse_v_scale_sm90(
+                q_int8,
+                k_int8,
+                v_fp8,
+                o_s,
+                lut,
+                valid_block_num,
+                q_scale,
+                k_scale,
+                v_scale,
+                1,
+                False,
+                1,
+                scale,
+            )
         else:
-            pvthreshold = torch.full((q.shape[-3],), 1e6, dtype=torch.float32, device=q.device)
+            pvthreshold = torch.full(
+                (q.shape[-3],), 1e6, dtype=torch.float32, device=q.device
+            )
             if SAGE2PP_ENABLED:
                 qk_int8_sv_f8_accum_f16_block_sparse_attn_inst_buf_fuse_v_scale_with_pv_threshold(
-                    q_int8, k_int8, v_fp8, o_s, lut, valid_block_num, pvthreshold, q_scale, k_scale, v_scale, 1, False, 1, scale, 0
+                    q_int8,
+                    k_int8,
+                    v_fp8,
+                    o_s,
+                    lut,
+                    valid_block_num,
+                    pvthreshold,
+                    q_scale,
+                    k_scale,
+                    v_scale,
+                    1,
+                    False,
+                    1,
+                    scale,
+                    0,
                 )
             else:
                 qattn.qk_int8_sv_f8_accum_f32_block_sparse_attn_inst_buf_fuse_v_scale_with_pv_threshold(
-                    q_int8, k_int8, v_fp8, o_s, lut, valid_block_num, pvthreshold, q_scale, k_scale, v_scale, 1, False, 1, scale, 0
+                    q_int8,
+                    k_int8,
+                    v_fp8,
+                    o_s,
+                    lut,
+                    valid_block_num,
+                    pvthreshold,
+                    q_scale,
+                    k_scale,
+                    v_scale,
+                    1,
+                    False,
+                    1,
+                    scale,
+                    0,
                 )
     return o_s

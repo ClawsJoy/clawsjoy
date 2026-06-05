@@ -2,4 +2,4 @@
 
 from engine.workflows.smart_qa import SmartQAWorkflow, smart_qa
 
-__all__ = ['SmartQAWorkflow', 'smart_qa']
+__all__ = ["SmartQAWorkflow", "smart_qa"]

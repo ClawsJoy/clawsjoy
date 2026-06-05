@@ -3,14 +3,14 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
 import threading
 import time
 from pathlib import Path
-from typing import Dict, Optional, Callable
+from typing import Callable, Dict, Optional
 
 
 class VoiceWakeup:

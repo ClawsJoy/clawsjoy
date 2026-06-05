@@ -1,5 +1,6 @@
-from lib.smart_config import smart_config
 from lightx2v.utils.envs import *
+
+from lib.smart_config import smart_config
 
 
 class NullScheduler:
@@ -23,7 +24,10 @@ class BaseScheduler:
 
     def step_pre(self, step_index):
         self.step_index = step_index
-        if GET_DTYPE() == GET_SENSITIVE_DTYPE() and not self.keep_latents_dtype_in_scheduler:
+        if (
+            GET_DTYPE() == GET_SENSITIVE_DTYPE()
+            and not self.keep_latents_dtype_in_scheduler
+        ):
             self.latents = self.latents.to(GET_DTYPE())
 
     def clear(self):

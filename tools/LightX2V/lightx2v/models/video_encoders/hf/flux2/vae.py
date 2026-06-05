@@ -1,7 +1,8 @@
-from lib.smart_config import smart_config
 import os
 
 import torch
+
+from lib.smart_config import smart_config
 
 try:
     from diffusers.models import AutoencoderKLFlux2
@@ -17,7 +18,9 @@ from lightx2v_platform.base.global_var import AI_DEVICE
 class Flux2VAE:
     def __init__(self, config):
         self.config = config
-        self.cpu_offload = config.get("vae_cpu_offload", config.get("cpu_offload", False))
+        self.cpu_offload = config.get(
+            "vae_cpu_offload", config.get("cpu_offload", False)
+        )
         self.latent_channels = config.get("latent_channels", 16)
         self.vae_scale_factor = config.get("vae_scale_factor", 8)
         self.load()
@@ -31,8 +34,12 @@ class Flux2VAE:
         else:
             vae_path = self.config.get("vae_path", os.path.join(model_path, "vae"))
         target_device = "cpu" if self.cpu_offload else AI_DEVICE
-        self.vae = AutoencoderKLFlux2.from_pretrained(vae_path, torch_dtype=GET_DTYPE(), **kwargs).to(target_device)
-        self.image_processor = Flux2ImageProcessor(vae_scale_factor=self.vae_scale_factor)
+        self.vae = AutoencoderKLFlux2.from_pretrained(
+            vae_path, torch_dtype=GET_DTYPE(), **kwargs
+        ).to(target_device)
+        self.image_processor = Flux2ImageProcessor(
+            vae_scale_factor=self.vae_scale_factor
+        )
 
         if self.config.get("use_tiling_vae", False):
             self.vae.enable_tiling()

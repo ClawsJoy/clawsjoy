@@ -1,32 +1,34 @@
 """引擎性能指标"""
 
-from collections import defaultdict
-from datetime import datetime
 import threading
 import time
+from collections import defaultdict
+from datetime import datetime
 
 
 class EngineMetrics:
     """引擎指标收集器"""
-    
+
     _instance = None
-    
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._init()
         return cls._instance
-    
+
     def _init(self):
-        self.metrics = defaultdict(lambda: {
-            "total": 0,
-            "success": 0,
-            "total_latency": 0,
-            "errors": 0,
-            "last_error": None
-        })
+        self.metrics = defaultdict(
+            lambda: {
+                "total": 0,
+                "success": 0,
+                "total_latency": 0,
+                "errors": 0,
+                "last_error": None,
+            }
+        )
         self._lock = threading.Lock()
-    
+
     def record(self, engine: str, success: bool, latency_ms: float, error: str = None):
         """记录一次调用"""
         with self._lock:
@@ -38,7 +40,7 @@ class EngineMetrics:
                 self.metrics[engine]["errors"] += 1
                 if error:
                     self.metrics[engine]["last_error"] = error
-    
+
     def get_summary(self) -> dict:
         """获取摘要"""
         summary = {}
@@ -51,10 +53,10 @@ class EngineMetrics:
                 "success_rate": round(success_rate, 2),
                 "avg_latency_ms": round(avg_latency, 2),
                 "errors": data["errors"],
-                "last_error": data["last_error"]
+                "last_error": data["last_error"],
             }
         return summary
-    
+
     def reset(self):
         with self._lock:
             self.metrics.clear()

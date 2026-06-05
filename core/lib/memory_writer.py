@@ -3,12 +3,12 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
 # 兼容旧代码导入
-from core.lib.memory_vector import vector_memory as memory
 from core.lib.memory_vector import VectorMemory
+from core.lib.memory_vector import vector_memory as memory
 
-__all__ = ['memory', 'VectorMemory']
+__all__ = ["memory", "VectorMemory"]

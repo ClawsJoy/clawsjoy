@@ -1,45 +1,52 @@
-#!/usr/bin/env python3
-"""Agent - Agent 模块
+"""ExecutorAgent - 执行层"""
 
-@version: 5.0.0
-@author: ClawsJoy
-@date: 2026-05-31
-"""
+from typing import Dict, Optional
 
-import re
-from typing import Dict, Any, Optional
-from core.agents.base.smart_agent import SmartAgent
-from core.lib.skill_loader_v3 import skill_loader
+from core.agents.business.base_business_agent import BusinessAgent
 
 
-class ExecutorAgent(SmartAgent):
+class ExecutorAgent(BusinessAgent):
     name = "executor_agent"
+    description = "任务执行器"
+    version = "2.1.0"
 
     def __init__(self, user_id: str = "default"):
         super().__init__(user_id=user_id)
+        print(f"⚙️ ExecutorAgent v{self.version} 已上线")
 
-    def process(self, user_input: str, context=None) -> Dict:
-        numbers = re.findall(r'\d+', user_input)
-        if len(numbers) >= 2:
-            a, b = int(numbers[0]), int(numbers[1])
-            result = skill_loader.execute("add", {"a": a, "b": b})
-            # 提取数字
-            val = result.get('result', 0)
-            if isinstance(val, dict):
-                val = val.get('result', 0)
-            return {
-                "success": True,
-                "response": str(val),      # 必须有 response 字段
-                "result": val,
-                "agent": self.name,
-                "user_id": self.user_id
-            }
+    def _execute_business(self, user_input: str, context: Dict = None) -> Dict:
+        return self.process(user_input, context)
+
+    def process(self, user_input: str, context: Dict = None) -> Dict:
+        print(f"[执行器] 执行: {user_input[:50]}...")
+
+        result = self._call_do_anything(user_input)
+        print(f"[执行器] do_anything 返回: {result}")
+
+        # 获取响应文本
+        response = result.get("response")
+        if response is None:
+            response = result.get("result")
+        if response is None:
+            response = "执行完成"
+
+        if not isinstance(response, str):
+            response = str(response)
+
+        print(f"[执行器] 最终响应: {response[:50]}...")
+        print(f"[执行器] 返回 agent: {self.name}")
+
         return {
-            "success": False,
-            "response": "无法解析，请提供如 15+27 格式",
+            "success": True,
+            "response": response,
             "agent": self.name,
-            "user_id": self.user_id
+            "user_id": self.user_id,
         }
+
+    def _call_do_anything(self, task: str) -> Dict:
+        from skills.core.do_anything import skill
+
+        return skill.execute({"goal": task})
 
 
 executor_agent = ExecutorAgent()

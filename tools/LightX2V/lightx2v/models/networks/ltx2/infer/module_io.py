@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """Module I/O definitions for LTX2 infer classes."""
 
 from dataclasses import dataclass

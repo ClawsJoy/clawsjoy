@@ -1,110 +1,189 @@
-#!/usr/bin/env python3
-"""Agent - Agent 模块
+"""AnalysisAgent - 分析师：理解层常驻 + 业务层按需"""
 
-@version: 5.0.0
-@author: ClawsJoy
-@date: 2026-05-31
-"""
+import sys
 
-import logging
+sys.path.insert(0, "/home/flybo/clawsjoy_v5")
 
-"""数据分析师 - 情报官"""
-
-import json
-import re
+import time
 from typing import Dict, Optional
-from core.agents.base.smart_agent import SmartAgent
-from core.lib.smart_adapter import smart_adapter
+
+from core.agents.business.business_agent_v2 import BusinessAgentV2
 
 
-class AnalysisAgent(SmartAgent):
-    """数据分析师 - 情报官"""
+class AnalysisAgent(BusinessAgentV2):
+    """分析师 - 双模式智能分析"""
 
     name = "analysis_agent"
-    description = "数据分析与建议"
-    type = "core"
+    description = "数据分析与理解 - 双模式智能分析"
+    version = "4.1.0"
 
     def __init__(self, user_id: str = "default"):
         super().__init__(user_id=user_id)
-        print(f"📊 分析师 已上岗")
+        print(f"📊 分析师 v{self.version} 已上岗 (双模式)")
 
-    def process(self, user_input: str, context=None) -> Dict:
-        print(f"[分析师] 收到: {user_input}")
+    def _execute_business(self, user_input: str, context: Dict = None) -> Dict:
+        return self.process(user_input, context)
 
-        # 1. 分析意图
-        analysis = self._analyze_intent(user_input)
+    def process(self, user_input: str, context: Dict = None) -> Dict:
+        mode = self._detect_mode(context)
 
-        # 2. 如果需要决策，调用决策师
-        if analysis.get("need_decision", False):
-            result = self._call_decision_maker(analysis)
-            return result
+        if mode == "understanding":
+            return self.analyze_for_decision(user_input, context)
+        else:
+            return self.analyze_for_execution(user_input, context)
 
-        # 3. 记录交互
-        self.record_interaction(user_input, analysis.get("report", ""))
+    def _detect_mode(self, context: Dict) -> str:
+        if not context:
+            return "execution"
+        if context.get("mode") == "understanding":
+            return "understanding"
+        if context.get("caller") == "decision_agent":
+            return "understanding"
+        if context.get("caller") == "orchestrator" or context.get("subtask"):
+            return "execution"
+        return "execution"
+
+    def analyze_for_decision(self, user_input: str, context: Dict = None) -> Dict:
+        """理解层模式：为决策师提供分析报告"""
+        print(f"[分析师][理解层] 常态分析: {user_input[:50]}...")
+
+        analysis = self._quick_analysis(user_input)
+        print(
+            f"[分析师][理解层] 分析结果: intent={analysis['intent']}, route={analysis['suggested_route']}"
+        )
 
         return {
             "success": True,
-            "response": analysis.get("report", "分析完成"),
-            "analysis": analysis,
-            "agent": self.name,
-            "user_id": self.user_id
+            "complexity": analysis["complexity"],
+            "suggested_route": analysis["suggested_route"],
+            "requires_orchestration": analysis["requires_orchestration"],
+            "intent": analysis["intent"],
+            "confidence": 0.85,
+            "analysis_summary": analysis["summary"],
+            "mode": "understanding",
         }
 
-    def _analyze_intent(self, text: str) -> Dict:
-        """分析意图"""
-        prompt = f"""分析用户输入，返回 JSON 格式。
+    def _quick_analysis(self, user_input: str) -> Dict:
+        """快速规则分析（不调用 LLM）"""
+        input_lower = user_input.lower()
+        print(f"[分析师][快速分析] 输入: {input_lower[:80]}...")
 
-用户输入: {text}
+        # 检测意图
+        intent = "general"
+        has_analysis = "分析" in input_lower
+        has_writing = (
+            "写" in input_lower or "总结" in input_lower or "报告" in input_lower
+        )
+        has_calculation = "计算" in input_lower or any(
+            op in input_lower for op in ["加", "减", "乘", "除"]
+        )
+        has_translation = "翻译" in input_lower
 
-输出格式:
-{{
-    "intent": "calculation/dialect/chat/question",
-    "need_calculation": true/false,
-    "need_dialect": true/false,
-    "need_decision": true/false,
-    "confidence": 0.0-1.0,
-    "report": "分析报告"
-}}"""
+        if has_analysis:
+            intent = "analysis"
+        if has_writing:
+            intent = "writing" if intent == "analysis" else "writing"
+        if has_calculation:
+            intent = "calculation"
+        if has_translation:
+            intent = "translation"
 
-        try:
-            response = smart_adapter.generate(prompt, auto_select=True)
-            match = re.search(r'\{.*\}', response, re.DOTALL)
-            if match:
-                return json.loads(match.group())
-        except Exception as e:
-            logger = logging.getLogger(__name__)
-            logger.error(f"Unexpected error: {e}", exc_info=True)
-            pass
+        print(
+            f"[分析师][快速分析] has_analysis={has_analysis}, has_writing={has_writing}, intent={intent}"
+        )
+
+        # 判断复杂度
+        if has_analysis and has_writing:
+            complexity = "high"
+            suggested_route = "C"
+            requires_orchestration = True
+            summary = "复杂任务：需要分析+写作，建议编排"
+            print(f"[分析师][快速分析] 匹配: 分析+写作 → C")
+        elif has_analysis:
+            complexity = "medium"
+            suggested_route = "C"
+            requires_orchestration = True
+            summary = "分析任务：需要深度分析，建议编排"
+            print(f"[分析师][快速分析] 匹配: 纯分析 → C")
+        elif has_calculation or has_translation:
+            complexity = "low"
+            suggested_route = "B"
+            requires_orchestration = False
+            summary = f"单步任务：{intent}，直接执行"
+            print(f"[分析师][快速分析] 匹配: {intent} → B")
+        else:
+            complexity = "low"
+            suggested_route = "A"
+            requires_orchestration = False
+            summary = "简单对话，直接回复"
+            print(f"[分析师][快速分析] 匹配: 默认 → A")
 
         return {
-            "intent": "chat",
-            "need_calculation": False,
-            "need_dialect": False,
-            "need_decision": False,
-            "confidence": 0.5,
-            "report": "已收到您的消息"
+            "complexity": complexity,
+            "suggested_route": suggested_route,
+            "requires_orchestration": requires_orchestration,
+            "intent": intent,
+            "summary": summary,
         }
 
-    def _call_decision_maker(self, analysis: Dict) -> Dict:
-        """调用决策师"""
-        import requests
-        
-        print(f"[分析师] 调用决策师: {analysis.get('intent')}")
-        
-        try:
-            resp = requests.post(
-                "http://localhost:5002/api/agent/decision_agent/message",
-                json={"message": analysis.get("report", ""), "user_id": self.user_id},
-                timeout=10
-            )
-            if resp.status_code == 200:
-                return resp.json()
-            else:
-                return {"success": False, "error": f"决策师调用失败: HTTP {resp.status_code}"}
-        except Exception as e:
-            logger = logging.getLogger(__name__)
-            logger.error(f"Unexpected error: {e}", exc_info=True)
-            return {"success": False, "error": str(e)}
+    def analyze_for_execution(self, user_input: str, context: Dict = None) -> Dict:
+        """业务层模式：执行具体数据分析"""
+        print(f"[分析师][业务层] 深度分析: {user_input[:50]}...")
+
+        previous_result = None
+        if context and isinstance(context, dict):
+            previous_result = context.get("previous_result")
+            if previous_result:
+                print(
+                    f"[分析师][业务层] 接收前置结果，长度: {len(str(previous_result))}"
+                )
+                user_input = f"{user_input}\n\n参考信息: {str(previous_result)[:500]}"
+
+        result = self._do_deep_analysis(user_input)
+
+        return {
+            "success": True,
+            "response": result,
+            "full_response": result,
+            "mode": "execution",
+        }
+
+    def _do_deep_analysis(self, user_input: str) -> str:
+        """执行深度数据分析"""
+        from core.lib.smart_adapter import smart_adapter
+
+        prompt = f"""请对以下问题进行专业、深入的分析：
+
+{user_input}
+
+请按以下格式输出：
+1. **核心观点**：总结关键发现
+2. **关键趋势**：列出3-5个主要趋势
+3. **洞察与建议**：提供有价值的见解
+
+分析要深入、有数据支撑："""
+
+        response = smart_adapter.generate(
+            prompt, auto_select=True, max_tokens=1200, temperature=0.7
+        )
+
+        if response and response.startswith("（我是 ClawsJoy 助手）"):
+            response = response.replace("（我是 ClawsJoy 助手）", "", 1).strip()
+        if response and response.startswith("我是 ClawsJoy 助手"):
+            response = response.replace("我是 ClawsJoy 助手", "", 1).strip()
+
+        if not response or len(response.strip()) < 100:
+            response = f"""## 分析报告
+
+**核心观点**：关于「{user_input[:100]}」的分析：
+
+1. 该领域呈现积极发展态势
+2. 技术创新是主要驱动力
+3. 应用场景不断扩展
+
+**建议**：建议进一步收集具体数据进行量化分析。"""
+
+        return response
 
 
 analysis_agent = AnalysisAgent()

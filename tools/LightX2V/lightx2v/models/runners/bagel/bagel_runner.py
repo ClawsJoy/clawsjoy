@@ -1,9 +1,6 @@
-from lib.smart_config import smart_config
 import gc
 
 import torch
-from loguru import logger
-
 from lightx2v.models.networks.bagel.model import BagelModel
 from lightx2v.models.runners.default_runner import DefaultRunner
 from lightx2v.models.schedulers.bagel.scheduler import BagelScheduler
@@ -13,6 +10,9 @@ from lightx2v.utils.envs import *
 from lightx2v.utils.profiler import *
 from lightx2v.utils.registry_factory import RUNNER_REGISTER
 from lightx2v_platform.base.global_var import AI_DEVICE
+from loguru import logger
+
+from lib.smart_config import smart_config
 
 torch_device_module = getattr(torch, AI_DEVICE)
 
@@ -40,7 +40,9 @@ class BagelRunner(DefaultRunner):
 
     def init_modules(self):
         logger.info("Initializing runner modules...")
-        if not self.config.get("lazy_load", False) and not self.config.get("unload_modules", False):
+        if not self.config.get("lazy_load", False) and not self.config.get(
+            "unload_modules", False
+        ):
             self.load_model()
         elif self.config.get("lazy_load", False):
             assert self.config.get("cpu_offload", False)
@@ -75,12 +77,21 @@ class BagelRunner(DefaultRunner):
         latents, generator = self.run(total_steps)
         return latents, generator
 
-    @ProfilingContext4DebugL1("Run VAE Decoder", recorder_mode=GET_RECORDER_MODE(), metrics_func=monitor_cli.lightx2v_run_vae_decode_duration, metrics_labels=["DefaultRunner"])
+    @ProfilingContext4DebugL1(
+        "Run VAE Decoder",
+        recorder_mode=GET_RECORDER_MODE(),
+        metrics_func=monitor_cli.lightx2v_run_vae_decode_duration,
+        metrics_labels=["DefaultRunner"],
+    )
     def run_vae_decoder(self, latents, decode_info):
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             self.vae_decoder = self.load_vae_decoder()
         images = self.vae_decoder.decode(latents, decode_info)
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             del self.vae_decoder
             torch_device_module.empty_cache()
             gc.collect()
@@ -90,7 +101,9 @@ class BagelRunner(DefaultRunner):
         self.input_info = input_info
         logger.info(f"input_info: {self.input_info}")
 
-        self.inputs, self.scheduler = self.model.prepare_inputs(self.input_info, self.scheduler)
+        self.inputs, self.scheduler = self.model.prepare_inputs(
+            self.input_info, self.scheduler
+        )
         self.model.set_scheduler(self.scheduler)
 
         self.set_image_shapes()

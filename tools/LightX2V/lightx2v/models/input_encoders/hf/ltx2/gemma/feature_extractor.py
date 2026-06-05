@@ -1,9 +1,10 @@
-from lib.smart_config import smart_config
 import math
 
 import torch
 from einops import rearrange
 from torch import nn
+
+from lib.smart_config import smart_config
 
 # ---------------------------------------------------------------------------
 # Normalization functions
@@ -48,7 +49,9 @@ def _norm_and_concat_padded_batch(
     mean = masked.sum(dim=(1, 2), keepdim=True) / (denom + eps)
 
     x_min = encoded_text.masked_fill(~mask, float("inf")).amin(dim=(1, 2), keepdim=True)
-    x_max = encoded_text.masked_fill(~mask, float("-inf")).amax(dim=(1, 2), keepdim=True)
+    x_max = encoded_text.masked_fill(~mask, float("-inf")).amax(
+        dim=(1, 2), keepdim=True
+    )
     range_ = x_max - x_min
 
     normed = 8 * (encoded_text - mean) / (range_ + eps)
@@ -97,8 +100,17 @@ class FeatureExtractorV1(nn.Module):
         self.aggregate_embed = aggregate_embed
         self.is_av = is_av
 
-    def forward(self, hidden_states: torch.Tensor, attention_mask: torch.Tensor, padding_side: str = "left") -> tuple[torch.Tensor, torch.Tensor | None]:
-        encoded = torch.stack(hidden_states, dim=-1) if isinstance(hidden_states, (list, tuple)) else hidden_states
+    def forward(
+        self,
+        hidden_states: torch.Tensor,
+        attention_mask: torch.Tensor,
+        padding_side: str = "left",
+    ) -> tuple[torch.Tensor, torch.Tensor | None]:
+        encoded = (
+            torch.stack(hidden_states, dim=-1)
+            if isinstance(hidden_states, (list, tuple))
+            else hidden_states
+        )
         dtype = encoded.dtype
         sequence_lengths = attention_mask.sum(dim=-1)
         normed = _norm_and_concat_padded_batch(encoded, sequence_lengths, padding_side)
@@ -128,13 +140,21 @@ class FeatureExtractorV2(nn.Module):
         attention_mask: torch.Tensor,
         padding_side: str = "left",  # noqa: ARG002
     ) -> tuple[torch.Tensor, torch.Tensor | None]:
-        encoded = torch.stack(hidden_states, dim=-1) if isinstance(hidden_states, (list, tuple)) else hidden_states
+        encoded = (
+            torch.stack(hidden_states, dim=-1)
+            if isinstance(hidden_states, (list, tuple))
+            else hidden_states
+        )
         normed = norm_and_concat_per_token_rms(encoded, attention_mask)
         normed = normed.to(encoded.dtype)
         v_dim = self.video_aggregate_embed.out_features
-        video = self.video_aggregate_embed(_rescale_norm(normed, v_dim, self.embedding_dim))
+        video = self.video_aggregate_embed(
+            _rescale_norm(normed, v_dim, self.embedding_dim)
+        )
         audio = None
         if self.audio_aggregate_embed is not None:
             a_dim = self.audio_aggregate_embed.out_features
-            audio = self.audio_aggregate_embed(_rescale_norm(normed, a_dim, self.embedding_dim))
+            audio = self.audio_aggregate_embed(
+                _rescale_norm(normed, a_dim, self.embedding_dim)
+            )
         return video, audio

@@ -1,6 +1,7 @@
-from lib.smart_config import smart_config
 import requests
 from loguru import logger
+
+from lib.smart_config import smart_config
 
 response = requests.get("http://smart_config.HOST:8000/v1/service/status")
 logger.info(response.json())

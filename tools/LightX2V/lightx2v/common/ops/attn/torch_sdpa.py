@@ -1,8 +1,8 @@
-from lib.smart_config import smart_config
 import torch
 import torch.nn.functional as F
-
 from lightx2v.utils.registry_factory import ATTN_WEIGHT_REGISTER
+
+from lib.smart_config import smart_config
 
 from .template import AttnWeightTemplate
 
@@ -33,7 +33,9 @@ class TorchSDPAWeight(AttnWeightTemplate):
         v = v.transpose(1, 2)
         if attn_mask is not None and attn_mask.dtype != torch.bool:
             attn_mask = attn_mask.to(q.dtype)
-        x = F.scaled_dot_product_attention(q, k, v, attn_mask=attn_mask, dropout_p=drop_rate, is_causal=causal)
+        x = F.scaled_dot_product_attention(
+            q, k, v, attn_mask=attn_mask, dropout_p=drop_rate, is_causal=causal
+        )
         x = x.transpose(1, 2)
         b, s, a, d = x.shape
         out = x.reshape(b, s, -1)

@@ -3,20 +3,23 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 import json
-from pathlib import Path
-from datetime import datetime
 import sys
+from datetime import datetime
+from pathlib import Path
+
 from core.lib.unified_config import unified_config
+
 sys.path.insert(0, smart_config.ROOT)
 from agent_core.brain_enhanced import brain
 
+
 class MemoryOptimizer:
     """记忆优化器"""
-    
+
     def __init__(self):
         self.optimization_log = Path("logs/memory_optimization.log")
 
@@ -25,56 +28,56 @@ class MemoryOptimizer:
         stats = brain.get_stats()
 
         health = {
-            "total_memories": stats.get('total_experiences', 0),
-            "knowledge_nodes": stats.get('knowledge_graph_nodes', 0),
-            "analogies": stats.get('analogies_count', 0),
-            "best_practices": stats.get('best_practices', 0),
-            "health_score": 0
+            "total_memories": stats.get("total_experiences", 0),
+            "knowledge_nodes": stats.get("knowledge_graph_nodes", 0),
+            "analogies": stats.get("analogies_count", 0),
+            "best_practices": stats.get("best_practices", 0),
+            "health_score": 0,
         }
 
         # 计算健康分
         score = 0
-        if health['total_memories'] > 50:
+        if health["total_memories"] > 50:
             score += 30
-        elif health['total_memories'] > 20:
+        elif health["total_memories"] > 20:
             score += 20
         else:
             score += 10
 
-        if health['knowledge_nodes'] > 30:
+        if health["knowledge_nodes"] > 30:
             score += 30
-        elif health['knowledge_nodes'] > 15:
+        elif health["knowledge_nodes"] > 15:
             score += 20
         else:
             score += 10
 
-        if health['best_practices'] > 5:
+        if health["best_practices"] > 5:
             score += 40
-        elif health['best_practices'] > 2:
+        elif health["best_practices"] > 2:
             score += 20
         else:
             score += 10
 
-        health['health_score'] = score
+        health["health_score"] = score
 
         return health
-    
+
     def suggest_optimization(self) -> list:
         """建议优化措施"""
         health = self.analyze_memory_health()
         suggestions = []
 
-        if health['total_memories'] < 30:
+        if health["total_memories"] < 30:
             suggestions.append("记忆不足，建议多使用系统功能积累经验")
 
-        if health['knowledge_nodes'] < 20:
+        if health["knowledge_nodes"] < 20:
             suggestions.append("知识图谱较小，建议使用不同功能扩展知识")
 
-        if health['best_practices'] < 3:
+        if health["best_practices"] < 3:
             suggestions.append("最佳实践较少，系统还在学习初期")
 
         return suggestions
-    
+
     def optimize(self):
         """执行优化"""
         health = self.analyze_memory_health()
@@ -94,10 +97,11 @@ class MemoryOptimizer:
                 print(f"   • {s}")
 
         # 记录优化日志
-        with open(self.optimization_log, 'a') as f:
+        with open(self.optimization_log, "a") as f:
             f.write(f"{datetime.now()}: {json.dumps(health)}\n")
 
         return health
+
 
 if __name__ == "__main__":
     optimizer = MemoryOptimizer()

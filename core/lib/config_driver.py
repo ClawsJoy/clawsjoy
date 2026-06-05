@@ -3,7 +3,7 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 from typing import Dict
@@ -20,33 +20,37 @@ class ConfigDriverCompatible:
 
     @property
     def VERSION(self) -> str:
-        return getattr(config, 'VERSION', '1.0.0')
+        return getattr(config, "VERSION", "1.0.0")
 
     def get(self, key: str, default=None):
-        return config.get(key, default) if hasattr(config, 'get') else unified_config.get(key, default)
+        return (
+            config.get(key, default)
+            if hasattr(config, "get")
+            else unified_config.get(key, default)
+        )
 
     def get_port(self, service: str) -> int:
-        if hasattr(config, 'get_port'):
+        if hasattr(config, "get_port"):
             return config.get_port(service)
         return unified_config.get_port(service)
 
     def get_path(self, name: str) -> str:
-        if hasattr(config, 'get_path'):
+        if hasattr(config, "get_path"):
             return config.get_path(name)
         return unified_config.get(f"paths.{name}", "")
 
     def is_enabled(self, feature: str) -> bool:
-        if hasattr(config, 'is_enabled'):
+        if hasattr(config, "is_enabled"):
             return config.is_enabled(feature)
         return unified_config.get(f"features.{feature}", False)
 
     def reload(self):
-        if hasattr(config, 'reload'):
+        if hasattr(config, "reload"):
             config.reload()
         # unified_config 没有 reload，跳过
 
     def get_status(self) -> Dict:
-        if hasattr(config, 'get_status'):
+        if hasattr(config, "get_status"):
             return config.get_status()
         return {"status": "ok", "source": "unified_config"}
 

@@ -3,13 +3,15 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
-import yaml
 from pathlib import Path
+
+import yaml
 from flask import jsonify, request
+
 from core.lib.unified_config import unified_config
 
 
@@ -36,18 +38,18 @@ class RouteRegistry:
     def _load_from_file(self, file_path: Path):
         """从文件加载路由"""
         try:
-            with open(file_path, 'r') as f:
+            with open(file_path, "r") as f:
                 data = yaml.safe_load(f)
 
             routes = []
             if isinstance(data, dict):
-                if 'routes' in data:
-                    routes = data['routes']
+                if "routes" in data:
+                    routes = data["routes"]
                 else:
                     for key, value in data.items():
                         if isinstance(value, list):
                             for item in value:
-                                if 'handler' in item and 'path' in item:
+                                if "handler" in item and "path" in item:
                                     self._add_route(item)
                     return
             elif isinstance(data, list):
@@ -103,12 +105,12 @@ class RouteRegistry:
         print(f"   📍 路由注册中心已加载 {len(self._routes)} 个路由")
 
     def _add_route(self, route):
-        if not route.get('enabled', True):
+        if not route.get("enabled", True):
             return
 
-        method = route.get('method', 'GET')
-        path = route.get('path', '')
-        handler = route.get('handler', '')
+        method = route.get("method", "GET")
+        path = route.get("path", "")
+        handler = route.get("handler", "")
 
         if path and handler:
             key = f"{method}:{path}"
@@ -119,7 +121,7 @@ class RouteRegistry:
         return self._routes.get(f"{method}:{path}")
 
     def get_all_enabled(self):
-        return [r for r in self._routes.values() if r.get('enabled', True)]
+        return [r for r in self._routes.values() if r.get("enabled", True)]
 
     def reload(self):
         """热重载路由配置"""
@@ -133,15 +135,13 @@ class RouteRegistry:
     def register_to_app(self, app, handlers):
         registered = 0
         for route in self.get_all_enabled():
-            method = route['method'].lower()
-            path = route['path']
-            handler_name = route['handler']
+            method = route["method"].lower()
+            path = route["path"]
+            handler_name = route["handler"]
 
             if handler_name in handlers:
                 app.add_url_rule(
-                    path,
-                    view_func=handlers[handler_name],
-                    methods=[method.upper()]
+                    path, view_func=handlers[handler_name], methods=[method.upper()]
                 )
                 registered += 1
             else:

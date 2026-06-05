@@ -1,6 +1,7 @@
-from lib.smart_config import smart_config
 from lightx2v.common.modules.weight_module import WeightModule
 from lightx2v.utils.registry_factory import CONV2D_WEIGHT_REGISTER, MM_WEIGHT_REGISTER
+
+from lib.smart_config import smart_config
 
 
 class NeoppPreWeights(WeightModule):

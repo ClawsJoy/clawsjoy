@@ -1,6 +1,7 @@
-from lib.smart_config import smart_config
 import math
 from abc import ABC, abstractmethod
+
+from lib.smart_config import smart_config
 
 
 class BaseTransformerInfer(ABC):

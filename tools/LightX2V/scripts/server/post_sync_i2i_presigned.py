@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import argparse
 import base64
 import json
@@ -9,9 +8,13 @@ from typing import Any, Dict
 
 import requests
 
+from lib.smart_config import smart_config
+
 try:
     import boto3  # pyright: ignore[reportMissingImports]
-    from botocore.config import Config as BotoConfig  # pyright: ignore[reportMissingImports]
+    from botocore.config import (
+        Config as BotoConfig,  # pyright: ignore[reportMissingImports]
+    )
 except ImportError:  # pragma: no cover - runtime dependency check
     boto3 = None
     BotoConfig = None
@@ -27,7 +30,9 @@ def build_presigned_url(args: argparse.Namespace) -> str:
         return args.presigned_url
 
     if boto3 is None:
-        raise RuntimeError("boto3 is required to auto-generate presigned URL, please install boto3/aioboto3.")
+        raise RuntimeError(
+            "boto3 is required to auto-generate presigned URL, please install boto3/aioboto3."
+        )
     if BotoConfig is None:
         raise RuntimeError("botocore is required to configure S3 client.")
 
@@ -45,10 +50,16 @@ def build_presigned_url(args: argparse.Namespace) -> str:
     access_key = args.s3_access_key or os.getenv("AWS_ACCESS_KEY_ID")
     secret_key = args.s3_secret_key or os.getenv("AWS_SECRET_ACCESS_KEY")
     session_token = args.s3_session_token or os.getenv("AWS_SESSION_TOKEN")
-    addressing_style = (args.s3_addressing_style or os.getenv("S3_ADDRESSING_STYLE", "auto")).strip().lower()
+    addressing_style = (
+        (args.s3_addressing_style or os.getenv("S3_ADDRESSING_STYLE", "auto"))
+        .strip()
+        .lower()
+    )
     if addressing_style not in {"auto", "path", "virtual"}:
         raise ValueError("--s3_addressing_style must be one of: auto, path, virtual")
-    signature_version = (args.s3_signature_version or os.getenv("S3_SIGNATURE_VERSION", "s3v4")).strip()
+    signature_version = (
+        args.s3_signature_version or os.getenv("S3_SIGNATURE_VERSION", "s3v4")
+    ).strip()
 
     client_kwargs: Dict[str, Any] = {
         "service_name": "s3",
@@ -103,31 +114,98 @@ def build_payload(args: argparse.Namespace) -> Dict[str, Any]:
     return payload
 
 
-def call_sync_api(args: argparse.Namespace, payload: Dict[str, Any]) -> requests.Response:
+def call_sync_api(
+    args: argparse.Namespace, payload: Dict[str, Any]
+) -> requests.Response:
     endpoint = f"{args.url.rstrip('/')}/v1/tasks/image/sync?timeout_seconds={args.timeout_seconds}&poll_interval_seconds={args.poll_interval_seconds}"
     return requests.post(endpoint, json=payload, timeout=args.timeout_seconds + 30)
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Call /v1/tasks/image/sync with presigned_url upload.")
-    parser.add_argument("--url", type=str, default="http://smart_config.HOST:8000", help="Server base url")
+    parser = argparse.ArgumentParser(
+        description="Call /v1/tasks/image/sync with presigned_url upload."
+    )
+    parser.add_argument(
+        "--url",
+        type=str,
+        default="http://smart_config.HOST:8000",
+        help="Server base url",
+    )
     parser.add_argument("--prompt", type=str, required=True, help="Prompt text")
-    parser.add_argument("--negative_prompt", type=str, default="", help="Negative prompt text")
+    parser.add_argument(
+        "--negative_prompt", type=str, default="", help="Negative prompt text"
+    )
     parser.add_argument("--infer_steps", type=int, default=30, help="Inference steps")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
-    parser.add_argument("--aspect_ratio", type=str, default="16:9", help="Aspect ratio for image task")
-    parser.add_argument("--timeout_seconds", type=int, default=600, help="Sync API timeout_seconds")
-    parser.add_argument("--poll_interval_seconds", type=float, default=0.5, help="Sync API poll_interval_seconds")
-    parser.add_argument("--save_result_path", type=str, default="", help="Server-side save_result_path")
-    parser.add_argument("--presigned_url", type=str, default="", help="Presigned URL used by server to upload final PNG")
-    parser.add_argument("--s3_endpoint_url", type=str, default="", help="S3 compatible endpoint, e.g. https://s3.amazonaws.com")
-    parser.add_argument("--s3_region", type=str, default="", help="S3 region, defaults to AWS_DEFAULT_REGION or us-east-1")
-    parser.add_argument("--s3_bucket", type=str, default="", help="S3 bucket name used for auto-generating presigned URL")
-    parser.add_argument("--s3_key_prefix", type=str, default="lightx2v/sync", help="S3 object key prefix when object key is omitted")
-    parser.add_argument("--s3_object_key", type=str, default="", help="Full S3 object key for uploaded result, e.g. lightx2v/sync/a.png")
-    parser.add_argument("--s3_access_key", type=str, default="", help="S3 access key, defaults to AWS_ACCESS_KEY_ID")
-    parser.add_argument("--s3_secret_key", type=str, default="", help="S3 secret key, defaults to AWS_SECRET_ACCESS_KEY")
-    parser.add_argument("--s3_session_token", type=str, default="", help="S3 session token, defaults to AWS_SESSION_TOKEN")
+    parser.add_argument(
+        "--aspect_ratio", type=str, default="16:9", help="Aspect ratio for image task"
+    )
+    parser.add_argument(
+        "--timeout_seconds", type=int, default=600, help="Sync API timeout_seconds"
+    )
+    parser.add_argument(
+        "--poll_interval_seconds",
+        type=float,
+        default=0.5,
+        help="Sync API poll_interval_seconds",
+    )
+    parser.add_argument(
+        "--save_result_path", type=str, default="", help="Server-side save_result_path"
+    )
+    parser.add_argument(
+        "--presigned_url",
+        type=str,
+        default="",
+        help="Presigned URL used by server to upload final PNG",
+    )
+    parser.add_argument(
+        "--s3_endpoint_url",
+        type=str,
+        default="",
+        help="S3 compatible endpoint, e.g. https://s3.amazonaws.com",
+    )
+    parser.add_argument(
+        "--s3_region",
+        type=str,
+        default="",
+        help="S3 region, defaults to AWS_DEFAULT_REGION or us-east-1",
+    )
+    parser.add_argument(
+        "--s3_bucket",
+        type=str,
+        default="",
+        help="S3 bucket name used for auto-generating presigned URL",
+    )
+    parser.add_argument(
+        "--s3_key_prefix",
+        type=str,
+        default="lightx2v/sync",
+        help="S3 object key prefix when object key is omitted",
+    )
+    parser.add_argument(
+        "--s3_object_key",
+        type=str,
+        default="",
+        help="Full S3 object key for uploaded result, e.g. lightx2v/sync/a.png",
+    )
+    parser.add_argument(
+        "--s3_access_key",
+        type=str,
+        default="",
+        help="S3 access key, defaults to AWS_ACCESS_KEY_ID",
+    )
+    parser.add_argument(
+        "--s3_secret_key",
+        type=str,
+        default="",
+        help="S3 secret key, defaults to AWS_SECRET_ACCESS_KEY",
+    )
+    parser.add_argument(
+        "--s3_session_token",
+        type=str,
+        default="",
+        help="S3 session token, defaults to AWS_SESSION_TOKEN",
+    )
     parser.add_argument(
         "--s3_addressing_style",
         type=str,
@@ -140,11 +218,25 @@ def main() -> None:
         default="",
         help="S3 signature version, defaults to env S3_SIGNATURE_VERSION or s3v4",
     )
-    parser.add_argument("--presign_expires", type=int, default=3600, help="Presigned URL expiry seconds")
+    parser.add_argument(
+        "--presign_expires", type=int, default=3600, help="Presigned URL expiry seconds"
+    )
 
-    parser.add_argument("--image_base64", type=str, default="", help="Base64 content for image_path")
-    parser.add_argument("--image_path", type=str, default="", help="Local image file path; encoded if image_base64 is empty")
-    parser.add_argument("--image_mask_base64", type=str, default="", help="Base64 content for image_mask_path")
+    parser.add_argument(
+        "--image_base64", type=str, default="", help="Base64 content for image_path"
+    )
+    parser.add_argument(
+        "--image_path",
+        type=str,
+        default="",
+        help="Local image file path; encoded if image_base64 is empty",
+    )
+    parser.add_argument(
+        "--image_mask_base64",
+        type=str,
+        default="",
+        help="Base64 content for image_mask_path",
+    )
     parser.add_argument(
         "--image_mask_path",
         type=str,
@@ -171,7 +263,9 @@ def main() -> None:
 
     content_type = response.headers.get("content-type", "")
     if "application/json" not in content_type:
-        raise RuntimeError(f"Unexpected response type. presigned_url mode should return JSON, but got content-type={content_type!r}.")
+        raise RuntimeError(
+            f"Unexpected response type. presigned_url mode should return JSON, but got content-type={content_type!r}."
+        )
 
     result = response.json()
     print("Sync request succeeded:")
@@ -180,7 +274,9 @@ def main() -> None:
     if args.save_response_json:
         output = Path(args.save_response_json)
         output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+        output.write_text(
+            json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
         print(f"Saved response JSON to: {output}")
 
 

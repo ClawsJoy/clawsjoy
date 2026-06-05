@@ -1,9 +1,10 @@
-from lib.smart_config import smart_config
 import inspect
 from dataclasses import MISSING, dataclass, field, fields, make_dataclass
 from typing import Any, Optional
 
 import torch
+
+from lib.smart_config import smart_config
 
 
 class _UnsetType:
@@ -201,7 +202,9 @@ class T2IInputInfo:
     resize_mode: str = field(default_factory=str)
     target_shape: list = field(default_factory=list)
     image_shapes: list = field(default_factory=list)
-    txt_seq_lens: list = field(default_factory=list)  # [postive_txt_seq_len, negative_txt_seq_len]
+    txt_seq_lens: list = field(
+        default_factory=list
+    )  # [postive_txt_seq_len, negative_txt_seq_len]
     aspect_ratio: str = field(default_factory=str)
 
 
@@ -217,7 +220,9 @@ class I2IInputInfo:
     resize_mode: str = field(default_factory=str)
     target_shape: list = field(default_factory=list)
     image_shapes: list = field(default_factory=list)
-    txt_seq_lens: list = field(default_factory=list)  # [postive_txt_seq_len, negative_txt_seq_len]
+    txt_seq_lens: list = field(
+        default_factory=list
+    )  # [postive_txt_seq_len, negative_txt_seq_len]
     processed_image_size: int = field(default_factory=list)
     original_size: list = field(default_factory=list)
     aspect_ratio: str = field(default_factory=str)
@@ -338,8 +343,12 @@ class WorldPlayI2VInputInfo:
     latent_shape: list = field(default_factory=list)
     target_shape: list = field(default_factory=list)
     # WorldPlay-specific: pose/action conditioning
-    pose: str = field(default_factory=str)  # Pose string (e.g., "w-3, right-0.5") or JSON path
-    model_type: str = field(default_factory=lambda: "ar")  # "ar" (autoregressive) or "bi" (bidirectional)
+    pose: str = field(
+        default_factory=str
+    )  # Pose string (e.g., "w-3, right-0.5") or JSON path
+    model_type: str = field(
+        default_factory=lambda: "ar"
+    )  # "ar" (autoregressive) or "bi" (bidirectional)
     chunk_latent_frames: int = field(default_factory=lambda: 4)
     # Computed pose tensors (set during processing)
     viewmats: torch.Tensor = field(default_factory=lambda: None)
@@ -381,8 +390,12 @@ class WorldPlayT2VInputInfo:
     latent_shape: list = field(default_factory=list)
     target_shape: list = field(default_factory=list)
     # WorldPlay-specific: pose/action conditioning
-    pose: str = field(default_factory=str)  # Pose string (e.g., "w-3, right-0.5") or JSON path
-    model_type: str = field(default_factory=lambda: "ar")  # "ar" (autoregressive) or "bi" (bidirectional)
+    pose: str = field(
+        default_factory=str
+    )  # Pose string (e.g., "w-3, right-0.5") or JSON path
+    model_type: str = field(
+        default_factory=lambda: "ar"
+    )  # "ar" (autoregressive) or "bi" (bidirectional)
     chunk_latent_frames: int = field(default_factory=lambda: 4)
     # Computed pose tensors (set during processing)
     viewmats: torch.Tensor = field(default_factory=lambda: None)
@@ -436,21 +449,39 @@ def init_empty_input_info(task, support_tasks=[]):
             merged_field_names.add(support_field.name)
 
             if support_field.default_factory is not MISSING:
-                merged_fields.append((support_field.name, support_field.type, field(default_factory=support_field.default_factory)))
+                merged_fields.append(
+                    (
+                        support_field.name,
+                        support_field.type,
+                        field(default_factory=support_field.default_factory),
+                    )
+                )
             elif support_field.default is not MISSING:
-                merged_fields.append((support_field.name, support_field.type, field(default=support_field.default)))
+                merged_fields.append(
+                    (
+                        support_field.name,
+                        support_field.type,
+                        field(default=support_field.default),
+                    )
+                )
             else:
-                merged_fields.append((support_field.name, support_field.type, field(default=None)))
+                merged_fields.append(
+                    (support_field.name, support_field.type, field(default=None))
+                )
 
     if not merged_fields:
         raise ValueError("support_tasks must not be empty")
 
-    merged_cls_name = "Merged" + "".join(task.upper() for task in support_tasks) + "InputInfo"
+    merged_cls_name = (
+        "Merged" + "".join(task.upper() for task in support_tasks) + "InputInfo"
+    )
     merged_input_info_cls = make_dataclass(merged_cls_name, merged_fields)
     return merged_input_info_cls()
 
 
-def calculate_target_video_length_from_duration(duration_seconds: float, fps: int = 16) -> int:
+def calculate_target_video_length_from_duration(
+    duration_seconds: float, fps: int = 16
+) -> int:
     """Calculate target_video_length from video duration using the formula:
     target_video_length = (fps * seconds + 3) // 4 * 4 + 1
 
@@ -560,7 +591,11 @@ def get_all_input_info_keys():
     current_module = inspect.currentframe().f_globals
 
     for name, obj in current_module.items():
-        if inspect.isclass(obj) and name.endswith("InputInfo") and hasattr(obj, "__dataclass_fields__"):
+        if (
+            inspect.isclass(obj)
+            and name.endswith("InputInfo")
+            and hasattr(obj, "__dataclass_fields__")
+        ):
             all_keys.update(obj.__dataclass_fields__.keys())
 
     return all_keys

@@ -1,7 +1,8 @@
-from lib.smart_config import smart_config
 import math
 from math import ceil
 from typing import Tuple
+
+from lib.smart_config import smart_config
 
 
 def get_window_op(name: str):
@@ -13,7 +14,9 @@ def get_window_op(name: str):
 
 
 # -------------------------------- Windowing -------------------------------- #
-def make_720Pwindows_bysize(size: Tuple[int, int, int], num_windows: Tuple[int, int, int]):
+def make_720Pwindows_bysize(
+    size: Tuple[int, int, int], num_windows: Tuple[int, int, int]
+):
     t, h, w = size
     resized_nt, resized_nh, resized_nw = num_windows
     # cal windows under 720p
@@ -37,7 +40,9 @@ def make_720Pwindows_bysize(size: Tuple[int, int, int], num_windows: Tuple[int, 
     ]
 
 
-def make_shifted_720Pwindows_bysize(size: Tuple[int, int, int], num_windows: Tuple[int, int, int]):
+def make_shifted_720Pwindows_bysize(
+    size: Tuple[int, int, int], num_windows: Tuple[int, int, int]
+):
     t, h, w = size
     resized_nt, resized_nh, resized_nw = num_windows
     # cal windows under 720p
@@ -51,7 +56,11 @@ def make_shifted_720Pwindows_bysize(size: Tuple[int, int, int], num_windows: Tup
         0.5 if wh < h else 0,
         0.5 if ww < w else 0,
     )
-    nt, nh, nw = ceil((t - st) / wt), ceil((h - sh) / wh), ceil((w - sw) / ww)  # window size.
+    nt, nh, nw = (
+        ceil((t - st) / wt),
+        ceil((h - sh) / wh),
+        ceil((w - sw) / ww),
+    )  # window size.
     nt, nh, nw = (  # number of window.
         nt + 1 if st > 0 else 1,
         nh + 1 if sh > 0 else 1,

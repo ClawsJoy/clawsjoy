@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import functools
 import math
 from typing import Callable, Tuple
@@ -6,6 +5,8 @@ from typing import Callable, Tuple
 import numpy as np
 import torch
 from einops import rearrange
+
+from lib.smart_config import smart_config
 
 
 def rmsnorm_torch_naive(x, weight=None, bias=None, eps=1e-6):
@@ -16,7 +17,9 @@ def modulate_torch_naive(x, scale, shift):
     return x * (1 + scale) + shift
 
 
-def modulate_with_rmsnorm_torch_naive(x, scale, shift, weight=None, bias=None, eps=1e-6):
+def modulate_with_rmsnorm_torch_naive(
+    x, scale, shift, weight=None, bias=None, eps=1e-6
+):
     return modulate_torch_naive(rmsnorm_torch_naive(x), scale, shift)
 
 
@@ -49,7 +52,9 @@ def get_timestep_embedding(
     assert len(timesteps.shape) == 1, "Timesteps should be a 1d-array"
 
     half_dim = embedding_dim // 2
-    exponent = -math.log(max_period) * torch.arange(start=0, end=half_dim, dtype=torch.float32, device=timesteps.device)
+    exponent = -math.log(max_period) * torch.arange(
+        start=0, end=half_dim, dtype=torch.float32, device=timesteps.device
+    )
     exponent = exponent / (half_dim - downscale_freq_shift)
 
     emb = torch.exp(exponent)
@@ -84,7 +89,9 @@ def apply_rotary_emb(
         raise ValueError(f"Invalid rope type: {rope_type}")
 
 
-def apply_interleaved_rotary_emb(input_tensor: torch.Tensor, cos_freqs: torch.Tensor, sin_freqs: torch.Tensor) -> torch.Tensor:
+def apply_interleaved_rotary_emb(
+    input_tensor: torch.Tensor, cos_freqs: torch.Tensor, sin_freqs: torch.Tensor
+) -> torch.Tensor:
     t_dup = rearrange(input_tensor, "... (d r) -> ... d r", r=2)
     t1, t2 = t_dup.unbind(dim=-1)
     t_dup = torch.stack((-t2, t1), dim=-1)
@@ -95,7 +102,9 @@ def apply_interleaved_rotary_emb(input_tensor: torch.Tensor, cos_freqs: torch.Te
     return out
 
 
-def apply_split_rotary_emb(input_tensor: torch.Tensor, cos_freqs: torch.Tensor, sin_freqs: torch.Tensor) -> torch.Tensor:
+def apply_split_rotary_emb(
+    input_tensor: torch.Tensor, cos_freqs: torch.Tensor, sin_freqs: torch.Tensor
+) -> torch.Tensor:
     needs_reshape = False
     if input_tensor.ndim != 4 and cos_freqs.ndim == 4:
         b, h, t, _ = cos_freqs.shape
@@ -121,7 +130,11 @@ def apply_split_rotary_emb(input_tensor: torch.Tensor, cos_freqs: torch.Tensor, 
 
 
 @functools.lru_cache(maxsize=5)
-def generate_freq_grid_np(positional_embedding_theta: float, positional_embedding_max_pos_count: int, inner_dim: int) -> torch.Tensor:
+def generate_freq_grid_np(
+    positional_embedding_theta: float,
+    positional_embedding_max_pos_count: int,
+    inner_dim: int,
+) -> torch.Tensor:
     theta = positional_embedding_theta
     start = 1
     end = theta
@@ -140,7 +153,11 @@ def generate_freq_grid_np(positional_embedding_theta: float, positional_embeddin
 
 
 @functools.lru_cache(maxsize=5)
-def generate_freq_grid_pytorch(positional_embedding_theta: float, positional_embedding_max_pos_count: int, inner_dim: int) -> torch.Tensor:
+def generate_freq_grid_pytorch(
+    positional_embedding_theta: float,
+    positional_embedding_max_pos_count: int,
+    inner_dim: int,
+) -> torch.Tensor:
     theta = positional_embedding_theta
     start = 1
     end = theta
@@ -161,9 +178,13 @@ def generate_freq_grid_pytorch(positional_embedding_theta: float, positional_emb
     return indices
 
 
-def get_fractional_positions(indices_grid: torch.Tensor, max_pos: list[int]) -> torch.Tensor:
+def get_fractional_positions(
+    indices_grid: torch.Tensor, max_pos: list[int]
+) -> torch.Tensor:
     n_pos_dims = indices_grid.shape[1]
-    assert n_pos_dims == len(max_pos), f"Number of position dimensions ({n_pos_dims}) must match max_pos length ({len(max_pos)})"
+    assert n_pos_dims == len(
+        max_pos
+    ), f"Number of position dimensions ({n_pos_dims}) must match max_pos length ({len(max_pos)})"
     fractional_positions = torch.stack(
         [indices_grid[:, i] / max_pos[i] for i in range(n_pos_dims)],
         dim=-1,
@@ -171,11 +192,19 @@ def get_fractional_positions(indices_grid: torch.Tensor, max_pos: list[int]) -> 
     return fractional_positions
 
 
-def generate_freqs(indices: torch.Tensor, indices_grid: torch.Tensor, max_pos: list[int], use_middle_indices_grid: bool) -> torch.Tensor:
+def generate_freqs(
+    indices: torch.Tensor,
+    indices_grid: torch.Tensor,
+    max_pos: list[int],
+    use_middle_indices_grid: bool,
+) -> torch.Tensor:
     if use_middle_indices_grid:
         assert len(indices_grid.shape) == 4
         assert indices_grid.shape[-1] == 2
-        indices_grid_start, indices_grid_end = indices_grid[..., 0], indices_grid[..., 1]
+        indices_grid_start, indices_grid_end = (
+            indices_grid[..., 0],
+            indices_grid[..., 1],
+        )
         indices_grid = (indices_grid_start + indices_grid_end) / 2.0
     elif len(indices_grid.shape) == 4:
         indices_grid = indices_grid[..., 0]
@@ -183,11 +212,17 @@ def generate_freqs(indices: torch.Tensor, indices_grid: torch.Tensor, max_pos: l
     fractional_positions = get_fractional_positions(indices_grid, max_pos)
     indices = indices.to(device=fractional_positions.device)
 
-    freqs = (indices * (fractional_positions.unsqueeze(-1) * 2 - 1)).transpose(-1, -2).flatten(2)
+    freqs = (
+        (indices * (fractional_positions.unsqueeze(-1) * 2 - 1))
+        .transpose(-1, -2)
+        .flatten(2)
+    )
     return freqs
 
 
-def split_freqs_cis(freqs: torch.Tensor, pad_size: int, num_attention_heads: int) -> tuple[torch.Tensor, torch.Tensor]:
+def split_freqs_cis(
+    freqs: torch.Tensor, pad_size: int, num_attention_heads: int
+) -> tuple[torch.Tensor, torch.Tensor]:
     cos_freq = freqs.cos()
     sin_freq = freqs.sin()
 
@@ -210,7 +245,9 @@ def split_freqs_cis(freqs: torch.Tensor, pad_size: int, num_attention_heads: int
     return cos_freq, sin_freq
 
 
-def interleaved_freqs_cis(freqs: torch.Tensor, pad_size: int) -> tuple[torch.Tensor, torch.Tensor]:
+def interleaved_freqs_cis(
+    freqs: torch.Tensor, pad_size: int
+) -> tuple[torch.Tensor, torch.Tensor]:
     cos_freq = freqs.cos().repeat_interleave(2, dim=-1)
     sin_freq = freqs.sin().repeat_interleave(2, dim=-1)
     if pad_size != 0:
@@ -230,7 +267,9 @@ def precompute_freqs_cis(
     use_middle_indices_grid: bool = False,
     num_attention_heads: int = 32,
     rope_type: str = "split",
-    freq_grid_generator: Callable[[float, int, int, torch.device], torch.Tensor] = generate_freq_grid_pytorch,
+    freq_grid_generator: Callable[
+        [float, int, int, torch.device], torch.Tensor
+    ] = generate_freq_grid_pytorch,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     if max_pos is None:
         max_pos = [20, 2048, 2048]

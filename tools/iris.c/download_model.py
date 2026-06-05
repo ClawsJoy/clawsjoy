@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 #!/usr/bin/env python3
 """
 Download FLUX.2-klein model files from HuggingFace.
@@ -45,27 +46,29 @@ If this is your first time, we suggest downloading the "4b" model:
 
 
 def main():
-    if len(sys.argv) < 2 or sys.argv[1].startswith('-'):
+    if len(sys.argv) < 2 or sys.argv[1].startswith("-"):
         print(USAGE_TEXT)
         return 1
 
     parser = argparse.ArgumentParser(
-        description='Download FLUX.2-klein model files from HuggingFace'
+        description="Download FLUX.2-klein model files from HuggingFace"
     )
     parser.add_argument(
-        'model',
+        "model",
         choices=list(MODELS.keys()),
-        help='Model to download (4b, 4b-base, 9b, 9b-base)'
+        help="Model to download (4b, 4b-base, 9b, 9b-base)",
     )
     parser.add_argument(
-        '--output-dir', '-o',
+        "--output-dir",
+        "-o",
         default=None,
-        help='Output directory (default: auto based on model type)'
+        help="Output directory (default: auto based on model type)",
     )
     parser.add_argument(
-        '--token', '-t',
+        "--token",
+        "-t",
         default=None,
-        help='HuggingFace authentication token (for gated models like 9B)'
+        help="HuggingFace authentication token (for gated models like 9B)",
     )
     args = parser.parse_args()
 
@@ -80,7 +83,8 @@ def main():
     token = args.token
     if not token:
         import os
-        token = os.environ.get('HF_TOKEN')
+
+        token = os.environ.get("HF_TOKEN")
 
     repo_id, default_dir = MODELS[args.model]
     output_dir = Path(args.output_dir if args.output_dir else default_dir)
@@ -145,17 +149,19 @@ def main():
             print(f"  Total:        {total_size / 1024 / 1024 / 1024:.2f} GB")
         print()
         print("Usage:")
-        print(f"  ./flux -d {output_dir} -p \"your prompt\" -o output.png")
+        print(f'  ./flux -d {output_dir} -p "your prompt" -o output.png')
         print()
 
     except Exception as e:
         error_msg = str(e)
         print(f"Error downloading: {e}")
         print()
-        if '401' in error_msg or '403' in error_msg or 'auth' in error_msg.lower():
+        if "401" in error_msg or "403" in error_msg or "auth" in error_msg.lower():
             print("Authentication required. For gated models (like 9B):")
-            print("  1. Accept the license at https://huggingface.co/black-forest-labs/" +
-                  repo_id.split('/')[-1])
+            print(
+                "  1. Accept the license at https://huggingface.co/black-forest-labs/"
+                + repo_id.split("/")[-1]
+            )
             print("  2. Get your token from https://huggingface.co/settings/tokens")
             print(f"  3. Run: python download_model.py {args.model} --token YOUR_TOKEN")
             print("  Or set the HF_TOKEN env var")
@@ -167,5 +173,5 @@ def main():
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

@@ -1,7 +1,7 @@
-from lib.smart_config import smart_config
 import torch
-
 from lightx2v_platform.base.global_var import AI_DEVICE
+
+from lib.smart_config import smart_config
 
 
 class BagelPostInfer:
@@ -12,14 +12,27 @@ class BagelPostInfer:
     def set_scheduler(self, scheduler):
         self.scheduler = scheduler
 
-    def infer(self, weights, packed_query_sequence, packed_text_indexes=None, packed_vae_token_indexes=None, mode="und"):
+    def infer(
+        self,
+        weights,
+        packed_query_sequence,
+        packed_text_indexes=None,
+        packed_vae_token_indexes=None,
+        mode="und",
+    ):
         if self.use_moe:
             if mode == "und":
                 packed_query_sequence = weights.norm.apply(packed_query_sequence)
             elif mode == "gen":
                 packed_query_sequence_ = torch.zeros_like(packed_query_sequence)
-                packed_query_sequence_[packed_text_indexes] = weights.norm.apply(packed_query_sequence[packed_text_indexes])
-                packed_query_sequence_[packed_vae_token_indexes] = weights.norm_moe_gen.apply(packed_query_sequence[packed_vae_token_indexes])
+                packed_query_sequence_[packed_text_indexes] = weights.norm.apply(
+                    packed_query_sequence[packed_text_indexes]
+                )
+                packed_query_sequence_[packed_vae_token_indexes] = (
+                    weights.norm_moe_gen.apply(
+                        packed_query_sequence[packed_vae_token_indexes]
+                    )
+                )
                 packed_query_sequence = packed_query_sequence_
         else:
             packed_query_sequence = weights.norm.apply(packed_query_sequence)

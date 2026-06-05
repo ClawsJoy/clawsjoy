@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 Runner for SeedVR video super-resolution model.
 
@@ -14,17 +15,18 @@ import os
 import numpy as np
 import torch
 from einops import rearrange
-from loguru import logger
-from torch import Tensor
-
 from lightx2v.models.runners.default_runner import DefaultRunner
 from lightx2v.models.schedulers.seedvr.scheduler import SeedVRScheduler
-from lightx2v.models.video_encoders.hf.seedvr import attn_video_vae_v3_s8_c16_t4_inflation_sd3_init
+from lightx2v.models.video_encoders.hf.seedvr import (
+    attn_video_vae_v3_s8_c16_t4_inflation_sd3_init,
+)
 from lightx2v.models.video_encoders.hf.seedvr.color_fix import wavelet_reconstruction
 from lightx2v.utils.envs import *
 from lightx2v.utils.profiler import *
 from lightx2v.utils.registry_factory import RUNNER_REGISTER
 from lightx2v_platform.base.global_var import AI_DEVICE
+from loguru import logger
+from torch import Tensor
 
 
 @RUNNER_REGISTER("seedvr2")
@@ -46,15 +48,23 @@ class SeedVRRunner(DefaultRunner):
         self.neg_emb_path = os.path.join(model_path_base, "neg_emb.pt")
 
     def _build_video_transform(self, img):
+        from lightx2v.models.video_encoders.hf.seedvr.data.image.transforms.divisible_crop import (
+            DivisibleCrop,
+        )
+        from lightx2v.models.video_encoders.hf.seedvr.data.image.transforms.na_resize import (
+            NaResize,
+        )
+        from lightx2v.models.video_encoders.hf.seedvr.data.video.transforms.rearrange import (
+            Rearrange,
+        )
         from torchvision.transforms import Normalize
-
-        from lightx2v.models.video_encoders.hf.seedvr.data.image.transforms.divisible_crop import DivisibleCrop
-        from lightx2v.models.video_encoders.hf.seedvr.data.image.transforms.na_resize import NaResize
-        from lightx2v.models.video_encoders.hf.seedvr.data.video.transforms.rearrange import Rearrange
 
         target_height = self.config.get("target_height", 720)
         target_width = self.config.get("target_width", 1280)
-        resolution = min((self.ori_h * self.ori_w) ** 0.5 * self.input_info.sr_ratio, (target_height * target_width) ** 0.5)
+        resolution = min(
+            (self.ori_h * self.ori_w) ** 0.5 * self.input_info.sr_ratio,
+            (target_height * target_width) ** 0.5,
+        )
 
         img = NaResize(
             resolution=resolution,
@@ -79,7 +89,9 @@ class SeedVRRunner(DefaultRunner):
             return None, 0
         if overlap >= seg_len:
             overlap = max(seg_len - 1, 0)
-            logger.warning(f"[SeedVRRunner] sr_overlap >= sr_segment_length, clamp to {overlap}")
+            logger.warning(
+                f"[SeedVRRunner] sr_overlap >= sr_segment_length, clamp to {overlap}"
+            )
         return seg_len, overlap
 
     def _set_output_fps(self, fps):
@@ -141,7 +153,9 @@ class SeedVRRunner(DefaultRunner):
             end_pts = float(self._sr_pts[end_idx - 1]) + 1.0 / max(self._sr_fps, 1.0)
         else:
             start_pts = float(start_idx) / max(self._sr_fps, 1.0)
-            end_pts = float(end_idx - 1) / max(self._sr_fps, 1.0) + 1.0 / max(self._sr_fps, 1.0)
+            end_pts = float(end_idx - 1) / max(self._sr_fps, 1.0) + 1.0 / max(
+                self._sr_fps, 1.0
+            )
 
         video, _, info = read_video(
             video_path,
@@ -185,7 +199,9 @@ class SeedVRRunner(DefaultRunner):
             return videos
         if (t - 1) % (4 * sp_size) == 0:
             return videos
-        padding = [videos[:, -1].unsqueeze(1)] * (4 * sp_size - ((t - 1) % (4 * sp_size)))
+        padding = [videos[:, -1].unsqueeze(1)] * (
+            4 * sp_size - ((t - 1) % (4 * sp_size))
+        )
         padding = torch.cat(padding, dim=1)
         videos = torch.cat([videos, padding], dim=1)
         return videos
@@ -254,14 +270,31 @@ class SeedVRRunner(DefaultRunner):
 
     def run_vae_decoder(self, latents):
         samples = self.vae_decoder.vae_decode(latents)
-        sample = [(rearrange(video[:, None], "c t h w -> t c h w") if video.ndim == 3 else rearrange(video, "c t h w -> t c h w")) for video in samples][0]
+        sample = [
+            (
+                rearrange(video[:, None], "c t h w -> t c h w")
+                if video.ndim == 3
+                else rearrange(video, "c t h w -> t c h w")
+            )
+            for video in samples
+        ][0]
         if self._ori_length < sample.shape[0]:
             sample = sample[: self._ori_length]
 
         # color fix
-        input = rearrange(self._input[:, None], "c t h w -> t c h w") if self._input.ndim == 3 else rearrange(self._input, "c t h w -> t c h w")
-        sample = wavelet_reconstruction(sample.to("cpu"), input[: sample.size(0)].to("cpu"))
-        sample = rearrange(sample[:, None], "t c h w -> c t h w") if sample.ndim == 3 else rearrange(sample, "t c h w -> c t h w")
+        input = (
+            rearrange(self._input[:, None], "c t h w -> t c h w")
+            if self._input.ndim == 3
+            else rearrange(self._input, "c t h w -> t c h w")
+        )
+        sample = wavelet_reconstruction(
+            sample.to("cpu"), input[: sample.size(0)].to("cpu")
+        )
+        sample = (
+            rearrange(sample[:, None], "t c h w -> c t h w")
+            if sample.ndim == 3
+            else rearrange(sample, "t c h w -> c t h w")
+        )
         sample = sample[None, :]
 
         return sample
@@ -363,7 +396,10 @@ class SeedVRRunner(DefaultRunner):
         """
         # Read input video/image
         # Check video_path first (priority for SR task)
-        if "video_path" in self.input_info.__dataclass_fields__ and self.input_info.video_path:
+        if (
+            "video_path" in self.input_info.__dataclass_fields__
+            and self.input_info.video_path
+        ):
             video_path = self.input_info.video_path
             from torchvision.io import read_video
 
@@ -379,7 +415,10 @@ class SeedVRRunner(DefaultRunner):
 
             img = video.to(GET_DTYPE()).div_(255.0).to(self.init_device)
 
-        elif "image_path" in self.input_info.__dataclass_fields__ and self.input_info.image_path:
+        elif (
+            "image_path" in self.input_info.__dataclass_fields__
+            and self.input_info.image_path
+        ):
             from PIL import Image
 
             img_path = self.input_info.image_path
@@ -425,7 +464,13 @@ class SeedVRRunner(DefaultRunner):
         gc.collect()
 
         first_latent = cond_latents[0]
-        latent_shape = [1, first_latent.shape[-1], first_latent.shape[0], first_latent.shape[1], first_latent.shape[2]]
+        latent_shape = [
+            1,
+            first_latent.shape[-1],
+            first_latent.shape[0],
+            first_latent.shape[1],
+            first_latent.shape[2],
+        ]
 
         return {
             "x": cond_latents[0],
@@ -458,7 +503,9 @@ class SeedVRRunner(DefaultRunner):
         self._sr_fps = fps
         self._sr_pts = pts
         segments = self._build_sr_segments(total_frames, seg_len, overlap)
-        logger.info(f"[SeedVRRunner] SR segmenting: total_frames={total_frames}, seg_len={seg_len}, overlap={overlap}, segments={len(segments)}")
+        logger.info(
+            f"[SeedVRRunner] SR segmenting: total_frames={total_frames}, seg_len={seg_len}, overlap={overlap}, segments={len(segments)}"
+        )
 
         raw_segments = []
         original_save_path = self.input_info.save_result_path
@@ -468,7 +515,9 @@ class SeedVRRunner(DefaultRunner):
             self.input_info.return_result_tensor = True
 
             for idx, (start_idx, end_idx) in enumerate(segments):
-                logger.info(f"[SeedVRRunner] Processing segment {idx + 1}/{len(segments)}: frames {start_idx}:{end_idx}")
+                logger.info(
+                    f"[SeedVRRunner] Processing segment {idx + 1}/{len(segments)}: frames {start_idx}:{end_idx}"
+                )
                 self._sr_segment = (start_idx, end_idx)
                 self.inputs = self.run_input_encoder()
                 raw = self._run_sr_single_segment()

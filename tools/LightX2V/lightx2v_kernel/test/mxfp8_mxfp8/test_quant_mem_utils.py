@@ -1,6 +1,7 @@
-from lib.smart_config import smart_config
 import torch
 from lightx2v_kernel.gemm import scaled_mxfp8_quant
+
+from lib.smart_config import smart_config
 
 
 def quantize_fp8(x):

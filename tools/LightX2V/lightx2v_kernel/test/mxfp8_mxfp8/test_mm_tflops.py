@@ -1,7 +1,7 @@
-from lib.smart_config import smart_config
 import torch
 from lightx2v_kernel.gemm import cutlass_scaled_mxfp8_mm
 
+from lib.smart_config import smart_config
 
 """
 input_shape = (1024, 2048)
@@ -17,7 +17,14 @@ bias = None
 
 
 def test_mm(input_tensor_quant, weight, input_tensor_scale, weight_scale, alpha, bias):
-    output_tensor = cutlass_scaled_mxfp8_mm(input_tensor_quant, weight, input_tensor_scale, weight_scale, alpha=alpha, bias=bias)
+    output_tensor = cutlass_scaled_mxfp8_mm(
+        input_tensor_quant,
+        weight,
+        input_tensor_scale,
+        weight_scale,
+        alpha=alpha,
+        bias=bias,
+    )
     return output_tensor
 
 
@@ -27,17 +34,29 @@ def test_tflops(input_shape, weight_shape, num_warmup=10, num_runs=100):
     """
 
     # 创建输入数据
-    input_tensor_quant = (torch.rand((input_shape[0], input_shape[1]), device="cuda") * 10).to(torch.uint8)
-    weight = (torch.rand((weight_shape[0], weight_shape[1]), device="cuda") * 10).to(torch.uint8)
+    input_tensor_quant = (
+        torch.rand((input_shape[0], input_shape[1]), device="cuda") * 10
+    ).to(torch.uint8)
+    weight = (torch.rand((weight_shape[0], weight_shape[1]), device="cuda") * 10).to(
+        torch.uint8
+    )
 
-    input_tensor_scale = torch.rand(((input_shape[0] + 128 - 1) // 128) * 128, (input_shape[1] // 32 + 4 - 1) // 4 * 4, device="cuda").to(torch.float8_e8m0fnu)
-    weight_scale = torch.rand(weight_shape[0], weight_shape[1] // 32, device="cuda").to(torch.float8_e8m0fnu)
+    input_tensor_scale = torch.rand(
+        ((input_shape[0] + 128 - 1) // 128) * 128,
+        (input_shape[1] // 32 + 4 - 1) // 4 * 4,
+        device="cuda",
+    ).to(torch.float8_e8m0fnu)
+    weight_scale = torch.rand(weight_shape[0], weight_shape[1] // 32, device="cuda").to(
+        torch.float8_e8m0fnu
+    )
     alpha = torch.tensor(1.0, device="cuda", dtype=torch.float32)
     bias = None
 
     # 预热GPU
     for _ in range(num_warmup):
-        test_mm(input_tensor_quant, weight, input_tensor_scale, weight_scale, alpha, bias)
+        test_mm(
+            input_tensor_quant, weight, input_tensor_scale, weight_scale, alpha, bias
+        )
 
     # 同步GPU
     torch.cuda.synchronize()
@@ -49,7 +68,9 @@ def test_tflops(input_shape, weight_shape, num_warmup=10, num_runs=100):
     # 测量时间
     start_event.record()
     for _ in range(num_runs):
-        result = test_mm(input_tensor_quant, weight, input_tensor_scale, weight_scale, alpha, bias)
+        result = test_mm(
+            input_tensor_quant, weight, input_tensor_scale, weight_scale, alpha, bias
+        )
     end_event.record()
 
     # 同步并计算时间

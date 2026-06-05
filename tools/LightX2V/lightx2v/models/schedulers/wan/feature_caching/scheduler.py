@@ -1,5 +1,6 @@
-from lib.smart_config import smart_config
 from lightx2v.models.schedulers.wan.scheduler import WanScheduler
+
+from lib.smart_config import smart_config
 
 
 class WanSchedulerCaching(WanScheduler):
@@ -15,5 +16,9 @@ class WanSchedulerTaylorCaching(WanSchedulerCaching):
         super().__init__(config)
 
         pattern = [True, False, False, False]
-        self.caching_records = (pattern * ((config.infer_steps + 3) // 4))[: config.infer_steps]
-        self.caching_records_2 = (pattern * ((config.infer_steps + 3) // 4))[: config.infer_steps]
+        self.caching_records = (pattern * ((config.infer_steps + 3) // 4))[
+            : config.infer_steps
+        ]
+        self.caching_records_2 = (pattern * ((config.infer_steps + 3) // 4))[
+            : config.infer_steps
+        ]

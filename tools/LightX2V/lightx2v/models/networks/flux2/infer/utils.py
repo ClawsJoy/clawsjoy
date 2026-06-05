@@ -1,7 +1,8 @@
-from lib.smart_config import smart_config
 from typing import Tuple
 
 import torch
+
+from lib.smart_config import smart_config
 
 try:
     from flashinfer.rope import apply_rope_with_cos_sin_cache_inplace

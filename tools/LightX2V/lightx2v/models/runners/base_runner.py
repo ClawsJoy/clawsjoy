@@ -1,11 +1,11 @@
-from lib.smart_config import smart_config
 import os
 from abc import ABC
 
 import torch
 import torch.distributed as dist
-
 from lightx2v_platform.base.global_var import AI_DEVICE
+
+from lib.smart_config import smart_config
 
 
 class BaseRunner(ABC):
@@ -52,9 +52,13 @@ class BaseRunner(ABC):
             if decoder_bootstrap_room is not None:
                 disagg_config["decoder_bootstrap_room"] = decoder_bootstrap_room
 
-            phase1_receiver_engine_rank = _safe_int("disagg_phase1_receiver_engine_rank")
+            phase1_receiver_engine_rank = _safe_int(
+                "disagg_phase1_receiver_engine_rank"
+            )
             if phase1_receiver_engine_rank is not None:
-                self.config["disagg_phase1_receiver_engine_rank"] = phase1_receiver_engine_rank
+                self.config["disagg_phase1_receiver_engine_rank"] = (
+                    phase1_receiver_engine_rank
+                )
 
             for flat_key, disagg_key in (
                 ("disagg_phase1_receiver_engine_rank", "receiver_engine_rank"),
@@ -130,7 +134,9 @@ class BaseRunner(ABC):
         """
         pass
 
-    def get_encoder_output_i2v(self, clip_encoder_out, vae_encoder_out, text_encoder_output, img):
+    def get_encoder_output_i2v(
+        self, clip_encoder_out, vae_encoder_out, text_encoder_output, img
+    ):
         """Combine encoder outputs for i2v task
 
         Args:
@@ -189,8 +195,12 @@ class BaseRunner(ABC):
         if dist.is_initialized():
             rank = dist.get_rank()
             world_size = dist.get_world_size()
-        stop_rank = int(os.getenv("WORKER_RANK", "0")) % world_size  # same as worker hub target_rank
-        pause_rank = int(os.getenv("READER_RANK", "0")) % world_size  # same as va_reader target_rank
+        stop_rank = (
+            int(os.getenv("WORKER_RANK", "0")) % world_size
+        )  # same as worker hub target_rank
+        pause_rank = (
+            int(os.getenv("READER_RANK", "0")) % world_size
+        )  # same as va_reader target_rank
 
         stopped, paused = 0, 0
         if rank == stop_rank and hasattr(self, "stop_signal") and self.stop_signal:
@@ -217,10 +227,14 @@ class BaseRunner(ABC):
                 self.end_run()
             except Exception as e:
                 print(f"end_run failed: {e}")
-            raise Exception(f"find rank: {rank} stop_signal, stop running, it's an expected behavior")
+            raise Exception(
+                f"find rank: {rank} stop_signal, stop running, it's an expected behavior"
+            )
         if paused == 1:
             try:
                 self.end_run()
             except Exception as e:
                 print(f"end_run failed: {e}")
-            raise Exception(f"find rank: {rank} pause_signal, pause running, it's an expected behavior")
+            raise Exception(
+                f"find rank: {rank} pause_signal, pause running, it's an expected behavior"
+            )

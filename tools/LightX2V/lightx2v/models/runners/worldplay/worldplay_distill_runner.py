@@ -1,17 +1,19 @@
-from lib.smart_config import smart_config
 import gc
 import os
 
 import torch
-from loguru import logger
-
 from lightx2v.models.networks.worldplay.model import WorldPlayModel
 from lightx2v.models.networks.worldplay.pose_utils import pose_to_input
-from lightx2v.models.runners.hunyuan_video.hunyuan_video_15_runner import HunyuanVideo15Runner
+from lightx2v.models.runners.hunyuan_video.hunyuan_video_15_runner import (
+    HunyuanVideo15Runner,
+)
 from lightx2v.models.schedulers.worldplay.scheduler import WorldPlayDistillScheduler
 from lightx2v.utils.profiler import ProfilingContext4DebugL2
 from lightx2v.utils.registry_factory import RUNNER_REGISTER
 from lightx2v_platform.base.global_var import AI_DEVICE
+from loguru import logger
+
+from lib.smart_config import smart_config
 
 torch_device_module = getattr(torch, AI_DEVICE)
 
@@ -48,7 +50,9 @@ class WorldPlayDistillRunner(HunyuanVideo15Runner):
         self.scheduler = WorldPlayDistillScheduler(self.config)
 
         if self.sr_version is not None:
-            from lightx2v.models.schedulers.hunyuan_video.scheduler import HunyuanVideo15SRScheduler
+            from lightx2v.models.schedulers.hunyuan_video.scheduler import (
+                HunyuanVideo15SRScheduler,
+            )
 
             self.scheduler_sr = HunyuanVideo15SRScheduler(self.config_sr)
         else:
@@ -66,9 +70,13 @@ class WorldPlayDistillRunner(HunyuanVideo15Runner):
         if self.sr_version is not None:
             from lightx2v.models.networks.hunyuan_video.model import HunyuanVideo15Model
 
-            self.config_sr["transformer_model_path"] = os.path.join(os.path.dirname(self.config.transformer_model_path), self.sr_version)
+            self.config_sr["transformer_model_path"] = os.path.join(
+                os.path.dirname(self.config.transformer_model_path), self.sr_version
+            )
             self.config_sr["is_sr_running"] = True
-            model_sr = HunyuanVideo15Model(self.config_sr["model_path"], self.config_sr, self.init_device)
+            model_sr = HunyuanVideo15Model(
+                self.config_sr["model_path"], self.config_sr, self.init_device
+            )
             self.config_sr["is_sr_running"] = False
         else:
             model_sr = None
@@ -83,9 +91,15 @@ class WorldPlayDistillRunner(HunyuanVideo15Runner):
         img_ori = self.read_image_input(self.input_info.image_path)
         if self.sr_version and self.config_sr["is_sr_running"]:
             self.latent_sr_shape = self.get_sr_latent_shape_with_target_hw()
-        self.input_info.latent_shape = self.get_latent_shape_with_target_hw(origin_size=img_ori.size)
+        self.input_info.latent_shape = self.get_latent_shape_with_target_hw(
+            origin_size=img_ori.size
+        )
 
-        siglip_output, siglip_mask = self.run_image_encoder(img_ori) if self.config.get("use_image_encoder", True) else (None, None)
+        siglip_output, siglip_mask = (
+            self.run_image_encoder(img_ori)
+            if self.config.get("use_image_encoder", True)
+            else (None, None)
+        )
         cond_latents = self.run_vae_encoder(img_ori)
         text_encoder_output = self.run_text_encoder(self.input_info)
 
@@ -117,8 +131,18 @@ class WorldPlayDistillRunner(HunyuanVideo15Runner):
         text_encoder_output = self.run_text_encoder(self.input_info)
 
         # vision_states is all zero for t2v
-        siglip_output = torch.zeros(1, self.vision_num_semantic_tokens, self.config["hidden_size"], dtype=torch.bfloat16).to(AI_DEVICE)
-        siglip_mask = torch.zeros(1, self.vision_num_semantic_tokens, dtype=torch.bfloat16, device=torch.device(AI_DEVICE))
+        siglip_output = torch.zeros(
+            1,
+            self.vision_num_semantic_tokens,
+            self.config["hidden_size"],
+            dtype=torch.bfloat16,
+        ).to(AI_DEVICE)
+        siglip_mask = torch.zeros(
+            1,
+            self.vision_num_semantic_tokens,
+            dtype=torch.bfloat16,
+            device=torch.device(AI_DEVICE),
+        )
 
         # Process pose input if available
         pose_output = None
@@ -166,7 +190,9 @@ class WorldPlayDistillRunner(HunyuanVideo15Runner):
                 "action": action,
             }
         except Exception as e:
-            logger.warning(f"Failed to process pose input: {e}. Continuing without pose conditioning.")
+            logger.warning(
+                f"Failed to process pose input: {e}. Continuing without pose conditioning."
+            )
             return None
 
     def init_run(self):
@@ -174,7 +200,9 @@ class WorldPlayDistillRunner(HunyuanVideo15Runner):
         self.gen_video_final = None
         self.get_video_segment_num()
 
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             self.model = self.load_transformer()
             self.model.set_scheduler(self.scheduler)
 

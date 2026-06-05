@@ -1,6 +1,7 @@
-from lib.smart_config import smart_config
 from lightx2v.common.modules.weight_module import WeightModule
 from lightx2v.utils.registry_factory import MM_WEIGHT_REGISTER
+
+from lib.smart_config import smart_config
 
 
 class Flux2PostWeights(WeightModule):
@@ -10,7 +11,9 @@ class Flux2PostWeights(WeightModule):
         super().__init__()
         self.config = config
         self.inner_dim = config["num_attention_heads"] * config["attention_head_dim"]
-        self.out_channels = config.get("transformer_in_channels", config.get("in_channels", 64))
+        self.out_channels = config.get(
+            "transformer_in_channels", config.get("in_channels", 64)
+        )
         self.patch_size = config.get("patch_size", 1)
         self.mm_type = config.get("dit_quant_scheme", "Default")
 

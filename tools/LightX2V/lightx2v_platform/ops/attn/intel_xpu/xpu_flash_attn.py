@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 Intel XPU Flash Attention operator for LightX2V.
 
@@ -15,7 +16,6 @@ import warnings
 
 import torch
 import torch.nn.functional as F
-
 from lightx2v.utils.registry_factory import ATTN_WEIGHT_REGISTER
 from lightx2v_platform.ops.attn.template import AttnWeightTemplate
 

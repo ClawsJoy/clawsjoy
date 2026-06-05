@@ -1,8 +1,15 @@
-from lib.smart_config import smart_config
 from lightx2v.common.modules.weight_module import WeightModule
-from lightx2v.models.networks.wan.weights.transformer_weights import WanTransformerWeights
+from lightx2v.models.networks.wan.weights.transformer_weights import (
+    WanTransformerWeights,
+)
 
-from ._shared import MotusJointExpertBlockWeights, MotusJointExpertTransformerWeights, load_prefixed_submodules
+from lib.smart_config import smart_config
+
+from ._shared import (
+    MotusJointExpertBlockWeights,
+    MotusJointExpertTransformerWeights,
+    load_prefixed_submodules,
+)
 from .pre_weights import build_motus_expert_configs
 
 

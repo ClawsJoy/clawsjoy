@@ -1,10 +1,11 @@
-from lib.smart_config import smart_config
 import ctypes
 import os
 import platform
+
 from lightx2v_kernel import common_ops  # noqa: F401
 from lightx2v_kernel.version import __version__
 
+from lib.smart_config import smart_config
 
 SYSTEM_ARCH = platform.machine()
 

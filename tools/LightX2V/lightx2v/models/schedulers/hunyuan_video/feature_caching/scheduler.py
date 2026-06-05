@@ -1,5 +1,6 @@
-from lib.smart_config import smart_config
 from lightx2v.models.schedulers.hunyuan_video.scheduler import HunyuanVideo15Scheduler
+
+from lib.smart_config import smart_config
 
 
 class HunyuanVideo15SchedulerCaching(HunyuanVideo15Scheduler):

@@ -1,7 +1,8 @@
-from lib.smart_config import smart_config
 from __future__ import annotations
 
 from lightx2v.disagg.scheduler.base import SchedulingPolicy
+
+from lib.smart_config import smart_config
 
 
 class RoundRobinPolicy(SchedulingPolicy):

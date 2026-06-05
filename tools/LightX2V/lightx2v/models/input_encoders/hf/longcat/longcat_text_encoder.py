@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import gc
 import os
 import re
@@ -6,8 +5,10 @@ import re
 import torch
 from loguru import logger
 
+from lib.smart_config import smart_config
+
 try:
-    from transformers import Qwen2Tokenizer, Qwen2_5_VLForConditionalGeneration
+    from transformers import Qwen2_5_VLForConditionalGeneration, Qwen2Tokenizer
 except ImportError:
     Qwen2Tokenizer = None
     Qwen2_5_VLForConditionalGeneration = None
@@ -79,7 +80,9 @@ class LongCatImageTextEncoder:
             "prompt_template_encode_prefix",
             "<|im_start|>system\nAs an image captioning expert, generate a descriptive text prompt based on an image content, suitable for input to a text-to-image model.<|im_end|>\n<|im_start|>user\n",
         )
-        self.prompt_template_encode_suffix = config.get("prompt_template_encode_suffix", "<|im_end|>\n<|im_start|>assistant\n")
+        self.prompt_template_encode_suffix = config.get(
+            "prompt_template_encode_suffix", "<|im_end|>\n<|im_start|>assistant\n"
+        )
 
         self.cpu_offload = config.get("cpu_offload", False)
         self.dtype = GET_DTYPE()
@@ -89,11 +92,17 @@ class LongCatImageTextEncoder:
     def load(self):
         """Load the text encoder and tokenizer."""
         text_encoder_path = os.path.join(self.config["model_path"], "text_encoder")
-        tokenizer_path = self.config.get("tokenizer_path", os.path.join(self.config["model_path"], "tokenizer"))
-        processor_path = self.config.get("processor_path", os.path.join(self.config["model_path"], "text_processor"))
+        tokenizer_path = self.config.get(
+            "tokenizer_path", os.path.join(self.config["model_path"], "tokenizer")
+        )
+        processor_path = self.config.get(
+            "processor_path", os.path.join(self.config["model_path"], "text_processor")
+        )
 
         # Load text encoder
-        self.text_encoder = Qwen2_5_VLForConditionalGeneration.from_pretrained(text_encoder_path, torch_dtype=self.dtype)
+        self.text_encoder = Qwen2_5_VLForConditionalGeneration.from_pretrained(
+            text_encoder_path, torch_dtype=self.dtype
+        )
 
         if not self.cpu_offload:
             self.text_encoder = self.text_encoder.to(AI_DEVICE)
@@ -118,15 +127,21 @@ class LongCatImageTextEncoder:
                 if matched:
                     # Character-level tokenization for quoted text
                     for sub_word in clean_prompt_sub:
-                        tokens = self.tokenizer(sub_word, add_special_tokens=False)["input_ids"]
+                        tokens = self.tokenizer(sub_word, add_special_tokens=False)[
+                            "input_ids"
+                        ]
                         all_tokens.extend(tokens)
                 else:
                     # Normal tokenization
-                    tokens = self.tokenizer(clean_prompt_sub, add_special_tokens=False)["input_ids"]
+                    tokens = self.tokenizer(clean_prompt_sub, add_special_tokens=False)[
+                        "input_ids"
+                    ]
                     all_tokens.extend(tokens)
 
             if len(all_tokens) > self.tokenizer_max_length:
-                logger.warning(f"Input truncated from {len(all_tokens)} to {self.tokenizer_max_length} tokens")
+                logger.warning(
+                    f"Input truncated from {len(all_tokens)} to {self.tokenizer_max_length} tokens"
+                )
                 all_tokens = all_tokens[: self.tokenizer_max_length]
 
             batch_all_tokens.append(all_tokens)
@@ -151,9 +166,14 @@ class LongCatImageTextEncoder:
         for each_prompt in prompt:
             language = get_prompt_language(each_prompt)
             if language == "zh":
-                question = SYSTEM_PROMPT_ZH + f"\n用户输入为：{each_prompt}\n改写后的prompt为："
+                question = (
+                    SYSTEM_PROMPT_ZH
+                    + f"\n用户输入为：{each_prompt}\n改写后的prompt为："
+                )
             else:
-                question = SYSTEM_PROMPT_EN + f"\nUser Input: {each_prompt}\nRewritten prompt:"
+                question = (
+                    SYSTEM_PROMPT_EN + f"\nUser Input: {each_prompt}\nRewritten prompt:"
+                )
 
             message = [
                 {
@@ -161,17 +181,30 @@ class LongCatImageTextEncoder:
                     "content": [{"type": "text", "text": question}],
                 }
             ]
-            text = self.processor.apply_chat_template(message, tokenize=False, add_generation_prompt=True)
+            text = self.processor.apply_chat_template(
+                message, tokenize=False, add_generation_prompt=True
+            )
             all_text.append(text)
 
-        inputs = self.processor(text=all_text, padding=True, return_tensors="pt").to(device)
+        inputs = self.processor(text=all_text, padding=True, return_tensors="pt").to(
+            device
+        )
 
         if self.cpu_offload:
             self.text_encoder.to(device)
 
-        generated_ids = self.text_encoder.generate(**inputs, max_new_tokens=self.tokenizer_max_length)
-        generated_ids_trimmed = [out_ids[len(in_ids) :] for in_ids, out_ids in zip(inputs.input_ids, generated_ids)]
-        output_text = self.processor.batch_decode(generated_ids_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False)
+        generated_ids = self.text_encoder.generate(
+            **inputs, max_new_tokens=self.tokenizer_max_length
+        )
+        generated_ids_trimmed = [
+            out_ids[len(in_ids) :]
+            for in_ids, out_ids in zip(inputs.input_ids, generated_ids)
+        ]
+        output_text = self.processor.batch_decode(
+            generated_ids_trimmed,
+            skip_special_tokens=True,
+            clean_up_tokenization_spaces=False,
+        )
 
         if self.cpu_offload:
             self.text_encoder.to("cpu")
@@ -207,17 +240,29 @@ class LongCatImageTextEncoder:
         )
 
         # Tokenize prefix and suffix
-        prefix_tokens = self.tokenizer(self.prompt_template_encode_prefix, add_special_tokens=False)["input_ids"]
-        suffix_tokens = self.tokenizer(self.prompt_template_encode_suffix, add_special_tokens=False)["input_ids"]
+        prefix_tokens = self.tokenizer(
+            self.prompt_template_encode_prefix, add_special_tokens=False
+        )["input_ids"]
+        suffix_tokens = self.tokenizer(
+            self.prompt_template_encode_suffix, add_special_tokens=False
+        )["input_ids"]
         prefix_len = len(prefix_tokens)
         suffix_len = len(suffix_tokens)
 
         # Create masks for prefix and suffix
-        prefix_tokens_mask = torch.tensor([1] * len(prefix_tokens), dtype=text_tokens_and_mask.attention_mask[0].dtype)
-        suffix_tokens_mask = torch.tensor([1] * len(suffix_tokens), dtype=text_tokens_and_mask.attention_mask[0].dtype)
+        prefix_tokens_mask = torch.tensor(
+            [1] * len(prefix_tokens), dtype=text_tokens_and_mask.attention_mask[0].dtype
+        )
+        suffix_tokens_mask = torch.tensor(
+            [1] * len(suffix_tokens), dtype=text_tokens_and_mask.attention_mask[0].dtype
+        )
 
-        prefix_tokens = torch.tensor(prefix_tokens, dtype=text_tokens_and_mask.input_ids.dtype)
-        suffix_tokens = torch.tensor(suffix_tokens, dtype=text_tokens_and_mask.input_ids.dtype)
+        prefix_tokens = torch.tensor(
+            prefix_tokens, dtype=text_tokens_and_mask.input_ids.dtype
+        )
+        suffix_tokens = torch.tensor(
+            suffix_tokens, dtype=text_tokens_and_mask.input_ids.dtype
+        )
 
         batch_size = text_tokens_and_mask.input_ids.size(0)
 
@@ -228,8 +273,14 @@ class LongCatImageTextEncoder:
         suffix_mask_batch = suffix_tokens_mask.unsqueeze(0).expand(batch_size, -1)
 
         # Concatenate: [prefix, content, suffix]
-        input_ids = torch.cat((prefix_tokens_batch, text_tokens_and_mask.input_ids, suffix_tokens_batch), dim=-1)
-        attention_mask = torch.cat((prefix_mask_batch, text_tokens_and_mask.attention_mask, suffix_mask_batch), dim=-1)
+        input_ids = torch.cat(
+            (prefix_tokens_batch, text_tokens_and_mask.input_ids, suffix_tokens_batch),
+            dim=-1,
+        )
+        attention_mask = torch.cat(
+            (prefix_mask_batch, text_tokens_and_mask.attention_mask, suffix_mask_batch),
+            dim=-1,
+        )
 
         input_ids = input_ids.to(AI_DEVICE)
         attention_mask = attention_mask.to(AI_DEVICE)
@@ -273,7 +324,10 @@ class LongCatImageTextEncoder:
 
         # Load processor if not already loaded
         if not hasattr(self, "processor") or self.processor is None:
-            processor_path = self.config.get("processor_path", os.path.join(self.config["model_path"], "text_processor"))
+            processor_path = self.config.get(
+                "processor_path",
+                os.path.join(self.config["model_path"], "text_processor"),
+            )
             self.processor = Qwen2VLProcessor.from_pretrained(processor_path)
 
         # Process image using the VL processor's image processor
@@ -302,12 +356,18 @@ class LongCatImageTextEncoder:
         # Replace <|image_pad|> with actual number of image tokens
         prefix_text = EDIT_PROMPT_TEMPLATE_PREFIX
         image_token = "<|image_pad|>"
-        prefix_text = prefix_text.replace(image_token, "<|placeholder|>" * num_image_tokens)
+        prefix_text = prefix_text.replace(
+            image_token, "<|placeholder|>" * num_image_tokens
+        )
         prefix_text = prefix_text.replace("<|placeholder|>", image_token)
 
         # Tokenize prefix and suffix
-        prefix_tokens = self.tokenizer(prefix_text, add_special_tokens=False)["input_ids"]
-        suffix_tokens = self.tokenizer(EDIT_PROMPT_TEMPLATE_SUFFIX, add_special_tokens=False)["input_ids"]
+        prefix_tokens = self.tokenizer(prefix_text, add_special_tokens=False)[
+            "input_ids"
+        ]
+        suffix_tokens = self.tokenizer(
+            EDIT_PROMPT_TEMPLATE_SUFFIX, add_special_tokens=False
+        )["input_ids"]
 
         # Find vision_start position to know where image tokens start
         vision_start_token_id = self.tokenizer.convert_tokens_to_ids("<|vision_start|>")
@@ -315,15 +375,32 @@ class LongCatImageTextEncoder:
         suffix_len = len(suffix_tokens)
 
         # Create masks
-        prefix_tokens_mask = torch.tensor([1] * len(prefix_tokens), dtype=text_tokens_and_mask.attention_mask[0].dtype)
-        suffix_tokens_mask = torch.tensor([1] * len(suffix_tokens), dtype=text_tokens_and_mask.attention_mask[0].dtype)
+        prefix_tokens_mask = torch.tensor(
+            [1] * len(prefix_tokens), dtype=text_tokens_and_mask.attention_mask[0].dtype
+        )
+        suffix_tokens_mask = torch.tensor(
+            [1] * len(suffix_tokens), dtype=text_tokens_and_mask.attention_mask[0].dtype
+        )
 
-        prefix_tokens = torch.tensor(prefix_tokens, dtype=text_tokens_and_mask.input_ids.dtype)
-        suffix_tokens = torch.tensor(suffix_tokens, dtype=text_tokens_and_mask.input_ids.dtype)
+        prefix_tokens = torch.tensor(
+            prefix_tokens, dtype=text_tokens_and_mask.input_ids.dtype
+        )
+        suffix_tokens = torch.tensor(
+            suffix_tokens, dtype=text_tokens_and_mask.input_ids.dtype
+        )
 
         # Concatenate: [prefix_with_image, content, suffix]
-        input_ids = torch.cat((prefix_tokens, text_tokens_and_mask.input_ids[0], suffix_tokens), dim=-1)
-        attention_mask = torch.cat((prefix_tokens_mask, text_tokens_and_mask.attention_mask[0], suffix_tokens_mask), dim=-1)
+        input_ids = torch.cat(
+            (prefix_tokens, text_tokens_and_mask.input_ids[0], suffix_tokens), dim=-1
+        )
+        attention_mask = torch.cat(
+            (
+                prefix_tokens_mask,
+                text_tokens_and_mask.attention_mask[0],
+                suffix_tokens_mask,
+            ),
+            dim=-1,
+        )
 
         input_ids = input_ids.unsqueeze(0).to(AI_DEVICE)
         attention_mask = attention_mask.unsqueeze(0).to(AI_DEVICE)

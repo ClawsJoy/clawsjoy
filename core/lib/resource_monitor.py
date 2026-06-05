@@ -3,10 +3,8 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
-
-from core.lib.unified_config import unified_config
 
 from core.lib.unified_config import unified_config
 
@@ -20,6 +18,7 @@ from core.lib.config_loader import config
 
 try:
     import psutil
+
     PSUTIL_AVAILABLE = True
 except ImportError:
     PSUTIL_AVAILABLE = False
@@ -27,16 +26,16 @@ except ImportError:
 
 class ResourceMonitor:
     VERSION = "1.0.01"
-    
+
     def __init__(self):
-        self.enabled = config.get('optimization.enable_resource_throttle', True)
-        self.cpu_threshold = config.get('thresholds.cpu_threshold', 80)
-        self.memory_threshold = config.get('thresholds.memory_threshold', 85)
-        self.check_interval = config.get('resources.check_interval', 60)
-        self.throttle_enabled = config.get('resources.throttle_when_high_load', True)
+        self.enabled = config.get("optimization.enable_resource_throttle", True)
+        self.cpu_threshold = config.get("thresholds.cpu_threshold", 80)
+        self.memory_threshold = config.get("thresholds.memory_threshold", 85)
+        self.check_interval = config.get("resources.check_interval", 60)
+        self.throttle_enabled = config.get("resources.throttle_when_high_load", True)
         self._last_check = 0
         self._last_status = None
-    
+
     def get_status(self) -> Dict:
         if not PSUTIL_AVAILABLE:
             return {"healthy": True, "error": "psutil not installed"}
@@ -45,20 +44,22 @@ class ResourceMonitor:
             cpu = psutil.cpu_percent(interval=1)
             memory = psutil.virtual_memory()
 
-            healthy = cpu < self.cpu_threshold and memory.percent < self.memory_threshold
+            healthy = (
+                cpu < self.cpu_threshold and memory.percent < self.memory_threshold
+            )
 
             status = {
                 "cpu_percent": cpu,
                 "memory_percent": memory.percent,
                 "healthy": healthy,
-                "timestamp": time.time()
+                "timestamp": time.time(),
             }
             self._last_status = status
             self._last_check = time.time()
             return status
         except Exception as e:
             return {"healthy": True, "error": str(e)}
-    
+
     def should_throttle(self) -> bool:
         if not self.enabled or not self.throttle_enabled:
             return False
@@ -68,16 +69,16 @@ class ResourceMonitor:
             self.get_status()
 
         if self._last_status:
-            return not self._last_status.get('healthy', True)
+            return not self._last_status.get("healthy", True)
         return False
-    
+
     def get_status_report(self) -> Dict:
         status = self.get_status()
         return {
             "version": self.VERSION,
             "enabled": self.enabled,
             "should_throttle": self.should_throttle(),
-            "monitor": status
+            "monitor": status,
         }
 
 

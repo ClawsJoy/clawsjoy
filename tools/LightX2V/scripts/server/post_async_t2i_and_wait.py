@@ -1,10 +1,11 @@
-from lib.smart_config import smart_config
 import argparse
 import time
 from pathlib import Path
 from typing import List, Optional
 
 import requests
+
+from lib.smart_config import smart_config
 
 
 def submit_t2i_task(
@@ -33,7 +34,9 @@ def submit_t2i_task(
     submit_url = f"{base_url.rstrip('/')}/v1/tasks/image/"
     response = requests.post(submit_url, json=payload, timeout=30)
     if response.status_code != 200:
-        raise RuntimeError(f"Submit task failed ({response.status_code}): {response.text}")
+        raise RuntimeError(
+            f"Submit task failed ({response.status_code}): {response.text}"
+        )
 
     data = response.json()
     task_id = data.get("task_id")
@@ -42,14 +45,18 @@ def submit_t2i_task(
     return task_id
 
 
-def wait_task_done(base_url: str, task_id: str, timeout_seconds: int, poll_interval: float) -> dict:
+def wait_task_done(
+    base_url: str, task_id: str, timeout_seconds: int, poll_interval: float
+) -> dict:
     status_url = f"{base_url.rstrip('/')}/v1/tasks/{task_id}/status"
     deadline = time.time() + timeout_seconds
 
     while time.time() < deadline:
         response = requests.get(status_url, timeout=15)
         if response.status_code != 200:
-            raise RuntimeError(f"Get task status failed ({response.status_code}): {response.text}")
+            raise RuntimeError(
+                f"Get task status failed ({response.status_code}): {response.text}"
+            )
 
         status = response.json()
         task_status = status.get("status")
@@ -58,7 +65,9 @@ def wait_task_done(base_url: str, task_id: str, timeout_seconds: int, poll_inter
         if task_status == "completed":
             return status
         if task_status in ("failed", "cancelled"):
-            raise RuntimeError(f"Task ended with status={task_status}, detail={status.get('error')}")
+            raise RuntimeError(
+                f"Task ended with status={task_status}, detail={status.get('error')}"
+            )
 
         time.sleep(poll_interval)
 
@@ -69,7 +78,9 @@ def download_result(base_url: str, task_id: str, output: str) -> Path:
     result_url = f"{base_url.rstrip('/')}/v1/tasks/{task_id}/result"
     response = requests.get(result_url, timeout=120)
     if response.status_code != 200:
-        raise RuntimeError(f"Download result failed ({response.status_code}): {response.text}")
+        raise RuntimeError(
+            f"Download result failed ({response.status_code}): {response.text}"
+        )
 
     output_path = Path(output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -78,13 +89,24 @@ def download_result(base_url: str, task_id: str, output: str) -> Path:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Submit T2I task to /v1/tasks/image/ and wait for final result.")
-    parser.add_argument("--url", type=str, default="http://smart_config.HOST:8000", help="Server base url")
+    parser = argparse.ArgumentParser(
+        description="Submit T2I task to /v1/tasks/image/ and wait for final result."
+    )
+    parser.add_argument(
+        "--url",
+        type=str,
+        default="http://smart_config.HOST:8000",
+        help="Server base url",
+    )
     parser.add_argument("--prompt", type=str, required=True, help="Prompt text")
-    parser.add_argument("--negative_prompt", type=str, default="", help="Negative prompt text")
+    parser.add_argument(
+        "--negative_prompt", type=str, default="", help="Negative prompt text"
+    )
     parser.add_argument("--infer_steps", type=int, default=30, help="Inference steps")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
-    parser.add_argument("--aspect_ratio", type=str, default="16:9", help="Aspect ratio for image task")
+    parser.add_argument(
+        "--aspect_ratio", type=str, default="16:9", help="Aspect ratio for image task"
+    )
     parser.add_argument(
         "--target_shape",
         type=int,
@@ -92,11 +114,24 @@ def main():
         default=None,
         help="Target output shape, e.g. --target_shape 1536 2752",
     )
-    parser.add_argument("--save_result_path", type=str, default="", help="Server-side save_result_path")
-    parser.add_argument("--use_prompt_enhancer", action="store_true", help="Enable prompt enhancer")
-    parser.add_argument("--timeout_seconds", type=int, default=600, help="Polling timeout in seconds")
-    parser.add_argument("--poll_interval", type=float, default=2.0, help="Polling interval in seconds")
-    parser.add_argument("--output", type=str, default="save_results/t2i_result.png", help="Local output image path")
+    parser.add_argument(
+        "--save_result_path", type=str, default="", help="Server-side save_result_path"
+    )
+    parser.add_argument(
+        "--use_prompt_enhancer", action="store_true", help="Enable prompt enhancer"
+    )
+    parser.add_argument(
+        "--timeout_seconds", type=int, default=600, help="Polling timeout in seconds"
+    )
+    parser.add_argument(
+        "--poll_interval", type=float, default=2.0, help="Polling interval in seconds"
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default="save_results/t2i_result.png",
+        help="Local output image path",
+    )
 
     args = parser.parse_args()
 

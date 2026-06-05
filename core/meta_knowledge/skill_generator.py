@@ -3,32 +3,32 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
 import json
 import re
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 
 class SkillGenerator:
     """自动技能生成器"""
-    
+
     def __init__(self):
         self.combos_file = Path("data/skill_stats/successful_combos.json")
         self.generated_dir = Path("skills/auto_generated")
         self.generated_dir.mkdir(parents=True, exist_ok=True)
         self._load_combos()
-    
+
     def _load_combos(self):
         if self.combos_file.exists():
-            with open(self.combos_file, 'r') as f:
+            with open(self.combos_file, "r") as f:
                 self.combos = json.load(f)
         else:
             self.combos = {"combos": [], "stats": {}}
-    
+
     def analyze_and_generate(self):
         """分析成功组合，生成新技能"""
         generated = []
@@ -40,11 +40,7 @@ class SkillGenerator:
             if len(skills) >= 2:
                 key = "|".join(skills)
                 if key not in combo_frequency:
-                    combo_frequency[key] = {
-                        "skills": skills,
-                        "count": 0,
-                        "intents": []
-                    }
+                    combo_frequency[key] = {"skills": skills, "count": 0, "intents": []}
                 combo_frequency[key]["count"] += 1
                 combo_frequency[key]["intents"].append(combo.get("intent", ""))
 
@@ -53,21 +49,21 @@ class SkillGenerator:
             if data["count"] >= 3:
                 skill_name = self._generate_skill_name(data["skills"])
                 skill_code = self._generate_skill_code(skill_name, data["skills"])
-                
+
                 skill_file = self.generated_dir / f"{skill_name}.py"
                 if not skill_file.exists():
-                    with open(skill_file, 'w') as f:
+                    with open(skill_file, "w") as f:
                         f.write(skill_code)
                     generated.append(skill_name)
                     print(f"✨ 自动生成新技能: {skill_name}")
 
         return generated
-    
+
     def _generate_skill_name(self, skills: list) -> str:
         """生成技能名称"""
         base = skills[0] if skills else "auto"
         return f"auto_{base}_combo"
-    
+
     def _generate_skill_code(self, skill_name: str, skills: list) -> str:
         """生成技能代码"""
         return f'''"""

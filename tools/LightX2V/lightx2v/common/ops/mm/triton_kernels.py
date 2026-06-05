@@ -1,7 +1,9 @@
-from lib.smart_config import smart_config
 import torch
-from triton import Config, autotune, cdiv, jit, next_power_of_2
+from triton import Config, autotune, cdiv, jit
 from triton import language as tl
+from triton import next_power_of_2
+
+from lib.smart_config import smart_config
 
 _ordered_datatypes = [torch.int8, torch.float16, torch.bfloat16, torch.float32]
 
@@ -32,12 +34,16 @@ def int8_quantize_triton(x):
     scales = torch.empty(x.shape[0], dtype=torch.float32, device=x.device)
     BLOCK_SIZE = next_power_of_2(x_shape_orig[-1])
     grid = (x.shape[0],)
-    int8_quantize_kernel[grid](x, out, scales, x_shape_orig[-1], BLOCK_SIZE, num_warps=8)
+    int8_quantize_kernel[grid](
+        x, out, scales, x_shape_orig[-1], BLOCK_SIZE, num_warps=8
+    )
     return out.view(x_shape_orig), scales.view(x_shape_orig[:-1])
 
 
 @jit
-def fp8_quantize_kernel(X, OUT, SCALES, HDIM, BLOCK_SIZE: tl.constexpr, FP8_MAX_VAL: tl.constexpr):
+def fp8_quantize_kernel(
+    X, OUT, SCALES, HDIM, BLOCK_SIZE: tl.constexpr, FP8_MAX_VAL: tl.constexpr
+):
     row_idx = tl.program_id(0)
     x_ptr = X + row_idx * HDIM
     out_ptr = OUT + row_idx * HDIM
@@ -61,7 +67,15 @@ def fp8_quantize_triton(x):
     BLOCK_SIZE = next_power_of_2(x_shape_orig[-1])
     grid = (x.shape[0],)
     FP8_MAX = 448.0
-    fp8_quantize_kernel[grid](x, out_scaled, scales, x_shape_orig[-1], BLOCK_SIZE, FP8_MAX_VAL=FP8_MAX, num_warps=8)
+    fp8_quantize_kernel[grid](
+        x,
+        out_scaled,
+        scales,
+        x_shape_orig[-1],
+        BLOCK_SIZE,
+        FP8_MAX_VAL=FP8_MAX,
+        num_warps=8,
+    )
     quantized = out_scaled.to(torch.float8_e4m3fn)
     return quantized.view(x_shape_orig), scales.view(x_shape_orig[:-1])
 
@@ -90,10 +104,26 @@ def get_higher_dtype(a, b):
 
 @autotune(
     configs=[
-        Config({"BLOCK_M": 256, "BLOCK_N": 128, "BLOCK_K": 128, "SPLIT_K": 1}, num_stages=3, num_warps=8),
-        Config({"BLOCK_M": 128, "BLOCK_N": 128, "BLOCK_K": 128, "SPLIT_K": 1}, num_stages=4, num_warps=8),
-        Config({"BLOCK_M": 256, "BLOCK_N": 128, "BLOCK_K": 64, "SPLIT_K": 1}, num_stages=3, num_warps=8),
-        Config({"BLOCK_M": 256, "BLOCK_N": 128, "BLOCK_K": 64, "SPLIT_K": 1}, num_stages=4, num_warps=8),
+        Config(
+            {"BLOCK_M": 256, "BLOCK_N": 128, "BLOCK_K": 128, "SPLIT_K": 1},
+            num_stages=3,
+            num_warps=8,
+        ),
+        Config(
+            {"BLOCK_M": 128, "BLOCK_N": 128, "BLOCK_K": 128, "SPLIT_K": 1},
+            num_stages=4,
+            num_warps=8,
+        ),
+        Config(
+            {"BLOCK_M": 256, "BLOCK_N": 128, "BLOCK_K": 64, "SPLIT_K": 1},
+            num_stages=3,
+            num_warps=8,
+        ),
+        Config(
+            {"BLOCK_M": 256, "BLOCK_N": 128, "BLOCK_K": 64, "SPLIT_K": 1},
+            num_stages=4,
+            num_warps=8,
+        ),
     ],
     key=["M", "N", "K"],
 )
@@ -191,7 +221,9 @@ def int8_gemm_bias_kernel(
 
 
 # @torch.compiler.disable()
-def int8_gemm_bias_triton(a, b, bias, a_scales, b_scales, fuse_gelu=False, output_dtype=None):
+def int8_gemm_bias_triton(
+    a, b, bias, a_scales, b_scales, fuse_gelu=False, output_dtype=None
+):
     device = a.device
     # handle non-contiguous inputs if necessary
     a_orig_shape = a.shape
@@ -271,10 +303,26 @@ def int8_gemm_bias_triton(a, b, bias, a_scales, b_scales, fuse_gelu=False, outpu
 
 @autotune(
     configs=[
-        Config({"BLOCK_M": 256, "BLOCK_N": 128, "BLOCK_K": 128, "SPLIT_K": 1}, num_stages=3, num_warps=8),
-        Config({"BLOCK_M": 128, "BLOCK_N": 128, "BLOCK_K": 128, "SPLIT_K": 1}, num_stages=4, num_warps=8),
-        Config({"BLOCK_M": 256, "BLOCK_N": 128, "BLOCK_K": 64, "SPLIT_K": 1}, num_stages=3, num_warps=8),
-        Config({"BLOCK_M": 256, "BLOCK_N": 128, "BLOCK_K": 64, "SPLIT_K": 1}, num_stages=4, num_warps=8),
+        Config(
+            {"BLOCK_M": 256, "BLOCK_N": 128, "BLOCK_K": 128, "SPLIT_K": 1},
+            num_stages=3,
+            num_warps=8,
+        ),
+        Config(
+            {"BLOCK_M": 128, "BLOCK_N": 128, "BLOCK_K": 128, "SPLIT_K": 1},
+            num_stages=4,
+            num_warps=8,
+        ),
+        Config(
+            {"BLOCK_M": 256, "BLOCK_N": 128, "BLOCK_K": 64, "SPLIT_K": 1},
+            num_stages=3,
+            num_warps=8,
+        ),
+        Config(
+            {"BLOCK_M": 256, "BLOCK_N": 128, "BLOCK_K": 64, "SPLIT_K": 1},
+            num_stages=4,
+            num_warps=8,
+        ),
     ],
     key=["M", "N", "K"],
 )
@@ -448,10 +496,26 @@ def int8_gemm_triton(a, b, a_scales, b_scales, fuse_gelu=False, output_dtype=Non
 
 @autotune(
     configs=[
-        Config({"BLOCK_M": 256, "BLOCK_N": 128, "BLOCK_K": 128, "SPLIT_K": 1}, num_stages=3, num_warps=8),
-        Config({"BLOCK_M": 128, "BLOCK_N": 128, "BLOCK_K": 128, "SPLIT_K": 1}, num_stages=4, num_warps=8),
-        Config({"BLOCK_M": 256, "BLOCK_N": 128, "BLOCK_K": 64, "SPLIT_K": 1}, num_stages=3, num_warps=8),
-        Config({"BLOCK_M": 256, "BLOCK_N": 128, "BLOCK_K": 64, "SPLIT_K": 1}, num_stages=4, num_warps=8),
+        Config(
+            {"BLOCK_M": 256, "BLOCK_N": 128, "BLOCK_K": 128, "SPLIT_K": 1},
+            num_stages=3,
+            num_warps=8,
+        ),
+        Config(
+            {"BLOCK_M": 128, "BLOCK_N": 128, "BLOCK_K": 128, "SPLIT_K": 1},
+            num_stages=4,
+            num_warps=8,
+        ),
+        Config(
+            {"BLOCK_M": 256, "BLOCK_N": 128, "BLOCK_K": 64, "SPLIT_K": 1},
+            num_stages=3,
+            num_warps=8,
+        ),
+        Config(
+            {"BLOCK_M": 256, "BLOCK_N": 128, "BLOCK_K": 64, "SPLIT_K": 1},
+            num_stages=4,
+            num_warps=8,
+        ),
     ],
     key=["M", "N", "K"],
 )
@@ -543,10 +607,18 @@ def fp8_gemm_bias_kernel(
         tl.atomic_add(C_ptr, out, mask=mask)
 
 
-def fp8_gemm_bias_triton(a, b, bias, a_scales, b_scales, fuse_gelu=False, output_dtype=None):
+def fp8_gemm_bias_triton(
+    a, b, bias, a_scales, b_scales, fuse_gelu=False, output_dtype=None
+):
     assert a.is_cuda and b.is_cuda, "This kernel is for CUDA"
-    assert a.dtype in (getattr(torch, "float8_e4m3fn", None), getattr(torch, "float8_e4m3fnuz", None)), f"a.dtype={a.dtype} is not FP8 E4M3"
-    assert b.dtype in (getattr(torch, "float8_e4m3fn", None), getattr(torch, "float8_e4m3fnuz", None)), f"b.dtype={b.dtype} is not FP8 E4M3"
+    assert a.dtype in (
+        getattr(torch, "float8_e4m3fn", None),
+        getattr(torch, "float8_e4m3fnuz", None),
+    ), f"a.dtype={a.dtype} is not FP8 E4M3"
+    assert b.dtype in (
+        getattr(torch, "float8_e4m3fn", None),
+        getattr(torch, "float8_e4m3fnuz", None),
+    ), f"b.dtype={b.dtype} is not FP8 E4M3"
 
     a_orig_shape = a.shape
     a2 = a.view(-1, a.shape[-1])
@@ -566,7 +638,10 @@ def fp8_gemm_bias_triton(a, b, bias, a_scales, b_scales, fuse_gelu=False, output
 
     c = torch.empty((M, N), device=a.device, dtype=output_dtype)
 
-    grid = lambda META: (cdiv(M, META["BLOCK_M"]) * cdiv(N, META["BLOCK_N"]), META["SPLIT_K"])  # noqa E731
+    grid = lambda META: (
+        cdiv(M, META["BLOCK_M"]) * cdiv(N, META["BLOCK_N"]),
+        META["SPLIT_K"],
+    )  # noqa E731
     even_k = K % 128 == 0
 
     fp8_gemm_bias_kernel[grid](
@@ -594,10 +669,26 @@ def fp8_gemm_bias_triton(a, b, bias, a_scales, b_scales, fuse_gelu=False, output
 
 @autotune(
     configs=[
-        Config({"BLOCK_M": 256, "BLOCK_N": 128, "BLOCK_K": 128, "SPLIT_K": 1}, num_stages=3, num_warps=8),
-        Config({"BLOCK_M": 128, "BLOCK_N": 128, "BLOCK_K": 128, "SPLIT_K": 1}, num_stages=4, num_warps=8),
-        Config({"BLOCK_M": 256, "BLOCK_N": 128, "BLOCK_K": 64, "SPLIT_K": 1}, num_stages=3, num_warps=8),
-        Config({"BLOCK_M": 256, "BLOCK_N": 128, "BLOCK_K": 64, "SPLIT_K": 1}, num_stages=4, num_warps=8),
+        Config(
+            {"BLOCK_M": 256, "BLOCK_N": 128, "BLOCK_K": 128, "SPLIT_K": 1},
+            num_stages=3,
+            num_warps=8,
+        ),
+        Config(
+            {"BLOCK_M": 128, "BLOCK_N": 128, "BLOCK_K": 128, "SPLIT_K": 1},
+            num_stages=4,
+            num_warps=8,
+        ),
+        Config(
+            {"BLOCK_M": 256, "BLOCK_N": 128, "BLOCK_K": 64, "SPLIT_K": 1},
+            num_stages=3,
+            num_warps=8,
+        ),
+        Config(
+            {"BLOCK_M": 256, "BLOCK_N": 128, "BLOCK_K": 64, "SPLIT_K": 1},
+            num_stages=4,
+            num_warps=8,
+        ),
     ],
     key=["M", "N", "K"],
 )

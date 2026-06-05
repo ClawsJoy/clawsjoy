@@ -1,12 +1,14 @@
-from lib.smart_config import smart_config
 from typing import Optional
 
 import torch
 import triton
 import triton.language as tl
+from lightx2v.models.networks.wan.infer.triton_ops import (
+    fuse_scale_shift_kernel as wan_fuse_scale_shift_kernel,
+)
 from torch import Tensor
 
-from lightx2v.models.networks.wan.infer.triton_ops import fuse_scale_shift_kernel as wan_fuse_scale_shift_kernel
+from lib.smart_config import smart_config
 
 
 def fuse_scale_shift_kernel(
@@ -16,7 +18,9 @@ def fuse_scale_shift_kernel(
     block_l: int = 128,
     block_c: int = 128,
 ):
-    return wan_fuse_scale_shift_kernel(x, scale.unsqueeze(0), shift.unsqueeze(0), block_l=block_l, block_c=block_c).squeeze(0)
+    return wan_fuse_scale_shift_kernel(
+        x, scale.unsqueeze(0), shift.unsqueeze(0), block_l=block_l, block_c=block_c
+    ).squeeze(0)
 
 
 @triton.jit
@@ -156,7 +160,9 @@ def fused_rmsnorm_modulate(
         num_frames = scale.shape[1]
         assert scale.shape[2] == 1
         assert scale.shape[3] == C
-        assert L % num_frames == 0, f"seq_len {L} must be divisible by num_frames {num_frames}"
+        assert (
+            L % num_frames == 0
+        ), f"seq_len {L} must be divisible by num_frames {num_frames}"
         frame_seqlen = L // num_frames
 
         # Reshape to [B*F, C] for easier indexing
@@ -236,7 +242,9 @@ def test_fused_rmsnorm_modulate():
 
     # Torch 参考实现（不带 weight/bias）
     def reference_impl(x, scale, shift, eps):
-        return (x * torch.rsqrt(x.pow(2).mean(dim=-1, keepdim=True) + eps)) * (1 + scale) + shift
+        return (x * torch.rsqrt(x.pow(2).mean(dim=-1, keepdim=True) + eps)) * (
+            1 + scale
+        ) + shift
 
     # 测试不带 weight/bias
     out_ref = reference_impl(x, scale, shift, eps)
@@ -245,7 +253,9 @@ def test_fused_rmsnorm_modulate():
     print("测试不带 weight/bias:")
     print(f"  最大误差: {(out_ref - out_triton).abs().max().item():.6e}")
     print(f"  平均误差: {(out_ref - out_triton).abs().mean().item():.6e}")
-    assert torch.allclose(out_ref, out_triton, rtol=1e-4, atol=1e-5), "不带 weight/bias 的测试失败"
+    assert torch.allclose(
+        out_ref, out_triton, rtol=1e-4, atol=1e-5
+    ), "不带 weight/bias 的测试失败"
 
     # 测试带 weight/bias
     def reference_impl_with_wb(x, scale, shift, weight, bias, eps):
@@ -259,7 +269,9 @@ def test_fused_rmsnorm_modulate():
     print("\n测试带 weight/bias:")
     print(f"  最大误差: {(out_ref_wb - out_triton_wb).abs().max().item():.6e}")
     print(f"  平均误差: {(out_ref_wb - out_triton_wb).abs().mean().item():.6e}")
-    assert torch.allclose(out_ref_wb, out_triton_wb, rtol=1e-4, atol=1e-5), "带 weight/bias 的测试失败"
+    assert torch.allclose(
+        out_ref_wb, out_triton_wb, rtol=1e-4, atol=1e-5
+    ), "带 weight/bias 的测试失败"
 
     # 测试 4D scale/shift 格式
     num_frames = 8
@@ -277,7 +289,9 @@ def test_fused_rmsnorm_modulate():
     print("\n测试 4D scale/shift 格式:")
     print(f"  最大误差: {(out_ref_4d - out_triton_4d).abs().max().item():.6e}")
     print(f"  平均误差: {(out_ref_4d - out_triton_4d).abs().mean().item():.6e}")
-    assert torch.allclose(out_ref_4d, out_triton_4d, rtol=1e-4, atol=1e-5), "4D 格式测试失败"
+    assert torch.allclose(
+        out_ref_4d, out_triton_4d, rtol=1e-4, atol=1e-5
+    ), "4D 格式测试失败"
 
     print("\n✅ 所有测试通过！")
 

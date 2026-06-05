@@ -1,13 +1,16 @@
-from lib.smart_config import smart_config
 import math
 from typing import List
 
 import einops
 import torch
 import torch.nn.functional as F
+from lightx2v.models.video_encoders.hf.ltx2.audio_vae.resnet import (
+    LRELU_SLOPE,
+    ResBlock1,
+)
 from torch import nn
 
-from lightx2v.models.video_encoders.hf.ltx2.audio_vae.resnet import LRELU_SLOPE, ResBlock1
+from lib.smart_config import smart_config
 
 
 def get_padding(kernel_size: int, dilation: int = 1) -> int:
@@ -28,7 +31,9 @@ def _sinc(x: torch.Tensor) -> torch.Tensor:
     )
 
 
-def kaiser_sinc_filter1d(cutoff: float, half_width: float, kernel_size: int) -> torch.Tensor:
+def kaiser_sinc_filter1d(
+    cutoff: float, half_width: float, kernel_size: int
+) -> torch.Tensor:
     even = kernel_size % 2 == 0
     half_size = kernel_size // 2
     delta_f = 4 * half_width
@@ -40,7 +45,11 @@ def kaiser_sinc_filter1d(cutoff: float, half_width: float, kernel_size: int) -> 
     else:
         beta = 0.0
     window = torch.kaiser_window(kernel_size, beta=beta, periodic=False)
-    time = torch.arange(-half_size, half_size) + 0.5 if even else torch.arange(kernel_size) - half_size
+    time = (
+        torch.arange(-half_size, half_size) + 0.5
+        if even
+        else torch.arange(kernel_size) - half_size
+    )
     if cutoff == 0:
         filter_ = torch.zeros_like(time)
     else:
@@ -71,13 +80,20 @@ class LowPassFilter1d(nn.Module):
         self.stride = stride
         self.padding = padding
         self.padding_mode = padding_mode
-        self.register_buffer("filter", kaiser_sinc_filter1d(cutoff, half_width, kernel_size))
+        self.register_buffer(
+            "filter", kaiser_sinc_filter1d(cutoff, half_width, kernel_size)
+        )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         _, n_channels, _ = x.shape
         if self.padding:
             x = F.pad(x, (self.pad_left, self.pad_right), mode=self.padding_mode)
-        return F.conv1d(x, self.filter.expand(n_channels, -1, -1), stride=self.stride, groups=n_channels)
+        return F.conv1d(
+            x,
+            self.filter.expand(n_channels, -1, -1),
+            stride=self.stride,
+            groups=n_channels,
+        )
 
 
 class UpSample1d(nn.Module):
@@ -104,13 +120,21 @@ class UpSample1d(nn.Module):
             time_axis = (torch.arange(self.kernel_size) / ratio - width) * rolloff
             time_clamped = time_axis.clamp(-lowpass_filter_width, lowpass_filter_width)
             window = torch.cos(time_clamped * math.pi / lowpass_filter_width / 2) ** 2
-            sinc_filter = (torch.sinc(time_axis) * window * rolloff / ratio).view(1, 1, -1)
+            sinc_filter = (torch.sinc(time_axis) * window * rolloff / ratio).view(
+                1, 1, -1
+            )
         else:
             # Kaiser-windowed sinc filter (BigVGAN default).
-            self.kernel_size = int(6 * ratio // 2) * 2 if kernel_size is None else kernel_size
+            self.kernel_size = (
+                int(6 * ratio // 2) * 2 if kernel_size is None else kernel_size
+            )
             self.pad = self.kernel_size // ratio - 1
-            self.pad_left = self.pad * self.stride + (self.kernel_size - self.stride) // 2
-            self.pad_right = self.pad * self.stride + (self.kernel_size - self.stride + 1) // 2
+            self.pad_left = (
+                self.pad * self.stride + (self.kernel_size - self.stride) // 2
+            )
+            self.pad_right = (
+                self.pad * self.stride + (self.kernel_size - self.stride + 1) // 2
+            )
             sinc_filter = kaiser_sinc_filter1d(
                 cutoff=0.5 / ratio,
                 half_width=0.6 / ratio,
@@ -123,7 +147,9 @@ class UpSample1d(nn.Module):
         _, n_channels, _ = x.shape
         x = F.pad(x, (self.pad, self.pad), mode="replicate")
         filt = self.filter.to(dtype=x.dtype, device=x.device).expand(n_channels, -1, -1)
-        x = self.ratio * F.conv_transpose1d(x, filt, stride=self.stride, groups=n_channels)
+        x = self.ratio * F.conv_transpose1d(
+            x, filt, stride=self.stride, groups=n_channels
+        )
         return x[..., self.pad_left : -self.pad_right]
 
 
@@ -131,7 +157,9 @@ class DownSample1d(nn.Module):
     def __init__(self, ratio: int = 2, kernel_size: int | None = None) -> None:
         super().__init__()
         self.ratio = ratio
-        self.kernel_size = int(6 * ratio // 2) * 2 if kernel_size is None else kernel_size
+        self.kernel_size = (
+            int(6 * ratio // 2) * 2 if kernel_size is None else kernel_size
+        )
         self.lowpass = LowPassFilter1d(
             cutoff=0.5 / ratio,
             half_width=0.6 / ratio,
@@ -173,7 +201,11 @@ class Snake(nn.Module):
     ) -> None:
         super().__init__()
         self.alpha_logscale = alpha_logscale
-        self.alpha = nn.Parameter(torch.zeros(in_features) if alpha_logscale else torch.ones(in_features) * alpha)
+        self.alpha = nn.Parameter(
+            torch.zeros(in_features)
+            if alpha_logscale
+            else torch.ones(in_features) * alpha
+        )
         self.alpha.requires_grad = alpha_trainable
         self.eps = 1e-9
 
@@ -194,9 +226,17 @@ class SnakeBeta(nn.Module):
     ) -> None:
         super().__init__()
         self.alpha_logscale = alpha_logscale
-        self.alpha = nn.Parameter(torch.zeros(in_features) if alpha_logscale else torch.ones(in_features) * alpha)
+        self.alpha = nn.Parameter(
+            torch.zeros(in_features)
+            if alpha_logscale
+            else torch.ones(in_features) * alpha
+        )
         self.alpha.requires_grad = alpha_trainable
-        self.beta = nn.Parameter(torch.zeros(in_features) if alpha_logscale else torch.ones(in_features) * alpha)
+        self.beta = nn.Parameter(
+            torch.zeros(in_features)
+            if alpha_logscale
+            else torch.ones(in_features) * alpha
+        )
         self.beta.requires_grad = alpha_trainable
         self.eps = 1e-9
 
@@ -250,17 +290,44 @@ class AMPBlock1(nn.Module):
 
         self.convs2 = nn.ModuleList(
             [
-                nn.Conv1d(channels, channels, kernel_size, 1, dilation=1, padding=get_padding(kernel_size, 1)),
-                nn.Conv1d(channels, channels, kernel_size, 1, dilation=1, padding=get_padding(kernel_size, 1)),
-                nn.Conv1d(channels, channels, kernel_size, 1, dilation=1, padding=get_padding(kernel_size, 1)),
+                nn.Conv1d(
+                    channels,
+                    channels,
+                    kernel_size,
+                    1,
+                    dilation=1,
+                    padding=get_padding(kernel_size, 1),
+                ),
+                nn.Conv1d(
+                    channels,
+                    channels,
+                    kernel_size,
+                    1,
+                    dilation=1,
+                    padding=get_padding(kernel_size, 1),
+                ),
+                nn.Conv1d(
+                    channels,
+                    channels,
+                    kernel_size,
+                    1,
+                    dilation=1,
+                    padding=get_padding(kernel_size, 1),
+                ),
             ]
         )
 
-        self.acts1 = nn.ModuleList([Activation1d(act_cls(channels)) for _ in range(len(self.convs1))])
-        self.acts2 = nn.ModuleList([Activation1d(act_cls(channels)) for _ in range(len(self.convs2))])
+        self.acts1 = nn.ModuleList(
+            [Activation1d(act_cls(channels)) for _ in range(len(self.convs1))]
+        )
+        self.acts2 = nn.ModuleList(
+            [Activation1d(act_cls(channels)) for _ in range(len(self.convs2))]
+        )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        for c1, c2, a1, a2 in zip(self.convs1, self.convs2, self.acts1, self.acts2, strict=True):
+        for c1, c2, a1, a2 in zip(
+            self.convs1, self.convs2, self.acts1, self.acts2, strict=True
+        ):
             xt = a1(x)
             xt = c1(xt)
             xt = a2(xt)
@@ -345,7 +412,9 @@ class Vocoder(torch.nn.Module):
                 stride,
                 padding=(kernel_size - stride) // 2,
             )
-            for i, (stride, kernel_size) in enumerate(zip(upsample_rates, upsample_kernel_sizes, strict=True))
+            for i, (stride, kernel_size) in enumerate(
+                zip(upsample_rates, upsample_kernel_sizes, strict=True)
+            )
         )
 
         final_channels = upsample_initial_channel // (2 ** len(upsample_rates))
@@ -353,9 +422,13 @@ class Vocoder(torch.nn.Module):
 
         for i in range(len(upsample_rates)):
             ch = upsample_initial_channel // (2 ** (i + 1))
-            for kernel_size, dilations in zip(resblock_kernel_sizes, resblock_dilation_sizes, strict=True):
+            for kernel_size, dilations in zip(
+                resblock_kernel_sizes, resblock_dilation_sizes, strict=True
+            ):
                 if self.is_amp:
-                    self.resblocks.append(resblock_cls(ch, kernel_size, dilations, activation=activation))
+                    self.resblocks.append(
+                        resblock_cls(ch, kernel_size, dilations, activation=activation)
+                    )
                 else:
                     self.resblocks.append(resblock_cls(ch, kernel_size, dilations))
 
@@ -384,7 +457,9 @@ class Vocoder(torch.nn.Module):
         Returns:
             Audio waveform tensor of shape (batch_size, out_channels, audio_length)
         """
-        x = x.transpose(2, 3)  # (batch, channels, time, mel_bins) -> (batch, channels, mel_bins, time)
+        x = x.transpose(
+            2, 3
+        )  # (batch, channels, time, mel_bins) -> (batch, channels, mel_bins, time)
 
         if x.dim() == 4:  # stereo
             assert x.shape[1] == 2, "Input must have 2 channels for stereo"
@@ -430,8 +505,12 @@ class _STFTFn(nn.Module):
         self.hop_length = hop_length
         self.win_length = win_length
         n_freqs = filter_length // 2 + 1
-        self.register_buffer("forward_basis", torch.zeros(n_freqs * 2, 1, filter_length))
-        self.register_buffer("inverse_basis", torch.zeros(n_freqs * 2, 1, filter_length))
+        self.register_buffer(
+            "forward_basis", torch.zeros(n_freqs * 2, 1, filter_length)
+        )
+        self.register_buffer(
+            "inverse_basis", torch.zeros(n_freqs * 2, 1, filter_length)
+        )
 
     def forward(self, y: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Compute magnitude and phase spectrogram from a batch of waveforms.
@@ -478,7 +557,9 @@ class MelSTFT(nn.Module):
         n_freqs = filter_length // 2 + 1
         self.register_buffer("mel_basis", torch.zeros(n_mel_channels, n_freqs))
 
-    def mel_spectrogram(self, y: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    def mel_spectrogram(
+        self, y: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """Compute log-mel spectrogram and auxiliary spectral quantities.
         Args:
             y: Waveform tensor of shape (B, T).
@@ -523,7 +604,11 @@ class VocoderWithBWE(nn.Module):
         # the model is constructed on meta device (SingleGPUModelBuilder pattern).
         # The filter is not stored in the checkpoint (persistent=False).
         with torch.device("cpu"):
-            self.resampler = UpSample1d(ratio=output_sampling_rate // input_sampling_rate, persistent=False, window_type="hann")
+            self.resampler = UpSample1d(
+                ratio=output_sampling_rate // input_sampling_rate,
+                persistent=False,
+                window_type="hann",
+            )
 
     @property
     def conv_pre(self) -> nn.Conv1d:
@@ -543,7 +628,9 @@ class VocoderWithBWE(nn.Module):
         batch, n_channels, _ = audio.shape
         flat = audio.reshape(batch * n_channels, -1)  # (B*C, T)
         mel, _, _, _ = self.mel_stft.mel_spectrogram(flat)  # (B*C, n_mels, T_frames)
-        return mel.reshape(batch, n_channels, mel.shape[1], mel.shape[2])  # (B, C, n_mels, T_frames)
+        return mel.reshape(
+            batch, n_channels, mel.shape[1], mel.shape[2]
+        )  # (B, C, n_mels, T_frames)
 
     def forward(self, mel_spec: torch.Tensor) -> torch.Tensor:
         """Run the full vocoder + BWE forward pass.
@@ -555,7 +642,9 @@ class VocoderWithBWE(nn.Module):
         """
         x = self.vocoder(mel_spec)
         _, _, length_low_rate = x.shape
-        output_length = length_low_rate * self.output_sampling_rate // self.input_sampling_rate
+        output_length = (
+            length_low_rate * self.output_sampling_rate // self.input_sampling_rate
+        )
 
         # Pad to multiple of hop_length for exact mel frame count
         remainder = length_low_rate % self.hop_length
@@ -569,6 +658,8 @@ class VocoderWithBWE(nn.Module):
         mel_for_bwe = mel.transpose(2, 3)  # (B, C, T_frames, mel_bins)
         residual = self.bwe_generator(mel_for_bwe)
         skip = self.resampler(x)
-        assert residual.shape == skip.shape, f"residual {residual.shape} != skip {skip.shape}"
+        assert (
+            residual.shape == skip.shape
+        ), f"residual {residual.shape} != skip {skip.shape}"
 
         return torch.clamp(residual + skip, -1, 1)[..., :output_length]

@@ -1,8 +1,9 @@
-from lib.smart_config import smart_config
 from typing import Callable, Optional
 
 import torch.nn.functional as F
 from torch import Tensor, nn
+
+from lib.smart_config import smart_config
 
 
 class SwiGLUFFN(nn.Module):
@@ -44,4 +45,9 @@ class SwiGLUFFNFused(SwiGLU):
         out_features = out_features or in_features
         hidden_features = hidden_features or in_features
         hidden_features = (int(hidden_features * 2 / 3) + 7) // 8 * 8
-        super().__init__(in_features=in_features, hidden_features=hidden_features, out_features=out_features, bias=bias)
+        super().__init__(
+            in_features=in_features,
+            hidden_features=hidden_features,
+            out_features=out_features,
+            bias=bias,
+        )

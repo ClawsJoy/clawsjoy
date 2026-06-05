@@ -1,9 +1,11 @@
-from lib.smart_config import smart_config
 from typing import Iterator
 
 import torch
-
-from lightx2v.models.video_encoders.hf.ltx2.audio_vae.audio_vae import AudioDecoder, AudioEncoder, decode_audio
+from lightx2v.models.video_encoders.hf.ltx2.audio_vae.audio_vae import (
+    AudioDecoder,
+    AudioEncoder,
+    decode_audio,
+)
 from lightx2v.models.video_encoders.hf.ltx2.audio_vae.model_configurator import (
     AUDIO_VAE_DECODER_COMFY_KEYS_FILTER,
     AUDIO_VAE_ENCODER_COMFY_KEYS_FILTER,
@@ -13,7 +15,9 @@ from lightx2v.models.video_encoders.hf.ltx2.audio_vae.model_configurator import 
     VocoderConfigurator,
 )
 from lightx2v.models.video_encoders.hf.ltx2.audio_vae.vocoder import Vocoder
-from lightx2v.models.video_encoders.hf.ltx2.upsampler.model import LatentUpsamplerConfigurator
+from lightx2v.models.video_encoders.hf.ltx2.upsampler.model import (
+    LatentUpsamplerConfigurator,
+)
 from lightx2v.models.video_encoders.hf.ltx2.video_vae.model_configurator import (
     VAE_DECODER_COMFY_KEYS_FILTER,
     VAE_ENCODER_COMFY_KEYS_FILTER,
@@ -21,10 +25,16 @@ from lightx2v.models.video_encoders.hf.ltx2.video_vae.model_configurator import 
     VideoEncoderConfigurator,
 )
 from lightx2v.models.video_encoders.hf.ltx2.video_vae.tiling import TilingConfig
-from lightx2v.models.video_encoders.hf.ltx2.video_vae.video_vae import VideoDecoder, VideoEncoder, decode_video
+from lightx2v.models.video_encoders.hf.ltx2.video_vae.video_vae import (
+    VideoDecoder,
+    VideoEncoder,
+    decode_video,
+)
 from lightx2v.utils.ltx2_media_io import *
 from lightx2v.utils.ltx2_utils import *
 from lightx2v_platform.base.global_var import AI_DEVICE
+
+from lib.smart_config import smart_config
 
 torch_device_module = getattr(torch, AI_DEVICE)
 
@@ -63,7 +73,9 @@ class LTX2VideoVAE:
             )
             state_dict = state_dict_obj.sd
             if self.dtype is not None:
-                state_dict = {key: value.to(dtype=self.dtype) for key, value in state_dict.items()}
+                state_dict = {
+                    key: value.to(dtype=self.dtype) for key, value in state_dict.items()
+                }
             encoder.load_state_dict(state_dict, strict=False, assign=True)
             self.encoder = encoder.to(self.device).eval()
 
@@ -75,7 +87,9 @@ class LTX2VideoVAE:
         )
         state_dict = state_dict_obj.sd
         if self.dtype is not None:
-            state_dict = {key: value.to(dtype=self.dtype) for key, value in state_dict.items()}
+            state_dict = {
+                key: value.to(dtype=self.dtype) for key, value in state_dict.items()
+            }
         decoder.load_state_dict(state_dict, strict=False, assign=True)
         self.decoder = decoder.to(self.device).eval()
 
@@ -148,7 +162,9 @@ class LTX2AudioVAE:
         )
         state_dict = state_dict_obj.sd
         if self.dtype is not None:
-            state_dict = {key: value.to(dtype=self.dtype) for key, value in state_dict.items()}
+            state_dict = {
+                key: value.to(dtype=self.dtype) for key, value in state_dict.items()
+            }
         encoder.load_state_dict(state_dict, strict=False, assign=True)
         self.encoder = encoder.to(self.device).eval()
 
@@ -160,7 +176,9 @@ class LTX2AudioVAE:
         )
         state_dict = state_dict_obj.sd
         if self.dtype is not None:
-            state_dict = {key: value.to(dtype=self.dtype) for key, value in state_dict.items()}
+            state_dict = {
+                key: value.to(dtype=self.dtype) for key, value in state_dict.items()
+            }
         decoder.load_state_dict(state_dict, strict=False, assign=True)
         self.decoder = decoder.to(self.device).eval()
 
@@ -172,7 +190,9 @@ class LTX2AudioVAE:
         )
         state_dict = state_dict_obj.sd
         if self.dtype is not None:
-            state_dict = {key: value.to(dtype=self.dtype) for key, value in state_dict.items()}
+            state_dict = {
+                key: value.to(dtype=self.dtype) for key, value in state_dict.items()
+            }
         vocoder.load_state_dict(state_dict, strict=False, assign=True)
         self.vocoder = vocoder.to(self.device).eval()
 
@@ -251,7 +271,9 @@ class LTX2Upsampler:
 
         # Convert state_dict dtype if needed (aligned with Builder.build line 82-83)
         if self.dtype is not None:
-            state_dict = {key: value.to(dtype=self.dtype) for key, value in state_dict.items()}
+            state_dict = {
+                key: value.to(dtype=self.dtype) for key, value in state_dict.items()
+            }
 
         # Load state_dict with assign=True (aligned with Builder.build line 84)
         # assign=True directly replaces parameters, so dtype should match state_dict
@@ -294,7 +316,9 @@ class LTX2Upsampler:
         return upsampled
 
     @staticmethod
-    def upsample_video(latent: torch.Tensor, video_encoder: VideoEncoder, upsampler) -> torch.Tensor:
+    def upsample_video(
+        latent: torch.Tensor, video_encoder: VideoEncoder, upsampler
+    ) -> torch.Tensor:
         """
         Apply upsampling to the latent representation using the provided upsampler,
         with normalization and un-normalization based on the video encoder's per-channel statistics.

@@ -1,12 +1,12 @@
-from lib.smart_config import smart_config
 import json
 import os
 
 import torch
 import torch.distributed as dist
+from lightx2v.utils.envs import GET_DTYPE
 from loguru import logger
 
-from lightx2v.utils.envs import GET_DTYPE
+from lib.smart_config import smart_config
 
 from .base import BaseKVCachePool
 from .calib import CalibRollingKVCachePool
@@ -36,8 +36,14 @@ def build_self_attn_kv_cache(config, ar_config, kv_size, dtype, device):
     else:
         quant_scheme = kv_quant.get("quant_scheme", "sage")
         if config.get("parallel"):
-            assert quant_scheme == "kivi", f"Invalid quant_scheme: {quant_scheme} for parallel inference"
-        assert quant_scheme in ["sage", "turboquant", "kivi"], f"Invalid quant_scheme: {quant_scheme}"
+            assert (
+                quant_scheme == "kivi"
+            ), f"Invalid quant_scheme: {quant_scheme} for parallel inference"
+        assert quant_scheme in [
+            "sage",
+            "turboquant",
+            "kivi",
+        ], f"Invalid quant_scheme: {quant_scheme}"
 
         calibrate = kv_quant.get("calibrate", False)
         calib_path = kv_quant.get("calib_path", None)
@@ -47,7 +53,9 @@ def build_self_attn_kv_cache(config, ar_config, kv_size, dtype, device):
                 tq_extra = dict(
                     turboquant_calibrate=True,
                     key_bits=kv_quant.get("key_bits", 3),
-                    turboquant_seed=kv_quant.get("turboquant_seed", kv_quant.get("seed", 42)),
+                    turboquant_seed=kv_quant.get(
+                        "turboquant_seed", kv_quant.get("seed", 42)
+                    ),
                     per_layer_compressors=kv_quant.get("per_layer_compressors", True),
                 )
             return CalibRollingKVCachePool(
@@ -74,7 +82,9 @@ def build_self_attn_kv_cache(config, ar_config, kv_size, dtype, device):
                 kv_offload=kv_offload,
                 codebook_dir=kv_quant.get("codebook_dir"),
                 codebook_cache_dir=kv_quant.get("codebook_cache_dir"),
-                export_missing_codebooks=kv_quant.get("export_missing_codebooks", False),
+                export_missing_codebooks=kv_quant.get(
+                    "export_missing_codebooks", False
+                ),
                 value_group_size=kv_quant.get("value_group_size", 32),
             )
         elif quant_scheme == "kivi":
@@ -135,13 +145,17 @@ class KVCacheManager:
         lat_w = latent_shape[3]
         patch_size = self.config.get("patch_size", (1, 2, 2))
         frame_seq_length = (lat_h // patch_size[1]) * (lat_w // patch_size[2])
-        num_output_frames = lat_f - (lat_f % self.ar_config.get("num_frame_per_chunk", 3))
+        num_output_frames = lat_f - (
+            lat_f % self.ar_config.get("num_frame_per_chunk", 3)
+        )
         return frame_seq_length, num_output_frames
 
     def _create_kv_caches(self, latent_shape):
         """Create (or recreate) cache pools with resolution-dependent sizes."""
 
-        self.frame_seq_length, self.num_output_frames = self._compute_frame_seq_length(latent_shape)
+        self.frame_seq_length, self.num_output_frames = self._compute_frame_seq_length(
+            latent_shape
+        )
         ws = dist.get_world_size(self.sp_group) if self.sp_group is not None else 1
         self.kv_size = self.frame_seq_length * self.num_output_frames
         self.local_attn_size = self.ar_config.get("local_attn_size", -1)
@@ -263,7 +277,10 @@ class KVCacheManager:
                     fpath = os.path.join(out_dir, fname)
                     with open(fpath, "w", encoding="utf-8") as f:
                         json.dump(cb_dict, f, indent=2)
-                    logger.info("[KVCacheManager] TurboQuant empirical codebook written {!r}", fpath)
+                    logger.info(
+                        "[KVCacheManager] TurboQuant empirical codebook written {!r}",
+                        fpath,
+                    )
 
         if not calib:
             return

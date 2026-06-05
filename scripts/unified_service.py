@@ -4,30 +4,31 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
-import sys
 import json
-from flask import Flask, request, jsonify, render_template_string
+import sys
+
+from flask import Flask, jsonify, render_template_string, request
 from flask_cors import CORS
 
-sys.path.insert(0, 'core')
+sys.path.insert(0, "core")
 
 from core.agent.smart_agent import smart_agent as config_agent
-from lib.skill_registry_v4 import skill_registry
 from lib.config_loader import config
+from lib.skill_registry_v4 import skill_registry
 
 app = Flask(__name__)
 CORS(app)
 
 # 读取配置
-WEB_PORT = config.get('ports.web', 5011)
-LLM_PORT = config.get('llm.ports.llm_service', 5012)
+WEB_PORT = config.get("ports.web", 5011)
+LLM_PORT = config.get("llm.ports.llm_service", 5012)
 
 
 # HTML 界面
-HTML_TEMPLATE = '''
+HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html>
 <head>
@@ -75,53 +76,59 @@ HTML_TEMPLATE = '''
     </script>
 </body>
 </html>
-'''
+"""
 
 
-@app.route('/')
+@app.route("/")
 def index():
     """Web 界面"""
     return render_template_string(HTML_TEMPLATE)
 
 
-@app.route('/api/chat', methods=['POST'])
+@app.route("/api/chat", methods=["POST"])
 def chat():
     """对话接口 - 使用配置驱动 Agent"""
     data = request.json or {}
-    message = data.get('message', '')
-    
+    message = data.get("message", "")
+
     if not message:
         return jsonify({"error": "No message"}), 400
-    
+
     result = config_agent.process(message)
-    
-    return jsonify({
-        "success": result.get('success', False),
-        "response": result.get('response', ''),
-        "skill": result.get('skill'),
-        "params": result.get('params')
-    })
+
+    return jsonify(
+        {
+            "success": result.get("success", False),
+            "response": result.get("response", ""),
+            "skill": result.get("skill"),
+            "params": result.get("params"),
+        }
+    )
 
 
-@app.route('/api/skills', methods=['GET'])
+@app.route("/api/skills", methods=["GET"])
 def list_skills():
     """列出所有技能"""
-    return jsonify({
-        "skills": list(skill_registry.skills.keys()),
-        "total": len(skill_registry.skills)
-    })
+    return jsonify(
+        {
+            "skills": list(skill_registry.skills.keys()),
+            "total": len(skill_registry.skills),
+        }
+    )
 
 
-@app.route('/api/health', methods=['GET'])
+@app.route("/api/health", methods=["GET"])
 def health():
     """健康检查"""
-    return jsonify({
-        "status": "ok",
-        "version": "4.0.0",
-        "agent": config_agent.VERSION,
-        "ollama": config_agent.ollama_url,
-        "model": config_agent.default_model
-    })
+    return jsonify(
+        {
+            "status": "ok",
+            "version": "4.0.0",
+            "agent": config_agent.VERSION,
+            "ollama": config_agent.ollama_url,
+            "model": config_agent.default_model,
+        }
+    )
 
 
 if __name__ == "__main__":
@@ -136,5 +143,5 @@ if __name__ == "__main__":
     print(f"模型: {config_agent.default_model}")
     print(f"技能数: {len(skill_registry.skills)}")
     print("=" * 50)
-    
-    app.run(host='0.0.0.0', port=WEB_PORT, debug=False)
+
+    app.run(host="0.0.0.0", port=WEB_PORT, debug=False)

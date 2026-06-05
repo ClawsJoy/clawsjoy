@@ -1,11 +1,10 @@
 from core.lib.unified_config import unified_config
 
-from core.lib.unified_config import unified_config
-
 """CODE Agent v2.0 - 代码生成、审查、执行"""
 
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import re
@@ -20,18 +19,18 @@ from core.lib.threejs_knowledge import threejs_kb
 
 class CodeAgentV2:
     """CODE Agent - 智能编程助手"""
-    
+
     VERSION = "2.0.0"
-    
+
     def __init__(self):
         self.code_history = []
         self.templates = self._load_templates()
         print(f"🤖 CODE Agent v{self.VERSION} 已启动")
-    
+
     def _load_templates(self):
         """加载代码模板"""
         return {
-            "threejs_cockpit": '''
+            "threejs_cockpit": """
 <!DOCTYPE html>
 <html>
 <head>
@@ -164,9 +163,9 @@ class CodeAgentV2:
     </script>
 </body>
 </html>
-'''
+"""
         }
-    
+
     def generate_code(self, request: str) -> Dict:
         """根据需求生成代码"""
 
@@ -177,26 +176,32 @@ class CodeAgentV2:
         code_type = self._detect_code_type(request)
 
         # 3. 生成代码
-        if "three.js" in request.lower() or "3d" in request.lower() or "座舱" in request:
+        if (
+            "three.js" in request.lower()
+            or "3d" in request.lower()
+            or "座舱" in request
+        ):
             code = self._generate_threejs(request, knowledge)
         else:
             code = self._generate_general(request)
 
         # 4. 保存到历史
-        self.code_history.append({
-            "timestamp": datetime.now().isoformat(),
-            "request": request,
-            "code": code[:500],
-            "type": code_type
-        })
+        self.code_history.append(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "request": request,
+                "code": code[:500],
+                "type": code_type,
+            }
+        )
 
         return {
             "success": True,
             "code": code,
             "type": code_type,
-            "suggestions": self._get_suggestions(code_type)
+            "suggestions": self._get_suggestions(code_type),
         }
-    
+
     def _detect_code_type(self, request: str) -> str:
         """检测代码类型"""
         if "three" in request.lower() or "3d" in request.lower():
@@ -208,7 +213,7 @@ class CodeAgentV2:
         if "css" in request.lower():
             return "css"
         return "general"
-    
+
     def _generate_threejs(self, request: str, knowledge: List) -> str:
         """生成 Three.js 代码"""
         # 使用模板生成
@@ -216,36 +221,30 @@ class CodeAgentV2:
 
         # 根据知识库定制
         for k in knowledge:
-            if "曲面" in k.get('topic', ''):
+            if "曲面" in k.get("topic", ""):
                 template = template.replace("opacity: 0.15", "opacity: 0.25")
 
         return template
-    
+
     def _generate_general(self, request: str) -> str:
         """生成通用代码"""
         prompt = f"请根据以下需求生成代码：\n{request}\n只返回代码，不要解释。"
         response = smart_adapter.generate(prompt, auto_select=True)
         return response
-    
+
     def _get_suggestions(self, code_type: str) -> List[str]:
         """获取优化建议"""
         suggestions = {
             "threejs": [
                 "可以调整相机位置获得更好的视角",
                 "添加轨道控制让用户交互",
-                "增加粒子系统增强视觉效果"
+                "增加粒子系统增强视觉效果",
             ],
-            "html": [
-                "添加响应式设计",
-                "优化移动端适配"
-            ],
-            "python": [
-                "添加错误处理",
-                "添加类型注解"
-            ]
+            "html": ["添加响应式设计", "优化移动端适配"],
+            "python": ["添加错误处理", "添加类型注解"],
         }
         return suggestions.get(code_type, ["代码已生成，请审核"])
-    
+
     def review_code(self, code: str) -> Dict:
         """代码审查"""
         issues = []
@@ -261,21 +260,23 @@ class CodeAgentV2:
         return {
             "passed": len(issues) == 0,
             "issues": issues,
-            "suggestions": self._get_suggestions(self._detect_code_type(code))
+            "suggestions": self._get_suggestions(self._detect_code_type(code)),
         }
-    
+
     def execute_code(self, code: str, language: str = "html") -> Dict:
         """在沙箱中执行代码"""
         if language == "html":
             # 保存为临时 HTML 文件
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False) as f:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".html", delete=False
+            ) as f:
                 f.write(code)
                 temp_path = f.name
 
             return {
                 "success": True,
                 "file_path": temp_path,
-                "message": f"代码已保存到 {temp_path}，可在浏览器中打开"
+                "message": f"代码已保存到 {temp_path}，可在浏览器中打开",
             }
 
         return {"success": False, "message": "不支持的执行类型"}

@@ -1,9 +1,10 @@
-from lib.smart_config import smart_config
 import concurrent.futures
 import glob
 import os
 
 from loguru import logger
+
+from lib.smart_config import smart_config
 
 try:
     from huggingface_hub import HfApi, list_repo_files
@@ -162,14 +163,20 @@ def get_gpu_generation():
         gpu_name_lower = gpu_name.lower()
 
         # 检测40系显卡 (RTX 40xx, RTX 4060, RTX 4070, RTX 4080, RTX 4090等)
-        if any(keyword in gpu_name_lower for keyword in ["rtx 40", "rtx40", "geforce rtx 40"]):
+        if any(
+            keyword in gpu_name_lower
+            for keyword in ["rtx 40", "rtx40", "geforce rtx 40"]
+        ):
             # 进一步检查是40xx系列
             match = re.search(r"rtx\s*40\d+|40\d+", gpu_name_lower)
             if match:
                 return "40"
 
         # 检测30系显卡 (RTX 30xx, RTX 3060, RTX 3070, RTX 3080, RTX 3090等)
-        if any(keyword in gpu_name_lower for keyword in ["rtx 30", "rtx30", "geforce rtx 30"]):
+        if any(
+            keyword in gpu_name_lower
+            for keyword in ["rtx 30", "rtx30", "geforce rtx 30"]
+        ):
             # 进一步检查是30xx系列
             match = re.search(r"rtx\s*30\d+|30\d+", gpu_name_lower)
             if match:
@@ -205,7 +212,11 @@ def process_files(files, repo_id=None):
     seen_dirs = set()
 
     # 对于 Qwen/Qwen-Image-Edit-2511、Qwen/Qwen-Image-2512 和 Tongyi-MAI/Z-Image-Turbo 仓库，保留 vae 和 scheduler 目录
-    is_qwen_image_repo = repo_id in ["Qwen/Qwen-Image-Edit-2511", "Qwen/Qwen-Image-2512", "Tongyi-MAI/Z-Image-Turbo"]
+    is_qwen_image_repo = repo_id in [
+        "Qwen/Qwen-Image-Edit-2511",
+        "Qwen/Qwen-Image-2512",
+        "Tongyi-MAI/Z-Image-Turbo",
+    ]
     # 对于 Qwen3 编码器仓库，整个仓库就是一个模型目录
     is_qwen3_encoder_repo = repo_id == "JunHowie/Qwen3-4B-GPTQ-Int4"
 
@@ -232,7 +243,10 @@ def process_files(files, repo_id=None):
                 elif is_qwen3_encoder_repo:
                     model_names.append(top_dir)
                 # 支持safetensors文件目录和_split分block存储目录
-                elif "_split" in top_dir or any(f.startswith(f"{top_dir}/") and f.endswith(".safetensors") for f in files):
+                elif "_split" in top_dir or any(
+                    f.startswith(f"{top_dir}/") and f.endswith(".safetensors")
+                    for f in files
+                ):
                     model_names.append(top_dir)
     return sorted(set(model_names))
 
@@ -254,10 +268,12 @@ def load_hf_models_cache():
                 # ModelScope API 获取文件列表
                 model_files = api.get_model_files(model_id=repo_id, recursive=True)
                 # 提取文件路径
-                files = [file["Path"] for file in model_files if file.get("Type") == "blob"]
+                files = [
+                    file["Path"] for file in model_files if file.get("Type") == "blob"
+                ]
                 source = "ModelScope"
                 logger.info(f"Successfully loaded models from ModelScope {repo_id}")
-        except:  # noqa E722
+        except Exception as e:  # noqa E722
             # 如果 ModelScope 失败，尝试从 Hugging Face 获取（带超时）
             if files is None and HF_AVAILABLE:
                 logger.info(f"Loading models from Hugging Face {repo_id}...")
@@ -265,7 +281,9 @@ def load_hf_models_cache():
 
                 # 使用线程池执行器设置超时
                 with concurrent.futures.ThreadPoolExecutor() as executor:
-                    future = executor.submit(list_repo_files, repo_id=repo_id, repo_type="model")
+                    future = executor.submit(
+                        list_repo_files, repo_id=repo_id, repo_type="model"
+                    )
                     files = future.result(timeout=HF_TIMEOUT)
                     source = "Hugging Face"
 
@@ -273,7 +291,9 @@ def load_hf_models_cache():
         if files:
             model_names = process_files(files, repo_id)
             HF_MODELS_CACHE[repo_id] = model_names
-            logger.info(f"Loaded {len(HF_MODELS_CACHE[repo_id])} models from {source} {repo_id}")
+            logger.info(
+                f"Loaded {len(HF_MODELS_CACHE[repo_id])} models from {source} {repo_id}"
+            )
         else:
             logger.warning(f"No files retrieved from {repo_id}, setting empty cache")
             HF_MODELS_CACHE[repo_id] = []
@@ -508,12 +528,18 @@ def build_wan21(
     is_dit_quant = dit_quant_detected in ["fp8", "int8"]
     if is_dit_quant:
         wan21_config["dit_quantized"] = True
-        wan21_config["dit_quant_scheme"] = get_quant_scheme(dit_quant_detected, quant_op)
-        wan21_config["dit_quantized_ckpt"] = os.path.join(model_path_input, dit_path_input)
+        wan21_config["dit_quant_scheme"] = get_quant_scheme(
+            dit_quant_detected, quant_op
+        )
+        wan21_config["dit_quantized_ckpt"] = os.path.join(
+            model_path_input, dit_path_input
+        )
     else:
         wan21_config["dit_quantized"] = False
         wan21_config["dit_quant_scheme"] = "Default"
-        wan21_config["dit_original_ckpt"] = os.path.join(model_path_input, dit_path_input)
+        wan21_config["dit_original_ckpt"] = os.path.join(
+            model_path_input, dit_path_input
+        )
 
     wan21_config["t5_original_ckpt"] = None
     wan21_config["t5_quantized_ckpt"] = None
@@ -522,7 +548,9 @@ def build_wan21(
     if is_t5_quant:
         wan21_config["t5_quantized"] = True
         wan21_config["t5_quant_scheme"] = get_quant_scheme(t5_quant_detected, quant_op)
-        wan21_config["t5_quantized_ckpt"] = os.path.join(model_path_input, t5_path_input)
+        wan21_config["t5_quantized_ckpt"] = os.path.join(
+            model_path_input, t5_path_input
+        )
     else:
         wan21_config["t5_quantized"] = False
         wan21_config["t5_quant_scheme"] = "Default"
@@ -534,16 +562,24 @@ def build_wan21(
     is_clip_quant = clip_quant_detected in ["fp8", "int8"]
     if is_clip_quant:
         wan21_config["clip_quantized"] = True  # 启用量化
-        wan21_config["clip_quant_scheme"] = get_quant_scheme(clip_quant_detected, quant_op)
-        wan21_config["clip_quantized_ckpt"] = os.path.join(model_path_input, clip_path_input)
+        wan21_config["clip_quant_scheme"] = get_quant_scheme(
+            clip_quant_detected, quant_op
+        )
+        wan21_config["clip_quantized_ckpt"] = os.path.join(
+            model_path_input, clip_path_input
+        )
     else:
         wan21_config["clip_quantized"] = False  # 禁用量化
         wan21_config["clip_quant_scheme"] = "Default"
-        wan21_config["clip_original_ckpt"] = os.path.join(model_path_input, clip_path_input)
+        wan21_config["clip_original_ckpt"] = os.path.join(
+            model_path_input, clip_path_input
+        )
 
     # 提取 VAE 路径，移除状态符号
     vae_path_input = extract_model_name(vae_path_input) if vae_path_input else ""
-    wan21_config["vae_path"] = os.path.join(model_path_input, vae_path_input) if vae_path_input else None
+    wan21_config["vae_path"] = (
+        os.path.join(model_path_input, vae_path_input) if vae_path_input else None
+    )
     wan21_config["model_path"] = model_path_input
     return wan21_config
 
@@ -568,8 +604,12 @@ def build_wan22(
         "text_len": 512,
     }
     """构建 Wan2.2 模型配置"""
-    high_noise_path_input = extract_model_name(high_noise_path_input) if high_noise_path_input else ""
-    low_noise_path_input = extract_model_name(low_noise_path_input) if low_noise_path_input else ""
+    high_noise_path_input = (
+        extract_model_name(high_noise_path_input) if high_noise_path_input else ""
+    )
+    low_noise_path_input = (
+        extract_model_name(low_noise_path_input) if low_noise_path_input else ""
+    )
     t5_path_input = extract_model_name(t5_path_input) if t5_path_input else ""
 
     is_distill = is_distill_model_from_name(high_noise_path_input)
@@ -586,16 +626,28 @@ def build_wan22(
     is_dit_quant = dit_quant_detected in ["fp8", "int8"]
     if is_dit_quant:
         wan22_config["dit_quantized"] = True
-        wan22_config["dit_quant_scheme"] = get_quant_scheme(dit_quant_detected, quant_op)
-        wan22_config["high_noise_quant_scheme"] = get_quant_scheme(dit_quant_detected, quant_op)
-        wan22_config["high_noise_quantized_ckpt"] = os.path.join(model_path_input, high_noise_path_input)
-        wan22_config["low_noise_quantized_ckpt"] = os.path.join(model_path_input, low_noise_path_input)
+        wan22_config["dit_quant_scheme"] = get_quant_scheme(
+            dit_quant_detected, quant_op
+        )
+        wan22_config["high_noise_quant_scheme"] = get_quant_scheme(
+            dit_quant_detected, quant_op
+        )
+        wan22_config["high_noise_quantized_ckpt"] = os.path.join(
+            model_path_input, high_noise_path_input
+        )
+        wan22_config["low_noise_quantized_ckpt"] = os.path.join(
+            model_path_input, low_noise_path_input
+        )
     else:
         wan22_config["dit_quantized"] = False
         wan22_config["dit_quant_scheme"] = "Default"
         wan22_config["high_noise_quant_scheme"] = "Default"
-        wan22_config["high_noise_original_ckpt"] = os.path.join(model_path_input, high_noise_path_input)
-        wan22_config["low_noise_original_ckpt"] = os.path.join(model_path_input, low_noise_path_input)
+        wan22_config["high_noise_original_ckpt"] = os.path.join(
+            model_path_input, high_noise_path_input
+        )
+        wan22_config["low_noise_original_ckpt"] = os.path.join(
+            model_path_input, low_noise_path_input
+        )
 
     wan22_config["t5_original_ckpt"] = None
     wan22_config["t5_quantized_ckpt"] = None
@@ -604,7 +656,9 @@ def build_wan22(
     if is_t5_quant:
         wan22_config["t5_quantized"] = True
         wan22_config["t5_quant_scheme"] = get_quant_scheme(t5_quant_detected, quant_op)
-        wan22_config["t5_quantized_ckpt"] = os.path.join(model_path_input, t5_path_input)
+        wan22_config["t5_quantized_ckpt"] = os.path.join(
+            model_path_input, t5_path_input
+        )
     else:
         wan22_config["t5_quantized"] = False
         wan22_config["t5_quant_scheme"] = "Default"
@@ -612,7 +666,9 @@ def build_wan22(
 
     # 提取 VAE 路径，移除状态符号
     vae_path_input = extract_model_name(vae_path_input) if vae_path_input else ""
-    wan22_config["vae_path"] = os.path.join(model_path_input, vae_path_input) if vae_path_input else None
+    wan22_config["vae_path"] = (
+        os.path.join(model_path_input, vae_path_input) if vae_path_input else None
+    )
     wan22_config["model_path"] = model_path_input
     return wan22_config
 
@@ -667,10 +723,26 @@ def build_qwen_image(
         raise ValueError(f"Invalid model type: {model_type_input}")
 
     """构建 Qwen-Image 模型配置"""
-    qwen_image_dit_path_input = extract_model_name(qwen_image_dit_path_input) if qwen_image_dit_path_input else ""
-    qwen_image_vae_path_input = extract_model_name(qwen_image_vae_path_input) if qwen_image_vae_path_input else ""
-    qwen_image_scheduler_path_input = extract_model_name(qwen_image_scheduler_path_input) if qwen_image_scheduler_path_input else ""
-    qwen25vl_encoder_path_input = extract_model_name(qwen25vl_encoder_path_input) if qwen25vl_encoder_path_input else ""
+    qwen_image_dit_path_input = (
+        extract_model_name(qwen_image_dit_path_input)
+        if qwen_image_dit_path_input
+        else ""
+    )
+    qwen_image_vae_path_input = (
+        extract_model_name(qwen_image_vae_path_input)
+        if qwen_image_vae_path_input
+        else ""
+    )
+    qwen_image_scheduler_path_input = (
+        extract_model_name(qwen_image_scheduler_path_input)
+        if qwen_image_scheduler_path_input
+        else ""
+    )
+    qwen25vl_encoder_path_input = (
+        extract_model_name(qwen25vl_encoder_path_input)
+        if qwen25vl_encoder_path_input
+        else ""
+    )
 
     # 确定子目录路径
     if model_type_input == "Qwen-Image-Edit-2511":
@@ -692,34 +764,68 @@ def build_qwen_image(
     is_qwen_dit_quant = qwen_dit_quant_detected in ["fp8", "int8"]
     if is_qwen_dit_quant:
         qwen_image_config["dit_quantized"] = True
-        qwen_image_config["dit_quant_scheme"] = get_quant_scheme(qwen_dit_quant_detected, quant_op)
+        qwen_image_config["dit_quant_scheme"] = get_quant_scheme(
+            qwen_dit_quant_detected, quant_op
+        )
         # 使用子目录路径构建完整路径
-        dit_path = os.path.join(model_path_input, model_subdir, qwen_image_dit_path_input) if qwen_image_dit_path_input else None
+        dit_path = (
+            os.path.join(model_path_input, model_subdir, qwen_image_dit_path_input)
+            if qwen_image_dit_path_input
+            else None
+        )
         qwen_image_config["dit_quantized_ckpt"] = dit_path
         qwen_image_config["dit_original_ckpt"] = None
     else:
         qwen_image_config["dit_quantized"] = False
         qwen_image_config["dit_quant_scheme"] = "Default"
         # 使用子目录路径构建完整路径
-        dit_path = os.path.join(model_path_input, model_subdir, qwen_image_dit_path_input) if qwen_image_dit_path_input else None
+        dit_path = (
+            os.path.join(model_path_input, model_subdir, qwen_image_dit_path_input)
+            if qwen_image_dit_path_input
+            else None
+        )
         qwen_image_config["dit_original_ckpt"] = dit_path
         qwen_image_config["dit_quantized_ckpt"] = None
 
     # VAE 和 Scheduler 路径也使用子目录
-    vae_path = os.path.join(model_path_input, model_subdir, "vae") if qwen_image_vae_path_input else None
-    scheduler_path = os.path.join(model_path_input, model_subdir, "scheduler") if qwen_image_scheduler_path_input else None
+    vae_path = (
+        os.path.join(model_path_input, model_subdir, "vae")
+        if qwen_image_vae_path_input
+        else None
+    )
+    scheduler_path = (
+        os.path.join(model_path_input, model_subdir, "scheduler")
+        if qwen_image_scheduler_path_input
+        else None
+    )
     qwen_image_config["vae_path"] = vae_path
     qwen_image_config["scheduler_path"] = scheduler_path
     qwen_image_config["qwen25vl_quantized"] = True
     qwen_image_config["qwen25vl_quant_scheme"] = "int4"
-    qwen_image_config["qwen25vl_quantized_ckpt"] = os.path.join(model_path_input, qwen25vl_encoder_path_input) if qwen25vl_encoder_path_input else None
-    qwen_image_config["qwen25vl_tokenizer_path"] = os.path.join(model_path_input, qwen25vl_encoder_path_input) if qwen25vl_encoder_path_input else None
-    qwen_image_config["qwen25vl_processor_path"] = os.path.join(model_path_input, qwen25vl_encoder_path_input) if qwen25vl_encoder_path_input else None
+    qwen_image_config["qwen25vl_quantized_ckpt"] = (
+        os.path.join(model_path_input, qwen25vl_encoder_path_input)
+        if qwen25vl_encoder_path_input
+        else None
+    )
+    qwen_image_config["qwen25vl_tokenizer_path"] = (
+        os.path.join(model_path_input, qwen25vl_encoder_path_input)
+        if qwen25vl_encoder_path_input
+        else None
+    )
+    qwen_image_config["qwen25vl_processor_path"] = (
+        os.path.join(model_path_input, qwen25vl_encoder_path_input)
+        if qwen25vl_encoder_path_input
+        else None
+    )
     # 使用子目录路径作为 model_path
     if model_type_input == "Qwen-Image-Edit-2511":
-        qwen_image_config["model_path"] = os.path.join(model_path_input, "Qwen-Image-Edit-2511")
+        qwen_image_config["model_path"] = os.path.join(
+            model_path_input, "Qwen-Image-Edit-2511"
+        )
     elif model_type_input == "Qwen-Image-2512":
-        qwen_image_config["model_path"] = os.path.join(model_path_input, "Qwen-Image-2512")
+        qwen_image_config["model_path"] = os.path.join(
+            model_path_input, "Qwen-Image-2512"
+        )
     qwen_image_config["vae_scale_factor"] = 8
     return qwen_image_config
 
@@ -751,10 +857,20 @@ def build_z_image(
         "rope_theta": 256.0,
         "t_scale": 1000.0,
     }
-    z_image_dit_path_input = extract_model_name(z_image_dit_path_input) if z_image_dit_path_input else ""
-    z_image_vae_path_input = extract_model_name(z_image_vae_path_input) if z_image_vae_path_input else ""
-    z_image_scheduler_path_input = extract_model_name(z_image_scheduler_path_input) if z_image_scheduler_path_input else ""
-    qwen3_encoder_path_input = extract_model_name(qwen3_encoder_path_input) if qwen3_encoder_path_input else ""
+    z_image_dit_path_input = (
+        extract_model_name(z_image_dit_path_input) if z_image_dit_path_input else ""
+    )
+    z_image_vae_path_input = (
+        extract_model_name(z_image_vae_path_input) if z_image_vae_path_input else ""
+    )
+    z_image_scheduler_path_input = (
+        extract_model_name(z_image_scheduler_path_input)
+        if z_image_scheduler_path_input
+        else ""
+    )
+    qwen3_encoder_path_input = (
+        extract_model_name(qwen3_encoder_path_input) if qwen3_encoder_path_input else ""
+    )
 
     model_subdir = "Z-Image-Turbo"
 
@@ -770,29 +886,59 @@ def build_z_image(
     is_z_image_dit_quant = z_image_dit_quant_detected in ["fp8", "int8"]
     if is_z_image_dit_quant:
         z_image_config["dit_quantized"] = True
-        z_image_config["dit_quant_scheme"] = get_quant_scheme(z_image_dit_quant_detected, quant_op)
+        z_image_config["dit_quant_scheme"] = get_quant_scheme(
+            z_image_dit_quant_detected, quant_op
+        )
         # 使用子目录路径构建完整路径
-        dit_path = os.path.join(model_path_input, model_subdir, z_image_dit_path_input) if z_image_dit_path_input else None
+        dit_path = (
+            os.path.join(model_path_input, model_subdir, z_image_dit_path_input)
+            if z_image_dit_path_input
+            else None
+        )
         z_image_config["dit_quantized_ckpt"] = dit_path
         z_image_config["dit_original_ckpt"] = None
     else:
         z_image_config["dit_quantized"] = False
         z_image_config["dit_quant_scheme"] = "Default"
         # 使用子目录路径构建完整路径
-        dit_path = os.path.join(model_path_input, model_subdir, z_image_dit_path_input) if z_image_dit_path_input else None
+        dit_path = (
+            os.path.join(model_path_input, model_subdir, z_image_dit_path_input)
+            if z_image_dit_path_input
+            else None
+        )
         z_image_config["dit_original_ckpt"] = dit_path
         z_image_config["dit_quantized_ckpt"] = None
 
     # VAE 和 Scheduler 路径也使用子目录
-    vae_path = os.path.join(model_path_input, model_subdir, "vae") if z_image_vae_path_input else None
-    scheduler_path = os.path.join(model_path_input, model_subdir, "scheduler") if z_image_scheduler_path_input else None
+    vae_path = (
+        os.path.join(model_path_input, model_subdir, "vae")
+        if z_image_vae_path_input
+        else None
+    )
+    scheduler_path = (
+        os.path.join(model_path_input, model_subdir, "scheduler")
+        if z_image_scheduler_path_input
+        else None
+    )
     z_image_config["vae_path"] = vae_path
     z_image_config["scheduler_path"] = scheduler_path
     z_image_config["qwen3_quantized"] = True
     z_image_config["qwen3_quant_scheme"] = "int4"
-    z_image_config["qwen3_quantized_ckpt"] = os.path.join(model_path_input, qwen3_encoder_path_input) if qwen3_encoder_path_input else None
-    z_image_config["qwen3_tokenizer_path"] = os.path.join(model_path_input, qwen3_encoder_path_input) if qwen3_encoder_path_input else None
-    z_image_config["qwen3_processor_path"] = os.path.join(model_path_input, qwen3_encoder_path_input) if qwen3_encoder_path_input else None
+    z_image_config["qwen3_quantized_ckpt"] = (
+        os.path.join(model_path_input, qwen3_encoder_path_input)
+        if qwen3_encoder_path_input
+        else None
+    )
+    z_image_config["qwen3_tokenizer_path"] = (
+        os.path.join(model_path_input, qwen3_encoder_path_input)
+        if qwen3_encoder_path_input
+        else None
+    )
+    z_image_config["qwen3_processor_path"] = (
+        os.path.join(model_path_input, qwen3_encoder_path_input)
+        if qwen3_encoder_path_input
+        else None
+    )
     # 使用子目录路径作为 model_path
     z_image_config["model_path"] = os.path.join(model_path_input, "Z-Image-Turbo")
     z_image_config["model_cls"] = "z_image"
@@ -838,8 +984,14 @@ def get_model_configs(
 
             # 处理 high_noise LoRA
             if high_noise_lora_path and high_noise_lora_path.strip():
-                high_noise_lora_full_path = os.path.join(model_path_input, "loras", high_noise_lora_path.strip())
-                high_noise_strength = float(high_noise_lora_strength) if high_noise_lora_strength is not None else 1.0
+                high_noise_lora_full_path = os.path.join(
+                    model_path_input, "loras", high_noise_lora_path.strip()
+                )
+                high_noise_strength = (
+                    float(high_noise_lora_strength)
+                    if high_noise_lora_strength is not None
+                    else 1.0
+                )
                 lora_configs.append(
                     {
                         "name": "high_noise_model",
@@ -849,8 +1001,12 @@ def get_model_configs(
                 )
             elif lora_path and lora_path.strip():
                 # 如果没有分别提供，使用统一的 lora_path
-                high_noise_lora_full_path = os.path.join(model_path_input, "loras", lora_path.strip())
-                high_noise_strength = float(lora_strength) if lora_strength is not None else 1.0
+                high_noise_lora_full_path = os.path.join(
+                    model_path_input, "loras", lora_path.strip()
+                )
+                high_noise_strength = (
+                    float(lora_strength) if lora_strength is not None else 1.0
+                )
                 lora_configs.append(
                     {
                         "name": "high_noise_model",
@@ -861,8 +1017,14 @@ def get_model_configs(
 
             # 处理 low_noise LoRA
             if low_noise_lora_path and low_noise_lora_path.strip():
-                low_noise_lora_full_path = os.path.join(model_path_input, "loras", low_noise_lora_path.strip())
-                low_noise_strength = float(low_noise_lora_strength) if low_noise_lora_strength is not None else 1.0
+                low_noise_lora_full_path = os.path.join(
+                    model_path_input, "loras", low_noise_lora_path.strip()
+                )
+                low_noise_strength = (
+                    float(low_noise_lora_strength)
+                    if low_noise_lora_strength is not None
+                    else 1.0
+                )
                 lora_configs.append(
                     {
                         "name": "low_noise_model",
@@ -872,8 +1034,12 @@ def get_model_configs(
                 )
             elif lora_path and lora_path.strip():
                 # 如果没有分别提供，使用统一的 lora_path
-                low_noise_lora_full_path = os.path.join(model_path_input, "loras", lora_path.strip())
-                low_noise_strength = float(lora_strength) if lora_strength is not None else 1.0
+                low_noise_lora_full_path = os.path.join(
+                    model_path_input, "loras", lora_path.strip()
+                )
+                low_noise_strength = (
+                    float(lora_strength) if lora_strength is not None else 1.0
+                )
                 lora_configs.append(
                     {
                         "name": "low_noise_model",
@@ -888,11 +1054,15 @@ def get_model_configs(
         else:
             # 其他模型类型（Wan2.1, Qwen-Image, Z-Image-Turbo）
             if lora_path and lora_path.strip():
-                lora_full_path = os.path.join(model_path_input, "loras", lora_path.strip())
+                lora_full_path = os.path.join(
+                    model_path_input, "loras", lora_path.strip()
+                )
                 lora_configs = [
                     {
                         "path": lora_full_path,
-                        "strength": float(lora_strength) if lora_strength is not None else 1.0,
+                        "strength": (
+                            float(lora_strength) if lora_strength is not None else 1.0
+                        ),
                     }
                 ]
 

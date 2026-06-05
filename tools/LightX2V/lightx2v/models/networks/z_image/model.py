@@ -1,18 +1,24 @@
-from lib.smart_config import smart_config
 import torch
 import torch.distributed as dist
-
 from lightx2v.models.networks.base_model import BaseTransformerModel
-from lightx2v.models.networks.z_image.infer.offload.transformer_infer import ZImageOffloadTransformerInfer
+from lightx2v.models.networks.z_image.infer.offload.transformer_infer import (
+    ZImageOffloadTransformerInfer,
+)
 from lightx2v.models.networks.z_image.infer.post_infer import ZImagePostInfer
 from lightx2v.models.networks.z_image.infer.pre_infer import ZImagePreInfer
-from lightx2v.models.networks.z_image.infer.transformer_infer import ZImageTransformerInfer
+from lightx2v.models.networks.z_image.infer.transformer_infer import (
+    ZImageTransformerInfer,
+)
 from lightx2v.models.networks.z_image.weights.post_weights import ZImagePostWeights
 from lightx2v.models.networks.z_image.weights.pre_weights import ZImagePreWeights
-from lightx2v.models.networks.z_image.weights.transformer_weights import ZImageTransformerWeights
+from lightx2v.models.networks.z_image.weights.transformer_weights import (
+    ZImageTransformerWeights,
+)
 from lightx2v.utils.custom_compiler import compiled_method
 from lightx2v.utils.envs import *
 from lightx2v.utils.utils import *
+
+from lib.smart_config import smart_config
 
 
 class ZImageTransformerModel(BaseTransformerModel):
@@ -26,7 +32,9 @@ class ZImageTransformerModel(BaseTransformerModel):
             self.remove_keys.extend(["layers."])
 
         if self.config["seq_parallel"]:
-            raise NotImplementedError("Sequence parallel is not implemented for ZImageTransformerModel")
+            raise NotImplementedError(
+                "Sequence parallel is not implemented for ZImageTransformerModel"
+            )
 
         self._init_infer_class()
         self._init_weights()
@@ -34,7 +42,11 @@ class ZImageTransformerModel(BaseTransformerModel):
 
     def _init_infer_class(self):
         if self.config["feature_caching"] == "NoCaching":
-            self.transformer_infer_class = ZImageTransformerInfer if not self.cpu_offload else ZImageOffloadTransformerInfer
+            self.transformer_infer_class = (
+                ZImageTransformerInfer
+                if not self.cpu_offload
+                else ZImageOffloadTransformerInfer
+            )
         else:
             assert NotImplementedError
         self.pre_infer_class = ZImagePreInfer
@@ -76,11 +88,15 @@ class ZImageTransformerModel(BaseTransformerModel):
 
     @torch.no_grad()
     def _seq_parallel_pre_process(self, pre_infer_out):
-        raise NotImplementedError("Sequence parallel pre-process is not implemented for ZImageTransformerModel")
+        raise NotImplementedError(
+            "Sequence parallel pre-process is not implemented for ZImageTransformerModel"
+        )
 
     @torch.no_grad()
     def _seq_parallel_post_process(self, noise_pred):
-        raise NotImplementedError("Sequence parallel post-process is not implemented for ZImageTransformerModel")
+        raise NotImplementedError(
+            "Sequence parallel post-process is not implemented for ZImageTransformerModel"
+        )
 
     @compiled_method()
     @torch.no_grad()
@@ -100,13 +116,23 @@ class ZImageTransformerModel(BaseTransformerModel):
             if self.config["cfg_parallel"]:
                 # ==================== CFG Parallel Processing ====================
                 cfg_p_group = self.config["device_mesh"].get_group(mesh_dim="cfg_p")
-                assert dist.get_world_size(cfg_p_group) == 2, "cfg_p_world_size must be equal to 2"
+                assert (
+                    dist.get_world_size(cfg_p_group) == 2
+                ), "cfg_p_world_size must be equal to 2"
                 cfg_p_rank = dist.get_rank(cfg_p_group)
 
                 if cfg_p_rank == 0:
-                    noise_pred = self._infer_cond_uncond(latents_input, inputs["text_encoder_output"]["prompt_embeds"], infer_condition=True)
+                    noise_pred = self._infer_cond_uncond(
+                        latents_input,
+                        inputs["text_encoder_output"]["prompt_embeds"],
+                        infer_condition=True,
+                    )
                 else:
-                    noise_pred = self._infer_cond_uncond(latents_input, inputs["text_encoder_output"]["negative_prompt_embeds"], infer_condition=False)
+                    noise_pred = self._infer_cond_uncond(
+                        latents_input,
+                        inputs["text_encoder_output"]["negative_prompt_embeds"],
+                        infer_condition=False,
+                    )
 
                 # post_infer already extracts image part, so noise_pred is already [B, T_img, out_dim]
                 # No need to extract again
@@ -116,8 +142,16 @@ class ZImageTransformerModel(BaseTransformerModel):
                 noise_pred_uncond = noise_pred_list[1]  # cfg_p_rank == 1
             else:
                 # ==================== CFG Processing ====================
-                noise_pred_cond = self._infer_cond_uncond(latents_input, inputs["text_encoder_output"]["prompt_embeds"], infer_condition=True)
-                noise_pred_uncond = self._infer_cond_uncond(latents_input, inputs["text_encoder_output"]["negative_prompt_embeds"], infer_condition=False)
+                noise_pred_cond = self._infer_cond_uncond(
+                    latents_input,
+                    inputs["text_encoder_output"]["prompt_embeds"],
+                    infer_condition=True,
+                )
+                noise_pred_uncond = self._infer_cond_uncond(
+                    latents_input,
+                    inputs["text_encoder_output"]["negative_prompt_embeds"],
+                    infer_condition=False,
+                )
 
                 # post_infer already extracts image part, so noise_pred is already [B, T_img, out_dim]
                 # Just ensure both have the same sequence length (should be same, but double-check)
@@ -125,13 +159,19 @@ class ZImageTransformerModel(BaseTransformerModel):
                 noise_pred_cond = noise_pred_cond[:, :min_seq_len, :]
                 noise_pred_uncond = noise_pred_uncond[:, :min_seq_len, :]
 
-            comb_pred = noise_pred_uncond + self.scheduler.sample_guide_scale * (noise_pred_cond - noise_pred_uncond)
+            comb_pred = noise_pred_uncond + self.scheduler.sample_guide_scale * (
+                noise_pred_cond - noise_pred_uncond
+            )
             noise_pred_cond_norm = torch.norm(noise_pred_cond, dim=-1, keepdim=True)
             noise_norm = torch.norm(comb_pred, dim=-1, keepdim=True)
             self.scheduler.noise_pred = comb_pred * (noise_pred_cond_norm / noise_norm)
         else:
             # ==================== No CFG Processing ====================
-            noise_pred = self._infer_cond_uncond(latents_input, inputs["text_encoder_output"]["prompt_embeds"], infer_condition=True)
+            noise_pred = self._infer_cond_uncond(
+                latents_input,
+                inputs["text_encoder_output"]["prompt_embeds"],
+                infer_condition=True,
+            )
 
             # post_infer already extracts image part, so noise_pred is already [B, T_img, out_dim]
             # No need to extract again
@@ -139,7 +179,11 @@ class ZImageTransformerModel(BaseTransformerModel):
             self.scheduler.noise_pred = noise_pred
 
         if self.cpu_offload:
-            if self.offload_granularity == "model" and self.scheduler.step_index == self.scheduler.infer_steps - 1 and "wan2.2_moe" not in self.config["model_cls"]:
+            if (
+                self.offload_granularity == "model"
+                and self.scheduler.step_index == self.scheduler.infer_steps - 1
+                and "wan2.2_moe" not in self.config["model_cls"]
+            ):
                 self.to_cpu()
             elif self.offload_granularity != "model":
                 self.pre_weight.to_cpu()

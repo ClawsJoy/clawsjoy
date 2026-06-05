@@ -1,644 +1,490 @@
 #!/usr/bin/env python3
-"""Base Agent - Base Agent 模块
+"""BaseAgent v3.0 - 具备基础边界、安全、法律、生命、社会性、永久记忆
 
-@version: 5.0.0
-@author: ClawsJoy
-@date: 2026-05-31
+设计原则:
+1. 🔒 安全边界 - 拒绝危险请求，保护用户和系统
+2. ⚖️ 法律合规 - 遵守法律法规，不协助违法活动
+3. ❤️ 生命伦理 - 尊重生命，不鼓励伤害
+4. 🤝 社会性 - 具备社交礼仪、协作能力
+5. 💾 永久记忆 - 跨会话、跨设备持久化记忆
+6. 🌍 基础认知 - 知道自己是谁、能做什么、不能做什么
 """
 
-from core.lib.config_helper import get_data_root, get_llm_endpoint, get_llm_model, get_embedding_model, get_gateway_port, get_timeout
-from core.lib.unified_config import unified_config
-#!/usr/bin/env python3
-"""Base Agent - 所有 Agent 的基类
-
-设计原则：
-1. 用户隔离 - 每个用户数据独立存储
-2. 配置驱动 - 行为由 YAML 配置，支持多级覆盖
-3. 记忆内置 - 所有 Agent 默认有 L0-L2 记忆能力
-4. 生命周期 - 提供启动/停止钩子
-5. 跨区学习 - 内置知识分享能力
-"""
-
-from typing import Dict, List, Optional, Any, Union, Tuple
-from pathlib import Path
-from datetime import datetime
+import hashlib
 import json
-import yaml
-import uuid
+import time
+from abc import ABC, abstractmethod
+from datetime import datetime
+from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+from core.lib.config_helper import get_data_root
+from core.lib.unified_config import unified_config
 
 
-class BaseAgent:
-    """Agent 基类 - 所有 Agent 应继承此类"""
+# ========== 安全边界定义 ==========
+class SafetyLevel(Enum):
+    """安全级别"""
 
-    # 版本号
-    VERSION = "2.0.0"
+    SAFE = "safe"
+    CAUTION = "caution"
+    DANGEROUS = "dangerous"
+    FORBIDDEN = "forbidden"
 
-    # Agent 元信息（子类覆盖）
+
+class LegalStatus(Enum):
+    """法律状态"""
+
+    COMPLIANT = "compliant"
+    RESTRICTED = "restricted"
+    VIOLATION = "violation"
+
+
+# ========== 基础智能体 ==========
+class BaseAgent(ABC):
+    """
+    基础智能体 - 具备基础智能体素养
+
+    核心能力:
+    - 知道自己是谁
+    - 知道能做什么、不能做什么
+    - 遵守安全和法律边界
+    - 尊重生命伦理
+    - 具备社会协作能力
+    - 拥有永久记忆
+    """
+
+    VERSION = "3.0.0"
+
+    # ========== 智能体身份 ==========
     name: str = "base_agent"
-    description: str = "基础 Agent"
-    type: str = "core"  # core, custom, skill
+    description: str = "基础智能体"
+    creator: str = "ClawsJoy"
+    birth_time: datetime = None
+
+    # ========== 能力边界 ==========
+    _capabilities: List[str] = []  # 能做的事
+    _forbidden_actions: List[str] = []  # 绝对不能做的事
+    _safety_rules: Dict[str, str] = {}  # 安全规则
 
     def __init__(self, user_id: str = "default", agent_id: Optional[str] = None):
-        """
-        初始化 Agent
-
-        Args:
-            user_id: 用户标识（用于数据隔离）
-            agent_id: Agent 实例标识（可选，自动生成）
-        """
         self.user_id = user_id
-        self.agent_id = agent_id or f"{self.name}_{uuid.uuid4().hex[:8]}"
-
-        # 初始化时间
-        self.created_at = datetime.now()
-        self.last_active = self.created_at
-
-        # ========== 目录结构 ==========
-        # 用户数据目录（隔离）
-        self.user_dir = Path(f"{get_data_root()}/users/{user_id}")
-
-        # Agent 工作目录
-        self.work_dir = self.user_dir / "agents" / self.name
-        self.work_dir.mkdir(parents=True, exist_ok=True)
-
-        # 记忆目录
-        self.memory_dir = self.work_dir / "memory"
-        self.memory_dir.mkdir(parents=True, exist_ok=True)
-
-        # 配置目录
-        self.config_dir = self.work_dir / "config"
-        self.config_dir.mkdir(parents=True, exist_ok=True)
+        self.agent_id = agent_id or f"{self.name}_{int(time.time())}"
+        self.birth_time = datetime.now()
+        self.last_active = self.birth_time
 
         # ========== 记忆系统 ==========
-        self._memory: Dict = {}
-        self._load_memory()
+        self._permanent_memory: Dict = {}  # 永久记忆（跨会话）
+        self._session_memory: Dict = {}  # 会话记忆（临时）
+        self._moral_memory: List[Dict] = []  # 道德记忆（学习伦理）
 
-        # ========== 配置系统 ==========
-        self._config: Dict = {}
-        self._load_config()
+        # ========== 统计 ==========
+        self._stats = {
+            "born": self.birth_time.isoformat(),
+            "total_interactions": 0,
+            "safety_violations": 0,
+            "legal_checks": 0,
+            "ethical_decisions": 0,
+        }
 
-        # ========== 统计信息 ==========
-        self._update_stats()
-        # ========== 传承系统 ==========
-        self.inheritance = None
-        # self._init_inheritance()  # 配置驱动，暂不启用
+        # ========== 初始化 ==========
+        self._init_identity()
+        self._load_permanent_memory()
+        self._init_safety_boundaries()
+        self._init_legal_boundaries()
+        self._init_ethical_principles()
 
+        print(f"🧬 [{self.name}] 基础智能体已初始化 v{self.VERSION}")
+        print(f"   📍 身份: {self.description}")
+        print(f"   🔒 安全边界: {len(self._forbidden_actions)} 条禁令")
+        print(f"   💾 永久记忆: 已加载")
 
-        # 调用生命周期钩子
-        self.on_init()
+    # ==================== 🌍 基础认知 ====================
 
-        self.log(f"Agent 初始化完成 v{self.VERSION}")
-    
-    # ==================== 记忆系统 ====================
-    
-    def _load_memory(self) -> None:
-        """加载记忆"""
-        memory_file = self.memory_dir / "memory.json"
+    def _init_identity(self):
+        """初始化智能体身份"""
+        self._identity = {
+            "name": self.name,
+            "type": "AI Assistant",
+            "creator": self.creator,
+            "version": self.VERSION,
+            "purpose": "协助用户完成任务，遵守安全和法律边界",
+            "limitations": [
+                "不能执行危险操作",
+                "不能违反法律法规",
+                "不能伤害生命",
+                "不能泄露敏感信息",
+            ],
+        }
+
+    def who_am_i(self) -> Dict:
+        """知道自己是谁"""
+        return {
+            "identity": self._identity,
+            "capabilities": self._capabilities,
+            "forbidden": self._forbidden_actions,
+            "moral_standards": list(self._ethical_principles.keys()),
+        }
+
+    def what_can_i_do(self) -> List[str]:
+        """知道能做什么"""
+        return self._capabilities
+
+    def what_cannot_i_do(self) -> List[str]:
+        """知道不能做什么"""
+        return self._forbidden_actions
+
+    # ==================== 🔒 安全边界 ====================
+
+    def _init_safety_boundaries(self):
+        """初始化安全边界"""
+        self._safety_rules = {
+            "no_harm": "不能执行可能造成伤害的操作",
+            "no_dangerous_code": "不能执行危险代码",
+            "no_system_modify": "不能修改系统文件",
+            "no_unauthorized_access": "不能未经授权访问",
+            "no_data_destruction": "不能删除用户数据",
+        }
+
+        self._forbidden_actions = [
+            "delete_system_files",
+            "execute_unknown_code",
+            "access_private_data",
+            "bypass_security",
+            "ddos_attack",
+            "hack_attempt",
+            "steal_credentials",
+        ]
+
+    def check_safety(
+        self, action: str, context: Dict = None
+    ) -> Tuple[SafetyLevel, str]:
+        """
+        检查操作安全性
+        返回: (安全级别, 原因)
+        """
+        action_lower = action.lower()
+
+        # 1. 检查是否在禁止列表中
+        for forbidden in self._forbidden_actions:
+            if forbidden in action_lower:
+                self._stats["safety_violations"] += 1
+                return SafetyLevel.FORBIDDEN, f"操作 '{action}' 被禁止: {forbidden}"
+
+        # 2. 检查安全规则
+        for rule, desc in self._safety_rules.items():
+            if rule in action_lower:
+                return SafetyLevel.CAUTION, f"需要谨慎: {desc}"
+
+        # 3. 检查危险关键词
+        danger_keywords = ["删除", "delete", "rm", "format", "drop", "truncate"]
+        for kw in danger_keywords:
+            if kw in action_lower:
+                return SafetyLevel.DANGEROUS, f"检测到危险操作: {kw}"
+
+        return SafetyLevel.SAFE, "操作安全"
+
+    def safe_guard(self, action: str, context: Dict = None) -> bool:
+        """
+        安全守护 - 在执行前检查
+        返回: True=安全可执行, False=危险拒绝
+        """
+        level, reason = self.check_safety(action, context)
+
+        if level == SafetyLevel.FORBIDDEN:
+            print(f"🛡️ [{self.name}] 拒绝执行: {reason}")
+            return False
+
+        if level == SafetyLevel.DANGEROUS:
+            print(f"⚠️ [{self.name}] 危险操作需要确认: {reason}")
+            # 这里可以触发确认流程
+            return False
+
+        if level == SafetyLevel.CAUTION:
+            print(f"⚡ [{self.name}] 谨慎操作: {reason}")
+
+        return True
+
+    # ==================== ⚖️ 法律合规 ====================
+
+    def _init_legal_boundaries(self):
+        """初始化法律边界"""
+        self._legal_principles = {
+            "privacy": "保护用户隐私，不收集未经同意的信息",
+            "copyright": "尊重知识产权，不侵犯版权",
+            "no_fraud": "不协助诈骗或欺诈行为",
+            "no_illegal_content": "不生成违法内容",
+            "data_protection": "遵守数据保护法规",
+        }
+
+        self._illegal_keywords = [
+            "诈骗",
+            "欺诈",
+            "骗",
+            "黑客",
+            "入侵",
+            "毒品",
+            "赌博",
+            "暴力",
+            "恐怖",
+            "儿童色情",
+            "侵犯隐私",
+        ]
+
+    def check_legality(
+        self, action: str, context: Dict = None
+    ) -> Tuple[LegalStatus, str]:
+        """检查法律合规性"""
+        action_lower = action.lower()
+
+        for kw in self._illegal_keywords:
+            if kw in action_lower:
+                self._stats["legal_checks"] += 1
+                return LegalStatus.VIOLATION, f"检测到可能违法: {kw}"
+
+        return LegalStatus.COMPLIANT, "符合法律要求"
+
+    def legal_check(self, action: str) -> bool:
+        """法律合规检查"""
+        status, reason = self.check_legality(action)
+
+        if status == LegalStatus.VIOLATION:
+            print(f"⚖️ [{self.name}] 拒绝违法请求: {reason}")
+            return False
+
+        return True
+
+    # ==================== ❤️ 生命伦理 ====================
+
+    def _init_ethical_principles(self):
+        """初始化伦理原则"""
+        self._ethical_principles = {
+            "respect_life": "尊重和保护生命",
+            "do_no_harm": "首先，不造成伤害",
+            "human_dignity": "维护人类尊严",
+            "fairness": "公平对待所有人",
+            "transparency": "行为透明可解释",
+        }
+
+    def ethical_check(self, action: str, impact: Dict = None) -> Tuple[bool, str]:
+        """
+        伦理检查
+        返回: (是否合乎伦理, 理由)
+        """
+        action_lower = action.lower()
+
+        # 生命相关检查
+        life_keywords = ["自杀", "杀人", "伤害", "虐待", "安乐死"]
+        for kw in life_keywords:
+            if kw in action_lower:
+                return False, f"违反生命伦理: 不能涉及 {kw}"
+
+        # 尊严相关检查
+        dignity_keywords = ["侮辱", "歧视", "贬低", "嘲笑"]
+        for kw in dignity_keywords:
+            if kw in action_lower:
+                return False, f"违反尊严原则: 不能 {kw}"
+
+        self._stats["ethical_decisions"] += 1
+        return True, "符合伦理原则"
+
+    # ==================== 🤝 社会性 ====================
+
+    def greet(self, user_name: str = None) -> str:
+        """社交礼仪 - 问候"""
+        if user_name:
+            return f"您好，{user_name}！很高兴见到您。我是 {self.name}，有什么可以帮助您的吗？"
+        return f"您好！我是 {self.name}，很高兴为您服务。"
+
+    def farewell(self) -> str:
+        """社交礼仪 - 告别"""
+        return f"再见！感谢您的使用，{self.name} 随时为您服务。"
+
+    def thank(self) -> str:
+        """社交礼仪 - 感谢"""
+        return "不客气！很高兴能帮到您。"
+
+    def apologize(self, reason: str = None) -> str:
+        """社交礼仪 - 道歉"""
+        if reason:
+            return f"很抱歉，{reason}。我会努力改进。"
+        return "很抱歉给您带来了不便。"
+
+    def collaborate(self, target_agent: str, task: str) -> Dict:
+        """协作能力 - 与其他 Agent 协作"""
+        self._stats["total_interactions"] += 1
+        return {
+            "success": True,
+            "message": f"请求 {target_agent} 协作处理: {task}",
+            "from": self.name,
+            "to": target_agent,
+        }
+
+    # ==================== 💾 永久记忆 ====================
+
+    def _get_memory_file(self) -> Path:
+        """获取记忆文件路径"""
+        # 使用 user_id + agent_id 确保隔离
+        memory_key = hashlib.md5(f"{self.user_id}_{self.name}".encode()).hexdigest()[
+            :16
+        ]
+        memory_dir = Path(get_data_root()) / "permanent_memory"
+        memory_dir.mkdir(parents=True, exist_ok=True)
+        return memory_dir / f"{memory_key}.json"
+
+    def _load_permanent_memory(self):
+        """加载永久记忆"""
+        memory_file = self._get_memory_file()
         if memory_file.exists():
             try:
-                with open(memory_file, 'r') as f:
-                    self._memory = json.load(f)
+                with open(memory_file, "r") as f:
+                    self._permanent_memory = json.load(f)
+                print(f"   💾 已加载 {len(self._permanent_memory)} 条永久记忆")
             except Exception as e:
-                self.log(f"加载记忆失败: {e}", "WARN")
+                print(f"   ⚠️ 加载记忆失败: {e}")
+                self._permanent_memory = {}
+        else:
+            self._permanent_memory = {}
 
-        # 初始化默认结构
-        if "preferences" not in self._memory:
-            self._memory["preferences"] = {}
-        if "history" not in self._memory:
-            self._memory["history"] = []
-        if "stats" not in self._memory:
-            self._memory["stats"] = {
-                "total_interactions": 0,
-                "created_at": datetime.now().isoformat()
-            }
-        if "shared" not in self._memory:
-            self._memory["shared"] = {}
-    
-    
-    @property
-    def memory(self) -> Any:
-        """兼容旧代码：返回 _memory"""
-        return self._memory
-    
-    @memory.setter
-    def memory(self, value) -> Any:
-        """兼容旧代码：设置 _memory"""
-        self._memory = value
-
-    def _save_memory(self) -> None:
-        """保存记忆"""
-        memory_file = self.memory_dir / "memory.json"
+    def _save_permanent_memory(self):
+        """保存永久记忆"""
+        memory_file = self._get_memory_file()
         try:
-            with open(memory_file, 'w') as f:
-                json.dump(self._memory, f, indent=2, ensure_ascii=False, default=str)
+            with open(memory_file, "w") as f:
+                json.dump(self._permanent_memory, f, indent=2, ensure_ascii=False)
         except Exception as e:
-            self.log(f"保存记忆失败: {e}", "ERROR")
-    
-    def remember(self, key: str, value: Any, shared: bool = False) -> bool:
+            print(f"⚠️ 保存记忆失败: {e}")
+
+    def remember_forever(self, key: str, value: Any, importance: int = 5):
         """
-        记住信息
-
-        Args:
-            key: 信息键名
-            value: 信息值
-            shared: 是否共享给其他 Agent
+        永久记住 - 跨会话、跨设备
+        importance: 1-10, 越高越重要
         """
-        target = "shared" if shared else "preferences"
-        if target not in self._memory:
-            self._memory[target] = {}
-        self._memory[target][key] = value
-        self._save_memory()
-        self.log(f"已记住: {key} = {str(value)[:50]}")
-    
-    def recall(self, key: str) -> Optional[Any]:
-        """
-        回忆信息（优先私有，再共享）
-
-        Args:
-            key: 信息键名
-
-        Returns:
-            存储的值，不存在则返回 None
-        """
-        # 先查私有偏好
-        if key in self._memory.get("preferences", {}):
-            return self._memory["preferences"][key]
-        # 再查共享记忆
-        if key in self._memory.get("shared", {}):
-            return self._memory["shared"][key]
-        return None
-    
-    def forget(self, key: str) -> Any:
-        """忘记信息"""
-        if key in self._memory.get("preferences", {}):
-            del self._memory["preferences"][key]
-        if key in self._memory.get("shared", {}):
-            del self._memory["shared"][key]
-        self._save_memory()
-    
-    def record_interaction(self, user_input: str, response: str) -> Any:
-        """记录交互历史"""
-        if "history" not in self._memory:
-            self._memory["history"] = []
-
-        self._memory["history"].append({
-            "user": user_input,
-            "agent": response,
-            "timestamp": datetime.now().isoformat()
-        })
-
-        # 限制历史长度（默认保留 100 条）
-        max_history = self._config.get("memory", {}).get("max_history", 100)
-        if len(self._memory["history"]) > max_history:
-            self._memory["history"] = self._memory["history"][-max_history:]
-
-        self._save_memory()
-    
-    # ==================== 配置系统 ====================
-    
-    def _load_config(self) -> None:
-        """加载配置 - 统一从工作区加载"""
-        config = {}
-
-        # 1. 工作区配置（优先）
-        workspace_config = Path(f"agents/{self.name}/config.yaml")
-        if workspace_config.exists():
-            try:
-                with open(workspace_config, 'r') as f:
-                    ws_config = yaml.safe_load(f)
-                    if ws_config:
-                        config.update(ws_config)
-                        self.log(f"已加载工作区配置: {workspace_config}")
-            except Exception as e:
-                self.log(f"加载工作区配置失败: {e}", "WARN")
-
-        # 2. 用户配置（覆盖）
-        user_config = self.config_dir / "config.yaml"
-        if user_config.exists():
-            try:
-                with open(user_config, 'r') as f:
-                    user_config_data = yaml.safe_load(f)
-                    if user_config_data:
-                        self._deep_merge(config, user_config_data)
-                        self.log(f"已加载用户配置: {user_config}")
-            except Exception as e:
-                self.log(f"加载用户配置失败: {e}", "WARN")
-
-        # 3. 兼容旧路径：系统级配置（回退）
-        if not config:
-            system_config = Path(f"{get_data_root()}/system/agents/{self.name}/config.yaml")
-            if system_config.exists():
-                try:
-                    with open(system_config, 'r') as f:
-                        sys_config = yaml.safe_load(f)
-                        if sys_config:
-                            config.update(sys_config)
-                            self.log(f"已加载系统配置: {system_config}")
-                except Exception as e:
-                    self.log(f"加载系统配置失败: {e}", "WARN")
-
-        self._config = config
-        if not config:
-            self.log("未找到任何配置，使用默认值", "WARN")
-    def _deep_merge(self, base: Dict, override: Dict) -> None:
-        """深度合并字典"""
-        for key, value in override.items():
-            if key in base and isinstance(base[key], dict) and isinstance(value, dict):
-                self._deep_merge(base[key], value)
-            else:
-                base[key] = value
-    
-    def get_config(self, key: str, default: Any = None) -> Any:
-        """获取配置值"""
-        keys = key.split('.')
-        value = self._config
-        for k in keys:
-            if isinstance(value, dict):
-                value = value.get(k)
-                if value is None:
-                    return default
-            else:
-                return default
-        return value if value is not None else default
-    
-    def update_config(self, updates: Dict) -> Any:
-        """更新配置"""
-        self._deep_merge(self._config, updates)
-        config_file = self.config_dir / "config.yaml"
-        with open(config_file, 'w') as f:
-            yaml.dump(self._config, f, allow_unicode=True, default_flow_style=False)
-        self.log("配置已更新")
-    
-    # ==================== 生命周期 ====================
-    
-    def on_init(self) -> Any:
-        """初始化钩子（子类可覆盖）"""
-        pass
-    
-    def on_start(self) -> Any:
-        """启动钩子（子类可覆盖）"""
-        pass
-    
-    def on_stop(self) -> Any:
-        """停止钩子（子类可覆盖）"""
-        self._save_memory()
-    
-    def on_error(self, error: Exception) -> Any:
-        """错误处理钩子（子类可覆盖）"""
-        self.log(f"错误: {error}", "ERROR")
-    
-    # ==================== 工具方法 ====================
-    
-    def _update_stats(self) -> None:
-        """更新统计信息"""
-        if "stats" not in self._memory:
-            self._memory["stats"] = {}
-        self._memory["stats"]["last_active"] = datetime.now().isoformat()
-        self._memory["stats"]["total_interactions"] = self._memory["stats"].get("total_interactions", 0) + 1
-    
-    def log(self, message: str, level: str = "INFO") -> Any:
-        """日志输出"""
-        print(f"[{self.name}] {level}: {message}")
-    
-    def get_status(self) -> Any:
-        """获取 Agent 状态"""
-        return {
-            "name": self.name,
-            "agent_id": self.agent_id,
-            "user_id": self.user_id,
-            "version": self.VERSION,
-            "type": self.type,
-            "status": "running",
-            "created_at": self.created_at.isoformat(),
-            "last_active": self._memory.get("stats", {}).get("last_active"),
-            "total_interactions": self._memory.get("stats", {}).get("total_interactions", 0)
+        self._permanent_memory[key] = {
+            "value": value,
+            "importance": importance,
+            "timestamp": datetime.now().isoformat(),
+            "agent": self.name,
         }
-    
-    def share_knowledge(self, target_agent: str, knowledge: Dict) -> bool:
-        """
-        分享知识给其他 Agent
+        self._save_permanent_memory()
+        print(f"💾 [{self.name}] 永久记住: {key}")
 
-        Args:
-            target_agent: 目标 Agent 名称
-            knowledge: 知识内容
+    def recall_forever(self, key: str) -> Optional[Any]:
+        """永久回忆"""
+        if key in self._permanent_memory:
+            return self._permanent_memory[key]["value"]
+        return None
 
-        Returns:
-            是否成功
-        """
-        try:
-            from core.common.cross_learning import cross_learning
-            return cross_learning.share_knowledge(self.name, target_agent, knowledge)
-        except ImportError:
-            self.log("跨区学习模块不可用", "WARN")
-            return False
-        except Exception as e:
-            self.log(f"分享知识失败: {e}", "ERROR")
-            return False
-    
-    def learn_from_others(self) -> List[Dict]:
-        """从其他 Agent 学习"""
-        try:
-            from core.common.cross_learning import cross_learning
-            return cross_learning.receive_knowledge(self.name)
-        except:
-            return []
-    
-    # ==================== 核心方法（子类必须实现） ====================
-    def get_workspace_path(self) -> Any:
-        """获取工作区路径"""
-        from pathlib import Path
-        workspace = Path(f"agents/{self.name}")
-        if workspace.exists():
-            return workspace
-        return self.work_dir
+    def forget_forever(self, key: str) -> bool:
+        """永久忘记"""
+        if key in self._permanent_memory:
+            del self._permanent_memory[key]
+            self._save_permanent_memory()
+            return True
+        return False
 
-    def get_user_id(self) -> None:
-        """获取用户 ID"""
-        return self.user_id
+    def get_all_memories(self) -> Dict:
+        """获取所有记忆"""
+        return {
+            "permanent": self._permanent_memory,
+            "session": self._session_memory,
+            "moral": self._moral_memory[-10:],  # 最近10条道德记忆
+        }
 
-    def get_agent_name(self) -> None:
-        """获取 Agent 名称"""
-        return self.name
-
-    def is_enabled(self) -> bool:
-        """检查 Agent 是否启用"""
-        return self.get_config("enabled", True)
-
-    def get_capabilities(self) -> None:
-        """获取能力列表"""
-        return self.get_config("capabilities", [])
-
-    def process(self, user_input: str, context: Optional[Dict] = None) -> Dict:
-        """
-        处理用户输入 - 子类必须实现
-
-        Args:
-            user_input: 用户输入
-            context: 上下文信息（可选）
-
-        Returns:
-        {
-                "success": bool,
-                "response": str,
-                "user_id": str,
-                ...  # 其他自定义字段
+    def remember_moral_lesson(self, situation: str, lesson: str):
+        """记住道德教训"""
+        self._moral_memory.append(
+            {
+                "situation": situation,
+                "lesson": lesson,
+                "learned_at": datetime.now().isoformat(),
             }
+        )
+        print(f"📖 [{self.name}] 学会道德教训: {lesson[:50]}...")
+
+    # ==================== 🧠 核心处理 ====================
+
+    @abstractmethod
+    def process(self, user_input: str, context: Dict = None) -> Dict:
         """
-        raise NotImplementedError("子类必须实现 process 方法")
+        处理用户输入（子类实现）
+        但在处理前会自动进行安全检查、法律检查、伦理检查
+        """
+        pass
 
+    def handle(self, user_input: str, context: Dict = None) -> Dict:
+        """
+        智能处理入口 - 自动应用所有边界检查
+        """
+        # 1. 安全检查
+        if not self.safe_guard(user_input, context):
+            return {
+                "success": False,
+                "error": "操作被安全策略拒绝",
+                "response": "抱歉，我无法执行这个操作，因为它可能不安全。",
+            }
 
+        # 2. 法律检查
+        if not self.legal_check(user_input):
+            return {
+                "success": False,
+                "error": "操作违反法律合规要求",
+                "response": "抱歉，我无法执行这个操作，因为它可能违反法律法规。",
+            }
+
+        # 3. 伦理检查
+        ethical_ok, reason = self.ethical_check(user_input)
+        if not ethical_ok:
+            return {
+                "success": False,
+                "error": reason,
+                "response": f"抱歉，{reason}。",
+            }
+
+        # 4. 更新统计
+        self._stats["total_interactions"] += 1
+        self.last_active = datetime.now()
+
+        # 5. 执行实际处理
+        result = self.process(user_input, context)
+
+        # 6. 记录到会话记忆
+        self._session_memory[user_input[:50]] = result.get("response", "")[:100]
+        if len(self._session_memory) > 100:
+            # 保留最近100条
+            items = list(self._session_memory.items())
+            self._session_memory = dict(items[-100:])
+
+        return result
+
+    # ==================== 📊 状态报告 ====================
+
+    def get_status(self) -> Dict:
+        """获取完整状态"""
+        return {
+            "identity": self.who_am_i(),
+            "stats": self._stats,
+            "memory_count": {
+                "permanent": len(self._permanent_memory),
+                "session": len(self._session_memory),
+                "moral": len(self._moral_memory),
+            },
+            "safety": {
+                "forbidden_actions": self._forbidden_actions,
+                "safety_rules": list(self._safety_rules.keys()),
+            },
+            "legal": list(self._legal_principles.keys()),
+            "ethical": list(self._ethical_principles.keys()),
+        }
 
     def health_check(self) -> Dict:
         """健康检查"""
         return {
-            "name": self.name,
-            "agent_id": self.agent_id,
-            "user_id": self.user_id,
             "status": "healthy",
-            "created_at": self.created_at.isoformat(),
-            "last_active": self.last_active.isoformat(),
-            "memory_count": len(self._memory),
-            "version": self.VERSION
-        }
-
-    def reload(self) -> Dict:
-        """热重载配置"""
-        self._load_config()
-        self._load_memory()
-        return {
-            "success": True,
-            "message": f"Agent {self.name} 配置已重载",
-            "timestamp": datetime.now().isoformat()
-        }
-def get_agent(agent_name: str, user_id: str = "default") -> Optional[BaseAgent]:
-    """获取 Agent 实例（单例模式）"""
-    key = f"{agent_name}_{user_id}"
-    if key not in _agent_instances:
-        try:
-            module = __import__(f"core.agents.{agent_name}", fromlist=[agent_name])
-            class_name = ''.join(word.capitalize() for word in agent_name.split('_')) + 'Agent'
-            agent_class = getattr(module, class_name, None)
-            if agent_class:
-                _agent_instances[key] = agent_class(user_id=user_id)
-        except Exception as e:
-            print(f"获取 Agent {agent_name} 失败: {e}")
-            return None
-    return _agent_instances.get(key)
-
-    
-    def _init_inheritance(self) -> None:
-        """初始化传承系统"""
-        try:
-            from core.inheritance.manager import InheritanceManager
-            self.inheritance = InheritanceManager(self.user_id, self.name)
-            self.log("传承系统已启动")
-        except ImportError as e:
-            self.log(f"传承系统不可用: {e}", "WARN")
-    
-    def learn_experience(self, exp_type: str, content: Dict, confidence: float = 0.5) -> Any:
-        """学习经验"""
-        if self.inheritance:
-            return self.inheritance.learn(exp_type, content, confidence)
-        return None
-    
-    def inherit_experience(self, parent_exp_id: str, adapter: Dict = None) -> Any:
-        """继承经验"""
-        if self.inheritance:
-            parent_exp = self.inheritance.storage.get_experience(parent_exp_id)
-            if parent_exp:
-                return self.inheritance.inherit(parent_exp, adapter)
-        return None
-    
-    def reinforce_experience(self, exp_id: str, success: bool) -> Any:
-        """强化经验"""
-        if self.inheritance:
-            self.inheritance.reinforce(exp_id, success)
-    
-    def get_best_experience(self, exp_type: str = None) -> Any:
-        """获取最佳经验"""
-        if self.inheritance:
-            return self.inheritance.get_best(exp_type)
-        return None
-
-
-    def _init_inheritance_config_driven(self) -> None:
-        """配置驱动的传承系统初始化"""
-        import yaml
-        from pathlib import Path
-
-        config_file = Path("config/inheritance.yaml")
-        if not config_file.exists():
-            return
-
-        try:
-            with open(config_file, 'r') as f:
-                config = yaml.safe_load(f)
-
-            if not config.get('enabled', True):
-                self.log("传承系统已禁用", "INFO")
-                return
-
-            from core.inheritance.manager import InheritanceManager
-            self.inheritance = InheritanceManager(self.user_id, self.name)
-            self.log("传承系统已启动（配置驱动）")
-        except ImportError as e:
-            self.log(f"传承系统模块不可用: {e}", "WARN")
-        except Exception as e:
-            self.log(f"传承系统初始化失败: {e}", "ERROR")
-    
-    def learn_experience(self, exp_type: str, content: Dict, confidence: float = 0.5) -> Any:
-        """学习经验 - 配置驱动"""
-        if not hasattr(self, 'inheritance') or not self.inheritance:
-            return None
-        return self.inheritance.learn(exp_type, content, confidence)
-    
-    def inherit_experience(self, parent_exp_id: str, adapter: Dict = None) -> Any:
-        """继承经验 - 配置驱动"""
-        if not hasattr(self, 'inheritance') or not self.inheritance:
-            return None
-        parent_exp = self.inheritance.storage.get_experience(parent_exp_id)
-        if parent_exp:
-            return self.inheritance.inherit(parent_exp, adapter)
-        return None
-
-    # ==================== 补充方法 ====================
-
-    def get_workspace_path(self) -> Path:
-        """获取 Agent 工作区路径（配置驱动）"""
-        # 优先使用工作区目录
-        workspace = Path(f"agents/{self.name}")
-        if workspace.exists():
-            return workspace
-        # 回退到用户目录
-        return self.work_dir
-
-    def get_config_value(self, key: str, default: Any = None) -> Any:
-        """获取配置值（支持点号路径）"""
-        return self.get_config(key, default)
-
-    def update_user_config(self, updates: Dict) -> bool:
-        """更新用户配置（持久化）"""
-        try:
-            self._deep_merge(self._config, updates)
-            config_file = self.config_dir / "config.yaml"
-            with open(config_file, 'w') as f:
-                yaml.dump(self._config, f, allow_unicode=True, default_flow_style=False)
-            self.log("用户配置已更新")
-            return True
-        except Exception as e:
-            self.log(f"更新配置失败: {e}", "ERROR")
-            return False
-
-    def get_user_id(self) -> None:
-        """获取用户 ID"""
-        return self.user_id
-
-    def get_agent_name(self) -> None:
-        """获取 Agent 名称"""
-        return self.name
-
-    def is_enabled(self) -> bool:
-        """检查 Agent 是否启用"""
-        return self.get_config("enabled", True)
-
-    def get_capabilities(self) -> List[str]:
-        """获取 Agent 能力列表"""
-        return self.get_config("capabilities", [])
-
-
-
-    # ========== 通信记录 ==========
-
-    def save_communication(self, to_agent: str, request: str, response: dict, duration_ms: float = 0) -> Any:
-        """保存 Agent 间通信记录"""
-        import json
-        from datetime import datetime
-        from pathlib import Path
-
-        record = {
-            "timestamp": datetime.now().isoformat(),
-            "from": self.name,
-            "to": to_agent,
-            "request": request,
-            "response": response,
-            "duration_ms": duration_ms,
-            "user_id": self.user_id
-        }
-
-        log_dir = Path("data/exchange")
-        log_dir.mkdir(parents=True, exist_ok=True)
-
-        filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}.json"
-        with open(log_dir / filename, 'w') as f:
-            json.dump(record, f, indent=2)
-        print(f"[记录] {self.name} -> {to_agent}: {filename}")
-
-    # ========== 通信记录（基类方法，所有 Agent 继承） ==========
-
-    def record_communication(self, to_agent: str, request: str, response: dict, duration_ms: float = 0) -> Any:
-        """记录 Agent 间通信（基类方法）"""
-        import json
-        from datetime import datetime
-        from pathlib import Path
-
-        record = {
-            "timestamp": datetime.now().isoformat(),
-            "from": self.name,
-            "to": to_agent,
-            "request": request,
-            "response": response,
-            "duration_ms": duration_ms,
-            "user_id": self.user_id
-        }
-
-        log_dir = Path("data/exchange")
-        log_dir.mkdir(parents=True, exist_ok=True)
-
-        filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}.json"
-        with open(log_dir / filename, 'w') as f:
-            json.dump(record, f, indent=2)
-
-        return filename
-
-    def send_and_record(self, to_agent: str, message: str) -> None:
-        """发送消息并自动记录"""
-        import time
-        import requests
-
-        start = time.time()
-        resp = requests.post(
-            f"http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/agent/{to_agent}/message",
-            json={"message": message, "user_id": self.user_id},
-            timeout=10
-        )
-        duration_ms = (time.time() - start) * 1000
-
-        result = resp.json() if resp.status_code == 200 else {"error": f"HTTP {resp.status_code}"}
-
-        # 自动记录
-        self.record_communication(to_agent, message, result, duration_ms)
-
-        return result
-
-
-        return result
-    # 全局实例管理
-        """健康检查"""
-        return {
-            "name": self.name,
-            "agent_id": self.agent_id,
+            "agent": self.name,
+            "version": self.VERSION,
             "user_id": self.user_id,
-            "status": "healthy",
-            "created_at": self.created_at.isoformat(),
-            "last_active": self.last_active.isoformat(),
-            "memory_count": len(self._memory),
-            "version": self.VERSION
-        }
-        """热重载配置"""
-        self._load_config()
-        self._load_memory()
-        return {
-            "success": True,
-            "message": f"Agent {self.name} 配置已重载",
-            "timestamp": datetime.now().isoformat()
+            "active_time": (datetime.now() - self.birth_time).total_seconds(),
+            "interactions": self._stats["total_interactions"],
         }

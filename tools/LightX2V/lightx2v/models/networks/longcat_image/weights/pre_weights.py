@@ -1,6 +1,7 @@
-from lib.smart_config import smart_config
 from lightx2v.common.modules.weight_module import WeightModule
 from lightx2v.utils.registry_factory import MM_WEIGHT_REGISTER
+
+from lib.smart_config import smart_config
 
 
 class LongCatImagePreWeights(WeightModule):
@@ -11,7 +12,9 @@ class LongCatImagePreWeights(WeightModule):
         self.config = config
         self.inner_dim = config["num_attention_heads"] * config["attention_head_dim"]
         # Use transformer_in_channels to avoid conflict with VAE's in_channels
-        self.in_channels = config.get("transformer_in_channels", config.get("in_channels", 64))
+        self.in_channels = config.get(
+            "transformer_in_channels", config.get("in_channels", 64)
+        )
         self.joint_attention_dim = config.get("joint_attention_dim", 3584)
         self.mm_type = config.get("dit_quant_scheme", "Default")
 

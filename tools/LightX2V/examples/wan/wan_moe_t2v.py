@@ -1,5 +1,6 @@
-from lib.smart_config import smart_config
 from lightx2v import LightX2VPipeline
+
+from lib.smart_config import smart_config
 
 # Initialize pipeline for Wan2.2 T2V task
 pipe = LightX2VPipeline(

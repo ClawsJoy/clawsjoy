@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 Model Merge and Multi-Precision Conversion Script
 
@@ -124,13 +125,19 @@ def convert_to_bf16_file(input_path: Path, output_path: Path, description: str =
         logger.info(f"{description}")
         logger.info("=" * 80)
 
-    checkpoint = load_checkpoint(input_path) if input_path.suffix in [".pt", ".pth"] else load_file(str(input_path))
+    checkpoint = (
+        load_checkpoint(input_path)
+        if input_path.suffix in [".pt", ".pth"]
+        else load_file(str(input_path))
+    )
     bf16_dict = convert_to_bf16(checkpoint)
     save_file(bf16_dict, str(output_path))
     logger.info(f"  ✓ Created: {output_path}")
 
 
-def checkpoint_to_safetensors(ckpt_path: Path, output_path: Path, description: str = ""):
+def checkpoint_to_safetensors(
+    ckpt_path: Path, output_path: Path, description: str = ""
+):
     """Convert checkpoint to safetensors format."""
     if description:
         logger.info(f"\n{description}")
@@ -139,7 +146,15 @@ def checkpoint_to_safetensors(ckpt_path: Path, output_path: Path, description: s
     logger.info(f"  Saved: {output_path}")
 
 
-def merge_via_lora(base_path: Path, lora_path: Path, output_dir: Path, output_name: str, lora_alpha: float, temp_dir: Path, description: str = "") -> Path:
+def merge_via_lora(
+    base_path: Path,
+    lora_path: Path,
+    output_dir: Path,
+    output_name: str,
+    lora_alpha: float,
+    temp_dir: Path,
+    description: str = "",
+) -> Path:
     """通用LoRA合并函数：合并base + lora via converter.py"""
     if description:
         logger.info("=" * 80)
@@ -149,10 +164,14 @@ def merge_via_lora(base_path: Path, lora_path: Path, output_dir: Path, output_na
     temp_dir.mkdir(parents=True, exist_ok=True)
 
     base_safetensors = temp_dir / f"{base_path.stem}.safetensors"
-    checkpoint_to_safetensors(base_path, base_safetensors, f"Converting base model to safetensors (FP32)...")
+    checkpoint_to_safetensors(
+        base_path, base_safetensors, f"Converting base model to safetensors (FP32)..."
+    )
 
     lora_safetensors = temp_dir / f"{lora_path.stem}.safetensors"
-    checkpoint_to_safetensors(lora_path, lora_safetensors, f"Converting LoRA to safetensors (FP32)...")
+    checkpoint_to_safetensors(
+        lora_path, lora_safetensors, f"Converting LoRA to safetensors (FP32)..."
+    )
 
     logger.info("\nMerging via LoRA (converter.py)...")
     cmd = [
@@ -180,7 +199,9 @@ def merge_via_lora(base_path: Path, lora_path: Path, output_dir: Path, output_na
     return merged_path
 
 
-def backward_convert_model(input_path: Path, output_dir: Path, output_name: str) -> Path:
+def backward_convert_model(
+    input_path: Path, output_dir: Path, output_name: str
+) -> Path:
     """
     Convert diffuser format model to x2v format using converter.py -d backward.
     Returns path to converted safetensors file.
@@ -213,17 +234,37 @@ def backward_convert_model(input_path: Path, output_dir: Path, output_name: str)
     return converted_path
 
 
-def step1_merge_via_lora(r2v_model_path: Path, distill_model_path: Path, output_dir: Path, lora_alpha: float, temp_dir: Path) -> Path:
+def step1_merge_via_lora(
+    r2v_model_path: Path,
+    distill_model_path: Path,
+    output_dir: Path,
+    lora_alpha: float,
+    temp_dir: Path,
+) -> Path:
     """Merge R2V + distillation model via LoRA."""
-    return merge_via_lora(r2v_model_path, distill_model_path, output_dir, "merged", lora_alpha, temp_dir, "STEP 1: Merge R2V + Distillation via LoRA (FP32)")
+    return merge_via_lora(
+        r2v_model_path,
+        distill_model_path,
+        output_dir,
+        "merged",
+        lora_alpha,
+        temp_dir,
+        "STEP 1: Merge R2V + Distillation via LoRA (FP32)",
+    )
 
 
 def step2_convert_merged_to_bf16(merged_path: Path, output_dir: Path):
     """Convert merged.safetensors (FP32) to BF16."""
-    convert_to_bf16_file(merged_path, output_dir / "merged_bf16.safetensors", "STEP 2: Convert merged.safetensors (FP32) → BF16")
+    convert_to_bf16_file(
+        merged_path,
+        output_dir / "merged_bf16.safetensors",
+        "STEP 2: Convert merged.safetensors (FP32) → BF16",
+    )
 
 
-def step3_convert_merged_to_fp8(merged_path: Path, output_dir: Path, device: str = "cuda"):
+def step3_convert_merged_to_fp8(
+    merged_path: Path, output_dir: Path, device: str = "cuda"
+):
     """Convert merged.safetensors (FP32) to FP8 using converter.py --quantized."""
     logger.info("=" * 80)
     logger.info("STEP 3: Convert merged.safetensors (FP32) → FP8")
@@ -249,14 +290,32 @@ def step3_convert_merged_to_fp8(merged_path: Path, output_dir: Path, device: str
     logger.info(f"  ✓ Created: {output_dir / 'merged_fp8.safetensors'}")
 
 
-def step_audio_merge_lora(audio_adapter_path: Path, audio_lora_path: Path, output_dir: Path, lora_alpha: float, temp_dir: Path) -> Path:
+def step_audio_merge_lora(
+    audio_adapter_path: Path,
+    audio_lora_path: Path,
+    output_dir: Path,
+    lora_alpha: float,
+    temp_dir: Path,
+) -> Path:
     """Merge audio adapter + LoRA using converter.py."""
-    return merge_via_lora(audio_adapter_path, audio_lora_path, output_dir, "audio_adapter_merged", lora_alpha, temp_dir, "AUDIO STEP 1: Merge Audio Adapter + LoRA (FP32)")
+    return merge_via_lora(
+        audio_adapter_path,
+        audio_lora_path,
+        output_dir,
+        "audio_adapter_merged",
+        lora_alpha,
+        temp_dir,
+        "AUDIO STEP 1: Merge Audio Adapter + LoRA (FP32)",
+    )
 
 
 def step4_convert_audio_adapter_to_bf16(audio_adapter_path: Path, output_dir: Path):
     """Convert audio adapter to BF16."""
-    convert_to_bf16_file(audio_adapter_path, output_dir / "audio_adapter_model.safetensors", "AUDIO STEP 2: Convert audio adapter → BF16")
+    convert_to_bf16_file(
+        audio_adapter_path,
+        output_dir / "audio_adapter_model.safetensors",
+        "AUDIO STEP 2: Convert audio adapter → BF16",
+    )
 
 
 def step5_convert_audio_adapter_to_fp8(output_dir: Path):
@@ -270,7 +329,14 @@ def step5_convert_audio_adapter_to_fp8(output_dir: Path):
     input_path = output_dir / "audio_adapter_model.safetensors"
     output_path = output_dir / "audio_adapter_model_fp8.safetensors"
 
-    cmd = ["python", "tools/convert/quant_adapter.py", "--model_path", str(input_path), "--output_path", str(output_path)]
+    cmd = [
+        "python",
+        "tools/convert/quant_adapter.py",
+        "--model_path",
+        str(input_path),
+        "--output_path",
+        str(output_path),
+    ]
 
     run_command(cmd, "Audio adapter FP8 conversion")
 
@@ -281,7 +347,9 @@ def validate_args(args):
     """验证参数并返回路径对象"""
     if args.mode in ["both", "merged"]:
         if not args.r2v_model or not args.distill_model:
-            raise ValueError("--r2v_model and --distill_model are required for 'both' and 'merged' modes")
+            raise ValueError(
+                "--r2v_model and --distill_model are required for 'both' and 'merged' modes"
+            )
     if args.mode == "r2v":
         if not args.r2v_model:
             raise ValueError("--r2v_model is required for 'r2v' mode")
@@ -302,7 +370,9 @@ def validate_args(args):
 
     for name, path in paths.items():
         if path and not path.exists():
-            raise FileNotFoundError(f"{name.replace('_', ' ').title()} not found: {path}")
+            raise FileNotFoundError(
+                f"{name.replace('_', ' ').title()} not found: {path}"
+            )
 
     output_dir.mkdir(parents=True, exist_ok=True)
     return output_dir, temp_dir, paths
@@ -333,7 +403,9 @@ def log_pipeline_info(args, output_dir, paths):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Merge R2V+distill via LoRA and convert to multiple formats")
+    parser = argparse.ArgumentParser(
+        description="Merge R2V+distill via LoRA and convert to multiple formats"
+    )
 
     parser.add_argument(
         "--mode",
@@ -342,18 +414,66 @@ def main():
         default="both",
         help="Conversion mode: 'both' (default), 'r2v' (only R2V model), 'audio' (only audio adapter), or 'merged' (only merge R2V+distill)",
     )
-    parser.add_argument("--r2v_model", type=str, help="Path to R2V model (.pt) [required for 'both', 'r2v', 'merged' modes]")
-    parser.add_argument("--distill_model", type=str, help="Path to distillation model (.pt) [required for 'both' and 'merged' modes]")
-    parser.add_argument("--audio_adapter", type=str, help="Path to audio adapter (.pt) [required for 'both' and 'audio' modes]")
-    parser.add_argument("--audio_lora", type=str, help="Path to audio LoRA (.pt/.safetensors) [optional, for merging with audio adapter]")
-    parser.add_argument("--audio_lora_alpha", type=float, default=8.0, help="Alpha for audio LoRA merge (default: 8.0)")
-    parser.add_argument("--output_dir", type=str, required=True, help="Output directory")
-    parser.add_argument("--temp_dir", type=str, default=None, help="Temp directory (default: output_dir/temp)")
-    parser.add_argument("--lora_alpha", type=float, default=8.0, help="Alpha for LoRA merge (default: 8.0)")
-    parser.add_argument("--device", type=str, default="cuda", help="Device for FP8 quantization (default: cuda)")
-    parser.add_argument("--backward_convert", action="store_true", help="Convert diffuser format to x2v format first (default: False)")
-    parser.add_argument("--skip_merged_fp8", action="store_true", help="Skip merged FP8 conversion")
-    parser.add_argument("--skip_audio_fp8", action="store_true", help="Skip audio adapter FP8 conversion")
+    parser.add_argument(
+        "--r2v_model",
+        type=str,
+        help="Path to R2V model (.pt) [required for 'both', 'r2v', 'merged' modes]",
+    )
+    parser.add_argument(
+        "--distill_model",
+        type=str,
+        help="Path to distillation model (.pt) [required for 'both' and 'merged' modes]",
+    )
+    parser.add_argument(
+        "--audio_adapter",
+        type=str,
+        help="Path to audio adapter (.pt) [required for 'both' and 'audio' modes]",
+    )
+    parser.add_argument(
+        "--audio_lora",
+        type=str,
+        help="Path to audio LoRA (.pt/.safetensors) [optional, for merging with audio adapter]",
+    )
+    parser.add_argument(
+        "--audio_lora_alpha",
+        type=float,
+        default=8.0,
+        help="Alpha for audio LoRA merge (default: 8.0)",
+    )
+    parser.add_argument(
+        "--output_dir", type=str, required=True, help="Output directory"
+    )
+    parser.add_argument(
+        "--temp_dir",
+        type=str,
+        default=None,
+        help="Temp directory (default: output_dir/temp)",
+    )
+    parser.add_argument(
+        "--lora_alpha",
+        type=float,
+        default=8.0,
+        help="Alpha for LoRA merge (default: 8.0)",
+    )
+    parser.add_argument(
+        "--device",
+        type=str,
+        default="cuda",
+        help="Device for FP8 quantization (default: cuda)",
+    )
+    parser.add_argument(
+        "--backward_convert",
+        action="store_true",
+        help="Convert diffuser format to x2v format first (default: False)",
+    )
+    parser.add_argument(
+        "--skip_merged_fp8", action="store_true", help="Skip merged FP8 conversion"
+    )
+    parser.add_argument(
+        "--skip_audio_fp8",
+        action="store_true",
+        help="Skip audio adapter FP8 conversion",
+    )
 
     args = parser.parse_args()
 
@@ -370,12 +490,18 @@ def main():
             if args.mode in ["both", "r2v", "merged"]:
                 logger.info("\n>>> BACKWARD CONVERSION (Diffuser → x2v format)")
                 if paths["r2v"]:
-                    paths["r2v"] = backward_convert_model(paths["r2v"], output_dir, "model")
+                    paths["r2v"] = backward_convert_model(
+                        paths["r2v"], output_dir, "model"
+                    )
                 if paths["distill"]:
-                    paths["distill"] = backward_convert_model(paths["distill"], output_dir, "model_ema")
+                    paths["distill"] = backward_convert_model(
+                        paths["distill"], output_dir, "model_ema"
+                    )
             if args.mode in ["both", "audio"] and paths["audio"]:
                 logger.info("\n>>> BACKWARD CONVERSION: Audio Adapter")
-                paths["audio"] = backward_convert_model(paths["audio"], output_dir, "audio_adapter")
+                paths["audio"] = backward_convert_model(
+                    paths["audio"], output_dir, "audio_adapter"
+                )
 
         # Process R2V model
         if args.mode in ["both", "r2v", "merged"]:
@@ -383,12 +509,22 @@ def main():
             if args.mode == "r2v":
                 merged_path = output_dir / "merged.safetensors"
                 if paths["r2v"].suffix in [".pt", ".pth"]:
-                    checkpoint_to_safetensors(paths["r2v"], merged_path, "STEP 1: Convert R2V model to safetensors (FP32)")
+                    checkpoint_to_safetensors(
+                        paths["r2v"],
+                        merged_path,
+                        "STEP 1: Convert R2V model to safetensors (FP32)",
+                    )
                 else:
                     shutil.copy(paths["r2v"], merged_path)
                     logger.info(f"  ✓ Copied R2V model to: {merged_path}")
             else:
-                merged_path = step1_merge_via_lora(paths["r2v"], paths["distill"], output_dir, args.lora_alpha, temp_dir)
+                merged_path = step1_merge_via_lora(
+                    paths["r2v"],
+                    paths["distill"],
+                    output_dir,
+                    args.lora_alpha,
+                    temp_dir,
+                )
 
             if args.mode != "merged":
                 step2_convert_merged_to_bf16(merged_path, output_dir)
@@ -400,7 +536,13 @@ def main():
             logger.info("\n>>> Processing AUDIO ADAPTER")
             audio_source = paths["audio"]
             if paths["audio_lora"]:
-                audio_source = step_audio_merge_lora(paths["audio"], paths["audio_lora"], output_dir, args.audio_lora_alpha, temp_dir)
+                audio_source = step_audio_merge_lora(
+                    paths["audio"],
+                    paths["audio_lora"],
+                    output_dir,
+                    args.audio_lora_alpha,
+                    temp_dir,
+                )
 
             step4_convert_audio_adapter_to_bf16(audio_source, output_dir)
             if not args.skip_audio_fp8:
@@ -412,10 +554,14 @@ def main():
 
     # Summary
     logger.info(f"\n{'=' * 80}\n✓ PIPELINE COMPLETED SUCCESSFULLY!\n{'=' * 80}")
-    logger.info(f"\nMode: {args.mode}\nOutput directory: {output_dir}\nGenerated files:")
+    logger.info(
+        f"\nMode: {args.mode}\nOutput directory: {output_dir}\nGenerated files:"
+    )
 
     if args.mode in ["both", "r2v", "merged"]:
-        logger.info("  ✓ merged.safetensors                  (FP32, R2V+distill merged)")
+        logger.info(
+            "  ✓ merged.safetensors                  (FP32, R2V+distill merged)"
+        )
         if args.mode != "merged":
             logger.info("  ✓ merged_bf16.safetensors             (BF16)")
             if not args.skip_merged_fp8:
@@ -423,7 +569,9 @@ def main():
 
     if args.mode in ["both", "audio"]:
         if paths["audio_lora"]:
-            logger.info("  ✓ audio_adapter_merged.safetensors    (FP32, audio+lora merged)")
+            logger.info(
+                "  ✓ audio_adapter_merged.safetensors    (FP32, audio+lora merged)"
+            )
         logger.info("  ✓ audio_adapter_model.safetensors     (BF16)")
         if not args.skip_audio_fp8:
             logger.info("  ✓ audio_adapter_model_fp8.safetensors (FP8)")

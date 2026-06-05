@@ -3,41 +3,45 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 import logging
 
-from core.lib.config_helper import get_data_root, get_llm_endpoint, get_llm_model, get_embedding_model, get_gateway_port, get_timeout
+from core.lib.config_helper import (
+    get_data_root,
+    get_embedding_model,
+    get_gateway_port,
+    get_llm_endpoint,
+    get_llm_model,
+    get_timeout,
+)
 from core.lib.unified_config import unified_config
 
-from core.lib.unified_config import unified_config
-
-from core.lib.unified_config import unified_config
 #!/usr/bin/env python3
 """有生命的 Agent - 完整闭环"""
 
-import sys
-import time
+import hashlib
 import json
 import re
-import hashlib
-import requests
-from pathlib import Path
-from datetime import datetime
-from typing import Dict, List, Optional
+import sys
+import time
 from collections import defaultdict
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional
 
+import requests
 
-from core.lib.memory_vector import vector_memory
 from core.lib.config_manager import config_manager
+from core.lib.memory_vector import vector_memory
 
 
 class LivingAgent:
     """
     有生命的 Agent - 完整感知-记忆-思考-行动-学习-反思闭环
     """
-    
+
     def __init__(self, agent_id: str = "default"):
         self.agent_id = agent_id
         self.agent_dir = Path(f"{get_data_root()}/agents/{agent_id}")
@@ -70,23 +74,23 @@ class LivingAgent:
         # 初始化时间
         self.birth_time = datetime.now()
         print(f"🎂 Agent {agent_id} 已诞生于 {self.birth_time}")
-    
+
     # ==================== 1. 感知层 ====================
     def _load_perception(self) -> Dict:
         if self.perception_file.exists():
-            with open(self.perception_file, 'r') as f:
+            with open(self.perception_file, "r") as f:
                 return json.load(f)
         return {
             "awareness": 0.0,  # 自我意识程度
             "curiosity": 0.5,  # 好奇心
-            "fatigue": 0.0,    # 疲劳度
-            "last_awake": datetime.now().isoformat()
+            "fatigue": 0.0,  # 疲劳度
+            "last_awake": datetime.now().isoformat(),
         }
-    
+
     def _save_perception(self):
-        with open(self.perception_file, 'w') as f:
+        with open(self.perception_file, "w") as f:
             json.dump(self.perception, f, indent=2)
-    
+
     def perceive(self, user_input: str) -> Dict:
         """感知用户输入"""
         # 感知情绪（简单实现）
@@ -94,7 +98,7 @@ class LivingAgent:
             "happy": ["好", "棒", "开心", "满意", "谢谢"],
             "angry": ["差", "坏", "生气", "不满", "垃圾"],
             "sad": ["难过", "伤心", "失望", "唉"],
-            "curious": ["什么", "怎么", "为什么", "如何"]
+            "curious": ["什么", "怎么", "为什么", "如何"],
         }
 
         detected = []
@@ -114,35 +118,37 @@ class LivingAgent:
             "emotions": list(set(detected)),
             "length": len(user_input),
             "has_question": "?" in user_input or "？" in user_input,
-            "awareness": self.perception["awareness"]
+            "awareness": self.perception["awareness"],
         }
-    
+
     # ==================== 2. 记忆层 ====================
     def _load_memory(self) -> Dict:
         if self.memory_file.exists():
-            with open(self.memory_file, 'r') as f:
+            with open(self.memory_file, "r") as f:
                 return json.load(f)
         return {
             "short_term": [],
             "long_term": [],
             "important": [],
             "user": {},
-            "stats": {"total_interactions": 0}
+            "stats": {"total_interactions": 0},
         }
-    
+
     def _save_memory(self):
-        with open(self.memory_file, 'w') as f:
+        with open(self.memory_file, "w") as f:
             json.dump(self.memory, f, indent=2, ensure_ascii=False)
-    
+
     def remember(self, user_input: str, response: str, importance: float = 0.5):
         """记忆存储"""
         # 短期记忆
-        self.memory["short_term"].append({
-            "user": user_input[:200],
-            "assistant": response[:200],
-            "importance": importance,
-            "time": datetime.now().isoformat()
-        })
+        self.memory["short_term"].append(
+            {
+                "user": user_input[:200],
+                "assistant": response[:200],
+                "importance": importance,
+                "time": datetime.now().isoformat(),
+            }
+        )
 
         # 只保留最近 20 条短期记忆
         if len(self.memory["short_term"]) > 20:
@@ -156,13 +162,13 @@ class LivingAgent:
             self.memory["long_term"] = self.memory["long_term"][-100:]
 
         # 提取用户信息
-        name_match = re.search(r'[我叫我是][\s]*([^\s，。]{2,4})', user_input)
+        name_match = re.search(r"[我叫我是][\s]*([^\s，。]{2,4})", user_input)
         if name_match:
             self.memory["user"]["name"] = name_match.group(1)
 
         self.memory["stats"]["total_interactions"] += 1
         self._save_memory()
-    
+
     def recall(self, query: str, n: int = 3) -> List[Dict]:
         """回忆记忆"""
         results = []
@@ -178,12 +184,14 @@ class LivingAgent:
                 results.append(mem)
 
         # 3. 向量检索
-        vector_results = vector_memory.search(query, category=f"agent_{self.agent_id}", n=n)
+        vector_results = vector_memory.search(
+            query, category=f"agent_{self.agent_id}", n=n
+        )
         for vr in vector_results:
-            results.append({"user": vr.get('text', '')[:100], "source": "vector"})
+            results.append({"user": vr.get("text", "")[:100], "source": "vector"})
 
         return results[:n]
-    
+
     # ==================== 3. 思考层 ====================
     def think(self, user_input: str, perception: Dict, memories: List[Dict]) -> str:
         """思考 - 结合感知和记忆做出判断"""
@@ -210,68 +218,81 @@ class LivingAgent:
         try:
             resp = requests.post(
                 f"{self.ollama_url}/api/generate",
-                json={"model": self.model, "prompt": context, "stream": False, "options": {"num_predict": 200}},
-                timeout=config_manager.get_timeout("normal")
+                json={
+                    "model": self.model,
+                    "prompt": context,
+                    "stream": False,
+                    "options": {"num_predict": 200},
+                },
+                timeout=config_manager.get_timeout("normal"),
             )
             if resp.status_code == 200:
-                return resp.json().get('response', '')
+                return resp.json().get("response", "")
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error(f"Unexpected error: {e}", exc_info=True)
             pass
         return "我在思考..."
-    
+
     # ==================== 4. 行动层 ====================
     def _load_actions(self) -> List:
         if self.action_file.exists():
-            with open(self.action_file, 'r') as f:
+            with open(self.action_file, "r") as f:
                 return json.load(f)
         return []
-    
+
     def _save_actions(self):
-        with open(self.action_file, 'w') as f:
+        with open(self.action_file, "w") as f:
             json.dump(self.actions, f, indent=2)
-    
+
     def act(self, action_type: str, params: Dict, result: str):
         """记录行动"""
-        self.actions.append({
-            "type": action_type,
-            "params": params,
-            "result": str(result)[:100],
-            "time": datetime.now().isoformat(),
-            "success": result.get("success", True)
-        })
+        self.actions.append(
+            {
+                "type": action_type,
+                "params": params,
+                "result": str(result)[:100],
+                "time": datetime.now().isoformat(),
+                "success": result.get("success", True),
+            }
+        )
         if len(self.actions) > 100:
             self.actions = self.actions[-100:]
         self._save_actions()
-    
+
     # ==================== 5. 学习层 ====================
     def _load_learning(self) -> Dict:
         if self.learning_file.exists():
-            with open(self.learning_file, 'r') as f:
+            with open(self.learning_file, "r") as f:
                 return json.load(f)
         return {
             "patterns": defaultdict(int),
             "successful_responses": [],
             "failed_responses": [],
-            "preferences": {}
+            "preferences": {},
         }
-    
+
     def _save_learning(self):
         # 转换 defaultdict
         learning_copy = dict(self.learning)
         learning_copy["patterns"] = dict(self.learning["patterns"])
-        with open(self.learning_file, 'w') as f:
+        with open(self.learning_file, "w") as f:
             json.dump(learning_copy, f, indent=2, ensure_ascii=False)
-    
+
     def learn(self, user_input: str, response: str, success: bool):
         """学习 - 从成功/失败中学习"""
         # 模式学习
         pattern = hashlib.md5(user_input[:50].encode()).hexdigest()
-        self.learning["patterns"][pattern] = self.learning["patterns"].get(pattern, 0) + 1
+        self.learning["patterns"][pattern] = (
+            self.learning["patterns"].get(pattern, 0) + 1
+        )
 
         # 记录成功/失败
-        record = {"input": user_input[:100], "response": response[:100], "time": datetime.now().isoformat()}
+        record = {
+            "input": user_input[:100],
+            "response": response[:100],
+            "time": datetime.now().isoformat(),
+        }
         if success:
             self.learning["successful_responses"].append(record)
         else:
@@ -279,31 +300,31 @@ class LivingAgent:
 
         # 保持大小
         if len(self.learning["successful_responses"]) > 50:
-            self.learning["successful_responses"] = self.learning["successful_responses"][-50:]
+            self.learning["successful_responses"] = self.learning[
+                "successful_responses"
+            ][-50:]
         if len(self.learning["failed_responses"]) > 20:
             self.learning["failed_responses"] = self.learning["failed_responses"][-20:]
 
         self._save_learning()
-    
+
     # ==================== 6. 反思层 ====================
     def _load_reflection(self) -> Dict:
         if self.reflection_file.exists():
-            with open(self.reflection_file, 'r') as f:
+            with open(self.reflection_file, "r") as f:
                 return json.load(f)
-        return {
-            "insights": [],
-            "self_assessment": [],
-            "evolution": []
-        }
-    
+        return {"insights": [], "self_assessment": [], "evolution": []}
+
     def _save_reflection(self):
-        with open(self.reflection_file, 'w') as f:
+        with open(self.reflection_file, "w") as f:
             json.dump(self.reflection, f, indent=2, ensure_ascii=False)
-    
+
     def reflect(self):
         """反思 - 定期自我评估"""
         # 计算成功率
-        total = len(self.learning["successful_responses"]) + len(self.learning["failed_responses"])
+        total = len(self.learning["successful_responses"]) + len(
+            self.learning["failed_responses"]
+        )
         success_rate = len(self.learning["successful_responses"]) / max(total, 1)
 
         # 生成洞察
@@ -313,23 +334,22 @@ class LivingAgent:
             "total_interactions": self.memory["stats"]["total_interactions"],
             "short_term_memories": len(self.memory["short_term"]),
             "long_term_memories": len(self.memory["long_term"]),
-            "learned_patterns": len(self.learning["patterns"])
+            "learned_patterns": len(self.learning["patterns"]),
         }
         self.reflection["insights"].append(insight)
 
         # 自我评估
         assessment = f"我处理了 {insight['total_interactions']} 次对话，成功率 {insight['success_rate']:.0%}，还在持续学习"
-        self.reflection["self_assessment"].append({
-            "text": assessment,
-            "time": datetime.now().isoformat()
-        })
+        self.reflection["self_assessment"].append(
+            {"text": assessment, "time": datetime.now().isoformat()}
+        )
 
         if len(self.reflection["insights"]) > 20:
             self.reflection["insights"] = self.reflection["insights"][-20:]
 
         self._save_reflection()
         return insight
-    
+
     # ==================== 主循环 ====================
     def process(self, user_input: str) -> Dict:
         start = time.time()
@@ -365,11 +385,12 @@ class LivingAgent:
             "response": response,
             "perception": perception,
             "memories_count": len(memories),
-            "total_memories": len(self.memory["short_term"]) + len(self.memory["long_term"]),
+            "total_memories": len(self.memory["short_term"])
+            + len(self.memory["long_term"]),
             "insight": insight,
-            "time_ms": round(elapsed, 2)
+            "time_ms": round(elapsed, 2),
         }
-    
+
     def get_identity(self) -> Dict:
         """获取 Agent 身份信息"""
         return {
@@ -379,7 +400,7 @@ class LivingAgent:
             "awareness": self.perception["awareness"],
             "total_interactions": self.memory["stats"]["total_interactions"],
             "known_user": self.memory["user"].get("name"),
-            "patterns_learned": len(self.learning["patterns"])
+            "patterns_learned": len(self.learning["patterns"]),
         }
 
 
@@ -389,12 +410,12 @@ if __name__ == "__main__":
     print("=" * 60)
     print("生命特征：感知 → 记忆 → 思考 → 行动 → 学习 → 反思")
     print("=" * 60)
-    
+
     agent = LivingAgent("life_agent")
-    
+
     print(f"\n📋 Agent 身份:")
     print(json.dumps(agent.get_identity(), indent=2, ensure_ascii=False))
-    
+
     # 模拟对话
     conversations = [
         "你好，我是张三",
@@ -402,20 +423,20 @@ if __name__ == "__main__":
         "你能记住我的名字吗？",
         "我喜欢简洁风格",
         "我刚才说我叫什么？",
-        "谢谢你的帮助"
+        "谢谢你的帮助",
     ]
-    
+
     for msg in conversations:
         print(f"\n👤 用户: {msg}")
         result = agent.process(msg)
         print(f"🤖 Agent: {result['response'][:150]}")
         print(f"   [感知: {result['perception']}]")
         print(f"   [记忆: {result['total_memories']}条 | 耗时: {result['time_ms']}ms]")
-    
+
     print("\n" + "=" * 60)
     print("📊 Agent 生命状态:")
     print(json.dumps(agent.get_identity(), indent=2, ensure_ascii=False))
-    
+
     print("\n💾 数据存储:")
     print(f"   {agent.agent_dir}/")
     print(f"   - perception.json  (感知层)")

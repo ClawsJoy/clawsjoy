@@ -1,8 +1,9 @@
-from lib.smart_config import smart_config
 import base64
 
 import requests
 from loguru import logger
+
+from lib.smart_config import smart_config
 
 
 def image_to_base64(image_path):

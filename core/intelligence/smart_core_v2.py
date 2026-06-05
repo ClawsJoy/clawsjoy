@@ -3,29 +3,33 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
+import json
+import sys
 import threading
 import time
-import json
 from datetime import datetime
-import sys
+
 from core.lib.unified_config import unified_config
+
 sys.path.insert(0, smart_config.ROOT)
+
+from intelligence.alerter import IntelligentAlerter
 
 # 导入所有智能模块
 from intelligence.analyzer import IntelligenceAnalyzer
-from intelligence.predictor import IntelligentPredictor
-from intelligence.alerter import IntelligentAlerter
-from intelligence.learner import IntelligentLearner
 from intelligence.decision_engine import SmartDecisionEngine
-from intelligence.task_allocator import SmartTaskAllocator
+from intelligence.learner import IntelligentLearner
 from intelligence.memory_optimizer import MemoryOptimizer
+from intelligence.predictor import IntelligentPredictor
+from intelligence.task_allocator import SmartTaskAllocator
+
 
 class SmartCoreV2:
     """智能核心 V2 - 完整版"""
-    
+
     def __init__(self):
         self.analyzer = IntelligenceAnalyzer()
         self.predictor = IntelligentPredictor()
@@ -50,7 +54,7 @@ class SmartCoreV2:
         print("  🎯 任务分配器 - 智能任务分配")
         print("  💾 记忆优化器 - 记忆健康优化")
         print("=" * 60)
-    
+
     def run_cycle(self):
         """运行一个完整周期"""
         self.cycle_count += 1
@@ -63,8 +67,10 @@ class SmartCoreV2:
 
         # 2. 预测
         forecast = self.predictor.generate_forecast()
-        for pred in forecast.get('predictions', []):
-            print(f"📈 预测: {pred['metric']} {pred['trend']} -> {pred['predicted_value']}")
+        for pred in forecast.get("predictions", []):
+            print(
+                f"📈 预测: {pred['metric']} {pred['trend']} -> {pred['predicted_value']}"
+            )
 
         # 3. 记忆优化
         memory_health = self.memory_optimizer.optimize()
@@ -79,11 +85,11 @@ class SmartCoreV2:
 
         return {
             "cycle": self.cycle_count,
-            "health_score": report['health_score'],
-            "memory_health": memory_health['health_score'],
-            "forecast": forecast
+            "health_score": report["health_score"],
+            "memory_health": memory_health["health_score"],
+            "forecast": forecast,
         }
-    
+
     def run_loop(self, interval=120):
         """持续运行"""
         print(f"\n🔄 智能循环启动 (间隔: {interval}秒)")
@@ -98,9 +104,10 @@ class SmartCoreV2:
             except Exception as e:
                 print(f"❌ 错误: {e}")
                 time.sleep(10)
-    
+
     def stop(self):
         self.running = False
+
 
 if __name__ == "__main__":
     core = SmartCoreV2()

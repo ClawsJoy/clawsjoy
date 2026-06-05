@@ -1,7 +1,7 @@
-from lib.smart_config import smart_config
 import torch.distributed as dist
-
 from lightx2v import LightX2VPipeline
+
+from lib.smart_config import smart_config
 
 # -------------------------------------------------
 # Initialize pipeline for NeoPP
@@ -14,7 +14,9 @@ pipe = LightX2VPipeline(
 )
 
 pipe.create_generator(config_json="../../configs/neopp/neopp_dense_parallel_cfg.json")
-pipe.modify_config({"load_kv_cache_in_pipeline_for_debug": False, "save_result_for_debug": True})
+pipe.modify_config(
+    {"load_kv_cache_in_pipeline_for_debug": False, "save_result_for_debug": True}
+)
 
 
 # -------------------------------------------------

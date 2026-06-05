@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 # Copyright 2024-2025 The Alibaba Wan Team Authors. All rights reserved.
 import os
 import shutil
@@ -6,12 +5,14 @@ import shutil
 import cv2
 import numpy as np
 import torch
-from PIL import Image
 from loguru import logger
+from PIL import Image
+
+from lib.smart_config import smart_config
 
 try:
     import moviepy.editor as mpy
-except:  # noqa
+except Exception as e:  # noqa
     import moviepy as mpy
 
 
@@ -33,24 +34,57 @@ from human_visualization import draw_aapose_by_meta_new
 from pose2d import Pose2d
 from pose2d_utils import AAPoseMeta
 from retarget_pose import get_retarget_pose
-from utils import get_aug_mask, get_face_bboxes, get_frame_indices, get_mask_body_img, padding_resize, resize_by_area
+from utils import (
+    get_aug_mask,
+    get_face_bboxes,
+    get_frame_indices,
+    get_mask_body_img,
+    padding_resize,
+    resize_by_area,
+)
 
 
 class ProcessPipeline:
-    def __init__(self, det_checkpoint_path, pose2d_checkpoint_path, sam_checkpoint_path, flux_kontext_path):
-        self.pose2d = Pose2d(checkpoint=pose2d_checkpoint_path, detector_checkpoint=det_checkpoint_path)
+    def __init__(
+        self,
+        det_checkpoint_path,
+        pose2d_checkpoint_path,
+        sam_checkpoint_path,
+        flux_kontext_path,
+    ):
+        self.pose2d = Pose2d(
+            checkpoint=pose2d_checkpoint_path, detector_checkpoint=det_checkpoint_path
+        )
 
         model_cfg = "sam2_hiera_l.yaml"
         if sam_checkpoint_path is not None:
             if not _SAM2_AVAILABLE:
-                raise RuntimeError("sam2 is required for preprocessing but is not installed. Please install sam2.")
+                raise RuntimeError(
+                    "sam2 is required for preprocessing but is not installed. Please install sam2."
+                )
             self.predictor = build_sam2_video_predictor(model_cfg, sam_checkpoint_path)
         if flux_kontext_path is not None:
             from diffusers import FluxKontextPipeline
 
-            self.flux_kontext = FluxKontextPipeline.from_pretrained(flux_kontext_path, torch_dtype=torch.bfloat16).to("cuda")
+            self.flux_kontext = FluxKontextPipeline.from_pretrained(
+                flux_kontext_path, torch_dtype=torch.bfloat16
+            ).to("cuda")
 
-    def __call__(self, video_path, refer_image_path, output_path, resolution_area=[1280, 720], fps=30, iterations=3, k=7, w_len=1, h_len=1, retarget_flag=False, use_flux=False, replace_flag=False):
+    def __call__(
+        self,
+        video_path,
+        refer_image_path,
+        output_path,
+        resolution_area=[1280, 720],
+        fps=30,
+        iterations=3,
+        k=7,
+        w_len=1,
+        h_len=1,
+        retarget_flag=False,
+        use_flux=False,
+        replace_flag=False,
+    ):
         if replace_flag:
             video_reader = VideoReader(video_path)
             frame_num = len(video_reader)
@@ -65,7 +99,9 @@ class ProcessPipeline:
             expected_frame_num = int(duration * video_fps + 0.5)
             ratio = abs((frame_num - expected_frame_num) / frame_num)
             if ratio > 0.1:
-                print("Warning: The difference between the actual number of frames and the expected number of frames is two large")
+                print(
+                    "Warning: The difference between the actual number of frames and the expected number of frames is two large"
+                )
                 frame_num = expected_frame_num
 
             if fps == -1:
@@ -76,7 +112,12 @@ class ProcessPipeline:
             idxs = get_frame_indices(frame_num, video_fps, target_num, fps)
             frames = video_reader.get_batch(idxs).asnumpy()
 
-            frames = [resize_by_area(frame, resolution_area[0] * resolution_area[1], divisor=16) for frame in frames]
+            frames = [
+                resize_by_area(
+                    frame, resolution_area[0] * resolution_area[1], divisor=16
+                )
+                for frame in frames
+            ]
             height, width = frames[0].shape[:2]
             logger.info(f"Processing pose meta")
 
@@ -84,7 +125,11 @@ class ProcessPipeline:
 
             face_images = []
             for idx, meta in enumerate(tpl_pose_metas):
-                face_bbox_for_image = get_face_bboxes(meta["keypoints_face"][:, :2], scale=1.3, image_shape=(frames[0].shape[0], frames[0].shape[1]))
+                face_bbox_for_image = get_face_bboxes(
+                    meta["keypoints_face"][:, :2],
+                    scale=1.3,
+                    image_shape=(frames[0].shape[0], frames[0].shape[1]),
+                )
 
                 x1, x2, y1, y2 = face_bbox_for_image
                 face_image = frames[idx][y1:y2, x1:x2]
@@ -99,7 +144,9 @@ class ProcessPipeline:
 
             refer_img = padding_resize(refer_img, height, width)
             logger.info(f"Processing template video: {video_path}")
-            tpl_retarget_pose_metas = [AAPoseMeta.from_humanapi_meta(meta) for meta in tpl_pose_metas]
+            tpl_retarget_pose_metas = [
+                AAPoseMeta.from_humanapi_meta(meta) for meta in tpl_pose_metas
+            ]
             cond_images = []
 
             for idx, meta in enumerate(tpl_retarget_pose_metas):
@@ -113,7 +160,9 @@ class ProcessPipeline:
 
             for frame, mask in zip(frames, masks):
                 if iterations > 0:
-                    _, each_mask = get_mask_body_img(frame, mask, iterations=iterations, k=k)
+                    _, each_mask = get_mask_body_img(
+                        frame, mask, iterations=iterations, k=k
+                    )
                     each_aug_mask = get_aug_mask(each_mask, w_len=w_len, h_len=h_len)
                 else:
                     each_aug_mask = mask
@@ -131,7 +180,10 @@ class ProcessPipeline:
             src_bg_path = os.path.join(output_path, "src_bg.mp4")
             mpy.ImageSequenceClip(bg_images, fps=fps).write_videofile(src_bg_path)
 
-            aug_masks_new = [np.stack([mask * 255, mask * 255, mask * 255], axis=2) for mask in aug_masks]
+            aug_masks_new = [
+                np.stack([mask * 255, mask * 255, mask * 255], axis=2)
+                for mask in aug_masks
+            ]
             src_mask_path = os.path.join(output_path, "src_mask.mp4")
             mpy.ImageSequenceClip(aug_masks_new, fps=fps).write_videofile(src_mask_path)
             return True
@@ -142,7 +194,9 @@ class ProcessPipeline:
             shutil.copy(refer_image_path, src_ref_path)
             refer_img = refer_img[..., ::-1]
 
-            refer_img = resize_by_area(refer_img, resolution_area[0] * resolution_area[1], divisor=16)
+            refer_img = resize_by_area(
+                refer_img, resolution_area[0] * resolution_area[1], divisor=16
+            )
 
             refer_pose_meta = self.pose2d([refer_img])[0]
 
@@ -160,7 +214,9 @@ class ProcessPipeline:
             expected_frame_num = int(duration * video_fps + 0.5)
             ratio = abs((frame_num - expected_frame_num) / frame_num)
             if ratio > 0.1:
-                print("Warning: The difference between the actual number of frames and the expected number of frames is two large")
+                print(
+                    "Warning: The difference between the actual number of frames and the expected number of frames is two large"
+                )
                 frame_num = expected_frame_num
 
             if fps == -1:
@@ -178,7 +234,11 @@ class ProcessPipeline:
 
             face_images = []
             for idx, meta in enumerate(tpl_pose_metas):
-                face_bbox_for_image = get_face_bboxes(meta["keypoints_face"][:, :2], scale=1.3, image_shape=(frames[0].shape[0], frames[0].shape[1]))
+                face_bbox_for_image = get_face_bboxes(
+                    meta["keypoints_face"][:, :2],
+                    scale=1.3,
+                    image_shape=(frames[0].shape[0], frames[0].shape[1]),
+                )
 
                 x1, x2, y1, y2 = face_bbox_for_image
                 face_image = frames[idx][y1:y2, x1:x2]
@@ -187,7 +247,9 @@ class ProcessPipeline:
 
             if retarget_flag:
                 if use_flux:
-                    tpl_prompt, refer_prompt = self.get_editing_prompts(tpl_pose_metas, refer_pose_meta)
+                    tpl_prompt, refer_prompt = self.get_editing_prompts(
+                        tpl_pose_metas, refer_pose_meta
+                    )
                     refer_input = Image.fromarray(refer_img)
                     refer_edit = self.flux_kontext(
                         image=refer_input,
@@ -198,7 +260,11 @@ class ProcessPipeline:
                         num_inference_steps=28,
                     ).images[0]
 
-                    refer_edit = Image.fromarray(padding_resize(np.array(refer_edit), refer_img.shape[0], refer_img.shape[1]))
+                    refer_edit = Image.fromarray(
+                        padding_resize(
+                            np.array(refer_edit), refer_img.shape[0], refer_img.shape[1]
+                        )
+                    )
                     refer_edit_path = os.path.join(output_path, "refer_edit.png")
                     refer_edit.save(refer_edit_path)
                     refer_edit_pose_meta = self.pose2d([np.array(refer_edit)])[0]
@@ -215,15 +281,29 @@ class ProcessPipeline:
                         num_inference_steps=28,
                     ).images[0]
 
-                    tpl_edit = Image.fromarray(padding_resize(np.array(tpl_edit), tpl_img.shape[0], tpl_img.shape[1]))
+                    tpl_edit = Image.fromarray(
+                        padding_resize(
+                            np.array(tpl_edit), tpl_img.shape[0], tpl_img.shape[1]
+                        )
+                    )
                     tpl_edit_path = os.path.join(output_path, "tpl_edit.png")
                     tpl_edit.save(tpl_edit_path)
                     tpl_edit_pose_meta0 = self.pose2d([np.array(tpl_edit)])[0]
-                    tpl_retarget_pose_metas = get_retarget_pose(tpl_pose_meta0, refer_pose_meta, tpl_pose_metas, tpl_edit_pose_meta0, refer_edit_pose_meta)
+                    tpl_retarget_pose_metas = get_retarget_pose(
+                        tpl_pose_meta0,
+                        refer_pose_meta,
+                        tpl_pose_metas,
+                        tpl_edit_pose_meta0,
+                        refer_edit_pose_meta,
+                    )
                 else:
-                    tpl_retarget_pose_metas = get_retarget_pose(tpl_pose_meta0, refer_pose_meta, tpl_pose_metas, None, None)
+                    tpl_retarget_pose_metas = get_retarget_pose(
+                        tpl_pose_meta0, refer_pose_meta, tpl_pose_metas, None, None
+                    )
             else:
-                tpl_retarget_pose_metas = [AAPoseMeta.from_humanapi_meta(meta) for meta in tpl_pose_metas]
+                tpl_retarget_pose_metas = [
+                    AAPoseMeta.from_humanapi_meta(meta) for meta in tpl_pose_metas
+                ]
 
             cond_images = []
             for idx, meta in enumerate(tpl_retarget_pose_metas):
@@ -233,7 +313,9 @@ class ProcessPipeline:
                 else:
                     canvas = np.zeros_like(frames[0])
                     conditioning_image = draw_aapose_by_meta_new(canvas, meta)
-                    conditioning_image = padding_resize(conditioning_image, refer_img.shape[0], refer_img.shape[1])
+                    conditioning_image = padding_resize(
+                        conditioning_image, refer_img.shape[0], refer_img.shape[1]
+                    )
 
                 cond_images.append(conditioning_image)
 
@@ -249,20 +331,62 @@ class ProcessPipeline:
         leg_visible = False
         for tpl_pose_meta in tpl_pose_metas:
             tpl_keypoints = tpl_pose_meta["keypoints_body"]
-            if tpl_keypoints[3].all() != 0 or tpl_keypoints[4].all() != 0 or tpl_keypoints[6].all() != 0 or tpl_keypoints[7].all() != 0:
+            if (
+                tpl_keypoints[3].all() != 0
+                or tpl_keypoints[4].all() != 0
+                or tpl_keypoints[6].all() != 0
+                or tpl_keypoints[7].all() != 0
+            ):
                 if (
-                    (tpl_keypoints[3][0] <= 1 and tpl_keypoints[3][1] <= 1 and tpl_keypoints[3][2] >= 0.75)
-                    or (tpl_keypoints[4][0] <= 1 and tpl_keypoints[4][1] <= 1 and tpl_keypoints[4][2] >= 0.75)
-                    or (tpl_keypoints[6][0] <= 1 and tpl_keypoints[6][1] <= 1 and tpl_keypoints[6][2] >= 0.75)
-                    or (tpl_keypoints[7][0] <= 1 and tpl_keypoints[7][1] <= 1 and tpl_keypoints[7][2] >= 0.75)
+                    (
+                        tpl_keypoints[3][0] <= 1
+                        and tpl_keypoints[3][1] <= 1
+                        and tpl_keypoints[3][2] >= 0.75
+                    )
+                    or (
+                        tpl_keypoints[4][0] <= 1
+                        and tpl_keypoints[4][1] <= 1
+                        and tpl_keypoints[4][2] >= 0.75
+                    )
+                    or (
+                        tpl_keypoints[6][0] <= 1
+                        and tpl_keypoints[6][1] <= 1
+                        and tpl_keypoints[6][2] >= 0.75
+                    )
+                    or (
+                        tpl_keypoints[7][0] <= 1
+                        and tpl_keypoints[7][1] <= 1
+                        and tpl_keypoints[7][2] >= 0.75
+                    )
                 ):
                     arm_visible = True
-            if tpl_keypoints[9].all() != 0 or tpl_keypoints[12].all() != 0 or tpl_keypoints[10].all() != 0 or tpl_keypoints[13].all() != 0:
+            if (
+                tpl_keypoints[9].all() != 0
+                or tpl_keypoints[12].all() != 0
+                or tpl_keypoints[10].all() != 0
+                or tpl_keypoints[13].all() != 0
+            ):
                 if (
-                    (tpl_keypoints[9][0] <= 1 and tpl_keypoints[9][1] <= 1 and tpl_keypoints[9][2] >= 0.75)
-                    or (tpl_keypoints[12][0] <= 1 and tpl_keypoints[12][1] <= 1 and tpl_keypoints[12][2] >= 0.75)
-                    or (tpl_keypoints[10][0] <= 1 and tpl_keypoints[10][1] <= 1 and tpl_keypoints[10][2] >= 0.75)
-                    or (tpl_keypoints[13][0] <= 1 and tpl_keypoints[13][1] <= 1 and tpl_keypoints[13][2] >= 0.75)
+                    (
+                        tpl_keypoints[9][0] <= 1
+                        and tpl_keypoints[9][1] <= 1
+                        and tpl_keypoints[9][2] >= 0.75
+                    )
+                    or (
+                        tpl_keypoints[12][0] <= 1
+                        and tpl_keypoints[12][1] <= 1
+                        and tpl_keypoints[12][2] >= 0.75
+                    )
+                    or (
+                        tpl_keypoints[10][0] <= 1
+                        and tpl_keypoints[10][1] <= 1
+                        and tpl_keypoints[10][2] >= 0.75
+                    )
+                    or (
+                        tpl_keypoints[13][0] <= 1
+                        and tpl_keypoints[13][1] <= 1
+                        and tpl_keypoints[13][2] >= 0.75
+                    )
                 ):
                     leg_visible = True
             if arm_visible and leg_visible:
@@ -335,7 +459,9 @@ class ProcessPipeline:
             inference_state = self.predictor.init_state_v2(frames=each_frames)
             self.predictor.reset_state(inference_state)
             ann_obj_id = 1
-            for ann_frame_idx, points in zip(key_frame_index_list, key_frame_body_points_list):
+            for ann_frame_idx, points in zip(
+                key_frame_index_list, key_frame_body_points_list
+            ):
                 labels = np.array([1] * points.shape[0], np.int32)
                 _, out_obj_ids, out_mask_logits = self.predictor.add_new_points(
                     inference_state=inference_state,
@@ -346,8 +472,15 @@ class ProcessPipeline:
                 )
 
             video_segments = {}
-            for out_frame_idx, out_obj_ids, out_mask_logits in self.predictor.propagate_in_video(inference_state):
-                video_segments[out_frame_idx] = {out_obj_id: (out_mask_logits[i] > 0.0).cpu().numpy() for i, out_obj_id in enumerate(out_obj_ids)}
+            for (
+                out_frame_idx,
+                out_obj_ids,
+                out_mask_logits,
+            ) in self.predictor.propagate_in_video(inference_state):
+                video_segments[out_frame_idx] = {
+                    out_obj_id: (out_mask_logits[i] > 0.0).cpu().numpy()
+                    for i, out_obj_id in enumerate(out_obj_ids)
+                }
 
             for out_frame_idx in range(len(video_segments)):
                 for out_obj_id, out_mask in video_segments[out_frame_idx].items():

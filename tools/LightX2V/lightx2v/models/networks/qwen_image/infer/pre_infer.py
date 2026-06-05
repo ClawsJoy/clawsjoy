@@ -1,9 +1,9 @@
-from lib.smart_config import smart_config
 import torch
 import torch.nn.functional as F
-
 from lightx2v.utils.envs import *
 from lightx2v_platform.base.global_var import AI_DEVICE
+
+from lib.smart_config import smart_config
 
 from .module_io import QwenPreInferModuleOutput
 
@@ -25,7 +25,9 @@ class QwenImagePreInfer:
         encoder_hidden_states = weights.txt_norm.apply(encoder_hidden_states.squeeze(0))
         encoder_hidden_states = weights.txt_in.apply(encoder_hidden_states)
 
-        embed0 = weights.time_text_embed_timestep_embedder_linear_1.apply(self.scheduler.timesteps_proj)
+        embed0 = weights.time_text_embed_timestep_embedder_linear_1.apply(
+            self.scheduler.timesteps_proj
+        )
         embed0 = torch.nn.functional.silu(embed0)
         embed0 = weights.time_text_embed_timestep_embedder_linear_2.apply(embed0)
 
@@ -46,5 +48,9 @@ class QwenImagePreInfer:
         else:
             temb_txt_silu = temb_img_silu
         return QwenPreInferModuleOutput(
-            hidden_states=hidden_states, encoder_hidden_states=encoder_hidden_states, temb_img_silu=temb_img_silu, temb_txt_silu=temb_txt_silu, image_rotary_emb=image_rotary_emb
+            hidden_states=hidden_states,
+            encoder_hidden_states=encoder_hidden_states,
+            temb_img_silu=temb_img_silu,
+            temb_txt_silu=temb_txt_silu,
+            image_rotary_emb=image_rotary_emb,
         )

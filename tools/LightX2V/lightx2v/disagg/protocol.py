@@ -1,9 +1,10 @@
-from lib.smart_config import smart_config
 import logging
 from dataclasses import dataclass
 from typing import List, Tuple
 
 import torch
+
+from lib.smart_config import smart_config
 
 logger = logging.getLogger(__name__)
 

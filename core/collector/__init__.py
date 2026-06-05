@@ -3,13 +3,11 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
-from .manager import CollectorManager
+# 创建全局实例
+from .manager import CollectorManager, collector_manager
 from .safety import SafetyChecker
 
-# 创建全局实例
-from .manager import collector_manager
-
-__all__ = ['CollectorManager', 'SafetyChecker', 'collector_manager']
+__all__ = ["CollectorManager", "SafetyChecker", "collector_manager"]

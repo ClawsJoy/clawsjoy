@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 Utilities for saving images, depths, normals, point clouds, and Gaussian splat data.
 tencent
@@ -32,7 +33,11 @@ def save_camera_params(extrinsics, intrinsics, target_dir):
     Returns:
         str: path to the saved file
     """
-    camera_data = {"num_cameras": int(extrinsics.shape[0]), "extrinsics": [], "intrinsics": []}
+    camera_data = {
+        "num_cameras": int(extrinsics.shape[0]),
+        "extrinsics": [],
+        "intrinsics": [],
+    }
 
     # Convert each camera's parameters to list format
     for i in range(extrinsics.shape[0]):
@@ -96,7 +101,14 @@ def _build_vertex_ply_element(pts: np.ndarray, colors: np.ndarray) -> PlyElement
     Returns:
         PlyElement describing the vertices
     """
-    vertex_dtype = [("x", "f4"), ("y", "f4"), ("z", "f4"), ("red", "u1"), ("green", "u1"), ("blue", "u1")]
+    vertex_dtype = [
+        ("x", "f4"),
+        ("y", "f4"),
+        ("z", "f4"),
+        ("red", "u1"),
+        ("green", "u1"),
+        ("blue", "u1"),
+    ]
     vertex_elements = np.empty(len(pts), dtype=vertex_dtype)
     vertex_elements["x"] = pts[:, 0]
     vertex_elements["y"] = pts[:, 1]
@@ -107,7 +119,12 @@ def _build_vertex_ply_element(pts: np.ndarray, colors: np.ndarray) -> PlyElement
     return PlyElement.describe(vertex_elements, "vertex")
 
 
-def save_scene_ply(path: Path, points_xyz: torch.Tensor, point_colors: torch.Tensor, valid_mask: torch.Tensor = None) -> None:
+def save_scene_ply(
+    path: Path,
+    points_xyz: torch.Tensor,
+    point_colors: torch.Tensor,
+    valid_mask: torch.Tensor = None,
+) -> None:
     """Save point cloud to PLY format"""
     pts = points_xyz.detach().cpu().to(torch.float32).numpy().reshape(-1, 3)
     colors = point_colors.detach().cpu().to(torch.uint8).numpy().reshape(-1, 3)
@@ -182,7 +199,14 @@ def _build_gs_ply_data(means, scales, rotations, rgbs, opacities, quantile_thres
     return PlyData([PlyElement.describe(elements, "vertex")])
 
 
-def save_gs_ply(path: Path, means: torch.Tensor, scales: torch.Tensor, rotations: torch.Tensor, rgbs: torch.Tensor, opacities: torch.Tensor) -> None:
+def save_gs_ply(
+    path: Path,
+    means: torch.Tensor,
+    scales: torch.Tensor,
+    rotations: torch.Tensor,
+    rgbs: torch.Tensor,
+    opacities: torch.Tensor,
+) -> None:
     """
     Export Gaussian splat data to PLY format.
 
@@ -195,8 +219,12 @@ def save_gs_ply(path: Path, means: torch.Tensor, scales: torch.Tensor, rotations
         opacities: Opacity values [N]
     """
     # Ensure float32 for quantile and numpy conversion (bf16 not supported)
-    means, scales, rotations, rgbs, opacities = (t.float() for t in (means, scales, rotations, rgbs, opacities))
-    plydata = _build_gs_ply_data(means, scales, rotations, rgbs, opacities, quantile_threshold=0.98)
+    means, scales, rotations, rgbs, opacities = (
+        t.float() for t in (means, scales, rotations, rgbs, opacities)
+    )
+    plydata = _build_gs_ply_data(
+        means, scales, rotations, rgbs, opacities, quantile_threshold=0.98
+    )
     plydata.write(str(path))
 
 
@@ -211,12 +239,17 @@ def convert_gs_to_ply(means, scales, rotations, rgbs, opacities):
         rgbs: RGB colors [N, 3]
         opacities: Opacity values [N]
     """
-    return _build_gs_ply_data(means, scales, rotations, rgbs, opacities, quantile_threshold=0.90)
+    return _build_gs_ply_data(
+        means, scales, rotations, rgbs, opacities, quantile_threshold=0.90
+    )
 
 
 def process_ply_to_splat(plydata, output_path):
     vert = plydata["vertex"]
-    sorted_indices = np.argsort(-np.exp(vert["scale_0"] + vert["scale_1"] + vert["scale_2"]) / (1 + np.exp(-vert["opacity"])))
+    sorted_indices = np.argsort(
+        -np.exp(vert["scale_0"] + vert["scale_1"] + vert["scale_2"])
+        / (1 + np.exp(-vert["opacity"]))
+    )
     buffer = BytesIO()
     for idx in sorted_indices:
         v = plydata["vertex"][idx]
@@ -243,7 +276,12 @@ def process_ply_to_splat(plydata, output_path):
         buffer.write(position.tobytes())
         buffer.write(scales.tobytes())
         buffer.write((color * 255).clip(0, 255).astype(np.uint8).tobytes())
-        buffer.write(((rot / np.linalg.norm(rot)) * 128 + 128).clip(0, 255).astype(np.uint8).tobytes())
+        buffer.write(
+            ((rot / np.linalg.norm(rot)) * 128 + 128)
+            .clip(0, 255)
+            .astype(np.uint8)
+            .tobytes()
+        )
     value = buffer.getvalue()
     with open(output_path, "wb") as f:
         f.write(value)

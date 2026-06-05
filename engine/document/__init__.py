@@ -2,4 +2,4 @@
 
 from engine.document.core import DocumentEngine, document_engine
 
-__all__ = ['DocumentEngine', 'document_engine']
+__all__ = ["DocumentEngine", "document_engine"]

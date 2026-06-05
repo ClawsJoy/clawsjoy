@@ -3,7 +3,7 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
@@ -13,5 +13,5 @@ HOT_RELOAD_PATHS = [
     "skills/auto_generated",
     "config",
     "config/agents",
-    "config/agents/behaviors"
+    "config/agents/behaviors",
 ]

@@ -1,8 +1,10 @@
 """因果推理引擎"""
 
-from typing import Dict, Any, List, Tuple
 from datetime import datetime
+from typing import Any, Dict, List, Tuple
+
 from engine.lib.logger import engine_logger
+
 
 class CausalReasoningEngine:
     """因果推理引擎"""
@@ -25,12 +27,20 @@ class CausalReasoningEngine:
 
     def infer_effect(self, cause: str) -> List[Tuple[str, float]]:
         """根据原因推断结果"""
-        effects = [(r['effect'], r['probability']) for r in self.causal_rules if r['cause'] == cause]
+        effects = [
+            (r["effect"], r["probability"])
+            for r in self.causal_rules
+            if r["cause"] == cause
+        ]
         return sorted(effects, key=lambda x: -x[1])
 
     def infer_cause(self, effect: str) -> List[Tuple[str, float]]:
         """根据结果推断原因"""
-        causes = [(r['cause'], r['probability']) for r in self.causal_rules if r['effect'] == effect]
+        causes = [
+            (r["cause"], r["probability"])
+            for r in self.causal_rules
+            if r["effect"] == effect
+        ]
         return sorted(causes, key=lambda x: -x[1])
 
     def get_stats(self) -> Dict:
@@ -41,5 +51,6 @@ class CausalReasoningEngine:
 
     def health_check(self) -> Dict:
         return {"name": "causal_engine", "status": "healthy"}
+
 
 causal_engine = CausalReasoningEngine()

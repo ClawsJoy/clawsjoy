@@ -1,8 +1,10 @@
 """向量化引擎核心"""
 
-from typing import Dict, Any, List, Optional
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
 from engine.embedding.local_embedding import local_embedding
+
 
 class EmbeddingEngine:
     """向量化引擎"""
@@ -40,5 +42,6 @@ class EmbeddingEngine:
 
     def health_check(self) -> Dict:
         return {"name": "embedding_engine", "status": "healthy"}
+
 
 embedding_engine = EmbeddingEngine()

@@ -3,18 +3,18 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
-from typing import Dict, List
-import uuid
 import time
+import uuid
+from typing import Dict, List
 
 
 class MeetingRoom:
     """会议室"""
-    
+
     def __init__(self, meeting_id: str, topic: str, participants: List[str]):
         self.meeting_id = meeting_id
         self.topic = topic
@@ -22,15 +22,13 @@ class MeetingRoom:
         self.messages: List[Dict] = []
         self.created_at = time.time()
         self.status = "active"
-    
+
     def add_message(self, from_agent: str, content: str):
         """添加消息"""
-        self.messages.append({
-            "from": from_agent,
-            "content": content,
-            "timestamp": time.time()
-        })
-    
+        self.messages.append(
+            {"from": from_agent, "content": content, "timestamp": time.time()}
+        )
+
     def get_summary(self) -> str:
         """获取会议摘要"""
         if not self.messages:
@@ -44,17 +42,17 @@ class MeetingRoom:
 
 class MeetingManager:
     """会议管理器"""
-    
+
     def __init__(self):
         self.meetings: Dict[str, MeetingRoom] = {}
-    
+
     def create_meeting(self, topic: str, participants: List[str]) -> str:
         """创建会议"""
         meeting_id = str(uuid.uuid4())[:8]
         self.meetings[meeting_id] = MeetingRoom(meeting_id, topic, participants)
         print(f"   📅 创建会议: {topic} (ID: {meeting_id})")
         return meeting_id
-    
+
     def join_meeting(self, meeting_id: str, agent_name: str) -> bool:
         """加入会议"""
         meeting = self.meetings.get(meeting_id)
@@ -64,7 +62,7 @@ class MeetingManager:
         if agent_name not in meeting.participants:
             meeting.participants.append(agent_name)
         return True
-    
+
     def speak(self, meeting_id: str, from_agent: str, content: str) -> bool:
         """发言"""
         meeting = self.meetings.get(meeting_id)
@@ -73,7 +71,7 @@ class MeetingManager:
 
         meeting.add_message(from_agent, content)
         return True
-    
+
     def get_summary(self, meeting_id: str) -> Dict:
         """获取会议信息"""
         meeting = self.meetings.get(meeting_id)
@@ -85,9 +83,9 @@ class MeetingManager:
             "topic": meeting.topic,
             "participants": meeting.participants,
             "messages": meeting.messages,
-            "summary": meeting.get_summary()
+            "summary": meeting.get_summary(),
         }
-    
+
     def close_meeting(self, meeting_id: str) -> bool:
         """关闭会议"""
         if meeting_id in self.meetings:

@@ -1,7 +1,9 @@
-from lib.smart_config import smart_config
-import torch
-from lightx2v_kernel.gemm import scaled_mxfp8_quant, cutlass_scaled_mxfp8_mm
 import time
+
+import torch
+from lightx2v_kernel.gemm import cutlass_scaled_mxfp8_mm, scaled_mxfp8_quant
+
+from lib.smart_config import smart_config
 
 
 class MMWeightMxfp8:
@@ -13,7 +15,14 @@ class MMWeightMxfp8:
     @torch.no_grad()
     def apply(self, input_tensor):
         input_tensor_quant, input_tensor_scale = self.act_quant_func(input_tensor)
-        output_tensor = cutlass_scaled_mxfp8_mm(input_tensor_quant, self.weight, input_tensor_scale, self.weight_scale, alpha=self.alpha, bias=self.bias)
+        output_tensor = cutlass_scaled_mxfp8_mm(
+            input_tensor_quant,
+            self.weight,
+            input_tensor_scale,
+            self.weight_scale,
+            alpha=self.alpha,
+            bias=self.bias,
+        )
         return output_tensor
 
     @torch.no_grad()
@@ -96,7 +105,9 @@ def test_accuracy(m, k, n):
         # print(f"output_tensor: {output_tensor}")
 
         # cosine
-        cos = torch.nn.functional.cosine_similarity(ref_output_tensor.flatten(), output_tensor.flatten(), dim=0)
+        cos = torch.nn.functional.cosine_similarity(
+            ref_output_tensor.flatten(), output_tensor.flatten(), dim=0
+        )
         print(f"cos : {cos}")
 
 

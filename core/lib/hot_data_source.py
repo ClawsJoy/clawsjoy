@@ -3,10 +3,8 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
-
-from core.lib.unified_config import unified_config
 
 from core.lib.unified_config import unified_config
 
@@ -14,6 +12,7 @@ from core.lib.unified_config import unified_config
 
 import random
 from datetime import datetime, timedelta
+
 
 class HotDataSource:
     def __init__(self):
@@ -27,10 +26,10 @@ class HotDataSource:
             ("Web3.0", 72),
             ("数字人", 68),
             ("自动驾驶", 80),
-            ("机器学习", 75)
+            ("机器学习", 75),
         ]
         self.last_update = None
-    
+
     def get_topics(self, limit=5) -> list:
         """获取热点话题列表"""
         # 模拟热度变化
@@ -44,10 +43,11 @@ class HotDataSource:
         # 按热度排序
         topics_with_score.sort(key=lambda x: x["score"], reverse=True)
         return topics_with_score[:limit]
-    
+
     def get_hottest(self) -> str:
         """获取最热话题"""
         topics = self.get_topics(1)
         return topics[0]["topic"] if topics else "人工智能"
+
 
 hot_data = HotDataSource()

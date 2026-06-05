@@ -1,13 +1,13 @@
-from lib.smart_config import smart_config
 from abc import ABCMeta, abstractmethod
 
 import torch
-from loguru import logger
-from safetensors import safe_open
-
 from lightx2v.common.ops.utils import *
 from lightx2v.utils.envs import *
 from lightx2v.utils.registry_factory import LN_WEIGHT_REGISTER
+from loguru import logger
+from safetensors import safe_open
+
+from lib.smart_config import smart_config
 
 from .triton_ops import norm_infer
 
@@ -57,7 +57,9 @@ class LNWeightTemplate(metaclass=ABCMeta):
 
     def _get_lora_attr_mapping(self):
         if self.weight_name is not None:
-            _, _, _, self.weight_diff_name, self.bias_diff_name = build_lora_and_diff_names(self.weight_name, self.lora_prefix)
+            _, _, _, self.weight_diff_name, self.bias_diff_name = (
+                build_lora_and_diff_names(self.weight_name, self.lora_prefix)
+            )
             self.lora_attrs = {
                 "weight_diff": "weight_diff_name",
                 "bias_diff": "bias_diff_name",
@@ -82,8 +84,14 @@ class LNWeightTemplate(metaclass=ABCMeta):
         return self.bias + self.bias_diff
 
     def load(self, weight_dict):
-        if not self.create_cuda_buffer and not self.create_cpu_buffer and not self.lazy_load:
-            device_tensors, pin_tensors = create_default_tensors(self.base_attrs, weight_dict)
+        if (
+            not self.create_cuda_buffer
+            and not self.create_cpu_buffer
+            and not self.lazy_load
+        ):
+            device_tensors, pin_tensors = create_default_tensors(
+                self.base_attrs, weight_dict
+            )
             self.weight = device_tensors.get("weight")
             self.bias = device_tensors.get("bias")
             self.pin_weight = pin_tensors.get("weight")
@@ -99,7 +107,9 @@ class LNWeightTemplate(metaclass=ABCMeta):
             self.weight_cuda_buffer = result.get("weight")
             self.bias_cuda_buffer = result.get("bias")
         elif self.create_cpu_buffer:
-            result = create_cpu_buffers(self.base_attrs, self.lazy_load_file, use_infer_dtype=True)
+            result = create_cpu_buffers(
+                self.base_attrs, self.lazy_load_file, use_infer_dtype=True
+            )
             self.pin_weight = result.get("weight")
             self.pin_bias = result.get("bias")
             self.weight = None
@@ -107,7 +117,10 @@ class LNWeightTemplate(metaclass=ABCMeta):
 
     def register_diff(self, weight_dict):
         if not self.lazy_load or self.create_cuda_buffer or self.create_cpu_buffer:
-            if self.weight_diff_name is not None and self.weight_diff_name in weight_dict:
+            if (
+                self.weight_diff_name is not None
+                and self.weight_diff_name in weight_dict
+            ):
                 self.weight_diff = weight_dict[self.weight_diff_name]
                 self.has_diff = True
                 logger.debug(f"Register Diff to {self.weight_name}")
@@ -152,8 +165,12 @@ class LNWeightTemplate(metaclass=ABCMeta):
         if self.weight_name is not None:
             if self.has_lora_branch or self.has_diff:
                 self.load_lora_state_dict_from_disk(block_index)
-            self.weight_name = resolve_block_name(self.weight_name, block_index, adapter_block_index, self.is_post_adapter)
-            lazy_load_file_path = get_lazy_load_file_path(self.lazy_load_file, self.weight_name)
+            self.weight_name = resolve_block_name(
+                self.weight_name, block_index, adapter_block_index, self.is_post_adapter
+            )
+            lazy_load_file_path = get_lazy_load_file_path(
+                self.lazy_load_file, self.weight_name
+            )
             if self.bias_name is not None:
                 self.bias_name = resolve_block_name(
                     self.bias_name,
@@ -161,11 +178,17 @@ class LNWeightTemplate(metaclass=ABCMeta):
                     adapter_block_index,
                     self.is_post_adapter,
                 )
-            with safe_open(lazy_load_file_path, framework="pt", device="cpu") as lazy_load_file:
-                weight_tensor = lazy_load_file.get_tensor(self.weight_name).to(self.infer_dtype)
+            with safe_open(
+                lazy_load_file_path, framework="pt", device="cpu"
+            ) as lazy_load_file:
+                weight_tensor = lazy_load_file.get_tensor(self.weight_name).to(
+                    self.infer_dtype
+                )
                 self.pin_weight = self.pin_weight.copy_(weight_tensor)
                 if self.bias_name is not None:
-                    bias_tensor = lazy_load_file.get_tensor(self.bias_name).to(self.infer_dtype)
+                    bias_tensor = lazy_load_file.get_tensor(self.bias_name).to(
+                        self.infer_dtype
+                    )
                     self.pin_bias = self.pin_bias.copy_(bias_tensor)
                 else:
                     self.pin_bias = None

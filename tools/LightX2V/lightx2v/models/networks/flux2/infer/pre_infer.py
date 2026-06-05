@@ -1,6 +1,7 @@
-from lib.smart_config import smart_config
 import torch
 import torch.nn.functional as F
+
+from lib.smart_config import smart_config
 
 try:
     from diffusers.models.transformers.transformer_flux2 import Flux2PosEmbed
@@ -26,7 +27,9 @@ class Flux2PreInfer:
         self.cpu_offload = config.get("cpu_offload", False)
 
         if Flux2PosEmbed is None:
-            raise ImportError("Flux2PosEmbed is not available. Please upgrade diffusers to a version that supports transformer_flux2: pip install --upgrade diffusers")
+            raise ImportError(
+                "Flux2PosEmbed is not available. Please upgrade diffusers to a version that supports transformer_flux2: pip install --upgrade diffusers"
+            )
 
         rope_theta = config.get("rope_theta", 2000)
         axes_dims_rope = config.get("axes_dims_rope", (32, 32, 32, 32))
@@ -35,18 +38,28 @@ class Flux2PreInfer:
     def set_scheduler(self, scheduler):
         self.scheduler = scheduler
 
-    def infer(self, weights, hidden_states, encoder_hidden_states, txt_ids=None, img_ids=None):
+    def infer(
+        self, weights, hidden_states, encoder_hidden_states, txt_ids=None, img_ids=None
+    ):
         hidden_states = weights.x_embedder.apply(hidden_states.squeeze(0))
 
-        encoder_hidden_states = weights.context_embedder.apply(encoder_hidden_states.squeeze(0))
+        encoder_hidden_states = weights.context_embedder.apply(
+            encoder_hidden_states.squeeze(0)
+        )
 
         timesteps_proj = self.scheduler.timesteps_proj
         timestep_embed = weights.timestep_embedder_linear_1.apply(timesteps_proj)
         timestep_embed = F.silu(timestep_embed)
         timestep_embed = weights.timestep_embedder_linear_2.apply(timestep_embed)
 
-        txt_ids_final = txt_ids if txt_ids is not None else getattr(self.scheduler, "txt_ids", None)
-        img_ids_final = img_ids if img_ids is not None else getattr(self.scheduler, "latent_image_ids", None)
+        txt_ids_final = (
+            txt_ids if txt_ids is not None else getattr(self.scheduler, "txt_ids", None)
+        )
+        img_ids_final = (
+            img_ids
+            if img_ids is not None
+            else getattr(self.scheduler, "latent_image_ids", None)
+        )
 
         image_rotary_emb = None
         if img_ids_final is not None and txt_ids_final is not None:
@@ -86,10 +99,14 @@ class Flux2DevPreInfer(Flux2PreInfer):
     instead of classifier-free guidance with two forward passes.
     """
 
-    def infer(self, weights, hidden_states, encoder_hidden_states, txt_ids=None, img_ids=None):
+    def infer(
+        self, weights, hidden_states, encoder_hidden_states, txt_ids=None, img_ids=None
+    ):
         hidden_states = weights.x_embedder.apply(hidden_states.squeeze(0))
 
-        encoder_hidden_states = weights.context_embedder.apply(encoder_hidden_states.squeeze(0))
+        encoder_hidden_states = weights.context_embedder.apply(
+            encoder_hidden_states.squeeze(0)
+        )
 
         timesteps_proj = self.scheduler.timesteps_proj
         timestep_embed = weights.timestep_embedder_linear_1.apply(timesteps_proj)
@@ -103,8 +120,14 @@ class Flux2DevPreInfer(Flux2PreInfer):
 
         timestep_embed = timestep_embed + guidance_embed
 
-        txt_ids_final = txt_ids if txt_ids is not None else getattr(self.scheduler, "txt_ids", None)
-        img_ids_final = img_ids if img_ids is not None else getattr(self.scheduler, "latent_image_ids", None)
+        txt_ids_final = (
+            txt_ids if txt_ids is not None else getattr(self.scheduler, "txt_ids", None)
+        )
+        img_ids_final = (
+            img_ids
+            if img_ids is not None
+            else getattr(self.scheduler, "latent_image_ids", None)
+        )
 
         image_rotary_emb = None
         if img_ids_final is not None and txt_ids_final is not None:

@@ -1,8 +1,11 @@
-from lib.smart_config import smart_config
 import torch
 
+from lib.smart_config import smart_config
 
-def position_grid_to_embed(pos_grid: torch.Tensor, embed_dim: int, omega_0: float = 100) -> torch.Tensor:
+
+def position_grid_to_embed(
+    pos_grid: torch.Tensor, embed_dim: int, omega_0: float = 100
+) -> torch.Tensor:
     """
     Convert 2D position grid (HxWx2) to sinusoidal embeddings (HxWxC)
 
@@ -22,7 +25,11 @@ def position_grid_to_embed(pos_grid: torch.Tensor, embed_dim: int, omega_0: floa
     pos_flat = pos_grid.reshape(-1, grid_dim)  # Flatten to (H*W, 2)
 
     # Generate frequency bands
-    omega = torch.arange(embed_dim // 4, dtype=torch.float32 if device.type == "mps" else torch.double, device=device)
+    omega = torch.arange(
+        embed_dim // 4,
+        dtype=torch.float32 if device.type == "mps" else torch.double,
+        device=device,
+    )
     omega /= embed_dim / 4.0
     omega = 1.0 / omega_0**omega  # (D/4,)
 
@@ -45,7 +52,13 @@ def position_grid_to_embed(pos_grid: torch.Tensor, embed_dim: int, omega_0: floa
 
 
 # Inspired by https://github.com/microsoft/moge
-def create_uv_grid(width: int, height: int, aspect_ratio: float = None, dtype: torch.dtype = None, device: torch.device = None) -> torch.Tensor:
+def create_uv_grid(
+    width: int,
+    height: int,
+    aspect_ratio: float = None,
+    dtype: torch.dtype = None,
+    device: torch.device = None,
+) -> torch.Tensor:
     """
     Create a normalized UV grid of shape (width, height, 2).
 

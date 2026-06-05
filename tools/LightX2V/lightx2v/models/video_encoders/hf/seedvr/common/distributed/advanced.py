@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 Advanced distributed functions for sequence parallel.
 """
@@ -155,8 +156,12 @@ def init_model_shard_group(
     num_groups = world_size // num_shards_per_group
     device_mesh = (num_groups, num_shards_per_group)
 
-    gpu_mesh_2d = init_device_mesh("cuda", device_mesh, mesh_dim_names=("inter", "intra"))
-    cpu_mesh_2d = init_device_mesh("cpu", device_mesh, mesh_dim_names=("inter", "intra"))
+    gpu_mesh_2d = init_device_mesh(
+        "cuda", device_mesh, mesh_dim_names=("inter", "intra")
+    )
+    cpu_mesh_2d = init_device_mesh(
+        "cpu", device_mesh, mesh_dim_names=("inter", "intra")
+    )
 
     _MODEL_SHARD_INTER_GROUP = gpu_mesh_2d.get_group("inter")
     _MODEL_SHARD_INTRA_GROUP = gpu_mesh_2d.get_group("intra")

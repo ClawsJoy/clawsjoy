@@ -3,24 +3,24 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
 import json
 import time
 from datetime import datetime
-from typing import Dict, List, Any
 from pathlib import Path
+from typing import Any, Dict, List
 
-from core.lib.smart_adapter import smart_adapter
 from core.lib.skill_loader_v3 import skill_loader
+from core.lib.smart_adapter import smart_adapter
 
 
 class TrialAgent:
     """
     试错智能体
-    
+
     核心能力:
     1. 分析拆解任务
     2. 制定执行计划
@@ -28,29 +28,31 @@ class TrialAgent:
     4. 失败时调整策略重试
     5. 记录学习经验
     """
-    
+
     name = "trial_agent"
     version = "1.0.0"
-    
+
     def __init__(self):
         self.max_attempts = 3
         self.learning_file = Path("data/agent_learning.json")
         self.experiences = self._load_experiences()
-    
+
     def _load_experiences(self) -> Dict:
         """加载历史经验"""
         if self.learning_file.exists():
             import json
-            with open(self.learning_file, 'r') as f:
+
+            with open(self.learning_file, "r") as f:
                 return json.load(f)
         return {"successful_plans": [], "failed_patterns": []}
-    
+
     def _save_experiences(self):
         """保存经验"""
         import json
-        with open(self.learning_file, 'w') as f:
+
+        with open(self.learning_file, "w") as f:
             json.dump(self.experiences, f, indent=2)
-    
+
     def execute(self, goal: str, context: Dict = None) -> Dict:
         """执行任务（试错循环）"""
         print(f"\n🤖 [试错智能体] 开始处理: {goal[:80]}")
@@ -82,7 +84,7 @@ class TrialAgent:
                     "result": result.get("final_output"),
                     "attempts": attempt,
                     "plan": plan.get("steps"),
-                    "learned": True
+                    "learned": True,
                 }
             else:
                 # 失败，调整策略
@@ -92,9 +94,9 @@ class TrialAgent:
         return {
             "success": False,
             "error": f"经过 {self.max_attempts} 次尝试仍未成功",
-            "attempts": self.max_attempts
+            "attempts": self.max_attempts,
         }
-    
+
     def _analyze(self, goal: str, attempt: int) -> Dict:
         """分析任务"""
         # 从经验中查找相似任务
@@ -116,11 +118,12 @@ class TrialAgent:
 
         response = smart_adapter.generate(prompt, auto_select=True)
         import re
-        match = re.search(r'\{.*\}', response, re.DOTALL)
+
+        match = re.search(r"\{.*\}", response, re.DOTALL)
         if match:
             return json.loads(match.group())
         return {"success": False}
-    
+
     def _plan(self, analysis: Dict, attempt: int) -> Dict:
         """制定执行计划"""
         required_skills = analysis.get("required_skills", [])
@@ -142,14 +145,14 @@ class TrialAgent:
 
         plan = {
             "steps": [
-                {"skill": s, "params": {"goal": analysis.get("original_goal", "")}} 
+                {"skill": s, "params": {"goal": analysis.get("original_goal", "")}}
                 for s in matched_skills
             ],
-            "attempt": attempt
+            "attempt": attempt,
         }
 
         return plan
-    
+
     def _execute_plan(self, plan: Dict, goal: str, attempt: int) -> Dict:
         """执行计划"""
         steps = plan.get("steps", [])
@@ -165,7 +168,11 @@ class TrialAgent:
             results.append(result)
 
             if not result.get("success"):
-                return {"success": False, "failed_step": i+1, "partial_results": results}
+                return {
+                    "success": False,
+                    "failed_step": i + 1,
+                    "partial_results": results,
+                }
 
             time.sleep(0.5)  # 避免过载
 
@@ -175,9 +182,9 @@ class TrialAgent:
             "success": True,
             "results": results,
             "final_output": final_output,
-            "steps_executed": len(steps)
+            "steps_executed": len(steps),
         }
-    
+
     def _evaluate(self, result: Dict, goal: str) -> Dict:
         """评估执行结果"""
         if not result.get("success"):
@@ -199,24 +206,25 @@ class TrialAgent:
 
         response = smart_adapter.generate(prompt, auto_select=True)
         import re
-        match = re.search(r'\{.*\}', response, re.DOTALL)
+
+        match = re.search(r"\{.*\}", response, re.DOTALL)
         if match:
             return json.loads(match.group())
 
         return {"satisfactory": len(str(final_output)) > 50, "score": 60}
-    
+
     def _adjust_strategy(self, goal: str, plan: Dict, result: Dict, attempt: int):
         """调整策略"""
         print(f"🔄 调整策略，准备第 {attempt + 1} 次尝试")
         # TODO: 根据失败原因调整计划
-    
+
     def _find_similar_experience(self, goal: str) -> Dict:
         """查找相似经验"""
         for exp in self.experiences.get("successful_plans", []):
             if any(kw in goal for kw in exp.get("keywords", [])):
                 return exp
         return {}
-    
+
     def _learn(self, goal: str, plan: Dict, result: Dict, attempt: int):
         """学习成功经验"""
         experience = {
@@ -224,12 +232,14 @@ class TrialAgent:
             "keywords": [w for w in goal.split() if len(w) > 2][:5],
             "plan": plan.get("steps", []),
             "attempts": attempt,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         self.experiences["successful_plans"].append(experience)
         # 保留最近100条
-        self.experiences["successful_plans"] = self.experiences["successful_plans"][-100:]
+        self.experiences["successful_plans"] = self.experiences["successful_plans"][
+            -100:
+        ]
         self._save_experiences()
 
         print(f"📚 学习成功经验: {experience['goal'][:50]}...")

@@ -3,10 +3,8 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
-
-from core.lib.unified_config import unified_config
 
 from core.lib.unified_config import unified_config
 
@@ -14,12 +12,14 @@ from core.lib.unified_config import unified_config
 
 import random
 from datetime import datetime
+
 from core.lib.memory_simple import memory
+
 
 class ChannelAnalyzer:
     def __init__(self):
         self.video_stats = {}
-    
+
     def record_video(self, topic, video_path):
         """记录视频发布"""
         video_id = f"video_{int(datetime.now().timestamp())}"
@@ -29,11 +29,11 @@ class ChannelAnalyzer:
             "published_at": datetime.now().isoformat(),
             "views": 0,
             "likes": 0,
-            "comments": 0
+            "comments": 0,
         }
         memory.remember(f"视频发布|{topic}|{video_path}", category="video_publish")
         return video_id
-    
+
     def simulate_performance(self, video_id):
         """模拟视频表现（实际应从 YouTube API 获取）"""
         if video_id not in self.video_stats:
@@ -56,11 +56,11 @@ class ChannelAnalyzer:
 
         memory.remember(
             f"视频效果|{stats['topic']}|播放:{stats['views']}|评级:{rating}",
-            category="video_performance"
+            category="video_performance",
         )
 
         return {"video_id": video_id, "stats": stats, "rating": rating}
-    
+
     def get_best_topics(self, limit=3):
         """获取表现最好的话题"""
         # 从记忆中获取
@@ -74,5 +74,6 @@ class ChannelAnalyzer:
                     topic = parts[1] if len(parts) > 1 else "unknown"
                     topics[topic] = topics.get(topic, 0) + 1
         return sorted(topics.items(), key=lambda x: x[1], reverse=True)[:limit]
+
 
 channel_analyzer = ChannelAnalyzer()

@@ -1,6 +1,11 @@
-#!/usr/bin/env python3
-"""3D 技能包"""
+"""
+three_d 技能模块
+"""
 
-from skills.three_d.skill import ThreeDSkill
+from .three_d_skill import Blender3DSkill
 
-__all__ = ['ThreeDSkill']
+
+def execute(params=None):
+    """统一执行入口"""
+    skill = Blender3DSkill()
+    return skill.execute(params)

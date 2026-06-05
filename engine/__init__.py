@@ -5,51 +5,53 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-# ========== 导入所有原子引擎 ==========
-from engine.semantic.core import semantic_engine
-from engine.profile.core import profile_engine
-from engine.knowledge.core import knowledge_engine
-from engine.skill_matrix.core import skill_matrix_engine
-from engine.reasoning.core import reasoning_engine
-from engine.planning.core import planning_engine
-from engine.memory.core import memory_engine
 from engine.active.core import active_engine
-from engine.event.core import event_engine
-from engine.workflow.core import workflow_engine
-from engine.monitor.core import monitor_engine
-from engine.scheduler.core import scheduler_engine
-from engine.tenant.core import tenant_engine
-from engine.ratelimit.core import ratelimit_engine
+from engine.active_learning.core import active_learning_engine
 from engine.audit.core import audit_engine
-from engine.hook.core import hook_engine
-from engine.document.core import document_engine
-from engine.evolution.core import evolution_engine
-from engine.common.core import common_engine
-from engine.skill_matrix_v2.core import skill_matrix_v2_engine
-from engine.embedding.local_embedding import local_embedding
 from engine.causal.core import causal_engine
-from engine.dynamic_knowledge.core import dynamic_knowledge_engine
-from engine.emotion.core import emotion_engine
-from engine.proactive.core import proactive_engine
-from engine.semantic.enhanced import enhanced_semantic
-from engine.learning.core import self_learning_engine
+from engine.common.core import common_engine
 from engine.dialogue.core import dialogue_engine
-from engine.recommend.core import recommend_engine
-from engine.openclaw.core import openclaw_engine
-from engine.orchestration.core import orchestration_engine
-from engine.observability.metrics import metrics
-from engine.observability.tracer import tracer
-from engine.multimodal.vision import vision_engine
+from engine.document.core import document_engine
+from engine.dynamic_knowledge.core import dynamic_knowledge_engine
+from engine.embedding.local_embedding import local_embedding
+from engine.emotion.core import emotion_engine
+from engine.event.core import event_engine
+from engine.evolution.autonomous import evolution_engine
+from engine.evolution.core import evolution_engine
+from engine.hook.core import hook_engine
+from engine.knowledge.core import knowledge_engine
+from engine.learning.core import self_learning_engine
+from engine.marketplace.core import marketplace_engine
+from engine.memory.core import memory_engine
+from engine.meta.core import meta_engine
+from engine.monitor.core import monitor_engine
 from engine.multimodal.audio import audio_engine
 from engine.multimodal.video import video_engine
-from engine.marketplace.core import marketplace_engine
-from engine.evolution.autonomous import evolution_engine
-from engine.synthetic.generator import synthetic_generator
-from engine.active_learning.core import active_learning_engine
+from engine.multimodal.vision import vision_engine
+from engine.observability.metrics import metrics
+from engine.observability.tracer import tracer
+from engine.openclaw.core import openclaw_engine
+from engine.orchestration.core import orchestration_engine
+from engine.planning.core import planning_engine
+from engine.proactive.core import proactive_engine
+from engine.profile.core import profile_engine
+from engine.ratelimit.core import ratelimit_engine
+from engine.reasoning.core import reasoning_engine
+from engine.recommend.core import recommend_engine
 from engine.rl.core import rl_engine
+from engine.scheduler.core import scheduler_engine
+
+# ========== 导入所有原子引擎 ==========
+from engine.semantic.core import semantic_engine
+from engine.semantic.enhanced import enhanced_semantic
+from engine.skill_matrix.core import skill_matrix_engine
+from engine.skill_matrix_v2.core import skill_matrix_v2_engine
+from engine.synthetic.generator import synthetic_generator
+from engine.tenant.core import tenant_engine
 from engine.transfer.core import transfer_engine
-from engine.meta.core import meta_engine
+from engine.workflow.core import workflow_engine
 from engine.youtube.auth import youtube_auth
+
 
 class AtomicEngine:
     """原子引擎 - 统一入口"""
@@ -101,12 +103,16 @@ class AtomicEngine:
         print("🧠 原子引擎 v6.0 已初始化")
 
     @property
-    def synthetic(self): return synthetic_generator
-    @property
-    def active_learning(self): return active_learning_engine
-    @property
-    def rl(self): return rl_engine
+    def synthetic(self):
+        return synthetic_generator
 
+    @property
+    def active_learning(self):
+        return active_learning_engine
+
+    @property
+    def rl(self):
+        return rl_engine
 
     @property
     def semantic(self):
@@ -280,7 +286,8 @@ class AtomicEngine:
     def meta(self):
         return self._meta
 
+
 engine = AtomicEngine()
 
-__all__ = ['engine']
-__version__ = '6.0.0'
+__all__ = ["engine"]
+__version__ = "6.0.0"

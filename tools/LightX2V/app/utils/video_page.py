@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import random
 
 import gradio as gr
@@ -12,8 +11,20 @@ from utils.model_choices import (
     get_vae_choices,
 )
 from utils.model_components import build_wan21_components, build_wan22_components
-from utils.model_handlers import TOKENIZER_CONFIG, create_download_wrappers, create_update_status_wrappers
-from utils.model_utils import HF_AVAILABLE, MS_AVAILABLE, check_model_exists, extract_model_name, is_fp8_supported_gpu
+from utils.model_handlers import (
+    TOKENIZER_CONFIG,
+    create_download_wrappers,
+    create_update_status_wrappers,
+)
+from utils.model_utils import (
+    HF_AVAILABLE,
+    MS_AVAILABLE,
+    check_model_exists,
+    extract_model_name,
+    is_fp8_supported_gpu,
+)
+
+from lib.smart_config import smart_config
 
 MAX_NUMPY_SEED = 2**32 - 1
 
@@ -67,7 +78,9 @@ def build_video_page(
         # 左侧：配置和输入区域
         with gr.Column(scale=5):
             # 模型配置区域
-            with gr.Accordion(t("model_config", lang), open=True, elem_classes=["model-config"]):
+            with gr.Accordion(
+                t("model_config", lang), open=True, elem_classes=["model-config"]
+            ):
                 gr.Markdown(t("model_config_hint", lang))
                 # FP8 支持提示
                 if not is_fp8_supported_gpu():
@@ -93,15 +106,36 @@ def build_video_page(
                     )
                     download_source_input = gr.Radio(
                         label=t("download_source", lang),
-                        choices=(["huggingface", "modelscope"] if (HF_AVAILABLE and MS_AVAILABLE) else (["huggingface"] if HF_AVAILABLE else ["modelscope"] if MS_AVAILABLE else [])),
-                        value=("modelscope" if MS_AVAILABLE else ("huggingface" if HF_AVAILABLE else None)),
+                        choices=(
+                            ["huggingface", "modelscope"]
+                            if (HF_AVAILABLE and MS_AVAILABLE)
+                            else (
+                                ["huggingface"]
+                                if HF_AVAILABLE
+                                else ["modelscope"] if MS_AVAILABLE else []
+                            )
+                        ),
+                        value=(
+                            "modelscope"
+                            if MS_AVAILABLE
+                            else ("huggingface" if HF_AVAILABLE else None)
+                        ),
                         info=t("download_source_info", lang),
                         visible=HF_AVAILABLE or MS_AVAILABLE,
                         elem_classes=["horizontal-radio"],
                     )
 
                 # wan2.1 和 wan2.2 组件
-                wan21_components = build_wan21_components(model_path, model_path_input, model_type_input, task_type_input, download_source_input, update_funcs, download_funcs, lang)
+                wan21_components = build_wan21_components(
+                    model_path,
+                    model_path_input,
+                    model_type_input,
+                    task_type_input,
+                    download_source_input,
+                    update_funcs,
+                    download_funcs,
+                    lang,
+                )
                 wan21_row = wan21_components["wan21_row"]
                 dit_path_input = wan21_components["dit_path_input"]
                 dit_download_btn = wan21_components["dit_download_btn"]
@@ -109,7 +143,15 @@ def build_video_page(
                 wan21_lora_path_input = wan21_components["lora_path_input"]
                 wan21_lora_strength_input = wan21_components["lora_strength"]
 
-                wan22_components = build_wan22_components(model_path, model_path_input, task_type_input, download_source_input, update_funcs, download_funcs, lang)
+                wan22_components = build_wan22_components(
+                    model_path,
+                    model_path_input,
+                    task_type_input,
+                    download_source_input,
+                    update_funcs,
+                    download_funcs,
+                    lang,
+                )
                 wan22_row = wan22_components["wan22_row"]
                 high_noise_path_input = wan22_components["high_noise_path_input"]
                 low_noise_path_input = wan22_components["low_noise_path_input"]
@@ -117,10 +159,18 @@ def build_video_page(
                 low_noise_download_btn = wan22_components["low_noise_download_btn"]
 
                 wan22_use_lora_input = wan22_components["use_lora"]
-                wan22_high_noise_lora_path_input = wan22_components["high_noise_lora_path_input"]
-                wan22_high_noise_lora_strength_input = wan22_components["high_noise_lora_strength"]
-                wan22_low_noise_lora_path_input = wan22_components["low_noise_lora_path_input"]
-                wan22_low_noise_lora_strength_input = wan22_components["low_noise_lora_strength"]
+                wan22_high_noise_lora_path_input = wan22_components[
+                    "high_noise_lora_path_input"
+                ]
+                wan22_high_noise_lora_strength_input = wan22_components[
+                    "high_noise_lora_strength"
+                ]
+                wan22_low_noise_lora_path_input = wan22_components[
+                    "low_noise_lora_path_input"
+                ]
+                wan22_low_noise_lora_strength_input = wan22_components[
+                    "low_noise_lora_strength"
+                ]
 
                 # 文本编码器（模型 + Tokenizer）
                 with gr.Row() as t5_row:
@@ -129,7 +179,11 @@ def build_video_page(
                         t5_path_input = gr.Dropdown(
                             label=t("text_encoder", lang),
                             choices=t5_model_choices_init,
-                            value=t5_model_choices_init[0] if t5_model_choices_init else "",
+                            value=(
+                                t5_model_choices_init[0]
+                                if t5_model_choices_init
+                                else ""
+                            ),
                             allow_custom_value=True,
                         )
                         # 初始化时检查 T5 模型状态
@@ -140,14 +194,31 @@ def build_video_page(
                             t5_exists = check_model_exists(model_path, actual_name)
                             t5_btn_visible = not t5_exists
 
-                        t5_download_btn = gr.Button(t("download", lang), visible=t5_btn_visible, size="sm", variant="secondary")
+                        t5_download_btn = gr.Button(
+                            t("download", lang),
+                            visible=t5_btn_visible,
+                            size="sm",
+                            variant="secondary",
+                        )
                         t5_download_status = gr.Markdown("", visible=False)
                     with gr.Column(scale=1):
                         # 初始化时检查 T5 Tokenizer 状态
                         t5_tokenizer_config = TOKENIZER_CONFIG.get("t5")
-                        t5_tokenizer_name = t5_tokenizer_config["name"] if t5_tokenizer_config else "google"
-                        t5_tokenizer_exists = check_model_exists(model_path, t5_tokenizer_name) if t5_tokenizer_config else False
-                        t5_tokenizer_status_text = f"{t5_tokenizer_name} ✅" if t5_tokenizer_exists else f"{t5_tokenizer_name} ❌"
+                        t5_tokenizer_name = (
+                            t5_tokenizer_config["name"]
+                            if t5_tokenizer_config
+                            else "google"
+                        )
+                        t5_tokenizer_exists = (
+                            check_model_exists(model_path, t5_tokenizer_name)
+                            if t5_tokenizer_config
+                            else False
+                        )
+                        t5_tokenizer_status_text = (
+                            f"{t5_tokenizer_name} ✅"
+                            if t5_tokenizer_exists
+                            else f"{t5_tokenizer_name} ❌"
+                        )
                         t5_tokenizer_btn_visible = not t5_tokenizer_exists
 
                         t5_tokenizer_hint = gr.Dropdown(
@@ -156,7 +227,12 @@ def build_video_page(
                             value=t5_tokenizer_status_text,
                             interactive=False,
                         )
-                        t5_tokenizer_download_btn = gr.Button(t("download", lang), visible=t5_tokenizer_btn_visible, size="sm", variant="secondary")
+                        t5_tokenizer_download_btn = gr.Button(
+                            t("download", lang),
+                            visible=t5_tokenizer_btn_visible,
+                            size="sm",
+                            variant="secondary",
+                        )
                         t5_tokenizer_download_status = gr.Markdown("", visible=False)
 
                 # 图像编码器（模型 + Tokenizer，条件显示）
@@ -166,7 +242,11 @@ def build_video_page(
                         clip_path_input = gr.Dropdown(
                             label=t("image_encoder", lang),
                             choices=clip_model_choices_init,
-                            value=clip_model_choices_init[0] if clip_model_choices_init else "",
+                            value=(
+                                clip_model_choices_init[0]
+                                if clip_model_choices_init
+                                else ""
+                            ),
                             allow_custom_value=True,
                         )
                         # 初始化时检查 CLIP 模型状态
@@ -177,14 +257,31 @@ def build_video_page(
                             clip_exists = check_model_exists(model_path, actual_name)
                             clip_btn_visible = not clip_exists
 
-                        clip_download_btn = gr.Button(t("download", lang), visible=clip_btn_visible, size="sm", variant="secondary")
+                        clip_download_btn = gr.Button(
+                            t("download", lang),
+                            visible=clip_btn_visible,
+                            size="sm",
+                            variant="secondary",
+                        )
                         clip_download_status = gr.Markdown("", visible=False)
                     with gr.Column(scale=1):
                         # 初始化时检查 CLIP Tokenizer 状态
                         clip_tokenizer_config = TOKENIZER_CONFIG.get("clip")
-                        clip_tokenizer_name = clip_tokenizer_config["name"] if clip_tokenizer_config else "xlm-roberta-large"
-                        clip_tokenizer_exists = check_model_exists(model_path, clip_tokenizer_name) if clip_tokenizer_config else False
-                        clip_tokenizer_status_text = f"{clip_tokenizer_name} ✅" if clip_tokenizer_exists else f"{clip_tokenizer_name} ❌"
+                        clip_tokenizer_name = (
+                            clip_tokenizer_config["name"]
+                            if clip_tokenizer_config
+                            else "xlm-roberta-large"
+                        )
+                        clip_tokenizer_exists = (
+                            check_model_exists(model_path, clip_tokenizer_name)
+                            if clip_tokenizer_config
+                            else False
+                        )
+                        clip_tokenizer_status_text = (
+                            f"{clip_tokenizer_name} ✅"
+                            if clip_tokenizer_exists
+                            else f"{clip_tokenizer_name} ❌"
+                        )
                         clip_tokenizer_btn_visible = not clip_tokenizer_exists
 
                         clip_tokenizer_hint = gr.Dropdown(
@@ -193,7 +290,12 @@ def build_video_page(
                             value=clip_tokenizer_status_text,
                             interactive=False,
                         )
-                        clip_tokenizer_download_btn = gr.Button(t("download", lang), visible=clip_tokenizer_btn_visible, size="sm", variant="secondary")
+                        clip_tokenizer_download_btn = gr.Button(
+                            t("download", lang),
+                            visible=clip_tokenizer_btn_visible,
+                            size="sm",
+                            variant="secondary",
+                        )
                         clip_tokenizer_download_status = gr.Markdown("", visible=False)
 
                 # VAE
@@ -214,7 +316,12 @@ def build_video_page(
                         vae_exists = check_model_exists(model_path, actual_name)
                         vae_btn_visible = not vae_exists
 
-                    vae_download_btn = gr.Button(t("download", lang), visible=vae_btn_visible, size="sm", variant="secondary")
+                    vae_download_btn = gr.Button(
+                        t("download", lang),
+                        visible=vae_btn_visible,
+                        size="sm",
+                        variant="secondary",
+                    )
                     vae_download_status = gr.Markdown("", visible=False)
 
                 # 使用预创建的包装函数
@@ -224,7 +331,9 @@ def build_video_page(
                 update_t5_model_status = update_funcs["update_t5_model_status"]
                 update_t5_tokenizer_status = update_funcs["update_t5_tokenizer_status"]
                 update_clip_model_status = update_funcs["update_clip_model_status"]
-                update_clip_tokenizer_status = update_funcs["update_clip_tokenizer_status"]
+                update_clip_tokenizer_status = update_funcs[
+                    "update_clip_tokenizer_status"
+                ]
                 update_vae_status = update_funcs["update_vae_status"]
 
                 download_t5_model = download_funcs["download_t5_model"]
@@ -334,37 +443,78 @@ def build_video_page(
                     # 获取模型选项
                     t5_choices = get_t5_model_choices(model_path_val)
                     vae_choices = get_vae_choices(model_path_val)
-                    clip_choices = get_clip_model_choices(model_path_val) if show_clip else []
+                    clip_choices = (
+                        get_clip_model_choices(model_path_val) if show_clip else []
+                    )
 
                     # 更新 Tokenizer 状态
                     t5_tokenizer_result = update_t5_tokenizer_status(model_path_val)
                     clip_tokenizer_result = update_clip_tokenizer_status(model_path_val)
 
                     # 更新模型下载按钮状态
-                    t5_btn_update = update_t5_model_status(model_path_val, t5_choices[0] if t5_choices else "")
-                    clip_btn_update = update_clip_model_status(model_path_val, clip_choices[0] if clip_choices else "") if show_clip else gr.update()
-                    vae_btn_update = update_vae_status(model_path_val, vae_choices[0] if vae_choices else "")
+                    t5_btn_update = update_t5_model_status(
+                        model_path_val, t5_choices[0] if t5_choices else ""
+                    )
+                    clip_btn_update = (
+                        update_clip_model_status(
+                            model_path_val, clip_choices[0] if clip_choices else ""
+                        )
+                        if show_clip
+                        else gr.update()
+                    )
+                    vae_btn_update = update_vae_status(
+                        model_path_val, vae_choices[0] if vae_choices else ""
+                    )
 
                     if is_wan21:
-                        dit_choices = get_dit_choices(model_path_val, "wan2.1", task_type)
+                        dit_choices = get_dit_choices(
+                            model_path_val, "wan2.1", task_type
+                        )
                         # 更新 DIT 下载按钮状态
                         from utils.model_utils import extract_model_name
 
-                        dit_btn_update = update_dit_status(model_path_val, extract_model_name(dit_choices[0]) if dit_choices else "", "wan2.1") if dit_choices else gr.update(visible=False)
+                        dit_btn_update = (
+                            update_dit_status(
+                                model_path_val,
+                                (
+                                    extract_model_name(dit_choices[0])
+                                    if dit_choices
+                                    else ""
+                                ),
+                                "wan2.1",
+                            )
+                            if dit_choices
+                            else gr.update(visible=False)
+                        )
                         return (
                             gr.update(visible=True),  # wan21_row
                             gr.update(visible=False),  # wan22_row
-                            gr.update(choices=dit_choices, value=dit_choices[0] if dit_choices else "", visible=True),  # dit_path_input
+                            gr.update(
+                                choices=dit_choices,
+                                value=dit_choices[0] if dit_choices else "",
+                                visible=True,
+                            ),  # dit_path_input
                             gr.update(),  # high_noise_path_input
                             gr.update(),  # low_noise_path_input
                             gr.update(visible=show_clip),  # clip_row
                             gr.update(visible=True),  # vae_row
                             gr.update(visible=True),  # t5_row
-                            gr.update(choices=t5_choices, value=t5_choices[0] if t5_choices else ""),  # t5_path_input
-                            gr.update(choices=clip_choices, value=clip_choices[0] if clip_choices else ""),  # clip_path_input
-                            gr.update(choices=vae_choices, value=vae_choices[0] if vae_choices else ""),  # vae_path_input
+                            gr.update(
+                                choices=t5_choices,
+                                value=t5_choices[0] if t5_choices else "",
+                            ),  # t5_path_input
+                            gr.update(
+                                choices=clip_choices,
+                                value=clip_choices[0] if clip_choices else "",
+                            ),  # clip_path_input
+                            gr.update(
+                                choices=vae_choices,
+                                value=vae_choices[0] if vae_choices else "",
+                            ),  # vae_path_input
                             gr.update(visible=show_image_input),  # image_input_row
-                            gr.update(label=t("output_video_path", lang)),  # save_result_path
+                            gr.update(
+                                label=t("output_video_path", lang)
+                            ),  # save_result_path
                             t5_tokenizer_result[0],  # t5_tokenizer_hint
                             t5_tokenizer_result[1],  # t5_tokenizer_download_btn
                             clip_tokenizer_result[0],  # clip_tokenizer_hint
@@ -377,31 +527,72 @@ def build_video_page(
                             gr.update(),  # low_noise_download_btn
                         )
                     else:  # wan2.2
-                        high_noise_choices = get_high_noise_choices(model_path_val, "wan2.2", task_type)
-                        low_noise_choices = get_low_noise_choices(model_path_val, "wan2.2", task_type)
+                        high_noise_choices = get_high_noise_choices(
+                            model_path_val, "wan2.2", task_type
+                        )
+                        low_noise_choices = get_low_noise_choices(
+                            model_path_val, "wan2.2", task_type
+                        )
                         # 更新 high_noise 和 low_noise 下载按钮状态
                         from utils.model_utils import extract_model_name
 
                         high_noise_btn_update = (
-                            update_high_noise_status(model_path_val, extract_model_name(high_noise_choices[0]) if high_noise_choices else "") if high_noise_choices else gr.update(visible=False)
+                            update_high_noise_status(
+                                model_path_val,
+                                (
+                                    extract_model_name(high_noise_choices[0])
+                                    if high_noise_choices
+                                    else ""
+                                ),
+                            )
+                            if high_noise_choices
+                            else gr.update(visible=False)
                         )
                         low_noise_btn_update = (
-                            update_low_noise_status(model_path_val, extract_model_name(low_noise_choices[0]) if low_noise_choices else "") if low_noise_choices else gr.update(visible=False)
+                            update_low_noise_status(
+                                model_path_val,
+                                (
+                                    extract_model_name(low_noise_choices[0])
+                                    if low_noise_choices
+                                    else ""
+                                ),
+                            )
+                            if low_noise_choices
+                            else gr.update(visible=False)
                         )
                         return (
                             gr.update(visible=False),  # wan21_row
                             gr.update(visible=True),  # wan22_row
                             gr.update(visible=False),  # dit_path_input
-                            gr.update(choices=high_noise_choices, value=high_noise_choices[0] if high_noise_choices else ""),  # high_noise_path_input
-                            gr.update(choices=low_noise_choices, value=low_noise_choices[0] if low_noise_choices else ""),  # low_noise_path_input
+                            gr.update(
+                                choices=high_noise_choices,
+                                value=(
+                                    high_noise_choices[0] if high_noise_choices else ""
+                                ),
+                            ),  # high_noise_path_input
+                            gr.update(
+                                choices=low_noise_choices,
+                                value=low_noise_choices[0] if low_noise_choices else "",
+                            ),  # low_noise_path_input
                             gr.update(visible=show_clip),  # clip_row
                             gr.update(visible=True),  # vae_row
                             gr.update(visible=True),  # t5_row
-                            gr.update(choices=t5_choices, value=t5_choices[0] if t5_choices else ""),  # t5_path_input
-                            gr.update(choices=clip_choices, value=clip_choices[0] if clip_choices else ""),  # clip_path_input
-                            gr.update(choices=vae_choices, value=vae_choices[0] if vae_choices else ""),  # vae_path_input
+                            gr.update(
+                                choices=t5_choices,
+                                value=t5_choices[0] if t5_choices else "",
+                            ),  # t5_path_input
+                            gr.update(
+                                choices=clip_choices,
+                                value=clip_choices[0] if clip_choices else "",
+                            ),  # clip_path_input
+                            gr.update(
+                                choices=vae_choices,
+                                value=vae_choices[0] if vae_choices else "",
+                            ),  # vae_path_input
                             gr.update(visible=show_image_input),  # image_input_row
-                            gr.update(label=t("output_video_path", lang)),  # save_result_path
+                            gr.update(
+                                label=t("output_video_path", lang)
+                            ),  # save_result_path
                             t5_tokenizer_result[0],  # t5_tokenizer_hint
                             t5_tokenizer_result[1],  # t5_tokenizer_download_btn
                             clip_tokenizer_result[0],  # clip_tokenizer_hint
@@ -415,7 +606,9 @@ def build_video_page(
                         )
 
             # 输入参数区域
-            with gr.Accordion(t("input_params", lang), open=True, elem_classes=["input-params"]):
+            with gr.Accordion(
+                t("input_params", lang), open=True, elem_classes=["input-params"]
+            ):
                 # 图片输入（i2v 时显示）
                 with gr.Column(visible=True) as image_input_row:
                     image_files = gr.File(
@@ -487,9 +680,19 @@ def build_video_page(
                             value=generate_random_seed(),
                         )
                     with gr.Column():
-                        default_dit = get_dit_choices(model_path, "wan2.1", "i2v")[0] if get_dit_choices(model_path, "wan2.1", "i2v") else ""
-                        default_high_noise = get_high_noise_choices(model_path, "wan2.2", "i2v")[0] if get_high_noise_choices(model_path, "wan2.2", "i2v") else ""
-                        default_is_distill = is_distill_model("wan2.1", default_dit, default_high_noise)
+                        default_dit = (
+                            get_dit_choices(model_path, "wan2.1", "i2v")[0]
+                            if get_dit_choices(model_path, "wan2.1", "i2v")
+                            else ""
+                        )
+                        default_high_noise = (
+                            get_high_noise_choices(model_path, "wan2.2", "i2v")[0]
+                            if get_high_noise_choices(model_path, "wan2.2", "i2v")
+                            else ""
+                        )
+                        default_is_distill = is_distill_model(
+                            "wan2.1", default_dit, default_high_noise
+                        )
                         if default_is_distill:
                             infer_steps = gr.Slider(
                                 label=t("infer_steps", lang),
@@ -539,7 +742,11 @@ def build_video_page(
 
                 # 监听模型路径和类型变化
                 inputs = [model_type_input, dit_path_input, high_noise_path_input]
-                for trigger in [dit_path_input, high_noise_path_input, model_type_input]:
+                for trigger in [
+                    dit_path_input,
+                    high_noise_path_input,
+                    model_type_input,
+                ]:
                     trigger.change(
                         fn=update_model_params,
                         inputs=inputs,
@@ -634,7 +841,9 @@ def build_video_page(
 
         # 右侧：输出区域
         with gr.Column(scale=4):
-            with gr.Accordion(t("output_result", lang), open=True, elem_classes=["output-video"]):
+            with gr.Accordion(
+                t("output_result", lang), open=True, elem_classes=["output-video"]
+            ):
                 output_video = gr.Video(
                     label="",
                     height=600,
@@ -691,8 +900,12 @@ def build_video_page(
         from utils.model_utils import extract_model_name
 
         dit_path_val = extract_model_name(dit_path_val) if dit_path_val else None
-        high_noise_path_val = extract_model_name(high_noise_path_val) if high_noise_path_val else None
-        low_noise_path_val = extract_model_name(low_noise_path_val) if low_noise_path_val else None
+        high_noise_path_val = (
+            extract_model_name(high_noise_path_val) if high_noise_path_val else None
+        )
+        low_noise_path_val = (
+            extract_model_name(low_noise_path_val) if low_noise_path_val else None
+        )
         t5_path_val = extract_model_name(t5_path_val) if t5_path_val else None
         clip_path_val = extract_model_name(clip_path_val) if clip_path_val else ""
         vae_path_val = extract_model_name(vae_path_val) if vae_path_val else None

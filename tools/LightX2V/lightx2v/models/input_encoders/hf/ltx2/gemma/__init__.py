@@ -1,6 +1,3 @@
-from lib.smart_config import smart_config
-# """Gemma text encoder components."""
-
 from lightx2v.models.input_encoders.hf.ltx2.gemma.encoders.base_encoder import (
     GemmaEncoderOutput,
     GemmaTextEncoder,
@@ -13,6 +10,11 @@ from lightx2v.models.input_encoders.hf.ltx2.gemma.encoders.encoder_configurator 
     VIDEO_ONLY_GEMMA_TEXT_ENCODER_KEY_OPS,
     GemmaTextEncoderConfigurator,
 )
+
+from lib.smart_config import smart_config
+
+# """Gemma text encoder components."""
+
 
 __all__ = [
     "AV_GEMMA_TEXT_ENCODER_KEY_OPS",

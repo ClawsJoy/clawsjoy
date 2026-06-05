@@ -1,20 +1,24 @@
-from lib.smart_config import smart_config
 import glob
 import os
 
 import torch
 import torch.distributed as dist
-from loguru import logger
-from safetensors import safe_open
-
 from lightx2v.models.networks.hunyuan_video.model import HunyuanVideo15Model
-from lightx2v.models.networks.worldplay.infer.bi_transformer_infer import WorldPlayBITransformerInfer
+from lightx2v.models.networks.worldplay.infer.bi_transformer_infer import (
+    WorldPlayBITransformerInfer,
+)
 from lightx2v.models.networks.worldplay.infer.post_infer import WorldPlayPostInfer
 from lightx2v.models.networks.worldplay.infer.pre_infer import WorldPlayPreInfer
 from lightx2v.models.networks.worldplay.weights.post_weights import WorldPlayPostWeights
 from lightx2v.models.networks.worldplay.weights.pre_weights import WorldPlayPreWeights
-from lightx2v.models.networks.worldplay.weights.transformer_weights import WorldPlayTransformerWeights
+from lightx2v.models.networks.worldplay.weights.transformer_weights import (
+    WorldPlayTransformerWeights,
+)
 from lightx2v.utils.envs import *
+from loguru import logger
+from safetensors import safe_open
+
+from lib.smart_config import smart_config
 
 
 class WorldPlayBIModel(HunyuanVideo15Model):
@@ -66,7 +70,9 @@ class WorldPlayBIModel(HunyuanVideo15Model):
             elif self.config["feature_caching"] == "Tea":
                 self.transformer_infer_class = HunyuanTransformerInferTeaCaching
             else:
-                raise NotImplementedError(f"Feature caching {self.config['feature_caching']} not supported")
+                raise NotImplementedError(
+                    f"Feature caching {self.config['feature_caching']} not supported"
+                )
 
     def _init_weights(self):
         """Initialize weights including action conditioning weights.
@@ -82,7 +88,9 @@ class WorldPlayBIModel(HunyuanVideo15Model):
 
         if use_bi_model_as_main and self.action_ckpt is not None:
             # BI model: action_ckpt contains complete model weights
-            logger.info("Loading BI model weights directly from action_ckpt (complete model)")
+            logger.info(
+                "Loading BI model weights directly from action_ckpt (complete model)"
+            )
             weight_dict = self._load_action_ckpt(unified_dtype, sensitive_layer)
         else:
             # Legacy mode: load base model and merge action weights
@@ -93,7 +101,9 @@ class WorldPlayBIModel(HunyuanVideo15Model):
 
             # Load action model weights if provided
             if self.action_ckpt is not None:
-                action_weight_dict = self._load_action_ckpt(unified_dtype, sensitive_layer)
+                action_weight_dict = self._load_action_ckpt(
+                    unified_dtype, sensitive_layer
+                )
                 weight_dict.update(action_weight_dict)
 
         self.original_weight_dict = weight_dict
@@ -119,12 +129,16 @@ class WorldPlayBIModel(HunyuanVideo15Model):
         for file_path in safetensors_files:
             logger.info(f"Loading action weights from {file_path}")
             # Use _load_safetensor_to_dict_no_filter to keep all keys for BI model
-            file_weights = self._load_safetensor_to_dict_no_filter(file_path, unified_dtype, sensitive_layer)
+            file_weights = self._load_safetensor_to_dict_no_filter(
+                file_path, unified_dtype, sensitive_layer
+            )
             weight_dict.update(file_weights)
 
         return weight_dict
 
-    def _load_safetensor_to_dict_no_filter(self, file_path, unified_dtype, sensitive_layer):
+    def _load_safetensor_to_dict_no_filter(
+        self, file_path, unified_dtype, sensitive_layer
+    ):
         """Load safetensor without filtering any keys (for BI model complete weights)."""
         if self.device.type != "cpu" and dist.is_initialized():
             device = dist.get_rank()
@@ -132,14 +146,23 @@ class WorldPlayBIModel(HunyuanVideo15Model):
             device = str(self.device)
 
         with safe_open(file_path, framework="pt", device=device) as f:
-            return {key: (f.get_tensor(key).to(GET_DTYPE()) if unified_dtype or all(s not in key for s in sensitive_layer) else f.get_tensor(key).to(GET_SENSITIVE_DTYPE())) for key in f.keys()}
+            return {
+                key: (
+                    f.get_tensor(key).to(GET_DTYPE())
+                    if unified_dtype or all(s not in key for s in sensitive_layer)
+                    else f.get_tensor(key).to(GET_SENSITIVE_DTYPE())
+                )
+                for key in f.keys()
+            }
 
     def _init_infer(self):
         """Initialize inference modules and connect action weights."""
         super()._init_infer()
 
         # Connect action weights to transformer for ProPE projection
-        if hasattr(self.pre_weight, "action_weights") and hasattr(self.transformer_infer, "set_action_weights"):
+        if hasattr(self.pre_weight, "action_weights") and hasattr(
+            self.transformer_infer, "set_action_weights"
+        ):
             self.transformer_infer.set_action_weights(self.pre_weight.action_weights)
 
     def set_scheduler(self, scheduler):

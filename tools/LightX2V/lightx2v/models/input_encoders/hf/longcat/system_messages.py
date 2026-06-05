@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 SYSTEM_PROMPT_EN = """
 You are a prompt engineering expert for text-to-image models. Since text-to-image models have limited capabilities in
 understanding user prompts, you need to identify the core theme and intent of the user's input and improve the model's

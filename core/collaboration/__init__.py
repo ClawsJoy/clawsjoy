@@ -3,10 +3,10 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 from .orchestrator import CollaborationOrchestrator
 from .session import CollaborationSession
 
-__all__ = ['CollaborationOrchestrator', 'CollaborationSession']
+__all__ = ["CollaborationOrchestrator", "CollaborationSession"]

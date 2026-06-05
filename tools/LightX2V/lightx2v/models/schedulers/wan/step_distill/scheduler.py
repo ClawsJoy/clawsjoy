@@ -1,11 +1,11 @@
-from lib.smart_config import smart_config
 import math
 from typing import Union
 
 import torch
-
 from lightx2v.models.schedulers.wan.scheduler import WanScheduler
 from lightx2v_platform.base.global_var import AI_DEVICE
+
+from lib.smart_config import smart_config
 
 
 class WanStepDistillScheduler(WanScheduler):
@@ -25,11 +25,19 @@ class WanStepDistillScheduler(WanScheduler):
 
     def set_denoising_timesteps(self, device: Union[str, torch.device] = None):
         sigma_start = self.sigma_min + (self.sigma_max - self.sigma_min)
-        self.sigmas = torch.linspace(sigma_start, self.sigma_min, self.num_train_timesteps + 1)[:-1]
-        self.sigmas = self.sample_shift * self.sigmas / (1 + (self.sample_shift - 1) * self.sigmas)
+        self.sigmas = torch.linspace(
+            sigma_start, self.sigma_min, self.num_train_timesteps + 1
+        )[:-1]
+        self.sigmas = (
+            self.sample_shift
+            * self.sigmas
+            / (1 + (self.sample_shift - 1) * self.sigmas)
+        )
         self.timesteps = self.sigmas * self.num_train_timesteps
 
-        self.denoising_step_index = [self.num_train_timesteps - x for x in self.denoising_step_list]
+        self.denoising_step_index = [
+            self.num_train_timesteps - x for x in self.denoising_step_list
+        ]
         self.timesteps = self.timesteps[self.denoising_step_index].to(device)
         self.sigmas = self.sigmas[self.denoising_step_index].to("cpu")
 
@@ -57,10 +65,20 @@ class Wan21MeanFlowStepDistillScheduler(WanStepDistillScheduler):
     def step_pre(self, step_index):
         super().step_pre(step_index)
         self.timestep_input = torch.stack([self.timesteps[self.step_index]])
-        if self.config["model_cls"] == "wan2.2" and self.config["task"] in ["i2v", "s2v", "rs2v"]:
-            self.timestep_input = (self.mask[0][:, ::2, ::2] * self.timestep_input).flatten()
+        if self.config["model_cls"] == "wan2.2" and self.config["task"] in [
+            "i2v",
+            "s2v",
+            "rs2v",
+        ]:
+            self.timestep_input = (
+                self.mask[0][:, ::2, ::2] * self.timestep_input
+            ).flatten()
         if self.config["model_cls"] == "wan2.1_mean_flow_distill":
-            t_next = self.timesteps[self.step_index + 1] if self.step_index < self.infer_steps - 1 else torch.zeros_like(self.timestep_input)
+            t_next = (
+                self.timesteps[self.step_index + 1]
+                if self.step_index < self.infer_steps - 1
+                else torch.zeros_like(self.timestep_input)
+            )
             self.timestep_input_r = torch.stack([t_next])
 
 

@@ -1,11 +1,11 @@
-from lib.smart_config import smart_config
 import gc
 import os
 
 import torch
-
 from lightx2v.utils.envs import *
 from lightx2v_platform.base.global_var import AI_DEVICE
+
+from lib.smart_config import smart_config
 
 try:
     from diffusers import AutoencoderKL
@@ -26,7 +26,9 @@ class LongCatImageVAE:
 
     def __init__(self, config):
         self.config = config
-        self.cpu_offload = config.get("vae_cpu_offload", config.get("cpu_offload", False))
+        self.cpu_offload = config.get(
+            "vae_cpu_offload", config.get("cpu_offload", False)
+        )
         if self.cpu_offload:
             self.device = torch.device("cpu")
         else:
@@ -47,8 +49,12 @@ class LongCatImageVAE:
 
     def load(self):
         """Load the VAE model."""
-        vae_path = self.config.get("vae_path", os.path.join(self.config["model_path"], "vae"))
-        self.model = AutoencoderKL.from_pretrained(vae_path).to(self.device).to(self.dtype)
+        vae_path = self.config.get(
+            "vae_path", os.path.join(self.config["model_path"], "vae")
+        )
+        self.model = (
+            AutoencoderKL.from_pretrained(vae_path).to(self.device).to(self.dtype)
+        )
         self.image_processor = VaeImageProcessor(vae_scale_factor=self.vae_scale_factor)
 
         if self.config.get("use_tiling_vae", False):
@@ -107,7 +113,9 @@ class LongCatImageVAE:
 
         # Decode - latents is now [B, 16, H, W]
         images = self.model.decode(latents, return_dict=False)[0]
-        images = self.image_processor.postprocess(images, output_type="pt" if input_info.return_result_tensor else "pil")
+        images = self.image_processor.postprocess(
+            images, output_type="pt" if input_info.return_result_tensor else "pil"
+        )
 
         if self.cpu_offload:
             self.model.to(torch.device("cpu"))

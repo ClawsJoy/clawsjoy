@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import argparse
 
 from lightx2v_train.data import build_data
@@ -6,9 +5,13 @@ from lightx2v_train.infer import build_inferencer
 from lightx2v_train.model_zoo import build_model
 from lightx2v_train.runtime import load_config
 
+from lib.smart_config import smart_config
+
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Run inference with a trained LightX2V model.")
+    parser = argparse.ArgumentParser(
+        description="Run inference with a trained LightX2V model."
+    )
     parser.add_argument("--config", required=True, help="Path to a YAML config file.")
     return parser.parse_args()
 

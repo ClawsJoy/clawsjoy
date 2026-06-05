@@ -1,10 +1,11 @@
-from lib.smart_config import smart_config
 import asyncio
 import uuid
 from pathlib import Path
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from loguru import logger
+
+from lib.smart_config import smart_config
 
 from ...schema import TaskResponse, VideoTaskRequest
 from ...task_manager import task_manager
@@ -21,9 +22,16 @@ def _write_file_sync(file_path: Path, content: bytes) -> None:
 @router.post("/", response_model=TaskResponse)
 async def create_video_task(message: VideoTaskRequest):
     try:
-        if hasattr(message, "image_path") and message.image_path and message.image_path.startswith("http"):
+        if (
+            hasattr(message, "image_path")
+            and message.image_path
+            and message.image_path.startswith("http")
+        ):
             if not await validate_url_async(message.image_path):
-                raise HTTPException(status_code=400, detail=f"Image URL is not accessible: {message.image_path}")
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Image URL is not accessible: {message.image_path}",
+                )
 
         task_id = task_manager.create_task(message)
         message.task_id = task_id
@@ -73,11 +81,15 @@ async def create_video_task_form(
 
     image_path = ""
     if image_file and image_file.filename:
-        image_path = await save_file_async(image_file, services.file_service.input_image_dir)
+        image_path = await save_file_async(
+            image_file, services.file_service.input_image_dir
+        )
 
     audio_path = ""
     if audio_file and audio_file.filename:
-        audio_path = await save_file_async(audio_file, services.file_service.input_audio_dir)
+        audio_path = await save_file_async(
+            audio_file, services.file_service.input_audio_dir
+        )
 
     message = VideoTaskRequest(
         prompt=prompt,

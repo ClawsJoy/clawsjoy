@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import os
 import random
 import subprocess
@@ -12,13 +11,14 @@ import torch
 import torch.distributed as dist
 import torchvision
 import torchvision.transforms.functional as TF
-from PIL import Image
 from einops import rearrange
+from lightx2v_platform.base.global_var import AI_DEVICE
 from loguru import logger
+from PIL import Image
 from torchvision.transforms import InterpolationMode
 from torchvision.transforms.functional import resize
 
-from lightx2v_platform.base.global_var import AI_DEVICE
+from lib.smart_config import smart_config
 
 torch_device_module = getattr(torch, AI_DEVICE)
 
@@ -91,7 +91,12 @@ def cache_video(
             # preprocess
             tensor = tensor.clamp(min(value_range), max(value_range))  # type: ignore
             tensor = torch.stack(
-                [torchvision.utils.make_grid(u, nrow=nrow, normalize=normalize, value_range=value_range) for u in tensor.unbind(2)],
+                [
+                    torchvision.utils.make_grid(
+                        u, nrow=nrow, normalize=normalize, value_range=value_range
+                    )
+                    for u in tensor.unbind(2)
+                ],
                 dim=1,
             ).permute(1, 2, 3, 0)
             tensor = (tensor * 255).type(torch.uint8).cpu()
@@ -233,7 +238,9 @@ def save_to_video(
         lossless: Whether to use lossless encoding (ffmpeg method only)
         output_pix_fmt: Pixel format for output (ffmpeg method only)
     """
-    assert images.dim() == 4 and images.shape[-1] == 3, "Input must be [N, H, W, C] with C=3"
+    assert (
+        images.dim() == 4 and images.shape[-1] == 3
+    ), "Input must be [N, H, W, C] with C=3"
 
     # Ensure output directory exists
     os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
@@ -347,7 +354,9 @@ def save_to_image(images: torch.Tensor, output_path: str) -> None:
 
     Used for ``task=sr`` when conditioning comes from ``image_path`` only (no ``video_path``).
     """
-    assert images.dim() == 4 and images.shape[-1] == 3, "Input must be [N, H, W, C] with C=3"
+    assert (
+        images.dim() == 4 and images.shape[-1] == 3
+    ), "Input must be [N, H, W, C] with C=3"
     frame = images[0].clamp(0, 1).cpu().numpy()
     frame_u8 = (frame * 255.0).round().astype(np.uint8)
     os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
@@ -386,7 +395,9 @@ def mux_audio_from_video(
     if os.path.exists(tmp_path):
         os.remove(tmp_path)
 
-    def _run_mux(audio_codec: str, extra_args: Optional[list] = None) -> subprocess.CompletedProcess:
+    def _run_mux(
+        audio_codec: str, extra_args: Optional[list] = None
+    ) -> subprocess.CompletedProcess:
         cmd = [
             ffmpeg_exe,
             "-y",
@@ -418,7 +429,9 @@ def mux_audio_from_video(
         result = _run_mux("aac", ["-b:a", "192k"])
 
     if result.returncode != 0:
-        stderr = result.stderr.decode(errors="ignore") if result.stderr else "Unknown error"
+        stderr = (
+            result.stderr.decode(errors="ignore") if result.stderr else "Unknown error"
+        )
         logger.warning(f"Audio mux failed, keep silent video. Error: {stderr}")
         if os.path.exists(tmp_path):
             os.remove(tmp_path)
@@ -435,7 +448,12 @@ def remove_substrings_from_keys(original_dict, substr):
     return new_dict
 
 
-def find_torch_model_path(config, ckpt_config_key=None, filename=None, subdir=["original", "fp8", "int8", "distill_models", "distill_fp8", "distill_int8"]):
+def find_torch_model_path(
+    config,
+    ckpt_config_key=None,
+    filename=None,
+    subdir=["original", "fp8", "int8", "distill_models", "distill_fp8", "distill_int8"],
+):
     if ckpt_config_key and config.get(ckpt_config_key, None) is not None:
         return config.get(ckpt_config_key)
 
@@ -451,7 +469,9 @@ def find_torch_model_path(config, ckpt_config_key=None, filename=None, subdir=["
     for path in paths_to_check:
         if os.path.exists(path):
             return path
-    raise FileNotFoundError(f"PyTorch model file '{filename}' not found.\nPlease download the model from https://huggingface.co/lightx2v/ or specify the model path in the configuration file.")
+    raise FileNotFoundError(
+        f"PyTorch model file '{filename}' not found.\nPlease download the model from https://huggingface.co/lightx2v/ or specify the model path in the configuration file."
+    )
 
 
 def load_safetensors(in_path, remove_key=None, include_keys=None):
@@ -486,7 +506,11 @@ def load_safetensors_from_dir(in_dir, remove_key=None, include_keys=None):
     safetensors_files = os.listdir(in_dir)
     safetensors_files = [f for f in safetensors_files if f.endswith(".safetensors")]
     for f in safetensors_files:
-        tensors.update(load_safetensors_from_path(os.path.join(in_dir, f), remove_key, include_keys))
+        tensors.update(
+            load_safetensors_from_path(
+                os.path.join(in_dir, f), remove_key, include_keys
+            )
+        )
     return tensors
 
 
@@ -512,7 +536,13 @@ def load_pt_safetensors(in_path, remove_key=None, include_keys=None):
     return state_dict
 
 
-def load_weights(checkpoint_path, cpu_offload=False, remove_key=None, load_from_rank0=False, include_keys=None):
+def load_weights(
+    checkpoint_path,
+    cpu_offload=False,
+    remove_key=None,
+    load_from_rank0=False,
+    include_keys=None,
+):
     if not dist.is_initialized() or not load_from_rank0:
         # Single GPU mode
         logger.info(f"Loading weights from {checkpoint_path}")
@@ -543,11 +573,17 @@ def load_weights(checkpoint_path, cpu_offload=False, remove_key=None, load_from_
 
     if cpu_offload:
         target_device = "cpu"
-        distributed_weight_dict = {key: torch.empty(meta["shape"], dtype=meta["dtype"], device=target_device) for key, meta in synced_meta_dict.items()}
+        distributed_weight_dict = {
+            key: torch.empty(meta["shape"], dtype=meta["dtype"], device=target_device)
+            for key, meta in synced_meta_dict.items()
+        }
         dist.barrier()
     else:
         target_device = torch.device(f"cuda:{current_rank}")
-        distributed_weight_dict = {key: torch.empty(meta["shape"], dtype=meta["dtype"], device=target_device) for key, meta in synced_meta_dict.items()}
+        distributed_weight_dict = {
+            key: torch.empty(meta["shape"], dtype=meta["dtype"], device=target_device)
+            for key, meta in synced_meta_dict.items()
+        }
         dist.barrier(device_ids=[torch.cuda.current_device()])
 
     for key in sorted(synced_meta_dict.keys()):
@@ -577,7 +613,9 @@ def load_weights(checkpoint_path, cpu_offload=False, remove_key=None, load_from_
     if cpu_offload:
         torch.cuda.empty_cache()
 
-    logger.info(f"Weights distributed across {dist.get_world_size()} devices on {target_device}")
+    logger.info(
+        f"Weights distributed across {dist.get_world_size()} devices on {target_device}"
+    )
     return distributed_weight_dict
 
 
@@ -586,7 +624,9 @@ def masks_like(tensor, zero=False, generator=None, p=0.2, prev_len=1):
     out = torch.ones_like(tensor)
     if zero:
         if generator is not None:
-            random_num = torch.rand(1, generator=generator, device=generator.device).item()
+            random_num = torch.rand(
+                1, generator=generator, device=generator.device
+            ).item()
             if random_num < p:
                 out[:, :prev_len] = torch.zeros_like(out[:, :prev_len])
         else:
@@ -620,7 +660,9 @@ def best_output_size(w, h, dw, dh, expected_area):
 
 
 def get_optimal_patched_size_with_sp(patched_h, patched_w, sp_size):
-    assert sp_size > 0 and (sp_size & (sp_size - 1)) == 0, "sp_size must be a power of 2"
+    assert (
+        sp_size > 0 and (sp_size & (sp_size - 1)) == 0
+    ), "sp_size must be a power of 2"
 
     h_ratio, w_ratio = 1, 1
     while sp_size != 1:
@@ -674,7 +716,9 @@ def isotropic_crop_resize(frames: torch.Tensor, size: tuple):
     h, w = size
     y0, y1, x0, x1 = get_crop_bbox(ori_h, ori_w, h, w)
     cropped_frames = frames[:, :, y0:y1, x0:x1]
-    resized_frames = resize(cropped_frames, [h, w], InterpolationMode.BICUBIC, antialias=True)
+    resized_frames = resize(
+        cropped_frames, [h, w], InterpolationMode.BICUBIC, antialias=True
+    )
 
     if len(original_shape) == 3:
         resized_frames = resized_frames.squeeze(0)
@@ -741,22 +785,42 @@ def validate_config_paths(config: dict) -> None:
     model_cls = config.get("model_cls", "")
     if model_cls and "wan2.2" in model_cls:
         # Check high noise checkpoints
-        if "high_noise_original_ckpt" in config and config["high_noise_original_ckpt"] is not None:
+        if (
+            "high_noise_original_ckpt" in config
+            and config["high_noise_original_ckpt"] is not None
+        ):
             check_path_exists(config["high_noise_original_ckpt"])
-            logger.debug(f"✓ Verified high_noise_original_ckpt: {config['high_noise_original_ckpt']}")
+            logger.debug(
+                f"✓ Verified high_noise_original_ckpt: {config['high_noise_original_ckpt']}"
+            )
 
-        if "high_noise_quantized_ckpt" in config and config["high_noise_quantized_ckpt"] is not None:
+        if (
+            "high_noise_quantized_ckpt" in config
+            and config["high_noise_quantized_ckpt"] is not None
+        ):
             check_path_exists(config["high_noise_quantized_ckpt"])
-            logger.debug(f"✓ Verified high_noise_quantized_ckpt: {config['high_noise_quantized_ckpt']}")
+            logger.debug(
+                f"✓ Verified high_noise_quantized_ckpt: {config['high_noise_quantized_ckpt']}"
+            )
 
         # Check low noise checkpoints
-        if "low_noise_original_ckpt" in config and config["low_noise_original_ckpt"] is not None:
+        if (
+            "low_noise_original_ckpt" in config
+            and config["low_noise_original_ckpt"] is not None
+        ):
             check_path_exists(config["low_noise_original_ckpt"])
-            logger.debug(f"✓ Verified low_noise_original_ckpt: {config['low_noise_original_ckpt']}")
+            logger.debug(
+                f"✓ Verified low_noise_original_ckpt: {config['low_noise_original_ckpt']}"
+            )
 
-        if "low_noise_quantized_ckpt" in config and config["low_noise_quantized_ckpt"] is not None:
+        if (
+            "low_noise_quantized_ckpt" in config
+            and config["low_noise_quantized_ckpt"] is not None
+        ):
             check_path_exists(config["low_noise_quantized_ckpt"])
-            logger.debug(f"✓ Verified low_noise_quantized_ckpt: {config['low_noise_quantized_ckpt']}")
+            logger.debug(
+                f"✓ Verified low_noise_quantized_ckpt: {config['low_noise_quantized_ckpt']}"
+            )
 
     logger.info("✓ Config checkpoint paths validated successfully")
 

@@ -3,7 +3,7 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
@@ -12,12 +12,12 @@ from core.lib.agent_bus import get_bus
 
 class AgentExecutor:
     """Agent 协作执行器"""
-    
+
     name = "agent_executor"
-    
+
     def __init__(self):
         self.bus = get_bus()
-    
+
     def execute(self, goal: str, params: dict = None) -> dict:
         """执行 Agent 协作任务"""
         user_id = params.get("user_id", "default") if params else "default"
@@ -31,11 +31,7 @@ class AgentExecutor:
             message_id = self.bus.publish(
                 "brain",
                 f"task.{agent}",
-                {
-                    "goal": goal,
-                    "user_id": user_id,
-                    "source": "brain"
-                }
+                {"goal": goal, "user_id": user_id, "source": "brain"},
             )
             results[agent] = {"status": "dispatched", "message_id": message_id}
 
@@ -43,9 +39,9 @@ class AgentExecutor:
             "success": True,
             "agents": agents,
             "results": results,
-            "source": "agent_collaboration"
+            "source": "agent_collaboration",
         }
-    
+
     def _identify_agents(self, goal: str) -> list:
         """识别需要哪些 Agent"""
         agents = []

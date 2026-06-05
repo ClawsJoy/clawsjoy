@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 AMD ROCm Device implementation for LightX2V.
 
@@ -12,9 +13,8 @@ import sys
 
 import torch
 import torch.distributed as dist
-from loguru import logger
-
 from lightx2v_platform.registry_factory import PLATFORM_DEVICE_REGISTER
+from loguru import logger
 
 # Detect AMD ROCm platform
 IS_AMD_ROCM = hasattr(torch.version, "hip") and torch.version.hip is not None
@@ -54,13 +54,21 @@ class AiterSglKernelCompat:
         """RMSNorm compatible with sgl_kernel.rmsnorm(input, weight, eps)"""
         return self._rms_norm(input, weight, eps)
 
-    def fp8_scaled_mm(self, input_quant, weight, input_scale, weight_scale, dtype, bias=None):
+    def fp8_scaled_mm(
+        self, input_quant, weight, input_scale, weight_scale, dtype, bias=None
+    ):
         """FP8 GEMM compatible with sgl_kernel.fp8_scaled_mm"""
-        return self._gemm_a8w8(input_quant, weight, input_scale, weight_scale, bias, dtype)
+        return self._gemm_a8w8(
+            input_quant, weight, input_scale, weight_scale, bias, dtype
+        )
 
-    def int8_scaled_mm(self, input_quant, weight, input_scale, weight_scale, dtype, bias=None):
+    def int8_scaled_mm(
+        self, input_quant, weight, input_scale, weight_scale, dtype, bias=None
+    ):
         """INT8 GEMM compatible with sgl_kernel.int8_scaled_mm"""
-        return self._gemm_a8w8(input_quant, weight, input_scale, weight_scale, bias, dtype)
+        return self._gemm_a8w8(
+            input_quant, weight, input_scale, weight_scale, bias, dtype
+        )
 
     def sgl_per_token_quant_fp8(self, x, out, scale):
         """Per-token FP8 quantization compatible with sgl_kernel.sgl_per_token_quant_fp8"""
@@ -68,12 +76,18 @@ class AiterSglKernelCompat:
         out.copy_(q)
         scale.copy_(s)
 
-    def sgl_per_token_group_quant_fp8(self, x, out, scale, group_size=128, eps=1e-10, fp8_min=-448.0, fp8_max=448.0):
+    def sgl_per_token_group_quant_fp8(
+        self, x, out, scale, group_size=128, eps=1e-10, fp8_min=-448.0, fp8_max=448.0
+    ):
         """Per-token per-group FP8 quantization compatible with sgl_kernel.sgl_per_token_group_quant_fp8"""
         m, k = x.shape
         x_view = x.view(m, -1, group_size)
         x_amax = x_view.abs().float().amax(dim=2).view(m, -1).clamp(eps)
-        q = (x_view * (fp8_max / x_amax.unsqueeze(2))).to(torch.float8_e4m3fn).view(m, k)
+        q = (
+            (x_view * (fp8_max / x_amax.unsqueeze(2)))
+            .to(torch.float8_e4m3fn)
+            .view(m, k)
+        )
         s = (x_amax / fp8_max).view(m, -1)
         out.copy_(q)
         scale.copy_(s)
@@ -89,7 +103,9 @@ def _get_aiter_sgl_kernel():
         logger.error(
             f"\n{'=' * 60}\nERROR: AMD ROCm detected but aiter is not installed.\naiter is REQUIRED for LightX2V to work on AMD GPUs.\n\nPlease install aiter:\n{AITER_INSTALL_CMD}\n{'=' * 60}\n"
         )
-        raise ImportError(f"aiter is required for AMD ROCm support. Please install: pip install git+{AITER_REPO}@{AITER_COMMIT}")
+        raise ImportError(
+            f"aiter is required for AMD ROCm support. Please install: pip install git+{AITER_REPO}@{AITER_COMMIT}"
+        )
 
 
 @PLATFORM_DEVICE_REGISTER("amd_rocm")

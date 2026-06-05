@@ -1,17 +1,19 @@
-from lib.smart_config import smart_config
 import torch
 import torch.distributed as dist
 import torch.nn.functional as F
-
 from lightx2v.models.networks.base_model import BaseTransformerModel
 from lightx2v.models.networks.neopp.infer.post_infer import NeoppPostInfer
 from lightx2v.models.networks.neopp.infer.pre_infer import NeoppPreInfer
 from lightx2v.models.networks.neopp.infer.transformer_infer import NeoppTransformerInfer
 from lightx2v.models.networks.neopp.weights.post_weights import NeoppPostWeights
 from lightx2v.models.networks.neopp.weights.pre_weights import NeoppPreWeights
-from lightx2v.models.networks.neopp.weights.transformer_weights import NeoppTransformerWeights
+from lightx2v.models.networks.neopp.weights.transformer_weights import (
+    NeoppTransformerWeights,
+)
 from lightx2v.utils.envs import *
 from lightx2v.utils.utils import *
+
+from lib.smart_config import smart_config
 
 
 class NeoppModel(BaseTransformerModel):
@@ -32,7 +34,9 @@ class NeoppModel(BaseTransformerModel):
         self.patch_size = self.config.get("patch_size", 16)
         self.merge_size = 2
         if self.config["seq_parallel"]:
-            self.seq_p_group = self.config.get("device_mesh").get_group(mesh_dim="seq_p")
+            self.seq_p_group = self.config.get("device_mesh").get_group(
+                mesh_dim="seq_p"
+            )
         else:
             self.seq_p_group = None
 
@@ -110,7 +114,11 @@ class NeoppModel(BaseTransformerModel):
 
         if self.enable_cfg:
             t = self.scheduler.timesteps[self.scheduler.step_index]
-            use_cfg = t >= self.cfg_interval[0] and t <= self.cfg_interval[1] and self.cfg_scale > 1
+            use_cfg = (
+                t >= self.cfg_interval[0]
+                and t <= self.cfg_interval[1]
+                and self.cfg_scale > 1
+            )
 
             if self.config.get("cfg_parallel", False):
                 # ==================== CFG Parallel Processing ====================
@@ -120,30 +128,48 @@ class NeoppModel(BaseTransformerModel):
 
                 if use_cfg:
                     if cfg_p_rank == 0:
-                        v_pred = self._infer_cond_uncond(inputs, pre_infer_out, infer_condition=True)
+                        v_pred = self._infer_cond_uncond(
+                            inputs, pre_infer_out, infer_condition=True
+                        )
                     else:
-                        v_pred = self._infer_cond_uncond(inputs, pre_infer_out, infer_condition=False)
-                    v_pred_list = [torch.zeros_like(v_pred) for _ in range(cfg_p_world_size)]
+                        v_pred = self._infer_cond_uncond(
+                            inputs, pre_infer_out, infer_condition=False
+                        )
+                    v_pred_list = [
+                        torch.zeros_like(v_pred) for _ in range(cfg_p_world_size)
+                    ]
                     dist.all_gather(v_pred_list, v_pred, group=cfg_p_group)
                     v_pred_cond, v_pred_uncond = v_pred_list[0], v_pred_list[1]
-                    v_pred = v_pred_uncond + self.cfg_scale * (v_pred_cond - v_pred_uncond)
+                    v_pred = v_pred_uncond + self.cfg_scale * (
+                        v_pred_cond - v_pred_uncond
+                    )
                     v_pred = self.cfg_norm_func(v_pred, v_pred_cond)
                     return v_pred
                 else:
                     # cfg 区间外只有 rank 0 做 cond 推理，其余 rank 用 all_gather 接收结果
                     if cfg_p_rank == 0:
-                        v_pred = self._infer_cond_uncond(inputs, pre_infer_out, infer_condition=True)
+                        v_pred = self._infer_cond_uncond(
+                            inputs, pre_infer_out, infer_condition=True
+                        )
                     else:
                         v_pred = torch.zeros_like(pre_infer_out.z)
-                    v_pred_list = [torch.zeros_like(v_pred) for _ in range(cfg_p_world_size)]
+                    v_pred_list = [
+                        torch.zeros_like(v_pred) for _ in range(cfg_p_world_size)
+                    ]
                     dist.all_gather(v_pred_list, v_pred, group=cfg_p_group)
                     return v_pred_list[0]
             else:
                 # ==================== CFG Processing ====================
-                v_pred_cond = self._infer_cond_uncond(inputs, pre_infer_out, infer_condition=True)
+                v_pred_cond = self._infer_cond_uncond(
+                    inputs, pre_infer_out, infer_condition=True
+                )
                 if use_cfg:
-                    v_pred_uncond = self._infer_cond_uncond(inputs, pre_infer_out, infer_condition=False)
-                    v_pred = v_pred_uncond + self.cfg_scale * (v_pred_cond - v_pred_uncond)
+                    v_pred_uncond = self._infer_cond_uncond(
+                        inputs, pre_infer_out, infer_condition=False
+                    )
+                    v_pred = v_pred_uncond + self.cfg_scale * (
+                        v_pred_cond - v_pred_uncond
+                    )
                     v_pred = self.cfg_norm_func(v_pred, v_pred_cond)
                     return v_pred
                 return v_pred_cond
@@ -153,14 +179,24 @@ class NeoppModel(BaseTransformerModel):
 
     def _infer_cond_uncond(self, inputs, pre_infer_out, infer_condition: bool):
         self.scheduler.infer_condition = infer_condition
-        pre_infer_out.image_embeds = pre_infer_out.image_embeds_cond if infer_condition else pre_infer_out.image_embeds_uncond
+        pre_infer_out.image_embeds = (
+            pre_infer_out.image_embeds_cond
+            if infer_condition
+            else pre_infer_out.image_embeds_uncond
+        )
 
-        hidden_states = self.transformer_infer.infer(self.transformer_weights, pre_infer_out, inputs)
+        hidden_states = self.transformer_infer.infer(
+            self.transformer_weights, pre_infer_out, inputs
+        )
 
         if self.seq_p_group is not None:
             world_size = dist.get_world_size(self.seq_p_group)
-            gathered_hidden_states = [torch.empty_like(hidden_states) for _ in range(world_size)]
-            dist.all_gather(gathered_hidden_states, hidden_states, group=self.seq_p_group)
+            gathered_hidden_states = [
+                torch.empty_like(hidden_states) for _ in range(world_size)
+            ]
+            dist.all_gather(
+                gathered_hidden_states, hidden_states, group=self.seq_p_group
+            )
             hidden_states = torch.cat(gathered_hidden_states, dim=1)
             hidden_states = hidden_states[:, : pre_infer_out.image_token_num, :]
 

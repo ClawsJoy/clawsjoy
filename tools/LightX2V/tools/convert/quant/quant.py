@@ -1,13 +1,18 @@
-from lib.smart_config import smart_config
 from abc import ABCMeta
 
 import torch
+from lightx2v.utils.registry_factory import CONVERT_WEIGHT_REGISTER
 from qtorch.quant import float_quantize
 
-from lightx2v.utils.registry_factory import CONVERT_WEIGHT_REGISTER
+from lib.smart_config import smart_config
 
 try:
-    from lightx2v_kernel.gemm import scaled_mxfp4_quant, scaled_mxfp6_quant, scaled_mxfp8_quant, scaled_nvfp4_quant
+    from lightx2v_kernel.gemm import (
+        scaled_mxfp4_quant,
+        scaled_mxfp6_quant,
+        scaled_mxfp8_quant,
+        scaled_nvfp4_quant,
+    )
 except ImportError:
     pass
 
@@ -68,7 +73,9 @@ class QuantWeightFP8(QuantTemplate):
         scales = max_val / qmax
         scaled_tensor = w / scales
         scaled_tensor = torch.clip(scaled_tensor, qmin, qmax)
-        w_q = float_quantize(scaled_tensor.float(), 4, 3, rounding="nearest").to(torch.float8_e4m3fn)
+        w_q = float_quantize(scaled_tensor.float(), 4, 3, rounding="nearest").to(
+            torch.float8_e4m3fn
+        )
 
         assert torch.isnan(scales).sum() == 0
         assert torch.isnan(w_q).sum() == 0

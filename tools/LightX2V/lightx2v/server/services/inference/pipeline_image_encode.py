@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """Normalize image runner outputs to PNG bytes (in-memory, no disk)."""
 
 from __future__ import annotations
@@ -10,8 +11,8 @@ from io import BytesIO
 from typing import Any, Optional
 
 import torch
-from PIL import Image
 from loguru import logger
+from PIL import Image
 
 try:
     from torchvision.io import encode_png as tv_encode_png
@@ -27,7 +28,9 @@ def _get_png_compression_level() -> int:
         logger.warning(f"Invalid LIGHTX2V_SYNC_PNG_COMPRESSION={raw}, fallback to 6")
         return 6
     if level < 0 or level > 9:
-        logger.warning(f"LIGHTX2V_SYNC_PNG_COMPRESSION={level} out of range [0,9], clamped")
+        logger.warning(
+            f"LIGHTX2V_SYNC_PNG_COMPRESSION={level} out of range [0,9], clamped"
+        )
         level = max(0, min(9, level))
     return level
 
@@ -90,10 +93,16 @@ def _tensor_to_png_bytes(image_tensor: torch.Tensor) -> bytes:
     # Fast path: encode PNG directly from CHW uint8 tensor.
     if tv_encode_png is not None:
         encode_start = time.perf_counter()
-        png_bytes = tv_encode_png(tensor_chw, compression_level=PNG_COMPRESSION_LEVEL).numpy().tobytes()
+        png_bytes = (
+            tv_encode_png(tensor_chw, compression_level=PNG_COMPRESSION_LEVEL)
+            .numpy()
+            .tobytes()
+        )
         encode_ms = (time.perf_counter() - encode_start) * 1000
         total_ms = (time.perf_counter() - total_start) * 1000
-        logger.info(f"Tensor->PNG(tv) cost total={total_ms:.2f}ms cpu_copy={cpu_ms:.2f}ms preprocess={prep_ms:.2f}ms encode={encode_ms:.2f}ms level={PNG_COMPRESSION_LEVEL} [{task_tag}]")
+        logger.info(
+            f"Tensor->PNG(tv) cost total={total_ms:.2f}ms cpu_copy={cpu_ms:.2f}ms preprocess={prep_ms:.2f}ms encode={encode_ms:.2f}ms level={PNG_COMPRESSION_LEVEL} [{task_tag}]"
+        )
         return png_bytes
 
     encode_start = time.perf_counter()
@@ -103,7 +112,9 @@ def _tensor_to_png_bytes(image_tensor: torch.Tensor) -> bytes:
     png_bytes = _pil_to_png_bytes(Image.fromarray(arr))
     encode_ms = (time.perf_counter() - encode_start) * 1000
     total_ms = (time.perf_counter() - total_start) * 1000
-    logger.info(f"Tensor->PNG(pil) cost total={total_ms:.2f}ms cpu_copy={cpu_ms:.2f}ms preprocess={prep_ms:.2f}ms encode={encode_ms:.2f}ms level={PNG_COMPRESSION_LEVEL} [{task_tag}]")
+    logger.info(
+        f"Tensor->PNG(pil) cost total={total_ms:.2f}ms cpu_copy={cpu_ms:.2f}ms preprocess={prep_ms:.2f}ms encode={encode_ms:.2f}ms level={PNG_COMPRESSION_LEVEL} [{task_tag}]"
+    )
     return png_bytes
 
 

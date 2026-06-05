@@ -1,8 +1,9 @@
-from lib.smart_config import smart_config
 from enum import Enum
 from typing import Dict, Literal, NamedTuple, Optional
 
 import torch
+
+from lib.smart_config import smart_config
 
 _receptive_field_t = Literal["half", "full"]
 _inflation_mode_t = Literal["none", "tail", "replicate"]

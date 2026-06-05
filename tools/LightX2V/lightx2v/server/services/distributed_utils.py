@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import os
 import pickle
 from datetime import timedelta
@@ -7,6 +6,8 @@ from typing import Any, Optional
 import torch
 import torch.distributed as dist
 from loguru import logger
+
+from lib.smart_config import smart_config
 
 
 class DistributedManager:
@@ -32,7 +33,9 @@ class DistributedManager:
 
                 task_timeout = timedelta(days=30)
                 self.task_pg = dist.new_group(backend="gloo", timeout=task_timeout)
-                logger.info("Created gloo process group for task distribution with 30-day timeout")
+                logger.info(
+                    "Created gloo process group for task distribution with 30-day timeout"
+                )
 
                 if torch.cuda.is_available():
                     torch.cuda.set_device(self.rank)
@@ -43,11 +46,15 @@ class DistributedManager:
                 self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
             self.is_initialized = True
-            logger.info(f"Rank {self.rank}/{self.world_size - 1} distributed environment initialized successfully")
+            logger.info(
+                f"Rank {self.rank}/{self.world_size - 1} distributed environment initialized successfully"
+            )
             return True
 
         except Exception as e:
-            logger.error(f"Rank {self.rank} distributed environment initialization failed: {str(e)}")
+            logger.error(
+                f"Rank {self.rank} distributed environment initialization failed: {str(e)}"
+            )
             return False
 
     def cleanup(self, timeout: int = 2):
@@ -119,7 +126,12 @@ class DistributedManager:
         return bytes(received)
 
     def broadcast_task_data(self, task_data: Optional[Any] = None) -> Optional[Any]:
-        if self._shutting_down or not self.is_initialized or not dist.is_initialized() or self.task_pg is None:
+        if (
+            self._shutting_down
+            or not self.is_initialized
+            or not dist.is_initialized()
+            or self.task_pg is None
+        ):
             return None
 
         if self.is_rank_zero():

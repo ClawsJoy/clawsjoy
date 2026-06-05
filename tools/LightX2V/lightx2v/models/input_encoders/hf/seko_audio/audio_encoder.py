@@ -1,10 +1,10 @@
-from lib.smart_config import smart_config
 import torch
+from lightx2v.utils.envs import *
+from lightx2v_platform.base.global_var import AI_DEVICE
 from loguru import logger
 from transformers import AutoConfig, AutoFeatureExtractor, AutoModel
 
-from lightx2v.utils.envs import *
-from lightx2v_platform.base.global_var import AI_DEVICE
+from lib.smart_config import smart_config
 
 
 class SekoAudioEncoderModel:
@@ -20,9 +20,13 @@ class SekoAudioEncoderModel:
         self.load()
 
     def load(self):
-        self.audio_feature_extractor = AutoFeatureExtractor.from_pretrained(self.model_path)
+        self.audio_feature_extractor = AutoFeatureExtractor.from_pretrained(
+            self.model_path
+        )
         if self.dummy_model:
-            logger.info("[DummyModel] Skipping audio encoder weight loading, using random init from config")
+            logger.info(
+                "[DummyModel] Skipping audio encoder weight loading, using random init from config"
+            )
             config = AutoConfig.from_pretrained(self.model_path)
             self.audio_feature_encoder = AutoModel.from_config(config)
         else:
@@ -39,10 +43,18 @@ class SekoAudioEncoderModel:
 
     @torch.no_grad()
     def infer(self, audio_segment):
-        audio_feat = self.audio_feature_extractor(audio_segment, sampling_rate=self.audio_sr, return_tensors="pt").input_values.to(AI_DEVICE).to(dtype=GET_DTYPE())
+        audio_feat = (
+            self.audio_feature_extractor(
+                audio_segment, sampling_rate=self.audio_sr, return_tensors="pt"
+            )
+            .input_values.to(AI_DEVICE)
+            .to(dtype=GET_DTYPE())
+        )
         if self.cpu_offload:
             self.audio_feature_encoder = self.audio_feature_encoder.to(AI_DEVICE)
-        audio_feat = self.audio_feature_encoder(audio_feat, return_dict=True).last_hidden_state
+        audio_feat = self.audio_feature_encoder(
+            audio_feat, return_dict=True
+        ).last_hidden_state
         if self.cpu_offload:
             self.audio_feature_encoder = self.audio_feature_encoder.to("cpu")
         return audio_feat

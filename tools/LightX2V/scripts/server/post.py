@@ -1,6 +1,7 @@
-from lib.smart_config import smart_config
 import requests
 from loguru import logger
+
+from lib.smart_config import smart_config
 
 if __name__ == "__main__":
     url = "http://smart_config.HOST:8000/v1/tasks/video/"

@@ -1,7 +1,9 @@
-from lib.smart_config import smart_config
-import torch
 import time
+
+import torch
 from test_bench import MMWeightMxfp8
+
+from lib.smart_config import smart_config
 
 
 def test_speed(m, k, n):
@@ -69,7 +71,9 @@ def test_accuracy(m, k, n):
         # print(f"output_tensor: {output_tensor}")
 
         # cosine
-        cos = torch.nn.functional.cosine_similarity(ref_output_tensor.flatten(), output_tensor.flatten(), dim=0)
+        cos = torch.nn.functional.cosine_similarity(
+            ref_output_tensor.flatten(), output_tensor.flatten(), dim=0
+        )
         print(f"cos : {cos}")
 
 

@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import gc
 from contextlib import nullcontext
 from typing import List, Literal, Optional, Tuple, Union
@@ -7,7 +6,10 @@ import diffusers
 import torch
 import torch.nn as nn
 from diffusers.models.attention_processor import Attention, SpatialNorm
-from diffusers.models.autoencoders.vae import DecoderOutput, DiagonalGaussianDistribution
+from diffusers.models.autoencoders.vae import (
+    DecoderOutput,
+    DiagonalGaussianDistribution,
+)
 from diffusers.models.downsampling import Downsample2D
 from diffusers.models.lora import LoRACompatibleConv
 from diffusers.models.modeling_outputs import AutoencoderKLOutput
@@ -17,10 +19,11 @@ from diffusers.models.upsampling import Upsample2D
 from diffusers.utils import is_torch_version
 from diffusers.utils.accelerate_utils import apply_forward_hook
 from einops import rearrange
-from torch import Tensor
-
 from lightx2v.utils.envs import *
 from lightx2v_platform.base.global_var import AI_DEVICE
+from torch import Tensor
+
+from lib.smart_config import smart_config
 
 from .causal_inflation_lib import (
     InflatedCausalConv3d,
@@ -90,8 +93,14 @@ class Upsample3D(Upsample2D):
         # [Override] MAGViT v2 implementation
         if not self.interpolate:
             upscale_ratio = (self.spatial_ratio**2) * self.temporal_ratio
-            self.upscale_conv = nn.Conv3d(self.channels, self.channels * upscale_ratio, kernel_size=1, padding=0)
-            identity = torch.eye(self.channels).repeat(upscale_ratio, 1).reshape_as(self.upscale_conv.weight)
+            self.upscale_conv = nn.Conv3d(
+                self.channels, self.channels * upscale_ratio, kernel_size=1, padding=0
+            )
+            identity = (
+                torch.eye(self.channels)
+                .repeat(upscale_ratio, 1)
+                .reshape_as(self.upscale_conv.weight)
+            )
             self.upscale_conv.weight.data.copy_(identity)
             nn.init.zeros_(self.upscale_conv.bias)
 
@@ -118,7 +127,11 @@ class Upsample3D(Upsample2D):
 
         if self.slicing:
             split_size = hidden_states.size(2) // 2
-            hidden_states = list(hidden_states.split([split_size, hidden_states.size(2) - split_size], dim=2))
+            hidden_states = list(
+                hidden_states.split(
+                    [split_size, hidden_states.size(2) - split_size], dim=2
+                )
+            )
         else:
             hidden_states = [hidden_states]
 
@@ -179,7 +192,11 @@ class Downsample3D(Downsample2D):
             conv = init_causal_conv3d(
                 self.channels,
                 self.out_channels,
-                kernel_size=(self.temporal_kernel, self.spatial_kernel, self.spatial_kernel),
+                kernel_size=(
+                    self.temporal_kernel,
+                    self.spatial_kernel,
+                    self.spatial_kernel,
+                ),
                 stride=(self.temporal_ratio, self.spatial_ratio, self.spatial_ratio),
                 padding=(
                     1 if self.temporal_down else 0,
@@ -191,7 +208,11 @@ class Downsample3D(Downsample2D):
         elif type(conv) is nn.AvgPool2d:
             assert self.channels == self.out_channels
             conv = nn.AvgPool3d(
-                kernel_size=(self.temporal_ratio, self.spatial_ratio, self.spatial_ratio),
+                kernel_size=(
+                    self.temporal_ratio,
+                    self.spatial_ratio,
+                    self.spatial_ratio,
+                ),
                 stride=(self.temporal_ratio, self.spatial_ratio, self.spatial_ratio),
             )
         else:
@@ -217,7 +238,9 @@ class Downsample3D(Downsample2D):
 
         if self.use_conv and self.padding == 0 and self.spatial_down:
             pad = (0, 1, 0, 1)
-            hidden_states = safe_pad_operation(hidden_states, pad, mode="constant", value=0)
+            hidden_states = safe_pad_operation(
+                hidden_states, pad, mode="constant", value=0
+            )
 
         assert hidden_states.shape[1] == self.channels
 
@@ -283,7 +306,13 @@ class ResnetBlock3D(ResnetBlock2D):
                 inflation_mode=inflation_mode,
             )
 
-    def forward(self, input_tensor, temb, memory_state: MemoryState = MemoryState.DISABLED, **kwargs):
+    def forward(
+        self,
+        input_tensor,
+        temb,
+        memory_state: MemoryState = MemoryState.DISABLED,
+        **kwargs,
+    ):
         hidden_states = input_tensor
 
         hidden_states = causal_norm_wrapper(self.norm1, hidden_states)
@@ -548,7 +577,9 @@ class UNetMidBlock3D(nn.Module):
         time_receptive_field: _receptive_field_t = "half",
     ):
         super().__init__()
-        resnet_groups = resnet_groups if resnet_groups is not None else min(in_channels // 4, 32)
+        resnet_groups = (
+            resnet_groups if resnet_groups is not None else min(in_channels // 4, 32)
+        )
         self.add_attention = add_attention
 
         # there is always at least one resnet
@@ -572,7 +603,9 @@ class UNetMidBlock3D(nn.Module):
         attentions = []
 
         if attention_head_dim is None:
-            logger.warn(f"It is not recommend to pass `attention_head_dim=None`. Defaulting `attention_head_dim` to `in_channels`: {in_channels}.")
+            logger.warn(
+                f"It is not recommend to pass `attention_head_dim=None`. Defaulting `attention_head_dim` to `in_channels`: {in_channels}."
+            )
             attention_head_dim = in_channels
 
         for _ in range(num_layers):
@@ -584,8 +617,16 @@ class UNetMidBlock3D(nn.Module):
                         dim_head=attention_head_dim,
                         rescale_output_factor=output_scale_factor,
                         eps=resnet_eps,
-                        norm_num_groups=(resnet_groups if resnet_time_scale_shift == "default" else None),
-                        spatial_norm_dim=(temb_channels if resnet_time_scale_shift == "spatial" else None),
+                        norm_num_groups=(
+                            resnet_groups
+                            if resnet_time_scale_shift == "default"
+                            else None
+                        ),
+                        spatial_norm_dim=(
+                            temb_channels
+                            if resnet_time_scale_shift == "spatial"
+                            else None
+                        ),
                         residual_connection=True,
                         bias=True,
                         upcast_softmax=True,
@@ -615,14 +656,18 @@ class UNetMidBlock3D(nn.Module):
         self.attentions = nn.ModuleList(attentions)
         self.resnets = nn.ModuleList(resnets)
 
-    def forward(self, hidden_states, temb=None, memory_state: MemoryState = MemoryState.DISABLED):
+    def forward(
+        self, hidden_states, temb=None, memory_state: MemoryState = MemoryState.DISABLED
+    ):
         video_length, frame_height, frame_width = hidden_states.size()[-3:]
         hidden_states = self.resnets[0](hidden_states, temb, memory_state=memory_state)
         for attn, resnet in zip(self.attentions, self.resnets[1:]):
             if attn is not None:
                 hidden_states = rearrange(hidden_states, "b c f h w -> (b f) c h w")
                 hidden_states = attn(hidden_states, temb=temb)
-                hidden_states = rearrange(hidden_states, "(b f) c h w -> b c f h w", f=video_length)
+                hidden_states = rearrange(
+                    hidden_states, "(b f) c h w -> b c f h w", f=video_length
+                )
             hidden_states = resnet(hidden_states, temb, memory_state=memory_state)
 
         return hidden_states
@@ -701,7 +746,9 @@ class Encoder3D(nn.Module):
             output_channel = block_out_channels[i]
             is_final_block = i == len(block_out_channels) - 1
             # [Override] to support temporal down block design
-            is_temporal_down_block = i >= len(block_out_channels) - self.temporal_down_num - 1
+            is_temporal_down_block = (
+                i >= len(block_out_channels) - self.temporal_down_num - 1
+            )
             # Note: take the last ones
 
             assert down_block_type == "DownEncoderBlock3D"
@@ -730,7 +777,17 @@ class Encoder3D(nn.Module):
                 return module
 
             self.conv_extra_cond.append(
-                zero_module(nn.Conv3d(extra_cond_dim, output_channel, kernel_size=1, stride=1, padding=0)) if self.extra_cond_dim is not None and self.extra_cond_dim > 0 else None
+                zero_module(
+                    nn.Conv3d(
+                        extra_cond_dim,
+                        output_channel,
+                        kernel_size=1,
+                        stride=1,
+                        padding=0,
+                    )
+                )
+                if self.extra_cond_dim is not None and self.extra_cond_dim > 0
+                else None
             )
 
         # mid
@@ -749,11 +806,19 @@ class Encoder3D(nn.Module):
         )
 
         # out
-        self.conv_norm_out = nn.GroupNorm(num_channels=block_out_channels[-1], num_groups=norm_num_groups, eps=1e-6)
+        self.conv_norm_out = nn.GroupNorm(
+            num_channels=block_out_channels[-1], num_groups=norm_num_groups, eps=1e-6
+        )
         self.conv_act = nn.SiLU()
 
         conv_out_channels = 2 * out_channels if double_z else out_channels
-        self.conv_out = init_causal_conv3d(block_out_channels[-1], conv_out_channels, 3, padding=1, inflation_mode=inflation_mode)
+        self.conv_out = init_causal_conv3d(
+            block_out_channels[-1],
+            conv_out_channels,
+            3,
+            padding=1,
+            inflation_mode=inflation_mode,
+        )
 
         self.gradient_checkpointing = gradient_checkpoint
 
@@ -776,9 +841,16 @@ class Encoder3D(nn.Module):
             # down
             # [Override] add extra block and extra cond
             for down_block, extra_block in zip(self.down_blocks, self.conv_extra_cond):
-                sample = torch.utils.checkpoint.checkpoint(create_custom_forward(down_block), sample, memory_state, use_reentrant=False)
+                sample = torch.utils.checkpoint.checkpoint(
+                    create_custom_forward(down_block),
+                    sample,
+                    memory_state,
+                    use_reentrant=False,
+                )
                 if extra_block is not None:
-                    sample = sample + safe_interpolate_operation(extra_block(extra_cond), size=sample.shape[2:])
+                    sample = sample + safe_interpolate_operation(
+                        extra_block(extra_cond), size=sample.shape[2:]
+                    )
 
             # middle
             sample = self.mid_block(sample, memory_state=memory_state)
@@ -793,7 +865,9 @@ class Encoder3D(nn.Module):
             for down_block, extra_block in zip(self.down_blocks, self.conv_extra_cond):
                 sample = down_block(sample, memory_state=memory_state)
                 if extra_block is not None:
-                    sample = sample + safe_interpolate_operation(extra_block(extra_cond), size=sample.shape[2:])
+                    sample = sample + safe_interpolate_operation(
+                        extra_block(extra_cond), size=sample.shape[2:]
+                    )
 
             # middle
             sample = self.mid_block(sample, memory_state=memory_state)
@@ -918,9 +992,17 @@ class Decoder3D(nn.Module):
         if norm_type == "spatial":
             self.conv_norm_out = SpatialNorm(block_out_channels[0], temb_channels)
         else:
-            self.conv_norm_out = nn.GroupNorm(num_channels=block_out_channels[0], num_groups=norm_num_groups, eps=1e-6)
+            self.conv_norm_out = nn.GroupNorm(
+                num_channels=block_out_channels[0], num_groups=norm_num_groups, eps=1e-6
+            )
         self.conv_act = nn.SiLU()
-        self.conv_out = init_causal_conv3d(block_out_channels[0], out_channels, 3, padding=1, inflation_mode=inflation_mode)
+        self.conv_out = init_causal_conv3d(
+            block_out_channels[0],
+            out_channels,
+            3,
+            padding=1,
+            inflation_mode=inflation_mode,
+        )
 
         self.gradient_checkpointing = gradient_checkpoint
 
@@ -945,7 +1027,9 @@ class Decoder3D(nn.Module):
                 return custom_forward
 
             if is_torch_version(">=", "1.11.0"):
-                sample = self.mid_block(sample, latent_embeds, memory_state=memory_state)
+                sample = self.mid_block(
+                    sample, latent_embeds, memory_state=memory_state
+                )
                 sample = sample.to(upscale_dtype)
 
                 # up
@@ -959,12 +1043,19 @@ class Decoder3D(nn.Module):
                     )
             else:
                 # middle
-                sample = self.mid_block(sample, latent_embeds, memory_state=memory_state)
+                sample = self.mid_block(
+                    sample, latent_embeds, memory_state=memory_state
+                )
                 sample = sample.to(upscale_dtype)
 
                 # up
                 for up_block in self.up_blocks:
-                    sample = torch.utils.checkpoint.checkpoint(create_custom_forward(up_block), sample, latent_embeds, memory_state)
+                    sample = torch.utils.checkpoint.checkpoint(
+                        create_custom_forward(up_block),
+                        sample,
+                        latent_embeds,
+                        memory_state,
+                    )
         else:
             # middle
             sample = self.mid_block(sample, latent_embeds, memory_state=memory_state)
@@ -999,7 +1090,9 @@ class AutoencoderKL(diffusers.AutoencoderKL):
         # Newer version of diffusers changed the model keys,
         # causing incompatibility with old checkpoints.
         # They provided a method for conversion. We call conversion before loading state_dict.
-        convert_deprecated_attention_blocks = getattr(self, "_convert_deprecated_attention_blocks", None)
+        convert_deprecated_attention_blocks = getattr(
+            self, "_convert_deprecated_attention_blocks", None
+        )
         if callable(convert_deprecated_attention_blocks):
             convert_deprecated_attention_blocks(state_dict)
         return super().load_state_dict(state_dict, strict)
@@ -1036,16 +1129,27 @@ class VideoAutoencoderKL(diffusers.AutoencoderKL):
         *args,
         **kwargs,
     ):
-        extra_cond_dim = kwargs.pop("extra_cond_dim") if "extra_cond_dim" in kwargs else None
+        extra_cond_dim = (
+            kwargs.pop("extra_cond_dim") if "extra_cond_dim" in kwargs else None
+        )
         self.slicing_sample_min_size = slicing_sample_min_size
-        self.slicing_latent_min_size = slicing_sample_min_size // (2**temporal_scale_num)
+        self.slicing_latent_min_size = slicing_sample_min_size // (
+            2**temporal_scale_num
+        )
 
         super().__init__(
             in_channels=in_channels,
             out_channels=out_channels,
             # [Override] make sure it can be normally initialized
-            down_block_types=tuple([down_block_type.replace("3D", "2D") for down_block_type in down_block_types]),
-            up_block_types=tuple([up_block_type.replace("3D", "2D") for up_block_type in up_block_types]),
+            down_block_types=tuple(
+                [
+                    down_block_type.replace("3D", "2D")
+                    for down_block_type in down_block_types
+                ]
+            ),
+            up_block_types=tuple(
+                [up_block_type.replace("3D", "2D") for up_block_type in up_block_types]
+            ),
             block_out_channels=block_out_channels,
             layers_per_block=layers_per_block,
             act_fn=act_fn,
@@ -1120,7 +1224,14 @@ class VideoAutoencoderKL(diffusers.AutoencoderKL):
             self.decoder.mid_block.attentions = torch.nn.ModuleList([None])
 
     @apply_forward_hook
-    def encode(self, x: torch.FloatTensor, return_dict: bool = True, tiled: bool = False, tile_size: Tuple[int, int] = (512, 512), tile_overlap: Tuple[int, int] = (64, 64)) -> AutoencoderKLOutput:
+    def encode(
+        self,
+        x: torch.FloatTensor,
+        return_dict: bool = True,
+        tiled: bool = False,
+        tile_size: Tuple[int, int] = (512, 512),
+        tile_overlap: Tuple[int, int] = (64, 64),
+    ) -> AutoencoderKLOutput:
         if tiled:
             h = self.tiled_encode(x, tile_size=tile_size, tile_overlap=tile_overlap)
         else:
@@ -1135,10 +1246,17 @@ class VideoAutoencoderKL(diffusers.AutoencoderKL):
 
     @apply_forward_hook
     def decode(
-        self, z: torch.Tensor, return_dict: bool = True, tiled: bool = False, tile_size: Tuple[int, int] = (512, 512), tile_overlap: Tuple[int, int] = (64, 64)
+        self,
+        z: torch.Tensor,
+        return_dict: bool = True,
+        tiled: bool = False,
+        tile_size: Tuple[int, int] = (512, 512),
+        tile_overlap: Tuple[int, int] = (64, 64),
     ) -> Union[DecoderOutput, torch.Tensor]:
         if tiled:
-            decoded = self.tiled_decode(z, tile_size=tile_size, tile_overlap=tile_overlap)
+            decoded = self.tiled_decode(
+                z, tile_size=tile_size, tile_overlap=tile_overlap
+            )
         else:
             decoded = self.slicing_decode(z)
 
@@ -1147,9 +1265,13 @@ class VideoAutoencoderKL(diffusers.AutoencoderKL):
 
         return DecoderOutput(sample=decoded)
 
-    def _encode(self, x: torch.Tensor, memory_state: MemoryState = MemoryState.DISABLED) -> torch.Tensor:
+    def _encode(
+        self, x: torch.Tensor, memory_state: MemoryState = MemoryState.DISABLED
+    ) -> torch.Tensor:
         _x = x.to(self.device)
-        _x = causal_conv_slice_inputs(_x, self.slicing_sample_min_size, memory_state=memory_state)
+        _x = causal_conv_slice_inputs(
+            _x, self.slicing_sample_min_size, memory_state=memory_state
+        )
         h = self.encoder(_x, memory_state=memory_state)
         if self.quant_conv is not None:
             output = self.quant_conv(h, memory_state=memory_state)
@@ -1158,9 +1280,13 @@ class VideoAutoencoderKL(diffusers.AutoencoderKL):
         output = causal_conv_gather_outputs(output)
         return output.to(x.device)
 
-    def _decode(self, z: torch.Tensor, memory_state: MemoryState = MemoryState.DISABLED) -> torch.Tensor:
+    def _decode(
+        self, z: torch.Tensor, memory_state: MemoryState = MemoryState.DISABLED
+    ) -> torch.Tensor:
         _z = z.to(self.device)
-        _z = causal_conv_slice_inputs(_z, self.slicing_latent_min_size, memory_state=memory_state)
+        _z = causal_conv_slice_inputs(
+            _z, self.slicing_latent_min_size, memory_state=memory_state
+        )
         if self.post_quant_conv is not None:
             _z = self.post_quant_conv(_z, memory_state=memory_state)
         output = self.decoder(_z, memory_state=memory_state)
@@ -1169,8 +1295,13 @@ class VideoAutoencoderKL(diffusers.AutoencoderKL):
 
     def slicing_encode(self, x: torch.Tensor) -> torch.Tensor:
         sp_size = get_sequence_parallel_world_size()
-        if self.use_slicing and (x.shape[2] - 1) > self.slicing_sample_min_size * sp_size:
-            x_slices = x[:, :, 1:].split(split_size=self.slicing_sample_min_size * sp_size, dim=2)
+        if (
+            self.use_slicing
+            and (x.shape[2] - 1) > self.slicing_sample_min_size * sp_size
+        ):
+            x_slices = x[:, :, 1:].split(
+                split_size=self.slicing_sample_min_size * sp_size, dim=2
+            )
             encoded_slices = [
                 self._encode(
                     torch.cat((x[:, :, :1], x_slices[0]), dim=2),
@@ -1178,15 +1309,22 @@ class VideoAutoencoderKL(diffusers.AutoencoderKL):
                 )
             ]
             for x_idx in range(1, len(x_slices)):
-                encoded_slices.append(self._encode(x_slices[x_idx], memory_state=MemoryState.ACTIVE))
+                encoded_slices.append(
+                    self._encode(x_slices[x_idx], memory_state=MemoryState.ACTIVE)
+                )
             return torch.cat(encoded_slices, dim=2)
         else:
             return self._encode(x)
 
     def slicing_decode(self, z: torch.Tensor) -> torch.Tensor:
         sp_size = get_sequence_parallel_world_size()
-        if self.use_slicing and (z.shape[2] - 1) > self.slicing_latent_min_size * sp_size:
-            z_slices = z[:, :, 1:].split(split_size=self.slicing_latent_min_size * sp_size, dim=2)
+        if (
+            self.use_slicing
+            and (z.shape[2] - 1) > self.slicing_latent_min_size * sp_size
+        ):
+            z_slices = z[:, :, 1:].split(
+                split_size=self.slicing_latent_min_size * sp_size, dim=2
+            )
             decoded_slices = [
                 self._decode(
                     torch.cat((z[:, :, :1], z_slices[0]), dim=2),
@@ -1194,12 +1332,19 @@ class VideoAutoencoderKL(diffusers.AutoencoderKL):
                 )
             ]
             for z_idx in range(1, len(z_slices)):
-                decoded_slices.append(self._decode(z_slices[z_idx], memory_state=MemoryState.ACTIVE))
+                decoded_slices.append(
+                    self._decode(z_slices[z_idx], memory_state=MemoryState.ACTIVE)
+                )
             return torch.cat(decoded_slices, dim=2)
         else:
             return self._decode(z)
 
-    def tiled_encode(self, x: torch.Tensor, tile_size: Tuple[int, int] = (512, 512), tile_overlap: Tuple[int, int] = (64, 64)) -> torch.Tensor:
+    def tiled_encode(
+        self,
+        x: torch.Tensor,
+        tile_size: Tuple[int, int] = (512, 512),
+        tile_overlap: Tuple[int, int] = (64, 64),
+    ) -> torch.Tensor:
         r"""
         Encodes an input tensor `x` by splitting it into spatial tiles in latent space. Temporal is handled by `slicing_encode`.
         `tile_size` and `tile_overlap` are interpreted in output-space pixels and converted to latent-space.
@@ -1236,15 +1381,21 @@ class VideoAutoencoderKL(diffusers.AutoencoderKL):
         result = None
         count = None
 
-        num_tiles = ((max(H_lat_total - latent_overlap_h, 1) + stride_h - 1) // stride_h) * ((max(W_lat_total - latent_overlap_w, 1) + stride_w - 1) // stride_w)
+        num_tiles = (
+            (max(H_lat_total - latent_overlap_h, 1) + stride_h - 1) // stride_h
+        ) * ((max(W_lat_total - latent_overlap_w, 1) + stride_w - 1) // stride_w)
 
         # Pre-compute common ramp values
         ramp_cache = {}
         if latent_overlap_h > 0:
-            t_h = torch.linspace(0, 1, steps=latent_overlap_h, device=x.device, dtype=x.dtype)
+            t_h = torch.linspace(
+                0, 1, steps=latent_overlap_h, device=x.device, dtype=x.dtype
+            )
             ramp_cache["h"] = 0.5 - 0.5 * torch.cos(t_h * torch.pi)
         if latent_overlap_w > 0:
-            t_w = torch.linspace(0, 1, steps=latent_overlap_w, device=x.device, dtype=x.dtype)
+            t_w = torch.linspace(
+                0, 1, steps=latent_overlap_w, device=x.device, dtype=x.dtype
+            )
             ramp_cache["w"] = 0.5 - 0.5 * torch.cos(t_w * torch.pi)
 
         tile_id = 0
@@ -1254,7 +1405,9 @@ class VideoAutoencoderKL(diffusers.AutoencoderKL):
                 x_lat_end = min(x_lat + latent_tile_w, W_lat_total)
 
                 # Skip if fully within overlap of previous tiles
-                if (y_lat > 0 and (y_lat_end - y_lat) <= latent_overlap_h) or (x_lat > 0 and (x_lat_end - x_lat) <= latent_overlap_w):
+                if (y_lat > 0 and (y_lat_end - y_lat) <= latent_overlap_h) or (
+                    x_lat > 0 and (x_lat_end - x_lat) <= latent_overlap_w
+                ):
                     continue
 
                 # Map latent tile to output-space crop
@@ -1283,19 +1436,33 @@ class VideoAutoencoderKL(diffusers.AutoencoderKL):
                         device=device,
                         dtype=encoded_tile.dtype,
                     )
-                    count = torch.zeros((1, 1, 1, H_lat_total, W_lat_total), device=device, dtype=encoded_tile.dtype)
+                    count = torch.zeros(
+                        (1, 1, 1, H_lat_total, W_lat_total),
+                        device=device,
+                        dtype=encoded_tile.dtype,
+                    )
 
-                eff_h_lat = min(y_lat_end - y_lat, encoded_tile.shape[3], result.shape[3] - y_lat)
-                eff_w_lat = min(x_lat_end - x_lat, encoded_tile.shape[4], result.shape[4] - x_lat)
+                eff_h_lat = min(
+                    y_lat_end - y_lat, encoded_tile.shape[3], result.shape[3] - y_lat
+                )
+                eff_w_lat = min(
+                    x_lat_end - x_lat, encoded_tile.shape[4], result.shape[4] - x_lat
+                )
 
-                encoded_tile = encoded_tile[:, :, : result.shape[2], :eff_h_lat, :eff_w_lat]
+                encoded_tile = encoded_tile[
+                    :, :, : result.shape[2], :eff_h_lat, :eff_w_lat
+                ]
 
                 # Build faded masks
                 ov_h = max(0, min(latent_overlap_h, eff_h_lat - 1))
                 ov_w = max(0, min(latent_overlap_w, eff_w_lat - 1))
 
-                weight_h = torch.ones((eff_h_lat,), device=encoded_tile.device, dtype=encoded_tile.dtype)
-                weight_w = torch.ones((eff_w_lat,), device=encoded_tile.device, dtype=encoded_tile.dtype)
+                weight_h = torch.ones(
+                    (eff_h_lat,), device=encoded_tile.device, dtype=encoded_tile.dtype
+                )
+                weight_w = torch.ones(
+                    (eff_w_lat,), device=encoded_tile.device, dtype=encoded_tile.dtype
+                )
 
                 # Apply fades only on interior edges using cached ramps (avoid fading on outer image borders)
                 if ov_h > 0:
@@ -1320,8 +1487,16 @@ class VideoAutoencoderKL(diffusers.AutoencoderKL):
                     weight_h_5d = weight_h_5d.to(result.device)
                     weight_w_5d = weight_w_5d.to(result.device)
 
-                result[:, :, : encoded_tile.shape[2], y_lat : y_lat + eff_h_lat, x_lat : x_lat + eff_w_lat] += encoded_tile
-                count[:, :, :, y_lat : y_lat + eff_h_lat, x_lat : x_lat + eff_w_lat].addcmul_(weight_h_5d, weight_w_5d)
+                result[
+                    :,
+                    :,
+                    : encoded_tile.shape[2],
+                    y_lat : y_lat + eff_h_lat,
+                    x_lat : x_lat + eff_w_lat,
+                ] += encoded_tile
+                count[
+                    :, :, :, y_lat : y_lat + eff_h_lat, x_lat : x_lat + eff_w_lat
+                ].addcmul_(weight_h_5d, weight_w_5d)
 
         # Move result back to inference device if needed and normalize
         if result.device != x.device:
@@ -1334,7 +1509,12 @@ class VideoAutoencoderKL(diffusers.AutoencoderKL):
 
         return result
 
-    def tiled_decode(self, z: torch.Tensor, tile_size: Tuple[int, int] = (512, 512), tile_overlap: Tuple[int, int] = (64, 64)) -> torch.Tensor:  # noqa: F821
+    def tiled_decode(
+        self,
+        z: torch.Tensor,
+        tile_size: Tuple[int, int] = (512, 512),
+        tile_overlap: Tuple[int, int] = (64, 64),
+    ) -> torch.Tensor:  # noqa: F821
         r"""
         Decodes a latent tensor `z` by splitting it into spatial tiles only. Temporal is handled by `slicing_decode`.
         """
@@ -1367,7 +1547,9 @@ class VideoAutoencoderKL(diffusers.AutoencoderKL):
         result = None
         count = None
 
-        num_tiles = ((max(H - latent_overlap_h, 1) + stride_h - 1) // stride_h) * ((max(W - latent_overlap_w, 1) + stride_w - 1) // stride_w)
+        num_tiles = ((max(H - latent_overlap_h, 1) + stride_h - 1) // stride_h) * (
+            (max(W - latent_overlap_w, 1) + stride_w - 1) // stride_w
+        )
 
         # Pre-compute common ramp values (small memory, big time save)
         ramp_cache = {}
@@ -1385,7 +1567,9 @@ class VideoAutoencoderKL(diffusers.AutoencoderKL):
                 x_lat_end = min(x_lat + latent_tile_w, W)
 
                 # Skip if fully within overlap of previous tiles
-                if (y_lat > 0 and (y_lat_end - y_lat) <= latent_overlap_h) or (x_lat > 0 and (x_lat_end - x_lat) <= latent_overlap_w):
+                if (y_lat > 0 and (y_lat_end - y_lat) <= latent_overlap_h) or (
+                    x_lat > 0 and (x_lat_end - x_lat) <= latent_overlap_w
+                ):
                     continue
 
                 tile_id += 1
@@ -1405,8 +1589,16 @@ class VideoAutoencoderKL(diffusers.AutoencoderKL):
                     if device is None or device == decoded_tile.device:
                         device = decoded_tile.device
 
-                    result = torch.zeros((b_out, c_out, out_f_tile, output_h, output_w), device=device, dtype=decoded_tile.dtype)
-                    count = torch.zeros((1, 1, 1, output_h, output_w), device=device, dtype=decoded_tile.dtype)
+                    result = torch.zeros(
+                        (b_out, c_out, out_f_tile, output_h, output_w),
+                        device=device,
+                        dtype=decoded_tile.dtype,
+                    )
+                    count = torch.zeros(
+                        (1, 1, 1, output_h, output_w),
+                        device=device,
+                        dtype=decoded_tile.dtype,
+                    )
 
                 # Corresponding output-space placement
                 y_out, y_out_end = y_lat * scale_factor, y_lat_end * scale_factor
@@ -1419,8 +1611,12 @@ class VideoAutoencoderKL(diffusers.AutoencoderKL):
                 ov_h_out = max(0, min(overlap_h, h_out - 1))
                 ov_w_out = max(0, min(overlap_w, w_out - 1))
 
-                weight_h = torch.ones((h_out,), device=decoded_tile.device, dtype=decoded_tile.dtype)
-                weight_w = torch.ones((w_out,), device=decoded_tile.device, dtype=decoded_tile.dtype)
+                weight_h = torch.ones(
+                    (h_out,), device=decoded_tile.device, dtype=decoded_tile.dtype
+                )
+                weight_w = torch.ones(
+                    (w_out,), device=decoded_tile.device, dtype=decoded_tile.dtype
+                )
 
                 # Apply fades only on interior edges using cached ramps (avoid fading on outer image borders)
                 if ov_h_out > 0:
@@ -1445,8 +1641,12 @@ class VideoAutoencoderKL(diffusers.AutoencoderKL):
                     weight_h_5d = weight_h_5d.to(result.device)
                     weight_w_5d = weight_w_5d.to(result.device)
 
-                result[:, :, : decoded_tile.shape[2], y_out:y_out_end, x_out:x_out_end] += decoded_tile
-                count[:, :, :, y_out:y_out_end, x_out:x_out_end].addcmul_(weight_h_5d, weight_w_5d)
+                result[
+                    :, :, : decoded_tile.shape[2], y_out:y_out_end, x_out:x_out_end
+                ] += decoded_tile
+                count[:, :, :, y_out:y_out_end, x_out:x_out_end].addcmul_(
+                    weight_h_5d, weight_w_5d
+                )
 
         # Move result back to inference device if needed and normalize
         if result.device != z.device:
@@ -1459,7 +1659,12 @@ class VideoAutoencoderKL(diffusers.AutoencoderKL):
 
         return result
 
-    def forward(self, x: torch.FloatTensor, mode: Literal["encode", "decode", "all"] = "all", **kwargs):
+    def forward(
+        self,
+        x: torch.FloatTensor,
+        mode: Literal["encode", "decode", "all"] = "all",
+        **kwargs,
+    ):
         # x: [b c t h w]
         if mode == "encode":
             h = self.encode(x)
@@ -1477,7 +1682,9 @@ class VideoAutoencoderKL(diffusers.AutoencoderKL):
         # causing incompatibility with old checkpoints.
         # They provided a method for conversion.
         # We call conversion before loading state_dict.
-        convert_deprecated_attention_blocks = getattr(self, "_convert_deprecated_attention_blocks", None)
+        convert_deprecated_attention_blocks = getattr(
+            self, "_convert_deprecated_attention_blocks", None
+        )
         if callable(convert_deprecated_attention_blocks):
             convert_deprecated_attention_blocks(state_dict)
         return super().load_state_dict(state_dict, strict)
@@ -1507,18 +1714,52 @@ class VideoAutoencoderKLWrapper(VideoAutoencoderKL):
         x = self.decode(z).sample
         return CausalAutoencoderOutput(x, z, p)
 
-    def encode(self, x: torch.FloatTensor, return_dict: bool = True, tiled: bool = False, tile_size: Tuple[int, int] = (512, 512), tile_overlap: Tuple[int, int] = (64, 64)) -> CausalEncoderOutput:
+    def encode(
+        self,
+        x: torch.FloatTensor,
+        return_dict: bool = True,
+        tiled: bool = False,
+        tile_size: Tuple[int, int] = (512, 512),
+        tile_overlap: Tuple[int, int] = (64, 64),
+    ) -> CausalEncoderOutput:
         if x.ndim == 4:
             x = x.unsqueeze(2)
-        p = super().encode(x, return_dict=return_dict, tiled=tiled, tile_size=tile_size, tile_overlap=tile_overlap).latent_dist
+        p = (
+            super()
+            .encode(
+                x,
+                return_dict=return_dict,
+                tiled=tiled,
+                tile_size=tile_size,
+                tile_overlap=tile_overlap,
+            )
+            .latent_dist
+        )
         # Use deterministic mode for tiled encoding to avoid artifacts
         z = p.mode().squeeze(2)
         return CausalEncoderOutput(z, p)
 
-    def decode(self, z: torch.Tensor, return_dict: bool = True, tiled: bool = False, tile_size: Tuple[int, int] = (512, 512), tile_overlap: Tuple[int, int] = (64, 64)) -> CausalDecoderOutput:
+    def decode(
+        self,
+        z: torch.Tensor,
+        return_dict: bool = True,
+        tiled: bool = False,
+        tile_size: Tuple[int, int] = (512, 512),
+        tile_overlap: Tuple[int, int] = (64, 64),
+    ) -> CausalDecoderOutput:
         if z.ndim == 4:
             z = z.unsqueeze(2)
-        x = super().decode(z, return_dict=return_dict, tiled=tiled, tile_size=tile_size, tile_overlap=tile_overlap).sample.squeeze(2)
+        x = (
+            super()
+            .decode(
+                z,
+                return_dict=return_dict,
+                tiled=tiled,
+                tile_size=tile_size,
+                tile_overlap=tile_overlap,
+            )
+            .sample.squeeze(2)
+        )
         return CausalDecoderOutput(x)
 
     def preprocess(self, x: torch.Tensor):
@@ -1536,7 +1777,9 @@ class VideoAutoencoderKLWrapper(VideoAutoencoderKL):
         split_size: Optional[int],
         memory_device: _memory_device_t,
     ):
-        assert split_size is None or memory_device is not None, "if split_size is set, memory_device must not be None."
+        assert (
+            split_size is None or memory_device is not None
+        ), "if split_size is set, memory_device must not be None."
         if split_size is not None:
             self.enable_slicing()
             self.slicing_sample_min_size = split_size
@@ -1547,11 +1790,15 @@ class VideoAutoencoderKLWrapper(VideoAutoencoderKL):
             if isinstance(module, InflatedCausalConv3d):
                 module.set_memory_device(memory_device)
 
-    def set_memory_limit(self, conv_max_mem: Optional[float], norm_max_mem: Optional[float]):
+    def set_memory_limit(
+        self, conv_max_mem: Optional[float], norm_max_mem: Optional[float]
+    ):
         set_norm_limit(norm_max_mem)
         for m in self.modules():
             if isinstance(m, InflatedCausalConv3d):
-                m.set_memory_limit(conv_max_mem if conv_max_mem is not None else float("inf"))
+                m.set_memory_limit(
+                    conv_max_mem if conv_max_mem is not None else float("inf")
+                )
 
     @torch.no_grad()
     def vae_encode(self, samples: List[Tensor]) -> List[Tensor]:
@@ -1576,7 +1823,11 @@ class VideoAutoencoderKLWrapper(VideoAutoencoderKL):
                     latent = self.encode(sample, tiled=self.use_tiling).latent
                 else:
                     # Deterministic vae encode, only used for i2v inference (optionally)
-                    latent = self.encode(sample, tiled=self.use_tiling).posterior.mode().squeeze(2)
+                    latent = (
+                        self.encode(sample, tiled=self.use_tiling)
+                        .posterior.mode()
+                        .squeeze(2)
+                    )
                 latent = latent.unsqueeze(2) if latent.ndim == 4 else latent
                 latent = rearrange(latent, "b c ... -> b ... c")
                 latent = (latent - shift) * scale

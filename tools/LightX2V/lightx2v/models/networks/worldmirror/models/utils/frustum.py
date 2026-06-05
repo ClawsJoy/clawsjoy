@@ -1,6 +1,7 @@
-from lib.smart_config import smart_config
 import einops
 import torch
+
+from lib.smart_config import smart_config
 
 
 # Calculate the loss mask for the target views in the batch
@@ -17,12 +18,21 @@ def calculate_unprojected_mask(views, context_nums):
     target_intrinsics = target_intrinsics[..., :3, :3]
     context_intrinsics = context_intrinsics[..., :3, :3]
 
-    mask = calculate_in_frustum_mask(target_depth, target_intrinsics, target_c2w, context_depth, context_intrinsics, context_c2w)
+    mask = calculate_in_frustum_mask(
+        target_depth,
+        target_intrinsics,
+        target_c2w,
+        context_depth,
+        context_intrinsics,
+        context_c2w,
+    )
     return mask
 
 
 @torch.no_grad()
-def calculate_in_frustum_mask(depth_1, intrinsics_1, c2w_1, depth_2, intrinsics_2, c2w_2):
+def calculate_in_frustum_mask(
+    depth_1, intrinsics_1, c2w_1, depth_2, intrinsics_2, c2w_2
+):
     """
     A function that takes in the depth, intrinsics and c2w matrices of two sets
     of views, and then works out which of the pixels in the first set of views
@@ -44,11 +54,17 @@ def calculate_in_frustum_mask(depth_1, intrinsics_1, c2w_1, depth_2, intrinsics_
     _, v2, _, _ = depth_2.shape
 
     # Unproject the depth to get the 3D points in world space
-    points_3d = unproject_depth(depth_1[..., None], intrinsics_1, c2w_1)  # (b, v1, h, w, 3)
+    points_3d = unproject_depth(
+        depth_1[..., None], intrinsics_1, c2w_1
+    )  # (b, v1, h, w, 3)
 
     # Project the 3D points into the pixel space of all the second views simultaneously
-    camera_points = world_space_to_camera_space(points_3d, c2w_2)  # (b, v1, v2, h, w, 3)
-    points_2d = camera_space_to_pixel_space(camera_points, intrinsics_2)  # (b, v1, v2, h, w, 2)
+    camera_points = world_space_to_camera_space(
+        points_3d, c2w_2
+    )  # (b, v1, v2, h, w, 3)
+    points_2d = camera_space_to_pixel_space(
+        camera_points, intrinsics_2
+    )  # (b, v1, v2, h, w, 2)
 
     # Calculate the depth of each point
     rendered_depth = camera_points[..., 2]  # (b, v1, v2, h, w)
@@ -56,7 +72,12 @@ def calculate_in_frustum_mask(depth_1, intrinsics_1, c2w_1, depth_2, intrinsics_
     # We use three conditions to determine if a point should be masked
 
     # Condition 1: Check if the points are in the frustum of any of the v2 views
-    in_frustum_mask = (points_2d[..., 0] > 0) & (points_2d[..., 0] < w) & (points_2d[..., 1] > 0) & (points_2d[..., 1] < h)  # (b, v1, v2, h, w)
+    in_frustum_mask = (
+        (points_2d[..., 0] > 0)
+        & (points_2d[..., 0] < w)
+        & (points_2d[..., 1] > 0)
+        & (points_2d[..., 1] < h)
+    )  # (b, v1, v2, h, w)
     in_frustum_mask = in_frustum_mask.any(dim=-3)  # (b, v1, h, w)
 
     # Condition 2: Check if the points have non-zero (i.e. valid) depth in the input view
@@ -74,8 +95,12 @@ def calculate_in_frustum_mask(depth_1, intrinsics_1, c2w_1, depth_2, intrinsics_
             for j in range(v2):
                 depth = einops.rearrange(depth_2[b, j], "h w -> 1 1 h w")
                 coords = einops.rearrange(points_2d[b, i, j], "h w c -> 1 h w c")
-                sampled_depths = torch.nn.functional.grid_sample(depth, coords, align_corners=False)[0, 0]
-                matching_depth[b, i, j] = torch.isclose(rendered_depth[b, i, j], sampled_depths, atol=1e-1)
+                sampled_depths = torch.nn.functional.grid_sample(
+                    depth, coords, align_corners=False
+                )[0, 0]
+                matching_depth[b, i, j] = torch.isclose(
+                    rendered_depth[b, i, j], sampled_depths, atol=1e-1
+                )
 
     matching_depth = matching_depth.any(dim=-3)  # (..., v1, h, w)
 
@@ -107,7 +132,9 @@ def pixel_space_to_camera_space(pixel_space_points, depth, intrinsics):
         torch.Tensor: Camera space points with shape (b, v, h, w, 3).
     """
     pixel_space_points = homogenize_points(pixel_space_points)
-    camera_space_points = torch.einsum("b v i j , h w j -> b v h w i", intrinsics.inverse(), pixel_space_points)
+    camera_space_points = torch.einsum(
+        "b v i j , h w j -> b v h w i", intrinsics.inverse(), pixel_space_points
+    )
     camera_space_points = camera_space_points * depth
     return camera_space_points
 
@@ -124,7 +151,9 @@ def camera_space_to_world_space(camera_space_points, c2w):
         torch.Tensor: World space points with shape (b, v, h, w, 3).
     """
     camera_space_points = homogenize_points(camera_space_points)
-    world_space_points = torch.einsum("b v i j , b v h w j -> b v h w i", c2w, camera_space_points)
+    world_space_points = torch.einsum(
+        "b v i j , b v h w j -> b v h w i", c2w, camera_space_points
+    )
     return world_space_points[..., :3]
 
 
@@ -140,7 +169,9 @@ def camera_space_to_pixel_space(camera_space_points, intrinsics):
         torch.Tensor: World space points with shape (b, v1, v2, h, w, 2).
     """
     camera_space_points = normalize_homogenous_points(camera_space_points)
-    pixel_space_points = torch.einsum("b u i j , b v u h w j -> b v u h w i", intrinsics, camera_space_points)
+    pixel_space_points = torch.einsum(
+        "b u i j , b v u h w j -> b v u h w i", intrinsics, camera_space_points
+    )
     return pixel_space_points[..., :2]
 
 
@@ -156,7 +187,9 @@ def world_space_to_camera_space(world_space_points, c2w):
         torch.Tensor: Camera space points with shape (b, v1, v2, h, w, 3).
     """
     world_space_points = homogenize_points(world_space_points)
-    camera_space_points = torch.einsum("b u i j , b v h w j -> b v u h w i", c2w.inverse(), world_space_points)
+    camera_space_points = torch.einsum(
+        "b u i j , b v h w j -> b v u h w i", c2w.inverse(), world_space_points
+    )
     return camera_space_points[..., :3]
 
 
@@ -175,11 +208,17 @@ def unproject_depth(depth, intrinsics, c2w):
 
     # Compute indices of pixels
     h, w = depth.shape[-3], depth.shape[-2]
-    x_grid, y_grid = torch.meshgrid(torch.arange(w, device=depth.device, dtype=torch.float32), torch.arange(h, device=depth.device, dtype=torch.float32), indexing="xy")  # (h, w), (h, w)
+    x_grid, y_grid = torch.meshgrid(
+        torch.arange(w, device=depth.device, dtype=torch.float32),
+        torch.arange(h, device=depth.device, dtype=torch.float32),
+        indexing="xy",
+    )  # (h, w), (h, w)
 
     # Compute coordinates of pixels in camera space
     pixel_space_points = torch.stack((x_grid, y_grid), dim=-1)  # (..., h, w, 2)
-    camera_points = pixel_space_to_camera_space(pixel_space_points, depth, intrinsics)  # (..., h, w, 3)
+    camera_points = pixel_space_to_camera_space(
+        pixel_space_points, depth, intrinsics
+    )  # (..., h, w, 3)
 
     # Convert points to world space
     world_points = camera_space_to_world_space(camera_points, c2w)  # (..., h, w, 3)

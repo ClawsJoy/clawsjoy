@@ -3,17 +3,20 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 from lib.smart_config import smart_config
+
 """subtract技能"""
+
+
 class SubtractSkill:
     name = "subtract"
     description = "subtract运算"
     version = "1.0.0"
     category = "math"
-    
+
     def execute(self, params):
         a = params.get("a", 0)
         b = params.get("b", 0)
@@ -24,5 +27,6 @@ class SubtractSkill:
         else:
             result = a - b
         return {"success": True, "result": result}
+
 
 skill = SubtractSkill()

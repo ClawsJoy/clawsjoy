@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 from lightx2v.common.modules.weight_module import WeightModule, WeightModuleList
 from lightx2v.utils.registry_factory import (
     ATTN_WEIGHT_REGISTER,
@@ -7,6 +6,8 @@ from lightx2v.utils.registry_factory import (
     RMS_WEIGHT_REGISTER,
     TENSOR_REGISTER,
 )
+
+from lib.smart_config import smart_config
 
 
 class WanTransformerWeights(WeightModule):
@@ -51,7 +52,9 @@ class WanTransformerWeights(WeightModule):
                 lora_prefix="diffusion_model.head",
             ),
         )
-        self.register_parameter("head_modulation", TENSOR_REGISTER["Default"]("head.modulation"))
+        self.register_parameter(
+            "head_modulation", TENSOR_REGISTER["Default"]("head.modulation")
+        )
 
     def register_offload_buffers(self, config, lazy_load_path, lora_path):
         if config["cpu_offload"]:
@@ -73,7 +76,9 @@ class WanTransformerWeights(WeightModule):
                         for i in range(self.offload_blocks_num)
                     ]
                 )
-                self.add_module("offload_block_cuda_buffers", self.offload_block_cuda_buffers)
+                self.add_module(
+                    "offload_block_cuda_buffers", self.offload_block_cuda_buffers
+                )
                 self.offload_phase_cuda_buffers = None
 
                 if self.lazy_load:
@@ -94,7 +99,9 @@ class WanTransformerWeights(WeightModule):
                             for i in range(self.offload_blocks_num)
                         ]
                     )
-                    self.add_module("offload_block_cpu_buffers", self.offload_block_cpu_buffers)
+                    self.add_module(
+                        "offload_block_cpu_buffers", self.offload_block_cpu_buffers
+                    )
                     self.offload_phase_cpu_buffers = None
 
             elif config["offload_granularity"] == "phase":
@@ -109,7 +116,9 @@ class WanTransformerWeights(WeightModule):
                     lazy_load=self.lazy_load,
                     lazy_load_path=lazy_load_path,
                 ).compute_phases
-                self.add_module("offload_phase_cuda_buffers", self.offload_phase_cuda_buffers)
+                self.add_module(
+                    "offload_phase_cuda_buffers", self.offload_phase_cuda_buffers
+                )
                 self.offload_block_cuda_buffers = None
                 if self.lazy_load:
                     self.offload_phase_cpu_buffers = WeightModuleList(
@@ -129,7 +138,9 @@ class WanTransformerWeights(WeightModule):
                             for i in range(2)
                         ]
                     )
-                    self.add_module("offload_phase_cpu_buffers", self.offload_phase_cpu_buffers)
+                    self.add_module(
+                        "offload_phase_cpu_buffers", self.offload_phase_cpu_buffers
+                    )
                     self.offload_block_cpu_buffers = None
 
     def non_block_weights_to_cuda(self):
@@ -350,19 +361,28 @@ class WanSelfAttention(WeightModule):
             "nbhd_attn",
             "nbhd_attn_flashinfer",
         ]:
-            attnmap_frame_num = ((self.config["target_video_length"] - 1) // self.config["vae_stride"][0] + 1) // self.config["patch_size"][0]
+            attnmap_frame_num = (
+                (self.config["target_video_length"] - 1) // self.config["vae_stride"][0]
+                + 1
+            ) // self.config["patch_size"][0]
             attention_weights_cls.attnmap_frame_num = attnmap_frame_num
         # nbhd_attn setting
         if self.config["self_attn_1_type"] in ["nbhd_attn", "nbhd_attn_flashinfer"]:
             if "nbhd_attn_setting" in self.config:
                 if "coefficient" in self.config["nbhd_attn_setting"]:
-                    attention_weights_cls.coefficient = self.config["nbhd_attn_setting"]["coefficient"]
+                    attention_weights_cls.coefficient = self.config[
+                        "nbhd_attn_setting"
+                    ]["coefficient"]
                 if "min_width" in self.config["nbhd_attn_setting"]:
-                    attention_weights_cls.min_width = self.config["nbhd_attn_setting"]["min_width"]
+                    attention_weights_cls.min_width = self.config["nbhd_attn_setting"][
+                        "min_width"
+                    ]
 
         # draft_attn setting
         if self.config["self_attn_1_type"] == "draft_attn":
-            attention_weights_cls.sparsity_ratio = self.config.get("draft_attn_sparsity_ratio", 0.75)
+            attention_weights_cls.sparsity_ratio = self.config.get(
+                "draft_attn_sparsity_ratio", 0.75
+            )
 
         # sla_attn setting
         if self.config["self_attn_1_type"] == "sla_attn":
@@ -384,7 +404,9 @@ class WanSelfAttention(WeightModule):
         if self.config["self_attn_1_type"] == "spas_sage_attn2":
             spas_sage2_config = self.config.get("spas_sage_attn2_setting", {})
             if "sparsity_ratio" in spas_sage2_config:
-                attention_weights_cls.sparsity_ratio = spas_sage2_config["sparsity_ratio"]
+                attention_weights_cls.sparsity_ratio = spas_sage2_config[
+                    "sparsity_ratio"
+                ]
             if "sparse_mode" in spas_sage2_config:
                 attention_weights_cls.sparse_mode = spas_sage2_config["sparse_mode"]
 
@@ -392,9 +414,13 @@ class WanSelfAttention(WeightModule):
         if self.config["self_attn_1_type"] == "spas_sage_attn3":
             spas_sage3_config = self.config.get("spas_sage_attn3_setting", {})
             if "sparsity_ratio" in spas_sage3_config:
-                attention_weights_cls.sparsity_ratio = spas_sage3_config["sparsity_ratio"]
+                attention_weights_cls.sparsity_ratio = spas_sage3_config[
+                    "sparsity_ratio"
+                ]
             if "per_block_mean" in spas_sage3_config:
-                attention_weights_cls.per_block_mean = spas_sage3_config["per_block_mean"]
+                attention_weights_cls.per_block_mean = spas_sage3_config[
+                    "per_block_mean"
+                ]
             if "sparse_mode" in spas_sage3_config:
                 attention_weights_cls.sparse_mode = spas_sage3_config["sparse_mode"]
 
@@ -408,24 +434,39 @@ class WanSelfAttention(WeightModule):
 
         # general_sparse_attn setting
         if self.config["self_attn_1_type"] == "general_sparse_attn":
-            attnmap_frame_num = ((self.config["target_video_length"] - 1) // self.config["vae_stride"][0] + 1) // self.config["patch_size"][0]
+            attnmap_frame_num = (
+                (self.config["target_video_length"] - 1) // self.config["vae_stride"][0]
+                + 1
+            ) // self.config["patch_size"][0]
             attention_weights_cls.attnmap_frame_num = attnmap_frame_num
-            general_sparse_attn_setting = self.config.get("general_sparse_attn_setting", {})
+            general_sparse_attn_setting = self.config.get(
+                "general_sparse_attn_setting", {}
+            )
             if "sparse_mask_generator" in general_sparse_attn_setting:
-                attention_weights_cls.sparse_mask_generator = general_sparse_attn_setting["sparse_mask_generator"]
+                attention_weights_cls.sparse_mask_generator = (
+                    general_sparse_attn_setting["sparse_mask_generator"]
+                )
             if "sparse_operator" in general_sparse_attn_setting:
-                attention_weights_cls.sparse_operator = general_sparse_attn_setting["sparse_operator"]
+                attention_weights_cls.sparse_operator = general_sparse_attn_setting[
+                    "sparse_operator"
+                ]
             if "sparse_setting" in general_sparse_attn_setting:
-                attention_weights_cls.sparse_setting = general_sparse_attn_setting["sparse_setting"]
+                attention_weights_cls.sparse_setting = general_sparse_attn_setting[
+                    "sparse_setting"
+                ]
             if "operator_setting" in general_sparse_attn_setting:
-                attention_weights_cls.operator_setting = general_sparse_attn_setting["operator_setting"]
+                attention_weights_cls.operator_setting = general_sparse_attn_setting[
+                    "operator_setting"
+                ]
 
         self.add_module("self_attn_1", attention_weights_cls())
 
         if self.config["seq_parallel"]:
             self.add_module(
                 "self_attn_1_parallel",
-                ATTN_WEIGHT_REGISTER[self.config["parallel"].get("seq_p_attn_type", "ulysses")](),
+                ATTN_WEIGHT_REGISTER[
+                    self.config["parallel"].get("seq_p_attn_type", "ulysses")
+                ](),
             )
 
         if self.quant_method in ["advanced_ptq"]:
@@ -563,9 +604,15 @@ class WanCrossAttention(WeightModule):
                 lora_path=lora_path,
             ),
         )
-        self.add_module("cross_attn_1", ATTN_WEIGHT_REGISTER[self.config["cross_attn_1_type"]]())
+        self.add_module(
+            "cross_attn_1", ATTN_WEIGHT_REGISTER[self.config["cross_attn_1_type"]]()
+        )
 
-        if self.config["task"] in ["i2v", "flf2v", "animate", "s2v", "rs2v"] and self.config.get("use_image_encoder", True) and self.config["model_cls"] != "wan2.1_sf_mtxg2":
+        if (
+            self.config["task"] in ["i2v", "flf2v", "animate", "s2v", "rs2v"]
+            and self.config.get("use_image_encoder", True)
+            and self.config["model_cls"] != "wan2.1_sf_mtxg2"
+        ):
             self.add_module(
                 "cross_attn_k_img",
                 MM_WEIGHT_REGISTER[self.mm_type](
@@ -604,7 +651,9 @@ class WanCrossAttention(WeightModule):
                     lora_path=lora_path,
                 ),
             )
-            self.add_module("cross_attn_2", ATTN_WEIGHT_REGISTER[self.config["cross_attn_2_type"]]())
+            self.add_module(
+                "cross_attn_2", ATTN_WEIGHT_REGISTER[self.config["cross_attn_2_type"]]()
+            )
 
 
 class WanFFN(WeightModule):

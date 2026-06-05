@@ -3,12 +3,13 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
-from typing import Dict, Optional
-from core.agents.base.smart_agent import SmartAgent
 import random
+from typing import Dict, Optional
+
+from core.agents.base.smart_agent import SmartAgent
 
 
 class CopywriterAgent(SmartAgent):
@@ -38,18 +39,14 @@ class CopywriterAgent(SmartAgent):
 
         self.record_interaction(user_input, response)
 
-        return {
-            "success": True,
-            "response": response,
-            "user_id": self.user_id
-        }
+        return {"success": True, "response": response, "user_id": self.user_id}
 
     def _generate_slogan(self, user_input: str) -> str:
         """生成广告语"""
         templates = [
             "智能{product}，开启{benefit}新体验",
             "{product}，{feature}之选",
-            "让{product}，成就{value}"
+            "让{product}，成就{value}",
         ]
 
         product = "产品"
@@ -61,13 +58,15 @@ class CopywriterAgent(SmartAgent):
         value = "不凡"
 
         template = random.choice(templates)
-        return template.format(product=product, benefit=benefit, feature=feature, value=value)
+        return template.format(
+            product=product, benefit=benefit, feature=feature, value=value
+        )
 
     def _generate_product_desc(self, user_input: str) -> str:
         """生成产品描述"""
         templates = [
             "全新{product}，采用{tech}技术，带来{benefit}的体验。",
-            "{product}，{feature}升级，{benefit}触手可及。"
+            "{product}，{feature}升级，{benefit}触手可及。",
         ]
 
         product = "产品"
@@ -75,13 +74,15 @@ class CopywriterAgent(SmartAgent):
             product = user_input.split("产品是")[-1].strip()[:20]
 
         template = random.choice(templates)
-        return template.format(product=product, tech="AI", feature="智能", benefit="卓越")
+        return template.format(
+            product=product, tech="AI", feature="智能", benefit="卓越"
+        )
 
     def _generate_social_post(self, user_input: str) -> str:
         """生成社交媒体文案"""
         templates = [
             "🔥 新品来袭！{product}，{feature}体验\n#好物分享",
-            "💡 推荐一款好物：{product}\n{benefit}，值得拥有！"
+            "💡 推荐一款好物：{product}\n{benefit}，值得拥有！",
         ]
 
         product = "好物"

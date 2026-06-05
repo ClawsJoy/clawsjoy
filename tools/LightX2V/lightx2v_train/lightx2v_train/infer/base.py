@@ -1,9 +1,9 @@
-from lib.smart_config import smart_config
 import os
 
 import torch
-
 from lightx2v_train.schedulers.flow_matching import RectifiedFlowMatchingScheduler
+
+from lib.smart_config import smart_config
 
 
 class BaseInferencer:

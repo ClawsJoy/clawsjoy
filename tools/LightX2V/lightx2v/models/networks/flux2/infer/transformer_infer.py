@@ -1,9 +1,9 @@
-from lib.smart_config import smart_config
 import torch
 import torch.distributed as dist
 import torch.nn.functional as F
-
 from lightx2v.common.transformer_infer.transformer_infer import BaseTransformerInfer
+
+from lib.smart_config import smart_config
 
 from .utils import apply_rope_with_flashinfer, apply_rope_with_torch
 
@@ -14,13 +14,19 @@ class Flux2TransformerInfer(BaseTransformerInfer):
         self.infer_conditional = True
         self.clean_cuda_cache = self.config.get("clean_cuda_cache", False)
 
-        self.inner_dim = config.get("num_attention_heads", 24) * config.get("attention_head_dim", 64)
+        self.inner_dim = config.get("num_attention_heads", 24) * config.get(
+            "attention_head_dim", 64
+        )
 
         if self.config.get("seq_parallel", False):
-            self.seq_p_group = self.config.get("device_mesh").get_group(mesh_dim="seq_p")
+            self.seq_p_group = self.config.get("device_mesh").get_group(
+                mesh_dim="seq_p"
+            )
             self.seq_p_fp8_comm = self.config["parallel"].get("seq_p_fp8_comm", False)
             self.seq_p_fp4_comm = self.config["parallel"].get("seq_p_fp4_comm", False)
-            self.enable_head_parallel = self.config["parallel"].get("seq_p_head_parallel", False)
+            self.enable_head_parallel = self.config["parallel"].get(
+                "seq_p_head_parallel", False
+            )
         else:
             self.seq_p_group = None
             self.seq_p_fp8_comm = False
@@ -61,13 +67,25 @@ class Flux2TransformerInfer(BaseTransformerInfer):
         heads = self.config["num_attention_heads"]
         head_dim = self.config["attention_head_dim"]
 
-        (shift_msa, scale_msa, gate_msa), (shift_mlp, scale_mlp, gate_mlp) = self._split_double_modulation(temb_mod_img)
-        (c_shift_msa, c_scale_msa, c_gate_msa), (c_shift_mlp, c_scale_mlp, c_gate_mlp) = self._split_double_modulation(temb_mod_txt)
+        (shift_msa, scale_msa, gate_msa), (shift_mlp, scale_mlp, gate_mlp) = (
+            self._split_double_modulation(temb_mod_img)
+        )
+        (c_shift_msa, c_scale_msa, c_gate_msa), (
+            c_shift_mlp,
+            c_scale_mlp,
+            c_gate_mlp,
+        ) = self._split_double_modulation(temb_mod_txt)
         norm_hidden_states = F.layer_norm(hidden_states, (hidden_states.shape[-1],))
-        norm_hidden_states = (norm_hidden_states * (1 + scale_msa) + shift_msa).squeeze(0)
+        norm_hidden_states = (norm_hidden_states * (1 + scale_msa) + shift_msa).squeeze(
+            0
+        )
 
-        norm_encoder_hidden_states = F.layer_norm(encoder_hidden_states, (encoder_hidden_states.shape[-1],))
-        norm_encoder_hidden_states = (norm_encoder_hidden_states * (1 + c_scale_msa) + c_shift_msa).squeeze(0)
+        norm_encoder_hidden_states = F.layer_norm(
+            encoder_hidden_states, (encoder_hidden_states.shape[-1],)
+        )
+        norm_encoder_hidden_states = (
+            norm_encoder_hidden_states * (1 + c_scale_msa) + c_shift_msa
+        ).squeeze(0)
 
         img_query = block_weights.to_q.apply(norm_hidden_states)
         img_key = block_weights.to_k.apply(norm_hidden_states)
@@ -138,16 +156,24 @@ class Flux2TransformerInfer(BaseTransformerInfer):
         hidden_states = hidden_states + gate_msa * img_attn_output
         encoder_hidden_states = encoder_hidden_states + c_gate_msa * txt_attn_output
         norm_hidden_states2 = F.layer_norm(hidden_states, (hidden_states.shape[-1],))
-        norm_hidden_states2 = (norm_hidden_states2 * (1 + scale_mlp) + shift_mlp).squeeze(0)
+        norm_hidden_states2 = (
+            norm_hidden_states2 * (1 + scale_mlp) + shift_mlp
+        ).squeeze(0)
         ff_output = block_weights.ff_net_0.apply(norm_hidden_states2)
         ff_1, ff_2 = ff_output.chunk(2, dim=-1)
         ff_output = F.silu(ff_1) * ff_2
         ff_output = block_weights.ff_net_2.apply(ff_output)
         hidden_states = hidden_states + gate_mlp * ff_output
 
-        norm_encoder_hidden_states2 = F.layer_norm(encoder_hidden_states, (encoder_hidden_states.shape[-1],))
-        norm_encoder_hidden_states2 = (norm_encoder_hidden_states2 * (1 + c_scale_mlp) + c_shift_mlp).squeeze(0)
-        context_ff_output = block_weights.ff_context_net_0.apply(norm_encoder_hidden_states2)
+        norm_encoder_hidden_states2 = F.layer_norm(
+            encoder_hidden_states, (encoder_hidden_states.shape[-1],)
+        )
+        norm_encoder_hidden_states2 = (
+            norm_encoder_hidden_states2 * (1 + c_scale_mlp) + c_shift_mlp
+        ).squeeze(0)
+        context_ff_output = block_weights.ff_context_net_0.apply(
+            norm_encoder_hidden_states2
+        )
         ctx_ff_1, ctx_ff_2 = context_ff_output.chunk(2, dim=-1)
         context_ff_output = F.silu(ctx_ff_1) * ctx_ff_2
         context_ff_output = block_weights.ff_context_net_2.apply(context_ff_output)
@@ -170,7 +196,9 @@ class Flux2TransformerInfer(BaseTransformerInfer):
         head_dim = self.config["attention_head_dim"]
 
         if encoder_hidden_states is not None:
-            raise ValueError("Encoder hidden states already cat in hidden states for single-stream blocks in Flux2, should be None here")
+            raise ValueError(
+                "Encoder hidden states already cat in hidden states for single-stream blocks in Flux2, should be None here"
+            )
 
         residual = hidden_states
 
@@ -181,7 +209,11 @@ class Flux2TransformerInfer(BaseTransformerInfer):
 
         hidden_states_proj = block_weights.to_qkv_mlp_proj.apply(norm_combined)
         inner_dim = heads * head_dim
-        qkv, mlp_hidden_states = torch.split(hidden_states_proj, [3 * inner_dim, hidden_states_proj.shape[-1] - 3 * inner_dim], dim=-1)
+        qkv, mlp_hidden_states = torch.split(
+            hidden_states_proj,
+            [3 * inner_dim, hidden_states_proj.shape[-1] - 3 * inner_dim],
+            dim=-1,
+        )
         query, key, value = qkv.chunk(3, dim=-1)
 
         query = query.unflatten(-1, (heads, head_dim))
@@ -282,9 +314,15 @@ class Flux2TransformerInfer(BaseTransformerInfer):
                 image_rotary_emb = torch.cat([txt_emb, img_emb], dim=0)
 
         timestep_act = F.silu(timestep)
-        double_stream_mod_img = block_weights.double_stream_modulation_img_linear.apply(timestep_act)
-        double_stream_mod_txt = block_weights.double_stream_modulation_txt_linear.apply(timestep_act)
-        single_stream_mod = block_weights.single_stream_modulation_linear.apply(timestep_act)
+        double_stream_mod_img = block_weights.double_stream_modulation_img_linear.apply(
+            timestep_act
+        )
+        double_stream_mod_txt = block_weights.double_stream_modulation_txt_linear.apply(
+            timestep_act
+        )
+        single_stream_mod = block_weights.single_stream_modulation_linear.apply(
+            timestep_act
+        )
 
         for block in block_weights.double_blocks:
             encoder_hidden_states, hidden_states = self.infer_double_stream_block(

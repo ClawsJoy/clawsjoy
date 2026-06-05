@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 try:
     import flash_attn
 except ModuleNotFoundError:
@@ -9,13 +10,14 @@ import torch.nn as nn
 import torch.nn.functional as F
 from diffusers.models.embeddings import TimestepEmbedding, Timesteps
 from einops import rearrange
-
 from lightx2v_platform.base.global_var import AI_DEVICE
 
 
 def linear_interpolation(features, output_len: int):
     features = features.transpose(1, 2)
-    output_features = F.interpolate(features, size=output_len, align_corners=False, mode="linear")
+    output_features = F.interpolate(
+        features, size=output_len, align_corners=False, mode="linear"
+    )
     return output_features.transpose(1, 2)
 
 
@@ -49,7 +51,9 @@ def get_qk_lens_audio_range(
     first_length = n_tokens_per_frame - idx0 % n_tokens_per_frame
     first_length = torch.minimum(first_length, n_query_tokens)
 
-    n_frames = torch.div(n_query_tokens - first_length, n_tokens_per_frame, rounding_mode="floor")
+    n_frames = torch.div(
+        n_query_tokens - first_length, n_tokens_per_frame, rounding_mode="floor"
+    )
 
     last_length = n_query_tokens - n_frames * n_tokens_per_frame - first_length
 
@@ -196,7 +200,13 @@ class AudioProjection(nn.Module):
         self.device = torch.device(AI_DEVICE)
         self.num_tokens = num_tokens
         if transformer_layers > 0:
-            decoder_layer = nn.TransformerDecoderLayer(d_model=audio_feature_dim, nhead=audio_feature_dim // 64, dim_feedforward=4 * audio_feature_dim, dropout=0.0, batch_first=True)
+            decoder_layer = nn.TransformerDecoderLayer(
+                d_model=audio_feature_dim,
+                nhead=audio_feature_dim // 64,
+                dim_feedforward=4 * audio_feature_dim,
+                dropout=0.0,
+                batch_first=True,
+            )
             self.transformer_decoder = nn.TransformerDecoder(
                 decoder_layer,
                 num_layers=transformer_layers,
@@ -213,22 +223,34 @@ class AudioProjection(nn.Module):
         if "npu" in str(self.device):
             dtype = audio_feature.dtype
             audio_feature = audio_feature.type(torch.float16)
-            audio_feature = F.pad(audio_feature, pad=(0, 0, self.left, self.right), mode="replicate")
+            audio_feature = F.pad(
+                audio_feature, pad=(0, 0, self.left, self.right), mode="replicate"
+            )
             audio_feature.type(dtype)
         else:
-            audio_feature = F.pad(audio_feature, pad=(0, 0, self.left, self.right), mode="replicate")
-        audio_feature = audio_feature.unfold(dimension=1, size=self.audio_frames, step=1)
+            audio_feature = F.pad(
+                audio_feature, pad=(0, 0, self.left, self.right), mode="replicate"
+            )
+        audio_feature = audio_feature.unfold(
+            dimension=1, size=self.audio_frames, step=1
+        )
         audio_feature = rearrange(audio_feature, "B T C W -> B T (W C)")
         audio_feature = self.mlp(audio_feature)  # (B, video_frame, C)
-        audio_feature = rearrange(audio_feature, "B T (N C) -> B T N C", N=self.num_tokens)  # (B, video_frame, num_tokens, C)
+        audio_feature = rearrange(
+            audio_feature, "B T (N C) -> B T N C", N=self.num_tokens
+        )  # (B, video_frame, num_tokens, C)
         return self.norm(audio_feature)
 
 
 class TimeEmbedding(nn.Module):
     def __init__(self, dim, time_freq_dim, time_proj_dim):
         super().__init__()
-        self.timesteps_proj = Timesteps(num_channels=time_freq_dim, flip_sin_to_cos=True, downscale_freq_shift=0)
-        self.time_embedder = TimestepEmbedding(in_channels=time_freq_dim, time_embed_dim=dim)
+        self.timesteps_proj = Timesteps(
+            num_channels=time_freq_dim, flip_sin_to_cos=True, downscale_freq_shift=0
+        )
+        self.time_embedder = TimestepEmbedding(
+            in_channels=time_freq_dim, time_embed_dim=dim
+        )
         self.act_fn = nn.SiLU()
         self.time_proj = nn.Linear(dim, time_proj_dim)
 
@@ -278,7 +300,9 @@ class AudioAdapter(nn.Module):
         )
         # self.num_tokens = num_tokens * 4
         self.num_tokens_x4 = num_tokens * 4
-        self.audio_pe = nn.Parameter(torch.randn(self.num_tokens_x4, mlp_dims[-1] // num_tokens) * 0.02)
+        self.audio_pe = nn.Parameter(
+            torch.randn(self.num_tokens_x4, mlp_dims[-1] // num_tokens) * 0.02
+        )
         # ca_num = math.ceil(base_num_layers / interval)
         self.base_num_layers = base_num_layers
         self.interval = interval
@@ -307,7 +331,9 @@ class AudioAdapter(nn.Module):
         # audio_feature (B, video_frame, num_tokens, C)
         audio_feature_0 = audio_feature[:, :1]
         audio_feature_0 = torch.repeat_interleave(audio_feature_0, repeats=4, dim=1)
-        audio_feature = torch.cat([audio_feature_0, audio_feature[:, 1:]], dim=1)  # (B, 4 * latent_frame, num_tokens, C)
+        audio_feature = torch.cat(
+            [audio_feature_0, audio_feature[:, 1:]], dim=1
+        )  # (B, 4 * latent_frame, num_tokens, C)
         audio_feature = rearrange(audio_feature, "B (T S) N C -> B T (S N) C", S=4)
         return audio_feature
 

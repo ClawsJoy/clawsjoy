@@ -1,7 +1,9 @@
-from lib.smart_config import smart_config
-import torch
-from lightx2v_kernel.gemm import scaled_nvfp4_quant, cutlass_scaled_nvfp4_mm
 import time
+
+import torch
+from lightx2v_kernel.gemm import cutlass_scaled_nvfp4_mm, scaled_nvfp4_quant
+
+from lib.smart_config import smart_config
 
 
 class MMWeightFp4:
@@ -15,17 +17,30 @@ class MMWeightFp4:
     @torch.no_grad()
     def apply(self, input_tensor):
         input_tensor_quant, input_tensor_scale = self.act_quant_func(input_tensor)
-        output_tensor = cutlass_scaled_nvfp4_mm(input_tensor_quant, self.weight, input_tensor_scale, self.weight_scale, alpha=self.alpha, bias=self.bias)
+        output_tensor = cutlass_scaled_nvfp4_mm(
+            input_tensor_quant,
+            self.weight,
+            input_tensor_scale,
+            self.weight_scale,
+            alpha=self.alpha,
+            bias=self.bias,
+        )
         return output_tensor
 
     @torch.no_grad()
     def load_fp4_weight(self, weight, bias):
-        self.weight_global_scale = (2688.0 / torch.max(torch.abs(weight))).to(torch.float32)
-        self.weight, self.weight_scale = scaled_nvfp4_quant(weight, self.weight_global_scale)
+        self.weight_global_scale = (2688.0 / torch.max(torch.abs(weight))).to(
+            torch.float32
+        )
+        self.weight, self.weight_scale = scaled_nvfp4_quant(
+            weight, self.weight_global_scale
+        )
         self.bias = bias
 
     def calibrate_x_absmax(self):
-        self.x_absmax = torch.tensor(5.0, dtype=torch.float32, device=self.weight.device)  # need to be calibrated
+        self.x_absmax = torch.tensor(
+            5.0, dtype=torch.float32, device=self.weight.device
+        )  # need to be calibrated
         self.input_global_scale = (2688.0 / self.x_absmax).to(torch.float32)
         self.alpha = 1.0 / (self.input_global_scale * self.weight_global_scale)
 
@@ -101,7 +116,9 @@ def test_accuracy(m, k, n):
         # print(f"output_tensor: {output_tensor}")
 
         # cosine
-        cos = torch.nn.functional.cosine_similarity(ref_output_tensor.flatten(), output_tensor.flatten(), dim=0)
+        cos = torch.nn.functional.cosine_similarity(
+            ref_output_tensor.flatten(), output_tensor.flatten(), dim=0
+        )
         print(f"cos : {cos}")
 
 

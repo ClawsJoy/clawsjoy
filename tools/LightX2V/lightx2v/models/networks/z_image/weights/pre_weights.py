@@ -1,10 +1,11 @@
-from lib.smart_config import smart_config
 from lightx2v.common.modules.weight_module import WeightModule
 from lightx2v.utils.registry_factory import (
     MM_WEIGHT_REGISTER,
     RMS_WEIGHT_REGISTER,
     TENSOR_REGISTER,
 )
+
+from lib.smart_config import smart_config
 
 
 class ZImagePreWeights(WeightModule):
@@ -13,16 +14,32 @@ class ZImagePreWeights(WeightModule):
         self.config = config
         self.add_module(
             "img_in",
-            MM_WEIGHT_REGISTER["Default"]("all_x_embedder.2-1.weight", "all_x_embedder.2-1.bias"),
+            MM_WEIGHT_REGISTER["Default"](
+                "all_x_embedder.2-1.weight", "all_x_embedder.2-1.bias"
+            ),
         )
         self.add_module(
             "txt_in",
-            MM_WEIGHT_REGISTER["Default"]("cap_embedder.1.weight", "cap_embedder.1.bias"),
+            MM_WEIGHT_REGISTER["Default"](
+                "cap_embedder.1.weight", "cap_embedder.1.bias"
+            ),
         )
 
-        self.add_module("txt_norm", RMS_WEIGHT_REGISTER["torch"]("cap_embedder.0.weight"))
-        self.add_module("time_text_embed_timestep_embedder_linear_1", MM_WEIGHT_REGISTER["Default"]("t_embedder.mlp.0.weight", "t_embedder.mlp.0.bias"))
-        self.add_module("time_text_embed_timestep_embedder_linear_2", MM_WEIGHT_REGISTER["Default"]("t_embedder.mlp.2.weight", "t_embedder.mlp.2.bias"))
+        self.add_module(
+            "txt_norm", RMS_WEIGHT_REGISTER["torch"]("cap_embedder.0.weight")
+        )
+        self.add_module(
+            "time_text_embed_timestep_embedder_linear_1",
+            MM_WEIGHT_REGISTER["Default"](
+                "t_embedder.mlp.0.weight", "t_embedder.mlp.0.bias"
+            ),
+        )
+        self.add_module(
+            "time_text_embed_timestep_embedder_linear_2",
+            MM_WEIGHT_REGISTER["Default"](
+                "t_embedder.mlp.2.weight", "t_embedder.mlp.2.bias"
+            ),
+        )
         self.add_module("x_pad_token", TENSOR_REGISTER["Default"]("x_pad_token"))
         self.add_module("cap_pad_token", TENSOR_REGISTER["Default"]("cap_pad_token"))
 

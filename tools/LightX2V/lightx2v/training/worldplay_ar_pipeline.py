@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 WorldPlay AR Training Pipeline for autoregressive video generation.
 
@@ -146,7 +147,9 @@ class WorldPlayARTrainingPipeline:
                 )
 
                 # Compute loss
-                target_flow = noise[:, start_frame:end_frame] - video[:, start_frame:end_frame]
+                target_flow = (
+                    noise[:, start_frame:end_frame] - video[:, start_frame:end_frame]
+                )
                 loss = self._compute_loss(pred_flow, target_flow, chunk_mask)
                 loss = loss / self.gradient_accumulation_steps
 
@@ -182,7 +185,9 @@ class WorldPlayARTrainingPipeline:
         timesteps = torch.rand(batch_size, device=self.device)
         return timesteps
 
-    def _add_noise(self, video: torch.Tensor, noise: torch.Tensor, timestep: torch.Tensor) -> torch.Tensor:
+    def _add_noise(
+        self, video: torch.Tensor, noise: torch.Tensor, timestep: torch.Tensor
+    ) -> torch.Tensor:
         """Add noise to video using flow matching schedule."""
         # Expand timestep for broadcasting
         t = timestep.view(-1, 1, 1, 1, 1)
@@ -246,14 +251,18 @@ class WorldPlayARTrainingPipeline:
 
         return output
 
-    def _compute_loss(self, pred_flow: torch.Tensor, target_flow: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
+    def _compute_loss(
+        self, pred_flow: torch.Tensor, target_flow: torch.Tensor, mask: torch.Tensor
+    ) -> torch.Tensor:
         """Compute flow matching loss with I2V masking."""
         # Expand mask for broadcasting
         mask = mask.view(mask.shape[0], mask.shape[1], 1, 1, 1)
 
         # MSE loss with masking
         loss = F.mse_loss(pred_flow * mask, target_flow * mask, reduction="sum")
-        loss = loss / (mask.sum() * pred_flow.shape[2] * pred_flow.shape[3] * pred_flow.shape[4])
+        loss = loss / (
+            mask.sum() * pred_flow.shape[2] * pred_flow.shape[3] * pred_flow.shape[4]
+        )
 
         return loss * self.flow_loss_weight
 

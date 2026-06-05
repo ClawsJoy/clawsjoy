@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
@@ -43,25 +44,65 @@ def _get_torch_dtype(dtype_str: str) -> torch.dtype:
 
 def parse_args():
     """Parse command line arguments"""
-    parser = argparse.ArgumentParser(description="Extract LoRA weights from the difference between source and target models", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description="Extract LoRA weights from the difference between source and target models",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
 
     # Source model parameters
-    parser.add_argument("--source-model", type=str, required=True, help="Path to source model")
-    parser.add_argument("--source-type", type=str, choices=["safetensors", "pytorch"], default="safetensors", help="Source model format type")
+    parser.add_argument(
+        "--source-model", type=str, required=True, help="Path to source model"
+    )
+    parser.add_argument(
+        "--source-type",
+        type=str,
+        choices=["safetensors", "pytorch"],
+        default="safetensors",
+        help="Source model format type",
+    )
 
     # Target model parameters
-    parser.add_argument("--target-model", type=str, required=True, help="Path to target model (fine-tuned model)")
-    parser.add_argument("--target-type", type=str, choices=["safetensors", "pytorch"], default="safetensors", help="Target model format type")
+    parser.add_argument(
+        "--target-model",
+        type=str,
+        required=True,
+        help="Path to target model (fine-tuned model)",
+    )
+    parser.add_argument(
+        "--target-type",
+        type=str,
+        choices=["safetensors", "pytorch"],
+        default="safetensors",
+        help="Target model format type",
+    )
 
     # Output parameters
-    parser.add_argument("--output", type=str, required=True, help="Path to output LoRA model")
-    parser.add_argument("--output-format", type=str, choices=["safetensors", "pytorch"], default="safetensors", help="Output LoRA model format")
+    parser.add_argument(
+        "--output", type=str, required=True, help="Path to output LoRA model"
+    )
+    parser.add_argument(
+        "--output-format",
+        type=str,
+        choices=["safetensors", "pytorch"],
+        default="safetensors",
+        help="Output LoRA model format",
+    )
 
     # LoRA related parameters
     parser.add_argument("--rank", type=int, default=32, help="LoRA rank value")
 
-    parser.add_argument("--output-dtype", type=str, choices=["float32", "fp32", "float16", "fp16", "bfloat16", "bf16"], default="bf16", help="Output weight data type")
-    parser.add_argument("--diff-only", action="store_true", help="Save all weights as direct diff without LoRA decomposition")
+    parser.add_argument(
+        "--output-dtype",
+        type=str,
+        choices=["float32", "fp32", "float16", "fp16", "bfloat16", "bf16"],
+        default="bf16",
+        help="Output weight data type",
+    )
+    parser.add_argument(
+        "--diff-only",
+        action="store_true",
+        help="Save all weights as direct diff without LoRA decomposition",
+    )
 
     return parser.parse_args()
 
@@ -93,7 +134,9 @@ def load_model_weights(model_path: str, model_type: str) -> Dict[str, torch.Tens
                     safetensors_files.append(os.path.join(model_path, file))
 
             if not safetensors_files:
-                raise ValueError(f"No .safetensors files found in directory: {model_path}")
+                raise ValueError(
+                    f"No .safetensors files found in directory: {model_path}"
+                )
 
             print(f"Found {len(safetensors_files)} safetensors files")
 
@@ -103,7 +146,9 @@ def load_model_weights(model_path: str, model_type: str) -> Dict[str, torch.Tens
                 with safe_open(file_path, framework="pt", device="cpu") as f:
                     for key in f.keys():
                         if key in weights:
-                            print(f"Warning: weight key '{key}' is duplicated in multiple files, will be overwritten")
+                            print(
+                                f"Warning: weight key '{key}' is duplicated in multiple files, will be overwritten"
+                            )
                         weights[key] = f.get_tensor(key)
 
         elif os.path.isfile(model_path):
@@ -113,7 +158,9 @@ def load_model_weights(model_path: str, model_type: str) -> Dict[str, torch.Tens
                     for key in f.keys():
                         weights[key] = f.get_tensor(key)
             else:
-                raise ValueError(f"safetensors type file should end with .safetensors: {model_path}")
+                raise ValueError(
+                    f"safetensors type file should end with .safetensors: {model_path}"
+                )
         else:
             raise ValueError(f"Invalid path type: {model_path}")
 
@@ -133,7 +180,9 @@ def load_model_weights(model_path: str, model_type: str) -> Dict[str, torch.Tens
             else:
                 weights = checkpoint
         else:
-            raise ValueError(f"pytorch type file should end with .pt or .pth: {model_path}")
+            raise ValueError(
+                f"pytorch type file should end with .pt or .pth: {model_path}"
+            )
     else:
         raise ValueError(f"Unsupported model type: {model_type}")
 
@@ -152,7 +201,12 @@ def load_model_weights(model_path: str, model_type: str) -> Dict[str, torch.Tens
     return converted_weights
 
 
-def save_lora_weights(lora_weights: Dict[str, torch.Tensor], output_path: str, output_format: str, output_dtype: str = "bf16"):
+def save_lora_weights(
+    lora_weights: Dict[str, torch.Tensor],
+    output_path: str,
+    output_format: str,
+    output_dtype: str = "bf16",
+):
     """
     Save LoRA weights
 
@@ -162,7 +216,9 @@ def save_lora_weights(lora_weights: Dict[str, torch.Tensor], output_path: str, o
         output_format: Output format
         output_dtype: Output data type
     """
-    print(f"Saving LoRA weights to: {output_path} (format: {output_format}, data type: {output_dtype})")
+    print(
+        f"Saving LoRA weights to: {output_path} (format: {output_format}, data type: {output_dtype})"
+    )
 
     # Ensure output directory exists
     output_dir = os.path.dirname(output_path)
@@ -174,7 +230,9 @@ def save_lora_weights(lora_weights: Dict[str, torch.Tensor], output_path: str, o
     print(f"Converting LoRA weights to {output_dtype} type...")
 
     converted_weights = {}
-    with tqdm(lora_weights.items(), desc="Converting data type", unit="weights") as pbar:
+    with tqdm(
+        lora_weights.items(), desc="Converting data type", unit="weights"
+    ) as pbar:
         for key, tensor in pbar:
             # Only convert floating point tensors, keep integer tensors unchanged
             if tensor.dtype.is_floating_point:
@@ -199,7 +257,9 @@ def save_lora_weights(lora_weights: Dict[str, torch.Tensor], output_path: str, o
     print(f"LoRA weights saved to: {output_path}")
 
 
-def _compute_weight_diff(source_tensor: torch.Tensor, target_tensor: torch.Tensor, key: str) -> Optional[torch.Tensor]:
+def _compute_weight_diff(
+    source_tensor: torch.Tensor, target_tensor: torch.Tensor, key: str
+) -> Optional[torch.Tensor]:
     """
     Compute the difference between two weight tensors
 
@@ -230,7 +290,9 @@ def _compute_weight_diff(source_tensor: torch.Tensor, target_tensor: torch.Tenso
     return diff
 
 
-def _decompose_to_lora(diff: torch.Tensor, key: str, rank: int) -> Dict[str, torch.Tensor]:
+def _decompose_to_lora(
+    diff: torch.Tensor, key: str, rank: int
+) -> Dict[str, torch.Tensor]:
     """
     Decompose weight difference into LoRA format
 
@@ -244,7 +306,9 @@ def _decompose_to_lora(diff: torch.Tensor, key: str, rank: int) -> Dict[str, tor
     """
     # Ensure it's a 2D tensor
     if len(diff.shape) != 2:
-        raise ValueError(f"LoRA decomposition only supports 2D weights, but got {len(diff.shape)}D tensor: {key}")
+        raise ValueError(
+            f"LoRA decomposition only supports 2D weights, but got {len(diff.shape)}D tensor: {key}"
+        )
 
     a, b = diff.shape
 
@@ -285,7 +349,12 @@ def _decompose_to_lora(diff: torch.Tensor, key: str, rank: int) -> Dict[str, tor
     return lora_weights
 
 
-def extract_lora_from_diff(source_weights: Dict[str, torch.Tensor], target_weights: Dict[str, torch.Tensor], rank: int = 16, diff_only: bool = False) -> Dict[str, torch.Tensor]:
+def extract_lora_from_diff(
+    source_weights: Dict[str, torch.Tensor],
+    target_weights: Dict[str, torch.Tensor],
+    rank: int = 16,
+    diff_only: bool = False,
+) -> Dict[str, torch.Tensor]:
     """
     Extract LoRA weights from model difference
 
@@ -320,9 +389,13 @@ def extract_lora_from_diff(source_weights: Dict[str, torch.Tensor], target_weigh
     target_only_keys = set(target_weights.keys()) - set(source_weights.keys())
 
     if source_only_keys:
-        print(f"Warning: Source model exclusive weight keys ({len(source_only_keys)} keys): {list(source_only_keys)[:5]}...")
+        print(
+            f"Warning: Source model exclusive weight keys ({len(source_only_keys)} keys): {list(source_only_keys)[:5]}..."
+        )
     if target_only_keys:
-        print(f"Warning: Target model exclusive weight keys ({len(target_only_keys)} keys): {list(target_only_keys)[:5]}...")
+        print(
+            f"Warning: Target model exclusive weight keys ({len(target_only_keys)} keys): {list(target_only_keys)[:5]}..."
+        )
 
     print(f"Common weight keys count: {len(common_keys)}")
 
@@ -439,10 +512,14 @@ def main():
         target_weights = load_model_weights(args.target_model, args.target_type)
 
         # Extract LoRA weights
-        lora_weights = extract_lora_from_diff(source_weights, target_weights, rank=args.rank, diff_only=args.diff_only)
+        lora_weights = extract_lora_from_diff(
+            source_weights, target_weights, rank=args.rank, diff_only=args.diff_only
+        )
 
         # Save LoRA weights
-        save_lora_weights(lora_weights, args.output, args.output_format, args.output_dtype)
+        save_lora_weights(
+            lora_weights, args.output, args.output_format, args.output_dtype
+        )
 
         print("=" * 50)
         print("LoRA extraction completed!")

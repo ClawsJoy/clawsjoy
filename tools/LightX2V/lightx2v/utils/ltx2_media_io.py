@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import logging
 import math
 from collections.abc import Generator, Iterator
@@ -8,12 +7,13 @@ from io import BytesIO
 import av
 import numpy as np
 import torch
-from PIL import Image
 from einops import rearrange
+from lightx2v.models.video_encoders.hf.ltx2.audio_vae.ops import Audio
+from PIL import Image
 from torch._prims_common import DeviceLikeType
 from tqdm import tqdm
 
-from lightx2v.models.video_encoders.hf.ltx2.audio_vae.ops import Audio
+from lib.smart_config import smart_config
 
 DEFAULT_IMAGE_CRF = 33
 
@@ -42,7 +42,9 @@ def resize_aspect_ratio_preserving(image: torch.Tensor, long_side: int) -> torch
     return result[0] if result.shape[0] == 1 else result
 
 
-def resize_and_center_crop(tensor: torch.Tensor, height: int, width: int) -> torch.Tensor:
+def resize_and_center_crop(
+    tensor: torch.Tensor, height: int, width: int
+) -> torch.Tensor:
     """
     Resize tensor preserving aspect ratio (filling target), then center crop to exact dimensions.
     Args:
@@ -57,7 +59,9 @@ def resize_and_center_crop(tensor: torch.Tensor, height: int, width: int) -> tor
     elif tensor.ndim == 4:
         tensor = rearrange(tensor, "f h w c -> f c h w")
     else:
-        raise ValueError(f"Expected input with 3 or 4 dimensions; got shape {tensor.shape}.")
+        raise ValueError(
+            f"Expected input with 3 or 4 dimensions; got shape {tensor.shape}."
+        )
 
     _, _, src_h, src_w = tensor.shape
 
@@ -67,7 +71,9 @@ def resize_and_center_crop(tensor: torch.Tensor, height: int, width: int) -> tor
     new_h = math.ceil(src_h * scale)
     new_w = math.ceil(src_w * scale)
 
-    tensor = torch.nn.functional.interpolate(tensor, size=(new_h, new_w), mode="bilinear", align_corners=False)
+    tensor = torch.nn.functional.interpolate(
+        tensor, size=(new_h, new_w), mode="bilinear", align_corners=False
+    )
 
     crop_top = (new_h - height) // 2
     crop_left = (new_w - width) // 2
@@ -77,7 +83,9 @@ def resize_and_center_crop(tensor: torch.Tensor, height: int, width: int) -> tor
     return tensor
 
 
-def normalize_latent(latent: torch.Tensor, device: torch.device, dtype: torch.dtype) -> torch.Tensor:
+def normalize_latent(
+    latent: torch.Tensor, device: torch.device, dtype: torch.dtype
+) -> torch.Tensor:
     return (latent / 127.5 - 1.0).to(device=device, dtype=dtype)
 
 
@@ -101,7 +109,14 @@ def load_image_conditioning(
     return image
 
 
-def load_video_conditioning(video_path: str, height: int, width: int, frame_cap: int, dtype: torch.dtype, device: torch.device) -> torch.Tensor:
+def load_video_conditioning(
+    video_path: str,
+    height: int,
+    width: int,
+    frame_cap: int,
+    dtype: torch.dtype,
+    device: torch.device,
+) -> torch.Tensor:
     """
     Loads a video from a path and preprocesses it for conditioning.
     Note: The video is resized to the nearest multiple of 2 for compatibility with video codecs.
@@ -121,7 +136,9 @@ def decode_image(image_path: str) -> np.ndarray:
     return np_array
 
 
-def _write_audio(container: av.container.Container, audio_stream: av.audio.AudioStream, audio: Audio) -> None:
+def _write_audio(
+    container: av.container.Container, audio_stream: av.audio.AudioStream, audio: Audio
+) -> None:
     samples = audio.waveform
     if samples.ndim == 1:
         samples = samples[:, None]
@@ -130,7 +147,9 @@ def _write_audio(container: av.container.Container, audio_stream: av.audio.Audio
         samples = samples.T
 
     if samples.shape[1] != 2:
-        raise ValueError(f"Expected samples with 2 channels; got shape {samples.shape}.")
+        raise ValueError(
+            f"Expected samples with 2 channels; got shape {samples.shape}."
+        )
 
     # Convert to int16 packed for ingestion; resampler converts to encoder fmt.
     if samples.dtype != torch.int16:
@@ -147,7 +166,9 @@ def _write_audio(container: av.container.Container, audio_stream: av.audio.Audio
     _resample_audio(container, audio_stream, frame_in)
 
 
-def _prepare_audio_stream(container: av.container.Container, audio_sample_rate: int) -> av.audio.AudioStream:
+def _prepare_audio_stream(
+    container: av.container.Container, audio_sample_rate: int
+) -> av.audio.AudioStream:
     """
     Prepare the audio stream for writing.
     """
@@ -158,7 +179,11 @@ def _prepare_audio_stream(container: av.container.Container, audio_sample_rate: 
     return audio_stream
 
 
-def _resample_audio(container: av.container.Container, audio_stream: av.audio.AudioStream, frame_in: av.AudioFrame) -> None:
+def _resample_audio(
+    container: av.container.Container,
+    audio_stream: av.audio.AudioStream,
+    frame_in: av.AudioFrame,
+) -> None:
     cc = audio_stream.codec_context
 
     # Use the encoder's format/layout/rate as the *target*
@@ -208,7 +233,10 @@ def encode_video(
     if audio is not None:
         audio_stream = _prepare_audio_stream(container, audio.sampling_rate)
 
-    def all_tiles(first_chunk: torch.Tensor, tiles_generator: Generator[tuple[torch.Tensor, int], None, None]) -> Generator[tuple[torch.Tensor, int], None, None]:
+    def all_tiles(
+        first_chunk: torch.Tensor,
+        tiles_generator: Generator[tuple[torch.Tensor, int], None, None],
+    ) -> Generator[tuple[torch.Tensor, int], None, None]:
         yield first_chunk
         yield from tiles_generator
 
@@ -271,7 +299,12 @@ def get_videostream_metadata(path: str) -> tuple[float, int, int, int]:
         container.close()
 
 
-def decode_audio_from_file(path: str, device: torch.device, start_time: float = 0.0, max_duration: float | None = None) -> Audio | None:
+def decode_audio_from_file(
+    path: str,
+    device: torch.device,
+    start_time: float = 0.0,
+    max_duration: float | None = None,
+) -> Audio | None:
     """Decodes audio from a file, optionally seeking to a start time and limiting duration.
     Args:
         path: Path to the audio/video file containing an audio stream.
@@ -290,7 +323,11 @@ def decode_audio_from_file(path: str, device: torch.device, start_time: float = 
 
     sample_rate = audio_stream.rate
     start_pts = int(start_time / audio_stream.time_base)
-    end_time = start_time + max_duration if max_duration else audio_stream.duration * audio_stream.time_base
+    end_time = (
+        start_time + max_duration
+        if max_duration
+        else audio_stream.duration * audio_stream.time_base
+    )
     container.seek(start_pts, stream=audio_stream)
 
     samples = []
@@ -332,12 +369,16 @@ def decode_audio_from_file(path: str, device: torch.device, start_time: float = 
     return Audio(waveform=waveform, sampling_rate=sample_rate)
 
 
-def decode_video_from_file(path: str, frame_cap: int, device: DeviceLikeType) -> Generator[torch.Tensor]:
+def decode_video_from_file(
+    path: str, frame_cap: int, device: DeviceLikeType
+) -> Generator[torch.Tensor]:
     container = av.open(path)
     try:
         video_stream = next(s for s in container.streams if s.type == "video")
         for frame in container.decode(video_stream):
-            tensor = torch.tensor(frame.to_rgb().to_ndarray(), dtype=torch.uint8, device=device).unsqueeze(0)
+            tensor = torch.tensor(
+                frame.to_rgb().to_ndarray(), dtype=torch.uint8, device=device
+            ).unsqueeze(0)
             yield tensor
             frame_cap = frame_cap - 1
             if frame_cap == 0:
@@ -349,14 +390,18 @@ def decode_video_from_file(path: str, frame_cap: int, device: DeviceLikeType) ->
 def encode_single_frame(output_file: str, image_array: np.ndarray, crf: float) -> None:
     container = av.open(output_file, "w", format="mp4")
     try:
-        stream = container.add_stream("libx264", rate=1, options={"crf": str(crf), "preset": "veryfast"})
+        stream = container.add_stream(
+            "libx264", rate=1, options={"crf": str(crf), "preset": "veryfast"}
+        )
         # Round to nearest multiple of 2 for compatibility with video codecs
         height = image_array.shape[0] // 2 * 2
         width = image_array.shape[1] // 2 * 2
         image_array = image_array[:height, :width]
         stream.height = height
         stream.width = width
-        av_frame = av.VideoFrame.from_ndarray(image_array, format="rgb24").reformat(format="yuv420p")
+        av_frame = av.VideoFrame.from_ndarray(image_array, format="rgb24").reformat(
+            format="yuv420p"
+        )
         container.mux(stream.encode(av_frame))
         container.mux(stream.encode())
     finally:

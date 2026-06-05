@@ -3,15 +3,15 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
 import json
-from pathlib import Path
-from datetime import datetime
-from threading import Thread
 import time
+from datetime import datetime
+from pathlib import Path
+from threading import Thread
 
 
 class ClubStatsCollector:
@@ -45,16 +45,18 @@ class ClubStatsCollector:
             # 读取现有统计
             stats = {}
             if self.stats_file.exists():
-                with open(self.stats_file, 'r') as f:
+                with open(self.stats_file, "r") as f:
                     stats = json.load(f)
 
-            stats.update({
-                "total_members": total_members,
-                "updated_at": datetime.now().isoformat(),
-                "anonymized": True
-            })
+            stats.update(
+                {
+                    "total_members": total_members,
+                    "updated_at": datetime.now().isoformat(),
+                    "anonymized": True,
+                }
+            )
 
-            with open(self.stats_file, 'w') as f:
+            with open(self.stats_file, "w") as f:
                 json.dump(stats, f, indent=2)
 
         except Exception as e:

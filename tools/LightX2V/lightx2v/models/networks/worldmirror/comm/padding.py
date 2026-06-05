@@ -1,9 +1,12 @@
-from lib.smart_config import smart_config
 import torch
 import torch.nn.functional as F
 
+from lib.smart_config import smart_config
 
-def minimal_pad_to_divisible(tensor: torch.Tensor, sp_size: int, dim: int = 1, pad_value: float = 0.0):
+
+def minimal_pad_to_divisible(
+    tensor: torch.Tensor, sp_size: int, dim: int = 1, pad_value: float = 0.0
+):
     """
     对三维或更高维度的tensor在指定维度进行最小化padding，使其长度能被 sp_size 整除。
 
@@ -73,7 +76,9 @@ def minimal_pad_to_divisible(tensor: torch.Tensor, sp_size: int, dim: int = 1, p
     return padded_tensor, padding_len
 
 
-def depad_by_length(padded_tensor: torch.Tensor, depadding_len: int, dim: int = 1) -> torch.Tensor:
+def depad_by_length(
+    padded_tensor: torch.Tensor, depadding_len: int, dim: int = 1
+) -> torch.Tensor:
     """
     在指定维度上去除末尾的 padding 部分。
 
@@ -91,7 +96,9 @@ def depad_by_length(padded_tensor: torch.Tensor, depadding_len: int, dim: int = 
     if depadding_len < 0:
         raise ValueError("depadding_len 必须是非负数。")
     if depadding_len > current_size:
-        raise ValueError(f"要去除的长度 {depadding_len} 大于当前维度长度 {current_size}。")
+        raise ValueError(
+            f"要去除的长度 {depadding_len} 大于当前维度长度 {current_size}。"
+        )
 
     # 计算去除 padding 后的目标长度
     target_size = current_size - depadding_len
@@ -110,12 +117,16 @@ def depad_by_length(padded_tensor: torch.Tensor, depadding_len: int, dim: int = 
     return depadded_tensor
 
 
-def pad_by_length(padded_tensor: torch.Tensor, padding_len: int, dim: int = 1, pad_value: float = 0.0) -> torch.Tensor:
+def pad_by_length(
+    padded_tensor: torch.Tensor, padding_len: int, dim: int = 1, pad_value: float = 0.0
+) -> torch.Tensor:
     if padding_len < 0:
         raise ValueError("padding_len 必须是非负数。")
 
     if dim < 0 or dim >= padded_tensor.dim():
-        raise ValueError(f"维度索引 {dim} 超出有效范围 [0, {padded_tensor.dim() - 1}]。")
+        raise ValueError(
+            f"维度索引 {dim} 超出有效范围 [0, {padded_tensor.dim() - 1}]。"
+        )
 
     # 构建padding参数
     # F.pad需要为每个维度指定左右两边的padding长度
@@ -128,6 +139,8 @@ def pad_by_length(padded_tensor: torch.Tensor, padding_len: int, dim: int = 1, p
     pad_tuple[pad_idx] = padding_len
 
     # 调用F.pad进行padding
-    padded_tensor = F.pad(padded_tensor, pad=tuple(pad_tuple), mode="constant", value=pad_value)
+    padded_tensor = F.pad(
+        padded_tensor, pad=tuple(pad_tuple), mode="constant", value=pad_value
+    )
 
     return padded_tensor

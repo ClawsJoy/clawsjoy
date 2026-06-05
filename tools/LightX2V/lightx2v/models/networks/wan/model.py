@@ -1,8 +1,6 @@
-from lib.smart_config import smart_config
 import torch
 import torch.distributed as dist
 import torch.nn.functional as F
-
 from lightx2v.models.networks.base_model import BaseTransformerModel
 from lightx2v.models.networks.wan.infer.feature_caching.transformer_infer import (
     WanTransformerInferAdaCaching,
@@ -30,13 +28,25 @@ from lightx2v.utils.custom_compiler import compiled_method
 from lightx2v.utils.envs import *
 from lightx2v.utils.utils import *
 
+from lib.smart_config import smart_config
+
 
 class WanModel(BaseTransformerModel):
     pre_weight_class = WanPreWeights
     transformer_weight_class = WanTransformerWeights
 
-    def __init__(self, model_path, config, device, model_type="wan2.1", lora_path=None, lora_strength=1.0):
-        super().__init__(model_path, config, device, model_type, lora_path, lora_strength)
+    def __init__(
+        self,
+        model_path,
+        config,
+        device,
+        model_type="wan2.1",
+        lora_path=None,
+        lora_strength=1.0,
+    ):
+        super().__init__(
+            model_path, config, device, model_type, lora_path, lora_strength
+        )
         if self.lazy_load:
             self.remove_keys.extend(["blocks."])
         self.sensitive_layer = {
@@ -59,7 +69,11 @@ class WanModel(BaseTransformerModel):
         self.post_infer_class = WanPostInfer
 
         if self.config["feature_caching"] == "NoCaching":
-            self.transformer_infer_class = WanTransformerInfer if not self.cpu_offload else WanOffloadTransformerInfer
+            self.transformer_infer_class = (
+                WanTransformerInfer
+                if not self.cpu_offload
+                else WanOffloadTransformerInfer
+            )
         elif self.config["feature_caching"] == "Tea":
             self.transformer_infer_class = WanTransformerInferTeaCaching
         elif self.config["feature_caching"] == "TaylorSeer":
@@ -77,7 +91,9 @@ class WanModel(BaseTransformerModel):
         elif self.config["feature_caching"] == "Mag":
             self.transformer_infer_class = WanTransformerInferMagCaching
         else:
-            raise NotImplementedError(f"Unsupported feature_caching type: {self.config['feature_caching']}")
+            raise NotImplementedError(
+                f"Unsupported feature_caching type: {self.config['feature_caching']}"
+            )
 
     def _init_infer(self):
         self.pre_infer = self.pre_infer_class(self.config)
@@ -87,7 +103,11 @@ class WanModel(BaseTransformerModel):
             self._init_offload_manager()
 
     def _should_init_empty_model(self):
-        if self.config.get("lora_configs") and self.config["lora_configs"] and not self.config.get("lora_dynamic_apply", False):
+        if (
+            self.config.get("lora_configs")
+            and self.config["lora_configs"]
+            and not self.config.get("lora_dynamic_apply", False)
+        ):
             if self.model_type in ["wan2.1"]:
                 return True
             if self.model_type in ["wan2.2_moe_high_noise"]:
@@ -136,7 +156,9 @@ class WanModel(BaseTransformerModel):
 
         pre_infer_out.x = torch.chunk(x, world_size, dim=0)[cur_rank]
 
-        if self.config["model_cls"] in ["wan2.2", "wan2.2_audio"] and self.config["task"] in ["i2v", "s2v", "rs2v"]:
+        if self.config["model_cls"] in ["wan2.2", "wan2.2_audio"] and self.config[
+            "task"
+        ] in ["i2v", "s2v", "rs2v"]:
             embed, embed0 = pre_infer_out.embed, pre_infer_out.embed0
 
             padding_size = (world_size - (embed.shape[0] % world_size)) % world_size
@@ -160,7 +182,11 @@ class WanModel(BaseTransformerModel):
     @torch.no_grad()
     def infer(self, inputs):
         if self.cpu_offload:
-            if self.offload_granularity == "model" and self.scheduler.step_index == 0 and "wan2.2_moe" not in self.config["model_cls"]:
+            if (
+                self.offload_granularity == "model"
+                and self.scheduler.step_index == 0
+                and "wan2.2_moe" not in self.config["model_cls"]
+            ):
                 self.to_cuda()
             elif self.offload_granularity != "model":
                 self.pre_weight.to_cuda()
@@ -170,7 +196,9 @@ class WanModel(BaseTransformerModel):
             if self.config["cfg_parallel"]:
                 # ==================== CFG Parallel Processing ====================
                 cfg_p_group = self.config["device_mesh"].get_group(mesh_dim="cfg_p")
-                assert dist.get_world_size(cfg_p_group) == 2, "cfg_p_world_size must be equal to 2"
+                assert (
+                    dist.get_world_size(cfg_p_group) == 2
+                ), "cfg_p_world_size must be equal to 2"
                 cfg_p_rank = dist.get_rank(cfg_p_group)
 
                 if cfg_p_rank == 0:
@@ -185,9 +213,15 @@ class WanModel(BaseTransformerModel):
             else:
                 # ==================== CFG Processing ====================
                 noise_pred_cond = self._infer_cond_uncond(inputs, infer_condition=True)
-                noise_pred_uncond = self._infer_cond_uncond(inputs, infer_condition=False)
+                noise_pred_uncond = self._infer_cond_uncond(
+                    inputs, infer_condition=False
+                )
 
-            noise_pred_guided = noise_pred_uncond + self.scheduler.sample_guide_scale * (noise_pred_cond - noise_pred_uncond)
+            noise_pred_guided = (
+                noise_pred_uncond
+                + self.scheduler.sample_guide_scale
+                * (noise_pred_cond - noise_pred_uncond)
+            )
             self.scheduler.noise_pred_cond = noise_pred_cond
             self.scheduler.noise_pred_uncond = noise_pred_uncond
             self.scheduler.noise_pred_guided = noise_pred_guided
@@ -201,7 +235,11 @@ class WanModel(BaseTransformerModel):
             self.scheduler.noise_pred = noise_pred
 
         if self.cpu_offload:
-            if self.offload_granularity == "model" and self.scheduler.step_index == self.scheduler.infer_steps - 1 and "wan2.2_moe" not in self.config["model_cls"]:
+            if (
+                self.offload_granularity == "model"
+                and self.scheduler.step_index == self.scheduler.infer_steps - 1
+                and "wan2.2_moe" not in self.config["model_cls"]
+            ):
                 self.to_cpu()
             elif self.offload_granularity != "model":
                 self.pre_weight.to_cpu()

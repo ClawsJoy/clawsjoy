@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import logging
 import subprocess
 import threading
@@ -7,6 +6,8 @@ from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional
 
 import zmq
+
+from lib.smart_config import smart_config
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +31,9 @@ class Reporter:
         self._metrics_lock = threading.Lock()
         self._extra_metrics_provider: Optional[Callable[[], Dict[str, Any]]] = None
 
-    def set_extra_metrics_provider(self, provider: Optional[Callable[[], Dict[str, Any]]]):
+    def set_extra_metrics_provider(
+        self, provider: Optional[Callable[[], Dict[str, Any]]]
+    ):
         with self._metrics_lock:
             self._extra_metrics_provider = provider
 
@@ -78,7 +81,12 @@ class Reporter:
         socket = self._context.socket(zmq.REP)
         socket.linger = 0
         socket.bind(self.config.bind_address)
-        logger.info("Reporter started: service=%s gpu=%s bind=%s", self.config.service_type, self.config.gpu_id, self.config.bind_address)
+        logger.info(
+            "Reporter started: service=%s gpu=%s bind=%s",
+            self.config.service_type,
+            self.config.gpu_id,
+            self.config.bind_address,
+        )
 
         try:
             while not self._stop_event.is_set():
@@ -94,7 +102,9 @@ class Reporter:
                 if cmd == "metrics":
                     socket.send_json(self.get_metrics())
                 else:
-                    socket.send_json({"status": "error", "error": f"unsupported cmd: {cmd}"})
+                    socket.send_json(
+                        {"status": "error", "error": f"unsupported cmd: {cmd}"}
+                    )
         finally:
             socket.close()
 

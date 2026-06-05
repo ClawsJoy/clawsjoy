@@ -1,17 +1,19 @@
 """情感计算引擎"""
 
-from typing import Dict, Any, List, Optional
+from collections import Counter, defaultdict
 from datetime import datetime
-from collections import defaultdict, Counter
+from typing import Any, Dict, List, Optional
+
 from engine.lib.logger import engine_logger
+
 
 class EmotionEngine:
     """情感计算引擎"""
 
     EMOTION_LEXICON = {
-        'positive': ['好', '棒', '喜欢', '开心', '高兴', '感谢', '谢谢', '不错', '赞'],
-        'negative': ['坏', '差', '讨厌', '烦', '生气', '愤怒', '糟糕', '失望'],
-        'satisfied': ['满意', '解决了', '好了', '可以了'],
+        "positive": ["好", "棒", "喜欢", "开心", "高兴", "感谢", "谢谢", "不错", "赞"],
+        "negative": ["坏", "差", "讨厌", "烦", "生气", "愤怒", "糟糕", "失望"],
+        "satisfied": ["满意", "解决了", "好了", "可以了"],
     }
 
     def __init__(self):
@@ -23,9 +25,9 @@ class EmotionEngine:
         if input_data is None:
             return self.get_stats()
         if isinstance(input_data, str):
-            return self.analyze(input_data, kwargs.get('user_id'))
+            return self.analyze(input_data, kwargs.get("user_id"))
         if isinstance(input_data, dict):
-            return self.analyze(input_data.get('text', ''), input_data.get('user_id'))
+            return self.analyze(input_data.get("text", ""), input_data.get("user_id"))
         return self.analyze(str(input_data))
 
     def analyze(self, text: str, user_id: str = None) -> Dict:
@@ -36,13 +38,17 @@ class EmotionEngine:
                 scores[emotion] += text.count(kw)
 
         dominant = max(scores.items(), key=lambda x: x[1])
-        sentiment = 'positive' if scores['positive'] + scores['satisfied'] > scores['negative'] else 'negative'
+        sentiment = (
+            "positive"
+            if scores["positive"] + scores["satisfied"] > scores["negative"]
+            else "negative"
+        )
 
         result = {
-            'dominant_emotion': dominant[0] if dominant[1] > 0 else 'neutral',
-            'intensity': dominant[1],
-            'sentiment': sentiment,
-            'text': text[:50]
+            "dominant_emotion": dominant[0] if dominant[1] > 0 else "neutral",
+            "intensity": dominant[1],
+            "sentiment": sentiment,
+            "text": text[:50],
         }
 
         if user_id:
@@ -57,7 +63,7 @@ class EmotionEngine:
         history = self.user_history.get(user_id, [])
         if not history:
             return {"status": "insufficient_data"}
-        emotions = [h['dominant_emotion'] for h in history[-10:]]
+        emotions = [h["dominant_emotion"] for h in history[-10:]]
         return {"emotion_distribution": dict(Counter(emotions)), "trend": "stable"}
 
     def get_stats(self) -> Dict:
@@ -69,5 +75,6 @@ class EmotionEngine:
 
     def health_check(self) -> Dict:
         return {"name": "emotion_engine", "status": "healthy"}
+
 
 emotion_engine = EmotionEngine()

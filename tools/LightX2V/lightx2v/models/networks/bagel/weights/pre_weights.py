@@ -1,6 +1,10 @@
-from lib.smart_config import smart_config
 from lightx2v.common.modules.weight_module import WeightModule
-from lightx2v.utils.registry_factory import EMBEDDING_WEIGHT_REGISTER, MM_WEIGHT_REGISTER
+from lightx2v.utils.registry_factory import (
+    EMBEDDING_WEIGHT_REGISTER,
+    MM_WEIGHT_REGISTER,
+)
+
+from lib.smart_config import smart_config
 
 
 class Qwen2PreWeights(WeightModule):
@@ -23,7 +27,9 @@ class Qwen2PreWeights(WeightModule):
         )
         self.add_module(
             "embed_tokens",
-            EMBEDDING_WEIGHT_REGISTER["Default"]("language_model.model.embed_tokens.weight"),
+            EMBEDDING_WEIGHT_REGISTER["Default"](
+                "language_model.model.embed_tokens.weight"
+            ),
         )
         # vae2llm
         self.add_module(
@@ -34,9 +40,13 @@ class Qwen2PreWeights(WeightModule):
         # time_embedder
         self.add_module(
             "mlp_0",
-            MM_WEIGHT_REGISTER["Default"]("time_embedder.mlp.0.weight", "time_embedder.mlp.0.bias"),
+            MM_WEIGHT_REGISTER["Default"](
+                "time_embedder.mlp.0.weight", "time_embedder.mlp.0.bias"
+            ),
         )
         self.add_module(
             "mlp_2",
-            MM_WEIGHT_REGISTER["Default"]("time_embedder.mlp.2.weight", "time_embedder.mlp.2.bias"),
+            MM_WEIGHT_REGISTER["Default"](
+                "time_embedder.mlp.2.weight", "time_embedder.mlp.2.bias"
+            ),
         )

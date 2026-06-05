@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """Export lightweight dummy-meta safetensors files from full model safetensors.
 
 The output files contain ONLY tensor metadata (key, shape, dtype) in the
@@ -41,7 +42,9 @@ def read_tensor_metadata(file_path: str) -> dict:
     return tensor_meta
 
 
-def write_dummy_meta_safetensors(tensor_meta: dict, output_path: str, source_filename: str = ""):
+def write_dummy_meta_safetensors(
+    tensor_meta: dict, output_path: str, source_filename: str = ""
+):
     """Write a lightweight safetensors file that stores only tensor metadata."""
     header = {
         "__metadata__": {
@@ -60,15 +63,21 @@ def write_dummy_meta_safetensors(tensor_meta: dict, output_path: str, source_fil
 def export_single_file(input_path: str, output_path: str):
     """Export one safetensors file to its dummy-meta counterpart."""
     tensor_meta = read_tensor_metadata(input_path)
-    write_dummy_meta_safetensors(tensor_meta, output_path, source_filename=os.path.basename(input_path))
+    write_dummy_meta_safetensors(
+        tensor_meta, output_path, source_filename=os.path.basename(input_path)
+    )
 
     input_size = os.path.getsize(input_path)
     output_size = os.path.getsize(output_path)
-    print(f"  {os.path.basename(input_path)}: {input_size / 1024 / 1024:.1f} MB -> {output_size / 1024:.1f} KB  ({len(tensor_meta)} tensors)")
+    print(
+        f"  {os.path.basename(input_path)}: {input_size / 1024 / 1024:.1f} MB -> {output_size / 1024:.1f} KB  ({len(tensor_meta)} tensors)"
+    )
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Export lightweight dummy-meta safetensors files from full model safetensors.")
+    parser = argparse.ArgumentParser(
+        description="Export lightweight dummy-meta safetensors files from full model safetensors."
+    )
     parser.add_argument(
         "input",
         help="Path to a safetensors file or a directory containing *.safetensors files.",
@@ -77,7 +86,9 @@ def main():
         "-o",
         "--output",
         default=None,
-        help=("Output path. For single-file input: output file path (default: input_dummy_meta.safetensors next to input). For directory input: output directory (default: {input}_dummy_meta/)."),
+        help=(
+            "Output path. For single-file input: output file path (default: input_dummy_meta.safetensors next to input). For directory input: output directory (default: {input}_dummy_meta/)."
+        ),
     )
     args = parser.parse_args()
 
@@ -89,14 +100,18 @@ def main():
 
         output_dir = args.output or (args.input.rstrip("/") + "_dummy_meta")
         os.makedirs(output_dir, exist_ok=True)
-        print(f"Exporting {len(safetensors_files)} files from {args.input} -> {output_dir}")
+        print(
+            f"Exporting {len(safetensors_files)} files from {args.input} -> {output_dir}"
+        )
 
         for sf in safetensors_files:
             out_path = os.path.join(output_dir, os.path.basename(sf))
             export_single_file(sf, out_path)
     else:
         if not args.input.endswith(".safetensors"):
-            print(f"Input file must be a .safetensors file: {args.input}", file=sys.stderr)
+            print(
+                f"Input file must be a .safetensors file: {args.input}", file=sys.stderr
+            )
             sys.exit(1)
 
         if args.output:

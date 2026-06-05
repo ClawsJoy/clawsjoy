@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import asyncio
 import os
 import time
@@ -6,11 +5,12 @@ from pathlib import Path
 from typing import Any, Dict
 
 import torch
-from loguru import logger
-
 from lightx2v.infer import init_runner
 from lightx2v.utils.input_info import init_empty_input_info, update_input_info_from_dict
 from lightx2v.utils.set_config import set_config, set_parallel_config
+from loguru import logger
+
+from lib.smart_config import smart_config
 
 from ..distributed_utils import DistributedManager
 from .pipeline_image_encode import encode_pipeline_return_to_png_bytes
@@ -35,7 +35,9 @@ class TorchrunInferenceWorker:
             else:
                 self.dist_manager.rank = 0
                 self.dist_manager.world_size = 1
-                self.dist_manager.device = "cuda:0" if torch.cuda.is_available() else "cpu"
+                self.dist_manager.device = (
+                    "cuda:0" if torch.cuda.is_available() else "cpu"
+                )
                 self.dist_manager.is_initialized = False
 
             self.lora_dir = getattr(args, "lora_dir", None)
@@ -56,7 +58,9 @@ class TorchrunInferenceWorker:
                 logger.info(f"Config:\n {config}")
 
             self.runner = init_runner(config)
-            logger.info(f"Rank {self.rank}/{self.world_size - 1} initialization completed")
+            logger.info(
+                f"Rank {self.rank}/{self.world_size - 1} initialization completed"
+            )
 
             self.input_info = init_empty_input_info(args.task)
 
@@ -84,16 +88,23 @@ class TorchrunInferenceWorker:
                 self.switch_lora(lora_name, lora_strength)
 
             task_data["task"] = self.runner.config["task"]
-            task_data["return_result_tensor"] = bool(task_data.get("return_result_tensor", False))
+            task_data["return_result_tensor"] = bool(
+                task_data.get("return_result_tensor", False)
+            )
             task_data["negative_prompt"] = task_data.get("negative_prompt", "")
 
             target_fps = task_data.pop("target_fps", None)
             if target_fps is not None:
                 vfi_cfg = self.runner.config.get("video_frame_interpolation")
                 if vfi_cfg:
-                    task_data["video_frame_interpolation"] = {**vfi_cfg, "target_fps": target_fps}
+                    task_data["video_frame_interpolation"] = {
+                        **vfi_cfg,
+                        "target_fps": target_fps,
+                    }
                 else:
-                    logger.warning(f"Target FPS {target_fps} is set, but video frame interpolation is not configured")
+                    logger.warning(
+                        f"Target FPS {target_fps} is set, but video frame interpolation is not configured"
+                    )
 
             update_input_info_from_dict(self.input_info, task_data)
 
@@ -131,7 +142,9 @@ class TorchrunInferenceWorker:
                     encode_start = time.perf_counter()
                     png = encode_pipeline_return_to_png_bytes(pipeline_return)
                     encode_elapsed_ms = (time.perf_counter() - encode_start) * 1000
-                    logger.info(f"Task {task_data.get('task_id')} encode result_png cost {encode_elapsed_ms:.2f} ms")
+                    logger.info(
+                        f"Task {task_data.get('task_id')} encode result_png cost {encode_elapsed_ms:.2f} ms"
+                    )
                     if png:
                         out["result_png"] = png
                 return out
@@ -158,7 +171,9 @@ class TorchrunInferenceWorker:
                     logger.warning(f"LoRA file not found for: {lora_name}")
                     return
 
-                logger.info(f"Applying LoRA: {lora_name} from {lora_path} with strength={lora_strength}")
+                logger.info(
+                    f"Applying LoRA: {lora_name} from {lora_path} with strength={lora_strength}"
+                )
                 if hasattr(self.runner.model, "_update_lora"):
                     self.runner.model._update_lora(lora_path, lora_strength)
                     self.current_lora_name = lora_name
@@ -192,15 +207,22 @@ class TorchrunInferenceWorker:
 
             except Exception as e:
                 error_str = str(e)
-                if "Connection closed by peer" in error_str or "Connection reset by peer" in error_str:
-                    logger.info(f"Rank {self.rank} detected master process shutdown, exiting worker loop")
+                if (
+                    "Connection closed by peer" in error_str
+                    or "Connection reset by peer" in error_str
+                ):
+                    logger.info(
+                        f"Rank {self.rank} detected master process shutdown, exiting worker loop"
+                    )
                     break
                 logger.error(f"Rank {self.rank} worker loop error: {error_str}")
                 if self.world_size > 1 and task_data is not None:
                     try:
                         self.dist_manager.barrier()
                     except Exception as barrier_error:
-                        logger.warning(f"Rank {self.rank} barrier failed, exiting: {barrier_error}")
+                        logger.warning(
+                            f"Rank {self.rank} barrier failed, exiting: {barrier_error}"
+                        )
                         break
                 continue
 

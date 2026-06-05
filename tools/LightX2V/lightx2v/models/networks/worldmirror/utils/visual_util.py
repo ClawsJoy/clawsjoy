@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """Visual utilities for HuggingFace integration.
 
 References: https://github.com/facebookresearch/vggt
@@ -134,7 +135,9 @@ def create_image_mesh(
         vertex_indices (np.ndarray, optional): Original vertex indices if return_vertex_indices=True
     """
     # Validate inputs
-    assert (len(image_data) > 0) or (mask is not None), "Need at least one image or mask"
+    assert (len(image_data) > 0) or (
+        mask is not None
+    ), "Need at least one image or mask"
 
     if mask is None:
         height, width = image_data[0].shape[:2]
@@ -143,7 +146,10 @@ def create_image_mesh(
 
     # Check all images have same dimensions
     for img in image_data:
-        assert img.shape[:2] == (height, width), "All images must have same height and width"
+        assert img.shape[:2] == (
+            height,
+            width,
+        ), "All images must have same height and width"
 
     # Create quad faces connecting neighboring pixels
     base_quad = np.stack(
@@ -175,7 +181,9 @@ def create_image_mesh(
         return tuple(output)
     else:
         # Apply mask - only keep faces where all 4 corners are valid
-        valid_quads = (mask[:-1, :-1] & mask[1:, :-1] & mask[1:, 1:] & mask[:-1, 1:]).ravel()
+        valid_quads = (
+            mask[:-1, :-1] & mask[1:, :-1] & mask[1:, 1:] & mask[:-1, 1:]
+        ).ravel()
         faces = faces[valid_quads]
 
         if triangulate:
@@ -260,7 +268,9 @@ def convert_predictions_to_glb_scene(
     # Validate required data in predictions
     print("Using Pointmap Branch")
     if "world_points" not in predictions:
-        raise ValueError("world_points not found in predictions. Pointmap Branch requires 'world_points' key. Depthmap and Camera branches have been removed.")
+        raise ValueError(
+            "world_points not found in predictions. Pointmap Branch requires 'world_points' key. Depthmap and Camera branches have been removed."
+        )
 
     # Extract prediction data
     point_cloud_3d = predictions["world_points"]
@@ -339,7 +349,9 @@ def convert_predictions_to_glb_scene(
             structured_colors *= 255
 
             # Get structured mask for mesh creation
-            structured_mask = predictions["final_mask"][target_frame_index].reshape(frame_height, frame_width)
+            structured_mask = predictions["final_mask"][target_frame_index].reshape(
+                frame_height, frame_width
+            )
 
             # Build filtering mask
             mesh_filter_mask = structured_mask
@@ -348,16 +360,22 @@ def convert_predictions_to_glb_scene(
             mesh_normals = None
             if "normal" in predictions and predictions["normal"] is not None:
                 # Extract normals for selected frame
-                frame_normal_data = predictions["normal"][target_frame_index] if target_frame_index is not None else predictions["normal"][0]
+                frame_normal_data = (
+                    predictions["normal"][target_frame_index]
+                    if target_frame_index is not None
+                    else predictions["normal"][0]
+                )
 
                 # Generate mesh with normal information
-                mesh_faces, mesh_vertices, mesh_colors, mesh_normals = create_image_mesh(
-                    structured_points * np.array([1, -1, 1], dtype=np.float32),
-                    structured_colors / 255.0,
-                    frame_normal_data * np.array([1, -1, 1], dtype=np.float32),
-                    mask=mesh_filter_mask,
-                    triangulate=True,
-                    return_vertex_indices=False,
+                mesh_faces, mesh_vertices, mesh_colors, mesh_normals = (
+                    create_image_mesh(
+                        structured_points * np.array([1, -1, 1], dtype=np.float32),
+                        structured_colors / 255.0,
+                        frame_normal_data * np.array([1, -1, 1], dtype=np.float32),
+                        mask=mesh_filter_mask,
+                        triangulate=True,
+                        return_vertex_indices=False,
+                    )
                 )
 
                 # Apply coordinate system transformation to normals
@@ -432,7 +450,9 @@ def convert_predictions_to_glb_scene(
                 output_scene.add_geometry(frame_geometry)
     else:
         # Point cloud representation
-        point_cloud_geometry = trimesh.PointCloud(vertices=filtered_vertices, colors=filtered_colors)
+        point_cloud_geometry = trimesh.PointCloud(
+            vertices=filtered_vertices, colors=filtered_colors
+        )
         output_scene.add_geometry(point_cloud_geometry)
 
     # Add camera visualizations if requested
@@ -445,7 +465,9 @@ def convert_predictions_to_glb_scene(
             camera_color_rgba = color_palette(camera_idx / num_camera_views)
             camera_color_rgb = tuple(int(255 * x) for x in camera_color_rgba[:3])
 
-            integrate_camera_into_scene(output_scene, camera_extrinsic, camera_color_rgb, scene_scale_factor)
+            integrate_camera_into_scene(
+                output_scene, camera_extrinsic, camera_color_rgb, scene_scale_factor
+            )
 
     # Define coordinate system transformation matrices
     opengl_transform = np.eye(4)
@@ -457,7 +479,9 @@ def convert_predictions_to_glb_scene(
     alignment_rotation[:3, :3] = Rotation.from_euler("y", 0, degrees=True).as_matrix()
 
     # Compute and apply final transformation
-    scene_transformation = np.linalg.inv(extrinsic_matrices[0]) @ opengl_transform @ alignment_rotation
+    scene_transformation = (
+        np.linalg.inv(extrinsic_matrices[0]) @ opengl_transform @ alignment_rotation
+    )
     output_scene.apply_transform(scene_transformation)
 
     print("GLB Scene built")
@@ -509,7 +533,9 @@ def integrate_camera_into_scene(
     rotated_vertices = apply_transformation_to_points(minor_rotation, original_vertices)
 
     # Combine all vertex sets
-    all_vertices = np.concatenate([original_vertices, scaled_vertices, rotated_vertices])
+    all_vertices = np.concatenate(
+        [original_vertices, scaled_vertices, rotated_vertices]
+    )
 
     # Transform vertices to final position
     transformed_vertices = apply_transformation_to_points(final_transform, all_vertices)
@@ -525,7 +551,9 @@ def integrate_camera_into_scene(
     scene.add_geometry(camera_mesh)
 
 
-def apply_transformation_to_points(transform_matrix: np.ndarray, point_array: np.ndarray, output_dim: int = None) -> np.ndarray:
+def apply_transformation_to_points(
+    transform_matrix: np.ndarray, point_array: np.ndarray, output_dim: int = None
+) -> np.ndarray:
     """
     Applies a 4x4 transformation matrix to a collection of 3D points.
 
@@ -545,10 +573,15 @@ def apply_transformation_to_points(transform_matrix: np.ndarray, point_array: np
     transposed_transform = transform_matrix.swapaxes(-1, -2)
 
     # Apply rotation/scaling and translation components
-    transformed_points = point_array @ transposed_transform[..., :-1, :] + transposed_transform[..., -1:, :]
+    transformed_points = (
+        point_array @ transposed_transform[..., :-1, :]
+        + transposed_transform[..., -1:, :]
+    )
 
     # Extract desired dimensions and restore original shape
-    final_result = transformed_points[..., :target_dim].reshape(*original_shape, target_dim)
+    final_result = transformed_points[..., :target_dim].reshape(
+        *original_shape, target_dim
+    )
     return final_result
 
 
@@ -575,8 +608,12 @@ def generate_camera_mesh_faces(base_cone_mesh):
         vertex_a, vertex_b, vertex_c = triangle_face
 
         # Calculate corresponding vertices in second and third cone layers
-        vertex_a_layer2, vertex_b_layer2, vertex_c_layer2 = triangle_face + vertex_count_per_cone
-        vertex_a_layer3, vertex_b_layer3, vertex_c_layer3 = triangle_face + 2 * vertex_count_per_cone
+        vertex_a_layer2, vertex_b_layer2, vertex_c_layer2 = (
+            triangle_face + vertex_count_per_cone
+        )
+        vertex_a_layer3, vertex_b_layer3, vertex_c_layer3 = (
+            triangle_face + 2 * vertex_count_per_cone
+        )
 
         # Create connecting faces between cone layers
         connecting_faces = [
@@ -591,7 +628,9 @@ def generate_camera_mesh_faces(base_cone_mesh):
         face_indices.extend(connecting_faces)
 
     # Add reverse-winding faces for proper mesh closure
-    reversed_faces = [(vertex_c, vertex_b, vertex_a) for vertex_a, vertex_b, vertex_c in face_indices]
+    reversed_faces = [
+        (vertex_c, vertex_b, vertex_a) for vertex_a, vertex_b, vertex_c in face_indices
+    ]
     face_indices.extend(reversed_faces)
 
     return np.array(face_indices)

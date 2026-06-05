@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 LoRA (Low-Rank Adaptation) loader with support for multiple format patterns.
 
@@ -109,7 +110,9 @@ class LoRAPatternMatcher:
             ),
         }
 
-    def detect_format(self, key: str, lora_weights: Dict) -> Optional[Tuple[LoRAFormat, str]]:
+    def detect_format(
+        self, key: str, lora_weights: Dict
+    ) -> Optional[Tuple[LoRAFormat, str]]:
         """
         Detect the LoRA format of a given key.
 
@@ -182,7 +185,11 @@ class LoRAPatternMatcher:
 class LoRALoader:
     """Loads and applies LoRA weights to model weights using pattern matching."""
 
-    def __init__(self, key_mapping_rules: Optional[List[Tuple[str, str]]] = None, model_prefix: Optional[str] = None):
+    def __init__(
+        self,
+        key_mapping_rules: Optional[List[Tuple[str, str]]] = None,
+        model_prefix: Optional[str] = None,
+    ):
         """
         Args:
             key_mapping_rules: Optional list of (pattern, replacement) regex rules for key mapping
@@ -195,7 +202,10 @@ class LoRALoader:
 
     def _compile_rules(self):
         """Pre-compile regex patterns for better performance."""
-        self.compiled_rules = [(re.compile(pattern), replacement) for pattern, replacement in self.key_mapping_rules]
+        self.compiled_rules = [
+            (re.compile(pattern), replacement)
+            for pattern, replacement in self.key_mapping_rules
+        ]
 
     def _apply_key_mapping(self, key: str) -> str:
         """Apply key mapping rules to a key."""
@@ -281,7 +291,9 @@ class LoRALoader:
                 continue
 
             # Try to extract LoRA pair
-            pair_info = self.pattern_matcher.extract_lora_pair(key, lora_weights, lora_alphas)
+            pair_info = self.pattern_matcher.extract_lora_pair(
+                key, lora_weights, lora_alphas
+            )
             if pair_info is None:
                 continue
 
@@ -328,7 +340,9 @@ class LoRALoader:
             for check_suffix, remove_suffix, add_suffix in diff_patterns:
                 if key.endswith(check_suffix):
                     base_key = key[: -len(remove_suffix)]
-                    model_key = self._get_model_key(key, base_key, remove_suffix, add_suffix)
+                    model_key = self._get_model_key(
+                        key, base_key, remove_suffix, add_suffix
+                    )
 
                     if model_key:
                         lora_diffs[model_key] = {
@@ -403,11 +417,15 @@ class LoRALoader:
                     param.data += lora_delta
                     applied_count += 1
                 else:
-                    logger.warning(f"Unexpected LoRA shape for {model_key}: down={lora_down.shape}, up={lora_up.shape}")
+                    logger.warning(
+                        f"Unexpected LoRA shape for {model_key}: down={lora_down.shape}, up={lora_up.shape}"
+                    )
 
             except Exception as e:
                 logger.warning(f"Failed to apply LoRA pair for {model_key}: {e}")
-                logger.warning(f"  Shapes - param: {param.shape}, down: {lora_weights[down_key].shape}, up: {lora_weights[up_key].shape}")
+                logger.warning(
+                    f"  Shapes - param: {param.shape}, down: {lora_weights[down_key].shape}, up: {lora_weights[up_key].shape}"
+                )
 
         # Apply diff weights (direct addition)
         for model_key, diff_info in lora_diffs.items():
@@ -424,9 +442,15 @@ class LoRALoader:
             try:
                 lora_diff = lora_weights[diff_key].to(param.device, param.dtype)
                 if alpha is not None:
-                    param.data += lora_diff * alpha * (float(strength) if strength is not None else 1.0)
+                    param.data += (
+                        lora_diff
+                        * alpha
+                        * (float(strength) if strength is not None else 1.0)
+                    )
                 else:
-                    param.data += lora_diff * (float(strength) if strength is not None else 1.0)
+                    param.data += lora_diff * (
+                        float(strength) if strength is not None else 1.0
+                    )
                 applied_count += 1
             except Exception as e:
                 logger.warning(f"Failed to apply LoRA diff for {model_key}: {e}")
@@ -436,17 +460,23 @@ class LoRALoader:
         unused_lora_keys = all_lora_keys - used_lora_keys
 
         if unused_lora_keys:
-            logger.warning(f"Found {len(unused_lora_keys)} unused LoRA weights - this may indicate key mismatch:")
+            logger.warning(
+                f"Found {len(unused_lora_keys)} unused LoRA weights - this may indicate key mismatch:"
+            )
             for key in list(unused_lora_keys)[:10]:  # Show first 10
                 logger.warning(f"  Unused: {key}")
             if len(unused_lora_keys) > 10:
                 logger.warning(f"  ... and {len(unused_lora_keys) - 10} more")
 
-        logger.info(f"Applied {applied_count} LoRA weight adjustments out of {len(lora_pairs) + len(lora_diffs)} possible")
+        logger.info(
+            f"Applied {applied_count} LoRA weight adjustments out of {len(lora_pairs) + len(lora_diffs)} possible"
+        )
 
         if applied_count == 0 and (lora_pairs or lora_diffs):
             logger.error("No LoRA weights were applied! Check for key name mismatches.")
-            logger.info("Model weight keys sample: " + str(list(weight_dict.keys())[:5]))
+            logger.info(
+                "Model weight keys sample: " + str(list(weight_dict.keys())[:5])
+            )
             logger.info("LoRA pairs keys sample: " + str(list(lora_pairs.keys())[:5]))
             logger.info("LoRA diffs keys sample: " + str(list(lora_diffs.keys())[:5]))
 

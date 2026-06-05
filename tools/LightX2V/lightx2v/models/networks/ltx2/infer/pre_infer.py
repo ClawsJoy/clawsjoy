@@ -1,9 +1,12 @@
-from lib.smart_config import smart_config
 import torch
-
-from lightx2v.models.networks.ltx2.infer.module_io import LTX2PreInferModuleOutput, TransformerArgs
+from lightx2v.models.networks.ltx2.infer.module_io import (
+    LTX2PreInferModuleOutput,
+    TransformerArgs,
+)
 from lightx2v.models.networks.ltx2.infer.utils import *
 from lightx2v.utils.envs import *
+
+from lib.smart_config import smart_config
 
 
 class LTX2PreInfer:
@@ -15,24 +18,34 @@ class LTX2PreInfer:
 
     def __init__(self, config):
         self.config = config
-        self.caption_proj_before_connector = self.config.get("caption_proj_before_connector", False)
+        self.caption_proj_before_connector = self.config.get(
+            "caption_proj_before_connector", False
+        )
         self.cross_attention_adaln = self.config.get("cross_attention_adaln", False)
 
         # Video config
         self.num_attention_heads = self.config["num_attention_heads"]
-        self.inner_dim = self.config["num_attention_heads"] * config["attention_head_dim"]
+        self.inner_dim = (
+            self.config["num_attention_heads"] * config["attention_head_dim"]
+        )
         self.positional_embedding_max_pos = [20, 2048, 2048]
 
         # Audio config
-        self.audio_num_attention_heads = self.config.get("audio_num_attention_heads", 32)
+        self.audio_num_attention_heads = self.config.get(
+            "audio_num_attention_heads", 32
+        )
         self.audio_attention_head_dim = self.config.get("audio_attention_head_dim", 64)
-        self.audio_inner_dim = self.audio_num_attention_heads * self.audio_attention_head_dim
+        self.audio_inner_dim = (
+            self.audio_num_attention_heads * self.audio_attention_head_dim
+        )
         self.audio_cross_attention_dim = self.config["audio_cross_attention_dim"]
         self.audio_positional_embedding_max_pos = [config["audio_pos_embed_max_pos"]]
 
         # Common config
         self.timestep_scale_multiplier = self.config["timestep_scale_multiplier"]
-        self.av_ca_timestep_scale_multiplier = self.config["cross_attn_timestep_scale_multiplier"]
+        self.av_ca_timestep_scale_multiplier = self.config[
+            "cross_attn_timestep_scale_multiplier"
+        ]
         self.double_precision_rope = self.config.get("double_precision_rope", False)
 
     def set_scheduler(self, scheduler):
@@ -48,7 +61,11 @@ class LTX2PreInfer:
         x_dtype: torch.dtype,
     ) -> torch.Tensor:
         """Prepare positional embeddings."""
-        freq_grid_generator = generate_freq_grid_np if self.double_precision_rope else generate_freq_grid_pytorch
+        freq_grid_generator = (
+            generate_freq_grid_np
+            if self.double_precision_rope
+            else generate_freq_grid_pytorch
+        )
         pe = precompute_freqs_cis(
             positions,
             dim=inner_dim,
@@ -81,10 +98,16 @@ class LTX2PreInfer:
         v_timestep = v_timesteps * self.timestep_scale_multiplier
         v_timesteps_proj = get_timestep_embedding(v_timestep.flatten()).to(GET_DTYPE())
 
-        v_emb_linear_1_out = weights.adaln_single_emb_timestep_embedder_linear_1.apply(v_timesteps_proj)
+        v_emb_linear_1_out = weights.adaln_single_emb_timestep_embedder_linear_1.apply(
+            v_timesteps_proj
+        )
         v_emb_linear_1_out = torch.nn.functional.silu(v_emb_linear_1_out)
-        v_embedded_timestep = weights.adaln_single_emb_timestep_embedder_linear_2.apply(v_emb_linear_1_out)
-        v_adaln_timestep = weights.adaln_single_linear.apply(torch.nn.functional.silu(v_embedded_timestep))
+        v_embedded_timestep = weights.adaln_single_emb_timestep_embedder_linear_2.apply(
+            v_emb_linear_1_out
+        )
+        v_adaln_timestep = weights.adaln_single_linear.apply(
+            torch.nn.functional.silu(v_embedded_timestep)
+        )
 
         # 3. Caption projection (19B: in DiT; 20B: already done in text encoder when caption_proj_before_connector)
         v_context = v_context.squeeze(0)
@@ -96,13 +119,23 @@ class LTX2PreInfer:
         # 3b. Prompt AdaLN timestep (global sigma) for cross-attention AdaLN — matches ltx_core TransformerArgsPreprocessor
         v_prompt_timestep = None
         if self.cross_attention_adaln:
-            sigma = self.scheduler.sigmas[self.scheduler.step_index].reshape(1).to(device=v_latent.device, dtype=v_latent.dtype)
+            sigma = (
+                self.scheduler.sigmas[self.scheduler.step_index]
+                .reshape(1)
+                .to(device=v_latent.device, dtype=v_latent.dtype)
+            )
             p_scaled = sigma * self.timestep_scale_multiplier
             p_proj = get_timestep_embedding(p_scaled.flatten()).to(GET_DTYPE())
-            p_e1 = weights.prompt_adaln_single_emb_timestep_embedder_linear_1.apply(p_proj)
+            p_e1 = weights.prompt_adaln_single_emb_timestep_embedder_linear_1.apply(
+                p_proj
+            )
             p_e1 = torch.nn.functional.silu(p_e1)
-            p_emb = weights.prompt_adaln_single_emb_timestep_embedder_linear_2.apply(p_e1)
-            v_prompt_timestep = weights.prompt_adaln_single_linear.apply(torch.nn.functional.silu(p_emb))
+            p_emb = weights.prompt_adaln_single_emb_timestep_embedder_linear_2.apply(
+                p_e1
+            )
+            v_prompt_timestep = weights.prompt_adaln_single_linear.apply(
+                torch.nn.functional.silu(p_emb)
+            )
 
         # 4. Positional embeddings
         v_pe = self._prepare_positional_embeddings(
@@ -116,7 +149,9 @@ class LTX2PreInfer:
 
         # 5. Cross-attention positional embeddings
         v_cross_pe = self._prepare_positional_embeddings(
-            positions=v_positions.unsqueeze(0)[:, 0:1, :],  # No unsqueeze, directly slice
+            positions=v_positions.unsqueeze(0)[
+                :, 0:1, :
+            ],  # No unsqueeze, directly slice
             inner_dim=self.audio_cross_attention_dim,
             max_pos=[20],
             use_middle_indices_grid=True,
@@ -127,20 +162,38 @@ class LTX2PreInfer:
         # 6. Cross-attention timestep embeddings — match ltx_core MultiModalTransformerArgsPreprocessor:
         # uses *global* step sigma (broadcast), not one embedding row per video token. Shapes are
         # like [1, 4*D] / [1, D] and broadcast in the block; numerically same as repeating when mask is all-1.
-        sigma_step = self.scheduler.sigmas[self.scheduler.step_index].to(device=v_latent.device, dtype=torch.float32)
+        sigma_step = self.scheduler.sigmas[self.scheduler.step_index].to(
+            device=v_latent.device, dtype=torch.float32
+        )
         cross_scaled = (sigma_step * self.timestep_scale_multiplier).reshape(1)
         v_cross_proj = get_timestep_embedding(cross_scaled).to(GET_DTYPE())
-        v_cross_emb_1 = weights.av_ca_video_scale_shift_adaln_single_emb_linear_1.apply(v_cross_proj)
+        v_cross_emb_1 = weights.av_ca_video_scale_shift_adaln_single_emb_linear_1.apply(
+            v_cross_proj
+        )
         v_cross_emb_1 = torch.nn.functional.silu(v_cross_emb_1)
-        v_cross_emb_2 = weights.av_ca_video_scale_shift_adaln_single_emb_linear_2.apply(v_cross_emb_1)
-        v_cross_scale_shift_timestep = weights.av_ca_video_scale_shift_adaln_single_linear.apply(torch.nn.functional.silu(v_cross_emb_2))
+        v_cross_emb_2 = weights.av_ca_video_scale_shift_adaln_single_emb_linear_2.apply(
+            v_cross_emb_1
+        )
+        v_cross_scale_shift_timestep = (
+            weights.av_ca_video_scale_shift_adaln_single_linear.apply(
+                torch.nn.functional.silu(v_cross_emb_2)
+            )
+        )
 
         # Video cross gate AdaLN
-        v_gate_proj = get_timestep_embedding((cross_scaled * av_ca_factor).reshape(1)).to(GET_DTYPE())
-        v_gate_emb_1 = weights.av_ca_a2v_gate_adaln_single_emb_linear_1.apply(v_gate_proj)
+        v_gate_proj = get_timestep_embedding(
+            (cross_scaled * av_ca_factor).reshape(1)
+        ).to(GET_DTYPE())
+        v_gate_emb_1 = weights.av_ca_a2v_gate_adaln_single_emb_linear_1.apply(
+            v_gate_proj
+        )
         v_gate_emb_1 = torch.nn.functional.silu(v_gate_emb_1)
-        v_gate_emb_2 = weights.av_ca_a2v_gate_adaln_single_emb_linear_2.apply(v_gate_emb_1)
-        v_cross_gate_timestep = weights.av_ca_a2v_gate_adaln_single_linear.apply(torch.nn.functional.silu(v_gate_emb_2))
+        v_gate_emb_2 = weights.av_ca_a2v_gate_adaln_single_emb_linear_2.apply(
+            v_gate_emb_1
+        )
+        v_cross_gate_timestep = weights.av_ca_a2v_gate_adaln_single_linear.apply(
+            torch.nn.functional.silu(v_gate_emb_2)
+        )
 
         # Return TransformerArgs structure
         return TransformerArgs(
@@ -174,10 +227,20 @@ class LTX2PreInfer:
         a_timestep = a_timesteps * self.timestep_scale_multiplier
         a_timesteps_proj = get_timestep_embedding(a_timestep.flatten()).to(GET_DTYPE())
 
-        a_emb_linear_1_out = weights.audio_adaln_single_emb_timestep_embedder_linear_1.apply(a_timesteps_proj)
+        a_emb_linear_1_out = (
+            weights.audio_adaln_single_emb_timestep_embedder_linear_1.apply(
+                a_timesteps_proj
+            )
+        )
         a_emb_linear_1_out = torch.nn.functional.silu(a_emb_linear_1_out)
-        a_embedded_timestep = weights.audio_adaln_single_emb_timestep_embedder_linear_2.apply(a_emb_linear_1_out)
-        a_adaln_timestep = weights.audio_adaln_single_linear.apply(torch.nn.functional.silu(a_embedded_timestep))
+        a_embedded_timestep = (
+            weights.audio_adaln_single_emb_timestep_embedder_linear_2.apply(
+                a_emb_linear_1_out
+            )
+        )
+        a_adaln_timestep = weights.audio_adaln_single_linear.apply(
+            torch.nn.functional.silu(a_embedded_timestep)
+        )
 
         # 3. Audio caption projection
         a_context = a_context.squeeze(0)
@@ -188,13 +251,27 @@ class LTX2PreInfer:
 
         a_prompt_timestep = None
         if self.cross_attention_adaln:
-            sigma = self.scheduler.sigmas[self.scheduler.step_index].reshape(1).to(device=a_latent.device, dtype=a_latent.dtype)
+            sigma = (
+                self.scheduler.sigmas[self.scheduler.step_index]
+                .reshape(1)
+                .to(device=a_latent.device, dtype=a_latent.dtype)
+            )
             p_scaled = sigma * self.timestep_scale_multiplier
             p_proj = get_timestep_embedding(p_scaled.flatten()).to(GET_DTYPE())
-            p_e1 = weights.audio_prompt_adaln_single_emb_timestep_embedder_linear_1.apply(p_proj)
+            p_e1 = (
+                weights.audio_prompt_adaln_single_emb_timestep_embedder_linear_1.apply(
+                    p_proj
+                )
+            )
             p_e1 = torch.nn.functional.silu(p_e1)
-            p_emb = weights.audio_prompt_adaln_single_emb_timestep_embedder_linear_2.apply(p_e1)
-            a_prompt_timestep = weights.audio_prompt_adaln_single_linear.apply(torch.nn.functional.silu(p_emb))
+            p_emb = (
+                weights.audio_prompt_adaln_single_emb_timestep_embedder_linear_2.apply(
+                    p_e1
+                )
+            )
+            a_prompt_timestep = weights.audio_prompt_adaln_single_linear.apply(
+                torch.nn.functional.silu(p_emb)
+            )
 
         # 4. Audio positional embeddings
         # Note: audio positions already have batch dim [B, 1, T, 2], unlike video [3, num_patches, 2]
@@ -218,20 +295,38 @@ class LTX2PreInfer:
         )
 
         # 6. Audio cross-attention timestep — same global sigma as video (ltx pipeline passes same sigma)
-        sigma_step = self.scheduler.sigmas[self.scheduler.step_index].to(device=a_latent.device, dtype=torch.float32)
+        sigma_step = self.scheduler.sigmas[self.scheduler.step_index].to(
+            device=a_latent.device, dtype=torch.float32
+        )
         cross_scaled = (sigma_step * self.timestep_scale_multiplier).reshape(1)
         a_cross_proj = get_timestep_embedding(cross_scaled).to(GET_DTYPE())
-        a_cross_emb_1 = weights.av_ca_audio_scale_shift_adaln_single_emb_linear_1.apply(a_cross_proj)
+        a_cross_emb_1 = weights.av_ca_audio_scale_shift_adaln_single_emb_linear_1.apply(
+            a_cross_proj
+        )
         a_cross_emb_1 = torch.nn.functional.silu(a_cross_emb_1)
-        a_cross_emb_2 = weights.av_ca_audio_scale_shift_adaln_single_emb_linear_2.apply(a_cross_emb_1)
-        a_cross_scale_shift_timestep = weights.av_ca_audio_scale_shift_adaln_single_linear.apply(torch.nn.functional.silu(a_cross_emb_2))
+        a_cross_emb_2 = weights.av_ca_audio_scale_shift_adaln_single_emb_linear_2.apply(
+            a_cross_emb_1
+        )
+        a_cross_scale_shift_timestep = (
+            weights.av_ca_audio_scale_shift_adaln_single_linear.apply(
+                torch.nn.functional.silu(a_cross_emb_2)
+            )
+        )
 
         # Audio cross gate AdaLN
-        a_gate_proj = get_timestep_embedding((cross_scaled * av_ca_factor).reshape(1)).to(GET_DTYPE())
-        a_gate_emb_1 = weights.av_ca_v2a_gate_adaln_single_emb_linear_1.apply(a_gate_proj)
+        a_gate_proj = get_timestep_embedding(
+            (cross_scaled * av_ca_factor).reshape(1)
+        ).to(GET_DTYPE())
+        a_gate_emb_1 = weights.av_ca_v2a_gate_adaln_single_emb_linear_1.apply(
+            a_gate_proj
+        )
         a_gate_emb_1 = torch.nn.functional.silu(a_gate_emb_1)
-        a_gate_emb_2 = weights.av_ca_v2a_gate_adaln_single_emb_linear_2.apply(a_gate_emb_1)
-        a_cross_gate_timestep = weights.av_ca_v2a_gate_adaln_single_linear.apply(torch.nn.functional.silu(a_gate_emb_2))
+        a_gate_emb_2 = weights.av_ca_v2a_gate_adaln_single_emb_linear_2.apply(
+            a_gate_emb_1
+        )
+        a_cross_gate_timestep = weights.av_ca_v2a_gate_adaln_single_linear.apply(
+            torch.nn.functional.silu(a_gate_emb_2)
+        )
         # Return TransformerArgs structure
         return TransformerArgs(
             x=audio_x,
@@ -250,7 +345,9 @@ class LTX2PreInfer:
     def infer(self, weights, inputs):
         """Main inference entry point."""
         # Calculate AV cross-attention factor (used by both video and audio)
-        av_ca_factor = self.av_ca_timestep_scale_multiplier / self.timestep_scale_multiplier
+        av_ca_factor = (
+            self.av_ca_timestep_scale_multiplier / self.timestep_scale_multiplier
+        )
 
         # Process video and audio modalities
         video_args = self._infer_video(weights, inputs, av_ca_factor)

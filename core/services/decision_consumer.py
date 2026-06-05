@@ -3,17 +3,19 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
-import threading
-import time
 import json
 import shutil
-import requests
-from pathlib import Path
+import threading
+import time
 from datetime import datetime
+from pathlib import Path
+
+import requests
+
 from core.lib.unified_config import unified_config
 
 
@@ -42,12 +44,16 @@ class DecisionConsumer:
         """主动推送结果"""
         try:
             from core.services.sse_service import sse_service
-            sse_service.push(user_id, {
-                "type": "task_completed",
-                "task_id": task_id,
-                "response": response,
-                "timestamp": datetime.now().isoformat()
-            })
+
+            sse_service.push(
+                user_id,
+                {
+                    "type": "task_completed",
+                    "task_id": task_id,
+                    "response": response,
+                    "timestamp": datetime.now().isoformat(),
+                },
+            )
             print(f"📡 主动推送: user={user_id}, response={response[:50]}")
         except Exception as e:
             print(f"推送失败: {e}")
@@ -64,7 +70,7 @@ class DecisionConsumer:
 
         task_file = task_files[0]
         try:
-            with open(task_file, 'r') as f:
+            with open(task_file, "r") as f:
                 task = json.load(f)
         except Exception as e:
             print(f"读取失败: {e}")
@@ -84,13 +90,17 @@ class DecisionConsumer:
         try:
             gateway_host = unified_config.get("services.gateway.host", "localhost")
             gateway_port = unified_config.get("services.gateway.port", 5002)
-            url = f"http://{gateway_host}:{gateway_port}/api/agent/decision_agent/message"
-            resp = requests.post(
-                url,
-                json={"message": message, "user_id": user_id},
-                timeout=30
+            url = (
+                f"http://{gateway_host}:{gateway_port}/api/agent/decision_agent/message"
             )
-            result = resp.json() if resp.status_code == 200 else {"error": f"HTTP {resp.status_code}"}
+            resp = requests.post(
+                url, json={"message": message, "user_id": user_id}, timeout=30
+            )
+            result = (
+                resp.json()
+                if resp.status_code == 200
+                else {"error": f"HTTP {resp.status_code}"}
+            )
         except Exception as e:
             result = {"error": str(e)}
 
@@ -103,11 +113,11 @@ class DecisionConsumer:
             "to": "butler",
             "response": response_text,
             "user_id": user_id,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         response_path = self.response_dir / f"resp_{task_file.stem}.json"
-        with open(response_path, 'w') as f:
+        with open(response_path, "w") as f:
             json.dump(response_task, f, indent=2)
 
         # 主动推送

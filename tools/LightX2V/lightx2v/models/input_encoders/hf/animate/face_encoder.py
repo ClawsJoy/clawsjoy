@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 # Copyright 2024-2025 The Alibaba Wan Team Authors. All rights reserved.
 import math
 
@@ -6,6 +5,8 @@ import torch
 import torch.nn.functional as F
 from einops import rearrange
 from torch import nn
+
+from lib.smart_config import smart_config
 
 try:
     from flash_attn import flash_attn_func, flash_attn_qkvpacked_func  # noqa: F401
@@ -66,7 +67,9 @@ def attention(
     if mode == "torch":
         if attn_mask is not None and attn_mask.dtype != torch.bool:
             attn_mask = attn_mask.to(q.dtype)
-        x = F.scaled_dot_product_attention(q, k, v, attn_mask=attn_mask, dropout_p=drop_rate, is_causal=causal)
+        x = F.scaled_dot_product_attention(
+            q, k, v, attn_mask=attn_mask, dropout_p=drop_rate, is_causal=causal
+        )
 
     elif mode == "flash":
         x = flash_attn_func(
@@ -74,7 +77,9 @@ def attention(
             k,
             v,
         )
-        x = x.view(batch_size, max_seqlen_q, x.shape[-2], x.shape[-1])  # reshape x to [b, s, a, d]
+        x = x.view(
+            batch_size, max_seqlen_q, x.shape[-2], x.shape[-1]
+        )  # reshape x to [b, s, a, d]
     elif mode == "vanilla":
         scale_factor = 1 / math.sqrt(q.size(-1))
 
@@ -83,8 +88,12 @@ def attention(
         attn_bias = torch.zeros(b, a, s, s1, dtype=q.dtype, device=q.device)
         if causal:
             # Only applied to self attention
-            assert attn_mask is None, "Causal mask and attn_mask cannot be used together"
-            temp_mask = torch.ones(b, a, s, s, dtype=torch.bool, device=q.device).tril(diagonal=0)
+            assert (
+                attn_mask is None
+            ), "Causal mask and attn_mask cannot be used together"
+            temp_mask = torch.ones(b, a, s, s, dtype=torch.bool, device=q.device).tril(
+                diagonal=0
+            )
             attn_bias.masked_fill_(temp_mask.logical_not(), float("-inf"))
             attn_bias.to(q.dtype)
 
@@ -109,14 +118,25 @@ def attention(
 
 
 class CausalConv1d(nn.Module):
-    def __init__(self, chan_in, chan_out, kernel_size=3, stride=1, dilation=1, pad_mode="replicate", **kwargs):
+    def __init__(
+        self,
+        chan_in,
+        chan_out,
+        kernel_size=3,
+        stride=1,
+        dilation=1,
+        pad_mode="replicate",
+        **kwargs,
+    ):
         super().__init__()
 
         self.pad_mode = pad_mode
         padding = (kernel_size - 1, 0)  # T
         self.time_causal_padding = padding
 
-        self.conv = nn.Conv1d(chan_in, chan_out, kernel_size, stride=stride, dilation=dilation, **kwargs)
+        self.conv = nn.Conv1d(
+            chan_in, chan_out, kernel_size, stride=stride, dilation=dilation, **kwargs
+        )
 
     def forward(self, x):
         x = F.pad(x, self.time_causal_padding, mode=self.pad_mode)
@@ -124,23 +144,33 @@ class CausalConv1d(nn.Module):
 
 
 class FaceEncoder(nn.Module):
-    def __init__(self, in_dim: int, hidden_dim: int, num_heads=int, dtype=None, device=None):
+    def __init__(
+        self, in_dim: int, hidden_dim: int, num_heads=int, dtype=None, device=None
+    ):
         factory_kwargs = {"dtype": dtype, "device": device}
         super().__init__()
 
         self.num_heads = num_heads
         self.conv1_local = CausalConv1d(in_dim, 1024 * num_heads, 3, stride=1)
-        self.norm1 = nn.LayerNorm(hidden_dim // 8, elementwise_affine=False, eps=1e-6, **factory_kwargs)
+        self.norm1 = nn.LayerNorm(
+            hidden_dim // 8, elementwise_affine=False, eps=1e-6, **factory_kwargs
+        )
         self.act = nn.SiLU()
         self.conv2 = CausalConv1d(1024, 1024, 3, stride=2)
         self.conv3 = CausalConv1d(1024, 1024, 3, stride=2)
 
         self.out_proj = nn.Linear(1024, hidden_dim)
-        self.norm1 = nn.LayerNorm(1024, elementwise_affine=False, eps=1e-6, **factory_kwargs)
+        self.norm1 = nn.LayerNorm(
+            1024, elementwise_affine=False, eps=1e-6, **factory_kwargs
+        )
 
-        self.norm2 = nn.LayerNorm(1024, elementwise_affine=False, eps=1e-6, **factory_kwargs)
+        self.norm2 = nn.LayerNorm(
+            1024, elementwise_affine=False, eps=1e-6, **factory_kwargs
+        )
 
-        self.norm3 = nn.LayerNorm(1024, elementwise_affine=False, eps=1e-6, **factory_kwargs)
+        self.norm3 = nn.LayerNorm(
+            1024, elementwise_affine=False, eps=1e-6, **factory_kwargs
+        )
 
         self.padding_tokens = nn.Parameter(torch.zeros(1, 1, 1, hidden_dim))
 

@@ -1,7 +1,13 @@
 from lib.smart_config import smart_config
+
 """Audio VAE model components."""
 
-from lightx2v.models.video_encoders.hf.ltx2.audio_vae.audio_vae import AudioDecoder, AudioEncoder, decode_audio, encode_audio
+from lightx2v.models.video_encoders.hf.ltx2.audio_vae.audio_vae import (
+    AudioDecoder,
+    AudioEncoder,
+    decode_audio,
+    encode_audio,
+)
 from lightx2v.models.video_encoders.hf.ltx2.audio_vae.model_configurator import (
     AUDIO_VAE_DECODER_COMFY_KEYS_FILTER,
     AUDIO_VAE_ENCODER_COMFY_KEYS_FILTER,
@@ -11,7 +17,10 @@ from lightx2v.models.video_encoders.hf.ltx2.audio_vae.model_configurator import 
     VocoderConfigurator,
 )
 from lightx2v.models.video_encoders.hf.ltx2.audio_vae.ops import AudioProcessor
-from lightx2v.models.video_encoders.hf.ltx2.audio_vae.vocoder import Vocoder, VocoderWithBWE
+from lightx2v.models.video_encoders.hf.ltx2.audio_vae.vocoder import (
+    Vocoder,
+    VocoderWithBWE,
+)
 
 __all__ = [
     "AUDIO_VAE_DECODER_COMFY_KEYS_FILTER",

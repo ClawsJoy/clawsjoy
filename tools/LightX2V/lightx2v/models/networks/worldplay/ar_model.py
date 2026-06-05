@@ -1,20 +1,24 @@
-from lib.smart_config import smart_config
 import glob
 import os
 
 import torch
 import torch.distributed as dist
 import torch.nn.functional as F
-from loguru import logger
-
 from lightx2v.models.networks.hunyuan_video.model import HunyuanVideo15Model
 from lightx2v.models.networks.worldplay.infer.ar_pre_infer import WorldPlayARPreInfer
-from lightx2v.models.networks.worldplay.infer.ar_transformer_infer import WorldPlayARTransformerInfer
+from lightx2v.models.networks.worldplay.infer.ar_transformer_infer import (
+    WorldPlayARTransformerInfer,
+)
 from lightx2v.models.networks.worldplay.infer.post_infer import WorldPlayPostInfer
 from lightx2v.models.networks.worldplay.weights.post_weights import WorldPlayPostWeights
 from lightx2v.models.networks.worldplay.weights.pre_weights import WorldPlayPreWeights
-from lightx2v.models.networks.worldplay.weights.transformer_weights import WorldPlayTransformerWeights
+from lightx2v.models.networks.worldplay.weights.transformer_weights import (
+    WorldPlayTransformerWeights,
+)
 from lightx2v.utils.envs import *
+from loguru import logger
+
+from lib.smart_config import smart_config
 
 
 class WorldPlayARModel(HunyuanVideo15Model):
@@ -46,7 +50,9 @@ class WorldPlayARModel(HunyuanVideo15Model):
         if self.config["feature_caching"] == "NoCaching":
             self.transformer_infer_class = WorldPlayARTransformerInfer
         else:
-            raise NotImplementedError(f"Feature caching {self.config['feature_caching']} not supported for AR model. AR model requires NoCaching due to KV cache management.")
+            raise NotImplementedError(
+                f"Feature caching {self.config['feature_caching']} not supported for AR model. AR model requires NoCaching due to KV cache management."
+            )
 
     def _init_weights(self):
         """Initialize weights including action conditioning weights."""
@@ -81,7 +87,9 @@ class WorldPlayARModel(HunyuanVideo15Model):
         weight_dict = {}
         for file_path in safetensors_files:
             logger.info(f"Loading action weights from {file_path}")
-            file_weights = self._load_safetensor_to_dict(file_path, unified_dtype, sensitive_layer)
+            file_weights = self._load_safetensor_to_dict(
+                file_path, unified_dtype, sensitive_layer
+            )
             weight_dict.update(file_weights)
 
         return weight_dict
@@ -91,7 +99,9 @@ class WorldPlayARModel(HunyuanVideo15Model):
         super()._init_infer()
 
         # Connect action weights to transformer for ProPE projection
-        if hasattr(self.pre_weight, "action_weights") and hasattr(self.transformer_infer, "set_action_weights"):
+        if hasattr(self.pre_weight, "action_weights") and hasattr(
+            self.transformer_infer, "set_action_weights"
+        ):
             self.transformer_infer.set_action_weights(self.pre_weight.action_weights)
 
     def set_scheduler(self, scheduler):
@@ -133,7 +143,10 @@ class WorldPlayARModel(HunyuanVideo15Model):
             KV cache reference
         """
         # Initialize KV cache if not already done
-        if not hasattr(self.transformer_infer, "_kv_cache") or self.transformer_infer._kv_cache is None:
+        if (
+            not hasattr(self.transformer_infer, "_kv_cache")
+            or self.transformer_infer._kv_cache is None
+        ):
             self.init_kv_cache()
 
         if self.cpu_offload and self.offload_granularity != "model":
@@ -144,7 +157,9 @@ class WorldPlayARModel(HunyuanVideo15Model):
         infer_module_out = self.pre_infer.infer_txt_only(self.pre_weight, inputs)
 
         # Cache text KV
-        result = self.transformer_infer.infer_txt(self.transformer_weights, infer_module_out, cache_txt=cache_txt)
+        result = self.transformer_infer.infer_txt(
+            self.transformer_weights, infer_module_out, cache_txt=cache_txt
+        )
 
         if self.cpu_offload and self.offload_granularity != "model":
             self.pre_weight.to_cpu()
@@ -192,7 +207,9 @@ class WorldPlayARModel(HunyuanVideo15Model):
             self.scheduler.cos_sin = infer_module_out.cos_sin
 
         # Vision inference with KV cache
-        output = self.transformer_infer.infer_vision(self.transformer_weights, infer_module_out, cache_vision=cache_vision)
+        output = self.transformer_infer.infer_vision(
+            self.transformer_weights, infer_module_out, cache_vision=cache_vision
+        )
 
         if self.cpu_offload and self.offload_granularity != "model":
             self.pre_weight.to_cpu()
@@ -250,10 +267,15 @@ class WorldPlayARModel(HunyuanVideo15Model):
         pre_infer_out.img = torch.chunk(pre_infer_out.img, world_size, dim=1)[cur_rank]
 
         # Split per-token vec
-        if getattr(self.scheduler, "vec_is_per_token", False) and pre_infer_out.vec.dim() == 3:
+        if (
+            getattr(self.scheduler, "vec_is_per_token", False)
+            and pre_infer_out.vec.dim() == 3
+        ):
             if padding_size > 0:
                 pre_infer_out.vec = F.pad(pre_infer_out.vec, (0, 0, 0, padding_size))
-            pre_infer_out.vec = torch.chunk(pre_infer_out.vec, world_size, dim=1)[cur_rank]
+            pre_infer_out.vec = torch.chunk(pre_infer_out.vec, world_size, dim=1)[
+                cur_rank
+            ]
 
         # Split cos_sin
         if pre_infer_out.cos_sin is not None:
@@ -261,7 +283,9 @@ class WorldPlayARModel(HunyuanVideo15Model):
             cs_pad = (world_size - (cs_len % world_size)) % world_size
             if cs_pad > 0:
                 pre_infer_out.cos_sin = F.pad(pre_infer_out.cos_sin, (0, 0, 0, cs_pad))
-            pre_infer_out.cos_sin = torch.chunk(pre_infer_out.cos_sin, world_size, dim=0)[cur_rank]
+            pre_infer_out.cos_sin = torch.chunk(
+                pre_infer_out.cos_sin, world_size, dim=0
+            )[cur_rank]
 
         return pre_infer_out
 

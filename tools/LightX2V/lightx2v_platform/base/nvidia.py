@@ -1,8 +1,8 @@
-from lib.smart_config import smart_config
 import torch
 import torch.distributed as dist
-
 from lightx2v_platform.registry_factory import PLATFORM_DEVICE_REGISTER
+
+from lib.smart_config import smart_config
 
 try:
     from torch.distributed import ProcessGroupNCCL
@@ -34,7 +34,9 @@ class CudaDevice:
     @staticmethod
     def init_parallel_env():
         if ProcessGroupNCCL is None:
-            raise RuntimeError("ProcessGroupNCCL is not available. Please check your runtime environment.")
+            raise RuntimeError(
+                "ProcessGroupNCCL is not available. Please check your runtime environment."
+            )
         pg_options = ProcessGroupNCCL.Options()
         pg_options.is_high_priority_stream = True
         dist.init_process_group(backend="nccl", pg_options=pg_options)

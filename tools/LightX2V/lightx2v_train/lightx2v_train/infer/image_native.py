@@ -1,9 +1,9 @@
-from lib.smart_config import smart_config
 from pathlib import Path
 
 import torch
-
 from lightx2v_train.utils.registry import INFERENCER_REGISTER
+
+from lib.smart_config import smart_config
 
 from .base import BaseInferencer
 
@@ -14,7 +14,9 @@ class NativeImageInferencer(BaseInferencer):
     def infer(self):
         prompts = [sample["prompt"] for sample in self.dataloader_eval.dataset.samples]
         enable_cfg = self.infer_config.get("enable_cfg", False)
-        negative_prompt = self.infer_config.get("negative_prompt", " ") if enable_cfg else None
+        negative_prompt = (
+            self.infer_config.get("negative_prompt", " ") if enable_cfg else None
+        )
         base_seed = self.infer_config.get("seed", 42)
 
         # Model-specific kwargs (e.g. QwenImage uses `true_cfg_scale` instead of `guidance_scale`)
@@ -32,7 +34,9 @@ class NativeImageInferencer(BaseInferencer):
         self.model.transformer.eval()
         with torch.no_grad():
             for i, prompt in enumerate(prompts):
-                generator = torch.Generator(device=self.model.device).manual_seed(base_seed + i)
+                generator = torch.Generator(device=self.model.device).manual_seed(
+                    base_seed + i
+                )
                 result = pipe(
                     prompt=prompt,
                     negative_prompt=negative_prompt,

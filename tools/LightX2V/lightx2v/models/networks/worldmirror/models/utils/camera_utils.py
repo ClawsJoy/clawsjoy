@@ -1,5 +1,6 @@
-from lib.smart_config import smart_config
 import torch
+
+from lib.smart_config import smart_config
 
 from .rotation import quat_to_rotmat, rotmat_to_quat
 
@@ -15,7 +16,20 @@ def camera_params_to_vector(ext, intr, image_hw=None):
     h, w = image_hw
     fov_v = 2.0 * torch.atan(h * 0.5 / intr[..., 1, 1])  # Vertical FOV
     fov_u = 2.0 * torch.atan(w * 0.5 / intr[..., 0, 0])  # Horizontal FOV
-    vec = torch.stack([t[..., 0], t[..., 1], t[..., 2], q[..., 0], q[..., 1], q[..., 2], q[..., 3], fov_v, fov_u], dim=-1).float()
+    vec = torch.stack(
+        [
+            t[..., 0],
+            t[..., 1],
+            t[..., 2],
+            q[..., 0],
+            q[..., 1],
+            q[..., 2],
+            q[..., 3],
+            fov_v,
+            fov_u,
+        ],
+        dim=-1,
+    ).float()
     return vec
 
 
@@ -25,7 +39,10 @@ def extrinsics_to_vector(ext):
     R = ext[..., :3, :3]
     t = ext[..., :3, 3]
     q = rotmat_to_quat(R)
-    vec = torch.stack([t[..., 0], t[..., 1], t[..., 2], q[..., 0], q[..., 1], q[..., 2], q[..., 3]], dim=-1).float()
+    vec = torch.stack(
+        [t[..., 0], t[..., 1], t[..., 2], q[..., 0], q[..., 1], q[..., 2], q[..., 3]],
+        dim=-1,
+    ).float()
     return vec
 
 

@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import gc
 import os
 
@@ -7,18 +6,26 @@ import requests
 import torch
 import torch.distributed as dist
 import torchvision.transforms.functional as TF
-from PIL import Image
-from loguru import logger
-from requests.exceptions import RequestException
-
 from lightx2v.models.runners.base_runner import BaseRunner
 from lightx2v.server.metrics import monitor_cli
 from lightx2v.utils.envs import *
 from lightx2v.utils.generate_task_id import generate_task_id
 from lightx2v.utils.global_paras import CALIB
 from lightx2v.utils.profiler import *
-from lightx2v.utils.utils import get_optimal_patched_size_with_sp, isotropic_crop_resize, mux_audio_from_video, save_to_image, save_to_video, wan_vae_to_comfy
+from lightx2v.utils.utils import (
+    get_optimal_patched_size_with_sp,
+    isotropic_crop_resize,
+    mux_audio_from_video,
+    save_to_image,
+    save_to_video,
+    wan_vae_to_comfy,
+)
 from lightx2v_platform.base.global_var import AI_DEVICE
+from loguru import logger
+from PIL import Image
+from requests.exceptions import RequestException
+
+from lib.smart_config import smart_config
 
 torch_device_module = getattr(torch, AI_DEVICE)
 
@@ -50,7 +57,9 @@ def resize_image(img, resolution, bucket_shape=None):
         target_h, target_w = bucket_config[closet_ratio][2]
 
     cropped_img = isotropic_crop_resize(img, (target_h, target_w))
-    logger.info(f"resize_image: {img.shape} -> {cropped_img.shape}, target_h: {target_h}, target_w: {target_w}")
+    logger.info(
+        f"resize_image: {img.shape} -> {cropped_img.shape}, target_h: {target_h}, target_w: {target_w}"
+    )
     return cropped_img, target_h, target_w
 
 
@@ -59,11 +68,16 @@ class DefaultRunner(BaseRunner):
         super().__init__(config)
         self.has_prompt_enhancer = False
         self.progress_callback = None
-        if self.config["task"] == "t2v" and self.config.get("sub_servers", {}).get("prompt_enhancer") is not None:
+        if (
+            self.config["task"] == "t2v"
+            and self.config.get("sub_servers", {}).get("prompt_enhancer") is not None
+        ):
             self.has_prompt_enhancer = True
             if not self.check_sub_servers("prompt_enhancer"):
                 self.has_prompt_enhancer = False
-                logger.warning("No prompt enhancer server available, disable prompt enhancer.")
+                logger.warning(
+                    "No prompt enhancer server available, disable prompt enhancer."
+                )
         if not self.has_prompt_enhancer:
             self.config["use_prompt_enhancer"] = False
         self.set_init_device()
@@ -71,7 +85,9 @@ class DefaultRunner(BaseRunner):
 
     def init_modules(self):
         logger.info("Initializing runner modules...")
-        if not self.config.get("lazy_load", False) and not self.config.get("unload_modules", False):
+        if not self.config.get("lazy_load", False) and not self.config.get(
+            "unload_modules", False
+        ):
             self.load_model()
         elif self.config.get("lazy_load", False):
             assert self.config.get("cpu_offload", False)
@@ -97,7 +113,9 @@ class DefaultRunner(BaseRunner):
             self.run_input_encoder = self._run_input_encoder_local_sr
         self.config.lock()  # lock config to avoid modification
         if self.config.get("compile", False) and hasattr(self.model, "compile"):
-            logger.info(f"[Compile] Compile all shapes: {self.config.get('compile_shapes', [])}")
+            logger.info(
+                f"[Compile] Compile all shapes: {self.config.get('compile_shapes', [])}"
+            )
             self.model.compile(self.config.get("compile_shapes", []))
 
     def set_init_device(self):
@@ -113,7 +131,9 @@ class DefaultRunner(BaseRunner):
             logger.info("Loading RIFE model...")
             return RIFEWrapper(self.config["video_frame_interpolation"]["model_path"])
         else:
-            raise ValueError(f"Unsupported VFI model: {self.config['video_frame_interpolation']['algo']}")
+            raise ValueError(
+                f"Unsupported VFI model: {self.config['video_frame_interpolation']['algo']}"
+            )
 
     def load_vsr_model(self):
         if "video_super_resolution" in self.config:
@@ -130,8 +150,14 @@ class DefaultRunner(BaseRunner):
         self.text_encoders = self.load_text_encoder()
         self.image_encoder = self.load_image_encoder()
         self.vae_encoder, self.vae_decoder = self.load_vae()
-        self.vfi_model = self.load_vfi_model() if "video_frame_interpolation" in self.config else None
-        self.vsr_model = self.load_vsr_model() if "video_super_resolution" in self.config else None
+        self.vfi_model = (
+            self.load_vfi_model()
+            if "video_frame_interpolation" in self.config
+            else None
+        )
+        self.vsr_model = (
+            self.load_vsr_model() if "video_super_resolution" in self.config else None
+        )
 
     def check_sub_servers(self, task_type):
         urls = self.config.get("sub_servers", {}).get(task_type, [])
@@ -143,7 +169,9 @@ class DefaultRunner(BaseRunner):
                 if response.status_code == 200:
                     available_servers.append(url)
                 else:
-                    logger.warning(f"Service {url} returned status code {response.status_code}")
+                    logger.warning(
+                        f"Service {url} returned status code {response.status_code}"
+                    )
 
             except RequestException as e:
                 logger.warning(f"Failed to connect to {url}: {str(e)}")
@@ -226,8 +254,12 @@ class DefaultRunner(BaseRunner):
         if hasattr(self, "inputs"):
             del self.inputs
         self.input_info = None
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
-            if hasattr(self.model, "model") and len(self.model.model) == 2:  # MultiModelStruct
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
+            if (
+                hasattr(self.model, "model") and len(self.model.model) == 2
+            ):  # MultiModelStruct
                 for model in self.model.model:
                     if hasattr(model.transformer_infer, "offload_manager"):
                         del model.transformer_infer.offload_manager
@@ -256,45 +288,80 @@ class DefaultRunner(BaseRunner):
         if GET_RECORDER_MODE():
             width, height = img_ori.size
             monitor_cli.lightx2v_input_image_len.observe(width * height)
-        img = TF.to_tensor(img_ori).sub_(0.5).div_(0.5).unsqueeze(0).to(self.init_device)
+        img = (
+            TF.to_tensor(img_ori).sub_(0.5).div_(0.5).unsqueeze(0).to(self.init_device)
+        )
         self.input_info.original_size = img_ori.size
 
         if self.config.get("resize_mode", None) == "adaptive":
-            img, h, w = resize_image(img, self.config.get("resolution", "480p"), self.config.get("bucket_shape", None))
+            img, h, w = resize_image(
+                img,
+                self.config.get("resolution", "480p"),
+                self.config.get("bucket_shape", None),
+            )
             logger.info(f"resize_image target_h: {h}, target_w: {w}")
-            patched_h = h // self.config["vae_stride"][1] // self.config["patch_size"][1]
-            patched_w = w // self.config["vae_stride"][2] // self.config["patch_size"][2]
+            patched_h = (
+                h // self.config["vae_stride"][1] // self.config["patch_size"][1]
+            )
+            patched_w = (
+                w // self.config["vae_stride"][2] // self.config["patch_size"][2]
+            )
 
-            patched_h, patched_w = get_optimal_patched_size_with_sp(patched_h, patched_w, 1)
+            patched_h, patched_w = get_optimal_patched_size_with_sp(
+                patched_h, patched_w, 1
+            )
 
             latent_h = patched_h * self.config["patch_size"][1]
             latent_w = patched_w * self.config["patch_size"][2]
 
             latent_shape = self.get_latent_shape_with_lat_hw(latent_h, latent_w)
-            target_shape = [latent_h * self.config["vae_stride"][1], latent_w * self.config["vae_stride"][2]]
+            target_shape = [
+                latent_h * self.config["vae_stride"][1],
+                latent_w * self.config["vae_stride"][2],
+            ]
 
-            logger.info(f"target_h: {target_shape[0]}, target_w: {target_shape[1]}, latent_h: {latent_h}, latent_w: {latent_w}")
+            logger.info(
+                f"target_h: {target_shape[0]}, target_w: {target_shape[1]}, latent_h: {latent_h}, latent_w: {latent_w}"
+            )
 
-            img = torch.nn.functional.interpolate(img, size=(target_shape[0], target_shape[1]), mode="bicubic")
-            self.input_info.latent_shape = latent_shape  # Important: set latent_shape in input_info
-            self.input_info.target_shape = target_shape  # Important: set target_shape in input_info
+            img = torch.nn.functional.interpolate(
+                img, size=(target_shape[0], target_shape[1]), mode="bicubic"
+            )
+            self.input_info.latent_shape = (
+                latent_shape  # Important: set latent_shape in input_info
+            )
+            self.input_info.target_shape = (
+                target_shape  # Important: set target_shape in input_info
+            )
 
         return img, img_ori
 
     @ProfilingContext4DebugL2("Run Encoders")
     def _run_input_encoder_local_i2v(self):
         img, img_ori = self.read_image_input(self.input_info.image_path)
-        clip_encoder_out = self.run_image_encoder(img) if self.config.get("use_image_encoder", True) else None
-        vae_encode_out, latent_shape = self.run_vae_encoder(img_ori if self.vae_encoder_need_img_original else img)
-        self.input_info.latent_shape = latent_shape  # Important: set latent_shape in input_info
+        clip_encoder_out = (
+            self.run_image_encoder(img)
+            if self.config.get("use_image_encoder", True)
+            else None
+        )
+        vae_encode_out, latent_shape = self.run_vae_encoder(
+            img_ori if self.vae_encoder_need_img_original else img
+        )
+        self.input_info.latent_shape = (
+            latent_shape  # Important: set latent_shape in input_info
+        )
         text_encoder_output = self.run_text_encoder(self.input_info)
         torch_device_module.empty_cache()
         gc.collect()
-        return self.get_encoder_output_i2v(clip_encoder_out, vae_encode_out, text_encoder_output, img)
+        return self.get_encoder_output_i2v(
+            clip_encoder_out, vae_encode_out, text_encoder_output, img
+        )
 
     @ProfilingContext4DebugL2("Run Encoders")
     def _run_input_encoder_local_t2v(self):
-        self.input_info.latent_shape = self.get_latent_shape_with_target_hw()  # Important: set latent_shape in input_info
+        self.input_info.latent_shape = (
+            self.get_latent_shape_with_target_hw()
+        )  # Important: set latent_shape in input_info
         text_encoder_output = self.run_text_encoder(self.input_info)
         torch_device_module.empty_cache()
         gc.collect()
@@ -307,13 +374,21 @@ class DefaultRunner(BaseRunner):
     def _run_input_encoder_local_flf2v(self):
         first_frame, _ = self.read_image_input(self.input_info.image_path)
         last_frame, _ = self.read_image_input(self.input_info.last_frame_path)
-        clip_encoder_out = self.run_image_encoder(first_frame, last_frame) if self.config.get("use_image_encoder", True) else None
+        clip_encoder_out = (
+            self.run_image_encoder(first_frame, last_frame)
+            if self.config.get("use_image_encoder", True)
+            else None
+        )
         vae_encode_out, latent_shape = self.run_vae_encoder(first_frame, last_frame)
-        self.input_info.latent_shape = latent_shape  # Important: set latent_shape in input_info
+        self.input_info.latent_shape = (
+            latent_shape  # Important: set latent_shape in input_info
+        )
         text_encoder_output = self.run_text_encoder(self.input_info)
         torch_device_module.empty_cache()
         gc.collect()
-        return self.get_encoder_output_i2v(clip_encoder_out, vae_encode_out, text_encoder_output)
+        return self.get_encoder_output_i2v(
+            clip_encoder_out, vae_encode_out, text_encoder_output
+        )
 
     @ProfilingContext4DebugL2("Run Encoders")
     def _run_input_encoder_local_vace(self):
@@ -328,8 +403,12 @@ class DefaultRunner(BaseRunner):
         )
         self.src_ref_images = src_ref_images
 
-        vae_encoder_out, latent_shape = self.run_vae_encoder(src_video, src_ref_images, src_mask)
-        self.input_info.latent_shape = latent_shape  # Important: set latent_shape in input_info
+        vae_encoder_out, latent_shape = self.run_vae_encoder(
+            src_video, src_ref_images, src_mask
+        )
+        self.input_info.latent_shape = (
+            latent_shape  # Important: set latent_shape in input_info
+        )
         text_encoder_output = self.run_text_encoder(self.input_info)
         torch_device_module.empty_cache()
         gc.collect()
@@ -349,12 +428,22 @@ class DefaultRunner(BaseRunner):
         self.gen_video_final = None
         self.get_video_segment_num()
 
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             self.model = self.load_transformer()
             self.model.set_scheduler(self.scheduler)
 
-        self.model.scheduler.prepare(seed=self.input_info.seed, latent_shape=self.input_info.latent_shape, image_encoder_output=self.inputs["image_encoder_output"])
-        if self.config.get("model_cls") == "wan2.2" and self.config["task"] in ["i2v", "s2v", "rs2v"]:
+        self.model.scheduler.prepare(
+            seed=self.input_info.seed,
+            latent_shape=self.input_info.latent_shape,
+            image_encoder_output=self.inputs["image_encoder_output"],
+        )
+        if self.config.get("model_cls") == "wan2.2" and self.config["task"] in [
+            "i2v",
+            "s2v",
+            "rs2v",
+        ]:
             self.inputs["image_encoder_output"]["vae_encoder_out"] = None
 
         if hasattr(self, "sr_version") and self.sr_version is not None:
@@ -397,26 +486,44 @@ class DefaultRunner(BaseRunner):
         self.end_run()
         return gen_video_final
 
-    @ProfilingContext4DebugL1("Run VAE Decoder", recorder_mode=GET_RECORDER_MODE(), metrics_func=monitor_cli.lightx2v_run_vae_decode_duration, metrics_labels=["DefaultRunner"])
+    @ProfilingContext4DebugL1(
+        "Run VAE Decoder",
+        recorder_mode=GET_RECORDER_MODE(),
+        metrics_func=monitor_cli.lightx2v_run_vae_decode_duration,
+        metrics_labels=["DefaultRunner"],
+    )
     def run_vae_decoder(self, latents):
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             self.vae_decoder = self.load_vae_decoder()
         images = self.vae_decoder.decode(latents.to(GET_DTYPE()))
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             del self.vae_decoder
             torch_device_module.empty_cache()
             gc.collect()
         return images
 
-    @ProfilingContext4DebugL1("Run VAE Decoder Stream", recorder_mode=GET_RECORDER_MODE(), metrics_func=monitor_cli.lightx2v_run_vae_decode_duration, metrics_labels=["DefaultRunner"])
+    @ProfilingContext4DebugL1(
+        "Run VAE Decoder Stream",
+        recorder_mode=GET_RECORDER_MODE(),
+        metrics_func=monitor_cli.lightx2v_run_vae_decode_duration,
+        metrics_labels=["DefaultRunner"],
+    )
     def run_vae_decoder_stream(self, latents):
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             self.vae_decoder = self.load_vae_decoder()
 
         for frame_segment in self.vae_decoder.decode_stream(latents.to(GET_DTYPE())):
             yield frame_segment
 
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             del self.vae_decoder
             torch_device_module.empty_cache()
             gc.collect()
@@ -424,7 +531,9 @@ class DefaultRunner(BaseRunner):
     def post_prompt_enhancer(self):
         while True:
             for url in self.config["sub_servers"]["prompt_enhancer"]:
-                response = requests.get(f"{url}/v1/local/prompt_enhancer/generate/service_status").json()
+                response = requests.get(
+                    f"{url}/v1/local/prompt_enhancer/generate/service_status"
+                ).json()
                 if response["service_status"] == "idle":
                     response = requests.post(
                         f"{url}/v1/local/prompt_enhancer/generate",
@@ -441,9 +550,15 @@ class DefaultRunner(BaseRunner):
         self.gen_video_final = wan_vae_to_comfy(self.gen_video_final)
 
         if "video_frame_interpolation" in self.config:
-            assert self.vfi_model is not None and self.config["video_frame_interpolation"].get("target_fps", None) is not None
+            assert (
+                self.vfi_model is not None
+                and self.config["video_frame_interpolation"].get("target_fps", None)
+                is not None
+            )
             target_fps = self.config["video_frame_interpolation"]["target_fps"]
-            logger.info(f"Interpolating frames from {self.config.get('fps', 16)} to {target_fps}")
+            logger.info(
+                f"Interpolating frames from {self.config.get('fps', 16)} to {target_fps}"
+            )
             self.gen_video_final = self.vfi_model.interpolate_frames(
                 self.gen_video_final,
                 source_fps=self.config.get("fps", 16),
@@ -453,7 +568,9 @@ class DefaultRunner(BaseRunner):
         if self.input_info.return_result_tensor:
             return {"video": self.gen_video_final}
         elif self.input_info.save_result_path is not None:
-            if "video_frame_interpolation" in self.config and self.config["video_frame_interpolation"].get("target_fps"):
+            if "video_frame_interpolation" in self.config and self.config[
+                "video_frame_interpolation"
+            ].get("target_fps"):
                 fps = self.config["video_frame_interpolation"]["target_fps"]
             else:
                 fps = self.config.get("fps", 16)
@@ -462,26 +579,43 @@ class DefaultRunner(BaseRunner):
                 out_path = self.input_info.save_result_path
                 img_in = (getattr(self.input_info, "image_path", None) or "").strip()
                 vid_in = (getattr(self.input_info, "video_path", None) or "").strip()
-                sr_from_image_only = self.config.get("task") == "sr" and bool(img_in) and not bool(vid_in)
+                sr_from_image_only = (
+                    self.config.get("task") == "sr"
+                    and bool(img_in)
+                    and not bool(vid_in)
+                )
 
                 if sr_from_image_only:
-                    logger.info("🖼 Start to save SR image (image_path input, no video_path) 🖼")
+                    logger.info(
+                        "🖼 Start to save SR image (image_path input, no video_path) 🖼"
+                    )
                     save_to_image(self.gen_video_final, out_path)
                     logger.info(f"✅ Image saved successfully to: {out_path} ✅")
                 else:
                     logger.info(f"🎬 Start to save video 🎬")
 
-                    save_to_video(self.gen_video_final, out_path, fps=fps, method="ffmpeg")
+                    save_to_video(
+                        self.gen_video_final, out_path, fps=fps, method="ffmpeg"
+                    )
                     if self.config.get("task") in ("sr", "animate"):
                         input_video_path = getattr(self.input_info, "video_path", "")
                         if input_video_path:
-                            muxed_path = mux_audio_from_video(input_video_path, out_path)
+                            muxed_path = mux_audio_from_video(
+                                input_video_path, out_path
+                            )
                             if muxed_path:
-                                logger.info(f"Audio muxed from input video: {input_video_path}")
+                                logger.info(
+                                    f"Audio muxed from input video: {input_video_path}"
+                                )
                     logger.info(f"✅ Video saved successfully to: {out_path} ✅")
             return {"video": None}
 
-    @ProfilingContext4DebugL1("RUN pipeline", recorder_mode=GET_RECORDER_MODE(), metrics_func=monitor_cli.lightx2v_worker_request_duration, metrics_labels=["DefaultRunner"])
+    @ProfilingContext4DebugL1(
+        "RUN pipeline",
+        recorder_mode=GET_RECORDER_MODE(),
+        metrics_func=monitor_cli.lightx2v_worker_request_duration,
+        metrics_labels=["DefaultRunner"],
+    )
     def run_pipeline(self, input_info):
         if GET_RECORDER_MODE():
             monitor_cli.lightx2v_worker_request_count.inc()
@@ -587,7 +721,9 @@ class DefaultRunner(BaseRunner):
                     for k, v in weight_dict.items():
                         if k in merged:
                             merged[k] = merged[k] + v * s
-            logger.info(f"Switching LoRA ({len(resolved_items)} files fused; same _load_lora_file + _update_lora as single): {resolved_items}")
+            logger.info(
+                f"Switching LoRA ({len(resolved_items)} files fused; same _load_lora_file + _update_lora as single): {resolved_items}"
+            )
             self.model._update_lora(merged, 1.0)
             logger.info("LoRA switched successfully")
             return True
@@ -595,7 +731,11 @@ class DefaultRunner(BaseRunner):
             logger.error(f"Failed to switch LoRA (multi): {e}")
             return False
 
-    def __del__(self, _empty_cache=getattr(torch_device_module, "empty_cache", None), _gc_collect=gc.collect):
+    def __del__(
+        self,
+        _empty_cache=getattr(torch_device_module, "empty_cache", None),
+        _gc_collect=gc.collect,
+    ):
         if hasattr(self, "model"):
             del self.model
         if hasattr(self, "text_encoders"):

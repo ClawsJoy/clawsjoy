@@ -1,24 +1,31 @@
-from lib.smart_config import smart_config
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from loguru import logger
 
+from lib.smart_config import smart_config
+
 from .deps import get_services
 
 router = APIRouter()
 
 
-def _stream_file_response(file_path: Path, filename: str | None = None) -> StreamingResponse:
+def _stream_file_response(
+    file_path: Path, filename: str | None = None
+) -> StreamingResponse:
     services = get_services()
     assert services.file_service is not None, "File service is not initialized"
 
     try:
         resolved_path = file_path.resolve()
 
-        if not str(resolved_path).startswith(str(services.file_service.output_video_dir.resolve())):
-            raise HTTPException(status_code=403, detail="Access to this file is not allowed")
+        if not str(resolved_path).startswith(
+            str(services.file_service.output_video_dir.resolve())
+        ):
+            raise HTTPException(
+                status_code=403, detail="Access to this file is not allowed"
+            )
 
         if not resolved_path.exists() or not resolved_path.is_file():
             raise HTTPException(status_code=404, detail=f"File not found: {file_path}")

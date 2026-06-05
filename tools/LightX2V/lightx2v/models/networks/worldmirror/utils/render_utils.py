@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 Render interpolated video from Gaussian Splatting predictions.
 
@@ -186,7 +187,9 @@ def render_interpolated_video(
                 q_interp = slerp_quaternions(q0, q1, alpha)
                 R_interp = quaternion_to_rotation_matrix(q_interp)
 
-                ext = torch.eye(4, device=R_interp.device, dtype=R_interp.dtype)[None].repeat(b, 1, 1)
+                ext = torch.eye(4, device=R_interp.device, dtype=R_interp.dtype)[
+                    None
+                ].repeat(b, 1, 1)
                 ext[:, :3, :3] = R_interp
                 ext[:, :3, 3] = t_interp
 
@@ -201,7 +204,9 @@ def render_interpolated_video(
         ints = torch.cat(ints, dim=1)[:1]
         return exts, ints
 
-    def build_wobble_traj(nums, delta, anchor_idx=0, yaw_rad=0.0, pivot=None, forward_ratio=0.0):
+    def build_wobble_traj(
+        nums, delta, anchor_idx=0, yaw_rad=0.0, pivot=None, forward_ratio=0.0
+    ):
         anchor_c2w = camtoworlds[:, anchor_idx : anchor_idx + 1]
         anchor_K = intrinsics[:, anchor_idx : anchor_idx + 1]
         need_rebuild = (yaw_rad != 0.0 or forward_ratio != 0.0) and pivot is not None
@@ -231,7 +236,9 @@ def render_interpolated_video(
             anc_new = torch.eye(4, device=device, dtype=dtype)
             anc_new[:3, :3] = R
             anc_new[:3, 3] = P
-            anchor_c2w = anc_new[None, None].expand(camtoworlds.shape[0], 1, 4, 4).contiguous()
+            anchor_c2w = (
+                anc_new[None, None].expand(camtoworlds.shape[0], 1, 4, 4).contiguous()
+            )
         t = torch.linspace(0, 1, nums, dtype=torch.float32, device=camtoworlds.device)
         t = (torch.cos(torch.pi * (t + 1)) + 1) / 2
         tf = torch.eye(4, dtype=torch.float32, device=camtoworlds.device)
@@ -262,7 +269,9 @@ def render_interpolated_video(
         )
         loop_reverse = True
     elif s > 1:
-        all_ext, all_int = build_interpolated_traj([i for i in range(s)], interp_per_pair)
+        all_ext, all_int = build_interpolated_traj(
+            [i for i in range(s)], interp_per_pair
+        )
         if yaw_deg != 0.0 or forward_ratio != 0.0:
             device = all_ext.device
             dtype = torch.float32
@@ -292,7 +301,10 @@ def render_interpolated_video(
             all_ext_f[..., :3, 3] = P
             all_ext = all_ext_f
     else:
-        all_ext, all_int = build_wobble_traj(interp_per_pair * 12, splats["means"][0].median(dim=0).values.norm(dim=-1)[None])
+        all_ext, all_int = build_wobble_traj(
+            interp_per_pair * 12,
+            splats["means"][0].median(dim=0).values.norm(dim=-1)[None],
+        )
 
     rendered_rgbs, rendered_depths = [], []
     chunk = 40
@@ -310,7 +322,11 @@ def render_interpolated_video(
             pruned_splats["quats"][:1],
             pruned_splats["scales"][:1],
             pruned_splats["opacities"][:1],
-            pruned_splats["sh"][:1] if "sh" in pruned_splats else pruned_splats["colors"][:1],
+            (
+                pruned_splats["sh"][:1]
+                if "sh" in pruned_splats
+                else pruned_splats["colors"][:1]
+            ),
             all_ext[:, st:ed].to(torch.float32),
             all_int[:, st:ed].to(torch.float32),
             width=w,

@@ -4,27 +4,31 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 import sys
+
 from core.lib.unified_config import unified_config
+
 sys.path.insert(0, smart_config.ROOT)
 
 import time
-from core.lib.memory_simple import memory
 from datetime import datetime
+
+from core.lib.memory_simple import memory
+
 
 class SuccessMonitor:
     def __init__(self):
         self.window_size = 20  # 最近20次任务
-    
+
     def get_recent_success_rate(self):
-        outcomes = memory.recall_all(category='workflow_outcome')[-self.window_size:]
+        outcomes = memory.recall_all(category="workflow_outcome")[-self.window_size :]
         if not outcomes:
             return 0
-        success = len([o for o in outcomes if '成功' in o])
+        success = len([o for o in outcomes if "成功" in o])
         return success / len(outcomes) * 100
-    
+
     def check_and_alert(self):
         rate = self.get_recent_success_rate()
 
@@ -41,13 +45,14 @@ class SuccessMonitor:
         # 记录到记忆
         memory.remember(
             f"成功率监控|{rate:.0f}%|等级:{level}|时间:{datetime.now().isoformat()}",
-            category="success_monitoring"
+            category="success_monitoring",
         )
 
         if level != "normal":
             print(f"{datetime.now().strftime('%H:%M:%S')} {alert}")
 
         return {"rate": rate, "level": level, "alert": alert}
+
 
 if __name__ == "__main__":
     monitor = SuccessMonitor()

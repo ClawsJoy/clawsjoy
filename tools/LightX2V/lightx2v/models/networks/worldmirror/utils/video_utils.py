@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import csv
 import json
 import os
@@ -9,6 +8,8 @@ from concurrent.futures import ThreadPoolExecutor
 import cv2
 import numpy as np
 from PIL import Image
+
+from lib.smart_config import smart_config
 
 
 def video_to_image_frames(input_video_path, save_directory=None, fps=1):
@@ -35,12 +36,18 @@ def video_to_image_frames(input_video_path, save_directory=None, fps=1):
             with Image.open(input_video_path) as gif_img:
                 # Get GIF properties
                 frame_duration_ms = gif_img.info.get("duration", 100)
-                gif_frame_rate = 1000.0 / frame_duration_ms if frame_duration_ms > 0 else 10.0
+                gif_frame_rate = (
+                    1000.0 / frame_duration_ms if frame_duration_ms > 0 else 10.0
+                )
                 source_fps = gif_frame_rate
 
-                print(f"GIF properties: {gif_img.n_frames} frames, {gif_frame_rate:.2f} FPS, {frame_duration_ms}ms per frame")
+                print(
+                    f"GIF properties: {gif_img.n_frames} frames, {gif_frame_rate:.2f} FPS, {frame_duration_ms}ms per frame"
+                )
 
-                sampling_interval = max(1, int(gif_frame_rate / fps)) if fps < gif_frame_rate else 1
+                sampling_interval = (
+                    max(1, int(gif_frame_rate / fps)) if fps < gif_frame_rate else 1
+                )
 
                 saved_count = 0
                 for current_frame_index in range(gif_img.n_frames):
@@ -49,7 +56,9 @@ def video_to_image_frames(input_video_path, save_directory=None, fps=1):
                     if current_frame_index % sampling_interval == 0:
                         rgb_frame = gif_img.convert("RGB")
                         frame_ndarray = np.array(rgb_frame)
-                        frame_output_path = os.path.join(save_directory, f"frame_{saved_count:06d}.jpg")
+                        frame_output_path = os.path.join(
+                            save_directory, f"frame_{saved_count:06d}.jpg"
+                        )
                         pil_image = Image.fromarray(frame_ndarray)
                         pil_image.save(frame_output_path, "JPEG", quality=95)
                         extracted_frame_paths.append(frame_output_path)
@@ -57,7 +66,9 @@ def video_to_image_frames(input_video_path, save_directory=None, fps=1):
                         saved_count += 1
 
                 if extracted_frame_paths:
-                    print(f"Successfully extracted {len(extracted_frame_paths)} frames from GIF using PIL")
+                    print(
+                        f"Successfully extracted {len(extracted_frame_paths)} frames from GIF using PIL"
+                    )
                     # Save metadata
                     _save_old_metadata(save_directory, frame_indices, source_fps)
                     return extracted_frame_paths
@@ -78,9 +89,20 @@ def video_to_image_frames(input_video_path, save_directory=None, fps=1):
 
             output_frame_pattern = os.path.join(save_directory, "frame_%04d.jpg")
 
-            ffmpeg_command = ["ffmpeg", "-i", input_video_path, "-vf", f"fps={fps}", "-q:v", "2", output_frame_pattern]
+            ffmpeg_command = [
+                "ffmpeg",
+                "-i",
+                input_video_path,
+                "-vf",
+                f"fps={fps}",
+                "-q:v",
+                "2",
+                output_frame_pattern,
+            ]
 
-            ffmpeg_process = subprocess.Popen(ffmpeg_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            ffmpeg_process = subprocess.Popen(
+                ffmpeg_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
             process_stdout, process_stderr = ffmpeg_process.communicate()
 
             # Collect all extracted frames and calculate indices
@@ -99,7 +121,9 @@ def video_to_image_frames(input_video_path, save_directory=None, fps=1):
                         frame_indices.append(len(frame_indices))
 
             if extracted_frame_paths:
-                print(f"Successfully extracted {len(extracted_frame_paths)} frames from WebM using FFmpeg")
+                print(
+                    f"Successfully extracted {len(extracted_frame_paths)} frames from WebM using FFmpeg"
+                )
                 _save_old_metadata(save_directory, frame_indices, source_fps)
                 return extracted_frame_paths
 
@@ -128,13 +152,23 @@ def video_to_image_frames(input_video_path, save_directory=None, fps=1):
             if processed_frame_count % extraction_interval == 0:
                 try:
                     if current_frame is not None and current_frame.size > 0:
-                        rgb_converted_frame = cv2.cvtColor(current_frame, cv2.COLOR_BGR2RGB)
-                        frame_output_path = os.path.join(save_directory, f"frame_{len(extracted_frame_paths):06d}.jpg")
-                        cv2.imwrite(frame_output_path, cv2.cvtColor(rgb_converted_frame, cv2.COLOR_RGB2BGR))
+                        rgb_converted_frame = cv2.cvtColor(
+                            current_frame, cv2.COLOR_BGR2RGB
+                        )
+                        frame_output_path = os.path.join(
+                            save_directory,
+                            f"frame_{len(extracted_frame_paths):06d}.jpg",
+                        )
+                        cv2.imwrite(
+                            frame_output_path,
+                            cv2.cvtColor(rgb_converted_frame, cv2.COLOR_RGB2BGR),
+                        )
                         extracted_frame_paths.append(frame_output_path)
                         frame_indices.append(processed_frame_count)
                 except Exception as error:
-                    print(f"Warning: Failed to process frame {processed_frame_count}: {str(error)}")
+                    print(
+                        f"Warning: Failed to process frame {processed_frame_count}: {str(error)}"
+                    )
 
             processed_frame_count += 1
 
@@ -160,7 +194,12 @@ def _save_old_metadata(save_directory, frame_indices, fps):
         return
 
     try:
-        meta = {"frame_indices": frame_indices, "frame_times": [idx / fps for idx in frame_indices], "fps": fps, "algorithm": "uniform_fps_based"}
+        meta = {
+            "frame_indices": frame_indices,
+            "frame_times": [idx / fps for idx in frame_indices],
+            "fps": fps,
+            "algorithm": "uniform_fps_based",
+        }
         metadata_path = os.path.join(save_directory, "frame_metadata.json")
         with open(metadata_path, "w") as f:
             json.dump(meta, f, indent=2)
@@ -193,7 +232,9 @@ def _resize_for_clarity(frame, long_edge=480):
 
 def _create_dis_flow():
     if hasattr(cv2, "optflow") and hasattr(cv2.optflow, "createOptFlow_DIS"):
-        return cv2.optflow.createOptFlow_DIS(cv2.optflow.DISOPTICAL_FLOW_PRESET_ULTRAFAST)
+        return cv2.optflow.createOptFlow_DIS(
+            cv2.optflow.DISOPTICAL_FLOW_PRESET_ULTRAFAST
+        )
     if hasattr(cv2, "DISOpticalFlow_create"):
         return cv2.DISOpticalFlow_create(cv2.DISOPTICAL_FLOW_PRESET_ULTRAFAST)
     return None
@@ -275,7 +316,9 @@ def _sparse_motion_analysis(cap, fps, total_frames):
         if current_idx > 0:
             steps_to_skip = sample_interval - 1
             if steps_to_skip > 0:
-                current_idx = _advance_cap_to_frame(cap, current_idx, current_idx + steps_to_skip)
+                current_idx = _advance_cap_to_frame(
+                    cap, current_idx, current_idx + steps_to_skip
+                )
         ret, frame = cap.read()
         if not ret:
             break
@@ -288,10 +331,18 @@ def _sparse_motion_analysis(cap, fps, total_frames):
             if dis_flow is not None:
                 flow = dis_flow.calc(prev_gray, gray, None)
             else:
-                flow = cv2.calcOpticalFlowFarneback(prev_gray, gray, None, 0.5, 3, 15, 2, 5, 1.2, 0)
+                flow = cv2.calcOpticalFlowFarneback(
+                    prev_gray, gray, None, 0.5, 3, 15, 2, 5, 1.2, 0
+                )
             motion_mag = float(np.mean(np.sqrt(flow[..., 0] ** 2 + flow[..., 1] ** 2)))
 
-        sparse_samples.append({"idx": current_idx, "motion": motion_mag, "hist": _calculate_histogram(small)})
+        sparse_samples.append(
+            {
+                "idx": current_idx,
+                "motion": motion_mag,
+                "hist": _calculate_histogram(small),
+            }
+        )
         prev_gray = gray
         current_idx += 1
 
@@ -326,7 +377,9 @@ def _adaptive_frame_selection(sparse_samples, fps, max_frames):
         should_select = (current_accum >= step_threshold) or (time_gap > (4.0 * fps))
 
         if should_select:
-            is_duplicate = any(_calculate_hist_similarity(s["hist"], h) > 0.999 for h in selected_hists)
+            is_duplicate = any(
+                _calculate_hist_similarity(s["hist"], h) > 0.999 for h in selected_hists
+            )
             if not is_duplicate:
                 candidate_indices.append(s["idx"])
                 selected_hists.append(s["hist"])
@@ -336,13 +389,17 @@ def _adaptive_frame_selection(sparse_samples, fps, max_frames):
     # Always check last frame
     if sparse_samples[-1]["idx"] != candidate_indices[-1]:
         last_hist = sparse_samples[-1]["hist"]
-        if not any(_calculate_hist_similarity(last_hist, h) > 0.999 for h in selected_hists):
+        if not any(
+            _calculate_hist_similarity(last_hist, h) > 0.999 for h in selected_hists
+        ):
             candidate_indices.append(sparse_samples[-1]["idx"])
 
     return sorted(list(set(candidate_indices)))
 
 
-def _enforce_frame_constraints(candidate_indices, sparse_samples, min_frames, max_frames):
+def _enforce_frame_constraints(
+    candidate_indices, sparse_samples, min_frames, max_frames
+):
     """Enforce min/max frame constraints."""
     if len(candidate_indices) < min_frames:
         needed = min_frames - len(candidate_indices)
@@ -389,7 +446,9 @@ def _compute_clarity_parallel(all_frames):
         return list(ex.map(_compute, all_frames))
 
 
-def _select_best_frames(clarity_results, merged_windows, candidate_indices, search_window_size=3):
+def _select_best_frames(
+    clarity_results, merged_windows, candidate_indices, search_window_size=3
+):
     """Select best frame for each candidate based on clarity."""
     # Group by window
     window_frames = {}
@@ -403,7 +462,11 @@ def _select_best_frames(clarity_results, merged_windows, candidate_indices, sear
     for window_idx, (_, _, targets) in enumerate(merged_windows):
         frames = window_frames.get(window_idx, [])
         for target_idx in targets:
-            candidates = [(idx, f, c) for idx, f, c in frames if abs(idx - target_idx) <= search_window_size]
+            candidates = [
+                (idx, f, c)
+                for idx, f, c in frames
+                if abs(idx - target_idx) <= search_window_size
+            ]
             if candidates:
                 best_idx, best_frame, _ = max(candidates, key=lambda x: x[2])
                 target_to_best[target_idx] = (best_idx, best_frame)
@@ -423,7 +486,14 @@ def _save_frames_parallel(target_to_best, candidate_indices, save_directory):
         if target_idx in target_to_best:
             best_idx, best_frame = target_to_best[target_idx]
             final_indices.append(best_idx)
-            path_frame_list.append((os.path.join(save_directory, f"frame_{len(path_frame_list):06d}.jpg"), best_frame))
+            path_frame_list.append(
+                (
+                    os.path.join(
+                        save_directory, f"frame_{len(path_frame_list):06d}.jpg"
+                    ),
+                    best_frame,
+                )
+            )
 
     def _write(p_f):
         cv2.imwrite(p_f[0], p_f[1])
@@ -470,14 +540,18 @@ def video_to_image_frames_new(
     cap.release()
 
     t_phase1 = time.perf_counter()
-    print(f"[Timing] Phase 1 (Sparse Flow): {t_phase1 - t_start:.3f}s, Samples: {len(sparse_samples)}")
+    print(
+        f"[Timing] Phase 1 (Sparse Flow): {t_phase1 - t_start:.3f}s, Samples: {len(sparse_samples)}"
+    )
 
     if not sparse_samples:
         return []
 
     # Phase 2: Adaptive frame selection
     candidate_indices = _adaptive_frame_selection(sparse_samples, fps, max_frames)
-    candidate_indices = _enforce_frame_constraints(candidate_indices, sparse_samples, min_frames, max_frames)
+    candidate_indices = _enforce_frame_constraints(
+        candidate_indices, sparse_samples, min_frames, max_frames
+    )
 
     # Phase 3: Local clarity refinement
     cap = cv2.VideoCapture(input_video_path)
@@ -486,7 +560,9 @@ def video_to_image_frames_new(
 
     t_phase3_start = time.perf_counter()
     search_window_size = 3
-    merged_windows = _merge_search_windows(candidate_indices, window_size=search_window_size)
+    merged_windows = _merge_search_windows(
+        candidate_indices, window_size=search_window_size
+    )
 
     # Read frames
     t_read_start = time.perf_counter()
@@ -500,32 +576,56 @@ def video_to_image_frames_new(
     t_clarity_end = time.perf_counter()
 
     # Select best frames
-    target_to_best = _select_best_frames(clarity_results, merged_windows, candidate_indices, search_window_size)
+    target_to_best = _select_best_frames(
+        clarity_results, merged_windows, candidate_indices, search_window_size
+    )
 
     # Parallel save
     t_save_start = time.perf_counter()
-    final_indices, extracted_paths = _save_frames_parallel(target_to_best, candidate_indices, save_directory)
+    final_indices, extracted_paths = _save_frames_parallel(
+        target_to_best, candidate_indices, save_directory
+    )
     t_save_end = time.perf_counter()
 
     t_phase3_end = time.perf_counter()
-    print(f"[Timing] Phase 3 (Clarity Refinement + Save): {t_phase3_end - t_phase3_start:.3f}s")
+    print(
+        f"[Timing] Phase 3 (Clarity Refinement + Save): {t_phase3_end - t_phase3_start:.3f}s"
+    )
     print(f"  - Read frames: {t_read_end - t_read_start:.3f}s")
     print(f"  - Parallel clarity: {t_clarity_end - t_clarity_start:.3f}s")
-    print(f"  - Parallel save: {t_save_end - t_save_start:.3f}s, Saved: {len(extracted_paths)}")
+    print(
+        f"  - Parallel save: {t_save_end - t_save_start:.3f}s, Saved: {len(extracted_paths)}"
+    )
 
     # Save metadata
     try:
-        meta = {"frame_indices": final_indices, "frame_times": [i / fps for i in final_indices], "fps": fps, "algorithm": "sparse_dis_clarity_refined"}
+        meta = {
+            "frame_indices": final_indices,
+            "frame_times": [i / fps for i in final_indices],
+            "fps": fps,
+            "algorithm": "sparse_dis_clarity_refined",
+        }
         with open(os.path.join(save_directory, "frame_metadata.json"), "w") as f:
             json.dump(meta, f, indent=2)
 
-        with open(os.path.join(save_directory, "frame_metrics.csv"), "w", newline="") as f:
+        with open(
+            os.path.join(save_directory, "frame_metrics.csv"), "w", newline=""
+        ) as f:
             writer = csv.writer(f)
             writer.writerow(["frame_index", "time_sec", "motion", "selected"])
             for s in sparse_samples:
-                writer.writerow([s["idx"], s["idx"] / fps, s["motion"], 1 if s["idx"] in final_indices else 0])
+                writer.writerow(
+                    [
+                        s["idx"],
+                        s["idx"] / fps,
+                        s["motion"],
+                        1 if s["idx"] in final_indices else 0,
+                    ]
+                )
     except Exception:
         pass
 
-    print(f"Extracted {len(extracted_paths)} frames using DIS flow + local clarity refinement.")
+    print(
+        f"Extracted {len(extracted_paths)} frames using DIS flow + local clarity refinement."
+    )
     return extracted_paths

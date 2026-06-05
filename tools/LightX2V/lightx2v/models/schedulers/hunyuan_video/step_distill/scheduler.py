@@ -1,7 +1,7 @@
-from lib.smart_config import smart_config
 import torch
-
 from lightx2v.models.schedulers.hunyuan_video.scheduler import HunyuanVideo15Scheduler
+
+from lib.smart_config import smart_config
 
 
 class HunyuanVideo15StepDistillScheduler(HunyuanVideo15Scheduler):
@@ -16,11 +16,19 @@ class HunyuanVideo15StepDistillScheduler(HunyuanVideo15Scheduler):
 
     def set_timesteps(self, num_inference_steps, device, shift):
         sigma_start = self.sigma_min + (self.sigma_max - self.sigma_min)
-        self.sigmas = torch.linspace(sigma_start, self.sigma_min, self.num_train_timesteps + 1)[:-1]
-        self.sigmas = self.sample_shift * self.sigmas / (1 + (self.sample_shift - 1) * self.sigmas)
+        self.sigmas = torch.linspace(
+            sigma_start, self.sigma_min, self.num_train_timesteps + 1
+        )[:-1]
+        self.sigmas = (
+            self.sample_shift
+            * self.sigmas
+            / (1 + (self.sample_shift - 1) * self.sigmas)
+        )
         self.timesteps = self.sigmas * self.num_train_timesteps
 
-        self.denoising_step_index = [self.num_train_timesteps - x for x in self.denoising_step_list]
+        self.denoising_step_index = [
+            self.num_train_timesteps - x for x in self.denoising_step_list
+        ]
         self.timesteps = self.timesteps[self.denoising_step_index].to(device)
         self.sigmas = self.sigmas[self.denoising_step_index].to("cpu")
 

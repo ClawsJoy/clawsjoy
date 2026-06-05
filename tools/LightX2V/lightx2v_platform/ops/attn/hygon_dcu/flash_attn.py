@@ -1,11 +1,11 @@
-from lib.smart_config import smart_config
 import os
 
 import torch
-from loguru import logger
-
 from lightx2v_platform.ops.attn.template import AttnWeightTemplate
 from lightx2v_platform.registry_factory import PLATFORM_ATTN_WEIGHT_REGISTER
+from loguru import logger
+
+from lib.smart_config import smart_config
 
 try:
     from flash_attn import sparse_attn_with_sla
@@ -48,7 +48,9 @@ class FlashAttnHygonDcu(AttnWeightTemplate):
         if self.use_flash_attn:
             logger.info("Flash Attention 2.6.1 (ROCm) is available and will be used.")
         else:
-            logger.warning("Flash Attention not available. Using PyTorch SDPA fallback.")
+            logger.warning(
+                "Flash Attention not available. Using PyTorch SDPA fallback."
+            )
 
     def apply(
         self,
@@ -93,7 +95,9 @@ class FlashAttnHygonDcu(AttnWeightTemplate):
         """
         if not self.use_flash_attn:
             # Fallback to PyTorch SDPA
-            return self._sdpa_fallback(q, k, v, cu_seqlens_q, max_seqlen_q, causal, dropout_p)
+            return self._sdpa_fallback(
+                q, k, v, cu_seqlens_q, max_seqlen_q, causal, dropout_p
+            )
 
         # Ensure data types are half precision
         import math
@@ -114,7 +118,11 @@ class FlashAttnHygonDcu(AttnWeightTemplate):
         if softmax_scale is None:
             softmax_scale = 1.0 / math.sqrt(q.shape[-1])
         # Use Flash Attention 2.6.1 (ROCm version) with varlen interface
-        if SAPRDE_LINEAR_ATTN and int(os.getenv("USE_SLA", 0)) and q.shape[1] == k.shape[1]:
+        if (
+            SAPRDE_LINEAR_ATTN
+            and int(os.getenv("USE_SLA", 0))
+            and q.shape[1] == k.shape[1]
+        ):
             topk_value = float(os.getenv("SPARSE_ATTN_TOPK", "0.5"))
 
             q = q_flat.unsqueeze(0)
@@ -148,7 +156,9 @@ class FlashAttnHygonDcu(AttnWeightTemplate):
         output = output.reshape(bs * max_seqlen_q, -1)
         return output.to(out_dtype)
 
-    def _sdpa_fallback(self, q, k, v, cu_seqlens_q, max_seqlen_q, causal=False, dropout_p=0.0):
+    def _sdpa_fallback(
+        self, q, k, v, cu_seqlens_q, max_seqlen_q, causal=False, dropout_p=0.0
+    ):
         """
         Fallback to PyTorch Scaled Dot Product Attention when Flash Attention is not available.
 
@@ -175,7 +185,9 @@ class FlashAttnHygonDcu(AttnWeightTemplate):
         k = k.transpose(1, 2)
         v = v.transpose(1, 2)
 
-        out = torch.nn.functional.scaled_dot_product_attention(q, k, v, attn_mask=None, is_causal=causal, dropout_p=dropout_p)
+        out = torch.nn.functional.scaled_dot_product_attention(
+            q, k, v, attn_mask=None, is_causal=causal, dropout_p=dropout_p
+        )
 
         # Transpose back to [B, L, Nq, C] and flatten
         out = out.transpose(1, 2).contiguous()

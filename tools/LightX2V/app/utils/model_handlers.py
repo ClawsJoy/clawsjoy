@@ -1,11 +1,17 @@
-from lib.smart_config import smart_config
 import os
 import shutil
 import warnings
 
 import gradio as gr
 from loguru import logger
-from utils.model_utils import check_model_exists, extract_model_name, format_model_choice, is_distill_model_from_name
+from utils.model_utils import (
+    check_model_exists,
+    extract_model_name,
+    format_model_choice,
+    is_distill_model_from_name,
+)
+
+from lib.smart_config import smart_config
 
 try:
     from huggingface_hub import hf_hub_download
@@ -16,14 +22,18 @@ except ImportError:
     HF_AVAILABLE = False
 
 try:
-    from modelscope.hub.snapshot_download import snapshot_download as ms_snapshot_download
+    from modelscope.hub.snapshot_download import (
+        snapshot_download as ms_snapshot_download,
+    )
 
     MS_AVAILABLE = True
 except ImportError:
     MS_AVAILABLE = False
 
 
-def download_model_from_hf(repo_id, model_name, model_path, progress=gr.Progress(), download_entire_repo=False):
+def download_model_from_hf(
+    repo_id, model_name, model_path, progress=gr.Progress(), download_entire_repo=False
+):
     """从 Hugging Face 下载模型（支持文件和目录）
 
     Args:
@@ -41,7 +51,9 @@ def download_model_from_hf(repo_id, model_name, model_path, progress=gr.Progress
 
     target_path = os.path.join(model_path, model_name)
     # 确保目标路径的父目录存在（如果 model_name 包含子目录路径，如 "Z-Image-Turbo/vae"）
-    os.makedirs(os.path.dirname(target_path) if "/" in model_name else model_path, exist_ok=True)
+    os.makedirs(
+        os.path.dirname(target_path) if "/" in model_name else model_path, exist_ok=True
+    )
     os.makedirs(model_path, exist_ok=True)
 
     # 如果指定下载整个仓库，直接下载整个仓库到目标目录
@@ -74,7 +86,9 @@ def download_model_from_hf(repo_id, model_name, model_path, progress=gr.Progress
         return f"✅ {model_name} 下载完成"
 
     # 判断是文件还是目录
-    is_directory = not (model_name.endswith(".safetensors") or model_name.endswith(".pth"))
+    is_directory = not (
+        model_name.endswith(".safetensors") or model_name.endswith(".pth")
+    )
 
     if is_directory:
         # 下载目录
@@ -125,7 +139,9 @@ def download_model_from_hf(repo_id, model_name, model_path, progress=gr.Progress
             os.remove(target_path)
 
         # 如果 model_name 包含子目录路径，提取实际文件名
-        actual_file_name = model_name.split("/")[-1] if "/" in model_name else model_name
+        actual_file_name = (
+            model_name.split("/")[-1] if "/" in model_name else model_name
+        )
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -153,7 +169,9 @@ def download_model_from_hf(repo_id, model_name, model_path, progress=gr.Progress
     return f"✅ {model_name} 下载完成"
 
 
-def download_model_from_ms(repo_id, model_name, model_path, progress=gr.Progress(), download_entire_repo=False):
+def download_model_from_ms(
+    repo_id, model_name, model_path, progress=gr.Progress(), download_entire_repo=False
+):
     """从 ModelScope 下载模型（支持文件和目录）
 
     Args:
@@ -171,7 +189,9 @@ def download_model_from_ms(repo_id, model_name, model_path, progress=gr.Progress
 
     target_path = os.path.join(model_path, model_name)
     # 确保目标路径的父目录存在（如果 model_name 包含子目录路径，如 "Z-Image-Turbo/vae"）
-    os.makedirs(os.path.dirname(target_path) if "/" in model_name else model_path, exist_ok=True)
+    os.makedirs(
+        os.path.dirname(target_path) if "/" in model_name else model_path, exist_ok=True
+    )
     os.makedirs(model_path, exist_ok=True)
 
     # 临时目录用于下载
@@ -209,7 +229,9 @@ def download_model_from_ms(repo_id, model_name, model_path, progress=gr.Progress
         return f"✅ {model_name} 下载完成"
 
     # 判断是文件还是目录
-    is_directory = not (model_name.endswith(".safetensors") or model_name.endswith(".pth"))
+    is_directory = not (
+        model_name.endswith(".safetensors") or model_name.endswith(".pth")
+    )
     is_file = not is_directory
 
     # 处理目录下载
@@ -239,7 +261,9 @@ def download_model_from_ms(repo_id, model_name, model_path, progress=gr.Progress
             # 如果找不到，尝试从下载路径中查找
             for item in os.listdir(downloaded_path):
                 item_path = os.path.join(downloaded_path, item)
-                if actual_dir_name.lower() in item.lower() or (os.path.isdir(item_path) and item.lower() == actual_dir_name.lower()):
+                if actual_dir_name.lower() in item.lower() or (
+                    os.path.isdir(item_path) and item.lower() == actual_dir_name.lower()
+                ):
                     source_dir = item_path
                     break
 
@@ -251,7 +275,9 @@ def download_model_from_ms(repo_id, model_name, model_path, progress=gr.Progress
             shutil.move(source_dir, target_path)
             logger.info(f"目录 {model_name} 下载完成，已移动到 {target_path}")
         else:
-            logger.error(f"无法找到下载的目录：{source_dir}，下载路径：{downloaded_path}")
+            logger.error(
+                f"无法找到下载的目录：{source_dir}，下载路径：{downloaded_path}"
+            )
 
         # 清理临时目录
         if os.path.exists(temp_dir):
@@ -265,10 +291,15 @@ def download_model_from_ms(repo_id, model_name, model_path, progress=gr.Progress
 
         if os.path.exists(target_path):
             os.remove(target_path)
-        os.makedirs(os.path.dirname(target_path) if "/" in model_name else model_path, exist_ok=True)
+        os.makedirs(
+            os.path.dirname(target_path) if "/" in model_name else model_path,
+            exist_ok=True,
+        )
 
         # 如果 model_name 包含子目录路径，提取实际文件名用于 allow_patterns
-        actual_file_name = model_name.split("/")[-1] if "/" in model_name else model_name
+        actual_file_name = (
+            model_name.split("/")[-1] if "/" in model_name else model_name
+        )
 
         # 使用 snapshot_download 下载文件
         with warnings.catch_warnings():
@@ -281,7 +312,9 @@ def download_model_from_ms(repo_id, model_name, model_path, progress=gr.Progress
 
         # 查找并移动文件
         # 如果 model_name 包含子目录路径（如 "Qwen-Image-2512/file.safetensors"），提取文件名
-        actual_file_name = model_name.split("/")[-1] if "/" in model_name else model_name
+        actual_file_name = (
+            model_name.split("/")[-1] if "/" in model_name else model_name
+        )
 
         # 先尝试完整路径
         source_file = os.path.join(downloaded_path, model_name)
@@ -303,7 +336,9 @@ def download_model_from_ms(repo_id, model_name, model_path, progress=gr.Progress
             shutil.move(source_file, target_path)
             logger.info(f"文件 {model_name} 下载完成，保存到 {target_path}")
         else:
-            logger.error(f"❌ 下载失败：无法找到文件 {actual_file_name} 在 {downloaded_path}")
+            logger.error(
+                f"❌ 下载失败：无法找到文件 {actual_file_name} 在 {downloaded_path}"
+            )
             return f"❌ 下载失败：无法找到文件 {actual_file_name}"
 
         # 清理临时目录
@@ -316,7 +351,14 @@ def download_model_from_ms(repo_id, model_name, model_path, progress=gr.Progress
     return f"✅ {model_name} 下载完成"
 
 
-def download_model(repo_id, model_name, model_path, download_source="huggingface", progress=gr.Progress(), download_entire_repo=False):
+def download_model(
+    repo_id,
+    model_name,
+    model_path,
+    download_source="huggingface",
+    progress=gr.Progress(),
+    download_entire_repo=False,
+):
     """统一的下载函数，根据下载源选择 Hugging Face 或 ModelScope
 
     Args:
@@ -328,20 +370,32 @@ def download_model(repo_id, model_name, model_path, download_source="huggingface
         download_entire_repo: 是否下载整个仓库（用于 Qwen3 编码器等）
     """
     if download_source == "modelscope":
-        return download_model_from_ms(repo_id, model_name, model_path, progress, download_entire_repo)
+        return download_model_from_ms(
+            repo_id, model_name, model_path, progress, download_entire_repo
+        )
     else:
-        return download_model_from_hf(repo_id, model_name, model_path, progress, download_entire_repo)
+        return download_model_from_hf(
+            repo_id, model_name, model_path, progress, download_entire_repo
+        )
 
 
 def get_repo_id_for_model(model_type, is_distill, model_category="dit"):
     """根据模型类型、是否 distill 和模型类别获取对应的 Hugging Face 仓库 ID"""
     if model_category == "dit":
         if model_type == "wan2.1":
-            return "lightx2v/wan2.1-Distill-Models" if is_distill else "lightx2v/wan2.1-Official-Models"
+            return (
+                "lightx2v/wan2.1-Distill-Models"
+                if is_distill
+                else "lightx2v/wan2.1-Official-Models"
+            )
         elif model_type == "Qwen-Image-Edit-2511":
             return "lightx2v/Qwen-Image-Edit-2511-Lightning"
         else:  # wan2.2
-            return "lightx2v/wan2.2-Distill-Models" if is_distill else "lightx2v/wan2.2-Official-Models"
+            return (
+                "lightx2v/wan2.2-Distill-Models"
+                if is_distill
+                else "lightx2v/wan2.2-Official-Models"
+            )
     elif model_category == "high_noise" or model_category == "low_noise":
         if is_distill:
             return "lightx2v/wan2.2-Distill-Models"
@@ -359,23 +413,53 @@ def get_repo_id_for_model(model_type, is_distill, model_category="dit"):
 
 
 MODEL_CONFIG_MAP = {
-    "dit": {"get_repo_id": lambda model_type, is_distill, _: get_repo_id_for_model(model_type, is_distill, "dit")},
-    "high_noise": {"get_repo_id": lambda model_type, is_distill, _: get_repo_id_for_model("wan2.2", is_distill, "high_noise")},
-    "low_noise": {"get_repo_id": lambda model_type, is_distill, _: get_repo_id_for_model("wan2.2", is_distill, "low_noise")},
+    "dit": {
+        "get_repo_id": lambda model_type, is_distill, _: get_repo_id_for_model(
+            model_type, is_distill, "dit"
+        )
+    },
+    "high_noise": {
+        "get_repo_id": lambda model_type, is_distill, _: get_repo_id_for_model(
+            "wan2.2", is_distill, "high_noise"
+        )
+    },
+    "low_noise": {
+        "get_repo_id": lambda model_type, is_distill, _: get_repo_id_for_model(
+            "wan2.2", is_distill, "low_noise"
+        )
+    },
     "t5": {"get_repo_id": lambda _, __, ___: get_repo_id_for_model(None, None, "t5")},
-    "clip": {"get_repo_id": lambda _, __, ___: get_repo_id_for_model(None, None, "clip")},
+    "clip": {
+        "get_repo_id": lambda _, __, ___: get_repo_id_for_model(None, None, "clip")
+    },
     "vae": {"get_repo_id": lambda _, __, ___: get_repo_id_for_model(None, None, "vae")},
-    "vae_encoder": {"get_repo_id": lambda _, __, ___: get_repo_id_for_model(None, None, "vae")},  # 兼容旧代码
-    "vae_decoder": {"get_repo_id": lambda _, __, ___: get_repo_id_for_model(None, None, "vae")},  # 兼容旧代码
-    "qwen_image_dit": {"get_repo_id": lambda _, __, ___: "lightx2v/Qwen-Image-Edit-2511-Lightning"},
+    "vae_encoder": {
+        "get_repo_id": lambda _, __, ___: get_repo_id_for_model(None, None, "vae")
+    },  # 兼容旧代码
+    "vae_decoder": {
+        "get_repo_id": lambda _, __, ___: get_repo_id_for_model(None, None, "vae")
+    },  # 兼容旧代码
+    "qwen_image_dit": {
+        "get_repo_id": lambda _, __, ___: "lightx2v/Qwen-Image-Edit-2511-Lightning"
+    },
     "qwen_image_vae": {"get_repo_id": lambda _, __, ___: "Qwen/Qwen-Image-Edit-2511"},
-    "qwen_image_scheduler": {"get_repo_id": lambda _, __, ___: "Qwen/Qwen-Image-Edit-2511"},
-    "qwen_image_2512_dit": {"get_repo_id": lambda _, __, ___: "lightx2v/Qwen-Image-2512-Lightning"},
+    "qwen_image_scheduler": {
+        "get_repo_id": lambda _, __, ___: "Qwen/Qwen-Image-Edit-2511"
+    },
+    "qwen_image_2512_dit": {
+        "get_repo_id": lambda _, __, ___: "lightx2v/Qwen-Image-2512-Lightning"
+    },
     "qwen_image_2512_vae": {"get_repo_id": lambda _, __, ___: "Qwen/Qwen-Image-2512"},
-    "qwen_image_2512_scheduler": {"get_repo_id": lambda _, __, ___: "Qwen/Qwen-Image-2512"},
-    "z_image_turbo_dit": {"get_repo_id": lambda _, __, ___: "lightx2v/Z-Image-Turbo-Quantized"},
+    "qwen_image_2512_scheduler": {
+        "get_repo_id": lambda _, __, ___: "Qwen/Qwen-Image-2512"
+    },
+    "z_image_turbo_dit": {
+        "get_repo_id": lambda _, __, ___: "lightx2v/Z-Image-Turbo-Quantized"
+    },
     "z_image_turbo_vae": {"get_repo_id": lambda _, __, ___: "Tongyi-MAI/Z-Image-Turbo"},
-    "z_image_turbo_scheduler": {"get_repo_id": lambda _, __, ___: "Tongyi-MAI/Z-Image-Turbo"},
+    "z_image_turbo_scheduler": {
+        "get_repo_id": lambda _, __, ___: "Tongyi-MAI/Z-Image-Turbo"
+    },
     "qwen3_encoder": {"get_repo_id": lambda _, __, ___: "JunHowie/Qwen3-4B-GPTQ-Int4"},
     "qwen25vl_encoder": {"get_repo_id": lambda _, __, ___: "lightx2v/Encoders"},
 }
@@ -383,11 +467,16 @@ MODEL_CONFIG_MAP = {
 # Tokenizer 配置
 TOKENIZER_CONFIG = {
     "t5": {"name": "google", "repo_id": get_repo_id_for_model(None, None, "t5")},
-    "clip": {"name": "xlm-roberta-large", "repo_id": get_repo_id_for_model(None, None, "clip")},
+    "clip": {
+        "name": "xlm-roberta-large",
+        "repo_id": get_repo_id_for_model(None, None, "clip"),
+    },
 }
 
 
-def update_model_status(model_path_val, model_name, model_category, model_type_val=None):
+def update_model_status(
+    model_path_val, model_name, model_category, model_type_val=None
+):
     """通用的模型状态更新函数
 
     Args:
@@ -441,7 +530,16 @@ def update_tokenizer_status(model_path_val, tokenizer_type):
         return gr.update(value=status_text), gr.update(visible=True)
 
 
-def download_model_handler(model_path_val, model_name, model_category, download_source_val, get_choices_func=None, model_type_val=None, task_type_val=None, progress=gr.Progress()):
+def download_model_handler(
+    model_path_val,
+    model_name,
+    model_category,
+    download_source_val,
+    get_choices_func=None,
+    model_type_val=None,
+    task_type_val=None,
+    progress=gr.Progress(),
+):
     """通用的模型下载处理函数
 
     Args:
@@ -465,7 +563,11 @@ def download_model_handler(model_path_val, model_name, model_category, download_
     # 获取 repo_id
     config = MODEL_CONFIG_MAP.get(model_category)
     if not config:
-        return gr.update(value=f"未知的模型类别: {model_category}"), gr.update(visible=False), gr.update()
+        return (
+            gr.update(value=f"未知的模型类别: {model_category}"),
+            gr.update(visible=False),
+            gr.update(),
+        )
 
     is_distill = False
     if model_category in ["dit", "high_noise", "low_noise"]:
@@ -492,11 +594,23 @@ def download_model_handler(model_path_val, model_name, model_category, download_
         "z_image_turbo_dit",
     ]:
         # 确定模型子目录名称
-        if model_category in ["qwen_image_vae", "qwen_image_scheduler", "qwen_image_dit"]:
+        if model_category in [
+            "qwen_image_vae",
+            "qwen_image_scheduler",
+            "qwen_image_dit",
+        ]:
             model_subdir = "Qwen-Image-Edit-2511"
-        elif model_category in ["qwen_image_2512_vae", "qwen_image_2512_scheduler", "qwen_image_2512_dit"]:
+        elif model_category in [
+            "qwen_image_2512_vae",
+            "qwen_image_2512_scheduler",
+            "qwen_image_2512_dit",
+        ]:
             model_subdir = "Qwen-Image-2512"
-        elif model_category in ["z_image_turbo_vae", "z_image_turbo_scheduler", "z_image_turbo_dit"]:
+        elif model_category in [
+            "z_image_turbo_vae",
+            "z_image_turbo_scheduler",
+            "z_image_turbo_dit",
+        ]:
             model_subdir = "Z-Image-Turbo"
 
         # 如果需要在子目录下载，修改 actual_name 为子目录路径
@@ -512,10 +626,19 @@ def download_model_handler(model_path_val, model_name, model_category, download_
     # 下载模型
     # 对于 Qwen3 编码器，下载整个仓库
     download_entire_repo = model_category == "qwen3_encoder"
-    result = download_model(repo_id, actual_name, model_path_val, download_source_val, progress, download_entire_repo)
+    result = download_model(
+        repo_id,
+        actual_name,
+        model_path_val,
+        download_source_val,
+        progress,
+        download_entire_repo,
+    )
 
     # 下载完成后，直接标记为已存在（使用 ✅ 状态），避免文件系统同步延迟导致的状态检查失败
-    formatted_name_with_status = format_model_choice(actual_name, model_path_val, status_emoji="✅")
+    formatted_name_with_status = format_model_choice(
+        actual_name, model_path_val, status_emoji="✅"
+    )
 
     # 更新状态（下载完成后，模型应该存在，所以隐藏下载按钮）
     btn_visible = gr.update(visible=False)
@@ -525,13 +648,17 @@ def download_model_handler(model_path_val, model_name, model_category, download_
     if get_choices_func:
         try:
             if model_category in ["dit"] and model_type_val and task_type_val:
-                choices = get_choices_func(model_path_val, model_type_val, task_type_val)
+                choices = get_choices_func(
+                    model_path_val, model_type_val, task_type_val
+                )
             elif model_category in ["high_noise", "low_noise"] and task_type_val:
                 choices = get_choices_func(model_path_val, "wan2.2", task_type_val)
             else:
                 choices = get_choices_func(model_path_val)
             # 使用带状态标识的格式化名称
-            choices_update = gr.update(choices=choices, value=formatted_name_with_status)
+            choices_update = gr.update(
+                choices=choices, value=formatted_name_with_status
+            )
         except Exception as e:
             # 如果获取选项失败，只更新值
             choices_update = gr.update(value=formatted_name_with_status)
@@ -539,7 +666,9 @@ def download_model_handler(model_path_val, model_name, model_category, download_
     return gr.update(value=result), btn_visible, choices_update
 
 
-def download_tokenizer_handler(model_path_val, tokenizer_type, download_source_val, progress=gr.Progress()):
+def download_tokenizer_handler(
+    model_path_val, tokenizer_type, download_source_val, progress=gr.Progress()
+):
     """下载 Tokenizer 处理函数
 
     Args:
@@ -553,13 +682,21 @@ def download_tokenizer_handler(model_path_val, tokenizer_type, download_source_v
     """
     config = TOKENIZER_CONFIG.get(tokenizer_type)
     if not config:
-        return gr.update(value=f"未知的 tokenizer 类型: {tokenizer_type}"), gr.update(), gr.update(visible=False)
+        return (
+            gr.update(value=f"未知的 tokenizer 类型: {tokenizer_type}"),
+            gr.update(),
+            gr.update(visible=False),
+        )
 
     tokenizer_name = config["name"]
     repo_id = config["repo_id"]
 
-    result = download_model(repo_id, tokenizer_name, model_path_val, download_source_val, progress)
-    dropdown_update, btn_visible = update_tokenizer_status(model_path_val, tokenizer_type)
+    result = download_model(
+        repo_id, tokenizer_name, model_path_val, download_source_val, progress
+    )
+    dropdown_update, btn_visible = update_tokenizer_status(
+        model_path_val, tokenizer_type
+    )
 
     return gr.update(value=result), dropdown_update, btn_visible
 
@@ -590,10 +727,14 @@ def create_update_status_wrappers():
         return update_model_status(model_path_val, model_name, "vae")
 
     def update_vae_encoder_status(model_path_val, model_name):
-        return update_model_status(model_path_val, model_name, "vae")  # 兼容旧代码，统一使用 vae
+        return update_model_status(
+            model_path_val, model_name, "vae"
+        )  # 兼容旧代码，统一使用 vae
 
     def update_vae_decoder_status(model_path_val, model_name):
-        return update_model_status(model_path_val, model_name, "vae")  # 兼容旧代码，统一使用 vae
+        return update_model_status(
+            model_path_val, model_name, "vae"
+        )  # 兼容旧代码，统一使用 vae
 
     def update_high_noise_status(model_path_val, model_name):
         return update_model_status(model_path_val, model_name, "high_noise", "wan2.2")
@@ -641,7 +782,14 @@ def create_download_wrappers(get_choices_funcs):
         dict: 包含所有 download 函数的字典
     """
 
-    def download_dit_model(model_path_val, model_name, model_type_val, task_type_val, download_source_val, progress=gr.Progress()):
+    def download_dit_model(
+        model_path_val,
+        model_name,
+        model_type_val,
+        task_type_val,
+        download_source_val,
+        progress=gr.Progress(),
+    ):
         return download_model_handler(
             model_path_val,
             model_name,
@@ -653,28 +801,77 @@ def create_download_wrappers(get_choices_funcs):
             progress=progress,
         )
 
-    def download_t5_model(model_path_val, model_name, download_source_val, progress=gr.Progress()):
-        return download_model_handler(model_path_val, model_name, "t5", download_source_val, get_choices_func=get_choices_funcs.get("get_t5_model_choices"), progress=progress)
+    def download_t5_model(
+        model_path_val, model_name, download_source_val, progress=gr.Progress()
+    ):
+        return download_model_handler(
+            model_path_val,
+            model_name,
+            "t5",
+            download_source_val,
+            get_choices_func=get_choices_funcs.get("get_t5_model_choices"),
+            progress=progress,
+        )
 
-    def download_t5_tokenizer(model_path_val, download_source_val, progress=gr.Progress()):
-        return download_tokenizer_handler(model_path_val, "t5", download_source_val, progress)
+    def download_t5_tokenizer(
+        model_path_val, download_source_val, progress=gr.Progress()
+    ):
+        return download_tokenizer_handler(
+            model_path_val, "t5", download_source_val, progress
+        )
 
-    def download_clip_model(model_path_val, model_name, download_source_val, progress=gr.Progress()):
-        return download_model_handler(model_path_val, model_name, "clip", download_source_val, get_choices_func=get_choices_funcs.get("get_clip_model_choices"), progress=progress)
+    def download_clip_model(
+        model_path_val, model_name, download_source_val, progress=gr.Progress()
+    ):
+        return download_model_handler(
+            model_path_val,
+            model_name,
+            "clip",
+            download_source_val,
+            get_choices_func=get_choices_funcs.get("get_clip_model_choices"),
+            progress=progress,
+        )
 
-    def download_clip_tokenizer(model_path_val, download_source_val, progress=gr.Progress()):
-        return download_tokenizer_handler(model_path_val, "clip", download_source_val, progress)
+    def download_clip_tokenizer(
+        model_path_val, download_source_val, progress=gr.Progress()
+    ):
+        return download_tokenizer_handler(
+            model_path_val, "clip", download_source_val, progress
+        )
 
-    def download_vae(model_path_val, model_name, download_source_val, progress=gr.Progress()):
-        return download_model_handler(model_path_val, model_name, "vae", download_source_val, get_choices_func=get_choices_funcs.get("get_vae_choices"), progress=progress)
+    def download_vae(
+        model_path_val, model_name, download_source_val, progress=gr.Progress()
+    ):
+        return download_model_handler(
+            model_path_val,
+            model_name,
+            "vae",
+            download_source_val,
+            get_choices_func=get_choices_funcs.get("get_vae_choices"),
+            progress=progress,
+        )
 
-    def download_vae_encoder(model_path_val, model_name, download_source_val, progress=gr.Progress()):
-        return download_vae(model_path_val, model_name, download_source_val, progress)  # 兼容旧代码
+    def download_vae_encoder(
+        model_path_val, model_name, download_source_val, progress=gr.Progress()
+    ):
+        return download_vae(
+            model_path_val, model_name, download_source_val, progress
+        )  # 兼容旧代码
 
-    def download_vae_decoder(model_path_val, model_name, download_source_val, progress=gr.Progress()):
-        return download_vae(model_path_val, model_name, download_source_val, progress)  # 兼容旧代码
+    def download_vae_decoder(
+        model_path_val, model_name, download_source_val, progress=gr.Progress()
+    ):
+        return download_vae(
+            model_path_val, model_name, download_source_val, progress
+        )  # 兼容旧代码
 
-    def download_high_noise_model(model_path_val, model_name, task_type_val, download_source_val, progress=gr.Progress()):
+    def download_high_noise_model(
+        model_path_val,
+        model_name,
+        task_type_val,
+        download_source_val,
+        progress=gr.Progress(),
+    ):
         return download_model_handler(
             model_path_val,
             model_name,
@@ -686,7 +883,13 @@ def create_download_wrappers(get_choices_funcs):
             progress=progress,
         )
 
-    def download_low_noise_model(model_path_val, model_name, task_type_val, download_source_val, progress=gr.Progress()):
+    def download_low_noise_model(
+        model_path_val,
+        model_name,
+        task_type_val,
+        download_source_val,
+        progress=gr.Progress(),
+    ):
         return download_model_handler(
             model_path_val,
             model_name,
@@ -698,19 +901,53 @@ def create_download_wrappers(get_choices_funcs):
             progress=progress,
         )
 
-    def download_qwen_image_dit(model_path_val, model_name, download_source_val, progress=gr.Progress()):
-        return download_model_handler(model_path_val, model_name, "qwen_image_dit", download_source_val, get_choices_func=get_choices_funcs.get("get_qwen_image_dit_choices"), progress=progress)
-
-    def download_qwen_image_vae(model_path_val, model_name, download_source_val, progress=gr.Progress()):
-        return download_model_handler(model_path_val, model_name, "qwen_image_vae", download_source_val, get_choices_func=get_choices_funcs.get("get_qwen_image_vae_choices"), progress=progress)
-
-    def download_qwen_image_scheduler(model_path_val, model_name, download_source_val, progress=gr.Progress()):
+    def download_qwen_image_dit(
+        model_path_val, model_name, download_source_val, progress=gr.Progress()
+    ):
         return download_model_handler(
-            model_path_val, model_name, "qwen_image_scheduler", download_source_val, get_choices_func=get_choices_funcs.get("get_qwen_image_scheduler_choices"), progress=progress
+            model_path_val,
+            model_name,
+            "qwen_image_dit",
+            download_source_val,
+            get_choices_func=get_choices_funcs.get("get_qwen_image_dit_choices"),
+            progress=progress,
         )
 
-    def download_qwen25vl_encoder(model_path_val, model_name, download_source_val, progress=gr.Progress()):
-        return download_model_handler(model_path_val, model_name, "qwen25vl_encoder", download_source_val, get_choices_func=get_choices_funcs.get("get_qwen25vl_encoder_choices"), progress=progress)
+    def download_qwen_image_vae(
+        model_path_val, model_name, download_source_val, progress=gr.Progress()
+    ):
+        return download_model_handler(
+            model_path_val,
+            model_name,
+            "qwen_image_vae",
+            download_source_val,
+            get_choices_func=get_choices_funcs.get("get_qwen_image_vae_choices"),
+            progress=progress,
+        )
+
+    def download_qwen_image_scheduler(
+        model_path_val, model_name, download_source_val, progress=gr.Progress()
+    ):
+        return download_model_handler(
+            model_path_val,
+            model_name,
+            "qwen_image_scheduler",
+            download_source_val,
+            get_choices_func=get_choices_funcs.get("get_qwen_image_scheduler_choices"),
+            progress=progress,
+        )
+
+    def download_qwen25vl_encoder(
+        model_path_val, model_name, download_source_val, progress=gr.Progress()
+    ):
+        return download_model_handler(
+            model_path_val,
+            model_name,
+            "qwen25vl_encoder",
+            download_source_val,
+            get_choices_func=get_choices_funcs.get("get_qwen25vl_encoder_choices"),
+            progress=progress,
+        )
 
     return {
         "download_dit_model": download_dit_model,

@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import ctypes
 import queue
 import threading
@@ -11,6 +10,8 @@ import torchaudio as ta
 from loguru import logger
 from scipy.signal import resample
 
+from lib.smart_config import smart_config
+
 
 class X264VARecorder:
     def __init__(
@@ -22,7 +23,9 @@ class X264VARecorder:
         slice_frame: int = 1,
         prev_frame: int = 1,
     ):
-        assert livestream_url.startswith("http"), "X264VARecorder only support whip http livestream"
+        assert livestream_url.startswith(
+            "http"
+        ), "X264VARecorder only support whip http livestream"
         self.livestream_url = livestream_url
         self.fps = fps
         self.sample_rate = sample_rate
@@ -36,7 +39,9 @@ class X264VARecorder:
         self.whip_shared_lib = None
         self.whip_shared_handle = None
 
-        assert livestream_url.startswith("http"), "X264VARecorder only support whip http livestream"
+        assert livestream_url.startswith(
+            "http"
+        ), "X264VARecorder only support whip http livestream"
         self.realtime = True
 
         # queue for send data to whip shared api
@@ -53,7 +58,9 @@ class X264VARecorder:
         self.schedule_thread = None
         self.slice_frame = slice_frame
         self.prev_frame = prev_frame
-        assert self.slice_frame >= self.prev_frame, "Slice frame must be greater than previous frame"
+        assert (
+            self.slice_frame >= self.prev_frame
+        ), "Slice frame must be greater than previous frame"
 
     def worker(self):
         try:
@@ -71,25 +78,41 @@ class X264VARecorder:
 
                     for i in range(images.shape[0]):
                         t0 = time.time()
-                        cur_audio = audios[i * self.target_chunks_per_frame : (i + 1) * self.target_chunks_per_frame].flatten()
-                        audio_ptr = cur_audio.ctypes.data_as(ctypes.POINTER(ctypes.c_int16))
-                        self.whip_shared_lib.pushWhipRawAudioFrame(self.whip_shared_handle, audio_ptr, self.target_samples_per_frame)
+                        cur_audio = audios[
+                            i
+                            * self.target_chunks_per_frame : (i + 1)
+                            * self.target_chunks_per_frame
+                        ].flatten()
+                        audio_ptr = cur_audio.ctypes.data_as(
+                            ctypes.POINTER(ctypes.c_int16)
+                        )
+                        self.whip_shared_lib.pushWhipRawAudioFrame(
+                            self.whip_shared_handle,
+                            audio_ptr,
+                            self.target_samples_per_frame,
+                        )
 
                         cur_video = images[i].flatten()
-                        video_ptr = cur_video.ctypes.data_as(ctypes.POINTER(ctypes.c_uint8))
-                        self.whip_shared_lib.pushWhipRawVideoFrame(self.whip_shared_handle, video_ptr, self.width, self.height)
+                        video_ptr = cur_video.ctypes.data_as(
+                            ctypes.POINTER(ctypes.c_uint8)
+                        )
+                        self.whip_shared_lib.pushWhipRawVideoFrame(
+                            self.whip_shared_handle, video_ptr, self.width, self.height
+                        )
 
                         if self.realtime and i < images.shape[0] - 1:
                             time.sleep(max(0, packet_secs - (time.time() - t0)))
 
                     fail_time = 0
-                except:  # noqa
+                except Exception as e:  # noqa
                     logger.error(f"Send audio data error: {traceback.format_exc()}")
                     fail_time += 1
                     if fail_time > max_fail_time:
-                        logger.error(f"Audio push worker thread failed {fail_time} times, stopping...")
+                        logger.error(
+                            f"Audio push worker thread failed {fail_time} times, stopping..."
+                        )
                         break
-        except:  # noqa
+        except Exception as e:  # noqa
             logger.error(f"Audio push worker thread error: {traceback.format_exc()}")
         finally:
             logger.info("Audio push worker thread stopped")
@@ -98,27 +121,61 @@ class X264VARecorder:
         self.whip_shared_lib = ctypes.CDLL(self.whip_shared_path)
 
         # define function argtypes and restype
-        self.whip_shared_lib.initWhipStream.argtypes = [ctypes.c_char_p, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int]
+        self.whip_shared_lib.initWhipStream.argtypes = [
+            ctypes.c_char_p,
+            ctypes.c_int,
+            ctypes.c_int,
+            ctypes.c_int,
+            ctypes.c_int,
+            ctypes.c_int,
+        ]
         self.whip_shared_lib.initWhipStream.restype = ctypes.c_void_p
 
-        self.whip_shared_lib.pushWhipRawAudioFrame.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_int16), ctypes.c_int]
-        self.whip_shared_lib.pushWhipRawVideoFrame.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_uint8), ctypes.c_int, ctypes.c_int]
+        self.whip_shared_lib.pushWhipRawAudioFrame.argtypes = [
+            ctypes.c_void_p,
+            ctypes.POINTER(ctypes.c_int16),
+            ctypes.c_int,
+        ]
+        self.whip_shared_lib.pushWhipRawVideoFrame.argtypes = [
+            ctypes.c_void_p,
+            ctypes.POINTER(ctypes.c_uint8),
+            ctypes.c_int,
+            ctypes.c_int,
+        ]
 
         self.whip_shared_lib.destroyWhipStream.argtypes = [ctypes.c_void_p]
 
         whip_url = ctypes.c_char_p(self.livestream_url.encode("utf-8"))
-        self.whip_shared_handle = ctypes.c_void_p(self.whip_shared_lib.initWhipStream(whip_url, 1, 1, 0, width, height))
-        logger.info(f"WHIP shared API initialized with handle: {self.whip_shared_handle}")
+        self.whip_shared_handle = ctypes.c_void_p(
+            self.whip_shared_lib.initWhipStream(whip_url, 1, 1, 0, width, height)
+        )
+        logger.info(
+            f"WHIP shared API initialized with handle: {self.whip_shared_handle}"
+        )
 
     def convert_data(self, audios, images):
         # Convert audio data to 16-bit integer format
-        audio_datas = torch.clamp(torch.round(audios * 32767), -32768, 32767).to(torch.int16).cpu().numpy().reshape(-1)
+        audio_datas = (
+            torch.clamp(torch.round(audios * 32767), -32768, 32767)
+            .to(torch.int16)
+            .cpu()
+            .numpy()
+            .reshape(-1)
+        )
         # Convert to numpy and scale to [0, 255], convert RGB to BGR for OpenCV/FFmpeg
         image_datas = (images * 255).clamp(0, 255).to(torch.uint8).cpu().numpy()
 
-        logger.info(f"image_datas: {image_datas.shape} {image_datas.dtype} {image_datas.min()} {image_datas.max()}")
-        reample_audios = resample(audio_datas, int(len(audio_datas) * 48000 / self.sample_rate))
-        stereo_audios = np.stack([reample_audios, reample_audios], axis=-1).astype(np.int16).reshape(-1)
+        logger.info(
+            f"image_datas: {image_datas.shape} {image_datas.dtype} {image_datas.min()} {image_datas.max()}"
+        )
+        reample_audios = resample(
+            audio_datas, int(len(audio_datas) * 48000 / self.sample_rate)
+        )
+        stereo_audios = (
+            np.stack([reample_audios, reample_audios], axis=-1)
+            .astype(np.int16)
+            .reshape(-1)
+        )
         return stereo_audios, image_datas
 
     def start(self, width: int, height: int):
@@ -126,7 +183,9 @@ class X264VARecorder:
 
     def set_video_size(self, width: int, height: int):
         if self.width is not None and self.height is not None:
-            assert self.width == width and self.height == height, "Video size already set"
+            assert (
+                self.width == width and self.height == height
+            ), "Video size already set"
             return
         self.width = width
         self.height = height
@@ -137,10 +196,18 @@ class X264VARecorder:
             self.schedule_thread = threading.Thread(target=self.schedule_stream_buffer)
             self.schedule_thread.start()
 
-    def buffer_stream(self, images: torch.Tensor, audios: torch.Tensor, gen_video: torch.Tensor, valid_duration=1e9):
+    def buffer_stream(
+        self,
+        images: torch.Tensor,
+        audios: torch.Tensor,
+        gen_video: torch.Tensor,
+        valid_duration=1e9,
+    ):
         N, height, width, C = images.shape
         M = audios.reshape(-1).shape[0]
-        assert N % self.slice_frame == 0, "Video frames must be divisible by slice_frame"
+        assert (
+            N % self.slice_frame == 0
+        ), "Video frames must be divisible by slice_frame"
         assert C == 3, "Input must be [N, H, W, C] with C=3"
 
         audio_frames = round(M * self.fps / self.sample_rate)
@@ -154,14 +221,20 @@ class X264VARecorder:
         for i in range(0, N, self.slice_frame):
             end_frame = i + self.slice_frame
             img = image_datas[i:end_frame]
-            aud = audio_datas[i * self.target_chunks_per_frame : end_frame * self.target_chunks_per_frame]
+            aud = audio_datas[
+                i
+                * self.target_chunks_per_frame : end_frame
+                * self.target_chunks_per_frame
+            ]
             gen = gen_video[:, :, (end_frame - self.prev_frame) : end_frame]
             rets.append((img, aud, gen))
 
         with self.stream_buffer_lock:
             origin_size = len(self.stream_buffer)
             self.stream_buffer.extend(rets)
-            logger.info(f"Buffered {origin_size} + {len(rets)} = {len(self.stream_buffer)} stream segments")
+            logger.info(
+                f"Buffered {origin_size} + {len(rets)} = {len(self.stream_buffer)} stream segments"
+            )
 
     def get_buffer_stream_size(self):
         return len(self.stream_buffer)
@@ -169,7 +242,9 @@ class X264VARecorder:
     def truncate_stream_buffer(self, size: int):
         with self.stream_buffer_lock:
             self.stream_buffer = self.stream_buffer[:size]
-            logger.info(f"Truncated stream buffer to {len(self.stream_buffer)} segments")
+            logger.info(
+                f"Truncated stream buffer to {len(self.stream_buffer)} segments"
+            )
             if len(self.stream_buffer) > 0:
                 return self.stream_buffer[-1][2]  # return the last video tensor
             else:
@@ -177,7 +252,9 @@ class X264VARecorder:
 
     def schedule_stream_buffer(self):
         schedule_interval = self.slice_frame / self.fps
-        logger.info(f"Schedule stream buffer with interval: {schedule_interval} seconds")
+        logger.info(
+            f"Schedule stream buffer with interval: {schedule_interval} seconds"
+        )
         t = None
         while True:
             try:
@@ -284,7 +361,9 @@ if __name__ == "__main__":
     # time.sleep(5)
     audio_path = "/data/nvme0/liuliang1/lightx2v/test_deploy/media_test/mangzhong.wav"
     audio_array, ori_sr = ta.load(audio_path)
-    audio_array = ta.functional.resample(audio_array.mean(0), orig_freq=ori_sr, new_freq=16000)
+    audio_array = ta.functional.resample(
+        audio_array.mean(0), orig_freq=ori_sr, new_freq=16000
+    )
     audio_array = audio_array.numpy().reshape(-1)
     secs = audio_array.shape[0] // sample_rate
     interval = 1
@@ -297,7 +376,9 @@ if __name__ == "__main__":
         cur_audio_array = np.zeros(int(interval * sample_rate), dtype=np.float32)
         num_frames = int(interval * fps)
         images = create_simple_video(num_frames, height, width)
-        recorder.buffer_stream(images, torch.tensor(cur_audio_array, dtype=torch.float32), images)
+        recorder.buffer_stream(
+            images, torch.tensor(cur_audio_array, dtype=torch.float32), images
+        )
         i += interval
         time.sleep(interval - (time.time() - t0))
 

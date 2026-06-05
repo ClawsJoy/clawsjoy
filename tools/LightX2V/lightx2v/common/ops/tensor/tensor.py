@@ -1,19 +1,27 @@
-from lib.smart_config import smart_config
 import os
 import re
 from pathlib import Path
 
 import torch
-from safetensors import safe_open
-
 from lightx2v.utils.envs import *
 from lightx2v.utils.registry_factory import TENSOR_REGISTER
 from lightx2v_platform.base.global_var import AI_DEVICE
+from safetensors import safe_open
+
+from lib.smart_config import smart_config
 
 
 @TENSOR_REGISTER("Default")
 class DefaultTensor:
-    def __init__(self, tensor_name, create_cuda_buffer=False, create_cpu_buffer=False, lazy_load=False, lazy_load_file=None, is_post_adapter=False):
+    def __init__(
+        self,
+        tensor_name,
+        create_cuda_buffer=False,
+        create_cpu_buffer=False,
+        lazy_load=False,
+        lazy_load_file=None,
+        is_post_adapter=False,
+    ):
         self.tensor_name = tensor_name
         self.lazy_load = lazy_load
         self.lazy_load_file = lazy_load_file
@@ -46,8 +54,13 @@ class DefaultTensor:
             if Path(self.lazy_load_file).is_file():
                 lazy_load_file_path = self.lazy_load_file
             else:
-                lazy_load_file_path = os.path.join(self.lazy_load_file, f"block_{self.tensor_name.split('.')[1]}.safetensors")
-            with safe_open(lazy_load_file_path, framework="pt", device="cpu") as lazy_load_file:
+                lazy_load_file_path = os.path.join(
+                    self.lazy_load_file,
+                    f"block_{self.tensor_name.split('.')[1]}.safetensors",
+                )
+            with safe_open(
+                lazy_load_file_path, framework="pt", device="cpu"
+            ) as lazy_load_file:
                 tensor = lazy_load_file.get_tensor(self.tensor_name)
                 if use_infer_dtype:
                     tensor = tensor.to(self.infer_dtype)
@@ -75,42 +88,62 @@ class DefaultTensor:
         elif hasattr(self, "tensor"):
             self.tensor = self.tensor.to(AI_DEVICE, non_blocking=non_blocking)
         else:
-            self.tensor = self._get_tensor(use_infer_dtype=True).to(AI_DEVICE, non_blocking=non_blocking)
+            self.tensor = self._get_tensor(use_infer_dtype=True).to(
+                AI_DEVICE, non_blocking=non_blocking
+            )
 
     def to_cpu(self, non_blocking=False):
         if hasattr(self, "pin_tensor"):
-            self.tensor = self.pin_tensor.copy_(self.tensor, non_blocking=non_blocking).cpu()
+            self.tensor = self.pin_tensor.copy_(
+                self.tensor, non_blocking=non_blocking
+            ).cpu()
         else:
             self.tensor = self.tensor.to("cpu", non_blocking=non_blocking)
 
     def state_dict(self, destination=None):
         if destination is None:
             destination = {}
-        destination[self.tensor_name] = self.pin_tensor if hasattr(self, "pin_tensor") else self.tensor
+        destination[self.tensor_name] = (
+            self.pin_tensor if hasattr(self, "pin_tensor") else self.tensor
+        )
         return destination
 
     def load_state_dict(self, destination, block_index, adapter_block_index=None):
         if self.is_post_adapter:
             assert adapter_block_index is not None
-            tensor_name = re.sub(r"\.\d+", lambda m: f".{adapter_block_index}", self.tensor_name, count=1)
+            tensor_name = re.sub(
+                r"\.\d+", lambda m: f".{adapter_block_index}", self.tensor_name, count=1
+            )
         else:
-            tensor_name = re.sub(r"\.\d+", lambda m: f".{block_index}", self.tensor_name, count=1)
+            tensor_name = re.sub(
+                r"\.\d+", lambda m: f".{block_index}", self.tensor_name, count=1
+            )
         if tensor_name not in destination:
             self.tensor = None
             return
-        self.tensor = self.tensor_cuda_buffer.copy_(destination[tensor_name], non_blocking=True)
+        self.tensor = self.tensor_cuda_buffer.copy_(
+            destination[tensor_name], non_blocking=True
+        )
 
     def load_state_dict_from_disk(self, block_index, adapter_block_index=None):
         if self.is_post_adapter:
             assert adapter_block_index is not None
-            self.tensor_name = re.sub(r"\.\d+", lambda m: f".{adapter_block_index}", self.tensor_name, count=1)
+            self.tensor_name = re.sub(
+                r"\.\d+", lambda m: f".{adapter_block_index}", self.tensor_name, count=1
+            )
         else:
-            self.tensor_name = re.sub(r"\.\d+", lambda m: f".{block_index}", self.tensor_name, count=1)
+            self.tensor_name = re.sub(
+                r"\.\d+", lambda m: f".{block_index}", self.tensor_name, count=1
+            )
         if Path(self.lazy_load_file).is_file():
             lazy_load_file_path = self.lazy_load_file
         else:
-            lazy_load_file_path = os.path.join(self.lazy_load_file, f"block_{block_index}.safetensors")
-        with safe_open(lazy_load_file_path, framework="pt", device="cpu") as lazy_load_file:
+            lazy_load_file_path = os.path.join(
+                self.lazy_load_file, f"block_{block_index}.safetensors"
+            )
+        with safe_open(
+            lazy_load_file_path, framework="pt", device="cpu"
+        ) as lazy_load_file:
             tensor = lazy_load_file.get_tensor(self.tensor_name).to(self.infer_dtype)
             self.pin_tensor = self.pin_tensor.copy_(tensor)
         del tensor

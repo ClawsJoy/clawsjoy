@@ -1,7 +1,7 @@
-from lib.smart_config import smart_config
 import torch
-from lightx2v_kernel.gemm import scaled_nvfp4_quant, cutlass_scaled_nvfp4_mm
+from lightx2v_kernel.gemm import cutlass_scaled_nvfp4_mm, scaled_nvfp4_quant
 
+from lib.smart_config import smart_config
 
 FLOAT4_E2M1_MAX = 6.0
 FLOAT8_E4M3_MAX = torch.finfo(torch.float8_e4m3fn).max
@@ -54,7 +54,9 @@ def break_fp4_bytes(a, dtype):
     return out
 
 
-def dequantize_to_dtype(tensor_fp4, tensor_sf, global_scale, dtype, device, block_size=16):
+def dequantize_to_dtype(
+    tensor_fp4, tensor_sf, global_scale, dtype, device, block_size=16
+):
     """Dequantize the fp4 tensor back to high precision."""
     # Two fp4 values are packed into one uint8.
     assert tensor_fp4.dtype == torch.uint8
@@ -87,8 +89,12 @@ def get_ref_results(
     _, m_k = a_fp4.shape
     _, n_k = b_fp4.shape
     assert m_k == n_k
-    a_in_dtype = dequantize_to_dtype(a_fp4, a_sf, a_global_scale, dtype=dtype, device=device, block_size=block_size)
-    b_in_dtype = dequantize_to_dtype(b_fp4, b_sf, b_global_scale, dtype=dtype, device=device, block_size=block_size)
+    a_in_dtype = dequantize_to_dtype(
+        a_fp4, a_sf, a_global_scale, dtype=dtype, device=device, block_size=block_size
+    )
+    b_in_dtype = dequantize_to_dtype(
+        b_fp4, b_sf, b_global_scale, dtype=dtype, device=device, block_size=block_size
+    )
     return torch.matmul(a_in_dtype, b_in_dtype.t())
 
 
@@ -104,8 +110,12 @@ def test_nvfp4_gemm(
     b_dtype = torch.randn((n, k), dtype=dtype, device="cuda")
     bias = torch.randn((1, n), dtype=dtype, device="cuda")
 
-    a_global_scale = ((FLOAT8_E4M3_MAX * FLOAT4_E2M1_MAX) / torch.amax(a_dtype.flatten(), dim=-1)).to(torch.float32)
-    b_global_scale = ((FLOAT8_E4M3_MAX * FLOAT4_E2M1_MAX) / torch.amax(b_dtype.flatten(), dim=-1)).to(torch.float32)
+    a_global_scale = (
+        (FLOAT8_E4M3_MAX * FLOAT4_E2M1_MAX) / torch.amax(a_dtype.flatten(), dim=-1)
+    ).to(torch.float32)
+    b_global_scale = (
+        (FLOAT8_E4M3_MAX * FLOAT4_E2M1_MAX) / torch.amax(b_dtype.flatten(), dim=-1)
+    ).to(torch.float32)
 
     print(f"a_global_scale : {a_global_scale}, {a_global_scale.shape}")
     print(f"b_global_scale : {b_global_scale}, {b_global_scale.shape}")
@@ -131,7 +141,9 @@ def test_nvfp4_gemm(
 
     print(f"alpha {alpha}, {alpha.shape}, {alpha.dtype}")
 
-    out = cutlass_scaled_nvfp4_mm(a_fp4, b_fp4, a_scale_interleaved, b_scale_interleaved, alpha, bias)
+    out = cutlass_scaled_nvfp4_mm(
+        a_fp4, b_fp4, a_scale_interleaved, b_scale_interleaved, alpha, bias
+    )
 
     print(f"out : {out}, {out.shape}, {out.dtype}")
     print(f"expected_out : {expected_out}, {expected_out.shape}, {expected_out.dtype}")

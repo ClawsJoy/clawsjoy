@@ -1,10 +1,10 @@
-from lib.smart_config import smart_config
 import torch
 import torch.nn as nn
 from einops import rearrange, repeat
-
 from lightx2v.models.video_encoders.hf.wan.vae import WanVAE_, _video_vae
 from lightx2v_platform.base.global_var import AI_DEVICE
+
+from lib.smart_config import smart_config
 
 torch_device_module = getattr(torch, AI_DEVICE)
 
@@ -30,14 +30,60 @@ class WanSFVAE:
         self.cpu_offload = cpu_offload
         self.use_2d_split = use_2d_split
 
-        mean = [-0.7571, -0.7089, -0.9113, 0.1075, -0.1745, 0.9653, -0.1517, 1.5508, 0.4134, -0.0715, 0.5517, -0.3632, -0.1922, -0.9497, 0.2503, -0.2921]
-        std = [2.8184, 1.4541, 2.3275, 2.6558, 1.2196, 1.7708, 2.6052, 2.0743, 3.2687, 2.1526, 2.8652, 1.5579, 1.6382, 1.1253, 2.8251, 1.9160]
+        mean = [
+            -0.7571,
+            -0.7089,
+            -0.9113,
+            0.1075,
+            -0.1745,
+            0.9653,
+            -0.1517,
+            1.5508,
+            0.4134,
+            -0.0715,
+            0.5517,
+            -0.3632,
+            -0.1922,
+            -0.9497,
+            0.2503,
+            -0.2921,
+        ]
+        std = [
+            2.8184,
+            1.4541,
+            2.3275,
+            2.6558,
+            1.2196,
+            1.7708,
+            2.6052,
+            2.0743,
+            3.2687,
+            2.1526,
+            2.8652,
+            1.5579,
+            1.6382,
+            1.1253,
+            2.8251,
+            1.9160,
+        ]
         self.mean = torch.tensor(mean, dtype=torch.float32)
         self.std = torch.tensor(std, dtype=torch.float32)
         self.scale = [self.mean, 1.0 / self.std]
 
         # init model
-        self.model = _video_vae(pretrained_path=vae_path, z_dim=z_dim, cpu_offload=cpu_offload, dtype=dtype, load_from_rank0=load_from_rank0).eval().requires_grad_(False).to(device).to(dtype)
+        self.model = (
+            _video_vae(
+                pretrained_path=vae_path,
+                z_dim=z_dim,
+                cpu_offload=cpu_offload,
+                dtype=dtype,
+                load_from_rank0=load_from_rank0,
+            )
+            .eval()
+            .requires_grad_(False)
+            .to(device)
+            .to(dtype)
+        )
         self.model.clear_cache()
         self.upsampling_factor = 8
 
@@ -66,7 +112,10 @@ class WanSFVAE:
             assert latent.shape[0] == 1, "Batch size must be 1 when using cache"
 
         device, dtype = latent.device, latent.dtype
-        scale = [self.mean.to(device=device, dtype=dtype), 1.0 / self.std.to(device=device, dtype=dtype)]
+        scale = [
+            self.mean.to(device=device, dtype=dtype),
+            1.0 / self.std.to(device=device, dtype=dtype),
+        ]
 
         if use_cache:
             decode_function = self.model.cached_decode
@@ -75,7 +124,9 @@ class WanSFVAE:
 
         output = []
         for u in zs:
-            output.append(decode_function(u.unsqueeze(0), scale).float().clamp_(-1, 1).squeeze(0))
+            output.append(
+                decode_function(u.unsqueeze(0), scale).float().clamp_(-1, 1).squeeze(0)
+            )
         output = torch.stack(output, dim=0)
         # from [batch_size, num_channels, num_frames, height, width]
         # to [batch_size, num_frames, num_channels, height, width]
@@ -102,14 +153,29 @@ class WanSFVAE:
         computation_device = device
 
         out_T = (T + 3) // 4
-        weight = torch.zeros((1, 1, out_T, H // self.upsampling_factor, W // self.upsampling_factor), dtype=video.dtype, device=data_device)
-        values = torch.zeros((1, 16, out_T, H // self.upsampling_factor, W // self.upsampling_factor), dtype=video.dtype, device=data_device)
+        weight = torch.zeros(
+            (1, 1, out_T, H // self.upsampling_factor, W // self.upsampling_factor),
+            dtype=video.dtype,
+            device=data_device,
+        )
+        values = torch.zeros(
+            (1, 16, out_T, H // self.upsampling_factor, W // self.upsampling_factor),
+            dtype=video.dtype,
+            device=data_device,
+        )
         for h, h_, w, w_ in tasks:  # tqdm(tasks, desc="VAE encoding"):
             hidden_states_batch = video[:, :, :, h:h_, w:w_].to(computation_device)
-            hidden_states_batch = self.model.encode(hidden_states_batch, self.scale).to(data_device)
+            hidden_states_batch = self.model.encode(hidden_states_batch, self.scale).to(
+                data_device
+            )
 
             mask = self.build_mask(
-                hidden_states_batch, is_bound=(h == 0, h_ >= H, w == 0, w_ >= W), border_width=((size_h - stride_h) // self.upsampling_factor, (size_w - stride_w) // self.upsampling_factor)
+                hidden_states_batch,
+                is_bound=(h == 0, h_ >= H, w == 0, w_ >= W),
+                border_width=(
+                    (size_h - stride_h) // self.upsampling_factor,
+                    (size_w - stride_w) // self.upsampling_factor,
+                ),
             ).to(dtype=video.dtype, device=data_device)
 
             target_h = h // self.upsampling_factor
@@ -120,7 +186,9 @@ class WanSFVAE:
                 :,
                 target_h : target_h + hidden_states_batch.shape[3],
                 target_w : target_w + hidden_states_batch.shape[4],
-            ] += hidden_states_batch * mask
+            ] += (
+                hidden_states_batch * mask
+            )
             weight[
                 :,
                 :,
@@ -136,7 +204,9 @@ class WanSFVAE:
         x = self.model.encode(video, self.scale)
         return x
 
-    def encode(self, videos, device, tiled=True, tile_size=(34, 34), tile_stride=(18, 16)):
+    def encode(
+        self, videos, device, tiled=True, tile_size=(34, 34), tile_stride=(18, 16)
+    ):
         videos = [video.to("cpu") for video in videos]
         hidden_states = []
         for video in videos:
@@ -156,8 +226,42 @@ class WanSFVAE:
 class WanMtxg2VAE(nn.Module):
     def __init__(self, pretrained_path=None, z_dim=16):
         super().__init__()
-        mean = [-0.7571, -0.7089, -0.9113, 0.1075, -0.1745, 0.9653, -0.1517, 1.5508, 0.4134, -0.0715, 0.5517, -0.3632, -0.1922, -0.9497, 0.2503, -0.2921]
-        std = [2.8184, 1.4541, 2.3275, 2.6558, 1.2196, 1.7708, 2.6052, 2.0743, 3.2687, 2.1526, 2.8652, 1.5579, 1.6382, 1.1253, 2.8251, 1.9160]
+        mean = [
+            -0.7571,
+            -0.7089,
+            -0.9113,
+            0.1075,
+            -0.1745,
+            0.9653,
+            -0.1517,
+            1.5508,
+            0.4134,
+            -0.0715,
+            0.5517,
+            -0.3632,
+            -0.1922,
+            -0.9497,
+            0.2503,
+            -0.2921,
+        ]
+        std = [
+            2.8184,
+            1.4541,
+            2.3275,
+            2.6558,
+            1.2196,
+            1.7708,
+            2.6052,
+            2.0743,
+            3.2687,
+            2.1526,
+            2.8652,
+            1.5579,
+            1.6382,
+            1.1253,
+            2.8251,
+            1.9160,
+        ]
         self.mean = torch.tensor(mean)
         self.std = torch.tensor(std)
         self.scale = [self.mean, 1.0 / self.std]
@@ -176,7 +280,9 @@ class WanMtxg2VAE(nn.Module):
             .requires_grad_(False)
         )
         if pretrained_path is not None:
-            self.model.load_state_dict(torch.load(pretrained_path, map_location="cpu"), assign=True)
+            self.model.load_state_dict(
+                torch.load(pretrained_path, map_location="cpu"), assign=True
+            )
         self.upsampling_factor = 8
 
     def to(self, *args, **kwargs):
@@ -191,7 +297,9 @@ class WanMtxg2VAE(nn.Module):
         if not left_bound:
             x[:border_width] = (torch.arange(border_width) + 1) / border_width
         if not right_bound:
-            x[-border_width:] = torch.flip((torch.arange(border_width) + 1) / border_width, dims=(0,))
+            x[-border_width:] = torch.flip(
+                (torch.arange(border_width) + 1) / border_width, dims=(0,)
+            )
         return x
 
     def build_mask(self, data, is_bound, border_width):
@@ -226,15 +334,32 @@ class WanMtxg2VAE(nn.Module):
         computation_device = device
 
         out_T = T * 4 - 3
-        weight = torch.zeros((1, 1, out_T, H * self.upsampling_factor, W * self.upsampling_factor), dtype=hidden_states.dtype, device=data_device)
-        values = torch.zeros((1, 3, out_T, H * self.upsampling_factor, W * self.upsampling_factor), dtype=hidden_states.dtype, device=data_device)
+        weight = torch.zeros(
+            (1, 1, out_T, H * self.upsampling_factor, W * self.upsampling_factor),
+            dtype=hidden_states.dtype,
+            device=data_device,
+        )
+        values = torch.zeros(
+            (1, 3, out_T, H * self.upsampling_factor, W * self.upsampling_factor),
+            dtype=hidden_states.dtype,
+            device=data_device,
+        )
 
         for h, h_, w, w_ in tasks:  # tqdm(tasks, desc="VAE decoding"):
-            hidden_states_batch = hidden_states[:, :, :, h:h_, w:w_].to(computation_device)
-            hidden_states_batch = self.model.decode(hidden_states_batch, self.scale).to(data_device)
+            hidden_states_batch = hidden_states[:, :, :, h:h_, w:w_].to(
+                computation_device
+            )
+            hidden_states_batch = self.model.decode(hidden_states_batch, self.scale).to(
+                data_device
+            )
 
             mask = self.build_mask(
-                hidden_states_batch, is_bound=(h == 0, h_ >= H, w == 0, w_ >= W), border_width=((size_h - stride_h) * self.upsampling_factor, (size_w - stride_w) * self.upsampling_factor)
+                hidden_states_batch,
+                is_bound=(h == 0, h_ >= H, w == 0, w_ >= W),
+                border_width=(
+                    (size_h - stride_h) * self.upsampling_factor,
+                    (size_w - stride_w) * self.upsampling_factor,
+                ),
             ).to(dtype=hidden_states.dtype, device=data_device)
 
             target_h = h * self.upsampling_factor
@@ -245,7 +370,9 @@ class WanMtxg2VAE(nn.Module):
                 :,
                 target_h : target_h + hidden_states_batch.shape[3],
                 target_w : target_w + hidden_states_batch.shape[4],
-            ] += hidden_states_batch * mask
+            ] += (
+                hidden_states_batch * mask
+            )
             weight[
                 :,
                 :,
@@ -277,15 +404,30 @@ class WanMtxg2VAE(nn.Module):
         computation_device = device
 
         out_T = (T + 3) // 4
-        weight = torch.zeros((1, 1, out_T, H // self.upsampling_factor, W // self.upsampling_factor), dtype=video.dtype, device=data_device)
-        values = torch.zeros((1, 16, out_T, H // self.upsampling_factor, W // self.upsampling_factor), dtype=video.dtype, device=data_device)
+        weight = torch.zeros(
+            (1, 1, out_T, H // self.upsampling_factor, W // self.upsampling_factor),
+            dtype=video.dtype,
+            device=data_device,
+        )
+        values = torch.zeros(
+            (1, 16, out_T, H // self.upsampling_factor, W // self.upsampling_factor),
+            dtype=video.dtype,
+            device=data_device,
+        )
 
         for h, h_, w, w_ in tasks:  # tqdm(tasks, desc="VAE encoding"):
             hidden_states_batch = video[:, :, :, h:h_, w:w_].to(computation_device)
-            hidden_states_batch = self.model.encode(hidden_states_batch, self.scale).to(data_device)
+            hidden_states_batch = self.model.encode(hidden_states_batch, self.scale).to(
+                data_device
+            )
 
             mask = self.build_mask(
-                hidden_states_batch, is_bound=(h == 0, h_ >= H, w == 0, w_ >= W), border_width=((size_h - stride_h) // self.upsampling_factor, (size_w - stride_w) // self.upsampling_factor)
+                hidden_states_batch,
+                is_bound=(h == 0, h_ >= H, w == 0, w_ >= W),
+                border_width=(
+                    (size_h - stride_h) // self.upsampling_factor,
+                    (size_w - stride_w) // self.upsampling_factor,
+                ),
             ).to(dtype=video.dtype, device=data_device)
 
             target_h = h // self.upsampling_factor
@@ -296,7 +438,9 @@ class WanMtxg2VAE(nn.Module):
                 :,
                 target_h : target_h + hidden_states_batch.shape[3],
                 target_w : target_w + hidden_states_batch.shape[4],
-            ] += hidden_states_batch * mask
+            ] += (
+                hidden_states_batch * mask
+            )
             weight[
                 :,
                 :,
@@ -317,12 +461,16 @@ class WanMtxg2VAE(nn.Module):
         video = self.model.decode(hidden_state, self.scale)
         return video.clamp_(-1, 1)
 
-    def encode(self, videos, device, tiled=True, tile_size=(34, 34), tile_stride=(18, 16)):
+    def encode(
+        self, videos, device, tiled=True, tile_size=(34, 34), tile_stride=(18, 16)
+    ):
         # videos: torch.Size([1, 3, 597, 352, 640]), device='cuda:0', dtype=torch.bfloat16
         videos = [video.to("cpu") for video in videos]
         hidden_states = []
         for video in videos:
-            video = video.unsqueeze(0)  # torch.Size([1, 3, 597, 352, 640])  torch.bfloat16  device(type='cpu')
+            video = video.unsqueeze(
+                0
+            )  # torch.Size([1, 3, 597, 352, 640])  torch.bfloat16  device(type='cpu')
             if tiled:  # True
                 tile_size = (tile_size[0] * 8, tile_size[1] * 8)
                 tile_stride = (tile_stride[0] * 8, tile_stride[1] * 8)
@@ -334,7 +482,14 @@ class WanMtxg2VAE(nn.Module):
         hidden_states = torch.stack(hidden_states)
         return hidden_states
 
-    def decode(self, hidden_states, device, tiled=True, tile_size=(34, 34), tile_stride=(18, 16)):
+    def decode(
+        self,
+        hidden_states,
+        device,
+        tiled=True,
+        tile_size=(34, 34),
+        tile_stride=(18, 16),
+    ):
         hidden_states = [hidden_state.to("cpu") for hidden_state in hidden_states]
         videos = []
         for hidden_state in hidden_states:

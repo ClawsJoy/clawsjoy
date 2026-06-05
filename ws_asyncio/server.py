@@ -3,11 +3,11 @@
 
 import asyncio
 import json
-import time
 import sqlite3
+import sys
+import time
 from datetime import datetime
 from pathlib import Path
-import sys
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -22,10 +22,12 @@ DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 connected_clients = {}  # user_id -> websocket
 
+
 def init_db():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    c.execute('''
+    c.execute(
+        """
         CREATE TABLE IF NOT EXISTS offline_messages (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id TEXT NOT NULL,
@@ -33,28 +35,32 @@ def init_db():
             data TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-    ''')
+    """
+    )
     conn.commit()
     conn.close()
 
+
 init_db()
+
 
 def save_offline_message(user_id: str, event: str, data: dict):
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute(
         "INSERT INTO offline_messages (user_id, event, data) VALUES (?, ?, ?)",
-        (user_id, event, json.dumps(data))
+        (user_id, event, json.dumps(data)),
     )
     conn.commit()
     conn.close()
+
 
 def get_offline_messages(user_id: str):
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute(
         "SELECT id, event, data FROM offline_messages WHERE user_id = ? ORDER BY id",
-        (user_id,)
+        (user_id,),
     )
     rows = c.fetchall()
     c.execute("DELETE FROM offline_messages WHERE user_id = ?", (user_id,))
@@ -62,22 +68,20 @@ def get_offline_messages(user_id: str):
     conn.close()
     messages = []
     for row in rows:
-        messages.append({
-            'id': row[0],
-            'event': row[1],
-            'data': json.loads(row[2])
-        })
+        messages.append({"id": row[0], "event": row[1], "data": json.loads(row[2])})
     return messages
 
 
 async def send_to_user(user_id: str, event: str, data: dict):
     if user_id in connected_clients:
         try:
-            message = json.dumps({'event': event, 'data': data, 'timestamp': time.time()})
+            message = json.dumps(
+                {"event": event, "data": data, "timestamp": time.time()}
+            )
             await connected_clients[user_id].send(message)
             print(f"📤 发送到用户 {user_id}: {event}")
             return True
-        except:
+        except Exception as e:
             if user_id in connected_clients:
                 del connected_clients[user_id]
             return False
@@ -92,50 +96,68 @@ async def websocket_handler(websocket):
     try:
         message = await websocket.recv()
         data = json.loads(message)
-        
-        if data.get('event') != 'auth':
-            await websocket.send(json.dumps({'event': 'error', 'data': {'error': 'First message must be auth'}}))
+
+        if data.get("event") != "auth":
+            await websocket.send(
+                json.dumps(
+                    {"event": "error", "data": {"error": "First message must be auth"}}
+                )
+            )
             return
-        
-        token = data.get('data', {}).get('token', '')
+
+        token = data.get("data", {}).get("token", "")
         payload = auth_manager.verify_token(token)
-        
+
         if not payload:
-            await websocket.send(json.dumps({'event': 'auth_error', 'data': {'error': 'Invalid token'}}))
+            await websocket.send(
+                json.dumps({"event": "auth_error", "data": {"error": "Invalid token"}})
+            )
             return
-        
-        user_id = payload.get('user_id')
-        username = payload.get('username', user_id)
-        
+
+        user_id = payload.get("user_id")
+        username = payload.get("username", user_id)
+
         connected_clients[user_id] = websocket
-        
+
         offline = get_offline_messages(user_id)
         for msg in offline:
-            await websocket.send(json.dumps({
-                'event': msg['event'],
-                'data': msg['data'],
-                'timestamp': time.time()
-            }))
-        
-        await websocket.send(json.dumps({
-            'event': 'auth_success',
-            'data': {
-                'user_id': user_id,
-                'username': username,
-                'offline_count': len(offline)
-            }
-        }))
+            await websocket.send(
+                json.dumps(
+                    {
+                        "event": msg["event"],
+                        "data": msg["data"],
+                        "timestamp": time.time(),
+                    }
+                )
+            )
+
+        await websocket.send(
+            json.dumps(
+                {
+                    "event": "auth_success",
+                    "data": {
+                        "user_id": user_id,
+                        "username": username,
+                        "offline_count": len(offline),
+                    },
+                }
+            )
+        )
         print(f"🔐 用户认证成功: {username} ({user_id})")
-        
+
         async for message in websocket:
             try:
                 msg_data = json.loads(message)
-                event = msg_data.get('event')
-                if event == 'ping':
-                    await websocket.send(json.dumps({'event': 'pong', 'data': {'timestamp': time.time()}}))
-            except:
+                event = msg_data.get("event")
+                if event == "ping":
+                    await websocket.send(
+                        json.dumps(
+                            {"event": "pong", "data": {"timestamp": time.time()}}
+                        )
+                    )
+            except Exception as e:
                 pass
-                
+
     except websockets.exceptions.ConnectionClosed:
         print(f"❌ 连接关闭: {user_id}")
     finally:
@@ -146,29 +168,33 @@ async def websocket_handler(websocket):
 async def push_api(request):
     try:
         data = await request.json()
-        user_id = data.get('user_id')
-        event = data.get('event')
-        msg_data = data.get('data', {})
-        
+        user_id = data.get("user_id")
+        event = data.get("event")
+        msg_data = data.get("data", {})
+
         if not user_id or not event:
-            return web.json_response({'success': False, 'error': 'user_id and event required'}, status=400)
-        
+            return web.json_response(
+                {"success": False, "error": "user_id and event required"}, status=400
+            )
+
         success = await send_to_user(user_id, event, msg_data)
-        return web.json_response({'success': success})
+        return web.json_response({"success": success})
     except Exception as e:
-        return web.json_response({'success': False, 'error': str(e)}, status=500)
+        return web.json_response({"success": False, "error": str(e)}, status=500)
 
 
 async def stats_api(request):
-    return web.json_response({
-        'success': True,
-        'active_connections': len(connected_clients),
-        'users': list(connected_clients.keys())
-    })
+    return web.json_response(
+        {
+            "success": True,
+            "active_connections": len(connected_clients),
+            "users": list(connected_clients.keys()),
+        }
+    )
 
 
 async def index_page(request):
-    html = '''<!DOCTYPE html>
+    html = """<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
@@ -219,23 +245,23 @@ async def index_page(request):
         function disconnect() { if (ws) ws.close(); }
     </script>
 </body>
-</html>'''
-    return web.Response(text=html, content_type='text/html')
+</html>"""
+    return web.Response(text=html, content_type="text/html")
 
 
 async def main():
     # HTTP 应用
     app = web.Application()
-    app.router.add_post('/api/push', push_api)
-    app.router.add_get('/api/stats', stats_api)
-    app.router.add_get('/', index_page)
-    
+    app.router.add_post("/api/push", push_api)
+    app.router.add_get("/api/stats", stats_api)
+    app.router.add_get("/", index_page)
+
     # 启动 HTTP 服务
     runner = web.AppRunner(app)
     await runner.setup()
-    site = web.TCPSite(runner, '0.0.0.0', 5004)
+    site = web.TCPSite(runner, "0.0.0.0", 5004)
     await site.start()
-    
+
     print("=" * 50)
     print("🔌 ClawsJoy WebSocket 服务")
     print("=" * 50)
@@ -243,11 +269,11 @@ async def main():
     print("📡 HTTP API: http://localhost:5004/api/push")
     print("📄 测试页面: http://localhost:5004")
     print("=" * 50)
-    
+
     # 启动 WebSocket 服务
     async with websockets.serve(websocket_handler, "0.0.0.0", 5003):
         await asyncio.Future()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(main())

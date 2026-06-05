@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import json
 import os
 import socket
@@ -10,8 +9,8 @@ from lightx2v.disagg.rdma_base import (
     MR,
     PD,
     QP,
-    AHAttr,
     AccessFlag,
+    AHAttr,
     GlobalRoute,
     IBDevice,
     QPAttr,
@@ -26,6 +25,8 @@ from lightx2v.disagg.rdma_base import (
     rtr_path_mtu,
     rtr_path_mtu_negotiated,
 )
+
+from lib.smart_config import smart_config
 
 
 class RDMAServer:
@@ -52,16 +53,22 @@ class RDMAServer:
         if self.ctx is None:
             available = []
             for dev in get_device_list():
-                dev_name = dev.name.decode() if isinstance(dev.name, bytes) else dev.name
+                dev_name = (
+                    dev.name.decode() if isinstance(dev.name, bytes) else dev.name
+                )
                 available.append(dev_name)
-            raise RuntimeError(f"Failed to open RDMA device '{iface_name}'. Available devices: {available}")
+            raise RuntimeError(
+                f"Failed to open RDMA device '{iface_name}'. Available devices: {available}"
+            )
 
         self.pd = PD(self.ctx)
         self.cq = CQ(self.ctx, 64)
         self.gid_index = self._resolve_gid_index()
 
         # 创建 QP (Queue Pair)
-        qp_init_attr = QPCap(max_send_wr=64, max_recv_wr=64, max_send_sge=1, max_recv_sge=1)
+        qp_init_attr = QPCap(
+            max_send_wr=64, max_recv_wr=64, max_send_sge=1, max_recv_sge=1
+        )
         qia = QPInitAttr(qp_type=QPType.RC, scq=self.cq, rcq=self.cq, cap=qp_init_attr)
         qa = QPAttr(port_num=self.port_num)
         self.qp = QP(self.pd, qia, qa)  # RC: Reliable Connected
@@ -77,7 +84,10 @@ class RDMAServer:
         self.mr = MR(
             self.pd,
             self.buffer_size,
-            AccessFlag.LOCAL_WRITE | AccessFlag.REMOTE_WRITE | AccessFlag.REMOTE_READ | AccessFlag.REMOTE_ATOMIC,
+            AccessFlag.LOCAL_WRITE
+            | AccessFlag.REMOTE_WRITE
+            | AccessFlag.REMOTE_READ
+            | AccessFlag.REMOTE_ATOMIC,
         )
 
         # 初始化缓冲区数据 (例如全为 0)
@@ -106,7 +116,9 @@ class RDMAServer:
             raise ValueError("addr is below MR base")
         off = addr - self._mr_addr
         if off + length > self.buffer_size:
-            raise ValueError(f"region out of MR range: off={off}, length={length}, buffer_size={self.buffer_size}")
+            raise ValueError(
+                f"region out of MR range: off={off}, length={length}, buffer_size={self.buffer_size}"
+            )
         return {
             "addr": addr,
             "length": length,
@@ -219,7 +231,11 @@ class RDMAServer:
         # Follow the standard RC flow: INIT -> RTR -> RTS.
         remote_lid = int(remote_info.get("lid", 0))
         heuristic_dlid = rtr_ah_dest_dlid(self.ctx, self.port_num, remote_lid)
-        negotiated_mtu = int(rtr_path_mtu_negotiated(self.ctx, self.port_num, remote_info.get("active_mtu")))
+        negotiated_mtu = int(
+            rtr_path_mtu_negotiated(
+                self.ctx, self.port_num, remote_info.get("active_mtu")
+            )
+        )
         local_mtu = int(rtr_path_mtu(self.ctx, self.port_num))
         default_mtu = int(e.IBV_MTU_1024)
 
@@ -232,7 +248,9 @@ class RDMAServer:
             if v not in dlid_candidates:
                 dlid_candidates.append(v)
 
-        gr = GlobalRoute(dgid=GID(remote_info["gid"]), sgid_index=self.gid_index, hop_limit=1)
+        gr = GlobalRoute(
+            dgid=GID(remote_info["gid"]), sgid_index=self.gid_index, hop_limit=1
+        )
         last_exc = None
         for rd_atomic in (1, 0):
             for mtu in mtu_candidates:
@@ -240,7 +258,12 @@ class RDMAServer:
                     for is_global in (1, 0):
                         try:
                             init_attr = QPAttr(port_num=self.port_num)
-                            init_attr.qp_access_flags = AccessFlag.LOCAL_WRITE | AccessFlag.REMOTE_WRITE | AccessFlag.REMOTE_READ | AccessFlag.REMOTE_ATOMIC
+                            init_attr.qp_access_flags = (
+                                AccessFlag.LOCAL_WRITE
+                                | AccessFlag.REMOTE_WRITE
+                                | AccessFlag.REMOTE_READ
+                                | AccessFlag.REMOTE_ATOMIC
+                            )
                             qp.to_init(init_attr)
 
                             rtr_attr = QPAttr(port_num=self.port_num)
@@ -250,9 +273,16 @@ class RDMAServer:
                             rtr_attr.dest_qp_num = int(remote_info["qpn"])
                             rtr_attr.rq_psn = int(remote_info["psn"])
                             if is_global == 1:
-                                rtr_attr.ah_attr = AHAttr(port_num=self.port_num, is_global=1, gr=gr, dlid=int(dlid))
+                                rtr_attr.ah_attr = AHAttr(
+                                    port_num=self.port_num,
+                                    is_global=1,
+                                    gr=gr,
+                                    dlid=int(dlid),
+                                )
                             else:
-                                rtr_attr.ah_attr = AHAttr(port_num=self.port_num, is_global=0, dlid=int(dlid))
+                                rtr_attr.ah_attr = AHAttr(
+                                    port_num=self.port_num, is_global=0, dlid=int(dlid)
+                                )
                             qp.to_rtr(rtr_attr)
                             last_exc = None
                             break

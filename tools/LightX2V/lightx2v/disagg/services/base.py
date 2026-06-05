@@ -1,8 +1,9 @@
-from lib.smart_config import smart_config
 import sys
 from abc import ABC
 
 from loguru import logger as loguru_logger
+
+from lib.smart_config import smart_config
 
 loguru_logger.remove()
 loguru_logger.add(
@@ -41,7 +42,9 @@ class _LoguruLoggerAdapter:
         self._logger.opt(depth=1).critical(self._format_message(message, args))
 
     def exception(self, message, *args, **kwargs):
-        self._logger.opt(depth=1, exception=True).error(self._format_message(message, args))
+        self._logger.opt(depth=1, exception=True).error(
+            self._format_message(message, args)
+        )
 
     def log(self, level, message, *args, **kwargs):
         self._logger.opt(depth=1).log(level, self._format_message(message, args))

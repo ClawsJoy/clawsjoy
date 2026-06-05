@@ -1,12 +1,26 @@
-from lib.smart_config import smart_config
 import torch
-
 from lightx2v.models.video_encoders.hf.ltx2.audio_vae.attention import AttentionType
-from lightx2v.models.video_encoders.hf.ltx2.audio_vae.audio_vae import AudioDecoder, AudioEncoder
-from lightx2v.models.video_encoders.hf.ltx2.audio_vae.causality_axis import CausalityAxis
-from lightx2v.models.video_encoders.hf.ltx2.audio_vae.vocoder import MelSTFT, Vocoder, VocoderWithBWE
+from lightx2v.models.video_encoders.hf.ltx2.audio_vae.audio_vae import (
+    AudioDecoder,
+    AudioEncoder,
+)
+from lightx2v.models.video_encoders.hf.ltx2.audio_vae.causality_axis import (
+    CausalityAxis,
+)
+from lightx2v.models.video_encoders.hf.ltx2.audio_vae.vocoder import (
+    MelSTFT,
+    Vocoder,
+    VocoderWithBWE,
+)
 from lightx2v.models.video_encoders.hf.ltx2.video_vae.normalization import NormType
-from lightx2v.utils.ltx2_utils import KeyValueOperationResult, ModelConfigurator, SDOps, check_config_value
+from lightx2v.utils.ltx2_utils import (
+    KeyValueOperationResult,
+    ModelConfigurator,
+    SDOps,
+    check_config_value,
+)
+
+from lib.smart_config import smart_config
 
 
 def _vocoder_from_config(
@@ -25,10 +39,16 @@ def _vocoder_from_config(
         resblock_kernel_sizes=cfg.get("resblock_kernel_sizes", [3, 7, 11]),
         upsample_rates=cfg.get("upsample_rates", [6, 5, 2, 2, 2]),
         upsample_kernel_sizes=cfg.get("upsample_kernel_sizes", [16, 15, 8, 4, 4]),
-        resblock_dilation_sizes=cfg.get("resblock_dilation_sizes", [[1, 3, 5], [1, 3, 5], [1, 3, 5]]),
+        resblock_dilation_sizes=cfg.get(
+            "resblock_dilation_sizes", [[1, 3, 5], [1, 3, 5], [1, 3, 5]]
+        ),
         upsample_initial_channel=cfg.get("upsample_initial_channel", 1024),
         resblock=cfg.get("resblock", "1"),
-        output_sampling_rate=(output_sampling_rate if output_sampling_rate is not None else cfg.get("output_sampling_rate", 24000)),
+        output_sampling_rate=(
+            output_sampling_rate
+            if output_sampling_rate is not None
+            else cfg.get("output_sampling_rate", 24000)
+        ),
         activation=cfg.get("activation", "snake"),
         use_tanh_at_final=cfg.get("use_tanh_at_final", True),
         apply_final_activation=apply_final_activation,
@@ -86,7 +106,9 @@ class VocoderConfigurator(ModelConfigurator[Vocoder]):
         )
 
 
-def _strip_vocoder_prefix(key: str, value: torch.Tensor) -> list[KeyValueOperationResult]:
+def _strip_vocoder_prefix(
+    key: str, value: torch.Tensor
+) -> list[KeyValueOperationResult]:
     """Strip the leading 'vocoder.' prefix exactly once.
     Uses removeprefix instead of str.replace so that BWE keys like
     'vocoder.vocoder.conv_pre' become 'vocoder.conv_pre' (not 'conv_pre').
@@ -95,7 +117,11 @@ def _strip_vocoder_prefix(key: str, value: torch.Tensor) -> list[KeyValueOperati
     return [KeyValueOperationResult(key.removeprefix("vocoder."), value)]
 
 
-VOCODER_COMFY_KEYS_FILTER = SDOps("VOCODER_COMFY_KEYS_FILTER").with_matching(prefix="vocoder.").with_kv_operation(operation=_strip_vocoder_prefix, key_prefix="vocoder.")
+VOCODER_COMFY_KEYS_FILTER = (
+    SDOps("VOCODER_COMFY_KEYS_FILTER")
+    .with_matching(prefix="vocoder.")
+    .with_kv_operation(operation=_strip_vocoder_prefix, key_prefix="vocoder.")
+)
 
 
 class AudioDecoderConfigurator(ModelConfigurator[AudioDecoder]):
@@ -113,7 +139,11 @@ class AudioDecoderConfigurator(ModelConfigurator[AudioDecoder]):
         sample_rate = model_params.get("sampling_rate", 16000)
         mel_hop_length = stft_cfg.get("hop_length", 160)
         is_causal = stft_cfg.get("causal", True)
-        mel_bins = ddconfig.get("mel_bins") or mel_cfg.get("n_mel_channels") or variables_cfg.get("mel_bins")
+        mel_bins = (
+            ddconfig.get("mel_bins")
+            or mel_cfg.get("n_mel_channels")
+            or variables_cfg.get("mel_bins")
+        )
 
         return AudioDecoder(
             ch=ddconfig.get("ch", 128),
@@ -150,7 +180,11 @@ class AudioEncoderConfigurator(ModelConfigurator[AudioEncoder]):
         mel_hop_length = stft_cfg.get("hop_length", 160)
         n_fft = stft_cfg.get("filter_length", 1024)
         is_causal = stft_cfg.get("causal", True)
-        mel_bins = ddconfig.get("mel_bins") or mel_cfg.get("n_mel_channels") or variables_cfg.get("mel_bins")
+        mel_bins = (
+            ddconfig.get("mel_bins")
+            or mel_cfg.get("n_mel_channels")
+            or variables_cfg.get("mel_bins")
+        )
 
         return AudioEncoder(
             ch=ddconfig.get("ch", 128),

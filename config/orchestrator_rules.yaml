@@ -1,0 +1,69 @@
+# Orchestrator 规则分解配置
+# 定义任务模式到 Agent 序列的映射
+
+rules:
+  # 计算 + 翻译
+  - patterns:
+      - "计算.*翻译"
+      - "加.*翻译"
+      - "算.*英文"
+      - "加.*然后.*翻译"
+    steps:
+      - target: calculator_agent
+        description: 计算
+        input_extractor: calculation
+      - target: translate_agent
+        description: 翻译结果
+        input: "将上一步结果翻译成英文"
+
+  # 分析 + 总结
+  - patterns:
+      - "分析.*总结"
+      - "优缺点.*写"
+      - "对比.*然后.*总结"
+    steps:
+      - target: analysis_agent
+        description: 分析
+        input: "{task}"
+      - target: writer_agent
+        description: 写总结
+        input: "根据分析结果写总结"
+
+  # 天气查询
+  - patterns:
+      - "天气"
+      - "气温"
+      - "预报"
+    steps:
+      - target: weather_skill
+        description: 查询天气
+        input: "{task}"
+
+  # 代码生成
+  - patterns:
+      - "写.*代码"
+      - "编程"
+      - "函数"
+      - "算法"
+    steps:
+      - target: code_agent
+        description: 写代码
+        input: "{task}"
+
+  # 翻译
+  - patterns:
+      - "翻译"
+    steps:
+      - target: translate_agent
+        description: 翻译
+        input: "{task}"
+
+  # 数据分析
+  - patterns:
+      - "分析"
+      - "统计"
+      - "报表"
+    steps:
+      - target: analysis_agent
+        description: 分析
+        input: "{task}"

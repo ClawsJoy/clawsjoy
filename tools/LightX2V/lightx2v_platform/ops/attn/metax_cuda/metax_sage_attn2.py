@@ -1,8 +1,8 @@
-from lib.smart_config import smart_config
-from loguru import logger
-
 from lightx2v.utils.registry_factory import ATTN_WEIGHT_REGISTER
 from lightx2v_platform.ops.attn.template import AttnWeightTemplate
+from loguru import logger
+
+from lib.smart_config import smart_config
 
 try:
     from sageattention import sageattn

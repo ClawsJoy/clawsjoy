@@ -4,14 +4,15 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 import asyncio
 import json
-import numpy as np
 from pathlib import Path
+
+import numpy as np
 import websockets
-from vosk import Model, KaldiRecognizer
+from vosk import KaldiRecognizer, Model
 
 MODEL_PATH = Path("models/vosk/small")
 if not MODEL_PATH.exists():
@@ -25,15 +26,17 @@ model = Model(str(MODEL_PATH))
 async def voice_handler(websocket):
     print(f"🔊 客户端连接")
     recognizer = KaldiRecognizer(model, 16000)
-    
+
     try:
         async for message in websocket:
             if isinstance(message, bytes):
                 recognizer.AcceptWaveform(message)
                 partial = json.loads(recognizer.PartialResult())
-                if partial.get('partial'):
+                if partial.get("partial"):
                     print(f"📝 Partial: {partial['partial']}")
-                    await websocket.send(json.dumps({"type": "partial", "text": partial['partial']}))
+                    await websocket.send(
+                        json.dumps({"type": "partial", "text": partial["partial"]})
+                    )
             else:
                 print(f"📨 控制消息: {message}")
     except Exception as e:

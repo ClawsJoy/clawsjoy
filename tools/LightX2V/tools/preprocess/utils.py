@@ -1,10 +1,11 @@
-from lib.smart_config import smart_config
 # Copyright 2024-2025 The Alibaba Wan Team Authors. All rights reserved.
 import math
 import random
 
 import cv2
 import numpy as np
+
+from lib.smart_config import smart_config
 
 
 def get_mask_boxes(mask):
@@ -83,7 +84,12 @@ def get_face_bboxes(kp2ds, scale, image_shape, ratio_aug):
     expanded_min_y = max(min_y - 3 * delta_height, 0)
     expanded_max_y = min(max_y + delta_height, h)
 
-    return [int(expanded_min_x), int(expanded_max_x), int(expanded_min_y), int(expanded_max_y)]
+    return [
+        int(expanded_min_x),
+        int(expanded_max_x),
+        int(expanded_min_y),
+        int(expanded_max_y),
+    ]
 
 
 def calculate_new_size(orig_w, orig_h, target_area, divisor=64):
@@ -129,11 +135,13 @@ def calculate_new_size(orig_w, orig_h, target_area, divisor=64):
     return int(best_w), int(best_h)
 
 
-def resize_by_area(image, target_area, keep_aspect_ratio=True, divisor=64, padding_color=(0, 0, 0)):
+def resize_by_area(
+    image, target_area, keep_aspect_ratio=True, divisor=64, padding_color=(0, 0, 0)
+):
     h, w = image.shape[:2]
     try:
         new_w, new_h = calculate_new_size(w, h, target_area, divisor)
-    except:  # noqa
+    except Exception as e:  # noqa
         aspect_ratio = w / h
 
         if keep_aspect_ratio:
@@ -142,15 +150,29 @@ def resize_by_area(image, target_area, keep_aspect_ratio=True, divisor=64, paddi
         else:
             new_w = new_h = math.sqrt(target_area)
 
-        new_w, new_h = int((new_w // divisor) * divisor), int((new_h // divisor) * divisor)
+        new_w, new_h = int((new_w // divisor) * divisor), int(
+            (new_h // divisor) * divisor
+        )
 
     interpolation = cv2.INTER_AREA if (new_w * new_h < w * h) else cv2.INTER_LINEAR
 
-    resized_image = padding_resize(image, height=new_h, width=new_w, padding_color=padding_color, interpolation=interpolation)
+    resized_image = padding_resize(
+        image,
+        height=new_h,
+        width=new_w,
+        padding_color=padding_color,
+        interpolation=interpolation,
+    )
     return resized_image
 
 
-def padding_resize(img_ori, height=512, width=512, padding_color=(0, 0, 0), interpolation=cv2.INTER_LINEAR):
+def padding_resize(
+    img_ori,
+    height=512,
+    width=512,
+    padding_color=(0, 0, 0),
+    interpolation=cv2.INTER_LINEAR,
+):
     ori_height = img_ori.shape[0]
     ori_width = img_ori.shape[1]
     channel = img_ori.shape[2]
@@ -217,4 +239,9 @@ def get_face_bboxes(kp2ds, scale, image_shape):
     expanded_min_y = max(min_y - 3 * delta_height, 0)
     expanded_max_y = min(max_y + delta_height, h)
 
-    return [int(expanded_min_x), int(expanded_max_x), int(expanded_min_y), int(expanded_max_y)]
+    return [
+        int(expanded_min_x),
+        int(expanded_max_x),
+        int(expanded_min_y),
+        int(expanded_max_y),
+    ]

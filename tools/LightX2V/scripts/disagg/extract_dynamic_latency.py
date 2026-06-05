@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 #!/usr/bin/env python3
 from __future__ import annotations
 
@@ -9,13 +8,25 @@ import re
 from datetime import datetime
 from pathlib import Path
 
+from lib.smart_config import smart_config
+
 WAIT_PATTERNS = [
-    re.compile(r"^\[INFO\]\s+(\d{2}\s+\w{3}\s+\d{4}\s+\d{2}:\d{2}:\d{2}).*Waiting for decoder results", re.IGNORECASE),
-    re.compile(r"^\[(?:INFO|WARNING|ERROR|DEBUG|CRITICAL)\]\s+(\d{2}\s+\w{3}\s+\d{4}\s+\d{2}:\d{2}:\d{2}).*waiting workload configs on port=", re.IGNORECASE),
+    re.compile(
+        r"^\[INFO\]\s+(\d{2}\s+\w{3}\s+\d{4}\s+\d{2}:\d{2}:\d{2}).*Waiting for decoder results",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"^\[(?:INFO|WARNING|ERROR|DEBUG|CRITICAL)\]\s+(\d{2}\s+\w{3}\s+\d{4}\s+\d{2}:\d{2}:\d{2}).*waiting workload configs on port=",
+        re.IGNORECASE,
+    ),
 ]
 LAT_PATTERNS = [
-    re.compile(r"^\[INFO\]\s+(\d{2}\s+\w{3}\s+\d{4}\s+\d{2}:\d{2}:\d{2}).*Latency summary room=(\d+) metrics=(\{.*\})"),
-    re.compile(r"^\[(?:INFO|WARNING|ERROR|DEBUG|CRITICAL)\]\s+(\d{2}\s+\w{3}\s+\d{4}\s+\d{2}:\d{2}:\d{2}).*Latency summary room=(\d+) metrics=(\{.*\})"),
+    re.compile(
+        r"^\[INFO\]\s+(\d{2}\s+\w{3}\s+\d{4}\s+\d{2}:\d{2}:\d{2}).*Latency summary room=(\d+) metrics=(\{.*\})"
+    ),
+    re.compile(
+        r"^\[(?:INFO|WARNING|ERROR|DEBUG|CRITICAL)\]\s+(\d{2}\s+\w{3}\s+\d{4}\s+\d{2}:\d{2}:\d{2}).*Latency summary room=(\d+) metrics=(\{.*\})"
+    ),
 ]
 TS_FMT = "%d %b %Y %H:%M:%S"
 LOGURU_TS_FMT = "%Y-%m-%d %H:%M:%S"
@@ -46,7 +57,9 @@ def _parse_timestamp(raw_ts: str):
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Extract latency summary rows relative to waiting workload log time")
+    parser = argparse.ArgumentParser(
+        description="Extract latency summary rows relative to waiting workload log time"
+    )
     parser.add_argument(
         "--log",
         default="/root/zht/LightX2V/save_results/disagg_wan22_i2v_dynamic_controller.log",

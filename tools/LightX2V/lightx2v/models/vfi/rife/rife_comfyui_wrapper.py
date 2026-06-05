@@ -1,11 +1,11 @@
-from lib.smart_config import smart_config
 import os
 from typing import List, Optional, Tuple
 
 import torch
+from lightx2v.utils.profiler import *
 from torch.nn import functional as F
 
-from lightx2v.utils.profiler import *
+from lib.smart_config import smart_config
 
 
 class RIFEWrapper:
@@ -14,7 +14,9 @@ class RIFEWrapper:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
     def __init__(self, model_path, device: Optional[torch.device] = None):
-        self.device = device or torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = device or torch.device(
+            "cuda" if torch.cuda.is_available() else "cpu"
+        )
 
         # Setup torch for optimal performance
         torch.set_grad_enabled(False)
@@ -52,7 +54,9 @@ class RIFEWrapper:
             Interpolated ComfyUI Image tensor [M, H, W, C] in range [0, 1]
         """
         # Validate input
-        assert images.dim() == 4 and images.shape[-1] == 3, "Input must be [N, H, W, C] with C=3"
+        assert (
+            images.dim() == 4 and images.shape[-1] == 3
+        ), "Input must be [N, H, W, C] with C=3"
 
         if source_fps == target_fps:
             return images
@@ -67,7 +71,9 @@ class RIFEWrapper:
         padding = (0, pw - width, 0, ph - height)
 
         # Calculate target frame positions
-        frame_positions = self._calculate_target_frame_positions(source_fps, target_fps, total_source_frames)
+        frame_positions = self._calculate_target_frame_positions(
+            source_fps, target_fps, total_source_frames
+        )
 
         # Prepare output tensor
         output_frames = []
@@ -92,17 +98,23 @@ class RIFEWrapper:
 
                 # Perform interpolation
                 with torch.no_grad():
-                    interpolated = self.model.inference(I0, I1, timestep=interp_factor, scale=scale)
+                    interpolated = self.model.inference(
+                        I0, I1, timestep=interp_factor, scale=scale
+                    )
 
                 # Convert back to ComfyUI format [H, W, C]
                 # Crop to original size and permute dimensions
-                interpolated_frame = interpolated[0, :, :height, :width].permute(1, 2, 0).cpu()
+                interpolated_frame = (
+                    interpolated[0, :, :height, :width].permute(1, 2, 0).cpu()
+                )
                 output_frames.append(interpolated_frame)
 
         # Stack all frames
         return torch.stack(output_frames, dim=0)
 
-    def _calculate_target_frame_positions(self, source_fps: float, target_fps: float, total_source_frames: int) -> List[Tuple[int, int, float]]:
+    def _calculate_target_frame_positions(
+        self, source_fps: float, target_fps: float, total_source_frames: int
+    ) -> List[Tuple[int, int, float]]:
         """
         Calculate which frames need to be generated for the target frame rate.
 

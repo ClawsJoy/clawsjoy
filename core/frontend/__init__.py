@@ -3,9 +3,9 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 from .collector import FrontendCollector
 
-__all__ = ['FrontendCollector']
+__all__ = ["FrontendCollector"]

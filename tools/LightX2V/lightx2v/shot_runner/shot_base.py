@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import json
 from argparse import Namespace
 from dataclasses import dataclass
@@ -6,13 +5,14 @@ from pathlib import Path
 from typing import Any
 
 import torch
-from loguru import logger
-
 from lightx2v.utils.input_info import fill_input_info_from_defaults
 from lightx2v.utils.profiler import *
 from lightx2v.utils.registry_factory import RUNNER_REGISTER
 from lightx2v.utils.set_config import print_config, set_config, set_parallel_config
 from lightx2v_platform.registry_factory import PLATFORM_DEVICE_REGISTER
+from loguru import logger
+
+from lib.smart_config import smart_config
 
 
 @dataclass
@@ -41,7 +41,9 @@ def load_clip_configs(main_json_path):
             cfg = json.load(f)
 
     if "parallel" in cfg:
-        platform_device = PLATFORM_DEVICE_REGISTER.get(os.getenv("PLATFORM", "cuda"), None)
+        platform_device = PLATFORM_DEVICE_REGISTER.get(
+            os.getenv("PLATFORM", "cuda"), None
+        )
         platform_device.init_parallel_env()
 
     lightx2v_path = cfg["lightx2v_path"]
@@ -96,7 +98,15 @@ class ShotPipeline:
             return
 
         # 将外部输入同步到 shot_cfg 和各 clip 的 input_info
-        for key in ["seed", "image_path", "audio_path", "prompt", "negative_prompt", "save_result_path", "target_shape"]:
+        for key in [
+            "seed",
+            "image_path",
+            "audio_path",
+            "prompt",
+            "negative_prompt",
+            "save_result_path",
+            "target_shape",
+        ]:
             if key in data and data[key] is not None:
                 setattr(self.shot_cfg, key, data[key])
 

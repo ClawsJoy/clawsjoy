@@ -1,6 +1,7 @@
-from lib.smart_config import smart_config
 import torch
 import torch.distributed as dist
+
+from lib.smart_config import smart_config
 
 
 def all2all_seq2head(input, group=None):
@@ -26,7 +27,9 @@ def all2all_seq2head(input, group=None):
 
     # 重塑输入张量以便进行 all-to-all 操作
     input_t = (
-        input.reshape(shard_seq_len, world_size, shard_heads, hidden_dims)  # 重塑为 [shard_seq_len, world_size, shard_heads, hidden_dims]
+        input.reshape(
+            shard_seq_len, world_size, shard_heads, hidden_dims
+        )  # 重塑为 [shard_seq_len, world_size, shard_heads, hidden_dims]
         .transpose(0, 1)  # 转置以便进行 all-to-all 操作
         .contiguous()  # 确保内存连续
     )
@@ -66,10 +69,14 @@ def all2all_head2seq(input, group=None):
 
     # 重塑输入张量以便进行 all-to-all 操作
     input_t = (
-        input.reshape(world_size, shard_seq_len, shard_heads, hidden_dims)  # 重塑为 [world_size, shard_seq_len, shard_heads, hidden_dims]
+        input.reshape(
+            world_size, shard_seq_len, shard_heads, hidden_dims
+        )  # 重塑为 [world_size, shard_seq_len, shard_heads, hidden_dims]
         .transpose(1, 2)  # 转置以便进行 all-to-all 操作
         .contiguous()  # 确保内存连续
-        .reshape(world_size, shard_heads, shard_seq_len, hidden_dims)  # 再次重塑为 [world_size, shard_heads, shard_seq_len, hidden_dims]
+        .reshape(
+            world_size, shard_heads, shard_seq_len, hidden_dims
+        )  # 再次重塑为 [world_size, shard_heads, shard_seq_len, hidden_dims]
     )
 
     # 创建一个与输入张量相同形状的输出张量
@@ -82,6 +89,8 @@ def all2all_head2seq(input, group=None):
     output = output.reshape(heads, shard_seq_len, hidden_dims)
 
     # 转置输出张量并重塑为 [shard_seq_len, heads, hidden_dims] 形状
-    output = output.transpose(0, 1).contiguous().reshape(shard_seq_len, heads, hidden_dims)
+    output = (
+        output.transpose(0, 1).contiguous().reshape(shard_seq_len, heads, hidden_dims)
+    )
 
     return output  # 返回转换后的输出张量

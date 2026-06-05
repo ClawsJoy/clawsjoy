@@ -3,24 +3,27 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 from core.lib.unified_config import unified_config
+
 """智能驱动管理器 - 统一管理所有配置驱动"""
 
-import yaml
 import importlib
-from pathlib import Path
-from typing import Dict, Any, Optional
 import threading
+from pathlib import Path
+from typing import Any, Dict, Optional
+
+import yaml
+
 
 class DriverManager:
     """智能驱动管理器单例"""
-    
+
     _instance = None
     _lock = threading.Lock()
-    
+
     def __new__(cls):
         if cls._instance is None:
             with cls._lock:
@@ -28,7 +31,7 @@ class DriverManager:
                     cls._instance = super().__new__(cls)
                     cls._instance._initialized = False
         return cls._instance
-    
+
     def __init__(self):
         if self._initialized:
             return
@@ -37,23 +40,23 @@ class DriverManager:
         self.driver_path = Path("config/drivers")
         self.driver_path.mkdir(parents=True, exist_ok=True)
         self._load_all_drivers()
-    
+
     def _load_all_drivers(self):
         """加载所有驱动配置"""
         for yaml_file in self.driver_path.glob("*.yaml"):
             try:
-                with open(yaml_file, 'r') as f:
+                with open(yaml_file, "r") as f:
                     config = unified_config.get("drivers", {})
-                    driver_name = config.get('driver_name', yaml_file.stem)
+                    driver_name = config.get("driver_name", yaml_file.stem)
                     self.drivers[driver_name] = config
                     print(f"✅ 加载驱动: {driver_name}")
             except Exception as e:
                 print(f"⚠️ 加载驱动失败 {yaml_file}: {e}")
-    
+
     def get_driver(self, name: str) -> Optional[Dict]:
         """获取驱动配置"""
         return self.drivers.get(name)
-    
+
     def reload(self):
         """热重载所有驱动"""
         self.drivers.clear()

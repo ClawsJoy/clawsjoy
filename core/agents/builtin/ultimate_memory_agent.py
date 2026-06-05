@@ -3,11 +3,12 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
-from typing import Dict, Optional, Any
+from typing import Any, Dict, Optional
+
 from core.agents.base.smart_agent import SmartAgent
 
 
@@ -49,11 +50,7 @@ class UltimateMemoryAgent(SmartAgent):
 
     def process(self, user_input: str, context: Optional[Dict] = None) -> Dict:
         """处理记忆请求"""
-        return {
-            "success": True,
-            "response": "终极记忆已处理",
-            "agent": self.name
-        }
+        return {"success": True, "response": "终极记忆已处理", "agent": self.name}
 
 
 # ultimate_memory_agent = UltimateMemoryAgent()  # 注释：改为按需创建

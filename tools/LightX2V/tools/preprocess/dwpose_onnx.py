@@ -1,4 +1,14 @@
+from __future__ import annotations
+
+import math
+import os
+from typing import Tuple
+
+import cv2
+import numpy as np
+
 from lib.smart_config import smart_config
+
 # Copyright 2024-2025 The Alibaba Wan Team Authors. All rights reserved.
 
 # official ONNX reference implementation:
@@ -11,19 +21,13 @@ from lib.smart_config import smart_config
 # Download:
 #   https://huggingface.co/yzd-v/DWPose
 
-from __future__ import annotations
-
-import math
-import os
-from typing import Tuple
-
-import cv2
-import numpy as np
 
 try:
     import onnxruntime as ort
 except ImportError as e:  # pragma: no cover
-    raise ImportError("onnxruntime is required by dwpose_onnx. Install via: pip install onnxruntime-gpu  (or onnxruntime on CPU-only hosts).") from e
+    raise ImportError(
+        "onnxruntime is required by dwpose_onnx. Install via: pip install onnxruntime-gpu  (or onnxruntime on CPU-only hosts)."
+    ) from e
 
 
 # -----------------------------------------------------------------------------
@@ -31,7 +35,9 @@ except ImportError as e:  # pragma: no cover
 # -----------------------------------------------------------------------------
 
 
-def _yolox_preprocess(img: np.ndarray, input_size: Tuple[int, int] = (640, 640)) -> Tuple[np.ndarray, float]:
+def _yolox_preprocess(
+    img: np.ndarray, input_size: Tuple[int, int] = (640, 640)
+) -> Tuple[np.ndarray, float]:
     """Letterbox + transpose to NCHW float32 for YOLOX."""
     padded = np.ones((input_size[0], input_size[1], 3), dtype=np.uint8) * 114
     r = min(input_size[0] / img.shape[0], input_size[1] / img.shape[1])
@@ -43,7 +49,9 @@ def _yolox_preprocess(img: np.ndarray, input_size: Tuple[int, int] = (640, 640))
     return padded, r
 
 
-def _yolox_demo_postprocess(outputs: np.ndarray, img_size: Tuple[int, int] = (640, 640)) -> np.ndarray:
+def _yolox_demo_postprocess(
+    outputs: np.ndarray, img_size: Tuple[int, int] = (640, 640)
+) -> np.ndarray:
     """Decode anchor-free YOLOX outputs to (cx, cy, w, h, obj, *cls) format."""
     grids = []
     expanded_strides = []
@@ -83,7 +91,13 @@ def _nms(boxes: np.ndarray, scores: np.ndarray, iou_thr: float) -> np.ndarray:
     return np.asarray(keep, dtype=np.int64)
 
 
-def _multiclass_nms(boxes: np.ndarray, scores: np.ndarray, nms_thr: float, score_thr: float, num_classes: int = 80) -> np.ndarray | None:
+def _multiclass_nms(
+    boxes: np.ndarray,
+    scores: np.ndarray,
+    nms_thr: float,
+    score_thr: float,
+    num_classes: int = 80,
+) -> np.ndarray | None:
     """Per-class NMS; returns ``[x1, y1, x2, y2, score, cls]`` array."""
     final = []
     for c in range(num_classes):
@@ -96,7 +110,10 @@ def _multiclass_nms(boxes: np.ndarray, scores: np.ndarray, nms_thr: float, score
         keep = _nms(b, s, nms_thr)
         if keep.size == 0:
             continue
-        dets = np.concatenate([b[keep], s[keep, None], np.full((keep.size, 1), c, dtype=np.float32)], axis=1)
+        dets = np.concatenate(
+            [b[keep], s[keep, None], np.full((keep.size, 1), c, dtype=np.float32)],
+            axis=1,
+        )
         final.append(dets)
     if not final:
         return None
@@ -133,7 +150,13 @@ def detect_persons(
     cls = out[:, 5:]
     scores = obj * cls
 
-    dets = _multiclass_nms(boxes_xyxy, scores, nms_thr=nms_thr, score_thr=score_thr, num_classes=cls.shape[1])
+    dets = _multiclass_nms(
+        boxes_xyxy,
+        scores,
+        nms_thr=nms_thr,
+        score_thr=score_thr,
+        num_classes=cls.shape[1],
+    )
     if dets is None:
         return np.zeros((0, 4), dtype=np.float32)
     # class 0 = person
@@ -146,7 +169,9 @@ def detect_persons(
 # -----------------------------------------------------------------------------
 
 
-def _get_warp_matrix(center: np.ndarray, scale: np.ndarray, rot: float, output_size: Tuple[int, int]) -> np.ndarray:
+def _get_warp_matrix(
+    center: np.ndarray, scale: np.ndarray, rot: float, output_size: Tuple[int, int]
+) -> np.ndarray:
     """Affine matrix used by RTMPose / MMPose top-down models."""
     shift = np.zeros(2, dtype=np.float32)
     src_w = scale[0]
@@ -154,7 +179,10 @@ def _get_warp_matrix(center: np.ndarray, scale: np.ndarray, rot: float, output_s
     rot_rad = np.deg2rad(rot)
     src_dir = np.array([0.0, src_w * -0.5], dtype=np.float32)
     sn, cs = math.sin(rot_rad), math.cos(rot_rad)
-    src_dir = np.array([src_dir[0] * cs - src_dir[1] * sn, src_dir[0] * sn + src_dir[1] * cs], dtype=np.float32)
+    src_dir = np.array(
+        [src_dir[0] * cs - src_dir[1] * sn, src_dir[0] * sn + src_dir[1] * cs],
+        dtype=np.float32,
+    )
     dst_dir = np.array([0.0, dst_w * -0.5], dtype=np.float32)
     src = np.zeros((3, 2), dtype=np.float32)
     dst = np.zeros((3, 2), dtype=np.float32)
@@ -167,7 +195,9 @@ def _get_warp_matrix(center: np.ndarray, scale: np.ndarray, rot: float, output_s
     return cv2.getAffineTransform(src, dst)
 
 
-def _bbox_xyxy2cs(bbox: np.ndarray, padding: float = 1.25) -> Tuple[np.ndarray, np.ndarray]:
+def _bbox_xyxy2cs(
+    bbox: np.ndarray, padding: float = 1.25
+) -> Tuple[np.ndarray, np.ndarray]:
     x1, y1, x2, y2 = bbox
     cx, cy = (x1 + x2) * 0.5, (y1 + y2) * 0.5
     w, h = (x2 - x1) * padding, (y2 - y1) * padding
@@ -180,7 +210,9 @@ def _bbox_xyxy2cs(bbox: np.ndarray, padding: float = 1.25) -> Tuple[np.ndarray, 
     return np.array([cx, cy], dtype=np.float32), np.array([w, h], dtype=np.float32)
 
 
-def _simcc_decode(simcc_x: np.ndarray, simcc_y: np.ndarray, simcc_split_ratio: float = 2.0):
+def _simcc_decode(
+    simcc_x: np.ndarray, simcc_y: np.ndarray, simcc_split_ratio: float = 2.0
+):
     """Decode SimCC (1D classification) outputs to (locs, scores).
 
     simcc_x : (N, K, Wx),  simcc_y : (N, K, Hy)
@@ -211,7 +243,9 @@ def estimate_pose(
         scores:    ``(N, 133)``.
     """
     if person_boxes.shape[0] == 0:
-        return np.zeros((0, 133, 2), dtype=np.float32), np.zeros((0, 133), dtype=np.float32)
+        return np.zeros((0, 133, 2), dtype=np.float32), np.zeros(
+            (0, 133), dtype=np.float32
+        )
 
     in_shape = session.get_inputs()[0].shape
     H, W = int(in_shape[2]), int(in_shape[3])
@@ -329,7 +363,12 @@ _HAND_LIMBS = [
 ]
 
 
-def _draw_body(canvas: np.ndarray, body_kp_18: np.ndarray, body_score_18: np.ndarray, threshold: float = 0.3):
+def _draw_body(
+    canvas: np.ndarray,
+    body_kp_18: np.ndarray,
+    body_score_18: np.ndarray,
+    threshold: float = 0.3,
+):
     H, W = canvas.shape[:2]
     stickwidth = 4
     for limb_idx, (a, b) in enumerate(_BODY_LIMBS):
@@ -342,7 +381,9 @@ def _draw_body(canvas: np.ndarray, body_kp_18: np.ndarray, body_score_18: np.nda
         mx, my = (x1 + x2) / 2.0, (y1 + y2) / 2.0
         length = math.hypot(x1 - x2, y1 - y2)
         angle = math.degrees(math.atan2(y1 - y2, x1 - x2))
-        poly = cv2.ellipse2Poly((int(mx), int(my)), (int(length / 2), stickwidth), int(angle), 0, 360, 1)
+        poly = cv2.ellipse2Poly(
+            (int(mx), int(my)), (int(length / 2), stickwidth), int(angle), 0, 360, 1
+        )
         cv2.fillConvexPoly(canvas, poly, _BODY_COLORS[limb_idx])
     for i in range(18):
         if body_score_18[i] < threshold:
@@ -353,7 +394,12 @@ def _draw_body(canvas: np.ndarray, body_kp_18: np.ndarray, body_score_18: np.nda
         cv2.circle(canvas, (int(x), int(y)), 4, _BODY_COLORS[i], thickness=-1)
 
 
-def _draw_hand(canvas: np.ndarray, hand_kp_21: np.ndarray, hand_score_21: np.ndarray, threshold: float = 0.3):
+def _draw_hand(
+    canvas: np.ndarray,
+    hand_kp_21: np.ndarray,
+    hand_score_21: np.ndarray,
+    threshold: float = 0.3,
+):
     for limb_idx, (a, b) in enumerate(_HAND_LIMBS):
         if hand_score_21[a] < threshold or hand_score_21[b] < threshold:
             continue
@@ -372,7 +418,12 @@ def _draw_hand(canvas: np.ndarray, hand_kp_21: np.ndarray, hand_score_21: np.nda
         cv2.circle(canvas, (int(x), int(y)), 3, (0, 0, 255), thickness=-1)
 
 
-def _draw_face(canvas: np.ndarray, face_kp_68: np.ndarray, face_score_68: np.ndarray, threshold: float = 0.3):
+def _draw_face(
+    canvas: np.ndarray,
+    face_kp_68: np.ndarray,
+    face_score_68: np.ndarray,
+    threshold: float = 0.3,
+):
     for i in range(face_kp_68.shape[0]):
         if face_score_68[i] < threshold:
             continue
@@ -382,7 +433,16 @@ def _draw_face(canvas: np.ndarray, face_kp_68: np.ndarray, face_score_68: np.nda
         cv2.circle(canvas, (int(x), int(y)), 2, (255, 255, 255), thickness=-1)
 
 
-def _wholebody_to_openpose(keypoints: np.ndarray, scores: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+def _wholebody_to_openpose(keypoints: np.ndarray, scores: np.ndarray) -> Tuple[
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+]:
     """Slice the 133-keypoint output into OpenPose-style body / hand / face groups."""
     body_coco = keypoints[:, :17]  # (N, 17, 2)
     body_score = scores[:, :17]  # (N, 17)
@@ -402,11 +462,22 @@ def _wholebody_to_openpose(keypoints: np.ndarray, scores: np.ndarray) -> Tuple[n
             valid = (body_score[:, li] > 0.3) & (body_score[:, ri] > 0.3)
             neck = (body_coco[:, li] + body_coco[:, ri]) / 2.0
             body_op[valid, op_idx] = neck[valid]
-            body_op_score[valid, op_idx] = np.minimum(body_score[valid, li], body_score[valid, ri])
+            body_op_score[valid, op_idx] = np.minimum(
+                body_score[valid, li], body_score[valid, ri]
+            )
         else:
             body_op[:, op_idx] = body_coco[:, coco_idx]
             body_op_score[:, op_idx] = body_score[:, coco_idx]
-    return body_op, body_op_score, left_hand, lhand_score, right_hand, rhand_score, face, face_score
+    return (
+        body_op,
+        body_op_score,
+        left_hand,
+        lhand_score,
+        right_hand,
+        rhand_score,
+        face,
+        face_score,
+    )
 
 
 # -----------------------------------------------------------------------------
@@ -446,7 +517,9 @@ class DWposeONNX:
         img_bgr = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2BGR)
         boxes = detect_persons(self.det_session, img_bgr, score_thr=0.3, nms_thr=0.45)
         if boxes.shape[0] == 0:
-            return np.zeros((0, 133, 2), dtype=np.float32), np.zeros((0, 133), dtype=np.float32)
+            return np.zeros((0, 133, 2), dtype=np.float32), np.zeros(
+                (0, 133), dtype=np.float32
+            )
         return estimate_pose(self.pose_session, img_bgr, boxes)
 
     def __call__(
@@ -483,7 +556,16 @@ class DWposeONNX:
         if keypoints.shape[0] == 0:
             return canvas
 
-        body_op, body_score_op, lhand, lhand_score, rhand, rhand_score, face, face_score = _wholebody_to_openpose(keypoints, scores)
+        (
+            body_op,
+            body_score_op,
+            lhand,
+            lhand_score,
+            rhand,
+            rhand_score,
+            face,
+            face_score,
+        ) = _wholebody_to_openpose(keypoints, scores)
 
         for i in range(body_op.shape[0]):
             _draw_body(canvas, body_op[i], body_score_op[i], threshold=body_threshold)

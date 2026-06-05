@@ -3,45 +3,44 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 from core.lib.unified_config import unified_config
 
-from core.lib.unified_config import unified_config
-
-from core.lib.unified_config import unified_config
 """Agent 皮肤和动画系统 - 商品化"""
 
 import json
-import yaml
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, List, Optional
+
+import yaml
+
 
 class AgentSkinSystem:
     """Agent 皮肤系统 - 支持动画、特效、人物形象"""
-    
+
     def __init__(self):
         self.skins_config = self._load_skins_config()
         self.animations_config = self._load_animations_config()
-    
+
     def _load_skins_config(self) -> Dict:
         """加载皮肤配置"""
         config_file = Path("config/agent_skins.yaml")
         if config_file.exists():
-            with open(config_file, 'r') as f:
+            with open(config_file, "r") as f:
                 return unified_config.get("agent_skins")
         return self._get_default_skins()
-    
+
     def _load_animations_config(self) -> Dict:
         """加载动画配置"""
         config_file = Path("config/agent_animations.yaml")
         if config_file.exists():
-            with open(config_file, 'r') as f:
+            with open(config_file, "r") as f:
                 return unified_config.get("agent_skins")
         return self._get_default_animations()
-    
+
     def _get_default_skins(self) -> Dict:
         """默认皮肤配置"""
         return {
@@ -55,7 +54,7 @@ class AgentSkinSystem:
                         "glow": "blue",
                         "background": "linear-gradient(135deg, #0a0a1a, #001a33)",
                         "price": "free",
-                        "rarity": "common"
+                        "rarity": "common",
                     },
                     "maid": {
                         "name": "女仆管家",
@@ -66,7 +65,7 @@ class AgentSkinSystem:
                         "background": "linear-gradient(135deg, #1a0a1a, #331a33)",
                         "price": 4.99,
                         "rarity": "rare",
-                        "effects": ["sparkle", "heart"]
+                        "effects": ["sparkle", "heart"],
                     },
                     "butler_premium": {
                         "name": "执事管家",
@@ -77,7 +76,7 @@ class AgentSkinSystem:
                         "background": "linear-gradient(135deg, #1a1a0a, #33331a)",
                         "price": 9.99,
                         "rarity": "epic",
-                        "effects": ["glow", "crown"]
+                        "effects": ["glow", "crown"],
                     },
                     "sci_fi": {
                         "name": "科幻管家",
@@ -88,7 +87,7 @@ class AgentSkinSystem:
                         "background": "linear-gradient(135deg, #0a0a2a, #1a0a3a)",
                         "price": 4.99,
                         "rarity": "rare",
-                        "effects": ["scan_line", "hologram"]
+                        "effects": ["scan_line", "hologram"],
                     },
                     "anime": {
                         "name": "动漫管家",
@@ -99,7 +98,7 @@ class AgentSkinSystem:
                         "background": "linear-gradient(135deg, #2a1a2a, #3a2a3a)",
                         "price": 6.99,
                         "rarity": "rare",
-                        "effects": ["petal", "sparkle"]
+                        "effects": ["petal", "sparkle"],
                     },
                     "cyberpunk": {
                         "name": "赛博管家",
@@ -110,7 +109,7 @@ class AgentSkinSystem:
                         "background": "linear-gradient(135deg, #0a0a0a, #1a0a2a)",
                         "price": 12.99,
                         "rarity": "legendary",
-                        "effects": ["glitch", "scan_line", "grid"]
+                        "effects": ["glitch", "scan_line", "grid"],
                     },
                     "fantasy": {
                         "name": "奇幻管家",
@@ -121,8 +120,8 @@ class AgentSkinSystem:
                         "background": "linear-gradient(135deg, #1a2a0a, #2a3a1a)",
                         "price": 7.99,
                         "rarity": "epic",
-                        "effects": ["magic", "sparkle"]
-                    }
+                        "effects": ["magic", "sparkle"],
+                    },
                 }
             },
             "code_agent": {
@@ -133,7 +132,7 @@ class AgentSkinSystem:
                         "avatar_animated": "⌨️💻⌨️",
                         "color": "#00ff88",
                         "price": "free",
-                        "rarity": "common"
+                        "rarity": "common",
                     },
                     "hacker": {
                         "name": "黑客风格",
@@ -143,8 +142,8 @@ class AgentSkinSystem:
                         "glow": "green",
                         "price": 4.99,
                         "rarity": "rare",
-                        "effects": ["matrix", "code_rain"]
-                    }
+                        "effects": ["matrix", "code_rain"],
+                    },
                 }
             },
             "translate_agent": {
@@ -155,7 +154,7 @@ class AgentSkinSystem:
                         "avatar_animated": "🌐🔤🌐",
                         "color": "#00f3f",
                         "price": "free",
-                        "rarity": "common"
+                        "rarity": "common",
                     },
                     "scholar": {
                         "name": "学者风格",
@@ -165,47 +164,47 @@ class AgentSkinSystem:
                         "glow": "brown",
                         "price": 4.99,
                         "rarity": "rare",
-                        "effects": ["book", "glow"]
-                    }
+                        "effects": ["book", "glow"],
+                    },
                 }
-            }
+            },
         }
-    
+
     def _get_default_animations(self) -> Dict:
         """默认动画配置"""
         return {
             "idle": {
                 "name": "待机动画",
                 "css": "pulse 2s ease-in-out infinite",
-                "price": "free"
+                "price": "free",
             },
             "glow": {
                 "name": "发光特效",
                 "css": "glow 1.5s ease-in-out infinite alternate",
-                "price": 2.99
+                "price": 2.99,
             },
             "bounce": {
                 "name": "弹跳动画",
                 "css": "bounce 0.5s ease-in-out infinite",
-                "price": 3.99
+                "price": 3.99,
             },
             "rotate": {
                 "name": "旋转特效",
                 "css": "rotate 3s linear infinite",
-                "price": 2.99
+                "price": 2.99,
             },
             "float": {
                 "name": "漂浮动画",
                 "css": "float 2s ease-in-out infinite",
-                "price": 4.99
+                "price": 4.99,
             },
             "sparkle": {
                 "name": "星光闪烁",
                 "css": "sparkle 1s ease-in-out infinite",
-                "price": 5.99
-            }
+                "price": 5.99,
+            },
         }
-    
+
     def get_available_skins(self, agent_id: str) -> List[Dict]:
         """获取 Agent 可用皮肤"""
         agent_skins = self.skins_config.get(agent_id, {}).get("skins", {})
@@ -220,11 +219,11 @@ class AgentSkinSystem:
                 "background": info.get("background"),
                 "price": info.get("price"),
                 "rarity": info.get("rarity", "common"),
-                "effects": info.get("effects", [])
+                "effects": info.get("effects", []),
             }
             for skin_id, info in agent_skins.items()
         ]
-    
+
     def get_skin_css(self, skin_id: str, agent_id: str = "personal_butler") -> str:
         """生成皮肤 CSS"""
         agent_skins = self.skins_config.get(agent_id, {}).get("skins", {})
@@ -245,8 +244,8 @@ class AgentSkinSystem:
         """
 
         # 添加特效 CSS
-        for effect in skin.get('effects', []):
-            if effect == 'sparkle':
+        for effect in skin.get("effects", []):
+            if effect == "sparkle":
                 css += """
                 @keyframes sparkle {
                     0%, 100% { text-shadow: 0 0 5px gold; }
@@ -254,7 +253,7 @@ class AgentSkinSystem:
                 }
                 .sparkle { animation: sparkle 1s ease-in-out infinite; }
                 """
-            elif effect == 'scan_line':
+            elif effect == "scan_line":
                 css += """
                 .scan-line {
                     position: absolute;
@@ -265,7 +264,7 @@ class AgentSkinSystem:
                     100% { transform: translateY(100%); }
                 }
                 """
-            elif effect == 'glitch':
+            elif effect == "glitch":
                 css += """
                 @keyframes glitch {
                     0%, 100% { transform: skew(0deg, 0deg); }
@@ -276,10 +275,12 @@ class AgentSkinSystem:
                 """
 
         return css
-    
+
     def get_animation_css(self, animation_id: str) -> str:
         """获取动画 CSS"""
-        anim = self.animations_config.get(animation_id, self.animations_config.get("idle", {}))
+        anim = self.animations_config.get(
+            animation_id, self.animations_config.get("idle", {})
+        )
 
         css_map = {
             "pulse": """
@@ -311,10 +312,10 @@ class AgentSkinSystem:
                 from { transform: rotate(0deg); }
                 to { transform: rotate(360deg); }
             }
-            """
+            """,
         }
 
-        return css_map.get(anim.get('css', '').split()[0], "")
+        return css_map.get(anim.get("css", "").split()[0], "")
 
 
 agent_skin_system = AgentSkinSystem()

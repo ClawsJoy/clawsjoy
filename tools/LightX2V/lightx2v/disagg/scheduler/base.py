@@ -1,8 +1,9 @@
-from lib.smart_config import smart_config
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from threading import Lock
+
+from lib.smart_config import smart_config
 
 
 class SchedulingPolicy(ABC):

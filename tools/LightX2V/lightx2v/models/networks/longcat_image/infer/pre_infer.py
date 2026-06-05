@@ -1,7 +1,7 @@
-from lib.smart_config import smart_config
 import torch.nn.functional as F
-
 from lightx2v.utils.envs import *
+
+from lib.smart_config import smart_config
 
 from .module_io import LongCatImagePreInferModuleOutput
 
@@ -36,15 +36,21 @@ class LongCatImagePreInfer:
         """
         # Validate batch size (currently only batch_size=1 is supported)
         if hidden_states.shape[0] != 1:
-            raise ValueError(f"Only batch_size=1 is supported, got {hidden_states.shape[0]}")
+            raise ValueError(
+                f"Only batch_size=1 is supported, got {hidden_states.shape[0]}"
+            )
         if encoder_hidden_states.shape[0] != 1:
-            raise ValueError(f"Only batch_size=1 is supported, got {encoder_hidden_states.shape[0]}")
+            raise ValueError(
+                f"Only batch_size=1 is supported, got {encoder_hidden_states.shape[0]}"
+            )
 
         # Embed image latents: x_embedder (squeeze batch dim since B=1)
         hidden_states = weights.x_embedder.apply(hidden_states.squeeze(0))
 
         # Embed text context: context_embedder
-        encoder_hidden_states = weights.context_embedder.apply(encoder_hidden_states.squeeze(0))
+        encoder_hidden_states = weights.context_embedder.apply(
+            encoder_hidden_states.squeeze(0)
+        )
 
         # Timestep embedding
         # time_proj is sinusoidal (computed in scheduler), then pass through MLP
@@ -64,9 +70,14 @@ class LongCatImagePreInfer:
         # For I2I task: get input image latents and output sequence length
         input_image_latents = None
         output_seq_len = None
-        if hasattr(self.scheduler, "input_image_latents") and self.scheduler.input_image_latents is not None:
+        if (
+            hasattr(self.scheduler, "input_image_latents")
+            and self.scheduler.input_image_latents is not None
+        ):
             # Embed input image latents
-            input_image_latents = weights.x_embedder.apply(self.scheduler.input_image_latents.squeeze(0))
+            input_image_latents = weights.x_embedder.apply(
+                self.scheduler.input_image_latents.squeeze(0)
+            )
             output_seq_len = self.scheduler.output_seq_len
 
         return LongCatImagePreInferModuleOutput(

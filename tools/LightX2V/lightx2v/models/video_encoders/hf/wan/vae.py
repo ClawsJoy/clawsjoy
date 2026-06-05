@@ -1,16 +1,17 @@
-from lib.smart_config import smart_config
-# Copyright 2024-2025 The Alibaba Wan Team Authors. All rights reserved.
-
 import torch
 import torch.distributed as dist
 import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange
-from loguru import logger
-
 from lightx2v.utils.envs import GET_USE_CHANNELS_LAST_3D
 from lightx2v.utils.utils import load_weights
 from lightx2v_platform.base.global_var import AI_DEVICE
+from loguru import logger
+
+from lib.smart_config import smart_config
+
+# Copyright 2024-2025 The Alibaba Wan Team Authors. All rights reserved.
+
 
 torch_device_module = getattr(torch, AI_DEVICE)
 
@@ -57,7 +58,9 @@ def convert_to_channels_last_3d(module):
     """
     for child in module.children():
         if isinstance(child, nn.Conv3d):
-            child.weight.data = child.weight.data.to(memory_format=torch.channels_last_3d)
+            child.weight.data = child.weight.data.to(
+                memory_format=torch.channels_last_3d
+            )
         else:
             convert_to_channels_last_3d(child)
 
@@ -74,7 +77,12 @@ class RMS_norm(nn.Module):
         self.bias = nn.Parameter(torch.zeros(shape)) if bias else 0.0
 
     def forward(self, x):
-        return F.normalize(x, dim=(1 if self.channel_first else -1)) * self.scale * self.gamma + self.bias
+        return (
+            F.normalize(x, dim=(1 if self.channel_first else -1))
+            * self.scale
+            * self.gamma
+            + self.bias
+        )
 
 
 class Upsample(nn.Upsample):
@@ -112,10 +120,16 @@ class Resample(nn.Module):
             self.time_conv = CausalConv3d(dim, dim * 2, (3, 1, 1), padding=(1, 0, 0))
 
         elif mode == "downsample2d":
-            self.resample = nn.Sequential(nn.ZeroPad2d((0, 1, 0, 1)), nn.Conv2d(dim, dim, 3, stride=(2, 2)))
+            self.resample = nn.Sequential(
+                nn.ZeroPad2d((0, 1, 0, 1)), nn.Conv2d(dim, dim, 3, stride=(2, 2))
+            )
         elif mode == "downsample3d":
-            self.resample = nn.Sequential(nn.ZeroPad2d((0, 1, 0, 1)), nn.Conv2d(dim, dim, 3, stride=(2, 2)))
-            self.time_conv = CausalConv3d(dim, dim, (3, 1, 1), stride=(2, 1, 1), padding=(0, 0, 0))
+            self.resample = nn.Sequential(
+                nn.ZeroPad2d((0, 1, 0, 1)), nn.Conv2d(dim, dim, 3, stride=(2, 2))
+            )
+            self.time_conv = CausalConv3d(
+                dim, dim, (3, 1, 1), stride=(2, 1, 1), padding=(0, 0, 0)
+            )
 
         else:
             self.resample = nn.Identity()
@@ -130,16 +144,26 @@ class Resample(nn.Module):
                     feat_idx[0] += 1
                 else:
                     cache_x = x[:, :, -CACHE_T:, :, :].clone()
-                    if cache_x.shape[2] < 2 and feat_cache[idx] is not None and feat_cache[idx] != "Rep":
+                    if (
+                        cache_x.shape[2] < 2
+                        and feat_cache[idx] is not None
+                        and feat_cache[idx] != "Rep"
+                    ):
                         # cache last frame of last two chunk
                         cache_x = torch.cat(
                             [
-                                feat_cache[idx][:, :, -1, :, :].unsqueeze(2).to(cache_x.device),
+                                feat_cache[idx][:, :, -1, :, :]
+                                .unsqueeze(2)
+                                .to(cache_x.device),
                                 cache_x,
                             ],
                             dim=2,
                         )
-                    if cache_x.shape[2] < 2 and feat_cache[idx] is not None and feat_cache[idx] == "Rep":
+                    if (
+                        cache_x.shape[2] < 2
+                        and feat_cache[idx] is not None
+                        and feat_cache[idx] == "Rep"
+                    ):
                         cache_x = torch.cat(
                             [torch.zeros_like(cache_x).to(cache_x.device), cache_x],
                             dim=2,
@@ -171,7 +195,9 @@ class Resample(nn.Module):
                     #     # cache last frame of last two chunk
                     #     cache_x = torch.cat([feat_cache[idx][:, :, -1, :, :].unsqueeze(2).to(cache_x.device), cache_x], dim=2)
 
-                    x = self.time_conv(torch.cat([feat_cache[idx][:, :, -1:, :, :], x], 2))
+                    x = self.time_conv(
+                        torch.cat([feat_cache[idx][:, :, -1:, :, :], x], 2)
+                    )
                     feat_cache[idx] = cache_x
                     feat_idx[0] += 1
         return x
@@ -216,7 +242,9 @@ class ResidualBlock(nn.Module):
             nn.Dropout(dropout),
             CausalConv3d(out_dim, out_dim, 3, padding=1),
         )
-        self.shortcut = CausalConv3d(in_dim, out_dim, 1) if in_dim != out_dim else nn.Identity()
+        self.shortcut = (
+            CausalConv3d(in_dim, out_dim, 1) if in_dim != out_dim else nn.Identity()
+        )
 
     def forward(self, x, feat_cache=None, feat_idx=[0]):
         h = self.shortcut(x)
@@ -228,7 +256,9 @@ class ResidualBlock(nn.Module):
                     # cache last frame of last two chunk
                     cache_x = torch.cat(
                         [
-                            feat_cache[idx][:, :, -1, :, :].unsqueeze(2).to(cache_x.device),
+                            feat_cache[idx][:, :, -1, :, :]
+                            .unsqueeze(2)
+                            .to(cache_x.device),
                             cache_x,
                         ],
                         dim=2,
@@ -264,7 +294,13 @@ class AttentionBlock(nn.Module):
         x = rearrange(x, "b c t h w -> (b t) c h w")
         x = self.norm(x)
         # compute query, key, value
-        q, k, v = self.to_qkv(x).reshape(b * t, 1, c * 3, -1).permute(0, 1, 3, 2).contiguous().chunk(3, dim=-1)
+        q, k, v = (
+            self.to_qkv(x)
+            .reshape(b * t, 1, c * 3, -1)
+            .permute(0, 1, 3, 2)
+            .contiguous()
+            .chunk(3, dim=-1)
+        )
 
         # apply attention
         x = F.scaled_dot_product_attention(
@@ -281,7 +317,17 @@ class AttentionBlock(nn.Module):
 
 
 class Encoder3d(nn.Module):
-    def __init__(self, dim=128, z_dim=4, dim_mult=[1, 2, 4, 4], num_res_blocks=2, attn_scales=[], temperal_downsample=[True, True, False], dropout=0.0, pruning_rate=0.0):
+    def __init__(
+        self,
+        dim=128,
+        z_dim=4,
+        dim_mult=[1, 2, 4, 4],
+        num_res_blocks=2,
+        attn_scales=[],
+        temperal_downsample=[True, True, False],
+        dropout=0.0,
+        pruning_rate=0.0,
+    ):
         super().__init__()
         self.dim = dim
         self.z_dim = z_dim
@@ -371,7 +417,9 @@ class Encoder3d(nn.Module):
                     # cache last frame of last two chunk
                     cache_x = torch.cat(
                         [
-                            feat_cache[idx][:, :, -1, :, :].unsqueeze(2).to(cache_x.device),
+                            feat_cache[idx][:, :, -1, :, :]
+                            .unsqueeze(2)
+                            .to(cache_x.device),
                             cache_x,
                         ],
                         dim=2,
@@ -385,7 +433,17 @@ class Encoder3d(nn.Module):
 
 
 class Decoder3d(nn.Module):
-    def __init__(self, dim=128, z_dim=4, dim_mult=[1, 2, 4, 4], num_res_blocks=2, attn_scales=[], temperal_upsample=[False, True, True], dropout=0.0, pruning_rate=0.0):
+    def __init__(
+        self,
+        dim=128,
+        z_dim=4,
+        dim_mult=[1, 2, 4, 4],
+        num_res_blocks=2,
+        attn_scales=[],
+        temperal_upsample=[False, True, True],
+        dropout=0.0,
+        pruning_rate=0.0,
+    ):
         super().__init__()
         self.dim = dim
         self.z_dim = z_dim
@@ -479,7 +537,9 @@ class Decoder3d(nn.Module):
                     # cache last frame of last two chunk
                     cache_x = torch.cat(
                         [
-                            feat_cache[idx][:, :, -1, :, :].unsqueeze(2).to(cache_x.device),
+                            feat_cache[idx][:, :, -1, :, :]
+                            .unsqueeze(2)
+                            .to(cache_x.device),
                             cache_x,
                         ],
                         dim=2,
@@ -501,7 +561,17 @@ def count_conv3d(model):
 
 
 class WanVAE_(nn.Module):
-    def __init__(self, dim=128, z_dim=4, dim_mult=[1, 2, 4, 4], num_res_blocks=2, attn_scales=[], temperal_downsample=[True, True, False], dropout=0.0, pruning_rate=0.0):
+    def __init__(
+        self,
+        dim=128,
+        z_dim=4,
+        dim_mult=[1, 2, 4, 4],
+        num_res_blocks=2,
+        attn_scales=[],
+        temperal_downsample=[True, True, False],
+        dropout=0.0,
+        pruning_rate=0.0,
+    ):
         super().__init__()
         self.dim = dim
         self.z_dim = z_dim
@@ -552,13 +622,17 @@ class WanVAE_(nn.Module):
     def blend_v(self, a, b, blend_extent):
         blend_extent = min(a.shape[-2], b.shape[-2], blend_extent)
         for y in range(blend_extent):
-            b[:, :, :, y, :] = a[:, :, :, -blend_extent + y, :] * (1 - y / blend_extent) + b[:, :, :, y, :] * (y / blend_extent)
+            b[:, :, :, y, :] = a[:, :, :, -blend_extent + y, :] * (
+                1 - y / blend_extent
+            ) + b[:, :, :, y, :] * (y / blend_extent)
         return b
 
     def blend_h(self, a, b, blend_extent):
         blend_extent = min(a.shape[-1], b.shape[-1], blend_extent)
         for x in range(blend_extent):
-            b[:, :, :, :, x] = a[:, :, :, :, -blend_extent + x] * (1 - x / blend_extent) + b[:, :, :, :, x] * (x / blend_extent)
+            b[:, :, :, :, x] = a[:, :, :, :, -blend_extent + x] * (
+                1 - x / blend_extent
+            ) + b[:, :, :, :, x] * (x / blend_extent)
         return b
 
     def tiled_encode(self, x, scale):
@@ -566,10 +640,18 @@ class WanVAE_(nn.Module):
         latent_height = height // self.spatial_compression_ratio
         latent_width = width // self.spatial_compression_ratio
 
-        tile_latent_min_height = self.tile_sample_min_height // self.spatial_compression_ratio
-        tile_latent_min_width = self.tile_sample_min_width // self.spatial_compression_ratio
-        tile_latent_stride_height = self.tile_sample_stride_height // self.spatial_compression_ratio
-        tile_latent_stride_width = self.tile_sample_stride_width // self.spatial_compression_ratio
+        tile_latent_min_height = (
+            self.tile_sample_min_height // self.spatial_compression_ratio
+        )
+        tile_latent_min_width = (
+            self.tile_sample_min_width // self.spatial_compression_ratio
+        )
+        tile_latent_stride_height = (
+            self.tile_sample_stride_height // self.spatial_compression_ratio
+        )
+        tile_latent_stride_width = (
+            self.tile_sample_stride_width // self.spatial_compression_ratio
+        )
 
         blend_height = tile_latent_min_height - tile_latent_stride_height
         blend_width = tile_latent_min_width - tile_latent_stride_width
@@ -586,7 +668,13 @@ class WanVAE_(nn.Module):
                 for k in range(frame_range):
                     self._enc_conv_idx = [0]
                     if k == 0:
-                        tile = x[:, :, :1, i : i + self.tile_sample_min_height, j : j + self.tile_sample_min_width]
+                        tile = x[
+                            :,
+                            :,
+                            :1,
+                            i : i + self.tile_sample_min_height,
+                            j : j + self.tile_sample_min_width,
+                        ]
                     else:
                         tile = x[
                             :,
@@ -595,10 +683,14 @@ class WanVAE_(nn.Module):
                             i : i + self.tile_sample_min_height,
                             j : j + self.tile_sample_min_width,
                         ]
-                    tile = self.encoder(tile, feat_cache=self._enc_feat_map, feat_idx=self._enc_conv_idx)
+                    tile = self.encoder(
+                        tile, feat_cache=self._enc_feat_map, feat_idx=self._enc_conv_idx
+                    )
                     mu, log_var = self.conv1(tile).chunk(2, dim=1)
                     if isinstance(scale[0], torch.Tensor):
-                        mu = (mu - scale[0].view(1, self.z_dim, 1, 1, 1)) * scale[1].view(1, self.z_dim, 1, 1, 1)
+                        mu = (mu - scale[0].view(1, self.z_dim, 1, 1, 1)) * scale[
+                            1
+                        ].view(1, self.z_dim, 1, 1, 1)
                     else:
                         mu = (mu - scale[0]) * scale[1]
 
@@ -618,7 +710,9 @@ class WanVAE_(nn.Module):
                     tile = self.blend_v(rows[i - 1][j], tile, blend_height)
                 if j > 0:
                     tile = self.blend_h(row[j - 1], tile, blend_width)
-                result_row.append(tile[:, :, :, :tile_latent_stride_height, :tile_latent_stride_width])
+                result_row.append(
+                    tile[:, :, :, :tile_latent_stride_height, :tile_latent_stride_width]
+                )
             result_rows.append(torch.cat(result_row, dim=-1))
 
         enc = torch.cat(result_rows, dim=3)[:, :, :, :latent_height, :latent_width]
@@ -626,7 +720,9 @@ class WanVAE_(nn.Module):
 
     def tiled_decode(self, z, scale):
         if isinstance(scale[0], torch.Tensor):
-            z = z / scale[1].view(1, self.z_dim, 1, 1, 1) + scale[0].view(1, self.z_dim, 1, 1, 1)
+            z = z / scale[1].view(1, self.z_dim, 1, 1, 1) + scale[0].view(
+                1, self.z_dim, 1, 1, 1
+            )
         else:
             z = z / scale[1] + scale[0]
 
@@ -634,10 +730,18 @@ class WanVAE_(nn.Module):
         sample_height = height * self.spatial_compression_ratio
         sample_width = width * self.spatial_compression_ratio
 
-        tile_latent_min_height = self.tile_sample_min_height // self.spatial_compression_ratio
-        tile_latent_min_width = self.tile_sample_min_width // self.spatial_compression_ratio
-        tile_latent_stride_height = self.tile_sample_stride_height // self.spatial_compression_ratio
-        tile_latent_stride_width = self.tile_sample_stride_width // self.spatial_compression_ratio
+        tile_latent_min_height = (
+            self.tile_sample_min_height // self.spatial_compression_ratio
+        )
+        tile_latent_min_width = (
+            self.tile_sample_min_width // self.spatial_compression_ratio
+        )
+        tile_latent_stride_height = (
+            self.tile_sample_stride_height // self.spatial_compression_ratio
+        )
+        tile_latent_stride_width = (
+            self.tile_sample_stride_width // self.spatial_compression_ratio
+        )
 
         blend_height = self.tile_sample_min_height - self.tile_sample_stride_height
         blend_width = self.tile_sample_min_width - self.tile_sample_stride_width
@@ -652,9 +756,17 @@ class WanVAE_(nn.Module):
                 time = []
                 for k in range(num_frames):
                     self._conv_idx = [0]
-                    tile = z[:, :, k : k + 1, i : i + tile_latent_min_height, j : j + tile_latent_min_width]
+                    tile = z[
+                        :,
+                        :,
+                        k : k + 1,
+                        i : i + tile_latent_min_height,
+                        j : j + tile_latent_min_width,
+                    ]
                     tile = self.conv2(tile)
-                    decoded = self.decoder(tile, feat_cache=self._feat_map, feat_idx=self._conv_idx)
+                    decoded = self.decoder(
+                        tile, feat_cache=self._feat_map, feat_idx=self._conv_idx
+                    )
                     time.append(decoded)
                 row.append(torch.cat(time, dim=2))
             rows.append(row)
@@ -670,7 +782,15 @@ class WanVAE_(nn.Module):
                     tile = self.blend_v(rows[i - 1][j], tile, blend_height)
                 if j > 0:
                     tile = self.blend_h(row[j - 1], tile, blend_width)
-                result_row.append(tile[:, :, :, : self.tile_sample_stride_height, : self.tile_sample_stride_width])
+                result_row.append(
+                    tile[
+                        :,
+                        :,
+                        :,
+                        : self.tile_sample_stride_height,
+                        : self.tile_sample_stride_width,
+                    ]
+                )
             result_rows.append(torch.cat(result_row, dim=-1))
 
         dec = torch.cat(result_rows, dim=3)[:, :, :, :sample_height, :sample_width]
@@ -699,7 +819,9 @@ class WanVAE_(nn.Module):
                 out = torch.cat([out, out_], 2)
         mu, log_var = self.conv1(out).chunk(2, dim=1)
         if isinstance(scale[0], torch.Tensor):
-            mu = (mu - scale[0].view(1, self.z_dim, 1, 1, 1)) * scale[1].view(1, self.z_dim, 1, 1, 1)
+            mu = (mu - scale[0].view(1, self.z_dim, 1, 1, 1)) * scale[1].view(
+                1, self.z_dim, 1, 1, 1
+            )
         else:
             mu = (mu - scale[0]) * scale[1]
 
@@ -714,7 +836,9 @@ class WanVAE_(nn.Module):
 
         # z: [b,c,t,h,w]
         if isinstance(scale[0], torch.Tensor):
-            z = z / scale[1].view(1, self.z_dim, 1, 1, 1) + scale[0].view(1, self.z_dim, 1, 1, 1)
+            z = z / scale[1].view(1, self.z_dim, 1, 1, 1) + scale[0].view(
+                1, self.z_dim, 1, 1, 1
+            )
         else:
             z = z / scale[1] + scale[0]
         iter_ = z.shape[2]
@@ -743,7 +867,9 @@ class WanVAE_(nn.Module):
 
         # z: [b,c,t,h,w]
         if isinstance(scale[0], torch.Tensor):
-            z = z / scale[1].view(1, self.z_dim, 1, 1, 1) + scale[0].view(1, self.z_dim, 1, 1, 1)
+            z = z / scale[1].view(1, self.z_dim, 1, 1, 1) + scale[0].view(
+                1, self.z_dim, 1, 1, 1
+            )
         else:
             z = z / scale[1] + scale[0]
         iter_ = z.shape[2]
@@ -760,7 +886,9 @@ class WanVAE_(nn.Module):
     def cached_decode(self, z, scale):
         # z: [b,c,t,h,w]
         if isinstance(scale[0], torch.Tensor):
-            z = z / scale[1].view(1, self.z_dim, 1, 1, 1) + scale[0].view(1, self.z_dim, 1, 1, 1)
+            z = z / scale[1].view(1, self.z_dim, 1, 1, 1) + scale[0].view(
+                1, self.z_dim, 1, 1, 1
+            )
         else:
             z = z / scale[1] + scale[0]
         iter_ = z.shape[2]
@@ -768,16 +896,26 @@ class WanVAE_(nn.Module):
         for i in range(iter_):
             self._conv_idx = [0]
             if i == 0:
-                out = self.decoder(x[:, :, i : i + 1, :, :], feat_cache=self._feat_map, feat_idx=self._conv_idx)
+                out = self.decoder(
+                    x[:, :, i : i + 1, :, :],
+                    feat_cache=self._feat_map,
+                    feat_idx=self._conv_idx,
+                )
             else:
-                out_ = self.decoder(x[:, :, i : i + 1, :, :], feat_cache=self._feat_map, feat_idx=self._conv_idx)
+                out_ = self.decoder(
+                    x[:, :, i : i + 1, :, :],
+                    feat_cache=self._feat_map,
+                    feat_idx=self._conv_idx,
+                )
                 out = torch.cat([out, out_], 2)
         return out
 
     def cached_decode_withflag(self, z, scale, is_first_clip, is_last_clip):
         # z: [b,c,t,h,w]
         if isinstance(scale[0], torch.Tensor):
-            z = z / scale[1].view(1, self.z_dim, 1, 1, 1) + scale[0].view(1, self.z_dim, 1, 1, 1)
+            z = z / scale[1].view(1, self.z_dim, 1, 1, 1) + scale[0].view(
+                1, self.z_dim, 1, 1, 1
+            )
         else:
             z = z / scale[1] + scale[0]
         iter_ = z.shape[2]
@@ -789,9 +927,17 @@ class WanVAE_(nn.Module):
         for i in range(iter_):
             self._conv_idx = [0]
             if i == 0:
-                out = self.decoder(x[:, :, i : i + 1, :, :], feat_cache=self._feat_map, feat_idx=self._conv_idx)
+                out = self.decoder(
+                    x[:, :, i : i + 1, :, :],
+                    feat_cache=self._feat_map,
+                    feat_idx=self._conv_idx,
+                )
             else:
-                out_ = self.decoder(x[:, :, i : i + 1, :, :], feat_cache=self._feat_map, feat_idx=self._conv_idx)
+                out_ = self.decoder(
+                    x[:, :, i : i + 1, :, :],
+                    feat_cache=self._feat_map,
+                    feat_idx=self._conv_idx,
+                )
                 out = torch.cat([out, out_], 2)
 
         if is_last_clip:
@@ -844,7 +990,17 @@ class WanVAE_(nn.Module):
         return y.transpose(1, 2).to(x)
 
 
-def _video_vae(pretrained_path=None, z_dim=None, device="cpu", cpu_offload=False, dtype=torch.float, load_from_rank0=False, pruning_rate=0.0, dummy_model=False, **kwargs):
+def _video_vae(
+    pretrained_path=None,
+    z_dim=None,
+    device="cpu",
+    cpu_offload=False,
+    dtype=torch.float,
+    load_from_rank0=False,
+    pruning_rate=0.0,
+    dummy_model=False,
+    **kwargs,
+):
     """
     Autoencoder3d adapted from Stable Diffusion 1.x, 2.x and XL.
     """
@@ -870,7 +1026,9 @@ def _video_vae(pretrained_path=None, z_dim=None, device="cpu", cpu_offload=False
             model = WanVAE_(**cfg)
 
         # load checkpoint
-        weights_dict = load_weights(pretrained_path, cpu_offload=cpu_offload, load_from_rank0=load_from_rank0)
+        weights_dict = load_weights(
+            pretrained_path, cpu_offload=cpu_offload, load_from_rank0=load_from_rank0
+        )
         for k in weights_dict.keys():
             if weights_dict[k].dtype != dtype:
                 weights_dict[k] = weights_dict[k].to(dtype)
@@ -991,7 +1149,15 @@ class WanVAE:
 
         # init model
         self.model = (
-            _video_vae(pretrained_path=vae_path, z_dim=z_dim, cpu_offload=cpu_offload, dtype=dtype, load_from_rank0=load_from_rank0, pruning_rate=pruning_rate, dummy_model=dummy_model)
+            _video_vae(
+                pretrained_path=vae_path,
+                z_dim=z_dim,
+                cpu_offload=cpu_offload,
+                dtype=dtype,
+                load_from_rank0=load_from_rank0,
+                pruning_rate=pruning_rate,
+                dummy_model=dummy_model,
+            )
             .eval()
             .requires_grad_(False)
             .to(device)
@@ -1057,14 +1223,22 @@ class WanVAE:
 
         if cur_rank == 0:
             if split_dim == 3:
-                video_chunk = video[:, :, :, : video_chunk_len + 2 * video_padding_len, :].contiguous()
+                video_chunk = video[
+                    :, :, :, : video_chunk_len + 2 * video_padding_len, :
+                ].contiguous()
             elif split_dim == 4:
-                video_chunk = video[:, :, :, :, : video_chunk_len + 2 * video_padding_len].contiguous()
+                video_chunk = video[
+                    :, :, :, :, : video_chunk_len + 2 * video_padding_len
+                ].contiguous()
         elif cur_rank == world_size - 1:
             if split_dim == 3:
-                video_chunk = video[:, :, :, -(video_chunk_len + 2 * video_padding_len) :, :].contiguous()
+                video_chunk = video[
+                    :, :, :, -(video_chunk_len + 2 * video_padding_len) :, :
+                ].contiguous()
             elif split_dim == 4:
-                video_chunk = video[:, :, :, :, -(video_chunk_len + 2 * video_padding_len) :].contiguous()
+                video_chunk = video[
+                    :, :, :, :, -(video_chunk_len + 2 * video_padding_len) :
+                ].contiguous()
         else:
             start_idx = cur_rank * video_chunk_len - video_padding_len
             end_idx = (cur_rank + 1) * video_chunk_len + video_padding_len
@@ -1080,19 +1254,31 @@ class WanVAE:
 
         if cur_rank == 0:
             if split_dim == 3:
-                encoded_chunk = encoded_chunk[:, :, :, :splited_chunk_len, :].contiguous()
+                encoded_chunk = encoded_chunk[
+                    :, :, :, :splited_chunk_len, :
+                ].contiguous()
             elif split_dim == 4:
-                encoded_chunk = encoded_chunk[:, :, :, :, :splited_chunk_len].contiguous()
+                encoded_chunk = encoded_chunk[
+                    :, :, :, :, :splited_chunk_len
+                ].contiguous()
         elif cur_rank == world_size - 1:
             if split_dim == 3:
-                encoded_chunk = encoded_chunk[:, :, :, -splited_chunk_len:, :].contiguous()
+                encoded_chunk = encoded_chunk[
+                    :, :, :, -splited_chunk_len:, :
+                ].contiguous()
             elif split_dim == 4:
-                encoded_chunk = encoded_chunk[:, :, :, :, -splited_chunk_len:].contiguous()
+                encoded_chunk = encoded_chunk[
+                    :, :, :, :, -splited_chunk_len:
+                ].contiguous()
         else:
             if split_dim == 3:
-                encoded_chunk = encoded_chunk[:, :, :, padding_size:-padding_size, :].contiguous()
+                encoded_chunk = encoded_chunk[
+                    :, :, :, padding_size:-padding_size, :
+                ].contiguous()
             elif split_dim == 4:
-                encoded_chunk = encoded_chunk[:, :, :, :, padding_size:-padding_size].contiguous()
+                encoded_chunk = encoded_chunk[
+                    :, :, :, :, padding_size:-padding_size
+                ].contiguous()
 
         full_encoded = [torch.empty_like(encoded_chunk) for _ in range(world_size)]
         dist.all_gather(full_encoded, encoded_chunk)
@@ -1171,7 +1357,9 @@ class WanVAE:
             encoded_w_start = padding_size
             encoded_w_end = encoded_chunk.shape[4] - padding_size
 
-        encoded_chunk = encoded_chunk[:, :, :, encoded_h_start:encoded_h_end, encoded_w_start:encoded_w_end].contiguous()
+        encoded_chunk = encoded_chunk[
+            :, :, :, encoded_h_start:encoded_h_end, encoded_w_start:encoded_w_end
+        ].contiguous()
 
         # Gather all chunks
         total_processes = world_size_h * world_size_w
@@ -1208,10 +1396,14 @@ class WanVAE:
 
             if self.use_2d_split:
                 if world_size_h is None or world_size_w is None:
-                    world_size_h, world_size_w = self._calculate_2d_grid(height // 8, width // 8, world_size)
+                    world_size_h, world_size_w = self._calculate_2d_grid(
+                        height // 8, width // 8, world_size
+                    )
                 cur_rank_h = cur_rank // world_size_w
                 cur_rank_w = cur_rank % world_size_w
-                out = self.encode_dist_2d(video, world_size_h, world_size_w, cur_rank_h, cur_rank_w)
+                out = self.encode_dist_2d(
+                    video, world_size_h, world_size_w, cur_rank_h, cur_rank_w
+                )
             else:
                 # Original 1D splitting logic
                 if width % world_size == 0:
@@ -1251,9 +1443,23 @@ class WanVAE:
                 zs = zs[:, :, :, -(splited_chunk_len + 2 * padding_size) :].contiguous()
         else:
             if split_dim == 2:
-                zs = zs[:, :, cur_rank * splited_chunk_len - padding_size : (cur_rank + 1) * splited_chunk_len + padding_size, :].contiguous()
+                zs = zs[
+                    :,
+                    :,
+                    cur_rank * splited_chunk_len
+                    - padding_size : (cur_rank + 1) * splited_chunk_len
+                    + padding_size,
+                    :,
+                ].contiguous()
             elif split_dim == 3:
-                zs = zs[:, :, :, cur_rank * splited_chunk_len - padding_size : (cur_rank + 1) * splited_chunk_len + padding_size].contiguous()
+                zs = zs[
+                    :,
+                    :,
+                    :,
+                    cur_rank * splited_chunk_len
+                    - padding_size : (cur_rank + 1) * splited_chunk_len
+                    + padding_size,
+                ].contiguous()
 
         decode_func = self.model.tiled_decode if self.use_tiling else self.model.decode
         images = decode_func(zs.unsqueeze(0), self.scale).clamp_(-1, 1)
@@ -1270,9 +1476,13 @@ class WanVAE:
                 images = images[:, :, :, :, -splited_chunk_len * 8 :].contiguous()
         else:
             if split_dim == 2:
-                images = images[:, :, :, 8 * padding_size : -8 * padding_size, :].contiguous()
+                images = images[
+                    :, :, :, 8 * padding_size : -8 * padding_size, :
+                ].contiguous()
             elif split_dim == 3:
-                images = images[:, :, :, :, 8 * padding_size : -8 * padding_size].contiguous()
+                images = images[
+                    :, :, :, :, 8 * padding_size : -8 * padding_size
+                ].contiguous()
 
         full_images = [torch.empty_like(images) for _ in range(world_size)]
         dist.all_gather(full_images, images)
@@ -1343,7 +1553,9 @@ class WanVAE:
             decoded_w_start = padding_size * spatial_ratio
             decoded_w_end = images_chunk.shape[4] - padding_size * spatial_ratio
 
-        images_chunk = images_chunk[:, :, :, decoded_h_start:decoded_h_end, decoded_w_start:decoded_w_end].contiguous()
+        images_chunk = images_chunk[
+            :, :, :, decoded_h_start:decoded_h_end, decoded_w_start:decoded_w_end
+        ].contiguous()
 
         # Gather all chunks
         total_processes = world_size_h * world_size_w
@@ -1366,7 +1578,9 @@ class WanVAE:
 
         return images
 
-    def decode_dist_2d_stream(self, zs, world_size_h, world_size_w, cur_rank_h, cur_rank_w):
+    def decode_dist_2d_stream(
+        self, zs, world_size_h, world_size_w, cur_rank_h, cur_rank_w
+    ):
         total_h = zs.shape[2]
         total_w = zs.shape[3]
 
@@ -1424,11 +1638,15 @@ class WanVAE:
                 decoded_w_start = padding_size * spatial_ratio
                 decoded_w_end = images_chunk.shape[4] - padding_size * spatial_ratio
 
-            images_chunk = images_chunk[:, :, :, decoded_h_start:decoded_h_end, decoded_w_start:decoded_w_end].contiguous()
+            images_chunk = images_chunk[
+                :, :, :, decoded_h_start:decoded_h_end, decoded_w_start:decoded_w_end
+            ].contiguous()
 
             # Gather all chunks
             total_processes = world_size_h * world_size_w
-            full_images = [torch.empty_like(images_chunk) for _ in range(total_processes)]
+            full_images = [
+                torch.empty_like(images_chunk) for _ in range(total_processes)
+            ]
 
             dist.all_gather(full_images, images_chunk)
 
@@ -1447,7 +1665,9 @@ class WanVAE:
 
             yield images
 
-    def cached_decode_dist_2d_withflag(self, zs, is_first, is_last, world_size_h, world_size_w, cur_rank_h, cur_rank_w):
+    def cached_decode_dist_2d_withflag(
+        self, zs, is_first, is_last, world_size_h, world_size_w, cur_rank_h, cur_rank_w
+    ):
         total_h = zs.shape[2]
         total_w = zs.shape[3]
 
@@ -1482,7 +1702,9 @@ class WanVAE:
         zs_chunk = zs[:, :, h_start:h_end, w_start:w_end].contiguous()
 
         # Decode the chunk
-        images_chunk = self.model.cached_decode_withflag(zs_chunk.unsqueeze(0), self.scale, is_first, is_last)
+        images_chunk = self.model.cached_decode_withflag(
+            zs_chunk.unsqueeze(0), self.scale, is_first, is_last
+        )
 
         # Remove padding from decoded chunk
         spatial_ratio = 8
@@ -1506,7 +1728,9 @@ class WanVAE:
             decoded_w_start = padding_size * spatial_ratio
             decoded_w_end = images_chunk.shape[4] - padding_size * spatial_ratio
 
-        images_chunk = images_chunk[:, :, :, decoded_h_start:decoded_h_end, decoded_w_start:decoded_w_end].contiguous()
+        images_chunk = images_chunk[
+            :, :, :, decoded_h_start:decoded_h_end, decoded_w_start:decoded_w_end
+        ].contiguous()
 
         # Gather all chunks
         total_processes = world_size_h * world_size_w
@@ -1539,10 +1763,14 @@ class WanVAE:
             latent_height, latent_width = zs.shape[2], zs.shape[3]
 
             if self.use_2d_split:
-                world_size_h, world_size_w = self._calculate_2d_grid(latent_height, latent_width, world_size)
+                world_size_h, world_size_w = self._calculate_2d_grid(
+                    latent_height, latent_width, world_size
+                )
                 cur_rank_h = cur_rank // world_size_w
                 cur_rank_w = cur_rank % world_size_w
-                images = self.decode_dist_2d(zs, world_size_h, world_size_w, cur_rank_h, cur_rank_w)
+                images = self.decode_dist_2d(
+                    zs, world_size_h, world_size_w, cur_rank_h, cur_rank_w
+                )
             else:
                 # Original 1D splitting logic
                 if latent_width % world_size == 0:
@@ -1551,9 +1779,13 @@ class WanVAE:
                     images = self.decode_dist(zs, world_size, cur_rank, split_dim=2)
                 else:
                     logger.info("Fall back to naive decode mode")
-                    images = self.model.decode(zs.unsqueeze(0), self.scale).clamp_(-1, 1)
+                    images = self.model.decode(zs.unsqueeze(0), self.scale).clamp_(
+                        -1, 1
+                    )
         else:
-            decode_func = self.model.tiled_decode if self.use_tiling else self.model.decode
+            decode_func = (
+                self.model.tiled_decode if self.use_tiling else self.model.decode
+            )
             images = decode_func(zs.unsqueeze(0), self.scale).clamp_(-1, 1)
 
         if self.cpu_offload:
@@ -1571,13 +1803,25 @@ class WanVAE:
             cur_rank = dist.get_rank()
             latent_height, latent_width = zs.shape[2], zs.shape[3]
 
-            world_size_h, world_size_w = self._calculate_2d_grid(latent_height, latent_width, world_size)
+            world_size_h, world_size_w = self._calculate_2d_grid(
+                latent_height, latent_width, world_size
+            )
             cur_rank_h = cur_rank // world_size_w
             cur_rank_w = cur_rank % world_size_w
 
-            images = self.cached_decode_dist_2d_withflag(zs, is_first, is_last, world_size_h, world_size_w, cur_rank_h, cur_rank_w)
+            images = self.cached_decode_dist_2d_withflag(
+                zs,
+                is_first,
+                is_last,
+                world_size_h,
+                world_size_w,
+                cur_rank_h,
+                cur_rank_w,
+            )
         else:
-            images = self.model.cached_decode_withflag(zs.unsqueeze(0), self.scale, is_first, is_last)
+            images = self.model.cached_decode_withflag(
+                zs.unsqueeze(0), self.scale, is_first, is_last
+            )
 
         images = images.clamp_(-1, 1)
 
@@ -1596,10 +1840,14 @@ class WanVAE:
             cur_rank = dist.get_rank()
             latent_height, latent_width = zs.shape[2], zs.shape[3]
 
-            world_size_h, world_size_w = self._calculate_2d_grid(latent_height, latent_width, world_size)
+            world_size_h, world_size_w = self._calculate_2d_grid(
+                latent_height, latent_width, world_size
+            )
             cur_rank_h = cur_rank // world_size_w
             cur_rank_w = cur_rank % world_size_w
-            for images in self.decode_dist_2d_stream(zs, world_size_h, world_size_w, cur_rank_h, cur_rank_w):
+            for images in self.decode_dist_2d_stream(
+                zs, world_size_h, world_size_w, cur_rank_h, cur_rank_w
+            ):
                 yield images
         else:
             for image in self.model.decode_stream(zs.unsqueeze(0), self.scale):

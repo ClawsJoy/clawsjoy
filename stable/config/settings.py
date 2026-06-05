@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """ClawsJoy 系统配置"""
 
 import os

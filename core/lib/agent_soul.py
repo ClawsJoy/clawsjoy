@@ -3,13 +3,14 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
-import yaml
 from pathlib import Path
 from typing import Dict, Optional
+
+import yaml
 
 
 class AgentSoul:
@@ -41,9 +42,9 @@ class AgentSoul:
         soul_file = self._find_file(candidates)
         if soul_file:
             try:
-                with open(soul_file, 'r') as f:
+                with open(soul_file, "r") as f:
                     data = yaml.safe_load(f)
-                    self._souls = data.get('agents', {})
+                    self._souls = data.get("agents", {})
                 print(f"   ✅ 加载 Agent 灵魂配置: {len(self._souls)} 个")
             except Exception as e:
                 print(f"   ⚠️ 加载灵魂配置失败: {e}")
@@ -56,8 +57,8 @@ class AgentSoul:
         """获取 Agent 人格"""
         soul = self.get_soul(agent_name)
         if soul:
-            return soul.get('persona', 'default')
-        return 'default'
+            return soul.get("persona", "default")
+        return "default"
 
 
 agent_soul = AgentSoul()

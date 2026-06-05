@@ -1,9 +1,10 @@
-from lib.smart_config import smart_config
 import os
 from abc import ABCMeta, abstractmethod
 from functools import lru_cache
 
 import torch
+
+from lib.smart_config import smart_config
 
 DTYPE_MAP = {
     "BF16": torch.bfloat16,

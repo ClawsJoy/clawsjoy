@@ -1,13 +1,20 @@
 """技能生成器 - 从描述自动生成技能"""
 
 import re
-from pathlib import Path
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple,  Any, Dict, List, Optional, Tuple,  Any, Dict, List, Optional,  Dict, Any, Optional
+from pathlib import Path
+from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+)
+
 
 class SkillCreator:
     """自动生成原子技能"""
-    
+
     SKILL_TEMPLATE = '''"""{{description}}"""
 
 import json
@@ -53,7 +60,7 @@ class {{class_name}}:
 skill = {{class_name}}()
 '''
 
-    MD_TEMPLATE = '''---
+    MD_TEMPLATE = """---
 name: {{skill_name}}
 version: 1.0.0
 description: '{{description}}'
@@ -76,54 +83,59 @@ security_grade: 🟢 A
 |------|------|------|
 | success | boolean | 是否成功 |
 | result | string | 执行结果 |
-'''
+"""
 
     def __init__(self):
         self.skills_dir = Path("skills")
         self.skills_dir.mkdir(exist_ok=True)
         print("🎨 技能生成器已初始化")
-    
-    def create_from_description(self, name: str, description: str, category: str = "general") -> Dict:
+
+    def create_from_description(
+        self, name: str, description: str, category: str = "general"
+    ) -> Dict:
         """从描述创建技能"""
         skill_name = self._normalize_name(name)
         skill_dir = self.skills_dir / skill_name
         skill_dir.mkdir(exist_ok=True)
-        
+
         # 生成类名
-        class_name = ''.join(word.capitalize() for word in skill_name.split('_'))
-        
+        class_name = "".join(word.capitalize() for word in skill_name.split("_"))
+
         # 生成 SKILL.md
-        md_content = self.MD_TEMPLATE \
-            .replace('{{skill_name}}', skill_name) \
-            .replace('{{description}}', description) \
-            .replace('{{category}}', category)
-        
+        md_content = (
+            self.MD_TEMPLATE.replace("{{skill_name}}", skill_name)
+            .replace("{{description}}", description)
+            .replace("{{category}}", category)
+        )
+
         md_file = skill_dir / "SKILL.md"
-        md_file.write_text(md_content, encoding='utf-8')
-        
+        md_file.write_text(md_content, encoding="utf-8")
+
         # 生成 Python 文件
-        py_content = self.SKILL_TEMPLATE \
-            .replace('{{skill_name}}', skill_name) \
-            .replace('{{class_name}}', class_name) \
-            .replace('{{description}}', description) \
-            .replace('{{category}}', category)
-        
+        py_content = (
+            self.SKILL_TEMPLATE.replace("{{skill_name}}", skill_name)
+            .replace("{{class_name}}", class_name)
+            .replace("{{description}}", description)
+            .replace("{{category}}", category)
+        )
+
         py_file = skill_dir / f"{skill_name}.py"
-        py_file.write_text(py_content, encoding='utf-8')
-        
+        py_file.write_text(py_content, encoding="utf-8")
+
         return {
             "success": True,
             "skill_name": skill_name,
             "path": str(skill_dir),
-            "files": [str(md_file), str(py_file)]
+            "files": [str(md_file), str(py_file)],
         }
-    
+
     def _normalize_name(self, name: str) -> str:
         """规范化技能名"""
         # 转小写，空格转下划线
-        name = name.lower().replace(' ', '_')
+        name = name.lower().replace(" ", "_")
         # 只保留字母数字下划线
-        name = re.sub(r'[^a-z0-9_]', '', name)
+        name = re.sub(r"[^a-z0-9_]", "", name)
         return name
+
 
 skill_creator = SkillCreator()

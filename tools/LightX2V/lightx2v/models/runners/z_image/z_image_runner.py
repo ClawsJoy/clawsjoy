@@ -1,12 +1,8 @@
-from lib.smart_config import smart_config
 import gc
 import math
 
 import torch
 import torchvision.transforms.functional as TF
-from PIL import Image
-from loguru import logger
-
 from lightx2v.models.input_encoders.hf.z_image.qwen3_model import Qwen3Model_TextEncoder
 from lightx2v.models.networks.lora_adapter import LoraAdapter
 from lightx2v.models.networks.z_image.model import ZImageTransformerModel
@@ -18,6 +14,10 @@ from lightx2v.utils.envs import *
 from lightx2v.utils.profiler import *
 from lightx2v.utils.registry_factory import RUNNER_REGISTER
 from lightx2v_platform.base.global_var import AI_DEVICE
+from loguru import logger
+from PIL import Image
+
+from lib.smart_config import smart_config
 
 torch_device_module = getattr(torch, AI_DEVICE)
 
@@ -42,8 +42,12 @@ def build_z_image_model_with_lora(z_image_module, config, model_kwargs, lora_con
         model_kwargs["lora_strength"] = lora_strength
         model = z_image_module(**model_kwargs)
     else:
-        assert not config.get("dit_quantized", False), "Online LoRA only for quantized models; merging LoRA is unsupported."
-        assert not config.get("lazy_load", False), "Lazy load mode does not support LoRA merging."
+        assert not config.get(
+            "dit_quantized", False
+        ), "Online LoRA only for quantized models; merging LoRA is unsupported."
+        assert not config.get(
+            "lazy_load", False
+        ), "Lazy load mode does not support LoRA merging."
         model = z_image_module(**model_kwargs)
         lora_adapter = LoraAdapter(model)
         lora_adapter.apply_lora(lora_configs)
@@ -74,7 +78,9 @@ class ZImageRunner(DefaultRunner):
         if not lora_configs:
             model = ZImageTransformerModel(**z_image_model_kwargs)
         else:
-            model = build_z_image_model_with_lora(ZImageTransformerModel, self.config, z_image_model_kwargs, lora_configs)
+            model = build_z_image_model_with_lora(
+                ZImageTransformerModel, self.config, z_image_model_kwargs, lora_configs
+            )
         return model
 
     def load_text_encoder(self):
@@ -91,7 +97,9 @@ class ZImageRunner(DefaultRunner):
 
     def init_modules(self):
         logger.info("Initializing runner modules...")
-        if not self.config.get("lazy_load", False) and not self.config.get("unload_modules", False):
+        if not self.config.get("lazy_load", False) and not self.config.get(
+            "unload_modules", False
+        ):
             self.load_model()
             self.model.set_scheduler(self.scheduler)
         elif self.config.get("lazy_load", False):
@@ -106,7 +114,9 @@ class ZImageRunner(DefaultRunner):
 
     @ProfilingContext4DebugL2("Run DiT")
     def _run_dit_local(self, total_steps=None):
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             self.model = self.load_transformer()
             self.model.set_scheduler(self.scheduler)
         self.model.scheduler.prepare(self.input_info)
@@ -116,10 +126,16 @@ class ZImageRunner(DefaultRunner):
     @ProfilingContext4DebugL2("Run Encoders")
     def _run_input_encoder_local_t2i(self):
         prompt = self.input_info.prompt
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             self.text_encoders = self.load_text_encoder()
-        text_encoder_output = self.run_text_encoder(prompt, neg_prompt=self.input_info.negative_prompt)
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        text_encoder_output = self.run_text_encoder(
+            prompt, neg_prompt=self.input_info.negative_prompt
+        )
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             del self.text_encoders[0]
         torch_device_module.empty_cache()
         gc.collect()
@@ -143,7 +159,9 @@ class ZImageRunner(DefaultRunner):
         vae_scale_factor = self.config["vae_scale_factor"]
         vae_scale = vae_scale_factor * 2
         if height % vae_scale != 0 or width % vae_scale != 0:
-            logger.warning(f"Image dimensions ({height}, {width}) are not divisible by {vae_scale}. Resizing to nearest valid dimensions.")
+            logger.warning(
+                f"Image dimensions ({height}, {width}) are not divisible by {vae_scale}. Resizing to nearest valid dimensions."
+            )
             # Resize to nearest valid dimensions
             new_height = (height // vae_scale) * vae_scale
             new_width = (width // vae_scale) * vae_scale
@@ -167,10 +185,16 @@ class ZImageRunner(DefaultRunner):
             images_list.append(image)
 
         prompt = self.input_info.prompt
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             self.text_encoders = self.load_text_encoder()
-        text_encoder_output = self.run_text_encoder(prompt, images_list, neg_prompt=self.input_info.negative_prompt)
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        text_encoder_output = self.run_text_encoder(
+            prompt, images_list, neg_prompt=self.input_info.negative_prompt
+        )
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             del self.text_encoders[0]
 
         image_encoder_output_list = []
@@ -184,7 +208,12 @@ class ZImageRunner(DefaultRunner):
             "image_encoder_output": image_encoder_output_list,
         }
 
-    @ProfilingContext4DebugL1("Run Text Encoder", recorder_mode=GET_RECORDER_MODE(), metrics_func=monitor_cli.lightx2v_run_text_encode_duration, metrics_labels=["ZImageRunner"])
+    @ProfilingContext4DebugL1(
+        "Run Text Encoder",
+        recorder_mode=GET_RECORDER_MODE(),
+        metrics_func=monitor_cli.lightx2v_run_text_encode_duration,
+        metrics_labels=["ZImageRunner"],
+    )
     def run_text_encoder(self, text, image_list=None, neg_prompt=None):
         if GET_RECORDER_MODE():
             monitor_cli.lightx2v_input_prompt_len.observe(len(text))
@@ -207,14 +236,18 @@ class ZImageRunner(DefaultRunner):
         elif self.config["task"] == "i2i":
             # I2I task: text encoding + image preprocessing
             if image_list is not None:
-                prompt_embeds_list, image_info = self.text_encoders[0].infer([text], image_list)
+                prompt_embeds_list, image_info = self.text_encoders[0].infer(
+                    [text], image_list
+                )
                 prompt_embeds = prompt_embeds_list[0]  # Get first (and only) embedding
                 # embedding_list[0] shape is (seq_len, hidden_dim), use shape[0] for sequence length
                 self.input_info.txt_seq_lens = [prompt_embeds.shape[0]]
                 text_encoder_output["prompt_embeds"] = prompt_embeds
                 text_encoder_output["image_info"] = image_info
                 if self.config["enable_cfg"] and neg_prompt is not None:
-                    neg_prompt_embeds_list, _ = self.text_encoders[0].infer([neg_prompt], image_list)
+                    neg_prompt_embeds_list, _ = self.text_encoders[0].infer(
+                        [neg_prompt], image_list
+                    )
                     neg_prompt_embeds = neg_prompt_embeds_list[0]
                     self.input_info.txt_seq_lens.append(neg_prompt_embeds.shape[0])
                     text_encoder_output["negative_prompt_embeds"] = neg_prompt_embeds
@@ -225,7 +258,9 @@ class ZImageRunner(DefaultRunner):
                 self.input_info.txt_seq_lens = [prompt_embeds.shape[0]]
                 text_encoder_output["prompt_embeds"] = prompt_embeds
                 if self.config["enable_cfg"] and neg_prompt is not None:
-                    neg_prompt_embeds_list, _ = self.text_encoders[0].infer([neg_prompt])
+                    neg_prompt_embeds_list, _ = self.text_encoders[0].infer(
+                        [neg_prompt]
+                    )
                     neg_prompt_embeds = neg_prompt_embeds_list[0]
                     self.input_info.txt_seq_lens.append(neg_prompt_embeds.shape[0])
                     text_encoder_output["negative_prompt_embeds"] = neg_prompt_embeds
@@ -243,12 +278,21 @@ class ZImageRunner(DefaultRunner):
 
         return text_encoder_output
 
-    @ProfilingContext4DebugL1("Run VAE Encoder", recorder_mode=GET_RECORDER_MODE(), metrics_func=monitor_cli.lightx2v_run_vae_encoder_image_duration, metrics_labels=["ZImageRunner"])
+    @ProfilingContext4DebugL1(
+        "Run VAE Encoder",
+        recorder_mode=GET_RECORDER_MODE(),
+        metrics_func=monitor_cli.lightx2v_run_vae_encoder_image_duration,
+        metrics_labels=["ZImageRunner"],
+    )
     def run_vae_encoder(self, image):
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             self.vae = self.load_vae()
         image_latents = self.vae.encode_vae_image(image.to(GET_DTYPE()))
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             del self.vae
             torch_device_module.empty_cache()
             gc.collect()
@@ -298,7 +342,11 @@ class ZImageRunner(DefaultRunner):
             logger.info(f"Z Image Runner got custom shape: {width}x{height}")
             return (width, height)
 
-        aspect_ratio = self.input_info.aspect_ratio if self.input_info.aspect_ratio else self.config.get("aspect_ratio", None)
+        aspect_ratio = (
+            self.input_info.aspect_ratio
+            if self.input_info.aspect_ratio
+            else self.config.get("aspect_ratio", None)
+        )
         if aspect_ratio in as_maps:
             logger.info(f"Z Image Runner got aspect ratio: {aspect_ratio}")
             width, height = as_maps[aspect_ratio]
@@ -320,9 +368,14 @@ class ZImageRunner(DefaultRunner):
         self.input_info.target_shape = (1, num_channels_latents, height, width)
 
     def set_img_shapes(self):
-        if hasattr(self.input_info, "target_shape") and self.input_info.target_shape is not None:
+        if (
+            hasattr(self.input_info, "target_shape")
+            and self.input_info.target_shape is not None
+        ):
             if len(self.input_info.target_shape) != 4:
-                raise ValueError(f"target_shape must be 4D [B, C, H, W], got {len(self.input_info.target_shape)}D: {self.input_info.target_shape}")
+                raise ValueError(
+                    f"target_shape must be 4D [B, C, H, W], got {len(self.input_info.target_shape)}D: {self.input_info.target_shape}"
+                )
             _, _, latent_height, latent_width = self.input_info.target_shape
         else:
             height, width = self.get_input_target_shape()
@@ -360,10 +413,14 @@ class ZImageRunner(DefaultRunner):
         metrics_labels=["ZImageRunner"],
     )
     def run_vae_decoder(self, latents):
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             self.vae = self.load_vae()
         images = self.vae.decode(latents, self.input_info)
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             del self.vae
             torch_device_module.empty_cache()
             gc.collect()

@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 Transformer inference module for LTX2 transformer model.
 
@@ -14,10 +15,17 @@ from __future__ import annotations
 import torch
 import torch.distributed as dist
 import torch.nn.functional as F
-
 from lightx2v.models.networks.ltx2.infer.module_io import LTX2PreInferModuleOutput
-from lightx2v.models.networks.ltx2.infer.triton_ops import fuse_scale_shift_kernel, fused_rmsnorm_modulate
-from lightx2v.models.networks.ltx2.infer.utils import apply_rotary_emb, modulate_torch_naive, modulate_with_rmsnorm_torch_naive, rmsnorm_torch_naive
+from lightx2v.models.networks.ltx2.infer.triton_ops import (
+    fuse_scale_shift_kernel,
+    fused_rmsnorm_modulate,
+)
+from lightx2v.models.networks.ltx2.infer.utils import (
+    apply_rotary_emb,
+    modulate_torch_naive,
+    modulate_with_rmsnorm_torch_naive,
+    rmsnorm_torch_naive,
+)
 from lightx2v.models.networks.wan.infer.triton_ops import norm_infer
 
 
@@ -48,8 +56,12 @@ class LTX2TransformerInfer:
 
         if config.get("seq_parallel", False):
             self.seq_p_group = config.get("device_mesh").get_group(mesh_dim="seq_p")
-            self.seq_p_fp8_comm = config.get("parallel", {}).get("seq_p_fp8_comm", False)
-            self.seq_p_fp4_comm = config.get("parallel", {}).get("seq_p_fp4_comm", False)
+            self.seq_p_fp8_comm = config.get("parallel", {}).get(
+                "seq_p_fp8_comm", False
+            )
+            self.seq_p_fp4_comm = config.get("parallel", {}).get(
+                "seq_p_fp4_comm", False
+            )
         else:
             self.seq_p_group = None
             self.seq_p_fp8_comm = False
@@ -151,9 +163,16 @@ class LTX2TransformerInfer:
 
             cos_gathered = [torch.zeros_like(cos_freqs) for _ in range(world_size)]
             sin_gathered = [torch.zeros_like(sin_freqs) for _ in range(world_size)]
-            dist.all_gather(cos_gathered, cos_freqs.contiguous(), group=self.seq_p_group)
-            dist.all_gather(sin_gathered, sin_freqs.contiguous(), group=self.seq_p_group)
-            gathered_k_pe = (torch.cat(cos_gathered, dim=seq_dim), torch.cat(sin_gathered, dim=seq_dim))
+            dist.all_gather(
+                cos_gathered, cos_freqs.contiguous(), group=self.seq_p_group
+            )
+            dist.all_gather(
+                sin_gathered, sin_freqs.contiguous(), group=self.seq_p_group
+            )
+            gathered_k_pe = (
+                torch.cat(cos_gathered, dim=seq_dim),
+                torch.cat(sin_gathered, dim=seq_dim),
+            )
 
         return gathered_context, gathered_k_pe
 
@@ -169,7 +188,9 @@ class LTX2TransformerInfer:
         is_audio: bool,
     ) -> torch.Tensor:
         """Text cross-attention with per-block prompt AdaLN (ltx_core apply_cross_attention_adaln)."""
-        q_shift, q_scale, q_gate = self._get_ada_values(scale_shift_table, timesteps, slice(6, 9))
+        q_shift, q_scale, q_gate = self._get_ada_values(
+            scale_shift_table, timesteps, slice(6, 9)
+        )
         # ltx_core.utils.rms_norm -> F.rms_norm(last-dim); do not use Triton norm_infer here (bf16 drift vs reference)
         norm_x = F.rms_norm(x.unsqueeze(0), (x.shape[-1],), eps=1e-6).squeeze(0)
         attn_input = norm_x * (1 + q_scale) + q_shift
@@ -246,7 +267,9 @@ class LTX2TransformerInfer:
 
         if bypass_attention:
             if not is_self_attn:
-                raise ValueError("bypass_attention is only valid for self-attention (STG).")
+                raise ValueError(
+                    "bypass_attention is only valid for self-attention (STG)."
+                )
             v = attn_phase.to_v.apply(context)
             v = v.view(-1, num_heads_effective, head_dim)
             seq_len_bypass = v.size(0)
@@ -260,7 +283,11 @@ class LTX2TransformerInfer:
 
         q = attn_phase.to_q.apply(q_in)
         # For sequence parallel (non-TP), gather context if needed
-        if need_gather_video_context and self.config.get("seq_parallel", False) and not use_tp:
+        if (
+            need_gather_video_context
+            and self.config.get("seq_parallel", False)
+            and not use_tp
+        ):
             context, k_pe = self._gather_cross_attn_context(context, k_pe)
         k = attn_phase.to_k.apply(context)
         v = attn_phase.to_v.apply(context)
@@ -276,7 +303,12 @@ class LTX2TransformerInfer:
 
         seq_len = q.size(0)
         # For video self-attention with sequence parallel (non-TP only)
-        if is_self_attn and not is_audio and self.config.get("seq_parallel", False) and not use_tp:
+        if (
+            is_self_attn
+            and not is_audio
+            and self.config.get("seq_parallel", False)
+            and not use_tp
+        ):
             # Cache cu_seqlens_qkv for self-attention (q, k, v have same length)
             if self.v_attn_cu_seqlens_qkv is None:
                 self.v_attn_cu_seqlens_qkv = self._create_cu_seqlens(q.shape[0])
@@ -303,7 +335,11 @@ class LTX2TransformerInfer:
                 elif is_audio and self.a_attn_cu_seqlens_qkv is None:
                     self.a_attn_cu_seqlens_qkv = self._create_cu_seqlens(q.shape[0])
 
-                cu_seqlens_q = self.v_attn_cu_seqlens_qkv if not is_audio else self.a_attn_cu_seqlens_qkv
+                cu_seqlens_q = (
+                    self.v_attn_cu_seqlens_qkv
+                    if not is_audio
+                    else self.a_attn_cu_seqlens_qkv
+                )
                 cu_seqlens_kv = cu_seqlens_q  # For self-attn, q and k have same length
             else:
                 # For cross-attention, always create cu_seqlens dynamically
@@ -345,7 +381,9 @@ class LTX2TransformerInfer:
         return ffn_phase.net_2.apply(x)
 
     @torch.no_grad()
-    def infer_block(self, block_idx: int, block, vx, ax, pre_infer_out: LTX2PreInferModuleOutput):
+    def infer_block(
+        self, block_idx: int, block, vx, ax, pre_infer_out: LTX2PreInferModuleOutput
+    ):
         """
         Perform inference for a single transformer block.
 
@@ -366,7 +404,9 @@ class LTX2TransformerInfer:
             slice(0, 3),
         )
 
-        norm_vx = self.modulate_with_rmsnorm_func(vx, vscale_msa, vshift_msa, weight=None, bias=None, eps=1e-6)
+        norm_vx = self.modulate_with_rmsnorm_func(
+            vx, vscale_msa, vshift_msa, weight=None, bias=None, eps=1e-6
+        )
         bypass_v_self = block_idx in self._mm_skip_video_self_blocks
         # Video self-attention
         vx = (
@@ -409,7 +449,9 @@ class LTX2TransformerInfer:
             slice(0, 3),
         )
 
-        norm_ax = self.modulate_with_rmsnorm_func(ax, ascale_msa, ashift_msa, weight=None, bias=None, eps=1e-6)
+        norm_ax = self.modulate_with_rmsnorm_func(
+            ax, ascale_msa, ashift_msa, weight=None, bias=None, eps=1e-6
+        )
 
         bypass_a_self = block_idx in self._mm_skip_audio_self_blocks
         # Audio self-attention
@@ -479,8 +521,12 @@ class LTX2TransformerInfer:
         # Audio-to-video cross-attention
         # Video queries attend to audio context
         # Audio is global (not split), so no need to gather
-        vx_scaled = self.modulate_func(vx_norm3, scale_ca_video_hidden_states_a2v, shift_ca_video_hidden_states_a2v)
-        ax_scaled = self.modulate_func(ax_norm3, scale_ca_audio_hidden_states_a2v, shift_ca_audio_hidden_states_a2v)
+        vx_scaled = self.modulate_func(
+            vx_norm3, scale_ca_video_hidden_states_a2v, shift_ca_video_hidden_states_a2v
+        )
+        ax_scaled = self.modulate_func(
+            ax_norm3, scale_ca_audio_hidden_states_a2v, shift_ca_audio_hidden_states_a2v
+        )
 
         # Audio-to-video cross-attention (ltx: skip when SKIP_A2V_CROSS_ATTN for this block / all blocks)
         if not self._mm_skip_a2v:
@@ -501,8 +547,12 @@ class LTX2TransformerInfer:
         # Video-to-audio cross-attention
         # Audio queries need to attend to full video context
         # In TP, video is NOT split (unlike SP), so no gather needed
-        ax_scaled = self.modulate_func(ax_norm3, scale_ca_audio_hidden_states_v2a, shift_ca_audio_hidden_states_v2a)
-        vx_scaled = self.modulate_func(vx_norm3, scale_ca_video_hidden_states_v2a, shift_ca_video_hidden_states_v2a)
+        ax_scaled = self.modulate_func(
+            ax_norm3, scale_ca_audio_hidden_states_v2a, shift_ca_audio_hidden_states_v2a
+        )
+        vx_scaled = self.modulate_func(
+            vx_norm3, scale_ca_video_hidden_states_v2a, shift_ca_video_hidden_states_v2a
+        )
 
         if not self._mm_skip_v2a:
             ax = (
@@ -514,7 +564,9 @@ class LTX2TransformerInfer:
                     pe=pre_infer_out.audio_args.cross_positional_embeddings,
                     k_pe=pre_infer_out.video_args.cross_positional_embeddings,
                     is_audio=True,
-                    need_gather_video_context=not (self.tp_size > 1),  # Need gather for SP, not for TP
+                    need_gather_video_context=not (
+                        self.tp_size > 1
+                    ),  # Need gather for SP, not for TP
                 )
                 * gate_out_v2a
             )
@@ -537,7 +589,9 @@ class LTX2TransformerInfer:
             pre_infer_out.video_args.timesteps,
             slice(3, 6),
         )
-        vx_scaled = self.modulate_with_rmsnorm_func(vx, vscale_mlp, vshift_mlp, weight=None, bias=None, eps=1e-6)
+        vx_scaled = self.modulate_with_rmsnorm_func(
+            vx, vscale_mlp, vshift_mlp, weight=None, bias=None, eps=1e-6
+        )
         vx = vx + self._infer_ffn(block.compute_phases[6], vx_scaled) * vgate_mlp
         del vshift_mlp, vscale_mlp, vgate_mlp
 
@@ -547,7 +601,9 @@ class LTX2TransformerInfer:
             pre_infer_out.audio_args.timesteps,
             slice(3, 6),
         )
-        ax_scaled = self.modulate_with_rmsnorm_func(ax, ascale_mlp, ashift_mlp, weight=None, bias=None, eps=1e-6)
+        ax_scaled = self.modulate_with_rmsnorm_func(
+            ax, ascale_mlp, ashift_mlp, weight=None, bias=None, eps=1e-6
+        )
         ax = ax + self._infer_ffn(block.compute_phases[7], ax_scaled) * agate_mlp
         del ashift_mlp, ascale_mlp, agate_mlp
 
@@ -577,7 +633,12 @@ class LTX2TransformerInfer:
         for block_idx in range(self.blocks_num):
             block = weights.blocks[block_idx]
             vx, ax = self.infer_block(block_idx, block, vx, ax, pre_infer_out)
-        return vx, ax, pre_infer_out.video_args.embedded_timestep, pre_infer_out.audio_args.embedded_timestep
+        return (
+            vx,
+            ax,
+            pre_infer_out.video_args.embedded_timestep,
+            pre_infer_out.audio_args.embedded_timestep,
+        )
 
     def _get_ada_values(
         self,
@@ -593,7 +654,12 @@ class LTX2TransformerInfer:
         # Reshape timestep to [seq_len, num_ada_params, hidden_dim]
         timestep_reshaped = timestep.reshape(timestep.shape[0], num_ada_params, -1)
 
-        ada_values = (scale_shift_table[indices].unsqueeze(0).to(device=timestep.device, dtype=timestep.dtype) + timestep_reshaped[:, indices, :]).unbind(dim=1)
+        ada_values = (
+            scale_shift_table[indices]
+            .unsqueeze(0)
+            .to(device=timestep.device, dtype=timestep.dtype)
+            + timestep_reshaped[:, indices, :]
+        ).unbind(dim=1)
         return ada_values
 
     def _get_av_ca_ada_values(
@@ -611,14 +677,30 @@ class LTX2TransformerInfer:
         # Process scale-shift values (4 parameters)
         num_ss_params = num_scale_shift_values  # Should be 4
         ss_table = scale_shift_table[:num_ss_params, :]  # [4, hidden_dim]
-        ss_reshaped = scale_shift_timestep.reshape(scale_shift_timestep.shape[0], num_ss_params, -1)  # [seq_len, 4, hidden_dim]
-        scale_shift_ada_values = (ss_table.unsqueeze(0).to(device=scale_shift_timestep.device, dtype=scale_shift_timestep.dtype) + ss_reshaped).unbind(
+        ss_reshaped = scale_shift_timestep.reshape(
+            scale_shift_timestep.shape[0], num_ss_params, -1
+        )  # [seq_len, 4, hidden_dim]
+        scale_shift_ada_values = (
+            ss_table.unsqueeze(0).to(
+                device=scale_shift_timestep.device, dtype=scale_shift_timestep.dtype
+            )
+            + ss_reshaped
+        ).unbind(
             dim=1
         )  # Returns 4 tensors of shape [seq_len, hidden_dim]
 
         # Process gate values (1 parameter)
         gate_table = scale_shift_table[num_ss_params:, :]  # [1, hidden_dim]
-        gate_reshaped = gate_timestep.reshape(gate_timestep.shape[0], gate_table.shape[0], -1)  # [seq_len, 1, hidden_dim]
-        gate_values = (gate_table.unsqueeze(0).to(device=gate_timestep.device, dtype=gate_timestep.dtype) + gate_reshaped).unbind(dim=1)  # Returns 1 tensor of shape [seq_len, hidden_dim]
+        gate_reshaped = gate_timestep.reshape(
+            gate_timestep.shape[0], gate_table.shape[0], -1
+        )  # [seq_len, 1, hidden_dim]
+        gate_values = (
+            gate_table.unsqueeze(0).to(
+                device=gate_timestep.device, dtype=gate_timestep.dtype
+            )
+            + gate_reshaped
+        ).unbind(
+            dim=1
+        )  # Returns 1 tensor of shape [seq_len, hidden_dim]
 
         return (*scale_shift_ada_values, *gate_values)

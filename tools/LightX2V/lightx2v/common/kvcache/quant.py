@@ -1,9 +1,10 @@
-from lib.smart_config import smart_config
 import os
 
 import torch
 import torch.distributed as dist
 from loguru import logger
+
+from lib.smart_config import smart_config
 
 from .kernel import *
 from .offload import KVOffloadPlugin
@@ -37,9 +38,19 @@ class SageQuantRollingKVCachePool(RollingKVCachePool):
         self._calib_path = calib_path
         self.current_step: int = 0
         self._PERM_16 = torch.tensor(self._PERM_16_VAL, dtype=torch.long, device=device)
-        self._INV_PERM_16 = torch.tensor(self._INV_PERM_16_VAL, dtype=torch.long, device=device)
+        self._INV_PERM_16 = torch.tensor(
+            self._INV_PERM_16_VAL, dtype=torch.long, device=device
+        )
         self._load_calib()
-        super().__init__(num_layers, cache_size, num_heads, head_dim, dtype, device, kv_offload=kv_offload)
+        super().__init__(
+            num_layers,
+            cache_size,
+            num_heads,
+            head_dim,
+            dtype,
+            device,
+            kv_offload=kv_offload,
+        )
 
     def _init_kv_buffer(self) -> None:
         if self._kv_offload:
@@ -50,7 +61,14 @@ class SageQuantRollingKVCachePool(RollingKVCachePool):
         H = self._num_heads
         D = self._head_dim
         self._k_buffer = torch.zeros(L, N, H, D, dtype=torch.int8, device=self._device)
-        self._v_buffer = torch.zeros(L, N, H, D, dtype=self._v_cache_type == "fp8" and torch.float8_e4m3fn or torch.float16, device=self._device)
+        self._v_buffer = torch.zeros(
+            L,
+            N,
+            H,
+            D,
+            dtype=self._v_cache_type == "fp8" and torch.float8_e4m3fn or torch.float16,
+            device=self._device,
+        )
 
         self._global_end = torch.zeros(L, dtype=torch.long, device=self._device)
         self._local_end = torch.zeros(L, dtype=torch.long, device=self._device)
@@ -60,16 +78,34 @@ class SageQuantRollingKVCachePool(RollingKVCachePool):
         N = self._cache_size
         H = self._num_heads
         D = self._head_dim
-        self._k_cpu = torch.zeros(L, N, H, D, dtype=torch.int8, device="cpu").pin_memory()
-        self._v_cpu = torch.zeros(L, N, H, D, dtype=self._v_cache_type == "fp8" and torch.float8_e4m3fn or torch.float16, device="cpu").pin_memory()
+        self._k_cpu = torch.zeros(
+            L, N, H, D, dtype=torch.int8, device="cpu"
+        ).pin_memory()
+        self._v_cpu = torch.zeros(
+            L,
+            N,
+            H,
+            D,
+            dtype=self._v_cache_type == "fp8" and torch.float8_e4m3fn or torch.float16,
+            device="cpu",
+        ).pin_memory()
         self._k_gpu_buf = torch.zeros(2, N, H, D, dtype=torch.int8, device=self._device)
-        self._v_gpu_buf = torch.zeros(2, N, H, D, dtype=self._v_cache_type == "fp8" and torch.float8_e4m3fn or torch.float16, device=self._device)
+        self._v_gpu_buf = torch.zeros(
+            2,
+            N,
+            H,
+            D,
+            dtype=self._v_cache_type == "fp8" and torch.float8_e4m3fn or torch.float16,
+            device=self._device,
+        )
         self._global_end = torch.zeros(L, dtype=torch.long, device=self._device)
         self._local_end = torch.zeros(L, dtype=torch.long, device=self._device)
 
         def _async_load(layer_id: int, buf: int) -> None:
             self._k_gpu_buf[buf].copy_(self._k_cpu[layer_id], non_blocking=True)
-            self._v_gpu_buf[buf].view(torch.float8_e4m3fn).copy_(self._v_cpu[layer_id], non_blocking=True)
+            self._v_gpu_buf[buf].view(torch.float8_e4m3fn).copy_(
+                self._v_cpu[layer_id], non_blocking=True
+            )
 
         def _async_store(layer_id: int, buf: int, start: int, end: int) -> None:
             self._k_cpu[layer_id, start:end].copy_(
@@ -101,7 +137,9 @@ class SageQuantRollingKVCachePool(RollingKVCachePool):
         self._calib_km = calib["km"].to(device=device, dtype=torch.float32)
         self._calib_v_scale = calib["v_scale"].to(device=device, dtype=torch.float32)
         if "k_block_scale" not in calib:
-            raise RuntimeError(f"Calibration file {load_path!r} is missing 'k_block_scale'. Re-run calibration with CalibRollingKVCachePool.")
+            raise RuntimeError(
+                f"Calibration file {load_path!r} is missing 'k_block_scale'. Re-run calibration with CalibRollingKVCachePool."
+            )
         self._calib_k_block_scale = calib["k_block_scale"].to(
             device=device,
             dtype=torch.float32,
@@ -215,7 +253,9 @@ class SageQuantRollingKVCachePool(RollingKVCachePool):
         preset_scale = self._lookup_k_block_scale(layer_id, blk_start, num_blk)
         k_int8 = self._quant_key(k_smoothed, preset_scale, start_idx, self._BLKK)
         v_scale = self._lookup_v_scale(layer_id)
-        v_fp8 = quant_value_per_channel_fp8_static_scale_kernel(v, v_scale, fp8_max=448.0)
+        v_fp8 = quant_value_per_channel_fp8_static_scale_kernel(
+            v, v_scale, fp8_max=448.0
+        )
 
         if not self._kv_offload:
             self._k_buffer[layer_id, start_idx:end_idx] = k_int8
@@ -261,7 +301,14 @@ class SageQuantRollingKVCachePool(RollingKVCachePool):
         v_t = v_t.view(1, D, H, padded_len)
         return v_t
 
-    def _roll_window_on_k_v(self, kb: torch.Tensor, vb: torch.Tensor, layer_id: int, sink_tokens: int, num_evicted: int) -> None:
+    def _roll_window_on_k_v(
+        self,
+        kb: torch.Tensor,
+        vb: torch.Tensor,
+        layer_id: int,
+        sink_tokens: int,
+        num_evicted: int,
+    ) -> None:
         num_kept = int(self._local_end[layer_id].item()) - num_evicted - sink_tokens
         src_start = sink_tokens + num_evicted
         src_end = src_start + num_kept
@@ -309,7 +356,12 @@ class SageQuantRollingKVCachePool(RollingKVCachePool):
         k_int8 = kb[aligned_start:local_end].unsqueeze(0).contiguous()
         blk_s = aligned_start // BLK
         blk_e = (local_end + BLK - 1) // BLK
-        k_scale = self._calib_k_block_scale[self.current_step, layer_id, blk_s:blk_e].permute(1, 0, 2).reshape(1, self._num_heads, -1).contiguous()
+        k_scale = (
+            self._calib_k_block_scale[self.current_step, layer_id, blk_s:blk_e]
+            .permute(1, 0, 2)
+            .reshape(1, self._num_heads, -1)
+            .contiguous()
+        )
         return k_int8, k_scale
 
     def v_cache(
@@ -369,9 +421,13 @@ class TurboQuantRollingKVCachePool(RollingKVCachePool):
         self._value_group_size = int(value_group_size)
 
         if self._key_bits < 2:
-            raise ValueError("TurboQuantProd requires key_bits >= 2 (inner MSE uses key_bits - 1).")
+            raise ValueError(
+                "TurboQuantProd requires key_bits >= 2 (inner MSE uses key_bits - 1)."
+            )
         if head_dim % self._value_group_size != 0:
-            raise ValueError(f"head_dim {head_dim} must divide value_group_size {self._value_group_size} for group value quant.")
+            raise ValueError(
+                f"head_dim {head_dim} must divide value_group_size {self._value_group_size} for group value quant."
+            )
 
         device_t = torch.device(dev_str)
         inf_dtype = torch.float32
@@ -388,10 +444,14 @@ class TurboQuantRollingKVCachePool(RollingKVCachePool):
         self._inf_nqjl = (head_dim + 7) // 8
 
         def _make_k_mod(seed_k: int) -> torch.nn.Module:
-            return TurboQuantProdInference(head_dim, self._key_bits, device_t, seed_k, cb_key, dtype=inf_dtype)
+            return TurboQuantProdInference(
+                head_dim, self._key_bits, device_t, seed_k, cb_key, dtype=inf_dtype
+            )
 
         if self._per_layer_compressors:
-            self._k_inference_modules = [_make_k_mod(self._seed_base + lid * 7) for lid in range(self._n_layers)]
+            self._k_inference_modules = [
+                _make_k_mod(self._seed_base + lid * 7) for lid in range(self._n_layers)
+            ]
         else:
             _km = _make_k_mod(self._seed_base)
             self._k_inference_modules = [_km for _ in range(self._n_layers)]
@@ -399,7 +459,15 @@ class TurboQuantRollingKVCachePool(RollingKVCachePool):
         self._inf_v_width = tq_value_group_packed_width(head_dim, self._value_bits)
         self._inf_v_n_groups = head_dim // self._value_group_size
 
-        super().__init__(num_layers, cache_size, num_heads, head_dim, dtype, device, kv_offload=kv_offload)
+        super().__init__(
+            num_layers,
+            cache_size,
+            num_heads,
+            head_dim,
+            dtype,
+            device,
+            kv_offload=kv_offload,
+        )
 
     def _k_mod_inf(self, layer_id: int) -> torch.nn.Module:
         assert self._k_inference_modules is not None
@@ -414,14 +482,26 @@ class TurboQuantRollingKVCachePool(RollingKVCachePool):
         N = self._cache_size
         H = self._num_heads
 
-        self._k_packed = torch.zeros(L, N, H, self._inf_nk, dtype=torch.uint8, device=self._device)
+        self._k_packed = torch.zeros(
+            L, N, H, self._inf_nk, dtype=torch.uint8, device=self._device
+        )
         self._k_norms = torch.zeros(L, N, H, dtype=torch.float16, device=self._device)
-        self._k_qjl_packed = torch.zeros(L, N, H, self._inf_nqjl, dtype=torch.uint8, device=self._device)
-        self._k_res_norms = torch.zeros(L, N, H, dtype=torch.float16, device=self._device)
+        self._k_qjl_packed = torch.zeros(
+            L, N, H, self._inf_nqjl, dtype=torch.uint8, device=self._device
+        )
+        self._k_res_norms = torch.zeros(
+            L, N, H, dtype=torch.float16, device=self._device
+        )
         ng = self._inf_v_n_groups
-        self._v_group_data = torch.zeros(L, N, H, self._inf_v_width, dtype=torch.uint8, device=self._device)
-        self._v_group_scales = torch.zeros(L, N, H, ng, dtype=torch.float16, device=self._device)
-        self._v_group_zeros = torch.zeros(L, N, H, ng, dtype=torch.float16, device=self._device)
+        self._v_group_data = torch.zeros(
+            L, N, H, self._inf_v_width, dtype=torch.uint8, device=self._device
+        )
+        self._v_group_scales = torch.zeros(
+            L, N, H, ng, dtype=torch.float16, device=self._device
+        )
+        self._v_group_zeros = torch.zeros(
+            L, N, H, ng, dtype=torch.float16, device=self._device
+        )
 
         self._global_end = torch.zeros(L, dtype=torch.long, device=self._device)
         self._local_end = torch.zeros(L, dtype=torch.long, device=self._device)
@@ -436,42 +516,86 @@ class TurboQuantRollingKVCachePool(RollingKVCachePool):
         ng = self._inf_v_n_groups
         d = self._device
 
-        self._k_packed_cpu = torch.zeros(L, N, H, nk, dtype=torch.uint8, device="cpu").pin_memory()
-        self._k_norms_cpu = torch.zeros(L, N, H, dtype=torch.float16, device="cpu").pin_memory()
-        self._k_qjl_packed_cpu = torch.zeros(L, N, H, nqjl, dtype=torch.uint8, device="cpu").pin_memory()
-        self._k_res_norms_cpu = torch.zeros(L, N, H, dtype=torch.float16, device="cpu").pin_memory()
-        self._v_group_data_cpu = torch.zeros(L, N, H, vw, dtype=torch.uint8, device="cpu").pin_memory()
-        self._v_group_scales_cpu = torch.zeros(L, N, H, ng, dtype=torch.float16, device="cpu").pin_memory()
-        self._v_group_zeros_cpu = torch.zeros(L, N, H, ng, dtype=torch.float16, device="cpu").pin_memory()
+        self._k_packed_cpu = torch.zeros(
+            L, N, H, nk, dtype=torch.uint8, device="cpu"
+        ).pin_memory()
+        self._k_norms_cpu = torch.zeros(
+            L, N, H, dtype=torch.float16, device="cpu"
+        ).pin_memory()
+        self._k_qjl_packed_cpu = torch.zeros(
+            L, N, H, nqjl, dtype=torch.uint8, device="cpu"
+        ).pin_memory()
+        self._k_res_norms_cpu = torch.zeros(
+            L, N, H, dtype=torch.float16, device="cpu"
+        ).pin_memory()
+        self._v_group_data_cpu = torch.zeros(
+            L, N, H, vw, dtype=torch.uint8, device="cpu"
+        ).pin_memory()
+        self._v_group_scales_cpu = torch.zeros(
+            L, N, H, ng, dtype=torch.float16, device="cpu"
+        ).pin_memory()
+        self._v_group_zeros_cpu = torch.zeros(
+            L, N, H, ng, dtype=torch.float16, device="cpu"
+        ).pin_memory()
 
         self._k_packed_gpu = torch.zeros(2, N, H, nk, dtype=torch.uint8, device=d)
         self._k_norms_gpu = torch.zeros(2, N, H, dtype=torch.float16, device=d)
         self._k_qjl_packed_gpu = torch.zeros(2, N, H, nqjl, dtype=torch.uint8, device=d)
         self._k_res_norms_gpu = torch.zeros(2, N, H, dtype=torch.float16, device=d)
         self._v_group_data_gpu = torch.zeros(2, N, H, vw, dtype=torch.uint8, device=d)
-        self._v_group_scales_gpu = torch.zeros(2, N, H, ng, dtype=torch.float16, device=d)
-        self._v_group_zeros_gpu = torch.zeros(2, N, H, ng, dtype=torch.float16, device=d)
+        self._v_group_scales_gpu = torch.zeros(
+            2, N, H, ng, dtype=torch.float16, device=d
+        )
+        self._v_group_zeros_gpu = torch.zeros(
+            2, N, H, ng, dtype=torch.float16, device=d
+        )
 
         self._global_end = torch.zeros(L, dtype=torch.long, device=d)
         self._local_end = torch.zeros(L, dtype=torch.long, device=d)
 
         def _async_load(layer_id: int, buf: int) -> None:
-            self._k_packed_gpu[buf].copy_(self._k_packed_cpu[layer_id], non_blocking=True)
+            self._k_packed_gpu[buf].copy_(
+                self._k_packed_cpu[layer_id], non_blocking=True
+            )
             self._k_norms_gpu[buf].copy_(self._k_norms_cpu[layer_id], non_blocking=True)
-            self._k_qjl_packed_gpu[buf].copy_(self._k_qjl_packed_cpu[layer_id], non_blocking=True)
-            self._k_res_norms_gpu[buf].copy_(self._k_res_norms_cpu[layer_id], non_blocking=True)
-            self._v_group_data_gpu[buf].copy_(self._v_group_data_cpu[layer_id], non_blocking=True)
-            self._v_group_scales_gpu[buf].copy_(self._v_group_scales_cpu[layer_id], non_blocking=True)
-            self._v_group_zeros_gpu[buf].copy_(self._v_group_zeros_cpu[layer_id], non_blocking=True)
+            self._k_qjl_packed_gpu[buf].copy_(
+                self._k_qjl_packed_cpu[layer_id], non_blocking=True
+            )
+            self._k_res_norms_gpu[buf].copy_(
+                self._k_res_norms_cpu[layer_id], non_blocking=True
+            )
+            self._v_group_data_gpu[buf].copy_(
+                self._v_group_data_cpu[layer_id], non_blocking=True
+            )
+            self._v_group_scales_gpu[buf].copy_(
+                self._v_group_scales_cpu[layer_id], non_blocking=True
+            )
+            self._v_group_zeros_gpu[buf].copy_(
+                self._v_group_zeros_cpu[layer_id], non_blocking=True
+            )
 
         def _async_store(layer_id: int, buf: int, start: int, end: int) -> None:
-            self._k_packed_cpu[layer_id, start:end].copy_(self._k_packed_gpu[buf, start:end], non_blocking=True)
-            self._k_norms_cpu[layer_id, start:end].copy_(self._k_norms_gpu[buf, start:end], non_blocking=True)
-            self._k_qjl_packed_cpu[layer_id, start:end].copy_(self._k_qjl_packed_gpu[buf, start:end], non_blocking=True)
-            self._k_res_norms_cpu[layer_id, start:end].copy_(self._k_res_norms_gpu[buf, start:end], non_blocking=True)
-            self._v_group_data_cpu[layer_id, start:end].copy_(self._v_group_data_gpu[buf, start:end], non_blocking=True)
-            self._v_group_scales_cpu[layer_id, start:end].copy_(self._v_group_scales_gpu[buf, start:end], non_blocking=True)
-            self._v_group_zeros_cpu[layer_id, start:end].copy_(self._v_group_zeros_gpu[buf, start:end], non_blocking=True)
+            self._k_packed_cpu[layer_id, start:end].copy_(
+                self._k_packed_gpu[buf, start:end], non_blocking=True
+            )
+            self._k_norms_cpu[layer_id, start:end].copy_(
+                self._k_norms_gpu[buf, start:end], non_blocking=True
+            )
+            self._k_qjl_packed_cpu[layer_id, start:end].copy_(
+                self._k_qjl_packed_gpu[buf, start:end], non_blocking=True
+            )
+            self._k_res_norms_cpu[layer_id, start:end].copy_(
+                self._k_res_norms_gpu[buf, start:end], non_blocking=True
+            )
+            self._v_group_data_cpu[layer_id, start:end].copy_(
+                self._v_group_data_gpu[buf, start:end], non_blocking=True
+            )
+            self._v_group_scales_cpu[layer_id, start:end].copy_(
+                self._v_group_scales_gpu[buf, start:end], non_blocking=True
+            )
+            self._v_group_zeros_cpu[layer_id, start:end].copy_(
+                self._v_group_zeros_gpu[buf, start:end], non_blocking=True
+            )
 
         self._offload = KVOffloadPlugin(self._device, _async_load, _async_store)
         gpu_mb = (
@@ -551,7 +675,9 @@ class TurboQuantRollingKVCachePool(RollingKVCachePool):
         if chunk_len <= 0:
             return
         if k.size(0) != chunk_len or v.size(0) != chunk_len:
-            raise ValueError(f"TurboQuantRollingKVCachePool.store_kv: chunk_len={chunk_len}, k={k.size(0)}, v={v.size(0)}.")
+            raise ValueError(
+                f"TurboQuantRollingKVCachePool.store_kv: chunk_len={chunk_len}, k={k.size(0)}, v={v.size(0)}."
+            )
 
         k_bhsd = k.unsqueeze(0).transpose(1, 2).contiguous()  # [1, H, S, D]
         v_bhsd = v.unsqueeze(0).transpose(1, 2).contiguous()
@@ -559,19 +685,35 @@ class TurboQuantRollingKVCachePool(RollingKVCachePool):
         with torch.no_grad():
             ck = self._k_mod_inf(layer_id).compress_bhsd(k_bhsd)
 
-        self._tq_k_packed(layer_id)[start_idx:end_idx].copy_(ck["mse_idx_bytes"][0].transpose(0, 1).contiguous())
-        self._tq_k_norms(layer_id)[start_idx:end_idx].copy_(ck["vec_norms"][0].transpose(0, 1).contiguous())
-        self._tq_k_qjl_packed(layer_id)[start_idx:end_idx].copy_(ck["qjl_bytes"][0].transpose(0, 1).contiguous())
-        self._tq_k_res_norms(layer_id)[start_idx:end_idx].copy_(ck["residual_norms"][0].transpose(0, 1).contiguous())
+        self._tq_k_packed(layer_id)[start_idx:end_idx].copy_(
+            ck["mse_idx_bytes"][0].transpose(0, 1).contiguous()
+        )
+        self._tq_k_norms(layer_id)[start_idx:end_idx].copy_(
+            ck["vec_norms"][0].transpose(0, 1).contiguous()
+        )
+        self._tq_k_qjl_packed(layer_id)[start_idx:end_idx].copy_(
+            ck["qjl_bytes"][0].transpose(0, 1).contiguous()
+        )
+        self._tq_k_res_norms(layer_id)[start_idx:end_idx].copy_(
+            ck["residual_norms"][0].transpose(0, 1).contiguous()
+        )
 
         if ck["shape"][-1] != self._head_dim:
             raise RuntimeError("TurboQuant inference key compress shape mismatch.")
 
         with torch.no_grad():
-            cv = tq_group_quantize_values(v_bhsd, self._value_bits, self._value_group_size)
-        self._tq_v_group_data(layer_id)[start_idx:end_idx].copy_(cv["data"][0].transpose(0, 1).contiguous())
-        self._tq_v_group_scales(layer_id)[start_idx:end_idx].copy_(cv["scales"][0].transpose(0, 1).contiguous())
-        self._tq_v_group_zeros(layer_id)[start_idx:end_idx].copy_(cv["zeros"][0].transpose(0, 1).contiguous())
+            cv = tq_group_quantize_values(
+                v_bhsd, self._value_bits, self._value_group_size
+            )
+        self._tq_v_group_data(layer_id)[start_idx:end_idx].copy_(
+            cv["data"][0].transpose(0, 1).contiguous()
+        )
+        self._tq_v_group_scales(layer_id)[start_idx:end_idx].copy_(
+            cv["scales"][0].transpose(0, 1).contiguous()
+        )
+        self._tq_v_group_zeros(layer_id)[start_idx:end_idx].copy_(
+            cv["zeros"][0].transpose(0, 1).contiguous()
+        )
 
         if self._kv_offload:
             self._mark_offload_dirty(start_idx, end_idx)
@@ -579,7 +721,13 @@ class TurboQuantRollingKVCachePool(RollingKVCachePool):
     def k_cache(self, layer_id: int, attn_start: int, local_end: int) -> torch.Tensor:
         kv_len = local_end - attn_start
         if kv_len <= 0:
-            return torch.empty(0, self._num_heads, self._head_dim, device=self._device, dtype=self._dtype)
+            return torch.empty(
+                0,
+                self._num_heads,
+                self._head_dim,
+                device=self._device,
+                dtype=self._dtype,
+            )
 
         packed = self._tq_k_packed(layer_id)[attn_start:local_end]
         norms = self._tq_k_norms(layer_id)[attn_start:local_end]
@@ -587,8 +735,15 @@ class TurboQuantRollingKVCachePool(RollingKVCachePool):
         norms_bhs = norms.unsqueeze(0).transpose(1, 2).contiguous()
         B, H, S, D = 1, self._num_heads, kv_len, self._head_dim
 
-        qjl_bhs = self._sh_extra_to_bhs(self._tq_k_qjl_packed(layer_id)[attn_start:local_end])
-        res_bhs = self._tq_k_res_norms(layer_id)[attn_start:local_end].unsqueeze(0).transpose(1, 2).contiguous()
+        qjl_bhs = self._sh_extra_to_bhs(
+            self._tq_k_qjl_packed(layer_id)[attn_start:local_end]
+        )
+        res_bhs = (
+            self._tq_k_res_norms(layer_id)[attn_start:local_end]
+            .unsqueeze(0)
+            .transpose(1, 2)
+            .contiguous()
+        )
         comp = {
             "mse_idx_bytes": idx_bytes,
             "qjl_bytes": qjl_bhs,
@@ -604,7 +759,13 @@ class TurboQuantRollingKVCachePool(RollingKVCachePool):
     def v_cache(self, layer_id: int, attn_start: int, local_end: int) -> torch.Tensor:
         kv_len = local_end - attn_start
         if kv_len <= 0:
-            return torch.empty(0, self._num_heads, self._head_dim, device=self._device, dtype=self._dtype)
+            return torch.empty(
+                0,
+                self._num_heads,
+                self._head_dim,
+                device=self._device,
+                dtype=self._dtype,
+            )
 
         data = self._tq_v_group_data(layer_id)[attn_start:local_end]
         scales = self._tq_v_group_scales(layer_id)[attn_start:local_end]
@@ -635,13 +796,27 @@ class TurboQuantRollingKVCachePool(RollingKVCachePool):
         dst_start = sink_tokens
         dst_end = dst_start + num_kept
 
-        self._tq_k_packed(layer_id)[dst_start:dst_end].copy_(self._tq_k_packed(layer_id)[src_start:src_end].clone())
-        self._tq_k_norms(layer_id)[dst_start:dst_end].copy_(self._tq_k_norms(layer_id)[src_start:src_end].clone())
-        self._tq_k_qjl_packed(layer_id)[dst_start:dst_end].copy_(self._tq_k_qjl_packed(layer_id)[src_start:src_end].clone())
-        self._tq_k_res_norms(layer_id)[dst_start:dst_end].copy_(self._tq_k_res_norms(layer_id)[src_start:src_end].clone())
-        self._tq_v_group_data(layer_id)[dst_start:dst_end].copy_(self._tq_v_group_data(layer_id)[src_start:src_end].clone())
-        self._tq_v_group_scales(layer_id)[dst_start:dst_end].copy_(self._tq_v_group_scales(layer_id)[src_start:src_end].clone())
-        self._tq_v_group_zeros(layer_id)[dst_start:dst_end].copy_(self._tq_v_group_zeros(layer_id)[src_start:src_end].clone())
+        self._tq_k_packed(layer_id)[dst_start:dst_end].copy_(
+            self._tq_k_packed(layer_id)[src_start:src_end].clone()
+        )
+        self._tq_k_norms(layer_id)[dst_start:dst_end].copy_(
+            self._tq_k_norms(layer_id)[src_start:src_end].clone()
+        )
+        self._tq_k_qjl_packed(layer_id)[dst_start:dst_end].copy_(
+            self._tq_k_qjl_packed(layer_id)[src_start:src_end].clone()
+        )
+        self._tq_k_res_norms(layer_id)[dst_start:dst_end].copy_(
+            self._tq_k_res_norms(layer_id)[src_start:src_end].clone()
+        )
+        self._tq_v_group_data(layer_id)[dst_start:dst_end].copy_(
+            self._tq_v_group_data(layer_id)[src_start:src_end].clone()
+        )
+        self._tq_v_group_scales(layer_id)[dst_start:dst_end].copy_(
+            self._tq_v_group_scales(layer_id)[src_start:src_end].clone()
+        )
+        self._tq_v_group_zeros(layer_id)[dst_start:dst_end].copy_(
+            self._tq_v_group_zeros(layer_id)[src_start:src_end].clone()
+        )
         if self._kv_offload:
             self._mark_offload_dirty(dst_start, dst_end)
 
@@ -691,9 +866,19 @@ class KIVIQuantRollingKVCachePool(RollingKVCachePool):
         group_size: int = 64,
         kv_offload: bool = False,
     ) -> None:
-        assert k_cache_type in ["int2", "int4", "int8"], f"Invalid k_cache_type: {k_cache_type}"
-        assert v_cache_type in ["int2", "int4", "int8"], f"Invalid v_cache_type: {v_cache_type}"
-        assert k_cache_type == v_cache_type, "k_cache_type and v_cache_type must be the same"
+        assert k_cache_type in [
+            "int2",
+            "int4",
+            "int8",
+        ], f"Invalid k_cache_type: {k_cache_type}"
+        assert v_cache_type in [
+            "int2",
+            "int4",
+            "int8",
+        ], f"Invalid v_cache_type: {v_cache_type}"
+        assert (
+            k_cache_type == v_cache_type
+        ), "k_cache_type and v_cache_type must be the same"
         self._bits = int(k_cache_type[-1])
         self._group_size = group_size
         self._feats = 32 // self._bits
@@ -702,7 +887,15 @@ class KIVIQuantRollingKVCachePool(RollingKVCachePool):
         self.current_step: int = 0
         self._N_alloc = n_alloc
         self._kivi_io_dtype = torch.float16
-        super().__init__(num_layers, n_alloc, num_heads, head_dim, dtype, device, kv_offload=kv_offload)
+        super().__init__(
+            num_layers,
+            n_alloc,
+            num_heads,
+            head_dim,
+            dtype,
+            device,
+            kv_offload=kv_offload,
+        )
 
     @staticmethod
     def _nhd_to_bhdt(nhd: torch.Tensor) -> torch.Tensor:
@@ -741,7 +934,9 @@ class KIVIQuantRollingKVCachePool(RollingKVCachePool):
         # code4 [1, H, D, n_packs], sc/mn [1, H, D, n_groups]
         # Match kernel.test_vcache: last dim of scale/mn must be 1 to broadcast
         # over the (num_groups, group_size) view inside unpack_and_dequant_cache.
-        out = unpack_and_dequant_cache(code4, sc.unsqueeze(-1), mn.unsqueeze(-1), group_size, bits)
+        out = unpack_and_dequant_cache(
+            code4, sc.unsqueeze(-1), mn.unsqueeze(-1), group_size, bits
+        )
         return out.to(as_dtype).squeeze(0)  # [H, D, T]
 
     def _init_kv_buffer(self) -> None:
@@ -778,17 +973,33 @@ class KIVIQuantRollingKVCachePool(RollingKVCachePool):
         self._kivi_n_groups = n_groups
         d = self._device
 
-        self._k_code_cpu = torch.zeros(L, H, D, n_packs, dtype=torch.int32, device="cpu").pin_memory()
-        self._v_code_cpu = torch.zeros(L, H, D, n_packs, dtype=torch.int32, device="cpu").pin_memory()
-        self._k_scale_cpu = torch.zeros(L, H, D, n_groups, dtype=torch.float32, device="cpu").pin_memory()
-        self._k_mn_cpu = torch.zeros(L, H, D, n_groups, dtype=torch.float32, device="cpu").pin_memory()
-        self._v_scale_cpu = torch.zeros(L, H, D, n_groups, dtype=torch.float32, device="cpu").pin_memory()
-        self._v_mn_cpu = torch.zeros(L, H, D, n_groups, dtype=torch.float32, device="cpu").pin_memory()
+        self._k_code_cpu = torch.zeros(
+            L, H, D, n_packs, dtype=torch.int32, device="cpu"
+        ).pin_memory()
+        self._v_code_cpu = torch.zeros(
+            L, H, D, n_packs, dtype=torch.int32, device="cpu"
+        ).pin_memory()
+        self._k_scale_cpu = torch.zeros(
+            L, H, D, n_groups, dtype=torch.float32, device="cpu"
+        ).pin_memory()
+        self._k_mn_cpu = torch.zeros(
+            L, H, D, n_groups, dtype=torch.float32, device="cpu"
+        ).pin_memory()
+        self._v_scale_cpu = torch.zeros(
+            L, H, D, n_groups, dtype=torch.float32, device="cpu"
+        ).pin_memory()
+        self._v_mn_cpu = torch.zeros(
+            L, H, D, n_groups, dtype=torch.float32, device="cpu"
+        ).pin_memory()
         self._k_code_gpu = torch.zeros(2, H, D, n_packs, dtype=torch.int32, device=d)
         self._v_code_gpu = torch.zeros(2, H, D, n_packs, dtype=torch.int32, device=d)
-        self._k_scale_gpu = torch.zeros(2, H, D, n_groups, dtype=torch.float32, device=d)
+        self._k_scale_gpu = torch.zeros(
+            2, H, D, n_groups, dtype=torch.float32, device=d
+        )
         self._k_mn_gpu = torch.zeros(2, H, D, n_groups, dtype=torch.float32, device=d)
-        self._v_scale_gpu = torch.zeros(2, H, D, n_groups, dtype=torch.float32, device=d)
+        self._v_scale_gpu = torch.zeros(
+            2, H, D, n_groups, dtype=torch.float32, device=d
+        )
         self._v_mn_gpu = torch.zeros(2, H, D, n_groups, dtype=torch.float32, device=d)
         self._global_end = torch.zeros(L, dtype=torch.long, device=d)
         self._local_end = torch.zeros(L, dtype=torch.long, device=d)
@@ -808,17 +1019,43 @@ class KIVIQuantRollingKVCachePool(RollingKVCachePool):
             g0, g1 = t0 // G, cdiv(t1, G)
             g1 = min(g1, self._kivi_n_groups)
             if p0 < p1:
-                self._k_code_cpu[lid, :, :, p0:p1].copy_(self._k_code_gpu[buf, :, :, p0:p1], non_blocking=True)
-                self._v_code_cpu[lid, :, :, p0:p1].copy_(self._v_code_gpu[buf, :, :, p0:p1], non_blocking=True)
+                self._k_code_cpu[lid, :, :, p0:p1].copy_(
+                    self._k_code_gpu[buf, :, :, p0:p1], non_blocking=True
+                )
+                self._v_code_cpu[lid, :, :, p0:p1].copy_(
+                    self._v_code_gpu[buf, :, :, p0:p1], non_blocking=True
+                )
             if g0 < g1:
-                self._k_scale_cpu[lid, :, :, g0:g1].copy_(self._k_scale_gpu[buf, :, :, g0:g1], non_blocking=True)
-                self._k_mn_cpu[lid, :, :, g0:g1].copy_(self._k_mn_gpu[buf, :, :, g0:g1], non_blocking=True)
-                self._v_scale_cpu[lid, :, :, g0:g1].copy_(self._v_scale_gpu[buf, :, :, g0:g1], non_blocking=True)
-                self._v_mn_cpu[lid, :, :, g0:g1].copy_(self._v_mn_gpu[buf, :, :, g0:g1], non_blocking=True)
+                self._k_scale_cpu[lid, :, :, g0:g1].copy_(
+                    self._k_scale_gpu[buf, :, :, g0:g1], non_blocking=True
+                )
+                self._k_mn_cpu[lid, :, :, g0:g1].copy_(
+                    self._k_mn_gpu[buf, :, :, g0:g1], non_blocking=True
+                )
+                self._v_scale_cpu[lid, :, :, g0:g1].copy_(
+                    self._v_scale_gpu[buf, :, :, g0:g1], non_blocking=True
+                )
+                self._v_mn_cpu[lid, :, :, g0:g1].copy_(
+                    self._v_mn_gpu[buf, :, :, g0:g1], non_blocking=True
+                )
 
         self._offload = KVOffloadPlugin(self._device, _async_load, _async_store)
-        gpu_mb = (self._k_code_gpu.nbytes + self._v_code_gpu.nbytes + self._k_scale_gpu.nbytes + self._k_mn_gpu.nbytes + self._v_scale_gpu.nbytes + self._v_mn_gpu.nbytes) / (1024 * 1024)
-        cpu_mb = (self._k_code_cpu.nbytes + self._v_code_cpu.nbytes + self._k_scale_cpu.nbytes + self._k_mn_cpu.nbytes + self._v_scale_cpu.nbytes + self._v_mn_cpu.nbytes) / (1024 * 1024)
+        gpu_mb = (
+            self._k_code_gpu.nbytes
+            + self._v_code_gpu.nbytes
+            + self._k_scale_gpu.nbytes
+            + self._k_mn_gpu.nbytes
+            + self._v_scale_gpu.nbytes
+            + self._v_mn_gpu.nbytes
+        ) / (1024 * 1024)
+        cpu_mb = (
+            self._k_code_cpu.nbytes
+            + self._v_code_cpu.nbytes
+            + self._k_scale_cpu.nbytes
+            + self._k_mn_cpu.nbytes
+            + self._v_scale_cpu.nbytes
+            + self._v_mn_cpu.nbytes
+        ) / (1024 * 1024)
         logger.info(
             "[KIVIQuantRollingKVCachePool+offload] GPU fixed buffer: {:.1f} MB, CPU pinned: {:.1f} MB (saved {:.1f} MB GPU)",
             gpu_mb,
@@ -876,7 +1113,9 @@ class KIVIQuantRollingKVCachePool(RollingKVCachePool):
         p0, p1 = t0 // fe, t0 // fe + code.shape[3]
         g0, g1 = t0 // G, t0 // G + g_cnt
         if t1 > self._N_alloc:
-            raise RuntimeError("KIVI store overflow (increase max_attention or alignment)")
+            raise RuntimeError(
+                "KIVI store overflow (increase max_attention or alignment)"
+            )
         if p0 + code.shape[3] > self._kivi_n_packs:
             raise RuntimeError("KIVI pack range overflow")
         csl = code[0]
@@ -942,10 +1181,14 @@ class KIVIQuantRollingKVCachePool(RollingKVCachePool):
             )
             need = start_idx - s0
             if pk.size(0) < need:
-                z = k.new_zeros(need - pk.size(0), *k.shape[1:], dtype=pk.dtype, device=pk.device)
+                z = k.new_zeros(
+                    need - pk.size(0), *k.shape[1:], dtype=pk.dtype, device=pk.device
+                )
                 pk = torch.cat((pk, z), dim=0)
             if pv.size(0) < need:
-                z2 = v.new_zeros(need - pv.size(0), *v.shape[1:], dtype=pv.dtype, device=pv.device)
+                z2 = v.new_zeros(
+                    need - pv.size(0), *v.shape[1:], dtype=pv.dtype, device=pv.device
+                )
                 pv = torch.cat((pv, z2), dim=0)
             parts_k.append(pk)
             parts_v.append(pv)
@@ -980,7 +1223,14 @@ class KIVIQuantRollingKVCachePool(RollingKVCachePool):
         p0, p1 = t0 // fe, t1 // fe
         g0, g1 = t0 // G, t1 // G
         c4 = code[:, :, p0:p1].unsqueeze(0)
-        out = self._dequant_bhdn(c4, sc[:, :, g0:g1].unsqueeze(0), mn[:, :, g0:g1].unsqueeze(0), self._group_size, self._bits, self._dtype)
+        out = self._dequant_bhdn(
+            c4,
+            sc[:, :, g0:g1].unsqueeze(0),
+            mn[:, :, g0:g1].unsqueeze(0),
+            self._group_size,
+            self._bits,
+            self._dtype,
+        )
         nhd = out.permute(2, 0, 1)
         o0 = max(attn_start, t0) - t0
         o1 = o0 + (local_end - max(attn_start, t0))
@@ -1034,7 +1284,11 @@ class KIVIQuantRollingKVCachePool(RollingKVCachePool):
         g0, g1 = t0 // G, cdiv(t1, G)
         h0, h1 = d0 // G, cdiv(d1, G)
         w_g = g1 - g0
-        if w_g != h1 - h0 or g0 + w_g > self._kivi_n_groups or h0 + w_g > self._kivi_n_groups:
+        if (
+            w_g != h1 - h0
+            or g0 + w_g > self._kivi_n_groups
+            or h0 + w_g > self._kivi_n_groups
+        ):
             raise RuntimeError("KIVI roll: group range mismatch (internal alignment).")
         lid = layer_id
         kc, vc = self._kivi_k_code(lid), self._kivi_v_code(lid)

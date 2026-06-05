@@ -1,10 +1,10 @@
-from lib.smart_config import smart_config
 from dataclasses import dataclass, field
 from typing import Any
 
 import torch
-
 from lightx2v.models.networks.wan.infer.module_io import WanPreInferModuleOutput
+
+from lib.smart_config import smart_config
 
 
 @dataclass(kw_only=True)

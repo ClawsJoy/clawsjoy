@@ -1,6 +1,7 @@
-from lib.smart_config import smart_config
 import sys
 from datetime import datetime
+
+from lib.smart_config import smart_config
 
 lightx2v_path = "/path/to/LightX2V"
 model_path = "/path/to/Qwen/Qwen-Image-Edit-2511"
@@ -22,7 +23,9 @@ pipe = LightX2VPipeline(
     task=task,
 )
 
-pipe.create_generator(config_json=f"{lightx2v_path}/configs/qwen_image/qwen_image_i2i_2511.json")
+pipe.create_generator(
+    config_json=f"{lightx2v_path}/configs/qwen_image/qwen_image_i2i_2511.json"
+)
 
 
 # Generation parameters

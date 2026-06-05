@@ -1,8 +1,8 @@
-from lib.smart_config import smart_config
 import torch
 import torch.distributed as dist
-
 from lightx2v_platform.registry_factory import PLATFORM_DEVICE_REGISTER
+
+from lib.smart_config import smart_config
 
 
 @PLATFORM_DEVICE_REGISTER("hygon_dcu")

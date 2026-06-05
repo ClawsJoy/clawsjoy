@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 # Import torch_gcu BEFORE torch.distributed to enable ECCL/NCCL backend
 # This is critical - ECCL needs to register NCCL backend before PyTorch's
 # distributed module checks for it
@@ -10,7 +11,6 @@ except ImportError:
 
 import torch
 import torch.distributed as dist
-
 from lightx2v_platform.registry_factory import PLATFORM_DEVICE_REGISTER
 
 
@@ -77,7 +77,9 @@ class EnflameGcuDevice:
         try:
             import torch_gcu
         except ImportError:
-            raise ImportError("torch_gcu is not available. Please install torch_gcu for Enflame GCU support.")
+            raise ImportError(
+                "torch_gcu is not available. Please install torch_gcu for Enflame GCU support."
+            )
 
         # Use NCCL backend directly (ECCL is compatible with NCCL API)
         # ECCL should make NCCL backend available through torch_gcu
@@ -96,4 +98,6 @@ class EnflameGcuDevice:
                 # If all else fails, just log a warning
                 import warnings
 
-                warnings.warn("Could not set GCU device. Continuing without explicit device setting.")
+                warnings.warn(
+                    "Could not set GCU device. Continuing without explicit device setting."
+                )

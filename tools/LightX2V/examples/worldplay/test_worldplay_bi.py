@@ -1,6 +1,7 @@
-from lib.smart_config import smart_config
 import json
 import os
+
+from lib.smart_config import smart_config
 
 # Paths
 CONFIG_PATH = "/workspace/LightX2V/configs/worldplay/worldplay_bi_i2v_480p.json"
@@ -18,7 +19,10 @@ os.makedirs(OUTPUT_PATH, exist_ok=True)
 
 
 def main():
-    from lightx2v.utils.input_info import init_empty_input_info, update_input_info_from_dict
+    from lightx2v.utils.input_info import (
+        init_empty_input_info,
+        update_input_info_from_dict,
+    )
     from lightx2v.utils.lockable_dict import LockableDict
     from lightx2v.utils.registry_factory import RUNNER_REGISTER
 
@@ -29,7 +33,9 @@ def main():
     # Add runtime paths
     config_dict["model_path"] = MODEL_PATH
     config_dict["action_ckpt"] = ACTION_CKPT
-    config_dict["transformer_model_path"] = os.path.join(MODEL_PATH, "transformer/480p_i2v")
+    config_dict["transformer_model_path"] = os.path.join(
+        MODEL_PATH, "transformer/480p_i2v"
+    )
 
     config = LockableDict(config_dict)
 

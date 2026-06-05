@@ -3,27 +3,31 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
+import json
+import sys
 import threading
 import time
-import json
-from pathlib import Path
 from datetime import datetime
-import sys
+from pathlib import Path
+
 from core.lib.unified_config import unified_config
+
 sys.path.insert(0, smart_config.ROOT)
 
-from intelligence.analyzer import IntelligenceAnalyzer
-from intelligence.predictor import IntelligentPredictor
-from intelligence.alerter import IntelligentAlerter
-from intelligence.learner import IntelligentLearner
 from agent_core.brain_enhanced import brain
+
+from intelligence.alerter import IntelligentAlerter
+from intelligence.analyzer import IntelligenceAnalyzer
+from intelligence.learner import IntelligentLearner
+from intelligence.predictor import IntelligentPredictor
+
 
 class SmartCore:
     """智能核心 - 整合所有智能能力"""
-    
+
     def __init__(self):
         self.analyzer = IntelligenceAnalyzer()
         self.predictor = IntelligentPredictor()
@@ -38,7 +42,7 @@ class SmartCore:
         print("   🔔 告警器 - 智能阈值告警")
         print("   📚 学习器 - 经验模式学习")
         print("=" * 50)
-    
+
     def run_once(self):
         """执行一次完整智能分析"""
         print(f"\n[{datetime.now().strftime('%H:%M:%S')}] 智能分析循环")
@@ -50,8 +54,10 @@ class SmartCore:
 
         # 2. 预测
         forecast = self.predictor.generate_forecast()
-        for pred in forecast.get('predictions', []):
-            print(f"📈 预测: {pred['metric']} -> {pred['predicted_value']} ({pred['trend']})")
+        for pred in forecast.get("predictions", []):
+            print(
+                f"📈 预测: {pred['metric']} -> {pred['predicted_value']} ({pred['trend']})"
+            )
 
         # 3. 学习
         insights = self.learner.auto_optimize()
@@ -60,12 +66,12 @@ class SmartCore:
         stats = brain.get_stats()
 
         return {
-            "health_score": report['health_score'],
+            "health_score": report["health_score"],
             "forecast": forecast,
             "insights": insights,
-            "stats": stats
+            "stats": stats,
         }
-    
+
     def run_loop(self, interval=60):
         """持续运行智能循环"""
         print(f"\n🔄 智能循环启动 (间隔: {interval}秒)")
@@ -79,13 +85,14 @@ class SmartCore:
             except Exception as e:
                 print(f"❌ 智能循环错误: {e}")
                 time.sleep(10)
-    
+
     def stop(self):
         self.running = False
 
+
 if __name__ == "__main__":
     import sys
-    
+
     if len(sys.argv) > 1 and sys.argv[1] == "--once":
         # 单次运行
         core = SmartCore()

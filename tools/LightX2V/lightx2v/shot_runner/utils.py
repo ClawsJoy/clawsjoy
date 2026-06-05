@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import os
 import subprocess
 from typing import Optional, Tuple, Union
@@ -9,6 +8,8 @@ import torch.nn.functional as F
 import torchaudio as ta
 from einops import rearrange
 from loguru import logger
+
+from lib.smart_config import smart_config
 
 
 class SlidingWindowReader:
@@ -194,7 +195,9 @@ def pad_for_libx264(image_array):
             else:
                 pad_width.append((0, 0))
         values = 0
-        image_array = np.pad(image_array, pad_width, mode="constant", constant_values=values)
+        image_array = np.pad(
+            image_array, pad_width, mode="constant", constant_values=values
+        )
     return image_array
 
 

@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 重构后的 Gradio Demo 主入口文件
 整合了所有模块，支持中英文切换
@@ -12,13 +13,12 @@ import os
 import warnings
 
 import torch
+from lightx2v.utils.input_info import init_empty_input_info, update_input_info_from_dict
+from lightx2v.utils.set_config import get_default_config
 from loguru import logger
 from utils.i18n import DEFAULT_LANG, set_language
 from utils.model_utils import cleanup_memory, extract_op_name, get_model_configs
 from utils.ui_builder import build_ui, generate_unique_filename, get_auto_config_dict
-
-from lightx2v.utils.input_info import init_empty_input_info, update_input_info_from_dict
-from lightx2v.utils.set_config import get_default_config
 
 warnings.filterwarnings("ignore", category=UserWarning, module="huggingface_hub")
 warnings.filterwarnings("ignore", category=UserWarning, module="huggingface_hub.utils")
@@ -90,7 +90,12 @@ def run_inference(
 ):
     cleanup_memory()
 
-    auto_config = get_auto_config_dict(model_type=model_type_input, resolution=resolution, num_frames=num_frames, task_type=task_type_input)
+    auto_config = get_auto_config_dict(
+        model_type=model_type_input,
+        resolution=resolution,
+        num_frames=num_frames,
+        task_type=task_type_input,
+    )
 
     # 从 auto_config 中获取 offload 和 rope 相关配置
     rope_chunk = auto_config["rope_chunk_val"]
@@ -149,14 +154,26 @@ def run_inference(
 
     global global_runner, current_config, cur_dit_path, cur_use_lora, cur_lora_path, cur_high_lora_path, cur_low_lora_path
 
-    logger.info(f"Auto-determined model_cls: {model_cls} (model type: {model_type_input})")
+    logger.info(
+        f"Auto-determined model_cls: {model_cls} (model type: {model_type_input})"
+    )
 
     if model_cls.startswith("wan2.2"):
-        current_dit_path = f"{high_noise_path_input}|{low_noise_path_input}" if high_noise_path_input and low_noise_path_input else None
+        current_dit_path = (
+            f"{high_noise_path_input}|{low_noise_path_input}"
+            if high_noise_path_input and low_noise_path_input
+            else None
+        )
     else:
         current_dit_path = dit_path_input
 
-    needs_reinit = lazy_load or unload_modules or global_runner is None or cur_dit_path != current_dit_path or cur_use_lora != use_lora
+    needs_reinit = (
+        lazy_load
+        or unload_modules
+        or global_runner is None
+        or cur_dit_path != current_dit_path
+        or cur_use_lora != use_lora
+    )
 
     config_graio = {
         "infer_steps": infer_steps,
@@ -184,7 +201,9 @@ def run_inference(
         "text_len": 512,
         "denoising_step_list": [1000, 750, 500, 250],
         "cpu_offload": True if "wan2.2" in model_cls else cpu_offload,
-        "offload_granularity": ("phase" if "wan2.2" in model_cls else offload_granularity),
+        "offload_granularity": (
+            "phase" if "wan2.2" in model_cls else offload_granularity
+        ),
         "t5_cpu_offload": t5_cpu_offload,
         "clip_cpu_offload": clip_cpu_offload,
         "vae_cpu_offload": vae_cpu_offload,
@@ -234,7 +253,9 @@ def run_inference(
         config["lora_dynamic_apply"] = True
 
     logger.info(f"Using model: {model_path}")
-    logger.info(f"Inference config:\n{json.dumps(config, indent=4, ensure_ascii=False)}")
+    logger.info(
+        f"Inference config:\n{json.dumps(config, indent=4, ensure_ascii=False)}"
+    )
 
     # 初始化或重用 runner
     runner = global_runner
@@ -261,8 +282,12 @@ def run_inference(
             lora_configs = config.get("lora_configs")
             if lora_configs:
                 lora_name_to_info = {item["name"]: item for item in lora_configs}
-                cur_high_lora_path = lora_name_to_info.get("high_noise_model", {}).get("path")
-                cur_low_lora_path = lora_name_to_info.get("low_noise_model", {}).get("path")
+                cur_high_lora_path = lora_name_to_info.get("high_noise_model", {}).get(
+                    "path"
+                )
+                cur_low_lora_path = lora_name_to_info.get("low_noise_model", {}).get(
+                    "path"
+                )
             else:
                 cur_high_lora_path = None
                 cur_low_lora_path = None
@@ -307,16 +332,22 @@ def run_inference(
                             low_lora_path=low_lora_path,
                             low_lora_strength=low_lora_strength,
                         )
-                        logger.info(f"Switched LoRA for Wan2.2: high={high_lora_path}, low={low_lora_path}")
+                        logger.info(
+                            f"Switched LoRA for Wan2.2: high={high_lora_path}, low={low_lora_path}"
+                        )
                         cur_high_lora_path = high_lora_path
                         cur_low_lora_path = low_lora_path
                     else:
                         logger.warning("Runner does not support switch_lora method")
             elif lora_path and lora_path != cur_lora_path:
-                lora_strength_val = float(lora_strength) if lora_strength is not None else 1.0
+                lora_strength_val = (
+                    float(lora_strength) if lora_strength is not None else 1.0
+                )
                 if hasattr(runner, "switch_lora"):
                     runner.switch_lora(lora_path, lora_strength_val)
-                    logger.info(f"Switched LoRA to: {lora_path} with strength={lora_strength_val}")
+                    logger.info(
+                        f"Switched LoRA to: {lora_path} with strength={lora_strength_val}"
+                    )
                 else:
                     logger.warning("Runner does not support switch_lora method")
                 cur_lora_path = lora_path
@@ -353,8 +384,12 @@ if __name__ == "__main__":
     parser.add_argument("--model_path", type=str, required=True, help="模型文件夹路径")
     parser.add_argument("--server_port", type=int, default=7862, help="服务器端口")
     parser.add_argument("--server_name", type=str, default="0.0.0.0", help="服务器IP")
-    parser.add_argument("--output_dir", type=str, default="./outputs", help="输出视频保存目录")
-    parser.add_argument("--lang", type=str, default="zh", choices=["zh", "en"], help="界面语言")
+    parser.add_argument(
+        "--output_dir", type=str, default="./outputs", help="输出视频保存目录"
+    )
+    parser.add_argument(
+        "--lang", type=str, default="zh", choices=["zh", "en"], help="界面语言"
+    )
     args = parser.parse_args()
 
     global model_path, model_cls, output_dir

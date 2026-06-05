@@ -1,7 +1,15 @@
-from lib.smart_config import smart_config
-from lightx2v.models.video_encoders.hf.ltx2.video_vae.enums import LogVarianceType, NormLayerType, PaddingModeType
-from lightx2v.models.video_encoders.hf.ltx2.video_vae.video_vae import VideoDecoder, VideoEncoder
+from lightx2v.models.video_encoders.hf.ltx2.video_vae.enums import (
+    LogVarianceType,
+    NormLayerType,
+    PaddingModeType,
+)
+from lightx2v.models.video_encoders.hf.ltx2.video_vae.video_vae import (
+    VideoDecoder,
+    VideoEncoder,
+)
 from lightx2v.utils.ltx2_utils import ModelConfigurator, SDOps
+
+from lib.smart_config import smart_config
 
 
 class VideoEncoderConfigurator(ModelConfigurator[VideoEncoder]):
@@ -13,7 +21,9 @@ class VideoEncoderConfigurator(ModelConfigurator[VideoEncoder]):
         convolution_dimensions = config.get("dims", 3)
         in_channels = config.get("in_channels", 3)
         latent_channels = config.get("latent_channels", 128)
-        spatial_padding_mode = PaddingModeType(config.get("spatial_padding_mode", "zeros"))
+        spatial_padding_mode = PaddingModeType(
+            config.get("spatial_padding_mode", "zeros")
+        )
         encoder_blocks = config.get("encoder_blocks", [])
         patch_size = config.get("patch_size", 4)
         norm_layer_str = config.get("norm_layer", "pixel_norm")
@@ -39,7 +49,9 @@ class VideoDecoderConfigurator(ModelConfigurator[VideoDecoder]):
         config = config.get("vae", {})
         convolution_dimensions = config.get("dims", 3)
         latent_channels = config.get("latent_channels", 128)
-        spatial_padding_mode = PaddingModeType(config.get("spatial_padding_mode", "reflect"))
+        spatial_padding_mode = PaddingModeType(
+            config.get("spatial_padding_mode", "reflect")
+        )
         out_channels = config.get("out_channels", 3)
         decoder_blocks = config.get("decoder_blocks", [])
         patch_size = config.get("patch_size", 4)

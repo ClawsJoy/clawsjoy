@@ -1,7 +1,8 @@
-from lib.smart_config import smart_config
 from typing import Any, Optional
 
 from loguru import logger
+
+from lib.smart_config import smart_config
 
 from ...schema import TaskResponse
 from ..file_service import FileService
@@ -10,7 +11,9 @@ from .base import BaseGenerationService
 
 
 class ImageGenerationService(BaseGenerationService):
-    def __init__(self, file_service: FileService, inference_service: DistributedInferenceService):
+    def __init__(
+        self, file_service: FileService, inference_service: DistributedInferenceService
+    ):
         super().__init__(file_service, inference_service)
 
     def get_output_extension(self) -> str:
@@ -21,7 +24,11 @@ class ImageGenerationService(BaseGenerationService):
 
     async def generate_with_stop_event(self, message: Any, stop_event) -> Optional[Any]:
         try:
-            task_data = {field: getattr(message, field) for field in message.model_fields_set if field != "task_id"}
+            task_data = {
+                field: getattr(message, field)
+                for field in message.model_fields_set
+                if field != "task_id"
+            }
             task_data["task_id"] = message.task_id
             task_data["target_shape"] = message.target_shape
 
@@ -34,13 +41,19 @@ class ImageGenerationService(BaseGenerationService):
 
             if hasattr(message, "image_path") and message.image_path:
                 await self._process_image_path(message.image_path, task_data)
-                logger.info(f"Task {message.task_id} image path: {task_data.get('image_path')}")
+                logger.info(
+                    f"Task {message.task_id} image path: {task_data.get('image_path')}"
+                )
 
             if hasattr(message, "image_mask_path") and message.image_mask_path:
                 await self._process_image_mask_path(message.image_mask_path, task_data)
-                logger.info(f"Task {message.task_id} image mask path: {task_data.get('image_mask_path')}")
+                logger.info(
+                    f"Task {message.task_id} image mask path: {task_data.get('image_mask_path')}"
+                )
                 self._pack_image_and_mask_as_dir(task_data)
-                logger.info(f"Task {message.task_id} packed image+mask dir: {task_data.get('image_path')}")
+                logger.info(
+                    f"Task {message.task_id} packed image+mask dir: {task_data.get('image_path')}"
+                )
 
             self._prepare_output_path(message.save_result_path, task_data)
             task_data["seed"] = message.seed
@@ -58,13 +71,19 @@ class ImageGenerationService(BaseGenerationService):
                 raise RuntimeError("Task processing failed")
 
             if result.get("status") == "success":
-                actual_save_path = self.file_service.get_output_path(message.save_result_path)
+                actual_save_path = self.file_service.get_output_path(
+                    message.save_result_path
+                )
                 if not actual_save_path.suffix:
-                    actual_save_path = actual_save_path.with_suffix(self.get_output_extension())
+                    actual_save_path = actual_save_path.with_suffix(
+                        self.get_output_extension()
+                    )
                 if prefer_memory_result:
                     result_png = result.get("result_png")
                     if not result_png:
-                        raise RuntimeError("Image inference did not return in-memory PNG bytes (result_png)")
+                        raise RuntimeError(
+                            "Image inference did not return in-memory PNG bytes (result_png)"
+                        )
                     return TaskResponse(
                         task_id=message.task_id,
                         task_status="completed",
@@ -88,5 +107,7 @@ class ImageGenerationService(BaseGenerationService):
             logger.exception(f"Task {message.task_id} processing failed: {str(e)}")
             raise
 
-    async def generate_image_with_stop_event(self, message: Any, stop_event) -> Optional[Any]:
+    async def generate_image_with_stop_event(
+        self, message: Any, stop_event
+    ) -> Optional[Any]:
         return await self.generate_with_stop_event(message, stop_event)

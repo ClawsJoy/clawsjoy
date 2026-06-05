@@ -1,12 +1,19 @@
-from lib.smart_config import smart_config
 from lightx2v.common.modules.weight_module import WeightModule, WeightModuleList
-from lightx2v.utils.registry_factory import ATTN_WEIGHT_REGISTER, MM_WEIGHT_REGISTER, RMS_WEIGHT_REGISTER
+from lightx2v.utils.registry_factory import (
+    ATTN_WEIGHT_REGISTER,
+    MM_WEIGHT_REGISTER,
+    RMS_WEIGHT_REGISTER,
+)
+
+from lib.smart_config import smart_config
 
 
 class LongCatImageDoubleBlockWeights(WeightModule):
     """Weights for a single double-stream transformer block."""
 
-    def __init__(self, config, block_idx, create_cuda_buffer=False, create_cpu_buffer=False):
+    def __init__(
+        self, config, block_idx, create_cuda_buffer=False, create_cpu_buffer=False
+    ):
         super().__init__()
         self.config = config
         self.block_idx = block_idx
@@ -206,7 +213,9 @@ class LongCatImageDoubleBlockWeights(WeightModule):
 class LongCatImageSingleBlockWeights(WeightModule):
     """Weights for a single single-stream transformer block."""
 
-    def __init__(self, config, block_idx, create_cuda_buffer=False, create_cpu_buffer=False):
+    def __init__(
+        self, config, block_idx, create_cuda_buffer=False, create_cpu_buffer=False
+    ):
         super().__init__()
         self.config = config
         self.block_idx = block_idx
@@ -319,21 +328,47 @@ class LongCatImageTransformerWeights(WeightModule):
         self.num_single_layers = config.get("num_single_layers", 20)
 
         # Create weight containers for each block
-        self.double_blocks = WeightModuleList([LongCatImageDoubleBlockWeights(config, i) for i in range(self.num_layers)])
-        self.single_blocks = WeightModuleList([LongCatImageSingleBlockWeights(config, i) for i in range(self.num_single_layers)])
+        self.double_blocks = WeightModuleList(
+            [LongCatImageDoubleBlockWeights(config, i) for i in range(self.num_layers)]
+        )
+        self.single_blocks = WeightModuleList(
+            [
+                LongCatImageSingleBlockWeights(config, i)
+                for i in range(self.num_single_layers)
+            ]
+        )
         self.register_offload_buffers(config)
         self.add_module("double_blocks", self.double_blocks)
         self.add_module("single_blocks", self.single_blocks)
 
     def register_offload_buffers(self, config):
-        if config.get("cpu_offload", False) and config.get("offload_granularity", "block") == "block":
+        if (
+            config.get("cpu_offload", False)
+            and config.get("offload_granularity", "block") == "block"
+        ):
             # Create 2 cuda buffer blocks for double_blocks
-            self.offload_double_block_cuda_buffers = WeightModuleList([LongCatImageDoubleBlockWeights(config, i, create_cuda_buffer=True) for i in range(2)])
-            self.add_module("offload_double_block_cuda_buffers", self.offload_double_block_cuda_buffers)
+            self.offload_double_block_cuda_buffers = WeightModuleList(
+                [
+                    LongCatImageDoubleBlockWeights(config, i, create_cuda_buffer=True)
+                    for i in range(2)
+                ]
+            )
+            self.add_module(
+                "offload_double_block_cuda_buffers",
+                self.offload_double_block_cuda_buffers,
+            )
 
             # Create 2 cuda buffer blocks for single_blocks
-            self.offload_single_block_cuda_buffers = WeightModuleList([LongCatImageSingleBlockWeights(config, i, create_cuda_buffer=True) for i in range(2)])
-            self.add_module("offload_single_block_cuda_buffers", self.offload_single_block_cuda_buffers)
+            self.offload_single_block_cuda_buffers = WeightModuleList(
+                [
+                    LongCatImageSingleBlockWeights(config, i, create_cuda_buffer=True)
+                    for i in range(2)
+                ]
+            )
+            self.add_module(
+                "offload_single_block_cuda_buffers",
+                self.offload_single_block_cuda_buffers,
+            )
 
     def to_cuda(self, non_blocking=True):
         for block in self.double_blocks:

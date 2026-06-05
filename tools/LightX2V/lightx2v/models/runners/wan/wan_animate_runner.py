@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import gc
 from copy import deepcopy
 
@@ -7,6 +6,8 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from loguru import logger
+
+from lib.smart_config import smart_config
 
 try:
     from decord import VideoReader
@@ -57,13 +58,19 @@ class WanAnimateRunner(WanRunner):
         target_len = real_len + extra
         return target_len
 
-    def get_i2v_mask(self, lat_t, lat_h, lat_w, mask_len=1, mask_pixel_values=None, device=AI_DEVICE):
+    def get_i2v_mask(
+        self, lat_t, lat_h, lat_w, mask_len=1, mask_pixel_values=None, device=AI_DEVICE
+    ):
         if mask_pixel_values is None:
-            msk = torch.zeros(1, (lat_t - 1) * 4 + 1, lat_h, lat_w, dtype=GET_DTYPE(), device=device)
+            msk = torch.zeros(
+                1, (lat_t - 1) * 4 + 1, lat_h, lat_w, dtype=GET_DTYPE(), device=device
+            )
         else:
             msk = mask_pixel_values.clone()
         msk[:, :mask_len] = 1
-        msk = torch.concat([torch.repeat_interleave(msk[:, 0:1], repeats=4, dim=1), msk[:, 1:]], dim=1)
+        msk = torch.concat(
+            [torch.repeat_interleave(msk[:, 0:1], repeats=4, dim=1), msk[:, 1:]], dim=1
+        )
         msk = msk.view(1, msk.shape[1] // 4, 4, lat_h, lat_w)
         msk = msk.transpose(1, 2)[0]
         return msk
@@ -151,7 +158,14 @@ class WanAnimateRunner(WanRunner):
             bg_pixel_values,
             mask_pixel_values,
         )
-        return {"image_encoder_output": {"clip_encoder_out": clip_encoder_out, "vae_encoder_out": vae_encoder_out, "pose_latents": pose_latents, "face_pixel_values": face_pixel_values}}
+        return {
+            "image_encoder_output": {
+                "clip_encoder_out": clip_encoder_out,
+                "vae_encoder_out": vae_encoder_out,
+                "pose_latents": pose_latents,
+                "face_pixel_values": face_pixel_values,
+            }
+        }
 
     @ProfilingContext4DebugL1(
         "Run VAE Encoder",
@@ -167,8 +181,12 @@ class WanAnimateRunner(WanRunner):
         mask_pixel_values,
     ):
         H, W = self.refer_pixel_values.shape[-2], self.refer_pixel_values.shape[-1]
-        pose_latents = self.vae_encoder.encode(conditioning_pixel_values.unsqueeze(0))  #  c t h w
-        ref_latents = self.vae_encoder.encode(self.refer_pixel_values.unsqueeze(1).unsqueeze(0))  #  c t h w
+        pose_latents = self.vae_encoder.encode(
+            conditioning_pixel_values.unsqueeze(0)
+        )  #  c t h w
+        ref_latents = self.vae_encoder.encode(
+            self.refer_pixel_values.unsqueeze(1).unsqueeze(0)
+        )  #  c t h w
 
         mask_ref = self.get_i2v_mask(1, self.latent_h, self.latent_w, 1)
         y_ref = torch.concat([mask_ref, ref_latents])
@@ -178,7 +196,9 @@ class WanAnimateRunner(WanRunner):
                 y_reft = self.vae_encoder.encode(
                     torch.concat(
                         [
-                            refer_t_pixel_values.unsqueeze(2)[0, :, : self.mask_reft_len],
+                            refer_t_pixel_values.unsqueeze(2)[
+                                0, :, : self.mask_reft_len
+                            ],
                             bg_pixel_values[:, self.mask_reft_len :],
                         ],
                         dim=1,
@@ -188,7 +208,9 @@ class WanAnimateRunner(WanRunner):
                 )
                 mask_pixel_values = 1 - mask_pixel_values
                 mask_pixel_values = mask_pixel_values.permute(1, 0, 2, 3)
-                mask_pixel_values = F.interpolate(mask_pixel_values, size=(H // 8, W // 8), mode="nearest")
+                mask_pixel_values = F.interpolate(
+                    mask_pixel_values, size=(H // 8, W // 8), mode="nearest"
+                )
                 mask_pixel_values = mask_pixel_values[:, 0, :, :]
 
                 msk_reft = self.get_i2v_mask(
@@ -203,23 +225,35 @@ class WanAnimateRunner(WanRunner):
                     torch.concat(
                         [
                             torch.nn.functional.interpolate(
-                                refer_t_pixel_values.unsqueeze(2)[0, :, : self.mask_reft_len].cpu(),
+                                refer_t_pixel_values.unsqueeze(2)[
+                                    0, :, : self.mask_reft_len
+                                ].cpu(),
                                 size=(H, W),
                                 mode="bicubic",
                             ),
-                            torch.zeros(3, self.config["target_video_length"] - self.mask_reft_len, H, W, dtype=GET_DTYPE()),
+                            torch.zeros(
+                                3,
+                                self.config["target_video_length"] - self.mask_reft_len,
+                                H,
+                                W,
+                                dtype=GET_DTYPE(),
+                            ),
                         ],
                         dim=1,
                     )
                     .to(AI_DEVICE)
                     .unsqueeze(0)
                 )
-                msk_reft = self.get_i2v_mask(self.latent_t, self.latent_h, self.latent_w, self.mask_reft_len)
+                msk_reft = self.get_i2v_mask(
+                    self.latent_t, self.latent_h, self.latent_w, self.mask_reft_len
+                )
         else:
             if self.config["replace_flag"]:
                 mask_pixel_values = 1 - mask_pixel_values
                 mask_pixel_values = mask_pixel_values.permute(1, 0, 2, 3)
-                mask_pixel_values = F.interpolate(mask_pixel_values, size=(H // 8, W // 8), mode="nearest")
+                mask_pixel_values = F.interpolate(
+                    mask_pixel_values, size=(H // 8, W // 8), mode="nearest"
+                )
                 mask_pixel_values = mask_pixel_values[:, 0, :, :]
                 y_reft = self.vae_encoder.encode(bg_pixel_values.unsqueeze(0))
                 msk_reft = self.get_i2v_mask(
@@ -230,8 +264,20 @@ class WanAnimateRunner(WanRunner):
                     mask_pixel_values=mask_pixel_values.unsqueeze(0),
                 )
             else:
-                y_reft = self.vae_encoder.encode(torch.zeros(1, 3, self.config["target_video_length"] - self.mask_reft_len, H, W, dtype=GET_DTYPE(), device=AI_DEVICE))
-                msk_reft = self.get_i2v_mask(self.latent_t, self.latent_h, self.latent_w, self.mask_reft_len)
+                y_reft = self.vae_encoder.encode(
+                    torch.zeros(
+                        1,
+                        3,
+                        self.config["target_video_length"] - self.mask_reft_len,
+                        H,
+                        W,
+                        dtype=GET_DTYPE(),
+                        device=AI_DEVICE,
+                    )
+                )
+                msk_reft = self.get_i2v_mask(
+                    self.latent_t, self.latent_h, self.latent_w, self.mask_reft_len
+                )
 
         y_reft = torch.concat([msk_reft, y_reft])
         y = torch.concat([y_ref, y_reft], dim=1)
@@ -242,36 +288,68 @@ class WanAnimateRunner(WanRunner):
         src_pose_path = self.input_info.src_pose_path
         src_face_path = self.input_info.src_face_path
         src_ref_path = self.input_info.src_ref_images
-        self.cond_images, self.face_images, self.refer_images = self.prepare_source(src_pose_path, src_face_path, src_ref_path)
-        self.refer_pixel_values = torch.tensor(self.refer_images / 127.5 - 1, dtype=GET_DTYPE(), device=AI_DEVICE).permute(2, 0, 1)  # chw
-        self.latent_t = self.config["target_video_length"] // self.config["vae_stride"][0] + 1
-        self.latent_h = self.refer_pixel_values.shape[-2] // self.config["vae_stride"][1]
-        self.latent_w = self.refer_pixel_values.shape[-1] // self.config["vae_stride"][2]
-        self.input_info.latent_shape = [self.config.get("num_channels_latents", 16), self.latent_t + 1, self.latent_h, self.latent_w]
+        self.cond_images, self.face_images, self.refer_images = self.prepare_source(
+            src_pose_path, src_face_path, src_ref_path
+        )
+        self.refer_pixel_values = torch.tensor(
+            self.refer_images / 127.5 - 1, dtype=GET_DTYPE(), device=AI_DEVICE
+        ).permute(
+            2, 0, 1
+        )  # chw
+        self.latent_t = (
+            self.config["target_video_length"] // self.config["vae_stride"][0] + 1
+        )
+        self.latent_h = (
+            self.refer_pixel_values.shape[-2] // self.config["vae_stride"][1]
+        )
+        self.latent_w = (
+            self.refer_pixel_values.shape[-1] // self.config["vae_stride"][2]
+        )
+        self.input_info.latent_shape = [
+            self.config.get("num_channels_latents", 16),
+            self.latent_t + 1,
+            self.latent_h,
+            self.latent_w,
+        ]
         self.real_frame_len = len(self.cond_images)
         target_len = self.get_valid_len(
             self.real_frame_len,
             self.config["target_video_length"],
             overlap=self.config["refert_num"] if "refert_num" in self.config else 1,
         )
-        logger.info("real frames: {} target frames: {}".format(self.real_frame_len, target_len))
+        logger.info(
+            "real frames: {} target frames: {}".format(self.real_frame_len, target_len)
+        )
         self.cond_images = self.inputs_padding(self.cond_images, target_len)
         self.face_images = self.inputs_padding(self.face_images, target_len)
 
         if self.config["replace_flag"] if "replace_flag" in self.config else False:
             src_bg_path = self.input_info.src_bg_path
             src_mask_path = self.input_info.src_mask_path
-            self.bg_images, self.mask_images = self.prepare_source_for_replace(src_bg_path, src_mask_path)
+            self.bg_images, self.mask_images = self.prepare_source_for_replace(
+                src_bg_path, src_mask_path
+            )
             self.bg_images = self.inputs_padding(self.bg_images, target_len)
             self.mask_images = self.inputs_padding(self.mask_images, target_len)
 
     def get_video_segment_num(self):
         total_frames = len(self.cond_images)
-        self.move_frames = self.config["target_video_length"] - self.config["refert_num"]
+        self.move_frames = (
+            self.config["target_video_length"] - self.config["refert_num"]
+        )
         if total_frames <= self.config["target_video_length"]:
             self.video_segment_num = 1
         else:
-            self.video_segment_num = 1 + (total_frames - self.config["target_video_length"] + self.move_frames - 1) // self.move_frames
+            self.video_segment_num = (
+                1
+                + (
+                    total_frames
+                    - self.config["target_video_length"]
+                    + self.move_frames
+                    - 1
+                )
+                // self.move_frames
+            )
 
     def init_run(self):
         self.all_out_frames = []
@@ -285,10 +363,14 @@ class WanAnimateRunner(WanRunner):
         metrics_labels=["WanAnimateRunner"],
     )
     def run_vae_decoder(self, latents):
-        if (self.config["lazy_load"] if "lazy_load" in self.config else False) or (self.config["unload_modules"] if "unload_modules" in self.config else False):
+        if (self.config["lazy_load"] if "lazy_load" in self.config else False) or (
+            self.config["unload_modules"] if "unload_modules" in self.config else False
+        ):
             self.vae_decoder = self.load_vae_decoder()
         images = self.vae_decoder.decode(latents[:, 1:].to(GET_DTYPE()))
-        if (self.config["lazy_load"] if "lazy_load" in self.config else False) or (self.config["unload_modules"] if "unload_modules" in self.config else False):
+        if (self.config["lazy_load"] if "lazy_load" in self.config else False) or (
+            self.config["unload_modules"] if "unload_modules" in self.config else False
+        ):
             del self.vae_decoder
             torch.cuda.empty_cache()
             gc.collect()
@@ -312,13 +394,17 @@ class WanAnimateRunner(WanRunner):
             np.stack(self.cond_images[start:end]) / 127.5 - 1,
             device=AI_DEVICE,
             dtype=GET_DTYPE(),
-        ).permute(3, 0, 1, 2)  # c t h w
+        ).permute(
+            3, 0, 1, 2
+        )  # c t h w
 
         face_pixel_values = torch.tensor(
             np.stack(self.face_images[start:end]) / 127.5 - 1,
             device=AI_DEVICE,
             dtype=GET_DTYPE(),
-        ).permute(0, 3, 1, 2)  # thwc->tchw
+        ).permute(
+            0, 3, 1, 2
+        )  # thwc->tchw
 
         if start == 0:
             height, width = self.refer_images.shape[:2]
@@ -331,7 +417,13 @@ class WanAnimateRunner(WanRunner):
                 dtype=GET_DTYPE(),
             )  # c t h w
         else:
-            refer_t_pixel_values = self.gen_video[0, :, -self.config["refert_num"] :].transpose(0, 1).clone().detach().to(AI_DEVICE)  # c t h w
+            refer_t_pixel_values = (
+                self.gen_video[0, :, -self.config["refert_num"] :]
+                .transpose(0, 1)
+                .clone()
+                .detach()
+                .to(AI_DEVICE)
+            )  # c t h w
 
         bg_pixel_values, mask_pixel_values = None, None
         if self.config["replace_flag"] if "replace_flag" in self.config else False:
@@ -339,13 +431,17 @@ class WanAnimateRunner(WanRunner):
                 np.stack(self.bg_images[start:end]) / 127.5 - 1,
                 device=AI_DEVICE,
                 dtype=GET_DTYPE(),
-            ).permute(3, 0, 1, 2)  # c t h w,
+            ).permute(
+                3, 0, 1, 2
+            )  # c t h w,
 
             mask_pixel_values = torch.tensor(
                 np.stack(self.mask_images[start:end])[:, :, :, None],
                 device=AI_DEVICE,
                 dtype=GET_DTYPE(),
-            ).permute(3, 0, 1, 2)  # c t h w,
+            ).permute(
+                3, 0, 1, 2
+            )  # c t h w,
 
         self.inputs.update(
             self.run_image_encoders(
@@ -358,7 +454,9 @@ class WanAnimateRunner(WanRunner):
         )
 
         if start != 0:
-            self.model.scheduler.reset(self.input_info.seed, self.input_info.latent_shape)
+            self.model.scheduler.reset(
+                self.input_info.seed, self.input_info.latent_shape
+            )
 
     def end_run_segment(self, segment_idx):
         if segment_idx != 0:
@@ -366,7 +464,9 @@ class WanAnimateRunner(WanRunner):
         self.all_out_frames.append(self.gen_video.cpu())
 
     def process_images_after_vae_decoder(self):
-        self.gen_video_final = torch.cat(self.all_out_frames, dim=2)[:, :, : self.real_frame_len]
+        self.gen_video_final = torch.cat(self.all_out_frames, dim=2)[
+            :, :, : self.real_frame_len
+        ]
         del self.all_out_frames
         gc.collect()
         super().process_images_after_vae_decoder()
@@ -378,31 +478,65 @@ class WanAnimateRunner(WanRunner):
         metrics_labels=["WanAnimateRunner"],
     )
     def run_image_encoder(self, img):  # CHW
-        if (self.config["lazy_load"] if "lazy_load" in self.config else False) or (self.config["unload_modules"] if "unload_modules" in self.config else False):
+        if (self.config["lazy_load"] if "lazy_load" in self.config else False) or (
+            self.config["unload_modules"] if "unload_modules" in self.config else False
+        ):
             self.image_encoder = self.load_image_encoder()
-        clip_encoder_out = self.image_encoder.visual([img.unsqueeze(0)]).squeeze(0).to(GET_DTYPE())
-        if (self.config["lazy_load"] if "lazy_load" in self.config else False) or (self.config["unload_modules"] if "unload_modules" in self.config else False):
+        clip_encoder_out = (
+            self.image_encoder.visual([img.unsqueeze(0)]).squeeze(0).to(GET_DTYPE())
+        )
+        if (self.config["lazy_load"] if "lazy_load" in self.config else False) or (
+            self.config["unload_modules"] if "unload_modules" in self.config else False
+        ):
             del self.image_encoder
             torch.cuda.empty_cache()
             gc.collect()
         return clip_encoder_out
 
     def load_transformer(self):
-        wan_model_kwargs = {"model_path": self.config["model_path"], "config": self.config, "device": self.init_device}
+        wan_model_kwargs = {
+            "model_path": self.config["model_path"],
+            "config": self.config,
+            "device": self.init_device,
+        }
         lora_configs = self.config.get("lora_configs")
         if not lora_configs:
             model = WanAnimateModel(**wan_model_kwargs)
         else:
-            model = build_wan_model_with_lora(WanAnimateModel, self.config, wan_model_kwargs, lora_configs, model_type="wan2.1")
+            model = build_wan_model_with_lora(
+                WanAnimateModel,
+                self.config,
+                wan_model_kwargs,
+                lora_configs,
+                model_type="wan2.1",
+            )
         motion_encoder, face_encoder = self.load_encoders()
         model.set_animate_encoders(motion_encoder, face_encoder)
         return model
 
     def load_encoders(self):
-        motion_encoder = Generator(size=512, style_dim=512, motion_dim=20).eval().requires_grad_(False).to(GET_DTYPE()).to(AI_DEVICE)
-        face_encoder = FaceEncoder(in_dim=512, hidden_dim=5120, num_heads=4).eval().requires_grad_(False).to(GET_DTYPE()).to(AI_DEVICE)
-        motion_weight_dict = remove_substrings_from_keys(load_weights(self.config["model_path"], include_keys=["motion_encoder"]), "motion_encoder.")
-        face_weight_dict = remove_substrings_from_keys(load_weights(self.config["model_path"], include_keys=["face_encoder"]), "face_encoder.")
+        motion_encoder = (
+            Generator(size=512, style_dim=512, motion_dim=20)
+            .eval()
+            .requires_grad_(False)
+            .to(GET_DTYPE())
+            .to(AI_DEVICE)
+        )
+        face_encoder = (
+            FaceEncoder(in_dim=512, hidden_dim=5120, num_heads=4)
+            .eval()
+            .requires_grad_(False)
+            .to(GET_DTYPE())
+            .to(AI_DEVICE)
+        )
+        motion_weight_dict = remove_substrings_from_keys(
+            load_weights(self.config["model_path"], include_keys=["motion_encoder"]),
+            "motion_encoder.",
+        )
+        face_weight_dict = remove_substrings_from_keys(
+            load_weights(self.config["model_path"], include_keys=["face_encoder"]),
+            "face_encoder.",
+        )
         motion_encoder.load_state_dict(motion_weight_dict)
         face_encoder.load_state_dict(face_weight_dict)
         return motion_encoder, face_encoder

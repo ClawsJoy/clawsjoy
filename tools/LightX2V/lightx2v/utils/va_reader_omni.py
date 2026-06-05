@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import datetime
 import json
 import os
@@ -17,6 +16,8 @@ import torch.distributed as dist
 import zmq
 from loguru import logger
 
+from lib.smart_config import smart_config
+
 try:
     from bson import BSON
 except ImportError:
@@ -34,13 +35,23 @@ class AudioInfo:
         self.pts = info["pts"]
 
     def is_spec_equal(self, other: "AudioInfo") -> bool:
-        return self.sample_fmt == other.sample_fmt and self.sample_rate == other.sample_rate and self.channel_count == other.channel_count
+        return (
+            self.sample_fmt == other.sample_fmt
+            and self.sample_rate == other.sample_rate
+            and self.channel_count == other.channel_count
+        )
 
     def duration(self) -> datetime.timedelta:
         return datetime.timedelta(seconds=self.sample_count / self.sample_rate)
 
     def __str__(self):
-        return "AudioInfo(sample_count={}, sample_rate={}, channel_count={}, sample_fmt={}, pts={})".format(self.sample_count, self.sample_rate, self.channel_count, self.sample_fmt, self.pts)
+        return "AudioInfo(sample_count={}, sample_rate={}, channel_count={}, sample_fmt={}, pts={})".format(
+            self.sample_count,
+            self.sample_rate,
+            self.channel_count,
+            self.sample_fmt,
+            self.pts,
+        )
 
 
 class ByteBuffer:
@@ -97,7 +108,9 @@ class ChatAdapter:
         huoshan_tts_voice_type,
         stream_config: dict,
     ):
-        assert os.path.exists(omni_work_dir), f"OMNI work directory {omni_work_dir} does not exist"
+        assert os.path.exists(
+            omni_work_dir
+        ), f"OMNI work directory {omni_work_dir} does not exist"
         self.omni_work_dir = omni_work_dir
         self.stream_config = stream_config
         self.context = zmq.Context()
@@ -140,7 +153,9 @@ class ChatAdapter:
             schema = json.load(f)
         jsonschema.validate(instance=override_config, schema=schema)
         if override_config is not None:
-            self.chat_server_cmd.extend(["--override-config", json.dumps(override_config)])
+            self.chat_server_cmd.extend(
+                ["--override-config", json.dumps(override_config)]
+            )
         self.chatter_proc = None
 
         self.seg_duration = seg_duration
@@ -154,10 +169,14 @@ class ChatAdapter:
     def launch_chat_server(self):
         env = {
             "RUST_LOG": "info,duplex_server=debug,backend_5o=debug",
-            "LD_LIBRARY_PATH": os.environ.get("LD_LIBRARY_PATH", "") + ":" + os.path.join(self.omni_work_dir, "lib/"),
+            "LD_LIBRARY_PATH": os.environ.get("LD_LIBRARY_PATH", "")
+            + ":"
+            + os.path.join(self.omni_work_dir, "lib/"),
             "PATH": os.environ["PATH"] + ":" + os.path.join(self.omni_work_dir, "bin/"),
         }
-        self.chatter_proc = subprocess.Popen(self.chat_server_cmd, env=env, cwd=self.omni_work_dir)
+        self.chatter_proc = subprocess.Popen(
+            self.chat_server_cmd, env=env, cwd=self.omni_work_dir
+        )
 
     @staticmethod
     def select_and_bind(socket: zmq.Socket) -> str:
@@ -193,7 +212,9 @@ class ChatAdapter:
         # only blank status and no action switch can be paused immediately
         if self.model_runner is not None and self.model_runner.can_pause:
             self.model_runner.pause_signal = True
-            logger.warning(f"Model runner set pause signal for image switch & blank status")
+            logger.warning(
+                f"Model runner set pause signal for image switch & blank status"
+            )
 
     def set_action_switch(self, prompt):
         logger.warning(f"Setting action switch: {prompt}")
@@ -201,7 +222,9 @@ class ChatAdapter:
         # only blank status can be paused immediately
         if self.model_runner is not None and self.model_runner.can_pause:
             self.model_runner.pause_signal = True
-            logger.warning(f"Model runner set pause signal for action switch & blank status")
+            logger.warning(
+                f"Model runner set pause signal for action switch & blank status"
+            )
 
     def recv_loop(self):
         while True:
@@ -221,7 +244,9 @@ class ChatAdapter:
                         continue
                     pcm_data = audio["data"]
                     audio_info = AudioInfo(audio["info"])
-                    logger.debug("Received audio with duration: {}".format(audio_info.duration()))
+                    logger.debug(
+                        "Received audio with duration: {}".format(audio_info.duration())
+                    )
                     if self.audio_info is None:
                         self.audio_info = audio_info
                     else:
@@ -258,10 +283,19 @@ class ChatAdapter:
     def has_voice(self, duration) -> bool:
         if self.audio_info is None or self.audio_buffer.current_size == 0:
             return False
-        bytes_count = round(duration * self.audio_info.sample_rate) * self.audio_info.channel_count * 2  # S16LE assumed
+        bytes_count = (
+            round(duration * self.audio_info.sample_rate)
+            * self.audio_info.channel_count
+            * 2
+        )  # S16LE assumed
         # if not has enough bytes and maybe has more voice, return False
-        if self.audio_buffer.current_size < bytes_count and self.audio_buffer.has_more_voice():
-            logger.warning(f"Not enough bytes and maybe has more voice, content_size: {self.audio_buffer.current_size}, bytes_count: {bytes_count}")
+        if (
+            self.audio_buffer.current_size < bytes_count
+            and self.audio_buffer.has_more_voice()
+        ):
+            logger.warning(
+                f"Not enough bytes and maybe has more voice, content_size: {self.audio_buffer.current_size}, bytes_count: {bytes_count}"
+            )
             return False
         return bytes_count
 
@@ -274,7 +308,11 @@ class ChatAdapter:
         # the actual sample count fetched
         sample_count = len(pcm_data) // (self.audio_info.channel_count * 2)
         logger.debug("Fetched {} bytes audio".format(sample_count))
-        logger.debug("After fetch, there are {} bytes left".format(self.audio_buffer.current_size))
+        logger.debug(
+            "After fetch, there are {} bytes left".format(
+                self.audio_buffer.current_size
+            )
+        )
         audio_info = deepcopy(self.audio_info)
         audio_info.sample_count = sample_count
         return (pcm_data, audio_info)
@@ -323,8 +361,12 @@ class OmniVAReader:
 
         self.target_rank = target_rank % self.world_size
         self.flag_tensor = torch.tensor([0], dtype=torch.int32).to(device="cuda")
-        self.valid_duration_tensor = torch.tensor([0], dtype=torch.float32).to(device="cuda")
-        self.immediate_switch_tensor = torch.tensor([0], dtype=torch.int32).to(device="cuda")
+        self.valid_duration_tensor = torch.tensor([0], dtype=torch.float32).to(
+            device="cuda"
+        )
+        self.immediate_switch_tensor = torch.tensor([0], dtype=torch.int32).to(
+            device="cuda"
+        )
         chunk_size = int(self.segment_duration * self.sample_rate) * 2
         self.audio_tensor = torch.zeros(chunk_size, dtype=torch.uint8, device="cuda")
         self.chat_adapter = None
@@ -333,8 +375,12 @@ class OmniVAReader:
         self.stream_config = stream_config
 
         assert self.audio_channels == 1, "Only mono audio is supported for OmniVAReader"
-        logger.info(f"VAReader initialized for stream: {stream_url} target_rank: {self.target_rank}")
-        logger.info(f"Audio duration per chunk: {segment_duration}s, sample rate: {sample_rate}Hz")
+        logger.info(
+            f"VAReader initialized for stream: {stream_url} target_rank: {self.target_rank}"
+        )
+        logger.info(
+            f"Audio duration per chunk: {segment_duration}s, sample rate: {sample_rate}Hz"
+        )
 
     def init_omni_env(self):
         self.omni_work_dir = os.getenv("OMNI_WORK_DIR", "/path/of/seko_chatter/")
@@ -342,8 +388,12 @@ class OmniVAReader:
         self.account = os.getenv("OMNI_ACCOUNT", "")
         self.config_files = os.getenv("OMNI_CONFIG_FILES", "").split(",")
         self.config_schema_path = os.getenv("OMNI_CONFIG_SCHEMA_PATH", None)
-        assert os.path.exists(self.omni_work_dir), f"OMNI work directory {self.omni_work_dir} does not exist"
-        assert self.session_id and self.account, "OMNI_SESSION_ID and OMNI_ACCOUNT are required"
+        assert os.path.exists(
+            self.omni_work_dir
+        ), f"OMNI work directory {self.omni_work_dir} does not exist"
+        assert (
+            self.session_id and self.account
+        ), "OMNI_SESSION_ID and OMNI_ACCOUNT are required"
         logger.info(
             f"OMNI work directory: {self.omni_work_dir}, session_id: {self.session_id}, account: {self.account}, config_files: {self.config_files}, config_schema_path: {self.config_schema_path}"
         )
@@ -351,7 +401,9 @@ class OmniVAReader:
     def start(self):
         if self.rank == self.target_rank:
             self.init_omni_env()
-            assert self.stream_url.startswith("http"), "Only HTTP stream is supported for OmniVAReader"
+            assert self.stream_url.startswith(
+                "http"
+            ), "Only HTTP stream is supported for OmniVAReader"
             self.chat_adapter = ChatAdapter(
                 omni_work_dir=self.omni_work_dir,
                 whep_url=self.stream_url,
@@ -365,7 +417,9 @@ class OmniVAReader:
                 stream_config=self.stream_config,
             )
             self.chat_adapter.start()
-            logger.info(f"OmniVAReader {self.rank}/{self.world_size} started successfully")
+            logger.info(
+                f"OmniVAReader {self.rank}/{self.world_size} started successfully"
+            )
         else:
             logger.info(f"OmniVAReader {self.rank}/{self.world_size} wait only")
         if self.world_size > 1:
@@ -379,7 +433,9 @@ class OmniVAReader:
                 self.flag_tensor.fill_(0)
             else:
                 self.flag_tensor.fill_(1)
-                self.audio_tensor.copy_(torch.frombuffer(bytearray(audio_data), dtype=torch.uint8))
+                self.audio_tensor.copy_(
+                    torch.frombuffer(bytearray(audio_data), dtype=torch.uint8)
+                )
                 # logger.info(f"rank {self.rank} send audio_tensor: {self.audio_tensor.shape}")
 
         dist.broadcast(self.flag_tensor, src=self.target_rank)
@@ -409,7 +465,9 @@ class OmniVAReader:
     def convert_pcm_s16le_to_mono_resampled(self, audio_data, audio_info):
         audio = np.frombuffer(audio_data, dtype=np.int16)
         sample_count = audio_info.sample_count
-        assert len(audio) == sample_count * audio_info.channel_count, f"audio length {len(audio)} != sample_count * channel_count {sample_count * audio_info.channel_count}"
+        assert (
+            len(audio) == sample_count * audio_info.channel_count
+        ), f"audio length {len(audio)} != sample_count * channel_count {sample_count * audio_info.channel_count}"
         # convert to mono
         if audio_info.channel_count > 1:
             audio = audio.reshape(-1, audio_info.channel_count).mean(axis=1)
@@ -419,7 +477,9 @@ class OmniVAReader:
             sample_count = int(len(audio) * self.sample_rate / audio_info.sample_rate)
             audio = resample(audio, sample_count).astype(np.int16)
             # logger.info(f"resampled audio: {audio.shape} {audio.dtype} {audio.min()} {audio.max()} {sample_count}")
-        logger.warning(f"valid audio: {audio.shape} {audio.dtype} {audio.min()} {audio.max()} {sample_count}")
+        logger.warning(
+            f"valid audio: {audio.shape} {audio.dtype} {audio.min()} {audio.max()} {sample_count}"
+        )
         return audio, sample_count
 
     def prepare_audio_data(self, chat_audio_result):
@@ -429,14 +489,18 @@ class OmniVAReader:
         # convert chat audio result to mono and target sample rate
         if chat_audio_result is not None:
             audio_data, audio_info = chat_audio_result
-            audio, sample_count = self.convert_pcm_s16le_to_mono_resampled(audio_data, audio_info)
+            audio, sample_count = self.convert_pcm_s16le_to_mono_resampled(
+                audio_data, audio_info
+            )
         valid_duration = sample_count / self.sample_rate
 
         # if is not the first segment, concat with previous segment
         if self.prev_seg_chunk is not None:
             audio = np.concatenate([self.prev_seg_chunk, audio])
             sample_count = len(audio)
-        assert sample_count <= self.all_seg_sample_count, f"audio length {sample_count} > all_seg_sample_count {self.all_seg_sample_count}"
+        assert (
+            sample_count <= self.all_seg_sample_count
+        ), f"audio length {sample_count} > all_seg_sample_count {self.all_seg_sample_count}"
 
         # pad 0 to the audio to make it the same length as all_seg_sample_count
         if sample_count < self.all_seg_sample_count:
@@ -466,7 +530,9 @@ class OmniVAReader:
         if segment_duration is None or self.segment_duration == segment_duration:
             return
         if self.rank == self.target_rank:
-            logger.warning(f"segment duration changed: {self.segment_duration} -> {segment_duration}")
+            logger.warning(
+                f"segment duration changed: {self.segment_duration} -> {segment_duration}"
+            )
         self.segment_duration = segment_duration
         self.all_seg_sample_count = int(self.segment_duration * self.sample_rate)
         chunk_size = int(self.segment_duration * self.sample_rate) * 2
@@ -474,7 +540,9 @@ class OmniVAReader:
         if self.chat_adapter is not None:
             self.chat_adapter.seg_duration = segment_duration
 
-    def get_audio_segment(self, fetch_duration: float = None, prev_duration: float = None):
+    def get_audio_segment(
+        self, fetch_duration: float = None, prev_duration: float = None
+    ):
         audio_data = None
         valid_duration = 0
         if prev_duration is not None and self.prev_duration != prev_duration:
@@ -490,7 +558,9 @@ class OmniVAReader:
                     audio_data, valid_duration = self.prepare_audio_data(audio_result)
                     # think all voice segments inferred, naturally switch to blank
                     if audio_result is None:
-                        logger.info(f"Think all voice segments inferred, naturally switch to blank")
+                        logger.info(
+                            f"Think all voice segments inferred, naturally switch to blank"
+                        )
                         self.chat_adapter.status = "blank"
                 else:
                     audio_data, valid_duration = self.prepare_audio_data(None)
@@ -505,7 +575,10 @@ class OmniVAReader:
 
     def get_immediate_switch(self):
         if self.rank == self.target_rank:
-            if self.chat_adapter is not None and self.chat_adapter.immediate_switch == 1:
+            if (
+                self.chat_adapter is not None
+                and self.chat_adapter.immediate_switch == 1
+            ):
                 self.immediate_switch_tensor.fill_(1)
                 # reset immediate switch
                 self.chat_adapter.immediate_switch = 0
@@ -585,7 +658,9 @@ if __name__ == "__main__":
         while True:
             audio_data = reader.get_audio_segment(timeout=1)
             if audio_data is not None:
-                logger.info(f"Got audio chunk, shape: {audio_data.shape}, range: [{audio_data.min()}, {audio_data.max()}]")
+                logger.info(
+                    f"Got audio chunk, shape: {audio_data.shape}, range: [{audio_data.min()}, {audio_data.max()}]"
+                )
                 fail_count = 0
             else:
                 fail_count += 1

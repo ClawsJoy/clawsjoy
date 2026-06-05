@@ -1,10 +1,11 @@
-from lib.smart_config import smart_config
 import torch
-from loguru import logger
-
 from lightx2v.common.kvcache import KVCacheManager
 from lightx2v.models.networks.wan.lingbot_fast_model import WanLingbotFastModel
-from lightx2v.models.runners.wan.wan_runner import LingbotRunner, WanRunner, build_wan_model_with_lora
+from lightx2v.models.runners.wan.wan_runner import (
+    LingbotRunner,
+    WanRunner,
+    build_wan_model_with_lora,
+)
 from lightx2v.models.schedulers.wan.self_forcing.scheduler import WanSFScheduler
 from lightx2v.server.metrics import monitor_cli
 from lightx2v.utils.envs import *
@@ -12,6 +13,9 @@ from lightx2v.utils.profiler import *
 from lightx2v.utils.registry_factory import RUNNER_REGISTER
 from lightx2v.utils.utils import get_rank_and_world_size, wan_vae_to_comfy
 from lightx2v.utils.video_recorder import VideoRecorder
+from loguru import logger
+
+from lib.smart_config import smart_config
 
 try:
     import torch.distributed as dist
@@ -47,19 +51,37 @@ class LingbotFastRunner(LingbotRunner):
         if not lora_configs:
             model = WanLingbotFastModel(**wan_model_kwargs)
         else:
-            model = build_wan_model_with_lora(WanLingbotFastModel, self.config, wan_model_kwargs, lora_configs, model_type="wan2.1")
+            model = build_wan_model_with_lora(
+                WanLingbotFastModel,
+                self.config,
+                wan_model_kwargs,
+                lora_configs,
+                model_type="wan2.1",
+            )
         return model
 
     def init_scheduler(self):
         self.scheduler = WanSFScheduler(self.config)
 
     def init_kv_cache_manager(self):
-        self.model.kv_cache_manager = KVCacheManager(config=self.config, device=torch.device("cuda"), sp_group=self.model.seq_p_group)
+        self.model.kv_cache_manager = KVCacheManager(
+            config=self.config,
+            device=torch.device("cuda"),
+            sp_group=self.model.seq_p_group,
+        )
         self.model.kv_cache_manager._create_kv_caches(self.input_info.latent_shape)
         self.model.transformer_infer.kv_cache_manager = self.model.kv_cache_manager
-        self.input_info.latent_shape = [self.input_info.latent_shape[0], self.model.kv_cache_manager.num_output_frames, self.input_info.latent_shape[2], self.input_info.latent_shape[3]]
+        self.input_info.latent_shape = [
+            self.input_info.latent_shape[0],
+            self.model.kv_cache_manager.num_output_frames,
+            self.input_info.latent_shape[2],
+            self.input_info.latent_shape[3],
+        ]
         self.scheduler.num_output_frames = self.model.kv_cache_manager.num_output_frames
-        self.scheduler.num_chunks = self.model.kv_cache_manager.num_output_frames // self.config.get("ar_config", {}).get("num_frame_per_chunk", 3)
+        self.scheduler.num_chunks = (
+            self.model.kv_cache_manager.num_output_frames
+            // self.config.get("ar_config", {}).get("num_frame_per_chunk", 3)
+        )
 
     def get_video_segment_num(self):
         self.video_segment_num = self.scheduler.num_chunks
@@ -73,7 +95,9 @@ class LingbotFastRunner(LingbotRunner):
             self.model.kv_cache_manager.current_step = step_index
 
             with ProfilingContext4DebugL1("step_pre"):
-                self.model.scheduler.step_pre(seg_index=segment_idx, step_index=step_index, is_rerun=False)
+                self.model.scheduler.step_pre(
+                    seg_index=segment_idx, step_index=step_index, is_rerun=False
+                )
 
             with ProfilingContext4DebugL1("infer_main"):
                 self.model.infer(self.inputs)
@@ -149,7 +173,10 @@ class LingbotFastRunner(LingbotRunner):
         rank, world_size = get_rank_and_world_size()
         if output_video_path and rank == world_size - 1:
             record_fps = self.config.get("target_fps", 16)
-            if "video_frame_interpolation" in self.config and self.vfi_model is not None:
+            if (
+                "video_frame_interpolation" in self.config
+                and self.vfi_model is not None
+            ):
                 record_fps = self.config["video_frame_interpolation"]["target_fps"]
             self.video_recorder = VideoRecorder(
                 livestream_url=output_video_path,
@@ -159,11 +186,19 @@ class LingbotFastRunner(LingbotRunner):
     @ProfilingContext4DebugL1("End run segment")
     def end_run_segment(self, segment_idx=None):
         with ProfilingContext4DebugL1("step_pre_in_rerun"):
-            self.model.scheduler.step_pre(seg_index=segment_idx, step_index=self.model.scheduler.infer_steps - 1, is_rerun=True)
+            self.model.scheduler.step_pre(
+                seg_index=segment_idx,
+                step_index=self.model.scheduler.infer_steps - 1,
+                is_rerun=True,
+            )
         with ProfilingContext4DebugL1("infer_main_in_rerun"):
             self.model.infer(self.inputs)
 
-        self.gen_video_final = torch.cat([self.gen_video_final, self.gen_video], dim=0) if self.gen_video_final is not None else self.gen_video
+        self.gen_video_final = (
+            torch.cat([self.gen_video_final, self.gen_video], dim=0)
+            if self.gen_video_final is not None
+            else self.gen_video
+        )
         if self.is_live:
             if self.video_recorder:
                 stream_video = wan_vae_to_comfy(self.gen_video)

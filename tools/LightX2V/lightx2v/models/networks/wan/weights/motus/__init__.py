@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 from ._shared import apply_mm
 from .post_weights import MotusActionPostWeights, MotusPostWeights
 from .pre_weights import (

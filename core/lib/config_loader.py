@@ -3,21 +3,22 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
 import os
 from pathlib import Path
-from core.lib.unified_config import unified_config
+
 from core.lib.config_helper import (
     get_data_root,
-    get_llm_endpoint,
-    get_llm_model,
     get_embedding_model,
     get_gateway_port,
-    get_timeout
+    get_llm_endpoint,
+    get_llm_model,
+    get_timeout,
 )
+from core.lib.unified_config import unified_config
 
 
 class ConfigLoader:
@@ -38,11 +39,16 @@ class ConfigLoader:
 
     @staticmethod
     def get_model() -> str:
-        return os.environ.get("LLM_MODEL", unified_config.get("llm.default_model", get_llm_model()))
+        return os.environ.get(
+            "LLM_MODEL", unified_config.get("llm.default_model", get_llm_model())
+        )
 
     @staticmethod
     def get_fast_model() -> str:
-        return os.environ.get("LLM_FAST_MODEL", unified_config.get("llm.fast_model", get_llm_model(fast=True)))
+        return os.environ.get(
+            "LLM_FAST_MODEL",
+            unified_config.get("llm.fast_model", get_llm_model(fast=True)),
+        )
 
 
 # 导出实例
@@ -53,12 +59,12 @@ config = config_loader
 
 # 导出函数（兼容旧代码）
 __all__ = [
-    'config_loader',
-    'config',
-    'get_data_root',
-    'get_llm_endpoint',
-    'get_llm_model',
-    'get_embedding_model',
-    'get_gateway_port',
-    'get_timeout'
+    "config_loader",
+    "config",
+    "get_data_root",
+    "get_llm_endpoint",
+    "get_llm_model",
+    "get_embedding_model",
+    "get_gateway_port",
+    "get_timeout",
 ]

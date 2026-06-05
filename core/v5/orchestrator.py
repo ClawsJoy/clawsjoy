@@ -3,28 +3,28 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
-from typing import Dict, List, Any
 import threading
 import time
+from typing import Any, Dict, List
 
 
 class AgentOrchestrator:
     """Agent 编排器"""
-    
+
     def __init__(self):
         self.agents: Dict[str, Any] = {}
         self.tasks: List[Dict] = []
         self.results: Dict[str, Any] = {}
-    
+
     def register_agent(self, name: str, agent_instance):
         """注册 Agent"""
         self.agents[name] = agent_instance
         print(f"   ✅ 注册 Agent: {name}")
-    
+
     def orchestrate(self, task: str, context: Dict = None) -> Dict:
         """编排任务"""
         # 分析任务类型
@@ -36,37 +36,37 @@ class AgentOrchestrator:
             return self._execute_analyze_task(task, context)
         else:
             return self._execute_chat_task(task, context)
-    
+
     def _execute_code_task(self, task: str, context: Dict) -> Dict:
         """执行代码任务"""
         return {
             "success": True,
             "agent": "code_agent",
-            "response": f"代码任务: {task[:50]}...\n建议使用 code_review 技能进行审查"
+            "response": f"代码任务: {task[:50]}...\n建议使用 code_review 技能进行审查",
         }
-    
+
     def _execute_translate_task(self, task: str, context: Dict) -> Dict:
         """执行翻译任务"""
         return {
             "success": True,
             "agent": "translate_agent",
-            "response": f"翻译任务: {task[:50]}...\n可使用 translate 技能"
+            "response": f"翻译任务: {task[:50]}...\n可使用 translate 技能",
         }
-    
+
     def _execute_analyze_task(self, task: str, context: Dict) -> Dict:
         """执行分析任务"""
         return {
             "success": True,
             "agent": "analysis_agent",
-            "response": f"分析任务: {task[:50]}..."
+            "response": f"分析任务: {task[:50]}...",
         }
-    
+
     def _execute_chat_task(self, task: str, context: Dict) -> Dict:
         """执行对话任务"""
         return {
             "success": True,
             "agent": "chat_agent",
-            "response": f"收到: {task[:100]}"
+            "response": f"收到: {task[:100]}",
         }
 
 

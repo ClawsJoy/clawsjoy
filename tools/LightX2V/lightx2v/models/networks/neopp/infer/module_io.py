@@ -1,8 +1,9 @@
-from lib.smart_config import smart_config
 from dataclasses import dataclass
 from typing import Optional
 
 import torch
+
+from lib.smart_config import smart_config
 
 
 @dataclass

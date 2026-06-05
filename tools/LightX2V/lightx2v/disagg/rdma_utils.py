@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 from __future__ import annotations
 
 import ipaddress
@@ -7,6 +6,8 @@ import logging
 import os
 import socket
 import time
+
+from lib.smart_config import smart_config
 
 logger = logging.getLogger(__name__)
 

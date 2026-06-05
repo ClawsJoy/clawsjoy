@@ -1,10 +1,11 @@
-from lib.smart_config import smart_config
 from lightx2v.common.modules.weight_module import WeightModule, WeightModuleList
 from lightx2v.utils.registry_factory import (
     ATTN_WEIGHT_REGISTER,
     MM_WEIGHT_REGISTER,
     RMS_WEIGHT_REGISTER,
 )
+
+from lib.smart_config import smart_config
 
 
 class ZImageTransformerWeights(WeightModule):
@@ -22,7 +23,18 @@ class ZImageTransformerWeights(WeightModule):
         self.add_module(
             "blocks",
             WeightModuleList(
-                ZImageTransformerBlock(i, self.task, self.mm_type, self.config, False, False, "layers", lazy_load=self.lazy_load, lazy_load_path=lazy_load_path) for i in range(self.blocks_num)
+                ZImageTransformerBlock(
+                    i,
+                    self.task,
+                    self.mm_type,
+                    self.config,
+                    False,
+                    False,
+                    "layers",
+                    lazy_load=self.lazy_load,
+                    lazy_load_path=lazy_load_path,
+                )
+                for i in range(self.blocks_num)
             ),
         )
 
@@ -80,7 +92,9 @@ class ZImageTransformerWeights(WeightModule):
                         for i in range(self.offload_blocks_num)
                     ]
                 )
-                self.add_module("offload_block_cuda_buffers", self.offload_block_cuda_buffers)
+                self.add_module(
+                    "offload_block_cuda_buffers", self.offload_block_cuda_buffers
+                )
                 self.offload_phase_cuda_buffers = None
                 if self.lazy_load:
                     self.offload_blocks_num = 2
@@ -101,7 +115,9 @@ class ZImageTransformerWeights(WeightModule):
                             for i in range(self.offload_blocks_num)
                         ]
                     )
-                    self.add_module("offload_block_cpu_buffers", self.offload_block_cpu_buffers)
+                    self.add_module(
+                        "offload_block_cpu_buffers", self.offload_block_cpu_buffers
+                    )
                     self.offload_phase_cpu_buffers = None
 
     def non_block_weights_to_cuda(self):
@@ -372,7 +388,9 @@ class ZImageAttention(WeightModule):
         if self.config["seq_parallel"]:
             self.add_module(
                 "calculate_parallel",
-                ATTN_WEIGHT_REGISTER[self.config["parallel"].get("seq_p_attn_type", "ulysses")](),
+                ATTN_WEIGHT_REGISTER[
+                    self.config["parallel"].get("seq_p_attn_type", "ulysses")
+                ](),
             )
 
     def to_cpu(self, non_blocking=True):

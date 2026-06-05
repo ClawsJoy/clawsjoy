@@ -1,6 +1,8 @@
 """生命周期 Agent - 6/6 闭环，符合新框架 v3.0"""
-from typing import Dict, Optional
+
 from datetime import datetime
+from typing import Dict, Optional
+
 from core.agents.base.smart_agent import SmartAgent
 
 
@@ -25,7 +27,7 @@ class LifeCycleAgent(SmartAgent):
             "monitor": {},
             "learning": {},
             "memory": {},
-            "history": []
+            "history": [],
         }
 
     # ========== 6/6 闭环核心方法 ==========
@@ -36,7 +38,7 @@ class LifeCycleAgent(SmartAgent):
             "input": user_input,
             "intent": self._detect_intent(user_input),
             "entities": self._extract_entities(user_input),
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
     def _detect_intent(self, text: str) -> str:
@@ -66,7 +68,7 @@ class LifeCycleAgent(SmartAgent):
             "analysis": {"action": "analyze", "priority": 2},
             "decision": {"action": "decide", "priority": 1},
             "execute": {"action": "execute", "priority": 3},
-            "chat": {"action": "respond", "priority": 4}
+            "chat": {"action": "respond", "priority": 4},
         }
 
         decision = decision_map.get(intent, decision_map["chat"])
@@ -83,7 +85,7 @@ class LifeCycleAgent(SmartAgent):
             "analyze": {"result": "分析完成", "data": {}},
             "decide": {"result": "决策已做出", "data": {"recommendation": "建议继续"}},
             "execute": {"result": "执行完成", "data": {"status": "success"}},
-            "respond": {"result": "已响应", "data": {"response": "收到消息"}}
+            "respond": {"result": "已响应", "data": {"response": "收到消息"}},
         }
 
         result = action_results.get(action, action_results["respond"])
@@ -96,12 +98,9 @@ class LifeCycleAgent(SmartAgent):
         """4. 监控阶段 - 监控执行结果"""
         return {
             "success": True,
-            "metrics": {
-                "response_time": 0.01,
-                "confidence": 0.9
-            },
+            "metrics": {"response_time": 0.01, "confidence": 0.9},
             "issues": [],
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
     def _learn(self, monitor_result: Dict) -> Dict:
@@ -115,31 +114,28 @@ class LifeCycleAgent(SmartAgent):
             "learned": True,
             "insights": [insight],
             "confidence_delta": 0.05,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
     def _remember(self, learn_result: Dict) -> Dict:
         """6. 记忆阶段 - 存储学习结果"""
         # 记录到闭环历史
-        self.closed_loop_data["history"].append({
-            "learning": learn_result,
-            "timestamp": datetime.now().isoformat()
-        })
+        self.closed_loop_data["history"].append(
+            {"learning": learn_result, "timestamp": datetime.now().isoformat()}
+        )
 
         # 限制历史长度
         if len(self.closed_loop_data["history"]) > 100:
             self.closed_loop_data["history"] = self.closed_loop_data["history"][-100:]
 
-        return {
-            "stored": True,
-            "history_length": len(self.closed_loop_data["history"])
-        }
+        return {"stored": True, "history_length": len(self.closed_loop_data["history"])}
 
     # ========== 主动服务方法 ==========
 
     def _should_serve(self) -> bool:
         """判断是否应该主动服务"""
         from datetime import datetime
+
         hour = datetime.now().hour
         # 早上9点主动问候
         return hour == 9
@@ -147,6 +143,7 @@ class LifeCycleAgent(SmartAgent):
     def _get_proactive_message(self) -> str:
         """获取主动服务消息"""
         from datetime import datetime
+
         hour = datetime.now().hour
 
         if hour == 9:
@@ -197,11 +194,13 @@ class LifeCycleAgent(SmartAgent):
                 "perception": perception.get("intent"),
                 "decision": decision.get("action"),
                 "action": action_result.get("action"),
-                "confidence": decision.get("confidence", 0)
-            }
+                "confidence": decision.get("confidence", 0),
+            },
         }
 
-    def _generate_response(self, perception: Dict, decision: Dict, action_result: Dict) -> str:
+    def _generate_response(
+        self, perception: Dict, decision: Dict, action_result: Dict
+    ) -> str:
         """生成响应"""
         intent = perception.get("intent", "chat")
         action = decision.get("action", "respond")
@@ -223,10 +222,10 @@ class LifeCycleAgent(SmartAgent):
             "current": {
                 "perception": self.closed_loop_data.get("perception", {}),
                 "decision": self.closed_loop_data.get("decision", {}),
-                "action": self.closed_loop_data.get("action", {})
+                "action": self.closed_loop_data.get("action", {}),
             },
             "history_length": len(self.closed_loop_data.get("history", [])),
-            "phases": ["perceive", "decide", "act", "monitor", "learn", "remember"]
+            "phases": ["perceive", "decide", "act", "monitor", "learn", "remember"],
         }
 
     def get_health_score(self) -> int:

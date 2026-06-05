@@ -3,7 +3,7 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
@@ -19,14 +19,29 @@ class AgentHealthCheck:
 
         # 内置 Agent 列表
         self.builtin_agents = [
-            'orchestrator', 'decision_agent', 'executor_agent',
-            'analysis_agent', 'chat_agent', 'code_agent',
-            'collaboration_agent', 'memory_agent', 'security_agent',
-            'video_agent', 'youtube_agent', 'translate_agent',
-            'dialect_agent', 'collector_agent', 'hermes_agent',
-            'analyst_agent', 'copywriter_agent', 'frontend_agent',
-            'life_cycle_agent', 'memory_manager', 'do_anything',
-            'test_agent_001', 'inheritance_test_agent'
+            "orchestrator",
+            "decision_agent",
+            "executor_agent",
+            "analysis_agent",
+            "chat_agent",
+            "code_agent",
+            "collaboration_agent",
+            "memory_agent",
+            "security_agent",
+            "video_agent",
+            "youtube_agent",
+            "translate_agent",
+            "dialect_agent",
+            "collector_agent",
+            "hermes_agent",
+            "analyst_agent",
+            "copywriter_agent",
+            "frontend_agent",
+            "life_cycle_agent",
+            "memory_manager",
+            "do_anything",
+            "test_agent_001",
+            "inheritance_test_agent",
         ]
 
     def check_agent(self, agent_id: str) -> Dict:
@@ -40,16 +55,15 @@ class AgentHealthCheck:
         # 记录历史
         if agent_id not in self.health_history:
             self.health_history[agent_id] = []
-        self.health_history[agent_id].append({
-            "timestamp": datetime.now().isoformat(),
-            "status": status
-        })
+        self.health_history[agent_id].append(
+            {"timestamp": datetime.now().isoformat(), "status": status}
+        )
         self.health_history[agent_id] = self.health_history[agent_id][-10:]
 
         return {
             "agent": agent_id,
             "status": status,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
     def check_all(self) -> Dict:
@@ -62,14 +76,16 @@ class AgentHealthCheck:
     def get_summary(self) -> Dict:
         """获取健康摘要"""
         results = self.check_all()
-        healthy = sum(1 for r in results.values() if r.get('status') == 'healthy')
-        unhealthy_agents = [aid for aid, r in results.items() if r.get('status') != 'healthy']
+        healthy = sum(1 for r in results.values() if r.get("status") == "healthy")
+        unhealthy_agents = [
+            aid for aid, r in results.items() if r.get("status") != "healthy"
+        ]
         return {
             "total": len(results),
             "healthy": healthy,
             "unhealthy": len(results) - healthy,
             "unhealthy_agents": unhealthy_agents,
-            "details": results
+            "details": results,
         }
 
 

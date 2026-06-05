@@ -1,9 +1,11 @@
-#!/usr/bin/env python3
-"""Init - Init 模块
-
-@version: 5.0.0
-@author: ClawsJoy
-@date: 2026-05-31
+"""
+self_heal 技能模块
 """
 
-# 空分类，待添加技能
+from .self_heal_skill import SelfHeal
+
+
+def execute(params=None):
+    """统一执行入口"""
+    skill = SelfHeal()
+    return skill.execute(params)

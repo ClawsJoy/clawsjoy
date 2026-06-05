@@ -1,19 +1,35 @@
-from lib.smart_config import smart_config
 from typing import NamedTuple, Set, Tuple
 
 import torch
 import torch.nn.functional as F
-
 from lightx2v.models.schedulers.ltx2.scheduler import AudioPatchifier
-from lightx2v.models.video_encoders.hf.ltx2.audio_vae.attention import AttentionType, make_attn
+from lightx2v.models.video_encoders.hf.ltx2.audio_vae.attention import (
+    AttentionType,
+    make_attn,
+)
 from lightx2v.models.video_encoders.hf.ltx2.audio_vae.causal_conv_2d import make_conv2d
-from lightx2v.models.video_encoders.hf.ltx2.audio_vae.causality_axis import CausalityAxis
-from lightx2v.models.video_encoders.hf.ltx2.audio_vae.downsample import build_downsampling_path
-from lightx2v.models.video_encoders.hf.ltx2.audio_vae.ops import Audio, AudioProcessor, PerChannelStatistics
+from lightx2v.models.video_encoders.hf.ltx2.audio_vae.causality_axis import (
+    CausalityAxis,
+)
+from lightx2v.models.video_encoders.hf.ltx2.audio_vae.downsample import (
+    build_downsampling_path,
+)
+from lightx2v.models.video_encoders.hf.ltx2.audio_vae.ops import (
+    Audio,
+    AudioProcessor,
+    PerChannelStatistics,
+)
 from lightx2v.models.video_encoders.hf.ltx2.audio_vae.resnet import ResnetBlock
-from lightx2v.models.video_encoders.hf.ltx2.audio_vae.upsample import build_upsampling_path
+from lightx2v.models.video_encoders.hf.ltx2.audio_vae.upsample import (
+    build_upsampling_path,
+)
 from lightx2v.models.video_encoders.hf.ltx2.audio_vae.vocoder import Vocoder
-from lightx2v.models.video_encoders.hf.ltx2.video_vae.normalization import NormType, build_normalization_layer
+from lightx2v.models.video_encoders.hf.ltx2.video_vae.normalization import (
+    NormType,
+    build_normalization_layer,
+)
+
+from lib.smart_config import smart_config
 
 LATENT_DOWNSAMPLE_FACTOR = 4
 
@@ -66,7 +82,11 @@ class AudioLatentShape(NamedTuple):
         hop_length: int = 160,
         audio_latent_downsample_factor: int = 4,
     ) -> "AudioLatentShape":
-        latents_per_second = float(sample_rate) / float(hop_length) / float(audio_latent_downsample_factor)
+        latents_per_second = (
+            float(sample_rate)
+            / float(hop_length)
+            / float(audio_latent_downsample_factor)
+        )
 
         return AudioLatentShape(
             batch=batch,
@@ -114,7 +134,11 @@ def build_mid_block(
         norm_type=norm_type,
         causality_axis=causality_axis,
     )
-    mid.attn_1 = make_attn(channels, attn_type=attn_type, norm_type=norm_type) if add_attention else torch.nn.Identity()
+    mid.attn_1 = (
+        make_attn(channels, attn_type=attn_type, norm_type=norm_type)
+        if add_attention
+        else torch.nn.Identity()
+    )
     mid.block_2 = ResnetBlock(
         in_channels=channels,
         out_channels=channels,
@@ -319,7 +343,9 @@ class AudioEncoder(torch.nn.Module):
         )
         latent_patched = self.patchifier.patchify(means)
         latent_normalized = self.per_channel_statistics.normalize(latent_patched)
-        return self.patchifier.unpatchify(latent_normalized, latent_shape.channels, latent_shape.mel_bins)
+        return self.patchifier.unpatchify(
+            latent_normalized, latent_shape.channels, latent_shape.mel_bins
+        )
 
 
 def encode_audio(
@@ -424,7 +450,13 @@ class AudioDecoder(torch.nn.Module):
         base_resolution = resolution // (2 ** (self.num_resolutions - 1))
         self.z_shape = (1, z_channels, base_resolution, base_resolution)
 
-        self.conv_in = make_conv2d(z_channels, base_block_channels, kernel_size=3, stride=1, causality_axis=self.causality_axis)
+        self.conv_in = make_conv2d(
+            z_channels,
+            base_block_channels,
+            kernel_size=3,
+            stride=1,
+            causality_axis=self.causality_axis,
+        )
         self.non_linearity = torch.nn.SiLU()
         self.mid = build_mid_block(
             channels=base_block_channels,
@@ -451,8 +483,16 @@ class AudioDecoder(torch.nn.Module):
             initial_block_channels=base_block_channels,
         )
 
-        self.norm_out = build_normalization_layer(final_block_channels, normtype=self.norm_type)
-        self.conv_out = make_conv2d(final_block_channels, out_ch, kernel_size=3, stride=1, causality_axis=self.causality_axis)
+        self.norm_out = build_normalization_layer(
+            final_block_channels, normtype=self.norm_type
+        )
+        self.conv_out = make_conv2d(
+            final_block_channels,
+            out_ch,
+            kernel_size=3,
+            stride=1,
+            causality_axis=self.causality_axis,
+        )
 
     def forward(self, sample: torch.Tensor) -> torch.Tensor:
         """
@@ -471,7 +511,9 @@ class AudioDecoder(torch.nn.Module):
 
         return self._adjust_output_shape(h, target_shape)
 
-    def _denormalize_latents(self, sample: torch.Tensor) -> tuple[torch.Tensor, AudioLatentShape]:
+    def _denormalize_latents(
+        self, sample: torch.Tensor
+    ) -> tuple[torch.Tensor, AudioLatentShape]:
         latent_shape = AudioLatentShape(
             batch=sample.shape[0],
             channels=sample.shape[1],
@@ -481,7 +523,9 @@ class AudioDecoder(torch.nn.Module):
 
         sample_patched = self.patchifier.patchify(sample)
         sample_denormalized = self.per_channel_statistics.un_normalize(sample_patched)
-        sample = self.patchifier.unpatchify(sample_denormalized, latent_shape.channels, latent_shape.mel_bins)
+        sample = self.patchifier.unpatchify(
+            sample_denormalized, latent_shape.channels, latent_shape.mel_bins
+        )
 
         target_frames = latent_shape.frames * LATENT_DOWNSAMPLE_FACTOR
         if self.causality_axis != CausalityAxis.NONE:
@@ -491,7 +535,9 @@ class AudioDecoder(torch.nn.Module):
             batch=latent_shape.batch,
             channels=self.out_ch,
             frames=target_frames,
-            mel_bins=self.mel_bins if self.mel_bins is not None else latent_shape.mel_bins,
+            mel_bins=(
+                self.mel_bins if self.mel_bins is not None else latent_shape.mel_bins
+            ),
         )
 
         return sample, target_shape
@@ -518,7 +564,12 @@ class AudioDecoder(torch.nn.Module):
         target_freq = target_shape.mel_bins
 
         # Step 1: Crop first to avoid exceeding target dimensions
-        decoded_output = decoded_output[:, :target_channels, : min(current_time, target_time), : min(current_freq, target_freq)]
+        decoded_output = decoded_output[
+            :,
+            :target_channels,
+            : min(current_time, target_time),
+            : min(current_freq, target_freq),
+        ]
 
         # Step 2: Calculate padding needed for time and frequency dimensions
         time_padding_needed = target_time - decoded_output.shape[2]
@@ -564,7 +615,9 @@ class AudioDecoder(torch.nn.Module):
         return torch.tanh(h) if self.tanh_out else h
 
 
-def decode_audio(latent: torch.Tensor, audio_decoder: "AudioDecoder", vocoder: "Vocoder") -> Audio:
+def decode_audio(
+    latent: torch.Tensor, audio_decoder: "AudioDecoder", vocoder: "Vocoder"
+) -> Audio:
     """
     Decode an audio latent representation using the provided audio decoder and vocoder.
     Args:

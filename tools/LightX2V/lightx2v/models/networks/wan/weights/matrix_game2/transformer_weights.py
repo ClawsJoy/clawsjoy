@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 from lightx2v.common.modules.weight_module import WeightModule, WeightModuleList
 from lightx2v.models.networks.wan.weights.transformer_weights import (
     WanFFN,
@@ -12,6 +11,8 @@ from lightx2v.utils.registry_factory import (
     RMS_WEIGHT_REGISTER,
     TENSOR_REGISTER,
 )
+
+from lib.smart_config import smart_config
 
 
 class WanActionTransformerWeights(WeightModule):
@@ -28,16 +29,26 @@ class WanActionTransformerWeights(WeightModule):
         block_list = []
         for i in range(self.blocks_num):
             if i in action_blocks:
-                block_list.append(WanTransformerActionBlock(i, self.task, self.mm_type, self.config))
+                block_list.append(
+                    WanTransformerActionBlock(i, self.task, self.mm_type, self.config)
+                )
             else:
-                block_list.append(WanTransformerAttentionBlock(i, self.task, self.mm_type, self.config))
+                block_list.append(
+                    WanTransformerAttentionBlock(
+                        i, self.task, self.mm_type, self.config
+                    )
+                )
         self.blocks = WeightModuleList(block_list)
         self.add_module("blocks", self.blocks)
 
         # non blocks weights
         self.register_parameter("norm", LN_WEIGHT_REGISTER["torch"]())
-        self.add_module("head", MM_WEIGHT_REGISTER["Default"]("head.head.weight", "head.head.bias"))
-        self.register_parameter("head_modulation", TENSOR_REGISTER["Default"]("head.modulation"))
+        self.add_module(
+            "head", MM_WEIGHT_REGISTER["Default"]("head.head.weight", "head.head.bias")
+        )
+        self.register_parameter(
+            "head_modulation", TENSOR_REGISTER["Default"]("head.modulation")
+        )
 
     def non_block_weights_to_cuda(self):
         self.norm.to_cuda()
@@ -131,10 +142,14 @@ class WanActionModule(WeightModule):
             ),
         )
 
-        self.add_module("cross_attn_2", ATTN_WEIGHT_REGISTER[self.config["cross_attn_2_type"]]())
+        self.add_module(
+            "cross_attn_2", ATTN_WEIGHT_REGISTER[self.config["cross_attn_2_type"]]()
+        )
 
         _ac = self.config.get("action_config") or {}
-        _action_attn_type = _ac.get("action_attn_type", self.config.get("self_attn_1_type", "flash_attn2"))
+        _action_attn_type = _ac.get(
+            "action_attn_type", self.config.get("self_attn_1_type", "flash_attn2")
+        )
         self.add_module("action_attn_1", ATTN_WEIGHT_REGISTER[_action_attn_type]())
 
         self.add_module(
@@ -246,4 +261,6 @@ class WanActionCrossAttention(WeightModule):
                 f"{block_prefix}.{self.block_index}.cross_attn.norm_k.weight",
             ),
         )
-        self.add_module("cross_attn_1", ATTN_WEIGHT_REGISTER[self.config["cross_attn_1_type"]]())
+        self.add_module(
+            "cross_attn_1", ATTN_WEIGHT_REGISTER[self.config["cross_attn_1_type"]]()
+        )

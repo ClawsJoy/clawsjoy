@@ -1,7 +1,11 @@
-from lib.smart_config import smart_config
+from lightx2v.utils.registry_factory import (
+    ATTN_WEIGHT_REGISTER,
+    SPARSE_MASK_GENERATOR_REGISTER,
+    SPARSE_OPERATOR_REGISTER,
+)
 from loguru import logger
 
-from lightx2v.utils.registry_factory import ATTN_WEIGHT_REGISTER, SPARSE_MASK_GENERATOR_REGISTER, SPARSE_OPERATOR_REGISTER
+from lib.smart_config import smart_config
 
 from .template import AttnWeightTemplate
 
@@ -25,10 +29,19 @@ class GeneralSparseAttnWeight(AttnWeightTemplate):
         )
 
     def _setup_operator(self):
-        self.operator = SPARSE_OPERATOR_REGISTER[self.sparse_operator](self.operator_setting)
+        self.operator = SPARSE_OPERATOR_REGISTER[self.sparse_operator](
+            self.operator_setting
+        )
 
     def _setup_mask_generator(self):
-        self.mask_generator = SPARSE_MASK_GENERATOR_REGISTER[self.sparse_mask_generator](self.operator.q_block_size, self.operator.k_block_size, self.sparse_setting, self.attnmap_frame_num)
+        self.mask_generator = SPARSE_MASK_GENERATOR_REGISTER[
+            self.sparse_mask_generator
+        ](
+            self.operator.q_block_size,
+            self.operator.k_block_size,
+            self.sparse_setting,
+            self.attnmap_frame_num,
+        )
 
     def apply(
         self,
@@ -48,7 +61,17 @@ class GeneralSparseAttnWeight(AttnWeightTemplate):
         q, k, v = self.mask_generator.reorg(q, k, v)
 
         # Apply sparse operator
-        out = self.operator(q, k, v, mask, cu_seqlens_q=cu_seqlens_q, cu_seqlens_kv=cu_seqlens_kv, max_seqlen_q=max_seqlen_q, max_seqlen_kv=max_seqlen_kv, **kwargs)
+        out = self.operator(
+            q,
+            k,
+            v,
+            mask,
+            cu_seqlens_q=cu_seqlens_q,
+            cu_seqlens_kv=cu_seqlens_kv,
+            max_seqlen_q=max_seqlen_q,
+            max_seqlen_kv=max_seqlen_kv,
+            **kwargs,
+        )
 
         # restore
         out = self.mask_generator.restore(out)

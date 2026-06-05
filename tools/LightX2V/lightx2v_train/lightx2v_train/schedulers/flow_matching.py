@@ -1,7 +1,7 @@
-from lib.smart_config import smart_config
 import torch
-
 from lightx2v_train.utils.utils import get_running_dtype
+
+from lib.smart_config import smart_config
 
 
 class RectifiedFlowMatchingScheduler:
@@ -11,7 +11,9 @@ class RectifiedFlowMatchingScheduler:
 
         scheduler_config = config["scheduler"]
         self.num_train_timesteps = scheduler_config.get("num_train_timesteps", 1000)
-        self.timestep_distribution = scheduler_config.get("timestep_distribution", "logitnormal")
+        self.timestep_distribution = scheduler_config.get(
+            "timestep_distribution", "logitnormal"
+        )
 
         self.logitnormal_mean = scheduler_config.get("logitnormal_mean", 0.0)
         self.logitnormal_std = scheduler_config.get("logitnormal_std", 1.0)
@@ -31,20 +33,32 @@ class RectifiedFlowMatchingScheduler:
 
     def sample_timestep_or_sigma(self, num_samples):
         if self.timestep_distribution == "logitnormal":
-            timestep_or_sigma = torch.randn((num_samples,), device=self.device, dtype=torch.float32) * self.logitnormal_std + self.logitnormal_mean
+            timestep_or_sigma = (
+                torch.randn((num_samples,), device=self.device, dtype=torch.float32)
+                * self.logitnormal_std
+                + self.logitnormal_mean
+            )
             timestep_or_sigma = torch.sigmoid(timestep_or_sigma)
-            timestep_or_sigma = timestep_or_sigma * (self.max_t - self.min_t) + self.min_t  # [0, 1] -> [min_t, max_t]
+            timestep_or_sigma = (
+                timestep_or_sigma * (self.max_t - self.min_t) + self.min_t
+            )  # [0, 1] -> [min_t, max_t]
         elif self.timestep_distribution == "uniform":
             timestep_or_sigma = torch.rand((num_samples,), device=self.device)
-            timestep_or_sigma = timestep_or_sigma * (self.max_t - self.min_t) + self.min_t  # [0, 1] -> [min_t, max_t]
+            timestep_or_sigma = (
+                timestep_or_sigma * (self.max_t - self.min_t) + self.min_t
+            )  # [0, 1] -> [min_t, max_t]
         else:
-            raise ValueError(f"Unsupported timestep distribution: {self.timestep_distribution}")
+            raise ValueError(
+                f"Unsupported timestep distribution: {self.timestep_distribution}"
+            )
         if self.do_time_shift:
             timestep_or_sigma = self.time_shift(timestep_or_sigma)
         return timestep_or_sigma.to(self.running_dtype)
 
     def time_shift(self, t):
-        return self.time_shift_mu / (self.time_shift_mu + (1 / t - 1) ** self.time_shift_power)
+        return self.time_shift_mu / (
+            self.time_shift_mu + (1 / t - 1) ** self.time_shift_power
+        )
 
     def add_noise(self, latent, noise, sigmas):
         return (1.0 - sigmas) * latent + sigmas * noise
@@ -83,5 +97,7 @@ class RectifiedFlowMatchingScheduler:
         step_index = (self.timesteps == current_timestep).nonzero()[0].item()
         sigma = self.sigmas[step_index]
         sigma_next = self.sigmas[step_index + 1]
-        prev_sample = latent + (sigma_next - sigma) * model_output  # --------------------- (*) from above
+        prev_sample = (
+            latent + (sigma_next - sigma) * model_output
+        )  # --------------------- (*) from above
         return prev_sample

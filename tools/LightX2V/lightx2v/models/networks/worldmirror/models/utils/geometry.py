@@ -1,5 +1,6 @@
-from lib.smart_config import smart_config
 import torch
+
+from lib.smart_config import smart_config
 
 
 def depth_to_camera_coords(depthmap, camera_intrinsics):
@@ -28,7 +29,11 @@ def depth_to_camera_coords(depthmap, camera_intrinsics):
     cy = camera_intrinsics[:, 1, 2]  # (B,)
 
     # Generate pixel grid
-    v_grid, u_grid = torch.meshgrid(torch.arange(H, dtype=dtype, device=device), torch.arange(W, dtype=dtype, device=device), indexing="ij")
+    v_grid, u_grid = torch.meshgrid(
+        torch.arange(H, dtype=dtype, device=device),
+        torch.arange(W, dtype=dtype, device=device),
+        indexing="ij",
+    )
 
     # Reshape for broadcasting: (1, H, W)
     u_grid = u_grid.unsqueeze(0)
@@ -51,7 +56,9 @@ def depth_to_camera_coords(depthmap, camera_intrinsics):
     return X_cam, valid_mask
 
 
-def depth_to_world_coords_points(depth_map: torch.Tensor, extrinsic: torch.Tensor, intrinsic: torch.Tensor, eps=1e-8) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+def depth_to_world_coords_points(
+    depth_map: torch.Tensor, extrinsic: torch.Tensor, intrinsic: torch.Tensor, eps=1e-8
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """
     Convert a batch of depth maps to world coordinates.
 
@@ -79,7 +86,10 @@ def depth_to_world_coords_points(depth_map: torch.Tensor, extrinsic: torch.Tenso
     t_cam_to_world = extrinsic[:, :3, 3]  # (B, 3)
 
     # Transform (B, H, W, 3) x (B, 3, 3)^T + (B, 3) -> (B, H, W, 3)
-    world_coords_points = torch.einsum("bhwi,bji->bhwj", camera_points, R_cam_to_world) + t_cam_to_world[:, None, None, :]
+    world_coords_points = (
+        torch.einsum("bhwi,bji->bhwj", camera_points, R_cam_to_world)
+        + t_cam_to_world[:, None, None, :]
+    )
 
     return world_coords_points, camera_points, point_mask
 
@@ -94,7 +104,10 @@ def closed_form_inverse_se3(se3: torch.Tensor) -> torch.Tensor:
     Returns:
         out (torch.Tensor): (B, 4, 4) Inverse transformation matrices
     """
-    assert se3.ndim == 3 and se3.shape[1:] == (4, 4), f"se3 must be (B, 4, 4), got {se3.shape}"
+    assert se3.ndim == 3 and se3.shape[1:] == (
+        4,
+        4,
+    ), f"se3 must be (B, 4, 4), got {se3.shape}"
     R = se3[:, :3, :3]  # (B, 3, 3)
     t = se3[:, :3, 3]  # (B, 3)
     Rt = R.transpose(1, 2)  # (B, 3, 3)

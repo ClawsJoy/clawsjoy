@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 LightX2V Setup Script
 Minimal installation for VAE models only

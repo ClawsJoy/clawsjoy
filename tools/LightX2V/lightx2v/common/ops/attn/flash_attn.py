@@ -1,13 +1,16 @@
-from lib.smart_config import smart_config
 import torch
 from loguru import logger
+
+from lib.smart_config import smart_config
 
 from .utils.sla_util import get_block_map
 from .utils.sparge_util import block_map_ordinal_lut_triton, get_block_map_meansim
 
 try:
     from flash_attn import flash_attn_func as flash_attn_func_v2
-    from flash_attn.flash_attn_interface import flash_attn_varlen_func as flash_attn_varlen_func_v2
+    from flash_attn.flash_attn_interface import (
+        flash_attn_varlen_func as flash_attn_varlen_func_v2,
+    )
 except ImportError:
     logger.info("flash_attn2 not found, please install flash_attn2 first")
     flash_attn_func_v2 = None
@@ -154,7 +157,9 @@ class FlashAttn4Weight(AttnWeightTemplate):
             q, k, v = q.unsqueeze(0), k.unsqueeze(0), v.unsqueeze(0)
         elif len(q.shape) == 4:
             bs = q.shape[0]
-        assert bs == 1, "flash_attn4 doesn't support flash_attn_varlen_func now. Just use it for batchsize = 1 for sure."
+        assert (
+            bs == 1
+        ), "flash_attn4 doesn't support flash_attn_varlen_func now. Just use it for batchsize = 1 for sure."
         x, _ = flash_attn_func_v4(
             q,
             k,
@@ -190,18 +195,32 @@ class SparseFlashAttn4Weight(AttnWeightTemplate):
             q, k, v = q.unsqueeze(0), k.unsqueeze(0), v.unsqueeze(0)
         elif len(q.shape) == 4:
             bs = q.shape[0]
-        assert bs == 1, "flash_attn4 doesn't support flash_attn_varlen_func now. Just use it for batchsize = 1 for sure."
+        assert (
+            bs == 1
+        ), "flash_attn4 doesn't support flash_attn_varlen_func now. Just use it for batchsize = 1 for sure."
 
         # (L, H, D) -> (B, L, H, D)
         qt = q.transpose(1, 2).contiguous()
         kt = k.transpose(1, 2).contiguous()
         if self.sparse_mode == "sla_mode":
-            sparse_map, lut, real_topk = get_block_map(qt, kt, topk_ratio=self.topk, BLKQ=self.BLKQ, BLKK=self.BLKK)
+            sparse_map, lut, real_topk = get_block_map(
+                qt, kt, topk_ratio=self.topk, BLKQ=self.BLKQ, BLKK=self.BLKK
+            )
         elif self.sparse_mode == "sparge_mode":
             smooth_k = kt - kt.mean(dim=-2, keepdim=True)
-            sparse_map = get_block_map_meansim(qt, smooth_k, cdfthreshd=None, topk=self.topk, return_lut=False, BLKQ=self.BLKQ, BLKK=self.BLKK)
+            sparse_map = get_block_map_meansim(
+                qt,
+                smooth_k,
+                cdfthreshd=None,
+                topk=self.topk,
+                return_lut=False,
+                BLKQ=self.BLKQ,
+                BLKK=self.BLKK,
+            )
         else:
-            logger.info(f"spas_flash_attn4 sparse_mode only support sla_mode and sparge_mode now.")
+            logger.info(
+                f"spas_flash_attn4 sparse_mode only support sla_mode and sparge_mode now."
+            )
 
         # (B, H, Q_block_num, K_block_num)
         full_block_idx, full_block_cnt = block_map_ordinal_lut_triton(sparse_map)

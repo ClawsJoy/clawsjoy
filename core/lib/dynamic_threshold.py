@@ -1,11 +1,10 @@
 from core.lib.unified_config import unified_config
 
-from core.lib.unified_config import unified_config
-
 """动态阈值调整器 - 统一入口"""
 
 import importlib.util
 from pathlib import Path
+
 
 def _get_latest():
     lib_dir = Path(__file__).parent
@@ -21,8 +20,9 @@ def _get_latest():
     spec.loader.exec_module(module)
     return module
 
+
 _module = _get_latest()
 dynamic_threshold = _module.dynamic_threshold
 DynamicThreshold = _module.DynamicThreshold
 
-__all__ = ['dynamic_threshold', 'DynamicThreshold']
+__all__ = ["dynamic_threshold", "DynamicThreshold"]

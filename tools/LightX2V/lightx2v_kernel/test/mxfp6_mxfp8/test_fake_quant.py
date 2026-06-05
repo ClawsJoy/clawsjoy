@@ -1,7 +1,8 @@
-from lib.smart_config import smart_config
 import torch
 from torchao.prototype.mx_formats.constants import DTYPE_FP6_E3M2
-from torchao.prototype.mx_formats.mx_tensor import to_mx, pack_uint6
+from torchao.prototype.mx_formats.mx_tensor import pack_uint6, to_mx
+
+from lib.smart_config import smart_config
 
 
 def quant2mxfp8(x: torch.Tensor):
@@ -24,11 +25,17 @@ def scale_pad_and_swizzle(scale: torch.Tensor):
     # pad the m up to 128, s up to 4
     padded_m = (m + 127) // 128 * 128
     padded_s = (s + 3) // 4 * 4
-    padded_scale = torch.empty(padded_m, padded_s, device=scale.device, dtype=scale.dtype)
+    padded_scale = torch.empty(
+        padded_m, padded_s, device=scale.device, dtype=scale.dtype
+    )
     padded_scale[:m, :s] = scale
 
     # swizzle the padded scale
-    swizzled_scale = padded_scale.reshape(padded_m // 128, 128, padded_s // 4, 4).reshape(padded_m // 128, 4, 32, padded_s // 4, 4).permute(0, 3, 2, 1, 4)
+    swizzled_scale = (
+        padded_scale.reshape(padded_m // 128, 128, padded_s // 4, 4)
+        .reshape(padded_m // 128, 4, 32, padded_s // 4, 4)
+        .permute(0, 3, 2, 1, 4)
+    )
 
     return swizzled_scale.reshape(padded_m, padded_s)
 
@@ -67,7 +74,9 @@ def triton_pack_uint6_kernel(
     offsets_rows = block_start + tl.arange(0, BLOCK_SIZE_IN)
     offsets_cols = tl.arange(0, MX_BLOCK_SIZE // 4)
     offsets = offsets_rows[:, None] * MX_BLOCK_SIZE + (4 * offsets_cols[None, :])
-    mask = (offsets_rows[:, None] < n_mx_blocks) & (offsets_cols[None, :] < MX_BLOCK_SIZE // 4)
+    mask = (offsets_rows[:, None] < n_mx_blocks) & (
+        offsets_cols[None, :] < MX_BLOCK_SIZE // 4
+    )
 
     # x is shape [BLOCK_SIZE, MX_BLOCK_SIZE]
     x_0 = tl.load(input_ptr + offsets, mask=mask)
@@ -86,9 +95,15 @@ def triton_pack_uint6_kernel(
     bits_packed2 = (x_3 << 2) | (x_2 >> 4)
 
     # Store values in a uint8 tensor of length `3 * MX_BLOCK_SIZE / 4`
-    offsets_out_4_a = offsets_rows[:, None] * PACKED_MX_BLOCK_SIZE + 3 * offsets_cols[None, :]
-    offsets_out_4_b = offsets_rows[:, None] * PACKED_MX_BLOCK_SIZE + 3 * offsets_cols[None, :] + 1
-    offsets_out_2 = offsets_rows[:, None] * PACKED_MX_BLOCK_SIZE + 3 * offsets_cols[None, :] + 2
+    offsets_out_4_a = (
+        offsets_rows[:, None] * PACKED_MX_BLOCK_SIZE + 3 * offsets_cols[None, :]
+    )
+    offsets_out_4_b = (
+        offsets_rows[:, None] * PACKED_MX_BLOCK_SIZE + 3 * offsets_cols[None, :] + 1
+    )
+    offsets_out_2 = (
+        offsets_rows[:, None] * PACKED_MX_BLOCK_SIZE + 3 * offsets_cols[None, :] + 2
+    )
 
     # Store into output tensor
     tl.store(
@@ -126,7 +141,9 @@ def pack_uint6(uint8_data: torch.Tensor) -> torch.Tensor:
     grid = lambda meta: (triton.cdiv(n_mx_blocks, meta["BLOCK_SIZE_IN"]),)  # noqa: E731
 
     # contiguous uint8 container in which we can store the unpacked tensor
-    packed_uint8_data = torch.empty(packed_shape, dtype=torch.uint8, device=uint8_data.device)
+    packed_uint8_data = torch.empty(
+        packed_shape, dtype=torch.uint8, device=uint8_data.device
+    )
 
     triton_pack_uint6_kernel[grid](
         uint8_data,
@@ -170,7 +187,14 @@ for m in M:
             bias = None
             x_quant = x_quant.reshape(m, k).view(torch.uint8)
             w_quant_packed = w_quant_packed.reshape(n, 3 * k // 4)
-            custom_mm = cutlass_scaled_mxfp6_mxfp8_mm(x_quant, w_quant_packed, padded_and_swizzled_x_scale, padded_and_swizzled_w_scale, alpha, bias)
+            custom_mm = cutlass_scaled_mxfp6_mxfp8_mm(
+                x_quant,
+                w_quant_packed,
+                padded_and_swizzled_x_scale,
+                padded_and_swizzled_w_scale,
+                alpha,
+                bias,
+            )
 
             # cal snr
             from lightx2v_kernel.utils import error
@@ -178,5 +202,7 @@ for m in M:
             print(f"m: {m}, n: {n}, k: {k}, error: {error(ref_mm, custom_mm)}")
 
             # cal cos
-            cos_sim = torch.nn.functional.cosine_similarity(ref_mm.flatten(), custom_mm.flatten(), dim=0)
+            cos_sim = torch.nn.functional.cosine_similarity(
+                ref_mm.flatten(), custom_mm.flatten(), dim=0
+            )
             print(f"m: {m}, n: {n}, k: {k}, cos_sim: {cos_sim}")

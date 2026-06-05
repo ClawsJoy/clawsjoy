@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 #!/usr/bin/env python3
 """
 一键生成应用图标脚本
@@ -11,12 +12,12 @@ from lib.smart_config import smart_config
 4. 更新 build/icon.icns 和 build/icon.png
 """
 
-import subprocess
-import shutil
-import sys
-import os
-import tempfile
 import argparse
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
 from pathlib import Path
 
 
@@ -25,7 +26,9 @@ def run_command(cmd, description=""):
     if description:
         print(f"→ {description}")
     try:
-        result = subprocess.run(cmd, shell=True, check=True, capture_output=False, text=True)
+        result = subprocess.run(
+            cmd, shell=True, check=True, capture_output=False, text=True
+        )
         return result.returncode == 0
     except subprocess.CalledProcessError as e:
         print(f"❌ 命令失败: {cmd}")
@@ -71,7 +74,9 @@ def generate_icons(logo_path, output_dir):
         svg_temp = tmpdir / "logo-1024.svg"
         with open(logo_path) as f:
             svg_content = f.read()
-        svg_content = svg_content.replace('width="512" height="512"', 'width="1024" height="1024"')
+        svg_content = svg_content.replace(
+            'width="512" height="512"', 'width="1024" height="1024"'
+        )
         with open(svg_temp, "w") as f:
             f.write(svg_content)
 
@@ -129,10 +134,14 @@ def generate_icons(logo_path, output_dir):
         # 6. 复制到输出目录
         print("\n✅ 写入输出文件...")
         shutil.copy(icns_output, output_dir / "icon.icns")
-        print(f"  → {output_dir}/icon.icns ({(output_dir / 'icon.icns').stat().st_size / 1024:.1f} KB)")
+        print(
+            f"  → {output_dir}/icon.icns ({(output_dir / 'icon.icns').stat().st_size / 1024:.1f} KB)"
+        )
 
         shutil.copy(iconset_dir / "icon_512x512.png", output_dir / "icon.png")
-        print(f"  → {output_dir}/icon.png ({(output_dir / 'icon.png').stat().st_size / 1024:.1f} KB)")
+        print(
+            f"  → {output_dir}/icon.png ({(output_dir / 'icon.png').stat().st_size / 1024:.1f} KB)"
+        )
 
     print("\n🎉 图标生成成功！")
     return True
@@ -140,10 +149,10 @@ def generate_icons(logo_path, output_dir):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--logo", default="logo.svg", help="logo.svg 路径 (默认: logo.svg)")
     parser.add_argument(
-        "--output-dir", default="build", help="输出目录 (默认: build/)"
+        "--logo", default="logo.svg", help="logo.svg 路径 (默认: logo.svg)"
     )
+    parser.add_argument("--output-dir", default="build", help="输出目录 (默认: build/)")
     args = parser.parse_args()
 
     try:

@@ -1,7 +1,8 @@
-from lib.smart_config import smart_config
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+from lib.smart_config import smart_config
 
 from ..model.warplayer import warp
 
@@ -91,17 +92,29 @@ class IFBlock(nn.Module):
             ResConv(c),
             ResConv(c),
         )
-        self.lastconv = nn.Sequential(nn.ConvTranspose2d(c, 4 * 13, 4, 2, 1), nn.PixelShuffle(2))
+        self.lastconv = nn.Sequential(
+            nn.ConvTranspose2d(c, 4 * 13, 4, 2, 1), nn.PixelShuffle(2)
+        )
 
     def forward(self, x, flow=None, scale=1):
-        x = F.interpolate(x, scale_factor=1.0 / scale, mode="bilinear", align_corners=False)
+        x = F.interpolate(
+            x, scale_factor=1.0 / scale, mode="bilinear", align_corners=False
+        )
         if flow is not None:
-            flow = F.interpolate(flow, scale_factor=1.0 / scale, mode="bilinear", align_corners=False) * 1.0 / scale
+            flow = (
+                F.interpolate(
+                    flow, scale_factor=1.0 / scale, mode="bilinear", align_corners=False
+                )
+                * 1.0
+                / scale
+            )
             x = torch.cat((x, flow), 1)
         feat = self.conv0(x)
         feat = self.convblock(feat)
         tmp = self.lastconv(feat)
-        tmp = F.interpolate(tmp, scale_factor=scale, mode="bilinear", align_corners=False)
+        tmp = F.interpolate(
+            tmp, scale_factor=scale, mode="bilinear", align_corners=False
+        )
         flow = tmp[:, :4] * scale
         mask = tmp[:, 4:5]
         feat = tmp[:, 5:]

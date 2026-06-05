@@ -1,6 +1,4 @@
-from lib.smart_config import smart_config
 import torch.distributed as dist
-
 from lightx2v.common.modules.weight_module import WeightModule, WeightModuleList
 from lightx2v.utils.registry_factory import (
     ATTN_WEIGHT_REGISTER,
@@ -8,6 +6,8 @@ from lightx2v.utils.registry_factory import (
     RMS_WEIGHT_REGISTER,
     TENSOR_REGISTER,
 )
+
+from lib.smart_config import smart_config
 
 
 class LTX2TransformerWeights(WeightModule):
@@ -30,7 +30,11 @@ class LTX2TransformerWeights(WeightModule):
                 LTX2TransformerBlock(
                     block_index=i,
                     task=self.task,
-                    mm_type=self.mm_type if i not in self.skip_fp8_block_index else "Default",
+                    mm_type=(
+                        self.mm_type
+                        if i not in self.skip_fp8_block_index
+                        else "Default"
+                    ),
                     config=self.config,
                     create_cuda_buffer=False,
                     create_cpu_buffer=False,
@@ -52,7 +56,11 @@ class LTX2TransformerWeights(WeightModule):
                         LTX2TransformerBlock(
                             block_index=i,
                             task=self.task,
-                            mm_type=self.mm_type if i not in self.skip_fp8_block_index else "Default",
+                            mm_type=(
+                                self.mm_type
+                                if i not in self.skip_fp8_block_index
+                                else "Default"
+                            ),
                             config=self.config,
                             create_cuda_buffer=True,
                             create_cpu_buffer=False,
@@ -63,7 +71,9 @@ class LTX2TransformerWeights(WeightModule):
                         for i in range(self.offload_blocks_num)
                     ]
                 )
-                self.add_module("offload_block_cuda_buffers", self.offload_block_cuda_buffers)
+                self.add_module(
+                    "offload_block_cuda_buffers", self.offload_block_cuda_buffers
+                )
                 self.offload_phase_cuda_buffers = None
 
 
@@ -158,7 +168,9 @@ class LTX2TransformerBlock(WeightModule):
                 lazy_load=self.lazy_load,
                 lazy_load_file=self.lazy_load_file,
             )
-            self.add_module("audio_prompt_scale_shift_table", self.audio_prompt_scale_shift_table)
+            self.add_module(
+                "audio_prompt_scale_shift_table", self.audio_prompt_scale_shift_table
+            )
 
         # Check if tensor parallel is enabled
         use_tp = config.get("tensor_parallel", False)
@@ -340,7 +352,9 @@ class LTX2Attention(WeightModule):
         if self.config.get("seq_parallel", False):
             self.add_module(
                 "attn_func_parallel",
-                ATTN_WEIGHT_REGISTER[self.config.get("parallel", {}).get("seq_p_attn_type", "ulysses")](),
+                ATTN_WEIGHT_REGISTER[
+                    self.config.get("parallel", {}).get("seq_p_attn_type", "ulysses")
+                ](),
             )
 
         if self.apply_gated_attention:

@@ -3,14 +3,14 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
 import logging
 import time
 from functools import wraps
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 
 class MaturityMixin:
@@ -26,7 +26,7 @@ class MaturityMixin:
         if not self.logger.handlers:
             handler = logging.StreamHandler()
             formatter = logging.Formatter(
-                '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
             )
             handler.setFormatter(formatter)
             self.logger.addHandler(handler)
@@ -36,7 +36,7 @@ class MaturityMixin:
         """带错误处理和监控的 process 包装器"""
         start = time.time()
         self._stats["calls"] += 1
-        
+
         try:
             result = self.process(user_input, context)
             self.logger.info(f"process success: {user_input[:50]}")
@@ -48,10 +48,10 @@ class MaturityMixin:
                 "success": False,
                 "error": str(e),
                 "agent": self.name,
-                "user_id": self.user_id
+                "user_id": self.user_id,
             }
         finally:
-            self._stats["total_time"] += (time.time() - start)
+            self._stats["total_time"] += time.time() - start
 
     def get_stats(self) -> Dict:
         """获取监控统计"""
@@ -60,5 +60,5 @@ class MaturityMixin:
             "calls": self._stats["calls"],
             "errors": self._stats["errors"],
             "avg_time_ms": avg_time * 1000,
-            "success_rate": 1 - (self._stats["errors"] / max(self._stats["calls"], 1))
+            "success_rate": 1 - (self._stats["errors"] / max(self._stats["calls"], 1)),
         }

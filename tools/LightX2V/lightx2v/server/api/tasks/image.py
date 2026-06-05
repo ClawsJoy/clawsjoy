@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import asyncio
 import time
 import uuid
@@ -7,6 +6,8 @@ from pathlib import Path
 from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import Response
 from loguru import logger
+
+from lib.smart_config import smart_config
 
 from ...schema import ImageTaskRequest, TaskResponse
 from ...task_manager import TaskStatus, task_manager
@@ -20,19 +21,26 @@ def _write_file_sync(file_path: Path, content: bytes) -> None:
         buffer.write(content)
 
 
-async def _wait_task_and_stream_result(task_id: str, timeout_seconds: int, poll_interval_seconds: float):
+async def _wait_task_and_stream_result(
+    task_id: str, timeout_seconds: int, poll_interval_seconds: float
+):
     start_time = time.monotonic()
     while True:
         task_status = task_manager.get_task_status(task_id)
         if not task_status:
-            raise HTTPException(status_code=500, detail=f"Task status not found: {task_id}")
+            raise HTTPException(
+                status_code=500, detail=f"Task status not found: {task_id}"
+            )
 
         status = task_status.get("status")
         if status == TaskStatus.COMPLETED.value:
             result_png = task_manager.get_task_result_png(task_id)
             if result_png:
                 return result_png
-            raise HTTPException(status_code=500, detail=f"Task completed but no in-memory image found: {task_id}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Task completed but no in-memory image found: {task_id}",
+            )
 
         if status == TaskStatus.FAILED.value:
             error_type = task_status.get("error_type", "")
@@ -42,11 +50,16 @@ async def _wait_task_and_stream_result(task_id: str, timeout_seconds: int, poll_
             raise HTTPException(status_code=500, detail=error_detail)
 
         if status == TaskStatus.CANCELLED.value:
-            raise HTTPException(status_code=409, detail=task_status.get("error", "Task cancelled"))
+            raise HTTPException(
+                status_code=409, detail=task_status.get("error", "Task cancelled")
+            )
 
         if (time.monotonic() - start_time) > timeout_seconds:
             task_manager.cancel_task(task_id)
-            raise HTTPException(status_code=504, detail=f"Task {task_id} timed out after {timeout_seconds} seconds")
+            raise HTTPException(
+                status_code=504,
+                detail=f"Task {task_id} timed out after {timeout_seconds} seconds",
+            )
 
         await asyncio.sleep(poll_interval_seconds)
 
@@ -74,7 +87,10 @@ async def _upload_sync_result_if_needed(message: ImageTaskRequest, result_png: b
             content_type="image/png",
         )
     except ValueError as e:
-        raise HTTPException(status_code=502, detail=f"Failed to upload sync result to presigned URL: {str(e)}")
+        raise HTTPException(
+            status_code=502,
+            detail=f"Failed to upload sync result to presigned URL: {str(e)}",
+        )
 
     return {
         "task_id": message.task_id,
@@ -84,7 +100,9 @@ async def _upload_sync_result_if_needed(message: ImageTaskRequest, result_png: b
     }
 
 
-async def _watch_client_disconnect(request: Request, task_id: str, poll_interval_seconds: float = 0.2) -> bool:
+async def _watch_client_disconnect(
+    request: Request, task_id: str, poll_interval_seconds: float = 0.2
+) -> bool:
     while True:
         if await request.is_disconnected():
             task_manager.cancel_task(task_id)
@@ -96,12 +114,26 @@ async def _watch_client_disconnect(request: Request, task_id: str, poll_interval
 @router.post("/", response_model=TaskResponse)
 async def create_image_task(message: ImageTaskRequest):
     try:
-        if hasattr(message, "image_path") and message.image_path and message.image_path.startswith("http"):
+        if (
+            hasattr(message, "image_path")
+            and message.image_path
+            and message.image_path.startswith("http")
+        ):
             if not await validate_url_async(message.image_path):
-                raise HTTPException(status_code=400, detail=f"Image URL is not accessible: {message.image_path}")
-        if hasattr(message, "image_mask_path") and message.image_mask_path and message.image_mask_path.startswith("http"):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Image URL is not accessible: {message.image_path}",
+                )
+        if (
+            hasattr(message, "image_mask_path")
+            and message.image_mask_path
+            and message.image_mask_path.startswith("http")
+        ):
             if not await validate_url_async(message.image_mask_path):
-                raise HTTPException(status_code=400, detail=f"Image mask URL is not accessible: {message.image_mask_path}")
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Image mask URL is not accessible: {message.image_mask_path}",
+                )
 
         message.prefer_memory_result = False
         task_id = task_manager.create_task(message)
@@ -135,24 +167,49 @@ async def create_image_task_sync(
 
     task_id = None
     try:
-        if hasattr(message, "image_path") and message.image_path and message.image_path.startswith("http"):
+        if (
+            hasattr(message, "image_path")
+            and message.image_path
+            and message.image_path.startswith("http")
+        ):
             if not await validate_url_async(message.image_path):
-                raise HTTPException(status_code=400, detail=f"Image URL is not accessible: {message.image_path}")
-        if hasattr(message, "image_mask_path") and message.image_mask_path and message.image_mask_path.startswith("http"):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Image URL is not accessible: {message.image_path}",
+                )
+        if (
+            hasattr(message, "image_mask_path")
+            and message.image_mask_path
+            and message.image_mask_path.startswith("http")
+        ):
             if not await validate_url_async(message.image_mask_path):
-                raise HTTPException(status_code=400, detail=f"Image mask URL is not accessible: {message.image_mask_path}")
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Image mask URL is not accessible: {message.image_mask_path}",
+                )
         if hasattr(message, "presigned_url") and message.presigned_url:
             if not message.presigned_url.startswith(("http://", "https://")):
-                raise HTTPException(status_code=400, detail=f"Invalid presigned_url: {message.presigned_url}")
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid presigned_url: {message.presigned_url}",
+                )
 
         message.prefer_memory_result = True
         task_id = task_manager.create_task(message)
         message.task_id = task_id
 
-        wait_task = asyncio.create_task(_wait_task_and_stream_result(task_id, timeout_seconds, poll_interval_seconds))
-        disconnect_task = asyncio.create_task(_watch_client_disconnect(request, task_id))
+        wait_task = asyncio.create_task(
+            _wait_task_and_stream_result(
+                task_id, timeout_seconds, poll_interval_seconds
+            )
+        )
+        disconnect_task = asyncio.create_task(
+            _watch_client_disconnect(request, task_id)
+        )
 
-        done, pending = await asyncio.wait({wait_task, disconnect_task}, return_when=asyncio.FIRST_COMPLETED)
+        done, pending = await asyncio.wait(
+            {wait_task, disconnect_task}, return_when=asyncio.FIRST_COMPLETED
+        )
         for pending_task in pending:
             pending_task.cancel()
         await asyncio.gather(*pending, return_exceptions=True)
@@ -161,7 +218,9 @@ async def create_image_task_sync(
             if not wait_task.done():
                 wait_task.cancel()
                 await asyncio.gather(wait_task, return_exceptions=True)
-            raise HTTPException(status_code=499, detail=f"Client disconnected, task {task_id} cancelled")
+            raise HTTPException(
+                status_code=499, detail=f"Client disconnected, task {task_id} cancelled"
+            )
 
         result_png = wait_task.result()
         upload_result = await _upload_sync_result_if_needed(message, result_png)
@@ -214,7 +273,9 @@ async def create_image_task_form(
 
     image_path = ""
     if image_file and image_file.filename:
-        image_path = await save_file_async(image_file, services.file_service.input_image_dir)
+        image_path = await save_file_async(
+            image_file, services.file_service.input_image_dir
+        )
 
     message = ImageTaskRequest(
         prompt=prompt,

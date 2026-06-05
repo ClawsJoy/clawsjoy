@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import math
 from typing import Dict, Literal, Tuple, Union
 
@@ -7,6 +6,8 @@ import torch
 import torch.nn as nn
 from torch import Tensor
 
+from lib.smart_config import smart_config
+
 
 class PositionGetter:
     """Generates and caches 2D spatial positions for patches in a grid."""
@@ -14,14 +15,22 @@ class PositionGetter:
     def __init__(self) -> None:
         self.position_cache: Dict[Tuple[int, int], torch.Tensor] = {}
 
-    def __call__(self, batch_size: int, height: int, width: int, device: torch.device) -> torch.Tensor:
+    def __call__(
+        self, batch_size: int, height: int, width: int, device: torch.device
+    ) -> torch.Tensor:
         if (height, width) not in self.position_cache:
             y_coords = torch.arange(height, device=device)
             x_coords = torch.arange(width, device=device)
-            self.position_cache[height, width] = torch.cartesian_prod(y_coords, x_coords)
+            self.position_cache[height, width] = torch.cartesian_prod(
+                y_coords, x_coords
+            )
 
         cached_positions = self.position_cache[height, width]
-        return cached_positions.view(1, height * width, 2).expand(batch_size, -1, -1).clone()
+        return (
+            cached_positions.view(1, height * width, 2)
+            .expand(batch_size, -1, -1)
+            .clone()
+        )
 
 
 def _rotate_half(x: torch.Tensor) -> torch.Tensor:
@@ -72,11 +81,17 @@ class NormalizedRotaryPositionEmbedding2D(nn.Module):
     def _init_periods(self) -> None:
         quarter_dim = self.periods.shape[0]
         half_dim = self.head_dim // 2
-        exponents = 2 * torch.arange(quarter_dim, device=self.periods.device, dtype=self.dtype) / half_dim
+        exponents = (
+            2
+            * torch.arange(quarter_dim, device=self.periods.device, dtype=self.dtype)
+            / half_dim
+        )
         periods = self.base**exponents
         self.periods.data.copy_(periods)
 
-    def _get_sincos_for_grid(self, H: int, W: int, device: torch.device, dtype: torch.dtype) -> Tuple[Tensor, Tensor]:
+    def _get_sincos_for_grid(
+        self, H: int, W: int, device: torch.device, dtype: torch.dtype
+    ) -> Tuple[Tensor, Tensor]:
         dd = {"device": device, "dtype": dtype}
 
         if self.normalize_coords == "max":
@@ -93,13 +108,17 @@ class NormalizedRotaryPositionEmbedding2D(nn.Module):
         else:
             raise ValueError(f"Unknown normalize_coords: {self.normalize_coords}")
 
-        coords = torch.stack(torch.meshgrid(coords_h, coords_w, indexing="ij"), dim=-1)  # [H, W, 2]
+        coords = torch.stack(
+            torch.meshgrid(coords_h, coords_w, indexing="ij"), dim=-1
+        )  # [H, W, 2]
         coords = coords.flatten(0, 1)  # [HW, 2]
         coords = 2.0 * coords - 1.0
 
         if self.training:
             if self.shift_coords is not None:
-                shift_hw = torch.empty(2, **dd).uniform_(-self.shift_coords, self.shift_coords)
+                shift_hw = torch.empty(2, **dd).uniform_(
+                    -self.shift_coords, self.shift_coords
+                )
                 coords += shift_hw[None, :]
             if self.jitter_coords is not None:
                 jitter_max = np.log(self.jitter_coords)
@@ -107,11 +126,15 @@ class NormalizedRotaryPositionEmbedding2D(nn.Module):
                 coords *= jitter_hw[None, :]
             if self.rescale_coords is not None:
                 rescale_max = np.log(self.rescale_coords)
-                rescale_hw = torch.empty(1, **dd).uniform_(-rescale_max, rescale_max).exp()
+                rescale_hw = (
+                    torch.empty(1, **dd).uniform_(-rescale_max, rescale_max).exp()
+                )
                 coords *= rescale_hw
 
         periods = self.periods.to(device=device, dtype=dtype)
-        angles = (2 * math.pi * coords[:, :, None]) / periods[None, None, :]  # [HW, 2, D/4]
+        angles = (2 * math.pi * coords[:, :, None]) / periods[
+            None, None, :
+        ]  # [HW, 2, D/4]
         angles = angles.flatten(1, 2)  # [HW, D/2]
         angles = torch.cat((angles, angles), dim=-1)  # [HW, D]
 
@@ -122,11 +145,15 @@ class NormalizedRotaryPositionEmbedding2D(nn.Module):
     def forward(self, tokens: torch.Tensor, positions: torch.Tensor) -> torch.Tensor:
         # Validate inputs
         assert tokens.size(-1) % 2 == 0, "Feature dimension must be even"
-        assert positions.ndim == 3 and positions.shape[-1] == 2, "Positions must have shape (batch_size, n_tokens, 2)"
+        assert (
+            positions.ndim == 3 and positions.shape[-1] == 2
+        ), "Positions must have shape (batch_size, n_tokens, 2)"
 
         B, _, N, C_head = tokens.shape
         if C_head != self.head_dim:
-            raise ValueError(f"Head dim {C_head} doesn't match configured {self.head_dim}")
+            raise ValueError(
+                f"Head dim {C_head} doesn't match configured {self.head_dim}"
+            )
 
         H = int(positions[..., 0].max().item() + 1)
         W = int(positions[..., 1].max().item() + 1)
