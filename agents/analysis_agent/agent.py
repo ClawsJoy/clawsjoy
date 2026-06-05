@@ -66,6 +66,7 @@ class AnalysisAgent(BusinessAgentV2):
     def _quick_analysis(self, user_input: str) -> Dict:
         """快速规则分析（不调用 LLM）"""
         input_lower = user_input.lower()
+        user_len = len(user_input)
         #  输入: {input_lower[:80]}...")
 
         # 检测意图
@@ -78,6 +79,7 @@ class AnalysisAgent(BusinessAgentV2):
             op in input_lower for op in ["加", "减", "乘", "除"]
         )
         has_translation = "翻译" in input_lower
+        user_len = len(user_input)
         user_len = len(user_input)
 
         if has_analysis:
@@ -106,12 +108,6 @@ class AnalysisAgent(BusinessAgentV2):
             requires_orchestration = True
             summary = "分析任务：需要深度分析，建议编排"
             #  匹配: 纯分析 → C")
-        elif has_calculation:
-            complexity = "low"
-            suggested_route = "B"
-            requires_orchestration = False
-            summary = "计算任务，直接执行"
-            #  匹配: 计算 → B")
         elif has_translation:
             # 根据长度判断路由
             if user_len > 50:
@@ -126,6 +122,12 @@ class AnalysisAgent(BusinessAgentV2):
                 requires_orchestration = False
                 summary = "短文本翻译，直接执行"
                 #  匹配: 短翻译 → B")
+        elif has_calculation:
+            complexity = "low"
+            suggested_route = "B"
+            requires_orchestration = False
+            summary = "计算任务，直接执行"
+            #  匹配: 计算 → B")
         else:
             complexity = "low"
             suggested_route = "A"
