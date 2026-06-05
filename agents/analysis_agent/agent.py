@@ -66,7 +66,7 @@ class AnalysisAgent(BusinessAgentV2):
     def _quick_analysis(self, user_input: str) -> Dict:
         """快速规则分析（不调用 LLM）"""
         input_lower = user_input.lower()
-        print(f"[分析师][快速分析] 输入: {input_lower[:80]}...")
+        #  输入: {input_lower[:80]}...")
 
         # 检测意图
         intent = "general"
@@ -78,6 +78,7 @@ class AnalysisAgent(BusinessAgentV2):
             op in input_lower for op in ["加", "减", "乘", "除"]
         )
         has_translation = "翻译" in input_lower
+        user_len = len(user_input)
 
         if has_analysis:
             intent = "analysis"
@@ -98,25 +99,39 @@ class AnalysisAgent(BusinessAgentV2):
             suggested_route = "C"
             requires_orchestration = True
             summary = "复杂任务：需要分析+写作，建议编排"
-            print(f"[分析师][快速分析] 匹配: 分析+写作 → C")
+            #  匹配: 分析+写作 → C")
         elif has_analysis:
             complexity = "medium"
             suggested_route = "C"
             requires_orchestration = True
             summary = "分析任务：需要深度分析，建议编排"
-            print(f"[分析师][快速分析] 匹配: 纯分析 → C")
-        elif has_calculation or has_translation:
+            #  匹配: 纯分析 → C")
+        elif has_calculation:
             complexity = "low"
             suggested_route = "B"
             requires_orchestration = False
-            summary = f"单步任务：{intent}，直接执行"
-            print(f"[分析师][快速分析] 匹配: {intent} → B")
+            summary = "计算任务，直接执行"
+            #  匹配: 计算 → B")
+        elif has_translation:
+            # 根据长度判断路由
+            if user_len > 50:
+                complexity = "medium"
+                suggested_route = "C"
+                requires_orchestration = True
+                summary = "长文本翻译任务，需要编排"
+                #  匹配: 长翻译 → C")
+            else:
+                complexity = "low"
+                suggested_route = "B"
+                requires_orchestration = False
+                summary = "短文本翻译，直接执行"
+                #  匹配: 短翻译 → B")
         else:
             complexity = "low"
             suggested_route = "A"
             requires_orchestration = False
             summary = "简单对话，直接回复"
-            print(f"[分析师][快速分析] 匹配: 默认 → A")
+            #  匹配: 默认 → A")
 
         return {
             "complexity": complexity,

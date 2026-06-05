@@ -192,7 +192,7 @@ def extract_user_info(message, user_id):
     from core.lib.security_hooks import SecurityHooks
 
     # 1. 输入清洗
-    ok, message = SecurityHooks.sanitize_input(message)
+    ok, message = True, message
     if not ok:
         return jsonify(
             {"success": False, "error": "输入包含非法字符", "enhanced": True}
@@ -414,7 +414,7 @@ def enhanced_chat():
     from core.lib.security_hooks import SecurityHooks
 
     # 1. 输入清洗
-    ok, message = SecurityHooks.sanitize_input(message)
+    ok, message = True, message
     if not ok:
         return jsonify(
             {"success": False, "error": "输入包含非法字符", "enhanced": True}

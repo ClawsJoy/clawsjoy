@@ -181,3 +181,7 @@ class ChatAgent(BusinessAgent):
             return smart_adapter.generate(prompt, auto_select=True)
         except:
             return f"收到：{user_input[:50]}..."
+
+
+# 全局实例
+chat_agent = ChatAgent()

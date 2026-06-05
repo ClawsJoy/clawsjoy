@@ -1,9 +1,22 @@
-"""DecisionAgent - 决策者 v5.2.0 (优化版：缓存+异步)"""
+
+import os
+import sys
+
+    with open("/tmp/decision_debug.log", "a") as f:
+        f.write(f"{msg}\n")
+    sys.stdout.write(msg + "\n")
+    sys.stdout.flush()
+
+import sys
+sys.stdout = sys.stderr
+
+"""DecisionAgent - 决策者 v5.3.0 (修复初始化顺序)"""
 
 import sys
 
 sys.path.insert(0, "/home/flybo/clawsjoy_v5")
 
+import atexit
 import concurrent.futures
 import time
 from dataclasses import dataclass, field
@@ -24,11 +37,16 @@ class DecisionRecord:
 
 
 class DecisionAgent(BusinessAgent):
-    """决策者 - 多源综合决策 (优化版)"""
+    """决策者 - 多源综合决策 (v5.3.0)"""
 
     name = "decision_agent"
     description = "智能决策者 - 多源综合决策"
-    version = "5.2.0"
+    version = "5.3.0"
+
+    # 可配置参数
+    CACHE_TTL_SECONDS = 60
+    EVIDENCE_TIMEOUT_SECONDS = 5.0
+    THREAD_POOL_WORKERS = 3
 
     WEIGHTS = {
         "analyst": 0.45,
@@ -40,35 +58,58 @@ class DecisionAgent(BusinessAgent):
 
     def __init__(self, user_id: str = "default"):
         super().__init__(user_id=user_id)
+
+        # 1. 初始化基础属性（先于加载记忆）
         self._init_components()
-        self._load_memory()
-        self._decision_cache = {}  # 决策缓存
+
+        # 2. 缓存
+        self._decision_cache = {}
         self._analysis_cache = {}
         self._route_stats = {"A": 0, "B": 0, "C": 0}
-        # 线程池
+
+        # 3. 线程池（用于异步证据收集）
         self._executor = concurrent.futures.ThreadPoolExecutor(
-            max_workers=3, thread_name_prefix="dec_"
+            max_workers=self.THREAD_POOL_WORKERS, thread_name_prefix="dec_"
         )
+
+        # 4. 注册退出时清理
+        atexit.register(self._cleanup)
+
+        # 5. 加载历史记忆（此时属性已存在）
+        self._load_memory()
+
         print(
             f"🎖️ 决策者 v{self.version} 已上岗 (经验记忆: {len(self._decision_memory)}条)"
         )
 
     def _init_components(self):
+        """初始化组件（不依赖顺序）"""
+        # 推理引擎
         try:
             from engine.reasoning import reasoning_engine
 
             self.reasoning_engine = reasoning_engine
         except:
             self.reasoning_engine = None
+
+        # 语义引擎
         try:
             from engine.semantic import semantic_engine
 
             self.semantic_engine = semantic_engine
         except:
             self.semantic_engine = None
+
+        # 决策记忆（先初始化为空列表）
         self._decision_memory: List[DecisionRecord] = []
 
+    def _cleanup(self):
+        """清理资源"""
+        if hasattr(self, "_executor") and self._executor:
+            self._executor.shutdown(wait=False)
+
     def _load_memory(self):
+        """加载历史决策记忆"""
         try:
             import json
             from pathlib import Path
@@ -79,11 +120,10 @@ class DecisionAgent(BusinessAgent):
                     data = json.load(f)
                     for item in data[-100:]:
                         self._decision_memory.append(DecisionRecord(**item))
-                print(f"[决策者] 加载了 {len(self._decision_memory)} 条历史决策")
         except Exception as e:
-            print(f"[决策者] 加载记忆: {e}")
 
     def _save_memory(self):
+        """保存决策记忆"""
         try:
             import json
             from pathlib import Path
@@ -108,13 +148,20 @@ class DecisionAgent(BusinessAgent):
     def _get_cached_decision(self, cache_key: str):
         if cache_key in self._decision_cache:
             result, timestamp = self._decision_cache[cache_key]
-            if datetime.now() - timestamp < timedelta(seconds=60):
+            if datetime.now() - timestamp < timedelta(seconds=self.CACHE_TTL_SECONDS):
                 return result
             else:
                 del self._decision_cache[cache_key]
         return None
 
     def _cache_decision(self, cache_key: str, route_result: dict):
+        # 限制缓存大小
+        if len(self._decision_cache) > 500:
+            # 删除最旧的条目
+            oldest = min(
+                self._decision_cache.keys(), key=lambda k: self._decision_cache[k][1]
+            )
+            del self._decision_cache[oldest]
         self._decision_cache[cache_key] = (route_result, datetime.now())
 
     # ========== 异步证据收集 ==========
@@ -125,36 +172,34 @@ class DecisionAgent(BusinessAgent):
         futures["analyst"] = self._executor.submit(
             self._get_analyst_report, user_input, context
         )
+
         if hasattr(self, "semantic_engine") and self.semantic_engine:
             futures["semantic"] = self._executor.submit(
                 self._get_semantic_suggestion, user_input
             )
-        if hasattr(self, "_decision_memory") and self._decision_memory:
+
+        if self._decision_memory:
             futures["historical"] = self._executor.submit(
                 self._get_historical_suggestion, user_input
             )
 
         for key, future in futures.items():
             try:
-                result = future.result(timeout=2.0)
+                result = future.result(timeout=5.0)
                 if result:
                     evidences[key] = result
             except concurrent.futures.TimeoutError:
-                print(f"[决策者] {key} 超时")
             except Exception as e:
-                print(f"[决策者] {key} 失败: {e}")
 
         return evidences
 
     # ========== 核心决策 ==========
     def _decide_and_route(self, user_input: str, context: dict = None) -> dict:
-        print(f"[决策者] 🧠 开始决策: {user_input[:50]}...")
 
         # 检查缓存
         cache_key = self._get_cache_key(user_input)
         cached = self._get_cached_decision(cache_key)
         if cached:
-            print(f"[决策者] 🎯 缓存命中")
             return cached
 
         # 异步收集证据
@@ -163,7 +208,6 @@ class DecisionAgent(BusinessAgent):
         # 综合决策
         decision, confidence, reasoning, scores = self._make_decision(evidences)
 
-        print(f"[决策者] 📊 决策: {decision} (置信度: {confidence:.2%})")
 
         # 记录和路由
         self._record_decision(user_input, decision, confidence)
@@ -198,7 +242,6 @@ class DecisionAgent(BusinessAgent):
                     "confidence": report.get("confidence", 0.8),
                 }
         except Exception as e:
-            print(f"[决策者] 分析师失败: {e}")
         return None
 
     def _get_semantic_suggestion(self, user_input: str) -> Optional[dict]:
@@ -206,14 +249,19 @@ class DecisionAgent(BusinessAgent):
             return None
         try:
             result = self.semantic_engine.understand(user_input)
-            if "翻译" in user_input.lower():
+            # 基于原子引擎 intent 智能路由
+            if result.intent == "translate":
+                suggestion = "C"
+            elif "翻译" in user_input.lower() and len(user_input) < 50:
                 suggestion = "B"
             elif result.intent in ["chat", "greeting", "farewell", "thanks"]:
                 suggestion = "A"
             elif result.intent in ["calculate", "weather"]:
                 suggestion = "B"
-            else:
+            elif result.intent in ["code", "ai", "analysis"]:
                 suggestion = "C"
+            else:
+                suggestion = "A"
             return {"suggestion": suggestion, "confidence": result.confidence}
         except:
             return None
@@ -303,18 +351,75 @@ class DecisionAgent(BusinessAgent):
         if decision == "A":
             from agents.chat_agent.agent import chat_agent
 
-            print(f"[决策者] 🚀 路由 → ChatAgent")
             return chat_agent.process(user_input)
         elif decision == "B":
             from agents.executor_agent.agent import executor_agent
 
-            print(f"[决策者] 🚀 路由 → ExecutorAgent")
             return executor_agent.process(user_input)
         else:
             from agents.orchestrator.agent import orchestrator_agent
 
-            print(f"[决策者] 🚀 路由 → Orchestrator")
             return orchestrator_agent.process(user_input, {"caller": "decision_agent"})
 
+    # ========== 状态查询 ==========
+    def get_stats(self) -> dict:
+        total = sum(self._route_stats.values())
+        return {
+            "total_decisions": total,
+            "routes": self._route_stats,
+            "distribution": {
+                k: v / total if total > 0 else 0 for k, v in self._route_stats.items()
+            },
+            "cache_size": len(self._decision_cache),
+            "memory_count": len(self._decision_memory),
+        }
+
+
+    def _get_semantic_suggestion(self, user_input: str) -> Optional[dict]:
+        if not self.semantic_engine:
+            return None
+        try:
+            result = self.semantic_engine.understand(user_input)
+            # 基于原子引擎 intent 智能路由
+            if result.intent == "translate":
+                suggestion = "C"
+            elif "翻译" in user_input.lower() and len(user_input) < 50:
+                suggestion = "B"
+            elif result.intent in ["chat", "greeting", "farewell", "thanks"]:
+                suggestion = "A"
+            elif result.intent in ["calculate", "weather"]:
+                suggestion = "B"
+            elif result.intent in ["code", "ai", "analysis"]:
+                suggestion = "C"
+            else:
+                suggestion = "A"
+            return {"suggestion": suggestion, "confidence": result.confidence}
+        except Exception as e:
+            return None
+
+    def _get_semantic_suggestion(self, user_input: str) -> Optional[dict]:
+        if not self.semantic_engine:
+            return None
+        try:
+            result = self.semantic_engine.understand(user_input)
+            
+            # 强制覆盖：包含"翻译"关键词时，按长度判断路由
+            if "翻译" in user_input:
+                if len(user_input) > 20:
+                    suggestion = "C"
+                else:
+                    suggestion = "B"
+            elif result.intent in ["chat", "greeting", "farewell", "thanks"]:
+                suggestion = "A"
+            elif result.intent in ["calculate", "weather"]:
+                suggestion = "B"
+            elif result.intent in ["code", "ai", "analysis", "translate"]:
+                suggestion = "C"
+            else:
+                suggestion = "A"
+            
+            return {"suggestion": suggestion, "confidence": result.confidence}
+        except Exception as e:
+            return None
 
 decision_agent = DecisionAgent()
