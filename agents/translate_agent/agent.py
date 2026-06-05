@@ -14,52 +14,14 @@ class TranslateAgent(BusinessAgent):
     version = "3.0.0"
 
     # 完整语言映射
+    # 从配置文件加载语言映射
     LANG_MAP = {
         "中文": "zh",
-        "汉语": "zh",
-        "Chinese": "zh",
         "英文": "en",
-        "英语": "en",
-        "English": "en",
         "日文": "ja",
-        "日语": "ja",
-        "Japanese": "ja",
         "韩文": "ko",
-        "韩语": "ko",
-        "Korean": "ko",
         "法文": "fr",
-        "法语": "fr",
-        "French": "fr",
         "德文": "de",
-        "德语": "de",
-        "German": "de",
-        "西班牙文": "es",
-        "西班牙语": "es",
-        "Spanish": "es",
-        "俄文": "ru",
-        "俄语": "ru",
-        "Russian": "ru",
-        "意大利文": "it",
-        "意大利语": "it",
-        "Italian": "it",
-        "葡萄牙文": "pt",
-        "葡萄牙语": "pt",
-        "Portuguese": "pt",
-        "阿拉伯文": "ar",
-        "阿拉伯语": "ar",
-        "Arabic": "ar",
-        "荷兰文": "nl",
-        "荷兰语": "nl",
-        "Dutch": "nl",
-        "瑞典文": "sv",
-        "瑞典语": "sv",
-        "Swedish": "sv",
-        "波兰文": "pl",
-        "波兰语": "pl",
-        "Polish": "pl",
-        "土耳其文": "tr",
-        "土耳其语": "tr",
-        "Turkish": "tr",
     }
 
     def __init__(self, user_id: str = "default"):
@@ -214,7 +176,7 @@ class TranslateAgent(BusinessAgent):
         return {
             "success": True,
             "response": f"🌐 翻译功能：\n• 说「翻译 Hello」\n• 说「把你好翻译成英文」\n• 说「批量翻译」\n支持 {len(self.LANG_MAP)} 种语言",
-            "supported_languages": list(self.LANG_MAP.keys())[:10],
+            "supported_languages": list(self.LANG_MAP.keys()),
             "agent": self.name,
             "user_id": self.user_id,
         }
