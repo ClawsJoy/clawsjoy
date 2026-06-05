@@ -1,13 +1,34 @@
-# 推荐迁移到 PostgreSQL
-production:
+# 数据库配置 - PostgreSQL 版本
+
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: 10
   host: localhost
   port: 5432
-  database: clawsjoy
-  user: clawsjoy_user
-  
-# 当前 SQLite 文件列表:
-sqlite_files:
-  - data/auth.db
-  - data/tasks.db  
-  - data/memory/long_term_memory.db
-  - data/feedback.db
+  username: clawsjoy
+  password: clawsjoy_local
+
+development:
+  <<: *default
+  database: clawsjoy_auth
+
+auth:
+  <<: *default
+  database: clawsjoy_auth
+
+billing:
+  <<: *default
+  database: clawsjoy_billing
+
+conversation:
+  <<: *default
+  database: clawsjoy_conversation
+
+memory:
+  <<: *default
+  database: clawsjoy_memory
+
+learning:
+  <<: *default
+  database: clawsjoy_learning
