@@ -266,25 +266,56 @@ def list_endpoints():
     return jsonify({"endpoints": endpoints, "total": len(endpoints)})
 
 
+# ========== 统一监控指标（支持 JSON 和 Prometheus 格式） ==========
+from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
+
+# 业务指标定义
+request_count = Counter('clawsjoy_requests_total', 'Total requests', ['method', 'endpoint', 'status'])
+request_duration = Histogram('clawsjoy_request_duration_seconds', 'Request duration', ['method', 'endpoint'])
+active_sessions = Counter('clawsjoy_active_sessions', 'Active sessions')
+
 @app.route("/metrics", methods=["GET"])
 def metrics():
+    """统一指标端点 - 根据 Accept 头返回 JSON 或 Prometheus 格式"""
+    accept = request.headers.get('Accept', '')
+    
+    # Prometheus 格式
+    if 'text/plain' in accept or 'prometheus' in accept:
+        return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
+    
+    # JSON 格式（默认）
     try:
-        return jsonify(
-            {
-                "cpu_percent": psutil.cpu_percent(interval=0.1),
-                "memory_percent": psutil.virtual_memory().percent,
-                "disk_usage": psutil.disk_usage("/").percent,
-                "connections": len(psutil.net_connections()),
-                "status": "ok",
-            }
-        )
+        # 系统指标
+        cpu_percent = psutil.cpu_percent(interval=0.1)
+        memory_percent = psutil.virtual_memory().percent
+        disk_usage = psutil.disk_usage("/").percent
+        connections = len(psutil.net_connections())
+        
+        # 业务指标值
+        requests_total = request_count._value.get()
+        sessions_total = active_sessions._value.get()
+        
+        return jsonify({
+            "system": {
+                "cpu_percent": cpu_percent,
+                "memory_percent": memory_percent,
+                "disk_usage": disk_usage,
+                "connections": connections,
+            },
+            "business": {
+                "requests_total": requests_total,
+                "active_sessions": sessions_total,
+            },
+            "status": "ok"
+        })
     except Exception as e:
-        return (
-            jsonify(
-                {"status": "degraded", "error": str(e), "message": "部分指标不可用"}
-            ),
-            200,
-        )
+        return jsonify({
+            "status": "degraded",
+            "error": str(e),
+            "message": "部分指标不可用"
+        }), 200
+
+
 
 
 @app.route("/health", methods=["GET"])
@@ -382,12 +413,58 @@ def get_patterns():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+# ========== Swagger API 文档 ==========
+from flasgger import Swagger, swag_from
+
+swagger_config = {
+    "headers": [],
+    "specs": [
+        {
+            "endpoint": 'apispec',
+            "route": '/apispec.json',
+            "rule_filter": lambda rule: True,
+            "model_filter": lambda tag: True,
+        }
+    ],
+    "static_url_path": "/flasgger_static",
+    "swagger_ui": True,
+    "specs_route": "/apidocs/"
+}
+
+swagger = Swagger(app, config=swagger_config)
+
+# 为现有的 enhanced_chat 添加文档（不要重新定义函数）
+# 需要在原有的 @app.route("/api/v5/enhanced/chat") 之前添加 @swag_from 装饰器
+
+
 # ========== 增强对话（集成 Orchestrator 四引擎） ==========
 @app.route("/api/v5/enhanced/chat", methods=["POST"])
 @monitor_performance
 @rate_limit(limit=30, window=60)
 @require_auth
-@require_auth
+@swag_from({
+    'tags': ['Chat'],
+    'summary': '智能对话',
+    'description': '发送消息，自动路由到对应 Agent（A/B/C）',
+    'parameters': [
+        {
+            'name': 'body',
+            'in': 'body',
+            'required': True,
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'user_id': {'type': 'string', 'example': 'testuser'},
+                    'message': {'type': 'string', 'example': '你好'}
+                }
+            }
+        }
+    ],
+    'responses': {
+        200: {'description': '成功'},
+        401: {'description': '未授权'}
+    }
+})
 def enhanced_chat():
     # 写入文件日志
     with open("/tmp/enhanced_chat.log", "a") as f:
@@ -1177,3 +1254,4 @@ if __name__ == "__main__":
 #   "user_id": "user1",
 #   "feedback": "需要更详细的趋势分析"
 # }
+

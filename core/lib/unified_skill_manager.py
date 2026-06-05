@@ -9,7 +9,9 @@
 
 from typing import Dict, List, Optional
 
-from core.lib.skill_loader_v3 import skill_loader
+from core.lib.skill_loader_v3 import get_skill_loader
+
+skill_loader = get_skill_loader()
 from core.lib.skill_registry_v2 import skill_registry
 
 

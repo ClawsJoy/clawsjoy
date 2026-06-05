@@ -34,8 +34,8 @@ class DecisionAgent(BusinessAgent):
 
     # 可配置参数
     CACHE_TTL_SECONDS = 60
-    EVIDENCE_TIMEOUT_SECONDS = 5.0
-    THREAD_POOL_WORKERS = 3
+    EVIDENCE_TIMEOUT_SECONDS = 10.0
+    THREAD_POOL_WORKERS = 20
 
     WEIGHTS = {
         "analyst": 0.45,
