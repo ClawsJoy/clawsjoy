@@ -139,4 +139,3 @@ class VisionAgent(BusinessAgent):
             "user_id": self.user_id,
         }
 
-vision_agent = VisionAgent()

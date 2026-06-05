@@ -202,3 +202,4 @@ class CalculatorAgent(BusinessAgent):
         )
         if len(self.history) > 20:
             self.history = self.history[-20:]
+
