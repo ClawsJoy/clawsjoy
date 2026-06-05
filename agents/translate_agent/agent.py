@@ -218,3 +218,5 @@ class TranslateAgent(BusinessAgent):
             "agent": self.name,
             "user_id": self.user_id,
         }
+
+translate_agent = TranslateAgent()

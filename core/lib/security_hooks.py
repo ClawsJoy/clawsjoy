@@ -146,14 +146,93 @@ class SecurityHooks:
         context["data"] = data
         return context
 
+    # 全局实例
 
-# 全局实例
-security_hooks = SecurityHooks()
+    @staticmethod
+    def sanitize_input(text: str) -> tuple:
+        """输入清洗和验证"""
+        if not text or not isinstance(text, str):
+            return False, ""
 
-# 导出函数（供钩子管理器调用）
-redact_sensitive = security_hooks.redact_sensitive
-encrypt_sensitive = security_hooks.encrypt_sensitive
-decrypt_sensitive = security_hooks.decrypt_sensitive
-validate_data = security_hooks.validate_data
-prepare_encryption = security_hooks.prepare_encryption
-cleanup_after_decrypt = security_hooks.cleanup_after_decrypt
+        import re
+
+        # 允许：中文、英文、数字、常用标点
+        cleaned = re.sub(
+            r"[^\u4e00-\u9fa5a-zA-Z0-9\s\.\,\!\?\-\:\;\"\'\(\)\[\]\{\}]", "", text
+        )
+
+        if not cleaned.strip():
+            return False, ""
+
+        if len(cleaned) > 5000:
+            cleaned = cleaned[:5000]
+
+        return True, cleaned
+
+    @staticmethod
+    def check_dangerous_patterns(text: str) -> tuple:
+        """检查危险模式
+
+        Args:
+            text: 用户输入文本
+
+        Returns:
+            (is_safe, error_message) 元组
+        """
+        if not text or not isinstance(text, str):
+            return True, ""
+
+        # 定义危险模式
+        dangerous_patterns = [
+            (r"(DROP|DELETE|TRUNCATE|ALTER|CREATE|INSERT|UPDATE)\s+", "SQL注入风险"),
+            (r"<script|<iframe|javascript:|onclick=|onload=", "XSS攻击风险"),
+            (r"rm\s+-rf|del\s+/|format\s+|shutdown", "系统命令风险"),
+            (r"__import__|eval\(|exec\(|compile\(", "代码注入风险"),
+            (r"\.\./|\.\.\\|/etc/passwd|C:\\Windows", "路径遍历风险"),
+        ]
+
+        import re
+
+        text_lower = text.lower()
+
+        for pattern, error_msg in dangerous_patterns:
+            if re.search(pattern, text_lower, re.IGNORECASE):
+                return False, f"检测到危险操作: {error_msg}"
+
+        return True, ""
+
+    @staticmethod
+    def check_rate_limit(user_id: str, config: dict = None) -> tuple:
+        """检查频率限制
+
+        Args:
+            user_id: 用户ID
+            config: 配置参数
+
+        Returns:
+            (is_allowed, error_message) 元组
+        """
+        import time
+        from collections import defaultdict
+
+        # 简单的内存限流
+        if not hasattr(SecurityHooks, "_rate_limit_cache"):
+            SecurityHooks._rate_limit_cache = defaultdict(list)
+
+        cache = SecurityHooks._rate_limit_cache
+        now = time.time()
+        window = 60  # 60秒窗口
+        max_requests = config.get("max_requests_per_minute", 30) if config else 30
+
+        # 清理过期记录
+        cache[user_id] = [t for t in cache[user_id] if now - t < window]
+
+        # 检查限制
+        if len(cache[user_id]) >= max_requests:
+            wait_time = int(window - (now - cache[user_id][0]))
+            return False, f"请求过于频繁，请等待 {wait_time} 秒后重试"
+
+        # 记录本次请求
+        cache[user_id].append(now)
+
+        return True, ""

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """大脑调度器 v5.0.0 - 配置驱动路由器"""
 
 import yaml
@@ -35,11 +36,11 @@ class DoAnythingSkill:
         """加载执行器"""
         self.executors = {}
         executors_config = self.config.get("executors", {})
-        
+
         for name, exec_config in executors_config.items():
             if not exec_config.get("enabled", True):
                 continue
-            
+
             module_path = exec_config.get("module")
             if module_path:
                 try:
@@ -82,22 +83,22 @@ class DoAnythingSkill:
         priority = self.config.get("priority", [])
         for rule in priority:
             handler_name = rule.get("handler")
-            
+
             # 检查是否匹配
             if not self._match_rule(goal, rule):
                 continue
-            
+
             print(f"🎯 匹配到规则: {rule.get('name')} -> {handler_name}")
-            
+
             # 获取执行器
             executor = self.executors.get(handler_name)
             if not executor:
                 print(f"⚠️ 执行器未找到: {handler_name}")
                 continue
-            
+
             # 准备参数
             exec_params = {"goal": goal, "context": params.get("context", {})}
-            
+
             # 执行
             try:
                 if hasattr(executor, 'execute'):
@@ -106,7 +107,7 @@ class DoAnythingSkill:
                     result = executor(goal, exec_params)
                 else:
                     result = {"success": False, "error": f"执行器 {handler_name} 不可调用"}
-                
+
                 if result.get("success"):
                     return self._format_response(result, rule.get("name"), goal)
                 else:
@@ -115,7 +116,7 @@ class DoAnythingSkill:
             except Exception as e:
                 print(f"⚠️ 执行器 {handler_name} 异常: {e}")
                 continue
-        
+
         # 兜底：LLM 执行器
         llm_executor = self.executors.get("llm_executor")
         if llm_executor:
@@ -124,7 +125,7 @@ class DoAnythingSkill:
                 return self._format_response(result, "llm", goal)
             except Exception as e:
                 return self._format_response({"success": False, "error": str(e)}, "error", goal)
-        
+
         return self._format_response(
             {"success": False, "error": "无法处理该任务"},
             "error", goal
@@ -139,26 +140,35 @@ class DoAnythingSkill:
                 if keyword in goal:
                     return True
             return False
-        
+
         # 检查正则模式
         pattern = rule.get("pattern")
         if pattern:
             import re
             if re.search(pattern, goal):
                 return True
-        
+
         # 默认规则（兜底）
         return rule.get("default", False)
 
-    def _format_response(self, result, source, original_goal):
+    def _format_response(self, result: dict, source: str, original_goal: str) -> dict:
         """格式化响应"""
-        return {
+        response = {
             "success": result.get("success", True),
             "source": source,
-            "original_goal": original_goal[:100],
+            "original_goal": original_goal,
             "timestamp": datetime.now().isoformat(),
-            **{k: v for k, v in result.items() if k not in ['success']}
         }
 
+        if "result" in result:
+            response["result"] = result["result"]
+        if "response" in result:
+            response["response"] = result["response"]
+        if "error" in result:
+            response["error"] = result["error"]
 
+        return response
+
+
+# 全局实例
 skill = DoAnythingSkill()
