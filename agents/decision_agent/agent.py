@@ -376,3 +376,11 @@ class DecisionAgent(BusinessAgent):
 
 
 decision_agent = DecisionAgent()
+
+def _get_agent_by_intent(self, intent: str) -> str:
+    """根据意图获取 Agent"""
+    try:
+        from core.lib.intent_router import intent_router
+        return intent_router.get_agent(intent)
+    except:
+        return None

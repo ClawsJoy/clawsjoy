@@ -64,81 +64,69 @@ class AnalysisAgent(BusinessAgentV2):
         }
 
     def _quick_analysis(self, user_input: str) -> Dict:
-        """快速规则分析（不调用 LLM）"""
+        """快速规则分析 - 配置驱动"""
+        from core.lib.smart_intent_router import SmartIntentRouter
+        from core.lib.intent_fallback import intent_fallback
+        from engine.semantic import semantic_engine
+        
         input_lower = user_input.lower()
-        user_len = len(user_input)
-        #  输入: {input_lower[:80]}...")
-
-        # 检测意图
-        intent = "general"
-        has_analysis = "分析" in input_lower
-        has_writing = (
-            "写" in input_lower or "总结" in input_lower or "报告" in input_lower
-        )
-        has_calculation = "计算" in input_lower or any(
-            op in input_lower for op in ["加", "减", "乘", "除"]
-        )
-        has_translation = "翻译" in input_lower
-        user_len = len(user_input)
-        user_len = len(user_input)
-
-        if has_analysis:
-            intent = "analysis"
-        if has_writing:
-            intent = "writing" if intent == "analysis" else "writing"
-        if has_calculation:
-            intent = "calculation"
-        if has_translation:
-            intent = "translation"
-
-        print(
-            f"[分析师][快速分析] has_analysis={has_analysis}, has_writing={has_writing}, intent={intent}"
-        )
-
-        # 判断复杂度
-        if has_analysis and has_writing:
-            complexity = "high"
-            suggested_route = "C"
-            requires_orchestration = True
-            summary = "复杂任务：需要分析+写作，建议编排"
-            #  匹配: 分析+写作 → C")
-        elif has_analysis:
+        
+        # 1. 关键词兜底（从配置文件加载）
+        fallback_intent = intent_fallback.get_intent(user_input)
+        if fallback_intent:
+            # 从配置文件获取 Agent
+            router = SmartIntentRouter()
+            router.reload_config()
+            agent = router.INTENT_TO_AGENT.get(fallback_intent)
+            if agent:
+                route = "C" if agent in ["translate_agent", "code_agent", "analysis_agent", "video_agent", "dialect_agent", "writer_agent", "vision_agent"] else "B"
+                orchestration = route == "C"
+                complexity = "medium" if orchestration else "low"
+                print(f"[分析师][快速分析] 关键词匹配: {fallback_intent} -> {agent} -> {route}")
+                return {
+                    "complexity": complexity,
+                    "suggested_route": route,
+                    "requires_orchestration": orchestration,
+                    "intent": fallback_intent,
+                    "summary": f"{fallback_intent}任务，需要编排" if orchestration else f"{fallback_intent}任务，直接执行",
+                }
+        
+        # 2. 语义理解
+        router = SmartIntentRouter()
+        router.reload_config()
+        
+        try:
+            result = semantic_engine.understand(user_input)
+            intent = result.intent
+        except:
+            intent = "chat"
+        
+        # 根据意图获取 Agent
+        agent = router.INTENT_TO_AGENT.get(intent, "chat_agent")
+        
+        # 确定路由
+        if agent in ["calculator_agent", "weather_skill"]:
+            route = "B"
+            orchestration = False
+            complexity = "low"
+            summary = f"单步任务：{intent}，直接执行"
+        elif agent in ["translate_agent", "code_agent", "analysis_agent", "video_agent", "dialect_agent", "writer_agent", "vision_agent"]:
+            route = "C"
+            orchestration = True
             complexity = "medium"
-            suggested_route = "C"
-            requires_orchestration = True
-            summary = "分析任务：需要深度分析，建议编排"
-            #  匹配: 纯分析 → C")
-        elif has_translation:
-            # 根据长度判断路由
-            if user_len > 50:
-                complexity = "medium"
-                suggested_route = "C"
-                requires_orchestration = True
-                summary = "长文本翻译任务，需要编排"
-                #  匹配: 长翻译 → C")
-            else:
-                complexity = "low"
-                suggested_route = "B"
-                requires_orchestration = False
-                summary = "短文本翻译，直接执行"
-                #  匹配: 短翻译 → B")
-        elif has_calculation:
-            complexity = "low"
-            suggested_route = "B"
-            requires_orchestration = False
-            summary = "计算任务，直接执行"
-            #  匹配: 计算 → B")
+            summary = f"复杂任务：{intent}，需要编排"
         else:
+            route = "A"
+            orchestration = False
             complexity = "low"
-            suggested_route = "A"
-            requires_orchestration = False
             summary = "简单对话，直接回复"
-            #  匹配: 默认 → A")
-
+        
+        print(f"[分析师][快速分析] 语义: intent={intent}, agent={agent}, route={route}")
+        
         return {
             "complexity": complexity,
-            "suggested_route": suggested_route,
-            "requires_orchestration": requires_orchestration,
+            "suggested_route": route,
+            "requires_orchestration": orchestration,
             "intent": intent,
             "summary": summary,
         }
@@ -204,3 +192,43 @@ class AnalysisAgent(BusinessAgentV2):
 
 
 analysis_agent = AnalysisAgent()
+
+def _get_route_from_config(self, intent: str) -> str:
+    """从配置获取路由"""
+    try:
+        from core.lib.intent_router import intent_router
+        agent = intent_router.get_agent(intent)
+        return intent_router.get_route(agent) if agent else "A"
+    except:
+        return "A"
+
+from core.lib.smart_intent_router import SmartIntentRouter
+
+def _get_route_from_intent(self, user_input: str) -> Dict:
+    """使用智能路由器获取路由"""
+    router = SmartIntentRouter()
+    # 重新加载配置确保最新
+    router.reload_config()
+    
+    # 获取意图
+    from engine.semantic import semantic_engine
+    result = semantic_engine.understand(user_input)
+    intent = result.intent
+    
+    # 根据意图获取 Agent
+    agent = router.INTENT_TO_AGENT.get(intent)
+    
+    # 确定路由
+    if agent in ["calculator_agent", "weather_skill"]:
+        route = "B"
+    elif agent in ["translate_agent", "code_agent", "analysis_agent", "video_agent", "dialect_agent"]:
+        route = "C"
+    else:
+        route = "A"
+    
+    return {
+        "agent": agent or "chat_agent",
+        "route": route,
+        "intent": intent,
+        "requires_orchestration": route == "C"
+    }
