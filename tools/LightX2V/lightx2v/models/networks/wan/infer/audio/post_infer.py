@@ -1,8 +1,8 @@
-from lib.smart_config import smart_config
 import torch
-
 from lightx2v.models.networks.wan.infer.post_infer import WanPostInfer
 from lightx2v.utils.envs import *
+
+from lib.smart_config import smart_config
 
 
 class WanAudioPostInfer(WanPostInfer):

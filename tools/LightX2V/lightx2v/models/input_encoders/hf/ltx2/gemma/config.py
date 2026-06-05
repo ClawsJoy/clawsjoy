@@ -1,5 +1,6 @@
-from lib.smart_config import smart_config
 from dataclasses import asdict, dataclass, field
+
+from lib.smart_config import smart_config
 
 
 @dataclass
@@ -56,7 +57,9 @@ class Gemma3VisionConfig:
 
 @dataclass
 class Gemma3ConfigData:
-    architectures: list[str] = field(default_factory=lambda: ["Gemma3ForConditionalGeneration"])
+    architectures: list[str] = field(
+        default_factory=lambda: ["Gemma3ForConditionalGeneration"]
+    )
     boi_token_index: int = 255999
     eoi_token_index: int = 256000
     eos_token_id: list[int] = field(default_factory=lambda: [1, 106])

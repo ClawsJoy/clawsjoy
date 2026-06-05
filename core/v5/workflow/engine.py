@@ -3,19 +3,20 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
-from typing import Dict, List, Any, Callable
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
-import uuid
+from typing import Any, Callable, Dict, List
 
 
 @dataclass
 class WorkflowNode:
     """工作流节点"""
+
     id: str
     type: str  # input, llm, condition, output, tool
     name: str
@@ -26,6 +27,7 @@ class WorkflowNode:
 @dataclass
 class Workflow:
     """工作流定义"""
+
     id: str
     name: str
     description: str
@@ -35,34 +37,33 @@ class Workflow:
 
 class WorkflowEngine:
     """工作流执行引擎"""
-    
+
     def __init__(self):
         self.workflows: Dict[str, Workflow] = {}
         self.results: Dict[str, Any] = {}
-    
+
     def create_workflow(self, name: str, description: str, nodes: List[Dict]) -> str:
         """创建工作流"""
         workflow_id = str(uuid.uuid4())[:8]
 
         workflow_nodes = []
         for node in nodes:
-            workflow_nodes.append(WorkflowNode(
-                id=node.get('id', str(uuid.uuid4())[:8]),
-                type=node.get('type', 'llm'),
-                name=node.get('name', ''),
-                config=node.get('config', {}),
-                next_nodes=node.get('next_nodes', [])
-            ))
+            workflow_nodes.append(
+                WorkflowNode(
+                    id=node.get("id", str(uuid.uuid4())[:8]),
+                    type=node.get("type", "llm"),
+                    name=node.get("name", ""),
+                    config=node.get("config", {}),
+                    next_nodes=node.get("next_nodes", []),
+                )
+            )
 
         self.workflows[workflow_id] = Workflow(
-            id=workflow_id,
-            name=name,
-            description=description,
-            nodes=workflow_nodes
+            id=workflow_id, name=name, description=description, nodes=workflow_nodes
         )
 
         return workflow_id
-    
+
     def execute(self, workflow_id: str, input_data: str) -> Dict:
         """执行工作流"""
         workflow = self.workflows.get(workflow_id)
@@ -72,7 +73,9 @@ class WorkflowEngine:
         context = {"input": input_data, "output": ""}
 
         # 找到起始节点
-        start_node = next((n for n in workflow.nodes if n.type == "input"), workflow.nodes[0])
+        start_node = next(
+            (n for n in workflow.nodes if n.type == "input"), workflow.nodes[0]
+        )
 
         current_node = start_node
         visited = set()
@@ -87,12 +90,14 @@ class WorkflowEngine:
             # 找下一个节点
             if current_node.next_nodes:
                 next_id = current_node.next_nodes[0]
-                current_node = next((n for n in workflow.nodes if n.id == next_id), None)
+                current_node = next(
+                    (n for n in workflow.nodes if n.id == next_id), None
+                )
             else:
                 break
 
         return {"success": True, "result": context["output"]}
-    
+
     def _execute_node(self, node: WorkflowNode, context: Dict) -> str:
         """执行单个节点"""
         from core.v5.llm.client import llm

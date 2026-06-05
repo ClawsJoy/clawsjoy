@@ -1,15 +1,18 @@
-from lib.smart_config import smart_config
 from lightx2v.common.modules.weight_module import WeightModule
 from lightx2v.utils.registry_factory import (
     MM_WEIGHT_REGISTER,
 )
+
+from lib.smart_config import smart_config
 
 
 class LTX2PreWeights(WeightModule):
     def __init__(self, config):
         super().__init__()
         self.config = config
-        self.caption_proj_before_connector = config.get("caption_proj_before_connector", False)
+        self.caption_proj_before_connector = config.get(
+            "caption_proj_before_connector", False
+        )
         self.cross_attention_adaln = config.get("cross_attention_adaln", False)
 
         # Video weights

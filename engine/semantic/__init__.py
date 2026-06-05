@@ -1,5 +1,6 @@
-"""语义理解引擎 v8.0 增强版"""
+#!/usr/bin/env python3
+"""Semantic 模块"""
 
-from engine.semantic.core import SemanticEngine, semantic_engine, IntentResult
+from engine.semantic.core import SemanticEngine, semantic_engine
 
-__all__ = ['SemanticEngine', 'semantic_engine', 'IntentResult']
+__all__ = ["SemanticEngine", "semantic_engine"]

@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import math
 import os
 import queue
@@ -12,6 +11,8 @@ import numpy as np
 import torch
 import torchaudio as ta
 from loguru import logger
+
+from lib.smart_config import smart_config
 
 
 def pseudo_random(a, b):
@@ -37,13 +38,17 @@ class VARecorder:
         self.audio_port = pseudo_random(32000, 40000)
         self.video_port = self.audio_port + 1
         self.ffmpeg_log_level = os.getenv("FFMPEG_LOG_LEVEL", "error")
-        logger.info(f"VARecorder audio port: {self.audio_port}, video port: {self.video_port}, ffmpeg_log_level: {self.ffmpeg_log_level}")
+        logger.info(
+            f"VARecorder audio port: {self.audio_port}, video port: {self.video_port}, ffmpeg_log_level: {self.ffmpeg_log_level}"
+        )
 
         self.width = None
         self.height = None
         self.stoppable_t = None
         self.realtime = False
-        if self.livestream_url.startswith("rtmp://") or self.livestream_url.startswith("http"):
+        if self.livestream_url.startswith("rtmp://") or self.livestream_url.startswith(
+            "http"
+        ):
             self.realtime = True
 
         # ffmpeg process for mix video and audio data and push to livestream
@@ -69,7 +74,9 @@ class VARecorder:
         self.schedule_thread = None
         self.slice_frame = slice_frame
         self.prev_frame = prev_frame
-        assert self.slice_frame >= self.prev_frame, "Slice frame must be greater than previous frame"
+        assert (
+            self.slice_frame >= self.prev_frame
+        ), "Slice frame must be greater than previous frame"
 
     def init_sockets(self):
         # TCP socket for send and recv video and audio data
@@ -89,7 +96,9 @@ class VARecorder:
         try:
             logger.info("Waiting for ffmpeg to connect to audio socket...")
             self.audio_conn, _ = self.audio_socket.accept()
-            logger.info(f"Audio connection established from {self.audio_conn.getpeername()}")
+            logger.info(
+                f"Audio connection established from {self.audio_conn.getpeername()}"
+            )
             fail_time, max_fail_time = 0, 10
             while True:
                 try:
@@ -100,11 +109,15 @@ class VARecorder:
                         logger.info("Audio thread received stop signal")
                         break
                     # Convert audio data to 16-bit integer format
-                    audios = torch.clamp(torch.round(data * 32767), -32768, 32767).to(torch.int16)
+                    audios = torch.clamp(torch.round(data * 32767), -32768, 32767).to(
+                        torch.int16
+                    )
                     try:
                         self.audio_conn.send(audios[None].cpu().numpy().tobytes())
                     except (BrokenPipeError, OSError, ConnectionResetError) as e:
-                        logger.info(f"Audio connection closed, stopping worker: {type(e).__name__}")
+                        logger.info(
+                            f"Audio connection closed, stopping worker: {type(e).__name__}"
+                        )
                         return
                     fail_time = 0
                 except (BrokenPipeError, OSError, ConnectionResetError):
@@ -114,7 +127,9 @@ class VARecorder:
                     logger.error(f"Send audio data error: {traceback.format_exc()}")
                     fail_time += 1
                     if fail_time > max_fail_time:
-                        logger.error(f"Audio push worker thread failed {fail_time} times, stopping...")
+                        logger.error(
+                            f"Audio push worker thread failed {fail_time} times, stopping..."
+                        )
                         break
         except Exception:
             logger.error(f"Audio push worker thread error: {traceback.format_exc()}")
@@ -125,7 +140,9 @@ class VARecorder:
         try:
             logger.info("Waiting for ffmpeg to connect to video socket...")
             self.video_conn, _ = self.video_socket.accept()
-            logger.info(f"Video connection established from {self.video_conn.getpeername()}")
+            logger.info(
+                f"Video connection established from {self.video_conn.getpeername()}"
+            )
             fail_time, max_fail_time = 0, 10
             packet_secs = 1.0 / self.fps
             while True:
@@ -140,11 +157,15 @@ class VARecorder:
                     # Convert to numpy and scale to [0, 255], convert RGB to BGR for OpenCV/FFmpeg
                     for i in range(data.shape[0]):
                         t0 = time.time()
-                        frame = (data[i] * 255).clamp(0, 255).to(torch.uint8).cpu().numpy()
+                        frame = (
+                            (data[i] * 255).clamp(0, 255).to(torch.uint8).cpu().numpy()
+                        )
                         try:
                             self.video_conn.send(frame.tobytes())
                         except (BrokenPipeError, OSError, ConnectionResetError) as e:
-                            logger.info(f"Video connection closed, stopping worker: {type(e).__name__}")
+                            logger.info(
+                                f"Video connection closed, stopping worker: {type(e).__name__}"
+                            )
                             return
                         if self.realtime and i < data.shape[0] - 1:
                             time.sleep(max(0, packet_secs - (time.time() - t0)))
@@ -157,7 +178,9 @@ class VARecorder:
                     logger.error(f"Send video data error: {traceback.format_exc()}")
                     fail_time += 1
                     if fail_time > max_fail_time:
-                        logger.error(f"Video push worker thread failed {fail_time} times, stopping...")
+                        logger.error(
+                            f"Video push worker thread failed {fail_time} times, stopping..."
+                        )
                         break
         except Exception:
             logger.error(f"Video push worker thread error: {traceback.format_exc()}")
@@ -373,12 +396,18 @@ class VARecorder:
             except OSError:
                 self.audio_port = pseudo_random(32000, 40000)
                 self.video_port = self.audio_port + 1
-                logger.warning(f"Failed to initialize sockets {i + 1}/{max_try}: {traceback.format_exc()}")
-                logger.warning(f"change port to {self.audio_port} and {self.video_port}, retry ...")
+                logger.warning(
+                    f"Failed to initialize sockets {i + 1}/{max_try}: {traceback.format_exc()}"
+                )
+                logger.warning(
+                    f"change port to {self.audio_port} and {self.video_port}, retry ..."
+                )
 
     def set_video_size(self, width: int, height: int):
         if self.width is not None and self.height is not None:
-            assert self.width == width and self.height == height, "Video size already set"
+            assert (
+                self.width == width and self.height == height
+            ), "Video size already set"
             return
         self.width = width
         self.height = height
@@ -416,10 +445,18 @@ class VARecorder:
 
         self.stoppable_t = time.time() + M / self.sample_rate + 3
 
-    def buffer_stream(self, images: torch.Tensor, audios: torch.Tensor, gen_video: torch.Tensor, valid_duration=1e9):
+    def buffer_stream(
+        self,
+        images: torch.Tensor,
+        audios: torch.Tensor,
+        gen_video: torch.Tensor,
+        valid_duration=1e9,
+    ):
         N, height, width, C = images.shape
         M = audios.reshape(-1).shape[0]
-        assert N % self.slice_frame == 0, "Video frames must be divisible by slice_frame"
+        assert (
+            N % self.slice_frame == 0
+        ), "Video frames must be divisible by slice_frame"
         assert C == 3, "Input must be [N, H, W, C] with C=3"
 
         audio_frames = round(M * self.fps / self.sample_rate)
@@ -434,14 +471,20 @@ class VARecorder:
             end_frame = i + self.slice_frame
             can_truncate = valid_frames < end_frame
             img = self.padding_video_frames(images[i:end_frame])
-            aud = audios[i * self.audio_samples_per_frame : end_frame * self.audio_samples_per_frame]
+            aud = audios[
+                i
+                * self.audio_samples_per_frame : end_frame
+                * self.audio_samples_per_frame
+            ]
             gen = gen_video[:, :, (end_frame - self.prev_frame) : end_frame]
             rets.append([img, aud, gen, can_truncate])
 
         with self.stream_buffer_lock:
             origin_size = len(self.stream_buffer)
             self.stream_buffer.extend(rets)
-            logger.info(f"Buffered {origin_size} + {len(rets)} = {len(self.stream_buffer)} stream segments, valid_frames: {valid_frames}")
+            logger.info(
+                f"Buffered {origin_size} + {len(rets)} = {len(self.stream_buffer)} stream segments, valid_frames: {valid_frames}"
+            )
 
     def get_buffer_stream_size(self):
         return len(self.stream_buffer)
@@ -452,12 +495,16 @@ class VARecorder:
             idx = len(self.stream_buffer) - 1
             while check_can_truncate and idx >= size and idx >= 0:
                 if not self.stream_buffer[idx][3]:
-                    logger.warning(f"can not truncate frame: {idx}, trucecate size: {size} -> {idx + 1}")
+                    logger.warning(
+                        f"can not truncate frame: {idx}, trucecate size: {size} -> {idx + 1}"
+                    )
                     size = idx + 1
                     break
                 idx -= 1
             self.stream_buffer = self.stream_buffer[:size]
-            logger.info(f"Truncated stream buffer to {len(self.stream_buffer)} segments")
+            logger.info(
+                f"Truncated stream buffer to {len(self.stream_buffer)} segments"
+            )
             if len(self.stream_buffer) > 0:
                 # after truncate, set the last segment can not be truncated
                 self.stream_buffer[-1][3] = False
@@ -467,7 +514,9 @@ class VARecorder:
 
     def schedule_stream_buffer(self):
         schedule_interval = self.slice_frame / self.fps
-        logger.info(f"Schedule stream buffer with interval: {schedule_interval} seconds")
+        logger.info(
+            f"Schedule stream buffer with interval: {schedule_interval} seconds"
+        )
         t = None
         fail_time = 0
         while True:
@@ -495,7 +544,9 @@ class VARecorder:
                 else:
                     fail_time += 1
                     if fail_time % 10 == 0:
-                        logger.warning(f"No stream buffer to schedule: {fail_time} times")
+                        logger.warning(
+                            f"No stream buffer to schedule: {fail_time} times"
+                        )
             except Exception:
                 logger.error(f"Schedule stream buffer error: {traceback.format_exc()}")
                 break
@@ -556,23 +607,35 @@ class VARecorder:
             is_local_file = not self.livestream_url.startswith(("rtmp://", "http"))
             # Local MP4 files need time to write moov atom and finalize the container
             timeout_seconds = 30 if is_local_file else 10
-            logger.info(f"Waiting for FFmpeg to finalize file (timeout={timeout_seconds}s, local_file={is_local_file})")
+            logger.info(
+                f"Waiting for FFmpeg to finalize file (timeout={timeout_seconds}s, local_file={is_local_file})"
+            )
             logger.info(f"FFmpeg output: {self.livestream_url}")
 
             try:
                 returncode = self.ffmpeg_process.wait(timeout=timeout_seconds)
                 if returncode == 0:
-                    logger.info(f"FFmpeg process exited successfully (exit code: {returncode})")
+                    logger.info(
+                        f"FFmpeg process exited successfully (exit code: {returncode})"
+                    )
                 else:
-                    logger.warning(f"FFmpeg process exited with non-zero code: {returncode}")
+                    logger.warning(
+                        f"FFmpeg process exited with non-zero code: {returncode}"
+                    )
             except subprocess.TimeoutExpired:
-                logger.warning(f"FFmpeg process did not exit within {timeout_seconds}s, sending SIGTERM...")
+                logger.warning(
+                    f"FFmpeg process did not exit within {timeout_seconds}s, sending SIGTERM..."
+                )
                 try:
                     self.ffmpeg_process.terminate()  # SIGTERM
                     returncode = self.ffmpeg_process.wait(timeout=5)
-                    logger.warning(f"FFmpeg process terminated with SIGTERM (exit code: {returncode})")
+                    logger.warning(
+                        f"FFmpeg process terminated with SIGTERM (exit code: {returncode})"
+                    )
                 except subprocess.TimeoutExpired:
-                    logger.error("FFmpeg process still running after SIGTERM, killing with SIGKILL...")
+                    logger.error(
+                        "FFmpeg process still running after SIGTERM, killing with SIGKILL..."
+                    )
                     self.ffmpeg_process.kill()
                     self.ffmpeg_process.wait()  # Wait for kill to complete
                     logger.error("FFmpeg process killed with SIGKILL")
@@ -615,13 +678,13 @@ class VARecorder:
             while self.audio_queue.qsize() > 0:
                 try:
                     self.audio_queue.get_nowait()
-                except:  # noqa
+                except Exception as e:  # noqa
                     break
         if self.video_queue:
             while self.video_queue.qsize() > 0:
                 try:
                     self.video_queue.get_nowait()
-                except:  # noqa
+                except Exception as e:  # noqa
                     break
         self.audio_queue = None
         self.video_queue = None
@@ -673,7 +736,9 @@ if __name__ == "__main__":
 
     audio_path = "/path/to/test_b_2min.wav"
     audio_array, ori_sr = ta.load(audio_path)
-    audio_array = ta.functional.resample(audio_array.mean(0), orig_freq=ori_sr, new_freq=16000)
+    audio_array = ta.functional.resample(
+        audio_array.mean(0), orig_freq=ori_sr, new_freq=16000
+    )
     audio_array = audio_array.reshape(-1)
     secs = audio_array.shape[0] // sample_rate
     interval = 1
@@ -683,11 +748,15 @@ if __name__ == "__main__":
         start = i * sample_rate
         end = (i + interval) * sample_rate
         cur_audio_array = audio_array[start:end]
-        logger.info(f"audio: {cur_audio_array.shape} {cur_audio_array.dtype} {cur_audio_array.min()} {cur_audio_array.max()}")
+        logger.info(
+            f"audio: {cur_audio_array.shape} {cur_audio_array.dtype} {cur_audio_array.min()} {cur_audio_array.max()}"
+        )
 
         num_frames = int(interval * fps)
         images = create_simple_video(num_frames, height, width)
-        logger.info(f"images: {images.shape} {images.dtype} {images.min()} {images.max()}")
+        logger.info(
+            f"images: {images.shape} {images.dtype} {images.min()} {images.max()}"
+        )
 
         recorder.pub_livestream(images, cur_audio_array)
         time.sleep(interval)

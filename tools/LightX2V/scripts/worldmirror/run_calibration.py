@@ -39,7 +39,9 @@ DEFAULT_SCENES = ["Workspace", "Desk", "Park", "Statue_Face"]
 DEFAULT_SCENE_ROOT = "/workspace/HY-World-2.0/examples/worldrecon/realistic"
 DEFAULT_MODEL_PATH = "/data/nvme1/models/HY-World-2.0"
 DEFAULT_CONFIG_JSON = str(REPO_ROOT / "configs/worldmirror/worldmirror_recon.json")
-DEFAULT_OUTPUT = str(REPO_ROOT / "configs/worldmirror/worldmirror_input_scales.safetensors")
+DEFAULT_OUTPUT = str(
+    REPO_ROOT / "configs/worldmirror/worldmirror_input_scales.safetensors"
+)
 
 
 def parse_args():
@@ -95,7 +97,9 @@ def main():
     config["target_size"] = args.target_size
 
     # Build runner and force-init modules (loads model + installs adapters).
-    from lightx2v.models.runners.worldmirror.worldmirror_runner import WorldMirrorRunner  # noqa: E402
+    from lightx2v.models.runners.worldmirror.worldmirror_runner import (  # noqa: E402
+        WorldMirrorRunner,
+    )
     from lightx2v.utils.input_info import init_empty_input_info  # noqa: E402
 
     logger.info("[calib] Building WorldMirrorRunner...")
@@ -104,7 +108,9 @@ def main():
     mm_type = runner.model.transformer_weights._mm_type
     logger.info(f"[calib] mm_type in use: {mm_type}")
     if mm_type not in ("Calib", "CalibMax"):
-        logger.error(f"[calib] mm_type={mm_type!r} — run_calib didn't reach the WeightModule. Check runtime_cfg plumbing.")
+        logger.error(
+            f"[calib] mm_type={mm_type!r} — run_calib didn't reach the WeightModule. Check runtime_cfg plumbing."
+        )
         sys.exit(2)
 
     # Iterate scenes. Any scene that 404s is skipped with a warning — do not
@@ -140,7 +146,9 @@ def main():
 
     vals = [float(v) for v in CALIB.get("absmax", {}).values()]
     if vals:
-        logger.info(f"[calib] absmax stats: n={len(vals)} min={min(vals):.3e} max={max(vals):.3e} mean={sum(vals) / len(vals):.3e}")
+        logger.info(
+            f"[calib] absmax stats: n={len(vals)} min={min(vals):.3e} max={max(vals):.3e} mean={sum(vals) / len(vals):.3e}"
+        )
 
 
 if __name__ == "__main__":

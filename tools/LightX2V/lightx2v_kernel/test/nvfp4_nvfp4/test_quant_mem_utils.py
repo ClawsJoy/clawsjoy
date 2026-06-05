@@ -1,7 +1,7 @@
-from lib.smart_config import smart_config
 import torch
 from lightx2v_kernel.gemm import scaled_nvfp4_quant
 
+from lib.smart_config import smart_config
 
 input_global_scale = torch.tensor(808.0, dtype=torch.float32).cuda()
 

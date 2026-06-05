@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import asyncio
 import threading
 import time
@@ -8,6 +7,8 @@ from typing import Any, Optional
 from fastapi import FastAPI
 from loguru import logger
 from starlette.responses import RedirectResponse
+
+from lib.smart_config import smart_config
 
 from ..metrics import monitor_cli
 from ..services import DistributedInferenceService
@@ -32,7 +33,9 @@ class ApiServer:
             start_time = time.monotonic()
             method = request.method
             endpoint = request.url.path
-            monitor_cli.lightx2v_api_request_total.labels(method=method, endpoint=endpoint).inc()
+            monitor_cli.lightx2v_api_request_total.labels(
+                method=method, endpoint=endpoint
+            ).inc()
 
             try:
                 response = await call_next(request)
@@ -75,7 +78,9 @@ class ApiServer:
     def _ensure_processing_thread_running(self):
         if self.processing_thread is None or not self.processing_thread.is_alive():
             self.stop_processing.clear()
-            self.processing_thread = threading.Thread(target=self._task_processing_loop, daemon=True)
+            self.processing_thread = threading.Thread(
+                target=self._task_processing_loop, daemon=True
+            )
             self.processing_thread.start()
             logger.info("Started task processing thread")
 
@@ -127,7 +132,9 @@ class ApiServer:
             else:
                 generation_service = services.video_service
 
-            result = await generation_service.generate_with_stop_event(message, task_info.stop_event)
+            result = await generation_service.generate_with_stop_event(
+                message, task_info.stop_event
+            )
 
             if result:
                 task_manager.complete_task(
@@ -152,7 +159,9 @@ class ApiServer:
             if lock_acquired:
                 task_manager.release_processing_lock(task_id)
 
-    def initialize_services(self, cache_dir: Path, inference_service: DistributedInferenceService):
+    def initialize_services(
+        self, cache_dir: Path, inference_service: DistributedInferenceService
+    ):
         container = ServiceContainer.get_instance()
         container.initialize(cache_dir, inference_service, self.max_queue_size)
         self._ensure_processing_thread_running()

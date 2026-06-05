@@ -1,5 +1,6 @@
-from lib.smart_config import smart_config
 from enum import Enum
+
+from lib.smart_config import smart_config
 
 
 class NormLayerType(Enum):

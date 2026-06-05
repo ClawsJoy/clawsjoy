@@ -1,0 +1,505 @@
+#!/usr/bin/env python3
+"""ClawsJoy Gateway - 完整版主网关 v2.0
+
+功能清单:
+- 四引擎路由 (LLM → 向量 → 配置 → 规则)
+- Agent 管理、技能管理
+- 记忆系统、学习系统
+- 向量系统、工作流系统
+- 热重载系统、监控系统
+- 俱乐部、管家、隐私保护
+"""
+
+import json
+import os
+import re
+import sys
+from datetime import datetime
+from functools import lru_cache
+from pathlib import Path
+
+import psutil
+import requests
+from flask import Flask, Response, jsonify, request, send_from_directory
+from flask_cors import CORS
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+
+# 注册 v5 API 蓝图
+from api.v5 import agents, health, butler
+from core.lib.unified_config import unified_config
+from engine.security import desensitizer
+
+from core.lib.performance_middleware import get_perf_stats, monitor_performance
+from core.lib.rate_limiter import rate_limit, rate_limiter
+from core.lib.response_cache import response_cache
+from core.lib.smart_active_service import smart_service
+
+
+# ========== 连接池优化 ==========
+session = requests.Session()
+retry = Retry(total=3, backoff_factor=0.5, status_forcelist=[500, 502, 503, 504])
+adapter = HTTPAdapter(pool_connections=20, pool_maxsize=20, max_retries=retry)
+session.mount("http://", adapter)
+session.mount("https://", adapter)
+
+
+# ========== Flask 应用 ==========
+app = Flask(__name__)
+CORS(app)
+
+
+# ========== 注册 v5 API 蓝图 ==========
+app.register_blueprint(agents.api_bp, url_prefix="/api/v5")
+app.register_blueprint(health.api_bp, url_prefix="/api/v5")
+app.register_blueprint(butler.api_bp, url_prefix="/api/v5")
+
+
+# ========== 简单缓存 ==========
+class SimpleCache:
+    def __init__(self, ttl=300):
+        self.cache = {}
+        self.ttl = ttl
+
+    def get(self, key):
+        if key in self.cache:
+            data, timestamp = self.cache[key]
+            if datetime.now().timestamp() - timestamp < self.ttl:
+                return data
+            del self.cache[key]
+        return None
+
+    def set(self, key, value):
+        self.cache[key] = (value, datetime.now().timestamp())
+
+    def clear(self):
+        self.cache.clear()
+
+
+request_cache = SimpleCache(ttl=300)
+
+
+# ========== 主动学习 ==========
+try:
+    from engine.active.integration import active_loop
+except ImportError:
+    class DummyActiveLoop:
+        def process(self, **kwargs):
+            return {}
+    active_loop = DummyActiveLoop()
+
+
+# ========== 数据目录 ==========
+DATA_DIR = Path("data")
+MEMORY_FILE = DATA_DIR / "memory_simple.json"
+LEARNING_FILE = DATA_DIR / "learning_data" / "learning_stats.json"
+MEMORY_FILE.parent.mkdir(parents=True, exist_ok=True)
+(DATA_DIR / "learning_data").mkdir(parents=True, exist_ok=True)
+
+
+# ========== Gunicorn post_fork 钩子 ==========
+def post_fork(server, worker):
+    """每个 worker fork 后执行，重新启动监听器线程"""
+    import os
+    import sys
+    sys.path.insert(0, os.getcwd())
+    try:
+        from core.lib.config_auto_watcher import config_auto_watcher
+        config_auto_watcher.scan_and_register()
+        config_auto_watcher.start()
+        print(f"✅ Worker {worker.pid} 配置监听器已启动")
+    except Exception as e:
+        print(f"⚠️ Worker {worker.pid} 监听器启动失败: {e}")
+
+
+# ========== 记忆函数 ==========
+def load_memories(user_id):
+    if MEMORY_FILE.exists():
+        with open(MEMORY_FILE, "r") as f:
+            all_memories = json.load(f)
+            return all_memories.get(user_id, [])
+    return []
+
+
+def save_memory(user_id, fact):
+    memories = load_memories(user_id)
+    memories.append({"fact": fact, "timestamp": datetime.now().isoformat()})
+    all_memories = {}
+    if MEMORY_FILE.exists():
+        with open(MEMORY_FILE, "r") as f:
+            all_memories = json.load(f)
+    all_memories[user_id] = memories[-100:]
+    with open(MEMORY_FILE, "w") as f:
+        json.dump(all_memories, f, indent=2)
+
+
+def search_memories(user_id, query):
+    memories = load_memories(user_id)
+    results = []
+    for m in memories:
+        fact = m.get("fact", "")
+        if "名字" in query and ("名字:" in fact or "叫" in fact):
+            results.append(fact)
+        elif query.lower() in fact.lower():
+            results.append(fact)
+    return results[:10]
+
+
+# ========== 学习函数 ==========
+def load_learning_stats():
+    if LEARNING_FILE.exists():
+        with open(LEARNING_FILE, "r") as f:
+            data = json.load(f)
+            if isinstance(data, dict):
+                if "total_learnings" not in data:
+                    data["total_learnings"] = data.get("learned", 0)
+                return data
+    return {"total_learnings": 0, "successful_learnings": 0, "failed_learnings": 0}
+
+
+def record_learning(fact, success=True):
+    stats = load_learning_stats()
+    stats["total_learnings"] = stats.get("total_learnings", 0) + 1
+    if success:
+        stats["successful_learnings"] = stats.get("successful_learnings", 0) + 1
+    else:
+        stats["failed_learnings"] = stats.get("failed_learnings", 0) + 1
+    with open(LEARNING_FILE, "w") as f:
+        json.dump(stats, f, indent=2)
+
+
+# ========== 用户状态 ==========
+USER_STATES = {}
+
+
+def get_user_state(user_id):
+    if user_id not in USER_STATES:
+        USER_STATES[user_id] = {}
+    return USER_STATES[user_id]
+
+
+def extract_user_info(message, user_id):
+    state = get_user_state(user_id)
+    name_match = re.search(r"我叫([\u4e00-\u9fa5]{2,4})", message)
+    if name_match:
+        name = name_match.group(1)
+        state["name"] = name
+        save_memory(user_id, f"用户名字: {name}")
+        save_memory(user_id, f"用户说: 我叫{name}")
+        return True
+    return False
+
+
+def answer_from_state(message, user_id):
+    if "我叫什么名字" in message or "我的名字" in message:
+        memories = load_memories(user_id)
+        for m in memories:
+            fact = m.get("fact", "")
+            if "用户名字:" in fact:
+                name = fact.replace("用户名字: ", "")
+                if name:
+                    return f"您叫{name}呀，我记着呢！"
+            if "用户说: 我叫" in fact:
+                start = fact.find("我叫")
+                if start != -1:
+                    name = fact[start + 2: start + 6].strip("，。！？")
+                    if name:
+                        return f"您叫{name}呀，我记着呢！"
+        return "您还没告诉我您的名字呢。您可以说'我叫XXX'告诉我哦~"
+    return None
+
+
+# ========== 基础路由 ==========
+@app.route("/api/endpoints", methods=["GET"])
+def list_endpoints():
+    endpoints = []
+    for rule in app.url_map.iter_rules():
+        if not rule.rule.startswith("/static"):
+            endpoints.append({"path": rule.rule, "methods": list(rule.methods)})
+    return jsonify({"endpoints": endpoints, "total": len(endpoints)})
+
+
+@app.route("/metrics", methods=["GET"])
+def metrics():
+    try:
+        return jsonify({
+            "cpu_percent": psutil.cpu_percent(interval=0.1),
+            "memory_percent": psutil.virtual_memory().percent,
+            "disk_usage": psutil.disk_usage("/").percent,
+            "connections": len(psutil.net_connections()),
+            "status": "ok",
+        })
+    except Exception as e:
+        return jsonify({"status": "degraded", "error": str(e), "message": "部分指标不可用"}), 200
+
+
+@app.route("/health", methods=["GET"])
+def health():
+    return jsonify({"status": "healthy", "service": "clawsjoy-gateway", "version": "5.0.0"})
+
+
+@app.route("/", methods=["GET"])
+def index():
+    return jsonify({"service": "ClawsJoy Gateway", "version": "5.0.0"})
+
+
+# ========== 技能清单 ==========
+@app.route("/api/skills/list", methods=["GET"])
+def list_skills():
+    try:
+        from core.lib.unified_skill_manager import unified_manager
+        skills = unified_manager.list_all()
+        return jsonify({"success": True, "total": len(skills), "skills": skills})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# ========== 技能执行 ==========
+@app.route("/api/skills/execute", methods=["POST"])
+def execute_skill():
+    try:
+        from core.lib.skill_loader_v3 import skill_loader
+        data = request.json or {}
+        skill_name = data.get("skill", "")
+        params = data.get("params", {})
+        if not skill_name:
+            return jsonify({"success": False, "error": "skill required"}), 400
+        result = skill_loader.execute(skill_name, params)
+        return jsonify({"success": True, "result": result, "skill": skill_name})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# ========== 智能体 ==========
+@app.route("/api/agents/list", methods=["GET"])
+def list_agents():
+    agents_list = [
+        {"name": "code_agent", "status": "active", "version": "2.0.0"},
+        {"name": "chat_agent", "status": "active", "version": "2.0.0"},
+        {"name": "analysis_agent", "status": "active", "version": "1.0.0"},
+        {"name": "decision_agent", "status": "active", "version": "1.0.0"},
+        {"name": "orchestrator", "status": "active", "version": "2.0.0"},
+        {"name": "translate_agent", "status": "active", "version": "2.0.0"},
+    ]
+    return jsonify({"success": True, "total": len(agents_list), "agents": agents_list})
+
+
+# ========== 模式识别查询 ==========
+@app.route("/api/learning/patterns", methods=["GET"])
+def get_patterns():
+    try:
+        from core.lib.pattern_recognizer import pattern_recognizer
+        return jsonify({
+            "success": True,
+            "stats": pattern_recognizer.get_stats(),
+            "rules": pattern_recognizer.data.get("generated_rules", []),
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# ========== 增强对话（集成 Orchestrator 四引擎） ==========
+@app.route("/api/v5/enhanced/chat", methods=["POST"])
+@monitor_performance
+@rate_limit(limit=30, window=60)
+def enhanced_chat():
+    data = request.json or {}
+    message = data.get("message", "")
+    message = desensitizer.desensitize(message)
+    user_id = data.get("user_id", "guest")
+    extract_user_info(message, user_id)
+
+    # 尝试从缓存获取
+    cached = response_cache.get(user_id, message)
+    if cached:
+        return jsonify({
+            "success": True,
+            "response": cached,
+            "cached": True,
+            "agent": "cached",
+            "enhanced": True,
+            "user_id": user_id,
+        })
+
+    # ========== 原子引擎注入 ==========
+    try:
+        from engine.knowledge import knowledge_engine
+        from engine.profile import profile_engine
+        from engine.semantic import semantic_engine
+        semantic_result = semantic_engine.understand(message)
+        intent_name = semantic_result.intent
+        intent_confidence = semantic_result.confidence
+        print(f"[原子引擎] user={user_id}, intent={intent_name}, conf={intent_confidence:.2f}")
+    except Exception as e:
+        print(f"[原子引擎] 初始化失败: {e}")
+        intent_name = "unknown"
+        intent_confidence = 0.0
+
+    # ===== 1. Orchestrator 智能路由 =====
+    try:
+        from core.agents.builtin.orchestrator import OrchestratorV6
+        orchestrator = OrchestratorV6(user_id=user_id)
+        target_agent = orchestrator.smart_route(message)
+        print(f"[社会协作] target_agent={target_agent}")
+        
+        if target_agent != "chat_agent":
+            module = __import__(f"core.agents.builtin.{target_agent}", fromlist=[target_agent])
+            class_name = target_agent.replace("_", " ").title().replace(" ", "") + "Agent"
+            agent_class = getattr(module, class_name)
+            agent = agent_class(user_id=user_id)
+            result = agent.process(message)
+            response = result.get("response", "处理完成")
+            agent_used = target_agent
+            save_memory(user_id, f"用户说: {message}")
+            save_memory(user_id, f"{agent_used}说: {response[:200]}")
+            record_learning(f"{user_id} -> {target_agent}", True)
+            response_cache.set(user_id, message, response)
+            return jsonify({
+                "success": True,
+                "response": response,
+                "agent": agent_used,
+                "enhanced": True,
+                "user_id": user_id,
+            })
+    except Exception as e:
+        print(f"Orchestrator 路由失败: {e}")
+
+    # ===== 2. 原子技能和话本匹配 =====
+    try:
+        from core.agents.builtin.chat_agent import ChatAgent
+        chat_agent = ChatAgent(user_id=user_id)
+        atomic_result = chat_agent._check_atomic_skill(message)
+        if atomic_result:
+            save_memory(user_id, f"用户说: {message}")
+            save_memory(user_id, f"ClawsJoy说: {atomic_result[:200]}")
+            response_cache.set(user_id, message, atomic_result)
+            return jsonify({
+                "success": True,
+                "response": atomic_result,
+                "agent": "atomic_skill",
+                "enhanced": True,
+                "user_id": user_id,
+            })
+
+        intent = chat_agent._match_intent(message)
+        if intent:
+            template = chat_agent._get_template(intent)
+            if template:
+                save_memory(user_id, f"用户说: {message}")
+                save_memory(user_id, f"ClawsJoy说: {template[:200]}")
+                response_cache.set(user_id, message, template)
+                return jsonify({
+                    "success": True,
+                    "response": template,
+                    "agent": "scriptbook",
+                    "enhanced": True,
+                    "user_id": user_id,
+                })
+    except Exception as e:
+        print(f"原子技能/话本匹配失败: {e}")
+
+    # ===== 3. 从状态回答 =====
+    direct_answer = answer_from_state(message, user_id)
+    if direct_answer:
+        response_cache.set(user_id, message, direct_answer)
+        return jsonify({
+            "success": True,
+            "response": direct_answer,
+            "agent": "state_manager",
+            "enhanced": True,
+            "user_id": user_id,
+        })
+
+    # ===== 4. 调用 LLM 服务（兜底） =====
+    try:
+        resp = requests.post("http://localhost:5012/chat", json={"message": message}, timeout=60)
+        if resp.status_code == 200:
+            response = resp.json().get("response", "")
+        else:
+            response = f"服务异常: {resp.status_code}"
+    except Exception as e:
+        response = f"服务繁忙: {e}"
+
+    save_memory(user_id, f"用户说: {message}")
+    save_memory(user_id, f"ClawsJoy说: {response[:200]}")
+    record_learning(f"对话: {user_id} -> {message[:30]}", True)
+    response_cache.set(user_id, message, response)
+
+    return jsonify({
+        "success": True,
+        "response": response,
+        "agent": "chat_agent",
+        "enhanced": True,
+        "user_id": user_id,
+    })
+
+
+# ========== 记忆路由 ==========
+@app.route("/api/v5/memory/remember", methods=["POST"])
+def memory_remember():
+    data = request.json or {}
+    user_id = data.get("user_id", "guest")
+    fact = data.get("fact", "")
+    if not fact:
+        return jsonify({"success": False, "error": "fact required"}), 400
+    save_memory(user_id, fact)
+    record_learning(f"用户 {user_id} 学习了: {fact}", True)
+    return jsonify({"success": True, "message": "记忆已存储"})
+
+
+@app.route("/api/v5/memory/recall", methods=["POST"])
+def memory_recall():
+    data = request.json or {}
+    user_id = data.get("user_id", "guest")
+    query = data.get("query", "")
+    results = search_memories(user_id, query)
+    return jsonify({"success": True, "results": results})
+
+
+@app.route("/api/v5/memory/stats", methods=["GET"])
+def memory_stats():
+    user_id = request.args.get("user_id", "guest")
+    memories = load_memories(user_id)
+    return jsonify({"success": True, "total": len(memories)})
+
+
+# ========== 学习路由 ==========
+@app.route("/api/learning/stats", methods=["GET"])
+def learning_stats():
+    stats = load_learning_stats()
+    return jsonify({"success": True, "stats": stats})
+
+
+# ========== 扩展监控端点 ==========
+@app.route("/api/v5/stats/cache", methods=["GET"])
+def cache_stats():
+    return jsonify(response_cache.get_stats())
+
+
+@app.route("/api/v5/stats/performance", methods=["GET"])
+def performance_stats():
+    return jsonify(get_perf_stats())
+
+
+@app.route("/api/v5/stats/ratelimit", methods=["GET"])
+def ratelimit_stats():
+    user_id = request.args.get("user_id")
+    return jsonify(rate_limiter.get_stats(user_id))
+
+
+# ========== 增强健康检查 ==========
+@app.route("/api/v5/health/detailed", methods=["GET"])
+def detailed_health():
+    from core.lib.health_check import health_checker
+    return jsonify(health_checker.check_all())
+
+
+# ========== 启动入口 ==========
+if __name__ == "__main__":
+    port = unified_config.get("services.gateway.port", 5002)
+    smart_service.start()
+    print("=" * 50)
+    print(f"🚀 ClawsJoy Gateway 完整版启动在端口 {port}")
+    print(f"   Workers: 4, Threads: 8, 并发: 32")
+    print("=" * 50)
+    app.run(host="0.0.0.0", port=port, debug=False, threaded=True)

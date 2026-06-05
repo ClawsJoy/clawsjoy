@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import json
 import math
 import os
@@ -6,10 +5,16 @@ import os
 import numpy as np
 import torch
 
+from lib.smart_config import smart_config
+
 try:
     from diffusers.pipelines.flux2.pipeline_flux2 import compute_empirical_mu
-    from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion import retrieve_timesteps
-    from diffusers.schedulers.scheduling_flow_match_euler_discrete import FlowMatchEulerDiscreteScheduler
+    from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion import (
+        retrieve_timesteps,
+    )
+    from diffusers.schedulers.scheduling_flow_match_euler_discrete import (
+        FlowMatchEulerDiscreteScheduler,
+    )
 except ImportError:
     compute_empirical_mu = None
     retrieve_timesteps = None
@@ -32,7 +37,9 @@ def get_timestep_embedding(
         raise ValueError("Timesteps should be a 1D tensor")
 
     half_dim = embedding_dim // 2
-    exponent = -math.log(max_period) * torch.arange(start=0, end=half_dim, dtype=torch.float32, device=timesteps.device)
+    exponent = -math.log(max_period) * torch.arange(
+        start=0, end=half_dim, dtype=torch.float32, device=timesteps.device
+    )
     exponent = exponent / (half_dim - downscale_freq_shift)
 
     emb = torch.exp(exponent)
@@ -63,10 +70,15 @@ class Flux2Scheduler(BaseScheduler):
     def __init__(self, config):
         super().__init__(config)
         self.config = config
-        scheduler_path = config.get("scheduler_path", os.path.join(config["model_path"], "scheduler"))
+        scheduler_path = config.get(
+            "scheduler_path", os.path.join(config["model_path"], "scheduler")
+        )
         self.scheduler = FlowMatchEulerDiscreteScheduler.from_pretrained(scheduler_path)
 
-        with open(os.path.join(config["model_path"], "scheduler", "scheduler_config.json"), "r") as f:
+        with open(
+            os.path.join(config["model_path"], "scheduler", "scheduler_config.json"),
+            "r",
+        ) as f:
             self.scheduler_config = json.load(f)
 
         self.dtype = GET_DTYPE()
@@ -89,14 +101,21 @@ class Flux2Scheduler(BaseScheduler):
         else:
             self.txt_ids = None
 
-        self.latents = randn_tensor(input_info.latent_shape, generator=self.generator, device=AI_DEVICE, dtype=self.dtype)
+        self.latents = randn_tensor(
+            input_info.latent_shape,
+            generator=self.generator,
+            device=AI_DEVICE,
+            dtype=self.dtype,
+        )
 
         self.set_timesteps()
 
     def set_timesteps(self):
         self.sigmas = np.linspace(1.0, 1 / self.infer_steps, self.infer_steps)
         image_seq_len = self.latents.shape[1]
-        mu = compute_empirical_mu(image_seq_len=image_seq_len, num_steps=self.infer_steps)
+        mu = compute_empirical_mu(
+            image_seq_len=image_seq_len, num_steps=self.infer_steps
+        )
         timesteps, num_inference_steps = retrieve_timesteps(
             self.scheduler,
             self.infer_steps,
@@ -107,18 +126,24 @@ class Flux2Scheduler(BaseScheduler):
         self.timesteps = timesteps
         self.infer_steps = num_inference_steps
 
-        num_warmup_steps = max(len(timesteps) - num_inference_steps * self.scheduler.order, 0)
+        num_warmup_steps = max(
+            len(timesteps) - num_inference_steps * self.scheduler.order, 0
+        )
         self._num_timesteps = len(timesteps)
         self.num_warmup_steps = num_warmup_steps
 
     def step_pre(self, step_index):
         super().step_pre(step_index)
-        timestep_input = torch.tensor([self.timesteps[self.step_index]], device=AI_DEVICE, dtype=self.dtype)
+        timestep_input = torch.tensor(
+            [self.timesteps[self.step_index]], device=AI_DEVICE, dtype=self.dtype
+        )
         self.timesteps_proj = get_timestep_embedding(timestep_input).to(self.dtype)
 
     def step_post(self):
         t = self.timesteps[self.step_index]
-        latents = self.scheduler.step(self.noise_pred, t, self.latents, return_dict=False)[0]
+        latents = self.scheduler.step(
+            self.noise_pred, t, self.latents, return_dict=False
+        )[0]
         self.latents = latents
 
     def _encode_image(self, image):
@@ -131,13 +156,21 @@ class Flux2Scheduler(BaseScheduler):
             image_latents = encoder_output.latents
 
         batch_size, num_channels_latents, height, width = image_latents.shape
-        image_latents = image_latents.view(batch_size, num_channels_latents, height // 2, 2, width // 2, 2)
+        image_latents = image_latents.view(
+            batch_size, num_channels_latents, height // 2, 2, width // 2, 2
+        )
         image_latents = image_latents.permute(0, 1, 3, 5, 2, 4)
-        image_latents = image_latents.reshape(batch_size, num_channels_latents * 4, height // 2, width // 2)
+        image_latents = image_latents.reshape(
+            batch_size, num_channels_latents * 4, height // 2, width // 2
+        )
 
         bn = self.vae.vae.bn
-        latents_bn_mean = bn.running_mean.view(1, -1, 1, 1).to(image_latents.device, image_latents.dtype)
-        latents_bn_std = torch.sqrt(bn.running_var.view(1, -1, 1, 1) + self.vae.vae.config.batch_norm_eps).to(image_latents.device, image_latents.dtype)
+        latents_bn_mean = bn.running_mean.view(1, -1, 1, 1).to(
+            image_latents.device, image_latents.dtype
+        )
+        latents_bn_std = torch.sqrt(
+            bn.running_var.view(1, -1, 1, 1) + self.vae.vae.config.batch_norm_eps
+        ).to(image_latents.device, image_latents.dtype)
         image_latents = (image_latents - latents_bn_mean) / latents_bn_std
 
         return image_latents
@@ -150,7 +183,9 @@ class Flux2Scheduler(BaseScheduler):
         for x, t in zip(image_latents, t_coords):
             x = x.squeeze(0)
             _, height, width = x.shape
-            x_ids = torch.cartesian_prod(t, torch.arange(height), torch.arange(width), torch.arange(1))
+            x_ids = torch.cartesian_prod(
+                t, torch.arange(height), torch.arange(width), torch.arange(1)
+            )
             image_latent_ids.append(x_ids)
 
         image_latent_ids = torch.cat(image_latent_ids, dim=0)
@@ -162,12 +197,16 @@ class Flux2Scheduler(BaseScheduler):
             packed_list = []
             for lat in latents:
                 batch_size, num_channels, height, width = lat.shape
-                packed = lat.reshape(batch_size, num_channels, height * width).permute(0, 2, 1)
+                packed = lat.reshape(batch_size, num_channels, height * width).permute(
+                    0, 2, 1
+                )
                 packed_list.append(packed)
             return torch.cat(packed_list, dim=1)
         else:
             batch_size, num_channels, height, width = latents.shape
-            latents = latents.reshape(batch_size, num_channels, height * width).permute(0, 2, 1)
+            latents = latents.reshape(batch_size, num_channels, height * width).permute(
+                0, 2, 1
+            )
             return latents
 
     def prepare_i2i(self, input_info, input_image, vae):
@@ -186,14 +225,20 @@ class Flux2Scheduler(BaseScheduler):
                 image_latents = image_latents[1:]
 
                 ref_img_latent = self._pack_latents(ref_img_latent).squeeze(0)
-                ref_img_latent = ref_img_latent.unsqueeze(0).to(AI_DEVICE, dtype=self.dtype)
-                self.latents = (1 - self.sigmas[0]) * ref_img_latent + self.sigmas[0] * self.latents
+                ref_img_latent = ref_img_latent.unsqueeze(0).to(
+                    AI_DEVICE, dtype=self.dtype
+                )
+                self.latents = (1 - self.sigmas[0]) * ref_img_latent + self.sigmas[
+                    0
+                ] * self.latents
 
         image_latent_ids = self._prepare_image_ids(image_latents, scale=10)
 
         packed = self._pack_latents(image_latents).squeeze(0)
 
-        packed_latents = packed.unsqueeze(0).repeat(1, 1, 1).to(AI_DEVICE, dtype=self.dtype)
+        packed_latents = (
+            packed.unsqueeze(0).repeat(1, 1, 1).to(AI_DEVICE, dtype=self.dtype)
+        )
         image_latent_ids = image_latent_ids.repeat(1, 1, 1).to(AI_DEVICE)
 
         self.input_image_latents = packed_latents
@@ -206,7 +251,9 @@ class Flux2DevScheduler(Flux2Scheduler):
     def prepare(self, input_info):
         super().prepare(input_info)
 
-        guidance_input = torch.tensor([self.sample_guide_scale * 1000], device=AI_DEVICE, dtype=self.dtype)
+        guidance_input = torch.tensor(
+            [self.sample_guide_scale * 1000], device=AI_DEVICE, dtype=self.dtype
+        )
         self.guidance_proj = get_timestep_embedding(guidance_input).to(self.dtype)
 
 

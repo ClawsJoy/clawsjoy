@@ -1,14 +1,14 @@
-from lib.smart_config import smart_config
 import torch
 import torch.distributed as dist
 import torch.nn.functional as F
-from loguru import logger
-
 from lightx2v.common.offload.manager import WeightAsyncStreamManager
 from lightx2v.models.networks.wan.infer.transformer_infer import WanTransformerInfer
 from lightx2v.models.networks.wan.infer.triton_ops import causal_rope_apply_triton
 from lightx2v.models.networks.wan.infer.utils import causal_rope_apply
 from lightx2v_platform.base.global_var import AI_DEVICE
+from loguru import logger
+
+from lib.smart_config import smart_config
 
 torch_device_module = getattr(torch, AI_DEVICE)
 
@@ -56,8 +56,12 @@ class WanSFTransformerInfer(WanTransformerInfer):
 
     def _calculate_q_k_len(self, q, k_lens):
         q_lens = torch.tensor([q.size(0)], dtype=torch.int32)
-        cu_seqlens_q = torch.cat([q_lens.new_zeros([1]), q_lens]).cumsum(0, dtype=torch.int32)
-        cu_seqlens_k = torch.cat([k_lens.new_zeros([1]), k_lens]).cumsum(0, dtype=torch.int32)
+        cu_seqlens_q = torch.cat([q_lens.new_zeros([1]), q_lens]).cumsum(
+            0, dtype=torch.int32
+        )
+        cu_seqlens_k = torch.cat([k_lens.new_zeros([1]), k_lens]).cumsum(
+            0, dtype=torch.int32
+        )
         return cu_seqlens_q, cu_seqlens_k
 
     def _apply_rope_sp(self, q, k, grid_sizes, freqs, start_frame):
@@ -68,7 +72,9 @@ class WanSFTransformerInfer(WanTransformerInfer):
         freqs_split = freqs.split([c - 2 * (c // 3), c // 3, c // 3], dim=1)
         pos_freqs = torch.cat(
             [
-                freqs_split[0][start_frame : start_frame + f].view(f, 1, 1, -1).expand(f, h, w, -1),
+                freqs_split[0][start_frame : start_frame + f]
+                .view(f, 1, 1, -1)
+                .expand(f, h, w, -1),
                 freqs_split[1][:h].view(1, h, 1, -1).expand(f, h, w, -1),
                 freqs_split[2][:w].view(1, 1, w, -1).expand(f, h, w, -1),
             ],
@@ -105,7 +111,9 @@ class WanSFTransformerInfer(WanTransformerInfer):
         for block_idx in range(num_blocks):
             self.block_idx = block_idx
             if self._kv_offload:
-                self._next_prefetch = block_idx + 2 if block_idx + 2 < num_blocks else None
+                self._next_prefetch = (
+                    block_idx + 2 if block_idx + 2 < num_blocks else None
+                )
             x = self.infer_block_func(blocks[block_idx], x, pre_infer_out)
 
         if self._kv_offload:
@@ -130,7 +138,9 @@ class WanSFTransformerInfer(WanTransformerInfer):
         for block_idx in range(num_blocks):
             self.block_idx = block_idx
             if self._kv_offload:
-                self._next_prefetch = block_idx + 2 if block_idx + 2 < num_blocks else None
+                self._next_prefetch = (
+                    block_idx + 2 if block_idx + 2 < num_blocks else None
+                )
 
             if self.offload_manager.need_init_first_buffer:
                 self.offload_manager.init_first_buffer(blocks)
@@ -178,9 +188,11 @@ class WanSFTransformerInfer(WanTransformerInfer):
         if hasattr(block.compute_phases[0], "before_proj"):
             x = block.compute_phases[0].before_proj.apply(x) + pre_infer_out.x
 
-        shift_msa, scale_msa, gate_msa, c_shift_msa, c_scale_msa, c_gate_msa = self.pre_process(
-            block.compute_phases[0].modulation,
-            pre_infer_out.embed0,
+        shift_msa, scale_msa, gate_msa, c_shift_msa, c_scale_msa, c_gate_msa = (
+            self.pre_process(
+                block.compute_phases[0].modulation,
+                pre_infer_out.embed0,
+            )
         )
 
         y_out = self.infer_self_attn_with_kvcache(
@@ -201,12 +213,16 @@ class WanSFTransformerInfer(WanTransformerInfer):
             gate_msa,
         )
 
-        y = self.infer_ffn(block.compute_phases[2], x, attn_out, c_shift_msa, c_scale_msa)
+        y = self.infer_ffn(
+            block.compute_phases[2], x, attn_out, c_shift_msa, c_scale_msa
+        )
 
         x = self.post_process(x, y, c_gate_msa, pre_infer_out)
         return x
 
-    def infer_self_attn_with_kvcache(self, phase, grid_sizes, x, seq_lens, freqs, shift_msa, scale_msa):
+    def infer_self_attn_with_kvcache(
+        self, phase, grid_sizes, x, seq_lens, freqs, shift_msa, scale_msa
+    ):
         norm1_weight = 1 + scale_msa.squeeze()
         norm1_bias = shift_msa.squeeze()
         if hasattr(phase, "smooth_norm1_weight"):
@@ -220,8 +236,12 @@ class WanSFTransformerInfer(WanTransformerInfer):
             norm1_out = norm1_out.to(self.infer_dtype)
 
         s, n, d = *norm1_out.shape[:1], self.num_heads, self.head_dim
-        q = phase.self_attn_norm_q.apply(phase.self_attn_q.apply(norm1_out)).view(s, n, d)
-        k = phase.self_attn_norm_k.apply(phase.self_attn_k.apply(norm1_out)).view(s, n, d)
+        q = phase.self_attn_norm_q.apply(phase.self_attn_q.apply(norm1_out)).view(
+            s, n, d
+        )
+        k = phase.self_attn_norm_k.apply(phase.self_attn_k.apply(norm1_out)).view(
+            s, n, d
+        )
         v = phase.self_attn_v.apply(norm1_out).view(s, n, d)
 
         seg_index = int(self.scheduler.seg_index)
@@ -230,8 +250,12 @@ class WanSFTransformerInfer(WanTransformerInfer):
         if self.config.get("seq_parallel", False):
             q, k = self._apply_rope_sp(q, k, grid_sizes, freqs, current_start_frame)
         else:
-            q = self.causal_rope_apply_func(q.unsqueeze(0), grid_sizes, freqs, start_frame=current_start_frame).type_as(v)[0]
-            k = self.causal_rope_apply_func(k.unsqueeze(0), grid_sizes, freqs, start_frame=current_start_frame).type_as(v)[0]
+            q = self.causal_rope_apply_func(
+                q.unsqueeze(0), grid_sizes, freqs, start_frame=current_start_frame
+            ).type_as(v)[0]
+            k = self.causal_rope_apply_func(
+                k.unsqueeze(0), grid_sizes, freqs, start_frame=current_start_frame
+            ).type_as(v)[0]
 
         kv_cache = self.kv_cache_manager.self_attn_kv_cache
 
@@ -240,10 +264,16 @@ class WanSFTransformerInfer(WanTransformerInfer):
         current_end = current_start + num_new
         global_end = kv_cache.get_global_end(self.block_idx)
         local_end = kv_cache.get_local_end(self.block_idx)
-        local_per_frame = num_new // self.num_frame_per_chunk if self.num_frame_per_chunk > 0 else 0
+        local_per_frame = (
+            num_new // self.num_frame_per_chunk if self.num_frame_per_chunk > 0 else 0
+        )
         sink_tokens = self.kv_cache_manager.sink_size * local_per_frame
 
-        if self.kv_cache_manager.local_attn_size != -1 and current_end > global_end and num_new + local_end > self.kv_cache_size:
+        if (
+            self.kv_cache_manager.local_attn_size != -1
+            and current_end > global_end
+            and num_new + local_end > self.kv_cache_size
+        ):
             num_evicted = num_new + local_end - self.kv_cache_size
             kv_cache.roll_window(self.block_idx, sink_tokens, num_evicted)
             local_end_idx = local_end + current_end - global_end - num_evicted
@@ -277,7 +307,11 @@ class WanSFTransformerInfer(WanTransformerInfer):
             attn_k = kv_cache.k_cache(self.block_idx, attn_start, local_end_idx)
             attn_v = kv_cache.v_cache(self.block_idx, attn_start, local_end_idx)
 
-            if self.config.get("ar_config", {}).get("kv_quant", {}).get("calibrate", False):
+            if (
+                self.config.get("ar_config", {})
+                .get("kv_quant", {})
+                .get("calibrate", False)
+            ):
                 kv_cache.capture_attn(self.block_idx, attn_start, local_end_idx)
 
             if isinstance(attn_k, tuple):
@@ -292,7 +326,11 @@ class WanSFTransformerInfer(WanTransformerInfer):
                 cu_seqlens_q=cu_seqlens_q,
                 cu_seqlens_kv=cu_seqlens_k,
                 max_seqlen_q=q.size(0),
-                max_seqlen_kv=attn_k.size(0) if not isinstance(attn_k, tuple) else attn_k[0].size(0),
+                max_seqlen_kv=(
+                    attn_k.size(0)
+                    if not isinstance(attn_k, tuple)
+                    else attn_k[0].size(0)
+                ),
             )
 
         y = phase.self_attn_o.apply(attn_out)
@@ -312,11 +350,17 @@ class WanSFTransformerInfer(WanTransformerInfer):
         frame_seqlen = x.shape[0] // num_frames
         seg_index = self.scheduler.seg_index
 
-        x.add_((y_out.unflatten(dim=0, sizes=(num_frames, frame_seqlen)) * gate_msa).flatten(0, 1))
+        x.add_(
+            (
+                y_out.unflatten(dim=0, sizes=(num_frames, frame_seqlen)) * gate_msa
+            ).flatten(0, 1)
+        )
 
         norm3_out = phase.norm3.apply(x)
 
-        if self.task in ["i2v", "flf2v", "animate", "s2v", "rs2v"] and self.config.get("use_image_encoder", True):
+        if self.task in ["i2v", "flf2v", "animate", "s2v", "rs2v"] and self.config.get(
+            "use_image_encoder", True
+        ):
             context_img = context[:257]
             context = context[257:]
         else:
@@ -328,12 +372,16 @@ class WanSFTransformerInfer(WanTransformerInfer):
                 context_img = context_img.to(self.infer_dtype)
 
         n, d = self.num_heads, self.head_dim
-        q = phase.cross_attn_norm_q.apply(phase.cross_attn_q.apply(norm3_out)).view(-1, n, d)
+        q = phase.cross_attn_norm_q.apply(phase.cross_attn_q.apply(norm3_out)).view(
+            -1, n, d
+        )
 
         cross_kv_cache = self.kv_cache_manager.cross_attn_kv_cache
 
         if seg_index == 0:
-            k = phase.cross_attn_norm_k.apply(phase.cross_attn_k.apply(context)).view(-1, n, d)
+            k = phase.cross_attn_norm_k.apply(phase.cross_attn_k.apply(context)).view(
+                -1, n, d
+            )
             v = phase.cross_attn_v.apply(context).view(-1, n, d)
             cross_kv_cache.store_kv(k, v, self.block_idx)
             self._cross_kv_len = k.size(0)
@@ -357,7 +405,9 @@ class WanSFTransformerInfer(WanTransformerInfer):
         )
 
         if context_img is not None:
-            k_img = phase.cross_attn_norm_k_img.apply(phase.cross_attn_k_img.apply(context_img)).view(-1, n, d)
+            k_img = phase.cross_attn_norm_k_img.apply(
+                phase.cross_attn_k_img.apply(context_img)
+            ).view(-1, n, d)
             v_img = phase.cross_attn_v_img.apply(context_img).view(-1, n, d)
             cu_seqlens_q, cu_seqlens_k = self._calculate_q_k_len(
                 q,
@@ -397,7 +447,9 @@ class WanSFTransformerInfer(WanTransformerInfer):
         frame_seqlen = x.shape[0] // c_shift_msa.shape[0]
 
         if hasattr(phase, "smooth_norm2_weight"):
-            norm2_weight = (1 + c_scale_msa.squeeze()) * phase.smooth_norm2_weight.tensor
+            norm2_weight = (
+                1 + c_scale_msa.squeeze()
+            ) * phase.smooth_norm2_weight.tensor
             norm2_bias = c_shift_msa.squeeze() * phase.smooth_norm2_bias.tensor
         else:
             norm2_weight = 1 + c_scale_msa

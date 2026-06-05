@@ -1,12 +1,24 @@
-from lib.smart_config import smart_config
 # Copyright 2024-2025 The Alibaba Wan Team Authors. All rights reserved.
 import numpy as np
 import torch
 import torch.nn.functional as F
 
+from lib.smart_config import smart_config
+
 
 class VaceVideoProcessor(object):
-    def __init__(self, downsample, min_area, max_area, min_fps, max_fps, zero_start, seq_len, keep_last, **kwargs):
+    def __init__(
+        self,
+        downsample,
+        min_area,
+        max_area,
+        min_fps,
+        max_fps,
+        zero_start,
+        seq_len,
+        keep_last,
+        **kwargs,
+    ):
         self.downsample = downsample
         self.min_area = min_area
         self.max_area = max_area
@@ -47,7 +59,12 @@ class VaceVideoProcessor(object):
         if ih != oh or iw != ow:
             # resize
             scale = max(ow / iw, oh / ih)
-            video = F.interpolate(video, size=(round(scale * ih), round(scale * iw)), mode="bicubic", antialias=True)
+            video = F.interpolate(
+                video,
+                size=(round(scale * ih), round(scale * iw)),
+                mode="bicubic",
+                antialias=True,
+            )
             assert video.size(3) >= ow and video.size(2) >= oh
 
             # center crop
@@ -85,7 +102,13 @@ class VaceVideoProcessor(object):
         target_duration = of / target_fps
         begin = 0.0 if self.zero_start else rng.uniform(0, duration - target_duration)
         timestamps = np.linspace(begin, begin + target_duration, of)
-        frame_ids = np.argmax(np.logical_and(timestamps[:, None] >= frame_timestamps[None, :, 0], timestamps[:, None] < frame_timestamps[None, :, 1]), axis=1).tolist()
+        frame_ids = np.argmax(
+            np.logical_and(
+                timestamps[:, None] >= frame_timestamps[None, :, 0],
+                timestamps[:, None] < frame_timestamps[None, :, 1],
+            ),
+            axis=1,
+        ).tolist()
         return frame_ids, (x1, x2, y1, y2), (oh, ow), target_fps
 
     def _get_frameid_bbox_adjust_last(self, fps, frame_timestamps, h, w, crop_box, rng):
@@ -110,21 +133,33 @@ class VaceVideoProcessor(object):
         target_duration = duration
         target_fps = of / target_duration
         timestamps = np.linspace(0.0, target_duration, of)
-        frame_ids = np.argmax(np.logical_and(timestamps[:, None] >= frame_timestamps[None, :, 0], timestamps[:, None] <= frame_timestamps[None, :, 1]), axis=1).tolist()
+        frame_ids = np.argmax(
+            np.logical_and(
+                timestamps[:, None] >= frame_timestamps[None, :, 0],
+                timestamps[:, None] <= frame_timestamps[None, :, 1],
+            ),
+            axis=1,
+        ).tolist()
         # print(oh, ow, of, target_duration, target_fps, len(frame_timestamps), len(frame_ids))
         return frame_ids, (x1, x2, y1, y2), (oh, ow), target_fps
 
     def _get_frameid_bbox(self, fps, frame_timestamps, h, w, crop_box, rng):
         if self.keep_last:
-            return self._get_frameid_bbox_adjust_last(fps, frame_timestamps, h, w, crop_box, rng)
+            return self._get_frameid_bbox_adjust_last(
+                fps, frame_timestamps, h, w, crop_box, rng
+            )
         else:
-            return self._get_frameid_bbox_default(fps, frame_timestamps, h, w, crop_box, rng)
+            return self._get_frameid_bbox_default(
+                fps, frame_timestamps, h, w, crop_box, rng
+            )
 
     def load_video(self, data_key, crop_box=None, seed=2024, **kwargs):
         return self.load_video_batch(data_key, crop_box=crop_box, seed=seed, **kwargs)
 
     def load_video_pair(self, data_key, data_key2, crop_box=None, seed=2024, **kwargs):
-        return self.load_video_batch(data_key, data_key2, crop_box=crop_box, seed=seed, **kwargs)
+        return self.load_video_batch(
+            data_key, data_key2, crop_box=crop_box, seed=seed, **kwargs
+        )
 
     def load_video_batch(self, *data_key_batch, crop_box=None, seed=2024, **kwargs):
         rng = np.random.default_rng(seed + hash(data_key_batch[0]) % 10000)
@@ -142,7 +177,9 @@ class VaceVideoProcessor(object):
         frame_timestamps = [readers[0].get_frame_timestamp(i) for i in range(length)]
         frame_timestamps = np.array(frame_timestamps, dtype=np.float32)
         h, w = readers[0].next().shape[:2]
-        frame_ids, (x1, x2, y1, y2), (oh, ow), fps = self._get_frameid_bbox(fps, frame_timestamps, h, w, crop_box, rng)
+        frame_ids, (x1, x2, y1, y2), (oh, ow), fps = self._get_frameid_bbox(
+            fps, frame_timestamps, h, w, crop_box, rng
+        )
 
         # preprocess video
         videos = [reader.get_batch(frame_ids)[:, y1:y2, x1:x2, :] for reader in readers]
@@ -154,21 +191,38 @@ class VaceVideoProcessor(object):
 def prepare_source(src_video, src_mask, src_ref_images, num_frames, image_size, device):
     for i, (sub_src_video, sub_src_mask) in enumerate(zip(src_video, src_mask)):
         if sub_src_video is None and sub_src_mask is None:
-            src_video[i] = torch.zeros((3, num_frames, image_size[0], image_size[1]), device=device)
-            src_mask[i] = torch.ones((1, num_frames, image_size[0], image_size[1]), device=device)
+            src_video[i] = torch.zeros(
+                (3, num_frames, image_size[0], image_size[1]), device=device
+            )
+            src_mask[i] = torch.ones(
+                (1, num_frames, image_size[0], image_size[1]), device=device
+            )
     for i, ref_images in enumerate(src_ref_images):
         if ref_images is not None:
             for j, ref_img in enumerate(ref_images):
                 if ref_img is not None and ref_img.shape[-2:] != image_size:
                     canvas_height, canvas_width = image_size
                     ref_height, ref_width = ref_img.shape[-2:]
-                    white_canvas = torch.ones((3, 1, canvas_height, canvas_width), device=device)  # [-1, 1]
+                    white_canvas = torch.ones(
+                        (3, 1, canvas_height, canvas_width), device=device
+                    )  # [-1, 1]
                     scale = min(canvas_height / ref_height, canvas_width / ref_width)
                     new_height = int(ref_height * scale)
                     new_width = int(ref_width * scale)
-                    resized_image = F.interpolate(ref_img.squeeze(1).unsqueeze(0), size=(new_height, new_width), mode="bilinear", align_corners=False).squeeze(0).unsqueeze(1)
+                    resized_image = (
+                        F.interpolate(
+                            ref_img.squeeze(1).unsqueeze(0),
+                            size=(new_height, new_width),
+                            mode="bilinear",
+                            align_corners=False,
+                        )
+                        .squeeze(0)
+                        .unsqueeze(1)
+                    )
                     top = (canvas_height - new_height) // 2
                     left = (canvas_width - new_width) // 2
-                    white_canvas[:, :, top : top + new_height, left : left + new_width] = resized_image
+                    white_canvas[
+                        :, :, top : top + new_height, left : left + new_width
+                    ] = resized_image
                     src_ref_images[i][j] = white_canvas
     return src_video, src_mask, src_ref_images

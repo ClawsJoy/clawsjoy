@@ -3,14 +3,14 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
-import time
 import threading
+import time
 from pathlib import Path
-from typing import Dict, Callable
+from typing import Callable, Dict
 
 
 class ConfigWatcher:
@@ -19,19 +19,19 @@ class ConfigWatcher:
     _file_mtimes: Dict[str, float] = {}
     _running = False
     _thread = None
-    
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
-    
+
     def register(self, config_path: str, callback: Callable):
         full_path = str(Path(config_path).absolute())
         self._callbacks[full_path] = callback
         if Path(full_path).exists():
             self._file_mtimes[full_path] = Path(full_path).stat().st_mtime
         print(f"📁 监听配置: {Path(config_path).name}")
-    
+
     def start(self):
         if self._running:
             return
@@ -39,7 +39,7 @@ class ConfigWatcher:
         self._thread = threading.Thread(target=self._watch_loop, daemon=True)
         self._thread.start()
         print("🔥 配置热重载监听已启动")
-    
+
     def _watch_loop(self):
         while self._running:
             try:
@@ -61,11 +61,9 @@ class ConfigWatcher:
             except Exception as e:
                 print(f"⚠️ 监听错误: {e}")
                 time.sleep(5)
-    
+
     def stop(self):
         self._running = False
-
-
 
     def register(self, config_path: str, callback: Callable):
         full_path = str(Path(config_path).absolute())

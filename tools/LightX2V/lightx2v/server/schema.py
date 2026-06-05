@@ -1,8 +1,9 @@
-from lib.smart_config import smart_config
 import random
 from typing import Optional
 
 from pydantic import BaseModel, Field
+
+from lib.smart_config import smart_config
 
 from ..utils.generate_task_id import generate_task_id
 
@@ -19,28 +20,50 @@ class TalkObject(BaseModel):
 class DisaggOverrideRequest(BaseModel):
     """Optional Mooncake / disagg overrides (merged into runner.config per request)."""
 
-    data_bootstrap_room: Optional[int] = Field(None, description="Per-request Mooncake bootstrap room (disagg)")
+    data_bootstrap_room: Optional[int] = Field(
+        None, description="Per-request Mooncake bootstrap room (disagg)"
+    )
     disagg_phase1_receiver_engine_rank: Optional[int] = Field(
         None,
         description="Transformer receiver rank for phase1 send (decentralized / multi-transformer)",
     )
-    disagg_bootstrap_room: Optional[int] = Field(None, description="Alias for data_bootstrap_room in some clients")
-    disagg_decoder_bootstrap_room: Optional[int] = Field(None, description="Phase2 Mooncake room override")
+    disagg_bootstrap_room: Optional[int] = Field(
+        None, description="Alias for data_bootstrap_room in some clients"
+    )
+    disagg_decoder_bootstrap_room: Optional[int] = Field(
+        None, description="Phase2 Mooncake room override"
+    )
 
 
 class BaseTaskRequest(DisaggOverrideRequest):
-    task_id: str = Field(default_factory=generate_task_id, description="Task ID (auto-generated)")
+    task_id: str = Field(
+        default_factory=generate_task_id, description="Task ID (auto-generated)"
+    )
     prompt: str = Field("", description="Generation prompt")
-    use_prompt_enhancer: bool = Field(False, description="Whether to use prompt enhancer")
+    use_prompt_enhancer: bool = Field(
+        False, description="Whether to use prompt enhancer"
+    )
     negative_prompt: str = Field("", description="Negative prompt")
     image_path: str = Field("", description="Base64 encoded image or URL")
-    image_mask_path: str = Field("", description="Mask image path (supports URL, base64, or local path)")
-    save_result_path: str = Field("", description="Save result path (optional, defaults to task_id, suffix auto-detected)")
-    presigned_url: str = Field("", description="Optional presigned URL for uploading final sync result")
+    image_mask_path: str = Field(
+        "", description="Mask image path (supports URL, base64, or local path)"
+    )
+    save_result_path: str = Field(
+        "",
+        description="Save result path (optional, defaults to task_id, suffix auto-detected)",
+    )
+    presigned_url: str = Field(
+        "", description="Optional presigned URL for uploading final sync result"
+    )
     infer_steps: int = Field(5, description="Inference steps")
-    seed: int = Field(default_factory=generate_random_seed, description="Random seed (auto-generated if not set)")
+    seed: int = Field(
+        default_factory=generate_random_seed,
+        description="Random seed (auto-generated if not set)",
+    )
     target_shape: list[int] = Field([], description="Return video or image shape")
-    lora_name: Optional[str] = Field(None, description="LoRA filename to load from lora_dir, None to disable LoRA")
+    lora_name: Optional[str] = Field(
+        None, description="LoRA filename to load from lora_dir, None to disable LoRA"
+    )
     lora_strength: float = Field(1.0, description="LoRA strength")
     # Internal switch: sync API sets this True to return image from memory only.
     prefer_memory_result: bool = Field(default=False, exclude=True)
@@ -60,9 +83,16 @@ class VideoTaskRequest(BaseTaskRequest):
     video_path: str = Field("", description="Input video path (for SR/V2V-like tasks)")
     audio_path: str = Field("", description="Input audio path (Wan-Audio)")
     video_duration: int = Field(5, description="Video duration (Wan-Audio)")
-    talk_objects: Optional[list[TalkObject]] = Field(None, description="Talk objects (Wan-Audio)")
-    target_fps: Optional[int] = Field(16, description="Target FPS for video frame interpolation (overrides config)")
-    resize_mode: Optional[str] = Field("adaptive", description="Resize mode (adaptive, keep_ratio_fixed_area, fixed_min_area, fixed_max_area, fixed_shape, fixed_min_side)")
+    talk_objects: Optional[list[TalkObject]] = Field(
+        None, description="Talk objects (Wan-Audio)"
+    )
+    target_fps: Optional[int] = Field(
+        16, description="Target FPS for video frame interpolation (overrides config)"
+    )
+    resize_mode: Optional[str] = Field(
+        "adaptive",
+        description="Resize mode (adaptive, keep_ratio_fixed_area, fixed_min_area, fixed_max_area, fixed_shape, fixed_min_side)",
+    )
 
 
 class ImageTaskRequest(BaseTaskRequest):
@@ -74,9 +104,13 @@ class TaskRequest(BaseTaskRequest):
     target_video_length: int = Field(81, description="Target video length (video only)")
     audio_path: str = Field("", description="Input audio path (Wan-Audio)")
     video_duration: int = Field(5, description="Video duration (Wan-Audio)")
-    talk_objects: Optional[list[TalkObject]] = Field(None, description="Talk objects (Wan-Audio)")
+    talk_objects: Optional[list[TalkObject]] = Field(
+        None, description="Talk objects (Wan-Audio)"
+    )
     aspect_ratio: str = Field("16:9", description="Output aspect ratio (T2I only)")
-    target_fps: Optional[int] = Field(16, description="Target FPS for video frame interpolation (overrides config)")
+    target_fps: Optional[int] = Field(
+        16, description="Target FPS for video frame interpolation (overrides config)"
+    )
 
 
 class TaskStatusMessage(BaseModel):

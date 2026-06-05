@@ -2,4 +2,4 @@
 
 from engine.monitor.core import MonitorEngine, monitor_engine
 
-__all__ = ['MonitorEngine', 'monitor_engine']
+__all__ = ["MonitorEngine", "monitor_engine"]

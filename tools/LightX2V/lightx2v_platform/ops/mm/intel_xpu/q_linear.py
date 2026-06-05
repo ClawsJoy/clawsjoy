@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 Intel XPU quantized linear layers for text encoders (T5, CLIP, etc.)
 
@@ -39,10 +40,15 @@ class IntelXpuQuantLinearFp8(nn.Module):
         self.dtype = dtype
 
         # Register FP8 weight buffer
-        self.register_buffer("weight", torch.empty((out_features, in_features), dtype=torch.float8_e4m3fn))
+        self.register_buffer(
+            "weight",
+            torch.empty((out_features, in_features), dtype=torch.float8_e4m3fn),
+        )
 
         # Register FP32 scale buffer (per-channel)
-        self.register_buffer("weight_scale", torch.empty((out_features, 1), dtype=torch.float32))
+        self.register_buffer(
+            "weight_scale", torch.empty((out_features, 1), dtype=torch.float32)
+        )
 
         # Register bias buffer
         if bias:
@@ -72,7 +78,9 @@ class IntelXpuQuantLinearFp8(nn.Module):
             input_tensor = input_tensor.to(self.dtype)
 
         if sycl_kernels is not None:
-            output = sycl_kernels.onednn_w8a16_fp8(input_tensor, self.weight, self.weight_scale.to(torch.float))
+            output = sycl_kernels.onednn_w8a16_fp8(
+                input_tensor, self.weight, self.weight_scale.to(torch.float)
+            )
         else:
             # Dequantize weight: FP8 → FP16
             weight_fp16 = self.weight.to(self.dtype) * self.weight_scale.to(self.dtype)
@@ -133,10 +141,14 @@ class IntelXpuQuantLinearInt8(nn.Module):
         self.dtype = dtype
 
         # Register INT8 weight buffer
-        self.register_buffer("weight", torch.empty((out_features, in_features), dtype=torch.int8))
+        self.register_buffer(
+            "weight", torch.empty((out_features, in_features), dtype=torch.int8)
+        )
 
         # Register FP32 scale buffer (per-channel)
-        self.register_buffer("weight_scale", torch.empty((out_features, 1), dtype=torch.float32))
+        self.register_buffer(
+            "weight_scale", torch.empty((out_features, 1), dtype=torch.float32)
+        )
 
         # Register bias buffer
         if bias:

@@ -1,12 +1,9 @@
-from lib.smart_config import smart_config
 import base64
 
 import numpy as np
 import torch
 import torch.nn.functional as F
 import torchvision.io as io
-from PIL import Image
-
 from lightx2v.models.networks.lora_adapter import LoraAdapter
 from lightx2v.models.networks.neopp.model import NeoppModel
 from lightx2v.models.runners.default_runner import DefaultRunner
@@ -16,6 +13,9 @@ from lightx2v.utils.profiler import *
 from lightx2v.utils.registry_factory import RUNNER_REGISTER
 from lightx2v.utils.utils import *
 from lightx2v_platform.base.global_var import AI_DEVICE
+from PIL import Image
+
+from lib.smart_config import smart_config
 
 
 def build_neopp_model_with_lora(neopp_module, config, model_kwargs, lora_configs):
@@ -28,8 +28,12 @@ def build_neopp_model_with_lora(neopp_module, config, model_kwargs, lora_configs
         model_kwargs["lora_strength"] = lora_strength
         model = neopp_module(**model_kwargs)
     else:
-        assert not config.get("dit_quantized", False), "Online LoRA only for quantized models; merging LoRA is unsupported."
-        assert not config.get("lazy_load", False), "Lazy load mode does not support LoRA merging."
+        assert not config.get(
+            "dit_quantized", False
+        ), "Online LoRA only for quantized models; merging LoRA is unsupported."
+        assert not config.get(
+            "lazy_load", False
+        ), "Lazy load mode does not support LoRA merging."
         model = neopp_module(**model_kwargs)
         lora_adapter = LoraAdapter(model)
         lora_adapter.apply_lora(lora_configs)
@@ -44,12 +48,16 @@ class NeoppRunner(DefaultRunner):
         self.merge_size = 2
         self.noise_scale_mode = self.config.get("noise_scale_mode", "resolution")
         self.noise_scale = self.config.get("noise_scale", 1.0)
-        self.noise_scale_base_image_seq_len = self.config.get("noise_scale_base_image_seq_len", 64)
+        self.noise_scale_base_image_seq_len = self.config.get(
+            "noise_scale_base_image_seq_len", 64
+        )
         self.noise_scale_max_value = self.config.get("noise_scale_max_value", 8.0)
         llm_config = config["llm_config"]
         head_dim = llm_config["head_dim"]
         self.inv_freq_t = self._build_inv_freq(head_dim // 2, llm_config["rope_theta"])
-        self.inv_freq_hw = self._build_inv_freq(head_dim // 4, llm_config["rope_theta_hw"])
+        self.inv_freq_hw = self._build_inv_freq(
+            head_dim // 4, llm_config["rope_theta_hw"]
+        )
         self.enable_cfg = self.config.get("enable_cfg", True)
         self.past_key_values_cond = None
         self.past_key_values_uncond = None
@@ -57,7 +65,9 @@ class NeoppRunner(DefaultRunner):
         self.past_key_values_img_uncond = None
         self.num_input_images = config.get("num_input_images", 1)
         if self.config["seq_parallel"]:
-            self.seq_p_group = self.config.get("device_mesh").get_group(mesh_dim="seq_p")
+            self.seq_p_group = self.config.get("device_mesh").get_group(
+                mesh_dim="seq_p"
+            )
         else:
             self.seq_p_group = None
 
@@ -83,24 +93,34 @@ class NeoppRunner(DefaultRunner):
         if not lora_configs:
             model = NeoppModel(**neopp_model_kwargs)
         else:
-            model = build_neopp_model_with_lora(NeoppModel, self.config, neopp_model_kwargs, lora_configs)
+            model = build_neopp_model_with_lora(
+                NeoppModel, self.config, neopp_model_kwargs, lora_configs
+            )
         return model
 
     def _build_inv_freq(self, half_head_dim, theta):
         full_dim = half_head_dim * 2
-        inv_freq_full = 1.0 / (theta ** (torch.arange(0, full_dim, 2, dtype=torch.float32) / full_dim))
+        inv_freq_full = 1.0 / (
+            theta ** (torch.arange(0, full_dim, 2, dtype=torch.float32) / full_dim)
+        )
         return inv_freq_full[::2]
 
     def _compute_rope(self, position_ids, inv_freq):
         inv_freq = inv_freq.cuda()
-        inv_freq_expanded = inv_freq[None, :, None].float().expand(position_ids.shape[0], -1, 1)
+        inv_freq_expanded = (
+            inv_freq[None, :, None].float().expand(position_ids.shape[0], -1, 1)
+        )
         position_ids_expanded = position_ids[:, None, :].float()
-        freqs = (inv_freq_expanded.float() @ position_ids_expanded.float()).transpose(1, 2)
+        freqs = (inv_freq_expanded.float() @ position_ids_expanded.float()).transpose(
+            1, 2
+        )
         emb = torch.cat((freqs, freqs), dim=-1)
         return emb.cos().to(dtype=torch.bfloat16), emb.sin().to(dtype=torch.bfloat16)
 
     def _build_t2i_image_indexes(self, token_h, token_w, text_len, device):
-        t_image = torch.full((token_h * token_w,), text_len, dtype=torch.long, device=device)
+        t_image = torch.full(
+            (token_h * token_w,), text_len, dtype=torch.long, device=device
+        )
         idx = torch.arange(token_h * token_w, device=device, dtype=torch.long)
         h_image = idx // token_w
         w_image = idx % token_w
@@ -108,22 +128,44 @@ class NeoppRunner(DefaultRunner):
 
     def run_input_encoder(self):
         with ProfilingContext4DebugL1("run_input_encoder"):
-            token_h = self.input_info.target_shape[0] // (self.patch_size * self.merge_size)
-            token_w = self.input_info.target_shape[1] // (self.patch_size * self.merge_size)
+            token_h = self.input_info.target_shape[0] // (
+                self.patch_size * self.merge_size
+            )
+            token_w = self.input_info.target_shape[1] // (
+                self.patch_size * self.merge_size
+            )
             self.input_info.latent_shape = self.get_latent_shape_with_target_hw()
 
-            indexes_cond = self._build_t2i_image_indexes(token_h, token_w, self.index_offset_cond, device=self.init_device)
-            cos_t_cond, sin_t_cond = self._compute_rope(indexes_cond[0].unsqueeze(0), self.inv_freq_t)
-            cos_h_cond, sin_h_cond = self._compute_rope(indexes_cond[1].unsqueeze(0), self.inv_freq_hw)
-            cos_w_cond, sin_w_cond = self._compute_rope(indexes_cond[2].unsqueeze(0), self.inv_freq_hw)
+            indexes_cond = self._build_t2i_image_indexes(
+                token_h, token_w, self.index_offset_cond, device=self.init_device
+            )
+            cos_t_cond, sin_t_cond = self._compute_rope(
+                indexes_cond[0].unsqueeze(0), self.inv_freq_t
+            )
+            cos_h_cond, sin_h_cond = self._compute_rope(
+                indexes_cond[1].unsqueeze(0), self.inv_freq_hw
+            )
+            cos_w_cond, sin_w_cond = self._compute_rope(
+                indexes_cond[2].unsqueeze(0), self.inv_freq_hw
+            )
 
             if self.enable_cfg:
-                indexes_uncond = self._build_t2i_image_indexes(token_h, token_w, self.index_offset_uncond, device=self.init_device)
-                cos_t_uncond, sin_t_uncond = self._compute_rope(indexes_uncond[0].unsqueeze(0), self.inv_freq_t)
-                cos_h_uncond, sin_h_uncond = self._compute_rope(indexes_uncond[1].unsqueeze(0), self.inv_freq_hw)
-                cos_w_uncond, sin_w_uncond = self._compute_rope(indexes_uncond[2].unsqueeze(0), self.inv_freq_hw)
+                indexes_uncond = self._build_t2i_image_indexes(
+                    token_h, token_w, self.index_offset_uncond, device=self.init_device
+                )
+                cos_t_uncond, sin_t_uncond = self._compute_rope(
+                    indexes_uncond[0].unsqueeze(0), self.inv_freq_t
+                )
+                cos_h_uncond, sin_h_uncond = self._compute_rope(
+                    indexes_uncond[1].unsqueeze(0), self.inv_freq_hw
+                )
+                cos_w_uncond, sin_w_uncond = self._compute_rope(
+                    indexes_uncond[2].unsqueeze(0), self.inv_freq_hw
+                )
             else:
-                cos_t_uncond = sin_t_uncond = cos_h_uncond = sin_h_uncond = cos_w_uncond = sin_w_uncond = None
+                cos_t_uncond = sin_t_uncond = cos_h_uncond = sin_h_uncond = (
+                    cos_w_uncond
+                ) = sin_w_uncond = None
 
             if self.seq_p_group is not None:
                 world_size = dist.get_world_size(self.seq_p_group)
@@ -153,13 +195,39 @@ class NeoppRunner(DefaultRunner):
             return {
                 "past_key_values_cond": self.past_key_values_cond,
                 "past_key_values_uncond": self.past_key_values_uncond,
-                "cos_sin_cond": (cos_t_cond, sin_t_cond, cos_h_cond, sin_h_cond, cos_w_cond, sin_w_cond),
-                "cos_sin_uncond": (cos_t_uncond, sin_t_uncond, cos_h_uncond, sin_h_uncond, cos_w_uncond, sin_w_uncond) if self.enable_cfg else None,
+                "cos_sin_cond": (
+                    cos_t_cond,
+                    sin_t_cond,
+                    cos_h_cond,
+                    sin_h_cond,
+                    cos_w_cond,
+                    sin_w_cond,
+                ),
+                "cos_sin_uncond": (
+                    (
+                        cos_t_uncond,
+                        sin_t_uncond,
+                        cos_h_uncond,
+                        sin_h_uncond,
+                        cos_w_uncond,
+                        sin_w_uncond,
+                    )
+                    if self.enable_cfg
+                    else None
+                ),
             }
 
     def get_latent_shape_with_target_hw(self):
-        target_height = self.input_info.target_shape[0] if self.input_info.target_shape and len(self.input_info.target_shape) == 2 else self.config["target_height"]
-        target_width = self.input_info.target_shape[1] if self.input_info.target_shape and len(self.input_info.target_shape) == 2 else self.config["target_width"]
+        target_height = (
+            self.input_info.target_shape[0]
+            if self.input_info.target_shape and len(self.input_info.target_shape) == 2
+            else self.config["target_height"]
+        )
+        target_width = (
+            self.input_info.target_shape[1]
+            if self.input_info.target_shape and len(self.input_info.target_shape) == 2
+            else self.config["target_width"]
+        )
         latent_shape = [1, 3, target_height, target_width]
         return latent_shape
 
@@ -178,7 +246,9 @@ class NeoppRunner(DefaultRunner):
                 cfg_norm="global",
                 timestep_shift=3.0,
             )
-            self.input_info.save_result_path = self.input_info.save_result_path.replace(".png", "_0.png")
+            self.input_info.save_result_path = self.input_info.save_result_path.replace(
+                ".png", "_0.png"
+            )
 
         self.inputs = self.run_input_encoder()
         gen_result = self.run_main()
@@ -198,7 +268,9 @@ class NeoppRunner(DefaultRunner):
                 cfg_norm="global",
                 timestep_shift=3.0,
             )
-            self.input_info.save_result_path = self.input_info.save_result_path.replace("_0.png", "_1.png")
+            self.input_info.save_result_path = self.input_info.save_result_path.replace(
+                "_0.png", "_1.png"
+            )
 
         self.inputs = self.run_input_encoder()
         gen_result = self.run_main()
@@ -229,13 +301,29 @@ class NeoppRunner(DefaultRunner):
     def load_kvcache(self, to_x2v_cond_kv_path, to_x2v_uncond_kv_path=None):
         cfg_p_rank = self._get_cfg_p_rank()
         if cfg_p_rank != 1:  # rank 0 只做 cond，无需加载 uncond
-            self.past_key_values_cond = torch.load(to_x2v_cond_kv_path, map_location="cpu").transpose(2, 3).to(AI_DEVICE)
+            self.past_key_values_cond = (
+                torch.load(to_x2v_cond_kv_path, map_location="cpu")
+                .transpose(2, 3)
+                .to(AI_DEVICE)
+            )
             logger.info(f"KV cache cond shape: {self.past_key_values_cond.shape}")
         if self.enable_cfg and cfg_p_rank != 0:  # rank 1 只做 uncond，无需加载 cond
-            self.past_key_values_uncond = torch.load(to_x2v_uncond_kv_path, map_location="cpu").transpose(2, 3).to(AI_DEVICE)
+            self.past_key_values_uncond = (
+                torch.load(to_x2v_uncond_kv_path, map_location="cpu")
+                .transpose(2, 3)
+                .to(AI_DEVICE)
+            )
             logger.info(f"KV cache uncond shape: {self.past_key_values_uncond.shape}")
 
-    def set_inference_params(self, index_offset_cond, index_offset_uncond=None, cfg_interval=(-1, 2), cfg_scale=4.0, cfg_norm="global", timestep_shift=3.0):
+    def set_inference_params(
+        self,
+        index_offset_cond,
+        index_offset_uncond=None,
+        cfg_interval=(-1, 2),
+        cfg_scale=4.0,
+        cfg_norm="global",
+        timestep_shift=3.0,
+    ):
         self.index_offset_cond = index_offset_cond
         self.index_offset_uncond = index_offset_uncond if self.enable_cfg else None
         self.scheduler.timestep_shift = timestep_shift
@@ -243,7 +331,9 @@ class NeoppRunner(DefaultRunner):
         self.model.cfg_scale = cfg_scale
         self.model.cfg_norm = cfg_norm
 
-    def set_kvcache(self, to_x2v_cond_kv: torch.Tensor, to_x2v_uncond_kv: torch.Tensor = None):
+    def set_kvcache(
+        self, to_x2v_cond_kv: torch.Tensor, to_x2v_uncond_kv: torch.Tensor = None
+    ):
         cfg_p_rank = self._get_cfg_p_rank()
         if cfg_p_rank != 1:
             self.past_key_values_cond = to_x2v_cond_kv.to(AI_DEVICE)
@@ -265,7 +355,9 @@ class NeoppRunner(DefaultRunner):
         self.model.transformer_infer.kv_cache.clear()
 
     def init_run(self):
-        self.model.scheduler.prepare(seed=self.input_info.seed, latent_shape=self.input_info.latent_shape)
+        self.model.scheduler.prepare(
+            seed=self.input_info.seed, latent_shape=self.input_info.latent_shape
+        )
 
     def run_main(self):
         self.init_run()
@@ -295,10 +387,16 @@ class NeoppRunner(DefaultRunner):
 
     def process_images_after_vae_decoder_for_debug(self):
         image = self._denorm(self.scheduler.image_prediction.float())
-        image = (image.clamp(0, 1).permute(0, 2, 3, 1).cpu().numpy() * 255.0).round().astype(np.uint8)
+        image = (
+            (image.clamp(0, 1).permute(0, 2, 3, 1).cpu().numpy() * 255.0)
+            .round()
+            .astype(np.uint8)
+        )
         grid_image = Image.fromarray(image[0])
         grid_image.save(self.input_info.save_result_path)
-        logger.info(f"✅ Image saved successfully to: {self.input_info.save_result_path} ✅")
+        logger.info(
+            f"✅ Image saved successfully to: {self.input_info.save_result_path} ✅"
+        )
         return grid_image
 
     def _denorm(self, x: torch.Tensor, mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]):

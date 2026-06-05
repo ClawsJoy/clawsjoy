@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 from lightx2v.models.networks.worldplay.ar_model import WorldPlayARModel
 from lightx2v.models.networks.worldplay.bi_model import WorldPlayBIModel
 from lightx2v.models.networks.worldplay.model import WorldPlayModel
@@ -8,6 +7,8 @@ from lightx2v.models.networks.worldplay.pose_utils import (
     pose_string_to_json,
     pose_to_input,
 )
+
+from lib.smart_config import smart_config
 
 __all__ = [
     "WorldPlayModel",

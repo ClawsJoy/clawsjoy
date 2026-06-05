@@ -1,9 +1,10 @@
-from lib.smart_config import smart_config
 import functools
 from typing import Dict, List, Optional
 
 import torch
 from loguru import logger
+
+from lib.smart_config import smart_config
 
 
 def compiled_method(compile_options: Optional[Dict] = None):
@@ -28,7 +29,9 @@ def compiled_method(compile_options: Optional[Dict] = None):
                 if graph_name not in state["compiled_graphs"]:
                     logger.info(f"[Compile] Compiling {func_name} as '{graph_name}'...")
 
-                    compiled_func = torch.compile(state["original_func"], **compile_opts)
+                    compiled_func = torch.compile(
+                        state["original_func"], **compile_opts
+                    )
 
                     try:
                         result = compiled_func(self, *args, **kwargs)
@@ -36,10 +39,14 @@ def compiled_method(compile_options: Optional[Dict] = None):
                         logger.info(f"[Compile] Compiled {func_name} as '{graph_name}'")
                         return result
                     except Exception as e:
-                        logger.info(f"[Compile] Failed to compile {func_name} as '{graph_name}': {e}")
+                        logger.info(
+                            f"[Compile] Failed to compile {func_name} as '{graph_name}': {e}"
+                        )
                         return state["original_func"](self, *args, **kwargs)
                 else:
-                    logger.info(f"[Compile] Using existing compiled graph '{graph_name}'")
+                    logger.info(
+                        f"[Compile] Using existing compiled graph '{graph_name}'"
+                    )
                     return state["compiled_graphs"][graph_name](self, *args, **kwargs)
 
             elif state["selected_compiled"]:
@@ -57,17 +64,23 @@ def compiled_method(compile_options: Optional[Dict] = None):
 
         def _select_graph(graph_name: str):
             if graph_name not in state["compiled_graphs"]:
-                logger.warning(f"[Compile] Graph '{graph_name}' not found. Available graphs: {list(state['compiled_graphs'].keys())}, returning to original function.")
+                logger.warning(
+                    f"[Compile] Graph '{graph_name}' not found. Available graphs: {list(state['compiled_graphs'].keys())}, returning to original function."
+                )
                 state["selected_graph"] = None
                 state["selected_compiled"] = None
             else:
                 logger.info(f"[Compile] Selecting graph '{graph_name}' for {func_name}")
                 state["selected_graph"] = graph_name
                 state["selected_compiled"] = state["compiled_graphs"][graph_name]
-                logger.info(f"[Compile] {func_name} will now use graph '{graph_name}' for inference")
+                logger.info(
+                    f"[Compile] {func_name} will now use graph '{graph_name}' for inference"
+                )
 
         def _unselect_graph():
-            logger.info(f"[Compile] Unselecting graph for {func_name}, returning to original function")
+            logger.info(
+                f"[Compile] Unselecting graph for {func_name}, returning to original function"
+            )
             state["selected_graph"] = None
             state["selected_compiled"] = None
 
@@ -77,7 +90,11 @@ def compiled_method(compile_options: Optional[Dict] = None):
                 "compiled_count": len(state["compiled_graphs"]),
                 "selected_graph": state["selected_graph"],
                 "compile_mode": state["compile_mode"],
-                "mode": "compile" if state["compile_mode"] else ("inference" if state["selected_compiled"] else "original"),
+                "mode": (
+                    "compile"
+                    if state["compile_mode"]
+                    else ("inference" if state["selected_compiled"] else "original")
+                ),
             }
 
         def _clear_graphs():
@@ -118,7 +135,9 @@ class CompiledMethodsMixin:
         self._discover_compiled_methods()
 
     def _discover_compiled_methods(self):
-        logger.info(f"[Compile] Discovering compiled methods for {self.__class__.__name__}...")
+        logger.info(
+            f"[Compile] Discovering compiled methods for {self.__class__.__name__}..."
+        )
 
         for attr_name in dir(self):
             attr = getattr(self, attr_name)

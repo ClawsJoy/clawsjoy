@@ -1,10 +1,7 @@
-from lib.smart_config import smart_config
 import logging
 
 import numpy as np
 import torch
-from loguru import logger
-
 from lightx2v.disagg.utils import (
     load_wan_image_encoder,
     load_wan_text_encoder,
@@ -18,6 +15,9 @@ from lightx2v.models.schedulers.wan.scheduler import WanScheduler
 from lightx2v.utils.envs import GET_DTYPE
 from lightx2v.utils.utils import save_to_video, seed_all, wan_vae_to_comfy
 from lightx2v_platform.base.global_var import AI_DEVICE
+from loguru import logger
+
+from lib.smart_config import smart_config
 
 # Setup basic logging
 logging.basicConfig(level=logging.INFO)
@@ -37,8 +37,18 @@ def compute_latent_shape_from_image(config, image_tensor):
     aspect_ratio = h / w
     max_area = config["target_height"] * config["target_width"]
 
-    latent_h = round(np.sqrt(max_area * aspect_ratio) // config["vae_stride"][1] // config["patch_size"][1] * config["patch_size"][1])
-    latent_w = round(np.sqrt(max_area / aspect_ratio) // config["vae_stride"][2] // config["patch_size"][2] * config["patch_size"][2])
+    latent_h = round(
+        np.sqrt(max_area * aspect_ratio)
+        // config["vae_stride"][1]
+        // config["patch_size"][1]
+        * config["patch_size"][1]
+    )
+    latent_w = round(
+        np.sqrt(max_area / aspect_ratio)
+        // config["vae_stride"][2]
+        // config["patch_size"][2]
+        * config["patch_size"][2]
+    )
     latent_shape = get_latent_shape_with_lat_hw(config, latent_h, latent_w)
     return latent_shape, latent_h, latent_w
 
@@ -55,13 +65,17 @@ def get_vae_encoder_output(vae_encoder, config, first_frame, latent_h, latent_w)
         device=torch.device(AI_DEVICE),
     )
     msk[:, 1:] = 0
-    msk = torch.concat([torch.repeat_interleave(msk[:, 0:1], repeats=4, dim=1), msk[:, 1:]], dim=1)
+    msk = torch.concat(
+        [torch.repeat_interleave(msk[:, 0:1], repeats=4, dim=1), msk[:, 1:]], dim=1
+    )
     msk = msk.view(1, msk.shape[1] // 4, 4, latent_h, latent_w)
     msk = msk.transpose(1, 2)[0]
 
     vae_input = torch.concat(
         [
-            torch.nn.functional.interpolate(first_frame.cpu(), size=(h, w), mode="bicubic").transpose(0, 1),
+            torch.nn.functional.interpolate(
+                first_frame.cpu(), size=(h, w), mode="bicubic"
+            ).transpose(0, 1),
             torch.zeros(3, config["target_video_length"] - 1, h, w),
         ],
         dim=1,
@@ -94,7 +108,9 @@ def main():
         "画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，"
         "三条腿，背景人很多，倒着走"
     )
-    image_path = "/root/zht/LightX2V/models/Wan-AI/Wan2.2-I2V-A14B/examples/i2v_input.JPG"
+    image_path = (
+        "/root/zht/LightX2V/models/Wan-AI/Wan2.2-I2V-A14B/examples/i2v_input.JPG"
+    )
     save_result_path = "/root/zht/LightX2V/save_results/wan_i2v_A14B_disagg.mp4"
 
     # Initialize configuration
@@ -148,11 +164,18 @@ def main():
     text_len = config.get("text_len", 512)
 
     context = text_encoder.infer([prompt])
-    context = torch.stack([torch.cat([u, u.new_zeros(text_len - u.size(0), u.size(1))]) for u in context])
+    context = torch.stack(
+        [torch.cat([u, u.new_zeros(text_len - u.size(0), u.size(1))]) for u in context]
+    )
 
     if config.get("enable_cfg", False):
         context_null = text_encoder.infer([negative_prompt])
-        context_null = torch.stack([torch.cat([u, u.new_zeros(text_len - u.size(0), u.size(1))]) for u in context_null])
+        context_null = torch.stack(
+            [
+                torch.cat([u, u.new_zeros(text_len - u.size(0), u.size(1))])
+                for u in context_null
+            ]
+        )
     else:
         context_null = None
 
@@ -174,7 +197,9 @@ def main():
         raise RuntimeError("VAE encoder is required for i2v task but was not loaded.")
 
     latent_shape, latent_h, latent_w = compute_latent_shape_from_image(config, img)
-    vae_encoder_out = get_vae_encoder_output(vae_encoder, config, img, latent_h, latent_w)
+    vae_encoder_out = get_vae_encoder_output(
+        vae_encoder, config, img, latent_h, latent_w
+    )
 
     image_encoder_output = {
         "clip_encoder_out": clip_encoder_out,
@@ -188,7 +213,9 @@ def main():
 
     # 4.3 Scheduler Preparation
     logger.info("Preparing scheduler...")
-    scheduler.prepare(seed=seed, latent_shape=latent_shape, image_encoder_output=image_encoder_output)
+    scheduler.prepare(
+        seed=seed, latent_shape=latent_shape, image_encoder_output=image_encoder_output
+    )
 
     # 4.4 Denoising Loop
     logger.info("Starting denoising loop...")
@@ -211,7 +238,9 @@ def main():
     gen_video_final = wan_vae_to_comfy(gen_video)
 
     logger.info(f"Saving video to {save_result_path}...")
-    save_to_video(gen_video_final, save_result_path, fps=config.get("fps", 16), method="ffmpeg")
+    save_to_video(
+        gen_video_final, save_result_path, fps=config.get("fps", 16), method="ffmpeg"
+    )
     logger.info("Done!")
 
 

@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import json
 import math
 import os
@@ -8,6 +7,8 @@ import torch
 import torch.nn.functional as Fn
 from loguru import logger
 from scipy import integrate, special
+
+from lib.smart_config import smart_config
 
 
 def ranked_calib_path(path: str, rank: int) -> str:
@@ -34,8 +35,14 @@ def compute_analytical_turboquant_codebook(head_dim: int, bits: int) -> dict:
 
     def beta_pdf(x: np.ndarray, d: int) -> np.ndarray:
         if d <= 2:
-            raise ValueError(f"head_dim d={d} too small for TurboQuant codebook (need d>=3)")
-        log_const = special.gammaln(d / 2.0) - 0.5 * np.log(np.pi) - special.gammaln((d - 1) / 2.0)
+            raise ValueError(
+                f"head_dim d={d} too small for TurboQuant codebook (need d>=3)"
+            )
+        log_const = (
+            special.gammaln(d / 2.0)
+            - 0.5 * np.log(np.pi)
+            - special.gammaln((d - 1) / 2.0)
+        )
         exponent = (d - 3) / 2.0
         x = np.clip(x, -1 + 1e-15, 1 - 1e-15)
         log_val = log_const + exponent * np.log(1 - x**2)
@@ -59,7 +66,9 @@ def compute_analytical_turboquant_codebook(head_dim: int, bits: int) -> dict:
         for i in range(n):
             lo, hi = boundaries[i], boundaries[i + 1]
             c = centroids[i]
-            val, _ = integrate.quad(lambda x: (x - c) ** 2 * beta_pdf(np.array([x]), d)[0], lo, hi)
+            val, _ = integrate.quad(
+                lambda x: (x - c) ** 2 * beta_pdf(np.array([x]), d)[0], lo, hi
+            )
             cost += val
         return cost
 
@@ -129,7 +138,9 @@ def export_turboquant_codebook_json(
     cb.pop("source", None)
     with open(path, "w", encoding="utf-8") as f:
         json.dump(cb, f, indent=2)
-    logger.info("[TurboQuant] wrote codebook {!r} (d={}, bits={})", path, head_dim, bits)
+    logger.info(
+        "[TurboQuant] wrote codebook {!r} (d={}, bits={})", path, head_dim, bits
+    )
     return path
 
 
@@ -153,7 +164,9 @@ def tq_fw_load_codebook_record(
         p = os.path.join(codebook_cache_dir, name)
         with open(p, "r", encoding="utf-8") as f:
             return json.load(f)
-    raise FileNotFoundError(f"TurboQuant codebook not found: {name} under {subdirs or '(no dirs)'}; run export_turboquant_codebook_json(...) or set codebook_cache_dir + export_missing_codebooks.")
+    raise FileNotFoundError(
+        f"TurboQuant codebook not found: {name} under {subdirs or '(no dirs)'}; run export_turboquant_codebook_json(...) or set codebook_cache_dir + export_missing_codebooks."
+    )
 
 
 def tq_fw_pack_indices(indices: torch.Tensor, bits: int) -> torch.Tensor:
@@ -175,7 +188,9 @@ def tq_fw_pack_indices(indices: torch.Tensor, bits: int) -> torch.Tensor:
     if padded_d > d:
         indices = Fn.pad(indices.to(torch.uint8), (0, padded_d - d), value=0)
     reshaped = indices.to(torch.uint8).reshape(*batch_shape, -1, vals_per_byte)
-    shifts = torch.arange(vals_per_byte, device=indices.device, dtype=torch.uint8) * bits
+    shifts = (
+        torch.arange(vals_per_byte, device=indices.device, dtype=torch.uint8) * bits
+    )
     packed = (reshaped << shifts).sum(dim=-1, dtype=torch.uint8)
     return packed
 
@@ -253,12 +268,16 @@ def tq_fw_pack_qjl_signs(projected: torch.Tensor) -> torch.Tensor:
     if d % 8 != 0:
         signs = torch.nn.functional.pad(signs, (0, 8 - d % 8), value=0)
     signs_reshaped = signs.reshape(*signs.shape[:-1], -1, 8)
-    powers = torch.tensor([1, 2, 4, 8, 16, 32, 64, 128], device=signs.device, dtype=torch.uint8)
+    powers = torch.tensor(
+        [1, 2, 4, 8, 16, 32, 64, 128], device=signs.device, dtype=torch.uint8
+    )
     return (signs_reshaped * powers).sum(dim=-1, dtype=torch.uint8)
 
 
 def tq_fw_unpack_qjl_signs(packed: torch.Tensor, dim: int) -> torch.Tensor:
-    powers = torch.tensor([1, 2, 4, 8, 16, 32, 64, 128], device=packed.device, dtype=torch.uint8)
+    powers = torch.tensor(
+        [1, 2, 4, 8, 16, 32, 64, 128], device=packed.device, dtype=torch.uint8
+    )
     unpacked = ((packed.unsqueeze(-1) & powers) > 0).float()
     signs = unpacked.reshape(*packed.shape[:-1], -1)[..., :dim]
     return 2.0 * signs - 1.0
@@ -282,7 +301,9 @@ def tq_group_quantize_values(v: torch.Tensor, bits: int, group_size: int) -> dic
     v_q_flat = v_q.reshape(*orig_shape[:-1], d)
     if bits == 2:
         v_4 = v_q_flat.reshape(*orig_shape[:-1], d // 4, 4)
-        packed = v_4[..., 0] | (v_4[..., 1] << 2) | (v_4[..., 2] << 4) | (v_4[..., 3] << 6)
+        packed = (
+            v_4[..., 0] | (v_4[..., 1] << 2) | (v_4[..., 2] << 4) | (v_4[..., 3] << 6)
+        )
     elif bits == 4:
         v_2 = v_q_flat.reshape(*orig_shape[:-1], d // 2, 2)
         packed = v_2[..., 0] | (v_2[..., 1] << 4)
@@ -309,7 +330,9 @@ def tq_group_dequantize_values(comp: dict) -> torch.Tensor:
         v1 = (packed >> 2) & 0x03
         v2 = (packed >> 4) & 0x03
         v3 = (packed >> 6) & 0x03
-        data = torch.stack([v0, v1, v2, v3], dim=-1).reshape(*batch_shape, packed.shape[-1] * 4)
+        data = torch.stack([v0, v1, v2, v3], dim=-1).reshape(
+            *batch_shape, packed.shape[-1] * 4
+        )
     elif bits == 4:
         v0 = packed & 0x0F
         v1 = (packed >> 4) & 0x0F
@@ -418,7 +441,9 @@ def turboquant_codebook_dict_from_histogram(
         cb["source"] = "analytical_fallback"
         return cb
 
-    centroids, boundaries, mse_coord = tq_lloyd_max_from_histogram_counts(hc, n_centroids)
+    centroids, boundaries, mse_coord = tq_lloyd_max_from_histogram_counts(
+        hc, n_centroids
+    )
     return {
         "centroids": centroids.tolist(),
         "boundaries": boundaries.tolist(),
@@ -462,7 +487,9 @@ class TurboQuantMSEInference(torch.nn.Module):
         super().__init__()
         self.dim = dim
         self.bits = bits
-        self.register_buffer("Pi", tq_fw_generate_rotation_matrix(dim, device, dtype, seed=seed))
+        self.register_buffer(
+            "Pi", tq_fw_generate_rotation_matrix(dim, device, dtype, seed=seed)
+        )
         c = torch.tensor(codebook["centroids"], device=device, dtype=dtype)
         b = torch.tensor(codebook["boundaries"], device=device, dtype=dtype)
         self.register_buffer("centroids", c)
@@ -512,8 +539,12 @@ class TurboQuantProdInference(torch.nn.Module):
         self.bits = bits
         self.mse_bits = bits - 1
         self.qjl_scale = math.sqrt(math.pi / 2.0) / dim
-        self.mse = TurboQuantMSEInference(dim, self.mse_bits, device, seed, codebook_mse, dtype=dtype)
-        self.register_buffer("S", tq_fw_generate_qjl_matrix(dim, device, dtype, seed=seed + 1000))
+        self.mse = TurboQuantMSEInference(
+            dim, self.mse_bits, device, seed, codebook_mse, dtype=dtype
+        )
+        self.register_buffer(
+            "S", tq_fw_generate_qjl_matrix(dim, device, dtype, seed=seed + 1000)
+        )
 
     @torch.no_grad()
     def compress_bhsd(self, x: torch.Tensor) -> dict:

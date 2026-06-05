@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """Video VAE package."""
 
 from lightx2v.models.video_encoders.hf.ltx2.video_vae.model_configurator import (
@@ -7,8 +8,17 @@ from lightx2v.models.video_encoders.hf.ltx2.video_vae.model_configurator import 
     VideoDecoderConfigurator,
     VideoEncoderConfigurator,
 )
-from lightx2v.models.video_encoders.hf.ltx2.video_vae.tiling import SpatialTilingConfig, TemporalTilingConfig, TilingConfig
-from lightx2v.models.video_encoders.hf.ltx2.video_vae.video_vae import VideoDecoder, VideoEncoder, decode_video, get_video_chunks_number
+from lightx2v.models.video_encoders.hf.ltx2.video_vae.tiling import (
+    SpatialTilingConfig,
+    TemporalTilingConfig,
+    TilingConfig,
+)
+from lightx2v.models.video_encoders.hf.ltx2.video_vae.video_vae import (
+    VideoDecoder,
+    VideoEncoder,
+    decode_video,
+    get_video_chunks_number,
+)
 
 __all__ = [
     "VAE_DECODER_COMFY_KEYS_FILTER",

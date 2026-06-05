@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 from __future__ import annotations
 
 import argparse
@@ -10,6 +9,8 @@ from multiprocessing import resource_tracker, shared_memory
 from typing import TYPE_CHECKING, Any, Deque
 
 import zmq
+
+from lib.smart_config import smart_config
 
 if TYPE_CHECKING:
     from lightx2v.disagg.conn import DataReceiver, DataSender
@@ -127,9 +128,15 @@ class DataMgrSidecarServer:
         if self._transformer_phase2_mgr is not None:
             return self._transformer_phase2_mgr
 
-        from lightx2v.disagg.conn import DataManager, DisaggregationMode, DisaggregationPhase
+        from lightx2v.disagg.conn import (
+            DataManager,
+            DisaggregationMode,
+            DisaggregationPhase,
+        )
 
-        self._transformer_phase2_mgr = DataManager(DisaggregationPhase.PHASE2, DisaggregationMode.TRANSFORMER)
+        self._transformer_phase2_mgr = DataManager(
+            DisaggregationPhase.PHASE2, DisaggregationMode.TRANSFORMER
+        )
         return self._transformer_phase2_mgr
 
     def _create_shared_memory(self, size: int) -> shared_memory.SharedMemory:
@@ -192,7 +199,6 @@ class DataMgrSidecarServer:
 
         import numpy as np
         import torch
-
         from lightx2v.disagg.conn import DataArgs, DataSender
 
         shms: list[shared_memory.SharedMemory] = []
@@ -319,7 +325,9 @@ class DataMgrSidecarServer:
 
     def _get_pending_counts(self) -> dict[str, int]:
         transformer_backlog = self._get_transformer_output_backlog()
-        output_watch = len(self._output_watch) + len(self._transformer_phase2_output_watch)
+        output_watch = len(self._output_watch) + len(
+            self._transformer_phase2_output_watch
+        )
         return {
             "input_watch": len(self._input_watch),
             "output_watch": output_watch,
@@ -359,7 +367,9 @@ class DataMgrSidecarServer:
                 data_lens_raw = req.get("data_lens")
                 bootstrap_addr = str(req.get("bootstrap_addr", "127.0.0.1"))
                 if room < 0 or sender_engine_rank < 0 or receiver_engine_rank < 0:
-                    raise ValueError("room/sender_engine_rank/receiver_engine_rank must be non-negative")
+                    raise ValueError(
+                        "room/sender_engine_rank/receiver_engine_rank must be non-negative"
+                    )
                 if not isinstance(data_lens_raw, list):
                     raise ValueError("data_lens must be a list")
                 data = self._init_transformer_output_room(
@@ -403,7 +413,10 @@ class DataMgrSidecarServer:
         if cmd == "get_transformer_output_identity":
             mgr = self._transformer_phase2_mgr
             if mgr is None:
-                return {"ok": False, "error": "transformer phase2 manager not initialized"}
+                return {
+                    "ok": False,
+                    "error": "transformer phase2 manager not initialized",
+                }
             return {
                 "ok": True,
                 "data": {
@@ -583,7 +596,9 @@ class _LocalDataMgrSidecar:
             "request_status": 0,
         }
 
-    def get_transformer_output_identity(self, room: int | None = None) -> dict[str, Any] | None:
+    def get_transformer_output_identity(
+        self, room: int | None = None
+    ) -> dict[str, Any] | None:
         return None
 
     def _run(self):
@@ -658,7 +673,9 @@ class _RemoteDataMgrSidecarClient:
             self._started = True
             return
         self._stop_event.clear()
-        self._thread = threading.Thread(target=self._run, name="data-mgr-sidecar-remote-client", daemon=True)
+        self._thread = threading.Thread(
+            target=self._run, name="data-mgr-sidecar-remote-client", daemon=True
+        )
         self._thread.start()
         self._started = True
 
@@ -823,7 +840,9 @@ class _RemoteDataMgrSidecarClient:
             "request_status": int(data.get("request_status", 0)),
         }
 
-    def get_transformer_output_identity(self, room: int | None = None) -> dict[str, Any] | None:
+    def get_transformer_output_identity(
+        self, room: int | None = None
+    ) -> dict[str, Any] | None:
         payload: dict[str, Any] = {}
         if room is not None:
             payload["room"] = int(room)
@@ -896,7 +915,9 @@ class DataMgrSidecar:
         req_addr = str(os.getenv("LIGHTX2V_SIDECAR_REQ_ADDR", "")).strip()
 
         if push_addr and req_addr:
-            self._impl = _RemoteDataMgrSidecarClient(push_addr=push_addr, req_addr=req_addr, poll_interval_s=poll_interval_s)
+            self._impl = _RemoteDataMgrSidecarClient(
+                push_addr=push_addr, req_addr=req_addr, poll_interval_s=poll_interval_s
+            )
         else:
             self._impl = _LocalDataMgrSidecar(poll_interval_s=poll_interval_s)
 
@@ -958,7 +979,9 @@ class DataMgrSidecar:
     def get_transformer_output_backlog(self) -> dict[str, int]:
         return self._impl.get_transformer_output_backlog()
 
-    def get_transformer_output_identity(self, room: int | None = None) -> dict[str, Any] | None:
+    def get_transformer_output_identity(
+        self, room: int | None = None
+    ) -> dict[str, Any] | None:
         return self._impl.get_transformer_output_identity(room)
 
 

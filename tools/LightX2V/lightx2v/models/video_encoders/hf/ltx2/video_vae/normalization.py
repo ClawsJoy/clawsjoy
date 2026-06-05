@@ -1,8 +1,9 @@
-from lib.smart_config import smart_config
 from enum import Enum
 
 import torch
 from torch import nn
+
+from lib.smart_config import smart_config
 
 
 class NormType(Enum):
@@ -41,7 +42,9 @@ class PixelNorm(nn.Module):
         return x / rms
 
 
-def build_normalization_layer(in_channels: int, *, num_groups: int = 32, normtype: NormType = NormType.GROUP) -> nn.Module:
+def build_normalization_layer(
+    in_channels: int, *, num_groups: int = 32, normtype: NormType = NormType.GROUP
+) -> nn.Module:
     """
     Create a normalization layer based on the normalization type.
     Args:
@@ -52,7 +55,9 @@ def build_normalization_layer(in_channels: int, *, num_groups: int = 32, normtyp
         A normalization layer
     """
     if normtype == NormType.GROUP:
-        return torch.nn.GroupNorm(num_groups=num_groups, num_channels=in_channels, eps=1e-6, affine=True)
+        return torch.nn.GroupNorm(
+            num_groups=num_groups, num_channels=in_channels, eps=1e-6, affine=True
+        )
     if normtype == NormType.PIXEL:
         return PixelNorm(dim=1, eps=1e-6)
     raise ValueError(f"Invalid normalization type: {normtype}")

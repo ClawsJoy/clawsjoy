@@ -1,9 +1,9 @@
-from lib.smart_config import smart_config
 import torch
-
 from lightx2v.utils.quant_utils import IntegerQuantizer
 from lightx2v_platform.ops.mm.template import MMWeightQuantTemplate
 from lightx2v_platform.registry_factory import PLATFORM_MM_WEIGHT_REGISTER
+
+from lib.smart_config import smart_config
 
 try:
     import ixformer.inference.functions as ixf
@@ -84,8 +84,12 @@ class MMWeightWint8channelAint8channeldynamicIluvatar(MMWeightQuantTemplate):
     def act_quant_int8_perchannel_sym_iluvatar(self, x):
         device = x.device
         input_tensor_quant = torch.empty(x.shape, dtype=torch.int8, device=device)
-        input_tensor_scale = torch.empty(x.shape[:-1], dtype=torch.float32, device=device)
-        ixf.dynamic_scaled_int8_quant(output=input_tensor_quant, input=x, scale=input_tensor_scale)
+        input_tensor_scale = torch.empty(
+            x.shape[:-1], dtype=torch.float32, device=device
+        )
+        ixf.dynamic_scaled_int8_quant(
+            output=input_tensor_quant, input=x, scale=input_tensor_scale
+        )
         return input_tensor_quant, input_tensor_scale
 
     def apply(self, input_tensor):
@@ -94,8 +98,17 @@ class MMWeightWint8channelAint8channeldynamicIluvatar(MMWeightQuantTemplate):
         if input_tensor.dim() == 3 and input_tensor.shape[0] == 1:
             input_tensor = input_tensor.squeeze(0)
             squeeze_output = True
-        input_tensor_quant, input_tensor_scale = self.act_quant_int8_perchannel_sym_iluvatar(input_tensor)
-        output = ixf.w8a8(input=input_tensor_quant, weight=self.weight, i_scales=input_tensor_scale, w_scales=self.weight_scale.reshape(-1), bias=self.bias, out_dtype=dtype)
+        input_tensor_quant, input_tensor_scale = (
+            self.act_quant_int8_perchannel_sym_iluvatar(input_tensor)
+        )
+        output = ixf.w8a8(
+            input=input_tensor_quant,
+            weight=self.weight,
+            i_scales=input_tensor_scale,
+            w_scales=self.weight_scale.reshape(-1),
+            bias=self.bias,
+            out_dtype=dtype,
+        )
         if squeeze_output:
             output = output.unsqueeze(0)
         return output

@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import gc
 from pathlib import Path
 
@@ -7,6 +6,8 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from loguru import logger
 
+from lib.smart_config import smart_config
+
 from ...schema import StopTaskResponse
 from ...task_manager import TaskStatus, task_manager
 from ..deps import get_services
@@ -14,15 +15,21 @@ from ..deps import get_services
 router = APIRouter()
 
 
-def _stream_file_response(file_path: Path, filename: str | None = None) -> StreamingResponse:
+def _stream_file_response(
+    file_path: Path, filename: str | None = None
+) -> StreamingResponse:
     services = get_services()
     assert services.file_service is not None, "File service is not initialized"
 
     try:
         resolved_path = file_path.resolve()
 
-        if not str(resolved_path).startswith(str(services.file_service.output_video_dir.resolve())):
-            raise HTTPException(status_code=403, detail="Access to this file is not allowed")
+        if not str(resolved_path).startswith(
+            str(services.file_service.output_video_dir.resolve())
+        ):
+            raise HTTPException(
+                status_code=403, detail="Access to this file is not allowed"
+            )
 
         if not resolved_path.exists() or not resolved_path.is_file():
             raise HTTPException(status_code=404, detail=f"File not found: {file_path}")
@@ -74,7 +81,8 @@ async def get_queue_status():
         "pending_count": task_manager.get_pending_task_count(),
         "active_count": task_manager.get_active_task_count(),
         "queue_size": services.max_queue_size,
-        "queue_available": services.max_queue_size - task_manager.get_active_task_count(),
+        "queue_available": services.max_queue_size
+        - task_manager.get_active_task_count(),
     }
 
 
@@ -103,7 +111,9 @@ async def get_task_result(task_id: str):
 
         save_result_path = task_status.get("save_result_path")
         if not save_result_path:
-            raise HTTPException(status_code=404, detail="Task result file does not exist")
+            raise HTTPException(
+                status_code=404, detail="Task result file does not exist"
+            )
 
         full_path = Path(save_result_path)
         if not full_path.is_absolute():
@@ -126,9 +136,13 @@ async def stop_task(task_id: str):
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
             logger.info(f"Task {task_id} stopped successfully.")
-            return StopTaskResponse(stop_status="success", reason="Task stopped successfully.")
+            return StopTaskResponse(
+                stop_status="success", reason="Task stopped successfully."
+            )
         else:
-            return StopTaskResponse(stop_status="do_nothing", reason="Task not found or already completed.")
+            return StopTaskResponse(
+                stop_status="do_nothing", reason="Task not found or already completed."
+            )
     except Exception as e:
         logger.error(f"Error occurred while stopping task {task_id}: {str(e)}")
         return StopTaskResponse(stop_status="error", reason=str(e))
@@ -142,7 +156,9 @@ async def stop_all_running_tasks():
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
         logger.info("All tasks stopped successfully.")
-        return StopTaskResponse(stop_status="success", reason="All tasks stopped successfully.")
+        return StopTaskResponse(
+            stop_status="success", reason="All tasks stopped successfully."
+        )
     except Exception as e:
         logger.error(f"Error occurred while stopping all tasks: {str(e)}")
         return StopTaskResponse(stop_status="error", reason=str(e))

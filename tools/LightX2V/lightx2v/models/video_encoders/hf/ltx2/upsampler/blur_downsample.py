@@ -1,9 +1,10 @@
-from lib.smart_config import smart_config
 import math
 
 import torch
 import torch.nn.functional as F
 from einops import rearrange
+
+from lib.smart_config import smart_config
 
 
 class BlurDownsample(torch.nn.Module):
@@ -30,7 +31,9 @@ class BlurDownsample(torch.nn.Module):
         k = torch.tensor([math.comb(kernel_size - 1, k) for k in range(kernel_size)])
         k2d = k[:, None] @ k[None, :]
         k2d = (k2d / k2d.sum()).float()  # shape (kernel_size, kernel_size)
-        self.register_buffer("kernel", k2d[None, None, :, :])  # (1, 1, kernel_size, kernel_size)
+        self.register_buffer(
+            "kernel", k2d[None, None, :, :]
+        )  # (1, 1, kernel_size, kernel_size)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         if self.stride == 1:
@@ -49,6 +52,15 @@ class BlurDownsample(torch.nn.Module):
 
     def _apply_2d(self, x2d: torch.Tensor) -> torch.Tensor:
         c = x2d.shape[1]
-        weight = self.kernel.expand(c, 1, self.kernel_size, self.kernel_size)  # depthwise
-        x2d = F.conv2d(x2d, weight=weight, bias=None, stride=self.stride, padding=self.kernel_size // 2, groups=c)
+        weight = self.kernel.expand(
+            c, 1, self.kernel_size, self.kernel_size
+        )  # depthwise
+        x2d = F.conv2d(
+            x2d,
+            weight=weight,
+            bias=None,
+            stride=self.stride,
+            padding=self.kernel_size // 2,
+            groups=c,
+        )
         return x2d

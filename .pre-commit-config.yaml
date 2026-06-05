@@ -3,12 +3,34 @@ repos:
     rev: 25.1.0
     hooks:
       - id: black
+        exclude: |
+          (?x)^(
+              .*backup.*|
+              tools/|
+              get_time.py
+          )$
+
   - repo: https://github.com/pycqa/isort
     rev: 6.0.1
     hooks:
       - id: isort
+        args: ["--profile", "black"]
+        exclude: |
+          (?x)^(
+              .*backup.*|
+              tools/|
+              get_time.py
+          )$
+
   - repo: https://github.com/pycqa/pylint
     rev: v3.3.6
     hooks:
       - id: pylint
-        args: [--disable=C0111,C0103]
+        args: [--rcfile=.pylintrc, --fail-under=5]
+        exclude: |
+          (?x)^(
+              .*backup.*|
+              tools/|
+              get_time.py
+          )$
+        additional_dependencies: []

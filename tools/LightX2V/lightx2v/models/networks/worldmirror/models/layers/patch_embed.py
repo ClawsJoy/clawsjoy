@@ -1,8 +1,3 @@
-from lib.smart_config import smart_config
-# References:
-#   https://github.com/facebookresearch/dino/blob/master/vision_transformer.py
-#   https://github.com/rwightman/pytorch-image-models/tree/master/timm/layers/patch_embed.py
-
 import collections.abc
 from itertools import repeat
 from typing import Callable, Optional, Tuple, Union
@@ -11,6 +6,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
+
+from lib.smart_config import smart_config
+
+# References:
+#   https://github.com/facebookresearch/dino/blob/master/vision_transformer.py
+#   https://github.com/rwightman/pytorch-image-models/tree/master/timm/layers/patch_embed.py
 
 
 def make_2tuple(x):
@@ -59,15 +60,21 @@ class PatchEmbed(nn.Module):
 
         self.flatten_embedding = flatten_embedding
 
-        self.proj = nn.Conv2d(in_chans, embed_dim, kernel_size=patch_HW, stride=patch_HW)
+        self.proj = nn.Conv2d(
+            in_chans, embed_dim, kernel_size=patch_HW, stride=patch_HW
+        )
         self.norm = norm_layer(embed_dim) if norm_layer else nn.Identity()
 
     def forward(self, x: Tensor) -> Tensor:
         _, _, H, W = x.shape
         patch_H, patch_W = self.patch_size
 
-        assert H % patch_H == 0, f"Input image height {H} is not a multiple of patch height {patch_H}"
-        assert W % patch_W == 0, f"Input image width {W} is not a multiple of patch width: {patch_W}"
+        assert (
+            H % patch_H == 0
+        ), f"Input image height {H} is not a multiple of patch height {patch_H}"
+        assert (
+            W % patch_W == 0
+        ), f"Input image width {W} is not a multiple of patch width: {patch_W}"
 
         x = self.proj(x)  # B C H W
         H, W = x.size(2), x.size(3)
@@ -79,8 +86,18 @@ class PatchEmbed(nn.Module):
 
 
 class PatchEmbed_Mlp(PatchEmbed):
-    def __init__(self, img_size=224, patch_size=16, in_chans=3, embed_dim=768, norm_layer=None, flatten_embedding=True):
-        super().__init__(img_size, patch_size, in_chans, embed_dim, norm_layer, flatten_embedding)
+    def __init__(
+        self,
+        img_size=224,
+        patch_size=16,
+        in_chans=3,
+        embed_dim=768,
+        norm_layer=None,
+        flatten_embedding=True,
+    ):
+        super().__init__(
+            img_size, patch_size, in_chans, embed_dim, norm_layer, flatten_embedding
+        )
 
         self.proj = nn.Sequential(
             PixelUnshuffle(patch_size),
@@ -99,8 +116,15 @@ class PixelUnshuffle(nn.Module):
         if input.numel() == 0:
             # this is not in the original torch implementation
             C, H, W = input.shape[-3:]
-            assert H and W and H % self.downscale_factor == W % self.downscale_factor == 0
-            return input.view(*input.shape[:-3], C * self.downscale_factor**2, H // self.downscale_factor, W // self.downscale_factor)
+            assert (
+                H and W and H % self.downscale_factor == W % self.downscale_factor == 0
+            )
+            return input.view(
+                *input.shape[:-3],
+                C * self.downscale_factor**2,
+                H // self.downscale_factor,
+                W // self.downscale_factor,
+            )
         else:
             return F.pixel_unshuffle(input, self.downscale_factor)
 
@@ -134,7 +158,15 @@ to_2tuple = _ntuple(2)
 class Mlp(nn.Module):
     """MLP as used in Vision Transformer, MLP-Mixer and related networks"""
 
-    def __init__(self, in_features, hidden_features=None, out_features=None, act_layer=nn.GELU, bias=True, drop=0.0):
+    def __init__(
+        self,
+        in_features,
+        hidden_features=None,
+        out_features=None,
+        act_layer=nn.GELU,
+        bias=True,
+        drop=0.0,
+    ):
         super().__init__()
         out_features = out_features or in_features
         hidden_features = hidden_features or in_features

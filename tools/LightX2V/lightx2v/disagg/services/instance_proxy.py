@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 from __future__ import annotations
 
 import argparse
@@ -11,6 +10,8 @@ from pathlib import Path
 from typing import Any
 
 import zmq
+
+from lib.smart_config import smart_config
 
 
 class InstanceProxyServer:
@@ -156,7 +157,9 @@ class InstanceProxyServer:
 
         time.sleep(0.3)
         if sidecar_proc.poll() is not None:
-            raise RuntimeError(f"failed to start sidecar process, exited with code={sidecar_proc.returncode}")
+            raise RuntimeError(
+                f"failed to start sidecar process, exited with code={sidecar_proc.returncode}"
+            )
 
         with open(service_log_path, "w", encoding="utf-8") as service_log:
             service_proc = subprocess.Popen(
@@ -170,7 +173,9 @@ class InstanceProxyServer:
 
         if service_proc.poll() is not None:
             self._terminate_pid(sidecar_proc.pid, timeout_seconds=2.0)
-            raise RuntimeError(f"failed to start service process, exited with code={service_proc.returncode}")
+            raise RuntimeError(
+                f"failed to start service process, exited with code={service_proc.returncode}"
+            )
 
         self._managed[sidecar_proc.pid] = sidecar_proc
         self._managed[service_proc.pid] = service_proc
@@ -224,7 +229,9 @@ class InstanceProxyServer:
                 try:
                     msg = socket.recv_pyobj()
                     if not isinstance(msg, dict):
-                        socket.send_pyobj({"ok": False, "error": "request must be a dict"})
+                        socket.send_pyobj(
+                            {"ok": False, "error": "request must be a dict"}
+                        )
                         continue
                     reply = self.handle(msg)
                 except Exception as exc:
@@ -238,13 +245,19 @@ class InstanceProxyServer:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Remote instance proxy for disagg services")
+    parser = argparse.ArgumentParser(
+        description="Remote instance proxy for disagg services"
+    )
     parser.add_argument("--bind-addr", type=str, required=True)
-    parser.add_argument("--workdir", type=str, default=str(Path(__file__).resolve().parents[3]))
+    parser.add_argument(
+        "--workdir", type=str, default=str(Path(__file__).resolve().parents[3])
+    )
     parser.add_argument("--log-dir", type=str, default="/tmp/lightx2v_disagg")
     args = parser.parse_args()
 
-    server = InstanceProxyServer(bind_addr=args.bind_addr, workdir=args.workdir, log_dir=args.log_dir)
+    server = InstanceProxyServer(
+        bind_addr=args.bind_addr, workdir=args.workdir, log_dir=args.log_dir
+    )
     server.serve()
 
 

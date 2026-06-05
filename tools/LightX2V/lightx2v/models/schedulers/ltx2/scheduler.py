@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 LTX2 Scheduler for LightX2V.
 
@@ -15,7 +16,6 @@ from typing import List, Optional, Tuple
 
 import einops
 import torch
-
 from lightx2v.models.schedulers.scheduler import BaseScheduler
 from lightx2v.utils.envs import *
 from lightx2v_platform.base.global_var import AI_DEVICE
@@ -47,11 +47,15 @@ def get_pixel_coords(
     Returns:
         Pixel coordinates with shape [3, num_patches, 2]
     """
-    scale_tensor = torch.tensor(scale_factors, device=latent_coords.device).view(-1, 1, 1)
+    scale_tensor = torch.tensor(scale_factors, device=latent_coords.device).view(
+        -1, 1, 1
+    )
     pixel_coords = latent_coords * scale_tensor
 
     if causal_fix:
-        pixel_coords[0, ...] = (pixel_coords[0, ...] + 1 - scale_factors[0]).clamp(min=0)
+        pixel_coords[0, ...] = (pixel_coords[0, ...] + 1 - scale_factors[0]).clamp(
+            min=0
+        )
 
     return pixel_coords
 
@@ -98,7 +102,9 @@ class VideoLatentPatchifier:
             p3=self._patch_size[2],
         )
 
-    def unpatchify(self, latents: torch.Tensor, frames: int, height: int, width: int) -> torch.Tensor:
+    def unpatchify(
+        self, latents: torch.Tensor, frames: int, height: int, width: int
+    ) -> torch.Tensor:
         """Unpatchify video latents from [T, D] to [C, F, H, W]."""
         patch_grid_frames = frames // self._patch_size[0]
         patch_grid_height = height // self._patch_size[1]
@@ -193,7 +199,9 @@ class AudioPatchifier:
             "c t f -> t (c f)",
         )
 
-    def unpatchify(self, audio_latents: torch.Tensor, channels: int, mel_bins: int) -> torch.Tensor:
+    def unpatchify(
+        self, audio_latents: torch.Tensor, channels: int, mel_bins: int
+    ) -> torch.Tensor:
         """Unpatchify audio latents from [T, D] to [C, T, F]."""
         if len(audio_latents.shape) == 3:
             return einops.rearrange(
@@ -232,7 +240,9 @@ class AudioPatchifier:
         if device is None:
             device = torch.device("cpu")
 
-        audio_latent_frame = torch.arange(start_latent, end_latent, dtype=dtype, device=device)
+        audio_latent_frame = torch.arange(
+            start_latent, end_latent, dtype=dtype, device=device
+        )
 
         audio_mel_frame = audio_latent_frame * self.audio_latent_downsample_factor
 
@@ -240,7 +250,9 @@ class AudioPatchifier:
             # Frame offset for causal alignment.
             # The "+1" ensures the timestamp corresponds to the first sample that is fully available.
             causal_offset = 1
-            audio_mel_frame = (audio_mel_frame + causal_offset - self.audio_latent_downsample_factor).clip(min=0)
+            audio_mel_frame = (
+                audio_mel_frame + causal_offset - self.audio_latent_downsample_factor
+            ).clip(min=0)
 
         return audio_mel_frame * self.hop_length / self.sample_rate
 
@@ -288,7 +300,9 @@ class AudioPatchifier:
         Returns shape [1, time_steps, 2] where 1 is temporal dimension and 2 is [start, end) in seconds.
         """
         # Use batch_size=1 since we removed batch dimension
-        return self._compute_audio_timings(batch_size=1, num_steps=frames, device=device)
+        return self._compute_audio_timings(
+            batch_size=1, num_steps=frames, device=device
+        )
 
 
 class LTX2Scheduler(BaseScheduler):
@@ -335,7 +349,10 @@ class LTX2Scheduler(BaseScheduler):
         # Patchifier configuration
         self.video_patch_size = config.get("video_patch_size", 1)
         self.fps = config.get("fps", 24)  # Frames per second for position calculation
-        self.video_scale_factors = tuple(config.get("vae_scale_factors") or config.get("video_scale_factors", (8, 32, 32)))  # (time, height, width); merged LTX config uses vae_scale_factors
+        self.video_scale_factors = tuple(
+            config.get("vae_scale_factors")
+            or config.get("video_scale_factors", (8, 32, 32))
+        )  # (time, height, width); merged LTX config uses vae_scale_factors
 
         # Initialize patchifiers
         self.video_patchifier = VideoLatentPatchifier(patch_size=self.video_patch_size)
@@ -368,7 +385,9 @@ class LTX2Scheduler(BaseScheduler):
         # Step state
         self.v_noise_pred = None
         self.a_noise_pred = None
-        self.keep_latents_dtype_in_scheduler = config.get("keep_latents_dtype_in_scheduler", False)
+        self.keep_latents_dtype_in_scheduler = config.get(
+            "keep_latents_dtype_in_scheduler", False
+        )
 
     def step_pre(self, step_index):
         self.step_index = step_index
@@ -432,7 +451,9 @@ class LTX2Scheduler(BaseScheduler):
         )
 
         if self.sigmas is None:
-            self.set_timesteps(infer_steps=self.infer_steps, latent=self.video_latent_state.latent)
+            self.set_timesteps(
+                infer_steps=self.infer_steps, latent=self.video_latent_state.latent
+            )
 
     def prepare_latents(
         self,
@@ -540,13 +561,17 @@ class LTX2Scheduler(BaseScheduler):
                 device=AI_DEVICE,
             )
         else:
-            video_denoise_mask = video_denoise_mask.to(dtype=torch.float32, device=AI_DEVICE)
+            video_denoise_mask = video_denoise_mask.to(
+                dtype=torch.float32, device=AI_DEVICE
+            )
             if video_denoise_mask.shape[0] != 1:
                 video_denoise_mask = video_denoise_mask[:1, ...]  # Take first channel
 
         # Patchify video latents first (aligned with source code: create_initial_state -> patchify)
         patchified_video_latent = self.video_patchifier.patchify(video_latent)
-        patchified_clean_video_latent = self.video_patchifier.patchify(clean_video_latent)
+        patchified_clean_video_latent = self.video_patchifier.patchify(
+            clean_video_latent
+        )
         patchified_video_mask = self.video_patchifier.patchify(video_denoise_mask)
 
         # Process denoise_mask: ensure float32 and reduce to [T, 1] (aligned with source code)
@@ -568,11 +593,18 @@ class LTX2Scheduler(BaseScheduler):
         )
 
         scaled_mask_video = patchified_video_mask * noise_scale
-        patchified_video_latent = (noise_video * scaled_mask_video + patchified_video_latent * (1 - scaled_mask_video)).to(patchified_video_latent.dtype)
+        patchified_video_latent = (
+            noise_video * scaled_mask_video
+            + patchified_video_latent * (1 - scaled_mask_video)
+        ).to(patchified_video_latent.dtype)
 
         # Get positions for video
-        latent_coords_video = self.video_patchifier.get_patch_grid_bounds(frames_v, height_v, width_v, AI_DEVICE)
-        positions_video = get_pixel_coords(latent_coords_video, self.video_scale_factors, causal_fix=True)
+        latent_coords_video = self.video_patchifier.get_patch_grid_bounds(
+            frames_v, height_v, width_v, AI_DEVICE
+        )
+        positions_video = get_pixel_coords(
+            latent_coords_video, self.video_scale_factors, causal_fix=True
+        )
         # Convert to float first, then divide by fps, then convert to dtype (aligned with source code)
         positions_video = positions_video.float()
         positions_video[0, ...] = positions_video[0, ...] / self.fps
@@ -623,17 +655,23 @@ class LTX2Scheduler(BaseScheduler):
         st = self.video_latent_state
         for enc, pixel_frame_idx, strength in keyframes:
             if enc.dim() != 4:
-                raise ValueError(f"guiding latent must be [C,1,H,W], got shape {tuple(enc.shape)}")
+                raise ValueError(
+                    f"guiding latent must be [C,1,H,W], got shape {tuple(enc.shape)}"
+                )
             c, f, h, w = enc.shape
             if f != 1:
                 raise ValueError(f"guiding latent must have F=1, got F={f}")
             if h != height_v or w != width_v:
-                raise ValueError(f"guiding latent spatial shape ({h},{w}) must match video_latent_shape ({height_v},{width_v})")
+                raise ValueError(
+                    f"guiding latent spatial shape ({h},{w}) must match video_latent_shape ({height_v},{width_v})"
+                )
 
             patch_tokens = self.video_patchifier.patchify(enc)
             tk = patch_tokens.shape[0]
 
-            latent_coords = self.video_patchifier.get_patch_grid_bounds(1, height_v, width_v, AI_DEVICE)
+            latent_coords = self.video_patchifier.get_patch_grid_bounds(
+                1, height_v, width_v, AI_DEVICE
+            )
             pos_k = get_pixel_coords(
                 latent_coords,
                 self.video_scale_factors,
@@ -644,7 +682,9 @@ class LTX2Scheduler(BaseScheduler):
             pos_k[0, ...] = pos_k[0, ...] / float(self.fps)
             pos_k = pos_k.to(dtype)
 
-            mask_k = torch.full((tk, 1), 1.0 - float(strength), device=AI_DEVICE, dtype=torch.float32)
+            mask_k = torch.full(
+                (tk, 1), 1.0 - float(strength), device=AI_DEVICE, dtype=torch.float32
+            )
             clean_k = patch_tokens.clone()
 
             noise_k = torch.randn(
@@ -654,7 +694,9 @@ class LTX2Scheduler(BaseScheduler):
                 generator=self.generator,
             )
             scaled_m = mask_k * noise_scale
-            noised_k = (noise_k * scaled_m + clean_k * (1 - scaled_m)).to(patch_tokens.dtype)
+            noised_k = (noise_k * scaled_m + clean_k * (1 - scaled_m)).to(
+                patch_tokens.dtype
+            )
 
             st.latent = torch.cat([st.latent, noised_k], dim=0)
             st.clean_latent = torch.cat([st.clean_latent, clean_k], dim=0)
@@ -673,9 +715,13 @@ class LTX2Scheduler(BaseScheduler):
         IC-LoRA reference video conditioning.
         """
         if enc.dim() != 4:
-            raise ValueError(f"reference latent must be [C,F,H,W], got shape {tuple(enc.shape)}")
+            raise ValueError(
+                f"reference latent must be [C,F,H,W], got shape {tuple(enc.shape)}"
+            )
         if ref_downscale_factor <= 0:
-            raise ValueError(f"ref_downscale_factor must be > 0, got {ref_downscale_factor}")
+            raise ValueError(
+                f"ref_downscale_factor must be > 0, got {ref_downscale_factor}"
+            )
 
         enc = enc.to(dtype=dtype, device=AI_DEVICE)
         c, f, h, w = enc.shape
@@ -693,7 +739,9 @@ class LTX2Scheduler(BaseScheduler):
         pos = pos.to(dtype)
 
         strength = float(max(0.0, min(1.0, strength)))
-        mask = torch.full((tk, 1), 1.0 - strength, device=AI_DEVICE, dtype=torch.float32)
+        mask = torch.full(
+            (tk, 1), 1.0 - strength, device=AI_DEVICE, dtype=torch.float32
+        )
         clean = patch_tokens.clone()
 
         noise = torch.randn(
@@ -756,13 +804,17 @@ class LTX2Scheduler(BaseScheduler):
                 device=AI_DEVICE,
             )
         else:
-            audio_denoise_mask = audio_denoise_mask.to(dtype=torch.float32, device=AI_DEVICE)
+            audio_denoise_mask = audio_denoise_mask.to(
+                dtype=torch.float32, device=AI_DEVICE
+            )
             if audio_denoise_mask.shape[0] != 1:
                 audio_denoise_mask = audio_denoise_mask[:1, ...]
 
         # Patchify audio latents first (aligned with source code: create_initial_state -> patchify)
         patchified_audio_latent = self.audio_patchifier.patchify(audio_latent)
-        patchified_clean_audio_latent = self.audio_patchifier.patchify(clean_audio_latent)
+        patchified_clean_audio_latent = self.audio_patchifier.patchify(
+            clean_audio_latent
+        )
         patchified_audio_mask = self.audio_patchifier.patchify(audio_denoise_mask)
 
         # Process denoise_mask: ensure float32 and reduce to [T, 1] (aligned with source code)
@@ -783,10 +835,15 @@ class LTX2Scheduler(BaseScheduler):
             generator=self.generator,
         )
         scaled_mask_audio = patchified_audio_mask * noise_scale
-        patchified_audio_latent = (noise_audio * scaled_mask_audio + patchified_audio_latent * (1 - scaled_mask_audio)).to(patchified_audio_latent.dtype)
+        patchified_audio_latent = (
+            noise_audio * scaled_mask_audio
+            + patchified_audio_latent * (1 - scaled_mask_audio)
+        ).to(patchified_audio_latent.dtype)
 
         # Get positions for audio (just time coordinates)
-        positions_audio = self.audio_patchifier.get_patch_grid_bounds(frames_a, AI_DEVICE)
+        positions_audio = self.audio_patchifier.get_patch_grid_bounds(
+            frames_a, AI_DEVICE
+        )
 
         # Create audio LatentState
         self.audio_latent_state = LatentState(
@@ -849,9 +906,13 @@ class LTX2Scheduler(BaseScheduler):
 
         self.sigmas = sigmas.to(torch.float32).to(AI_DEVICE)
 
-    def post_process_latent(self, denoised: torch.Tensor, denoise_mask: torch.Tensor, clean: torch.Tensor) -> torch.Tensor:
+    def post_process_latent(
+        self, denoised: torch.Tensor, denoise_mask: torch.Tensor, clean: torch.Tensor
+    ) -> torch.Tensor:
         """Blend denoised output with clean state based on mask."""
-        return (denoised * denoise_mask + clean.float() * (1 - denoise_mask)).to(denoised.dtype)
+        return (denoised * denoise_mask + clean.float() * (1 - denoise_mask)).to(
+            denoised.dtype
+        )
 
     def to_velocity(
         self,
@@ -869,23 +930,47 @@ class LTX2Scheduler(BaseScheduler):
             sigma = sigma.to(calc_dtype).item()
         if sigma == 0:
             raise ValueError("Sigma can't be 0.0")
-        return ((sample.to(calc_dtype) - denoised_sample.to(calc_dtype)) / sigma).to(sample.dtype)
+        return ((sample.to(calc_dtype) - denoised_sample.to(calc_dtype)) / sigma).to(
+            sample.dtype
+        )
 
     def step_post(self):
-        self.v_noise_pred = self.post_process_latent(self.v_noise_pred, self.video_latent_state.denoise_mask, self.video_latent_state.clean_latent)
-        self.a_noise_pred = self.post_process_latent(self.a_noise_pred, self.audio_latent_state.denoise_mask, self.audio_latent_state.clean_latent)
+        self.v_noise_pred = self.post_process_latent(
+            self.v_noise_pred,
+            self.video_latent_state.denoise_mask,
+            self.video_latent_state.clean_latent,
+        )
+        self.a_noise_pred = self.post_process_latent(
+            self.a_noise_pred,
+            self.audio_latent_state.denoise_mask,
+            self.audio_latent_state.clean_latent,
+        )
 
         sigma = self.sigmas[self.step_index]
         sigma_next = self.sigmas[self.step_index + 1]
         dt = sigma_next - sigma
 
-        v_velocity = self.to_velocity(self.video_latent_state.latent, sigma, self.v_noise_pred)
-        a_velocity = self.to_velocity(self.audio_latent_state.latent, sigma, self.a_noise_pred)
+        v_velocity = self.to_velocity(
+            self.video_latent_state.latent, sigma, self.v_noise_pred
+        )
+        a_velocity = self.to_velocity(
+            self.audio_latent_state.latent, sigma, self.a_noise_pred
+        )
 
-        v_latent = self.video_latent_state.latent.to(torch.float32) + v_velocity.to(torch.float32) * dt
-        a_latent = self.audio_latent_state.latent.to(torch.float32) + a_velocity.to(torch.float32) * dt
-        self.video_latent_state.latent = v_latent.to(self.video_latent_state.latent.dtype)
-        self.audio_latent_state.latent = a_latent.to(self.audio_latent_state.latent.dtype)
+        v_latent = (
+            self.video_latent_state.latent.to(torch.float32)
+            + v_velocity.to(torch.float32) * dt
+        )
+        a_latent = (
+            self.audio_latent_state.latent.to(torch.float32)
+            + a_velocity.to(torch.float32) * dt
+        )
+        self.video_latent_state.latent = v_latent.to(
+            self.video_latent_state.latent.dtype
+        )
+        self.audio_latent_state.latent = a_latent.to(
+            self.audio_latent_state.latent.dtype
+        )
 
         # Unpatchify latents on the final step (aligned with source code)
         if self.step_index == self.infer_steps - 1:
@@ -896,8 +981,12 @@ class LTX2Scheduler(BaseScheduler):
             main_n = getattr(self, "_video_main_num_tokens", None)
             if main_n is not None and vl.shape[0] > main_n:
                 vl = vl[:main_n]
-            self.video_latent_state.latent = self.video_patchifier.unpatchify(vl, frames_v, height_v, width_v)
-            self.audio_latent_state.latent = self.audio_patchifier.unpatchify(self.audio_latent_state.latent, channels=channels_a, mel_bins=mel_bins_a)
+            self.video_latent_state.latent = self.video_patchifier.unpatchify(
+                vl, frames_v, height_v, width_v
+            )
+            self.audio_latent_state.latent = self.audio_patchifier.unpatchify(
+                self.audio_latent_state.latent, channels=channels_a, mel_bins=mel_bins_a
+            )
 
     def clear(self):
         """Clear scheduler state."""

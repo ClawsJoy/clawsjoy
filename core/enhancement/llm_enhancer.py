@@ -3,11 +3,12 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
 import requests
+
 from core.lib.unified_config import unified_config
 
 
@@ -15,7 +16,7 @@ class LLMEnhancer:
     """LLM 增强器"""
 
     def __init__(self):
-        self.ollama_url = unified_config.get("llm.endpoint", "http://localhost:11434")
+        self.ollama_url = "http://localhost:11434"
         self.model = unified_config.get("llm.fast_model", "qwen2.5:3b")
         self.enabled = True
 
@@ -32,10 +33,10 @@ class LLMEnhancer:
             response = requests.post(
                 f"{self.ollama_url}/api/generate",
                 json={"model": self.model, "prompt": prompt, "stream": False},
-                timeout=unified_config.get("timeouts.default", 30)
+                timeout=unified_config.get("timeouts.default", 30),
             )
             if response.status_code == 200:
-                return response.json().get('response', '')
+                return response.json().get("response", "")
         except Exception as e:
             print(f"LLM 增强失败: {e}")
         return None
@@ -45,7 +46,7 @@ class LLMEnhancer:
             "llm_enabled": self.enabled,
             "model": self.model,
             "supported_agents": ["chat_agent", "personal_butler", "butler"],
-            "features": ["智能对话", "上下文理解", "自然语言生成"]
+            "features": ["智能对话", "上下文理解", "自然语言生成"],
         }
 
 

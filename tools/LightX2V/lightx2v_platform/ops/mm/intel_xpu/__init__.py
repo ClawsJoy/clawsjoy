@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 Intel XPU matrix multiplication using torch.xpu.
 """
@@ -8,12 +9,11 @@ import re
 from abc import ABCMeta, abstractmethod
 
 import torch
-from loguru import logger
-from safetensors import safe_open
-
 from lightx2v_platform.base.global_var import AI_DEVICE
 from lightx2v_platform.ops.mm.template import MMWeightQuantTemplate, MMWeightTemplate
 from lightx2v_platform.registry_factory import PLATFORM_MM_WEIGHT_REGISTER
+from loguru import logger
+from safetensors import safe_open
 
 # Detect Intel XPU platform
 IS_INTEL_XPU = hasattr(torch, "xpu") and torch.xpu.is_available()
@@ -43,8 +43,25 @@ class IntelXpuMmWeight(MMWeightTemplate):
     Intel XPU matrix multiplication implementation.
     """
 
-    def __init__(self, weight_name, bias_name, create_cuda_buffer=False, create_cpu_buffer=False, lazy_load=False, lazy_load_file=None, is_post_adapter=False):
-        super().__init__(weight_name, bias_name, create_cuda_buffer, create_cpu_buffer, lazy_load, lazy_load_file, is_post_adapter)
+    def __init__(
+        self,
+        weight_name,
+        bias_name,
+        create_cuda_buffer=False,
+        create_cpu_buffer=False,
+        lazy_load=False,
+        lazy_load_file=None,
+        is_post_adapter=False,
+    ):
+        super().__init__(
+            weight_name,
+            bias_name,
+            create_cuda_buffer,
+            create_cpu_buffer,
+            lazy_load,
+            lazy_load_file,
+            is_post_adapter,
+        )
 
     def load(self, weight_dict):
         if self.create_cuda_buffer:
@@ -68,14 +85,20 @@ class IntelXpuMmWeight(MMWeightTemplate):
                 del weight_dict[self.weight_name]
             else:
                 self.weight = weight_dict[self.weight_name]
-                self.bias = weight_dict[self.bias_name] if self.bias_name is not None and self.bias_name in weight_dict else None
+                self.bias = (
+                    weight_dict[self.bias_name]
+                    if self.bias_name is not None and self.bias_name in weight_dict
+                    else None
+                )
         else:
             self.weight = None
             self.bias = None
 
     def _get_weight_tensor(self, weight_dict=None):
         if self.lazy_load:
-            with safe_open(self.lazy_load_file, framework="pt", device="cpu") as lazy_load_file:
+            with safe_open(
+                self.lazy_load_file, framework="pt", device="cpu"
+            ) as lazy_load_file:
                 tensor = lazy_load_file.get_tensor(self.weight_name)
         else:
             tensor = weight_dict[self.weight_name]
@@ -131,9 +154,28 @@ class IntelXpuFp8MmWeight(MMWeightQuantTemplate):
         - Intel XPU friendly: No CUDA-specific kernels
     """
 
-    def __init__(self, weight_name, bias_name, create_cuda_buffer=False, create_cpu_buffer=False, lazy_load=False, lazy_load_file=None, is_post_adapter=False):
-        super().__init__(weight_name, bias_name, create_cuda_buffer, create_cpu_buffer, lazy_load, lazy_load_file, is_post_adapter)
-        self.weight_scale_name = self.weight_name.removesuffix(".weight") + ".weight_scale"
+    def __init__(
+        self,
+        weight_name,
+        bias_name,
+        create_cuda_buffer=False,
+        create_cpu_buffer=False,
+        lazy_load=False,
+        lazy_load_file=None,
+        is_post_adapter=False,
+    ):
+        super().__init__(
+            weight_name,
+            bias_name,
+            create_cuda_buffer,
+            create_cpu_buffer,
+            lazy_load,
+            lazy_load_file,
+            is_post_adapter,
+        )
+        self.weight_scale_name = (
+            self.weight_name.removesuffix(".weight") + ".weight_scale"
+        )
         self.load_func = self.load_fp8_perchannel_sym
         self.weight_need_transpose = False  # Handle transpose in apply
         self.infer_dtype = torch.float16
@@ -149,7 +191,9 @@ class IntelXpuFp8MmWeight(MMWeightQuantTemplate):
             # Calculate scale per output channel
             weight_abs_max = self.weight.abs().max(dim=0, keepdim=True)[0]
             self.weight_scale = weight_abs_max / 448.0  # FP8 E4M3 max value ≈ 448
-            self.weight_scale = self.weight_scale.clamp(min=1e-12)  # Avoid division by zero
+            self.weight_scale = self.weight_scale.clamp(
+                min=1e-12
+            )  # Avoid division by zero
 
             # Quantize to FP8
             weight_normalized = self.weight / self.weight_scale

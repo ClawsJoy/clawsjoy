@@ -1,8 +1,8 @@
-from lib.smart_config import smart_config
 import torch
 import torch.nn.functional as F
-
 from lightx2v.utils.envs import *
+
+from lib.smart_config import smart_config
 
 from .module_io import ZPreInferModuleOutput
 from .utils import patchify
@@ -25,7 +25,9 @@ class ZImagePreInfer:
         patch_size = self.config.get("patch_size", 2)
         f_patch_size = self.config.get("f_patch_size", 1)
 
-        hidden_states = patchify(hidden_states, patch_size=patch_size, f_patch_size=f_patch_size).squeeze(0)
+        hidden_states = patchify(
+            hidden_states, patch_size=patch_size, f_patch_size=f_patch_size
+        ).squeeze(0)
 
         num_tokens, patch_dim = hidden_states.shape
 
@@ -46,14 +48,22 @@ class ZImagePreInfer:
         if x_padding_len > 0:
             x_pad_mask = torch.cat(
                 [
-                    torch.zeros((x_ori_len,), dtype=torch.bool, device=hidden_states.device),
-                    torch.ones((x_padding_len,), dtype=torch.bool, device=hidden_states.device),
+                    torch.zeros(
+                        (x_ori_len,), dtype=torch.bool, device=hidden_states.device
+                    ),
+                    torch.ones(
+                        (x_padding_len,), dtype=torch.bool, device=hidden_states.device
+                    ),
                 ],
                 dim=0,
             )
-            x_padded = torch.cat([hidden_states, hidden_states[-1:].repeat(x_padding_len, 1)], dim=0)
+            x_padded = torch.cat(
+                [hidden_states, hidden_states[-1:].repeat(x_padding_len, 1)], dim=0
+            )
         else:
-            x_pad_mask = torch.zeros((x_ori_len,), dtype=torch.bool, device=hidden_states.device)
+            x_pad_mask = torch.zeros(
+                (x_ori_len,), dtype=torch.bool, device=hidden_states.device
+            )
             x_padded = hidden_states
 
         x_padded_len = x_padded.shape[0]
@@ -71,7 +81,9 @@ class ZImagePreInfer:
         if encoder_hidden_states.dim() == 3:
             encoder_hidden_states = encoder_hidden_states.squeeze(0)
         elif encoder_hidden_states.dim() != 2:
-            raise ValueError(f"encoder_hidden_states must be 2D [L, D] or 3D [B, L, D], got {encoder_hidden_states.shape}")
+            raise ValueError(
+                f"encoder_hidden_states must be 2D [L, D] or 3D [B, L, D], got {encoder_hidden_states.shape}"
+            )
 
         cap_ori_len = encoder_hidden_states.shape[0]
         cap_padding_len = (-cap_ori_len) % SEQ_MULTI_OF
@@ -79,21 +91,39 @@ class ZImagePreInfer:
         if cap_padding_len > 0:
             cap_pad_mask = torch.cat(
                 [
-                    torch.zeros((cap_ori_len,), dtype=torch.bool, device=encoder_hidden_states.device),
-                    torch.ones((cap_padding_len,), dtype=torch.bool, device=encoder_hidden_states.device),
+                    torch.zeros(
+                        (cap_ori_len,),
+                        dtype=torch.bool,
+                        device=encoder_hidden_states.device,
+                    ),
+                    torch.ones(
+                        (cap_padding_len,),
+                        dtype=torch.bool,
+                        device=encoder_hidden_states.device,
+                    ),
                 ],
                 dim=0,
             )
-            cap_padded = torch.cat([encoder_hidden_states, encoder_hidden_states[-1:].repeat(cap_padding_len, 1)], dim=0)
+            cap_padded = torch.cat(
+                [
+                    encoder_hidden_states,
+                    encoder_hidden_states[-1:].repeat(cap_padding_len, 1),
+                ],
+                dim=0,
+            )
         else:
-            cap_pad_mask = torch.zeros((cap_ori_len,), dtype=torch.bool, device=encoder_hidden_states.device)
+            cap_pad_mask = torch.zeros(
+                (cap_ori_len,), dtype=torch.bool, device=encoder_hidden_states.device
+            )
             cap_padded = encoder_hidden_states
 
         cap_padded_len = cap_padded.shape[0]
         encoder_hidden_states = weights.txt_norm.apply(cap_padded)  # [L, D]
         encoder_hidden_states = weights.txt_in.apply(encoder_hidden_states)  # [L, D]
 
-        if hasattr(weights, "cap_pad_token") and hasattr(weights.cap_pad_token, "tensor"):
+        if hasattr(weights, "cap_pad_token") and hasattr(
+            weights.cap_pad_token, "tensor"
+        ):
             cap_pad_token = weights.cap_pad_token.tensor
             # Handle both [1, D] and [D] formats
             if cap_pad_token.dim() == 2:
@@ -129,10 +159,16 @@ class ZImagePreInfer:
             image_pos_ids = torch.cat([image_pos_ids, padding_pos_ids], dim=0)
 
         # Generate freqs_cis
-        x_freqs_cis = self.scheduler.generate_freqs_cis_from_position_ids(image_pos_ids, device=device)
-        cap_freqs_cis = self.scheduler.generate_freqs_cis_from_position_ids(cap_pos_ids, device=device)
+        x_freqs_cis = self.scheduler.generate_freqs_cis_from_position_ids(
+            image_pos_ids, device=device
+        )
+        cap_freqs_cis = self.scheduler.generate_freqs_cis_from_position_ids(
+            cap_pos_ids, device=device
+        )
 
-        embed0 = weights.time_text_embed_timestep_embedder_linear_1.apply(self.scheduler.timesteps_proj)
+        embed0 = weights.time_text_embed_timestep_embedder_linear_1.apply(
+            self.scheduler.timesteps_proj
+        )
         embed0 = F.silu(embed0)
         temb_img_silu = weights.time_text_embed_timestep_embedder_linear_2.apply(embed0)
 
@@ -147,7 +183,11 @@ class ZImagePreInfer:
                 if pooled_text.shape[-1] > target_dim:
                     pooled_text = pooled_text[..., :target_dim]
                 else:
-                    padding = torch.zeros(target_dim - pooled_text.shape[-1], device=pooled_text.device, dtype=pooled_text.dtype)
+                    padding = torch.zeros(
+                        target_dim - pooled_text.shape[-1],
+                        device=pooled_text.device,
+                        dtype=pooled_text.dtype,
+                    )
                     pooled_text = torch.cat([pooled_text, padding], dim=-1)
 
             temb_txt_silu = F.silu(pooled_text)  # [D]

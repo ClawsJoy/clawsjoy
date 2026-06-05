@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
 """智能体 Web 服务"""
 
-from flask import Flask, request, jsonify, render_template_string
+from flask import Flask, jsonify, render_template_string, request
+
 from core.agent.true_learner import true_learner
+from core.lib.unified_config import unified_config
 
 app = Flask(__name__)
 
-HTML = '''
+# 配置加载器
+config_loader = unified_config
+smart_config = unified_config
+
+HTML = """
 <!DOCTYPE html>
 <html>
 <head>
@@ -17,48 +23,41 @@ HTML = '''
         #chat { border: 1px solid #ccc; height: 400px; overflow-y: auto; padding: 10px; margin-bottom: 10px; }
         .user { color: blue; margin: 5px 0; }
         .bot { color: green; margin: 5px 0; }
-        .skill { color: gray; font-size: 12px; }
-        input { width: 80%; padding: 10px; }
-        button { padding: 10px 20px; }
     </style>
 </head>
 <body>
     <h1>🤖 ClawsJoy 智能体</h1>
     <div id="chat"></div>
-    <input type="text" id="input" placeholder="输入消息..." />
+    <input type="text" id="input" placeholder="输入消息..." style="width: 80%; padding: 10px;">
     <button onclick="send()">发送</button>
-    
     <script>
         function send() {
             var input = document.getElementById('input');
             var msg = input.value;
             if (!msg) return;
-            
-            var chat = document.getElementById('chat');
-            chat.innerHTML += '<div class="user">👤 用户: ' + msg + '</div>';
-            input.value = '';
-            
-            fetch('/api/chat', {
+            addMessage('user', msg);
+            fetch('/chat', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({message: msg})
             })
             .then(res => res.json())
-            .then(data => {
-                chat.innerHTML += '<div class="bot">🤖 智能体: ' + data.response + '</div>';
-                if (data.skill) {
-                    chat.innerHTML += '<div class="skill">📊 使用技能: ' + data.skill + '</div>';
-                }
-                chat.scrollTop = chat.scrollHeight;
-            });
+            .then(data => addMessage('bot', data.response))
+            .catch(err => addMessage('bot', '错误: ' + err));
+            input.value = '';
         }
-        document.getElementById('input').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') send();
-        });
+        function addMessage(role, text) {
+            var chat = document.getElementById('chat');
+            var div = document.createElement('div');
+            div.className = role;
+            div.textContent = (role === 'user' ? '👤 ' : '🤖 ') + text;
+            chat.appendChild(div);
+            chat.scrollTop = chat.scrollHeight;
+        }
     </script>
 </body>
 </html>
-'''
+"""
 
 
 @app.route('/')
@@ -66,33 +65,30 @@ def index():
     return render_template_string(HTML)
 
 
-@app.route('/api/chat', methods=['POST'])
+@app.route('/chat', methods=['POST'])
 def chat():
-    data = request.json or {}
+    data = request.json
     message = data.get('message', '')
-    
     if not message:
-        return jsonify({"error": "No message"}), 400
+        return jsonify({'response': '请输入消息', 'success': False})
     
-    result = true_learner.process(message)
+    # 调用 true_learner
+    result = true_learner.learn(message)
+    response = result.get('response', '处理完成')
     
-    return jsonify({
-        "success": result.get('success', False),
-        "response": result.get('response', ''),
-        "skill": result.get('skill'),
-        "reasoning": result.get('reasoning')
-    })
-
-
-@app.route('/api/stats', methods=['GET'])
-def stats():
-    return jsonify(true_learner.get_stats())
+    return jsonify({'response': response, 'success': True})
 
 
 if __name__ == "__main__":
     print("=" * 50)
     print("🤖 ClawsJoy 智能体服务")
     print("=" * 50)
-    print(f"访问: http://{config_loader.get("endpoints.gateway.host", "localhost")}:{config_loader.get("endpoints.web_learner.port", 5011)}")
+    
+    # 获取配置
+    gateway_host = config_loader.get("endpoints.gateway.host", "localhost")
+    web_port = smart_config.get("endpoints.web_learner.port", 5011)
+    
+    print(f"访问: http://{gateway_host}:{web_port}")
     print("=" * 50)
-    app.run(host='0.0.0.0', port=smart_config.PORTS.get("web", 5011), debug=False)
+    
+    app.run(host="0.0.0.0", port=web_port, debug=False)

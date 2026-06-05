@@ -1,0 +1,139 @@
+"""DecisionAgent - 理解层核心：智能决策与路由"""
+
+import sys
+sys.path.insert(0, '/home/flybo/clawsjoy_v5')
+
+import time
+from typing import Dict, Optional
+from core.agents.business.base_business_agent import BusinessAgent
+
+
+class DecisionAgent(BusinessAgent):
+    """决策者 - 理解层核心"""
+
+    name = "decision_agent"
+    description = "智能决策者 - 理解层核心"
+    version = "5.0.1"
+
+    def __init__(self, user_id: str = "default"):
+        super().__init__(user_id=user_id)
+        self._init_components()
+        print(f"🎖️ 决策者 v{self.version} 已上岗")
+
+    def _init_components(self):
+        try:
+            from engine.reasoning import reasoning_engine
+            self.reasoning_engine = reasoning_engine
+            print(f"[决策者] ✅ 推理引擎已加载")
+        except Exception as e:
+            print(f"[决策者] ❌ 推理引擎加载失败: {e}")
+            self.reasoning_engine = None
+        
+        self._analysis_cache = {}
+        self._route_stats = {"A": 0, "B": 0, "C": 0}
+
+    def process(self, user_input: str, context: dict = None) -> dict:
+        """SmartAgent 抽象方法实现"""
+        return self._decide_and_route(user_input, context)
+    
+    def _execute_business(self, user_input: str, context: dict = None) -> dict:
+        """BusinessAgent 抽象方法实现"""
+        return self._decide_and_route(user_input, context)
+
+    def _decide_and_route(self, user_input: str, context: dict = None) -> dict:
+        print(f"[决策者] 🧠 开始决策: {user_input[:50]}...")
+        
+        # Step 1: 获取分析报告
+        analysis_report = self._get_analysis_report(user_input, context)
+        print(f"[决策者] 📊 分析师建议: {analysis_report.get('suggested_route')}")
+        
+        # Step 2: 决策
+        decision = analysis_report.get("suggested_route", "C")
+        confidence = analysis_report.get("confidence", 0.8)
+        
+        print(f"[决策者] 📊 最终决策: {decision}")
+        
+        # Step 3: 更新统计
+        self._route_stats[decision] = self._route_stats.get(decision, 0) + 1
+        
+        # Step 4: 路由
+        route_result = self._route(decision, user_input, analysis_report)
+        
+        if isinstance(route_result, dict):
+            route_result["decision_metadata"] = {
+                "decision": decision,
+                "confidence": confidence,
+                "route_stats": self._route_stats
+            }
+        
+        return route_result
+
+    def _get_analysis_report(self, user_input: str, context: dict = None) -> dict:
+        """获取分析报告"""
+        try:
+            from agents.analysis_agent.agent import analysis_agent
+            
+            # 直接调用分析师的决策模式
+            report = analysis_agent.process(
+                user_input,
+                {"mode": "understanding", "caller": "decision_agent"}
+            )
+            
+            # 确保返回 dict
+            if isinstance(report, dict):
+                return report
+            else:
+                return self._fallback_analysis(user_input)
+                
+        except Exception as e:
+            print(f"[决策者] 分析师调用失败: {e}")
+            return self._fallback_analysis(user_input)
+
+    def _fallback_analysis(self, user_input: str) -> dict:
+        """降级分析"""
+        input_lower = user_input.lower()
+        
+        if "分析" in input_lower and ("写" in input_lower or "总结" in input_lower):
+            route = "C"
+        elif "分析" in input_lower:
+            route = "C"
+        elif "计算" in input_lower or "翻译" in input_lower:
+            route = "B"
+        else:
+            route = "A"
+        
+        return {
+            "success": True,
+            "complexity": "high" if route == "C" else "low",
+            "suggested_route": route,
+            "requires_orchestration": route == "C",
+            "confidence": 0.8,
+            "source": "fallback"
+        }
+
+    def _route(self, decision: str, user_input: str, analysis_report: dict) -> dict:
+        """路由执行"""
+        if decision == "A":
+            return self._route_to_chat(user_input)
+        elif decision == "B":
+            return self._route_to_executor(user_input)
+        else:
+            return self._route_to_orchestrator(user_input)
+
+    def _route_to_chat(self, message: str) -> dict:
+        from agents.chat_agent.agent import chat_agent
+        print(f"[决策者] 🚀 路由 → ChatAgent")
+        return chat_agent.process(message)
+
+    def _route_to_executor(self, task: str) -> dict:
+        from agents.executor_agent.agent import executor_agent
+        print(f"[决策者] 🚀 路由 → ExecutorAgent")
+        return executor_agent.process(task)
+
+    def _route_to_orchestrator(self, task: str) -> dict:
+        from agents.orchestrator.agent import orchestrator_agent
+        print(f"[决策者] 🚀 路由 → Orchestrator")
+        return orchestrator_agent.process(task, {"caller": "decision_agent"})
+
+
+decision_agent = DecisionAgent()

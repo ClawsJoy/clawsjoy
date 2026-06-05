@@ -1,5 +1,6 @@
-from lib.smart_config import smart_config
 import torch
+
+from lib.smart_config import smart_config
 
 
 def normalize_poses(extrinsics, padding=0.1, return_stats=False):
@@ -22,13 +23,18 @@ def normalize_poses(extrinsics, padding=0.1, return_stats=False):
     for i in range(B):
         if torch.isnan(extrinsics[i]).any() or torch.isinf(extrinsics[i]).any():
             print(f"Warning: dataset sample has NaN/Inf in extrinsics")
-            extrinsics[i] = torch.nan_to_num(extrinsics[i], nan=0.0, posinf=1e6, neginf=-1e6)
+            extrinsics[i] = torch.nan_to_num(
+                extrinsics[i], nan=0.0, posinf=1e6, neginf=-1e6
+            )
 
     normalized_extrinsics = extrinsics.clone()
 
     # Store normalization parameters if needed
     if return_stats:
-        stats = {"scale_factors": torch.zeros(B, device=device), "translation_vectors": torch.zeros(B, 3, device=device)}
+        stats = {
+            "scale_factors": torch.zeros(B, device=device),
+            "translation_vectors": torch.zeros(B, 3, device=device),
+        }
 
     for b in range(B):
         # Extract camera positions for this batch
@@ -62,7 +68,9 @@ def normalize_poses(extrinsics, padding=0.1, return_stats=False):
         pos_range = max_pos - min_pos
 
         # Add small epsilon to prevent dimension collapse
-        eps = torch.maximum(torch.tensor(1e-6, device=device), torch.abs(max_pos) * 1e-6)
+        eps = torch.maximum(
+            torch.tensor(1e-6, device=device), torch.abs(max_pos) * 1e-6
+        )
         pos_range = torch.maximum(pos_range, eps)
 
         # Use maximum range as scale factor for uniform scaling
@@ -91,7 +99,9 @@ def normalize_poses(extrinsics, padding=0.1, return_stats=False):
             stats["translation_vectors"][b] = center
 
     # Final validation
-    assert torch.isfinite(normalized_extrinsics).all(), "Output contains non-finite values"
+    assert torch.isfinite(
+        normalized_extrinsics
+    ).all(), "Output contains non-finite values"
 
     if return_stats:
         return normalized_extrinsics, stats
@@ -130,7 +140,9 @@ def normalize_depth(depth, eps=1e-6, min_percentile=1, max_percentile=99):
             values_to_use = depth_flat
 
         # Only calculate percentiles when there are enough values
-        if values_to_use.numel() > 100:  # Ensure enough samples for percentile calculation
+        if (
+            values_to_use.numel() > 100
+        ):  # Ensure enough samples for percentile calculation
             # Calculate min and max percentiles
             depth_min = torch.quantile(values_to_use, min_percentile / 100.0)
             depth_max = torch.quantile(values_to_use, max_percentile / 100.0)

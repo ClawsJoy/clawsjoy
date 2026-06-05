@@ -1,7 +1,8 @@
-from lib.smart_config import smart_config
 import os
 
 import torch
+
+from lib.smart_config import smart_config
 
 try:
     import spas_sage_attn
@@ -21,14 +22,26 @@ class SpargeAttnWeight(AttnWeightTemplate):
         self.config = {}
         self.topk = 1 - self.sparsity_ratio
 
-    def apply(self, q, k, v, cu_seqlens_q=None, cu_seqlens_kv=None, max_seqlen_q=None, max_seqlen_kv=None, **kwargs):
+    def apply(
+        self,
+        q,
+        k,
+        v,
+        cu_seqlens_q=None,
+        cu_seqlens_kv=None,
+        max_seqlen_q=None,
+        max_seqlen_kv=None,
+        **kwargs
+    ):
         q = q.unsqueeze(0)
         k = k.unsqueeze(0)
         v = v.unsqueeze(0)
         q = q.transpose(1, 2)
         k = k.transpose(1, 2)
         v = v.transpose(1, 2)
-        attn_out = spas_sage_attn.core.spas_sage2_attn_meansim_topk_cuda(q, k, v, topk=self.topk)
+        attn_out = spas_sage_attn.core.spas_sage2_attn_meansim_topk_cuda(
+            q, k, v, topk=self.topk
+        )
         _, H, N, D = attn_out.shape
         attn_out = attn_out.permute(2, 1, 3, 0).contiguous().view(N, H * D)
         return attn_out
@@ -57,7 +70,9 @@ if __name__ == "__main__":
     q = q.transpose(1, 2)  # shape: (1, 12, 32760, 128)
     k = k.transpose(1, 2)
     v = v.transpose(1, 2)
-    output_cuda = spas_sage_attn.core.spas_sage2_attn_meansim_cuda(q, k, v, tensor_layout="HND")
+    output_cuda = spas_sage_attn.core.spas_sage2_attn_meansim_cuda(
+        q, k, v, tensor_layout="HND"
+    )
     output_cuda = output_cuda.float()
 
     # 4. 取左上角[3000, 3000]，只取第一个head

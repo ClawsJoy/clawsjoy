@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 HunyuanVideo-1.5 text-to-video generation example.
 This example demonstrates how to use LightX2V with HunyuanVideo-1.5 4-step distilled model for T2V generation.
@@ -38,7 +39,16 @@ pipe.enable_lightvae(
 )
 
 # Create generator with specified parameters
-pipe.create_generator(attn_mode="sage_attn2", infer_steps=4, num_frames=81, guidance_scale=1, sample_shift=9.0, aspect_ratio="16:9", fps=16, denoising_step_list=[1000, 750, 500, 250])
+pipe.create_generator(
+    attn_mode="sage_attn2",
+    infer_steps=4,
+    num_frames=81,
+    guidance_scale=1,
+    sample_shift=9.0,
+    aspect_ratio="16:9",
+    fps=16,
+    denoising_step_list=[1000, 750, 500, 250],
+)
 
 
 # Generation parameters

@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import functools
 import inspect
 import json
@@ -10,12 +9,15 @@ from typing import List, Optional, Tuple, Union
 import numpy as np
 import torch
 import torch.distributed as dist
-from diffusers.schedulers.scheduling_flow_match_euler_discrete import FlowMatchEulerDiscreteScheduler
+from diffusers.schedulers.scheduling_flow_match_euler_discrete import (
+    FlowMatchEulerDiscreteScheduler,
+)
+from lightx2v.models.schedulers.scheduler import BaseScheduler
+from lightx2v_platform.base.global_var import AI_DEVICE, PLATFORM
 from torch import nn
 from torch.nn import functional as F
 
-from lightx2v.models.schedulers.scheduler import BaseScheduler
-from lightx2v_platform.base.global_var import AI_DEVICE, PLATFORM
+from lib.smart_config import smart_config
 
 try:
     from sgl_kernel.elementwise import timestep_embedding as timestep_embedding_cuda
@@ -76,9 +78,13 @@ def retrieve_timesteps(
         second element is the number of inference steps.
     """
     if timesteps is not None and sigmas is not None:
-        raise ValueError("Only one of `timesteps` or `sigmas` can be passed. Please choose one to set custom values")
+        raise ValueError(
+            "Only one of `timesteps` or `sigmas` can be passed. Please choose one to set custom values"
+        )
     if timesteps is not None:
-        accepts_timesteps = "timesteps" in set(inspect.signature(scheduler.set_timesteps).parameters.keys())
+        accepts_timesteps = "timesteps" in set(
+            inspect.signature(scheduler.set_timesteps).parameters.keys()
+        )
         if not accepts_timesteps:
             raise ValueError(
                 f"The current scheduler class {scheduler.__class__}'s `set_timesteps` does not support custom timestep schedules. Please check whether you are using the correct scheduler."
@@ -87,9 +93,13 @@ def retrieve_timesteps(
         timesteps = scheduler.timesteps
         num_inference_steps = len(timesteps)
     elif sigmas is not None:
-        accept_sigmas = "sigmas" in set(inspect.signature(scheduler.set_timesteps).parameters.keys())
+        accept_sigmas = "sigmas" in set(
+            inspect.signature(scheduler.set_timesteps).parameters.keys()
+        )
         if not accept_sigmas:
-            raise ValueError(f"The current scheduler class {scheduler.__class__}'s `set_timesteps` does not support custom sigmas schedules. Please check whether you are using the correct scheduler.")
+            raise ValueError(
+                f"The current scheduler class {scheduler.__class__}'s `set_timesteps` does not support custom sigmas schedules. Please check whether you are using the correct scheduler."
+            )
         scheduler.set_timesteps(sigmas=sigmas, device=device, **kwargs)
         timesteps = scheduler.timesteps
         num_inference_steps = len(timesteps)
@@ -120,7 +130,11 @@ def randn_tensor(
     device = device or torch.device("cpu")
 
     if generator is not None:
-        gen_device_type = generator.device.type if not isinstance(generator, list) else generator[0].device.type
+        gen_device_type = (
+            generator.device.type
+            if not isinstance(generator, list)
+            else generator[0].device.type
+        )
         if gen_device_type != device.type and gen_device_type == "cpu":
             rand_device = "cpu"
             if device != "mps":
@@ -130,7 +144,9 @@ def randn_tensor(
                     f" slightly speed up this function by passing a generator that was created on the {device} device."
                 )
         elif gen_device_type != device.type and gen_device_type == "cuda":
-            raise ValueError(f"Cannot generate a {device} tensor from a generator of type {gen_device_type}.")
+            raise ValueError(
+                f"Cannot generate a {device} tensor from a generator of type {gen_device_type}."
+            )
 
     # make sure generator list of length 1 is treated like a non-list
     if isinstance(generator, list) and len(generator) == 1:
@@ -138,10 +154,21 @@ def randn_tensor(
 
     if isinstance(generator, list):
         shape = (1,) + shape[1:]
-        latents = [torch.randn(shape, generator=generator[i], device=rand_device, dtype=dtype, layout=layout) for i in range(batch_size)]
+        latents = [
+            torch.randn(
+                shape,
+                generator=generator[i],
+                device=rand_device,
+                dtype=dtype,
+                layout=layout,
+            )
+            for i in range(batch_size)
+        ]
         latents = torch.cat(latents, dim=0).to(device)
     else:
-        latents = torch.randn(shape, generator=generator, device=rand_device, dtype=dtype, layout=layout).to(device)
+        latents = torch.randn(
+            shape, generator=generator, device=rand_device, dtype=dtype, layout=layout
+        ).to(device)
 
     return latents
 
@@ -187,7 +214,9 @@ def get_timestep_embedding(
     assert len(timesteps.shape) == 1, "Timesteps should be a 1d-array"
 
     half_dim = embedding_dim // 2
-    exponent = -math.log(max_period) * torch.arange(start=0, end=half_dim, dtype=torch.float32, device=timesteps.device)
+    exponent = -math.log(max_period) * torch.arange(
+        start=0, end=half_dim, dtype=torch.float32, device=timesteps.device
+    )
     exponent = exponent / (half_dim - downscale_freq_shift)
 
     emb = torch.exp(exponent)
@@ -243,7 +272,10 @@ class QwenEmbedRope(nn.Module):
             index: [0, 1, 2, 3] 1D Tensor representing the position index of the token
         """
         assert dim % 2 == 0
-        freqs = torch.outer(index, 1.0 / torch.pow(theta, torch.arange(0, dim, 2).to(torch.float32).div(dim)))
+        freqs = torch.outer(
+            index,
+            1.0 / torch.pow(theta, torch.arange(0, dim, 2).to(torch.float32).div(dim)),
+        )
         freqs = torch.polar(torch.ones_like(freqs), freqs)
         return freqs
 
@@ -269,7 +301,9 @@ class QwenEmbedRope(nn.Module):
 
             if not torch.compiler.is_compiling():
                 if rope_key not in self.rope_cache:
-                    self.rope_cache[rope_key] = self._compute_video_freqs(frame, height, width, idx)
+                    self.rope_cache[rope_key] = self._compute_video_freqs(
+                        frame, height, width, idx
+                    )
                 video_freq = self.rope_cache[rope_key]
             else:
                 video_freq = self._compute_video_freqs(frame, height, width, idx)
@@ -293,17 +327,41 @@ class QwenEmbedRope(nn.Module):
         freqs_pos = self.pos_freqs.split([x // 2 for x in self.axes_dim], dim=1)
         freqs_neg = self.neg_freqs.split([x // 2 for x in self.axes_dim], dim=1)
 
-        freqs_frame = freqs_pos[0][idx : idx + frame].view(frame, 1, 1, -1).expand(frame, height, width, -1)
+        freqs_frame = (
+            freqs_pos[0][idx : idx + frame]
+            .view(frame, 1, 1, -1)
+            .expand(frame, height, width, -1)
+        )
         if self.scale_rope:
-            freqs_height = torch.cat([freqs_neg[1][-(height - height // 2) :], freqs_pos[1][: height // 2]], dim=0)
-            freqs_height = freqs_height.view(1, height, 1, -1).expand(frame, height, width, -1)
-            freqs_width = torch.cat([freqs_neg[2][-(width - width // 2) :], freqs_pos[2][: width // 2]], dim=0)
-            freqs_width = freqs_width.view(1, 1, width, -1).expand(frame, height, width, -1)
+            freqs_height = torch.cat(
+                [freqs_neg[1][-(height - height // 2) :], freqs_pos[1][: height // 2]],
+                dim=0,
+            )
+            freqs_height = freqs_height.view(1, height, 1, -1).expand(
+                frame, height, width, -1
+            )
+            freqs_width = torch.cat(
+                [freqs_neg[2][-(width - width // 2) :], freqs_pos[2][: width // 2]],
+                dim=0,
+            )
+            freqs_width = freqs_width.view(1, 1, width, -1).expand(
+                frame, height, width, -1
+            )
         else:
-            freqs_height = freqs_pos[1][:height].view(1, height, 1, -1).expand(frame, height, width, -1)
-            freqs_width = freqs_pos[2][:width].view(1, 1, width, -1).expand(frame, height, width, -1)
+            freqs_height = (
+                freqs_pos[1][:height]
+                .view(1, height, 1, -1)
+                .expand(frame, height, width, -1)
+            )
+            freqs_width = (
+                freqs_pos[2][:width]
+                .view(1, 1, width, -1)
+                .expand(frame, height, width, -1)
+            )
 
-        freqs = torch.cat([freqs_frame, freqs_height, freqs_width], dim=-1).reshape(seq_lens, -1)
+        freqs = torch.cat([freqs_frame, freqs_height, freqs_width], dim=-1).reshape(
+            seq_lens, -1
+        )
         return freqs.clone().contiguous()
 
 
@@ -339,7 +397,10 @@ class QwenEmbedLayer3DRope(nn.Module):
             index: [0, 1, 2, 3] 1D Tensor representing the position index of the token
         """
         assert dim % 2 == 0
-        freqs = torch.outer(index, 1.0 / torch.pow(theta, torch.arange(0, dim, 2).to(torch.float32).div(dim)))
+        freqs = torch.outer(
+            index,
+            1.0 / torch.pow(theta, torch.arange(0, dim, 2).to(torch.float32).div(dim)),
+        )
         freqs = torch.polar(torch.ones_like(freqs), freqs)
         return freqs
 
@@ -389,17 +450,41 @@ class QwenEmbedLayer3DRope(nn.Module):
         freqs_pos = self.pos_freqs.split([x // 2 for x in self.axes_dim], dim=1)
         freqs_neg = self.neg_freqs.split([x // 2 for x in self.axes_dim], dim=1)
 
-        freqs_frame = freqs_pos[0][idx : idx + frame].view(frame, 1, 1, -1).expand(frame, height, width, -1)
+        freqs_frame = (
+            freqs_pos[0][idx : idx + frame]
+            .view(frame, 1, 1, -1)
+            .expand(frame, height, width, -1)
+        )
         if self.scale_rope:
-            freqs_height = torch.cat([freqs_neg[1][-(height - height // 2) :], freqs_pos[1][: height // 2]], dim=0)
-            freqs_height = freqs_height.view(1, height, 1, -1).expand(frame, height, width, -1)
-            freqs_width = torch.cat([freqs_neg[2][-(width - width // 2) :], freqs_pos[2][: width // 2]], dim=0)
-            freqs_width = freqs_width.view(1, 1, width, -1).expand(frame, height, width, -1)
+            freqs_height = torch.cat(
+                [freqs_neg[1][-(height - height // 2) :], freqs_pos[1][: height // 2]],
+                dim=0,
+            )
+            freqs_height = freqs_height.view(1, height, 1, -1).expand(
+                frame, height, width, -1
+            )
+            freqs_width = torch.cat(
+                [freqs_neg[2][-(width - width // 2) :], freqs_pos[2][: width // 2]],
+                dim=0,
+            )
+            freqs_width = freqs_width.view(1, 1, width, -1).expand(
+                frame, height, width, -1
+            )
         else:
-            freqs_height = freqs_pos[1][:height].view(1, height, 1, -1).expand(frame, height, width, -1)
-            freqs_width = freqs_pos[2][:width].view(1, 1, width, -1).expand(frame, height, width, -1)
+            freqs_height = (
+                freqs_pos[1][:height]
+                .view(1, height, 1, -1)
+                .expand(frame, height, width, -1)
+            )
+            freqs_width = (
+                freqs_pos[2][:width]
+                .view(1, 1, width, -1)
+                .expand(frame, height, width, -1)
+            )
 
-        freqs = torch.cat([freqs_frame, freqs_height, freqs_width], dim=-1).reshape(seq_lens, -1)
+        freqs = torch.cat([freqs_frame, freqs_height, freqs_width], dim=-1).reshape(
+            seq_lens, -1
+        )
         return freqs.clone().contiguous()
 
     @functools.lru_cache(maxsize=None)
@@ -408,17 +493,39 @@ class QwenEmbedLayer3DRope(nn.Module):
         freqs_pos = self.pos_freqs.split([x // 2 for x in self.axes_dim], dim=1)
         freqs_neg = self.neg_freqs.split([x // 2 for x in self.axes_dim], dim=1)
 
-        freqs_frame = freqs_neg[0][-1:].view(frame, 1, 1, -1).expand(frame, height, width, -1)
+        freqs_frame = (
+            freqs_neg[0][-1:].view(frame, 1, 1, -1).expand(frame, height, width, -1)
+        )
         if self.scale_rope:
-            freqs_height = torch.cat([freqs_neg[1][-(height - height // 2) :], freqs_pos[1][: height // 2]], dim=0)
-            freqs_height = freqs_height.view(1, height, 1, -1).expand(frame, height, width, -1)
-            freqs_width = torch.cat([freqs_neg[2][-(width - width // 2) :], freqs_pos[2][: width // 2]], dim=0)
-            freqs_width = freqs_width.view(1, 1, width, -1).expand(frame, height, width, -1)
+            freqs_height = torch.cat(
+                [freqs_neg[1][-(height - height // 2) :], freqs_pos[1][: height // 2]],
+                dim=0,
+            )
+            freqs_height = freqs_height.view(1, height, 1, -1).expand(
+                frame, height, width, -1
+            )
+            freqs_width = torch.cat(
+                [freqs_neg[2][-(width - width // 2) :], freqs_pos[2][: width // 2]],
+                dim=0,
+            )
+            freqs_width = freqs_width.view(1, 1, width, -1).expand(
+                frame, height, width, -1
+            )
         else:
-            freqs_height = freqs_pos[1][:height].view(1, height, 1, -1).expand(frame, height, width, -1)
-            freqs_width = freqs_pos[2][:width].view(1, 1, width, -1).expand(frame, height, width, -1)
+            freqs_height = (
+                freqs_pos[1][:height]
+                .view(1, height, 1, -1)
+                .expand(frame, height, width, -1)
+            )
+            freqs_width = (
+                freqs_pos[2][:width]
+                .view(1, 1, width, -1)
+                .expand(frame, height, width, -1)
+            )
 
-        freqs = torch.cat([freqs_frame, freqs_height, freqs_width], dim=-1).reshape(seq_lens, -1)
+        freqs = torch.cat([freqs_frame, freqs_height, freqs_width], dim=-1).reshape(
+            seq_lens, -1
+        )
         return freqs.clone().contiguous()
 
 
@@ -429,33 +536,56 @@ class QwenImageScheduler(BaseScheduler):
         self.is_layered = config.get("layered", False)
         if self.is_layered:
             self.layers = config.get("layers", 4)
-        scheduler_path = config.get("scheduler_path", os.path.join(config["model_path"], "scheduler"))
+        scheduler_path = config.get(
+            "scheduler_path", os.path.join(config["model_path"], "scheduler")
+        )
         self.scheduler = FlowMatchEulerDiscreteScheduler.from_pretrained(scheduler_path)
-        with open(os.path.join(config["model_path"], "scheduler", "scheduler_config.json"), "r") as f:
+        with open(
+            os.path.join(config["model_path"], "scheduler", "scheduler_config.json"),
+            "r",
+        ) as f:
             self.scheduler_config = json.load(f)
         self.dtype = torch.bfloat16
         self.sample_guide_scale = self.config.get("sample_guide_scale", None)
         self.zero_cond_t = config.get("zero_cond_t", False)
         if self.config["seq_parallel"]:
-            self.seq_p_group = self.config.get("device_mesh").get_group(mesh_dim="seq_p")
+            self.seq_p_group = self.config.get("device_mesh").get_group(
+                mesh_dim="seq_p"
+            )
         else:
             self.seq_p_group = None
         self.use_layer3d_rope = config.get("use_layer3d_rope", False)
         if self.use_layer3d_rope:
-            self.pos_embed = QwenEmbedLayer3DRope(theta=10000, axes_dim=[16, 56, 56], scale_rope=True)
+            self.pos_embed = QwenEmbedLayer3DRope(
+                theta=10000, axes_dim=[16, 56, 56], scale_rope=True
+            )
         else:
-            self.pos_embed = QwenEmbedRope(theta=10000, axes_dim=[16, 56, 56], scale_rope=True)
+            self.pos_embed = QwenEmbedRope(
+                theta=10000, axes_dim=[16, 56, 56], scale_rope=True
+            )
 
     @staticmethod
-    def _pack_latents(latents, batchsize, num_channels_latents, height, width, layers=None):
+    def _pack_latents(
+        latents, batchsize, num_channels_latents, height, width, layers=None
+    ):
         if not layers:
-            latents = latents.view(batchsize, num_channels_latents, height // 2, 2, width // 2, 2)
+            latents = latents.view(
+                batchsize, num_channels_latents, height // 2, 2, width // 2, 2
+            )
             latents = latents.permute(0, 2, 4, 1, 3, 5)
-            latents = latents.reshape(batchsize, (height // 2) * (width // 2), num_channels_latents * 4)
+            latents = latents.reshape(
+                batchsize, (height // 2) * (width // 2), num_channels_latents * 4
+            )
         else:
-            latents = latents.view(batchsize, layers, num_channels_latents, height // 2, 2, width // 2, 2)
+            latents = latents.view(
+                batchsize, layers, num_channels_latents, height // 2, 2, width // 2, 2
+            )
             latents = latents.permute(0, 1, 3, 5, 2, 4, 6)
-            latents = latents.reshape(batchsize, layers * (height // 2) * (width // 2), num_channels_latents * 4)
+            latents = latents.reshape(
+                batchsize,
+                layers * (height // 2) * (width // 2),
+                num_channels_latents * 4,
+            )
         return latents
 
     @staticmethod
@@ -478,21 +608,35 @@ class QwenImageScheduler(BaseScheduler):
     def _prepare_latent_image_ids(batch_size, height, width, device, dtype):
         latent_image_ids = torch.zeros(height, width, 3)
 
-        latent_image_ids[..., 1] = latent_image_ids[..., 1] + torch.arange(height)[:, None]
-        latent_image_ids[..., 2] = latent_image_ids[..., 2] + torch.arange(width)[None, :]
+        latent_image_ids[..., 1] = (
+            latent_image_ids[..., 1] + torch.arange(height)[:, None]
+        )
+        latent_image_ids[..., 2] = (
+            latent_image_ids[..., 2] + torch.arange(width)[None, :]
+        )
 
-        latent_image_id_height, latent_image_id_width, latent_image_id_channels = latent_image_ids.shape
-        latent_image_ids = latent_image_ids.reshape(latent_image_id_height * latent_image_id_width, latent_image_id_channels)
+        latent_image_id_height, latent_image_id_width, latent_image_id_channels = (
+            latent_image_ids.shape
+        )
+        latent_image_ids = latent_image_ids.reshape(
+            latent_image_id_height * latent_image_id_width, latent_image_id_channels
+        )
 
         return latent_image_ids.to(device=device, dtype=dtype)
 
     def _prepare_latents_lightx2v(self, shape, height, width, num_channels_latents):
         """Original LightX2V latent generation: noise in [B, T, C, H, W] then pack."""
-        latents = randn_tensor(shape, generator=self.generator, device=AI_DEVICE, dtype=self.dtype)
+        latents = randn_tensor(
+            shape, generator=self.generator, device=AI_DEVICE, dtype=self.dtype
+        )
         if self.is_layered:
-            latents = self._pack_latents(latents, 1, num_channels_latents, height, width, self.layers + 1)
+            latents = self._pack_latents(
+                latents, 1, num_channels_latents, height, width, self.layers + 1
+            )
         else:
-            latents = self._pack_latents(latents, 1, num_channels_latents, height, width)
+            latents = self._pack_latents(
+                latents, 1, num_channels_latents, height, width
+            )
         return latents
 
     def _prepare_latents_zoe(self, shape, height, width, num_channels_latents):
@@ -501,11 +645,15 @@ class QwenImageScheduler(BaseScheduler):
         """
         b, t = shape[0], shape[1]
         zoe_shape = (b, num_channels_latents * 4, t, height // 2, width // 2)
-        latents = randn_tensor(zoe_shape, generator=self.generator, device=AI_DEVICE, dtype=self.dtype)
+        latents = randn_tensor(
+            zoe_shape, generator=self.generator, device=AI_DEVICE, dtype=self.dtype
+        )
         # Convert to LightX2V sequence format: [B, (H//2)*(W//2), C*4]
         latents = latents.squeeze(2)  # [B, C*4, H//2, W//2]
         latents = latents.permute(0, 2, 3, 1)  # [B, H//2, W//2, C*4]
-        latents = latents.reshape(b, (height // 2) * (width // 2), num_channels_latents * 4)
+        latents = latents.reshape(
+            b, (height // 2) * (width // 2), num_channels_latents * 4
+        )
         return latents
 
     def prepare_latents(self, input_info):
@@ -516,11 +664,17 @@ class QwenImageScheduler(BaseScheduler):
         num_channels_latents = self.config.get("num_channels_latents", 16)
 
         if self.config.get("zoe_style_noise", False) and not self.is_layered:
-            latents = self._prepare_latents_zoe(shape, height, width, num_channels_latents)
+            latents = self._prepare_latents_zoe(
+                shape, height, width, num_channels_latents
+            )
         else:
-            latents = self._prepare_latents_lightx2v(shape, height, width, num_channels_latents)
+            latents = self._prepare_latents_lightx2v(
+                shape, height, width, num_channels_latents
+            )
 
-        latent_image_ids = self._prepare_latent_image_ids(1, height // 2, width // 2, AI_DEVICE, self.dtype)
+        latent_image_ids = self._prepare_latent_image_ids(
+            1, height // 2, width // 2, AI_DEVICE, self.dtype
+        )
         self.latents = latents
         self.latent_image_ids = latent_image_ids
         self.noise_pred = None
@@ -535,9 +689,15 @@ class QwenImageScheduler(BaseScheduler):
             # Formula: t_shifted = mu / (mu + (1/t - 1))
             sigmas_tensor = torch.from_numpy(sigmas).float().to(AI_DEVICE)
             sigmas_shifted = time_shift_linear(mu=sample_shift, t=sigmas_tensor)
-            sigmas_shifted = torch.cat([sigmas_shifted, torch.zeros(1, device=AI_DEVICE)])
-            self.scheduler.sigmas = sigmas_shifted.to(dtype=torch.float32, device=AI_DEVICE)
-            self.scheduler.timesteps = sigmas_shifted[:-1] * self.scheduler_config["num_train_timesteps"]
+            sigmas_shifted = torch.cat(
+                [sigmas_shifted, torch.zeros(1, device=AI_DEVICE)]
+            )
+            self.scheduler.sigmas = sigmas_shifted.to(
+                dtype=torch.float32, device=AI_DEVICE
+            )
+            self.scheduler.timesteps = (
+                sigmas_shifted[:-1] * self.scheduler_config["num_train_timesteps"]
+            )
             self.scheduler.timesteps = self.scheduler.timesteps.to(AI_DEVICE)
             self.scheduler._step_index = None
             self.scheduler._begin_index = None
@@ -568,7 +728,9 @@ class QwenImageScheduler(BaseScheduler):
         self.timesteps = timesteps
         self.infer_steps = num_inference_steps
 
-        num_warmup_steps = max(len(timesteps) - num_inference_steps * self.scheduler.order, 0)
+        num_warmup_steps = max(
+            len(timesteps) - num_inference_steps * self.scheduler.order, 0
+        )
         self._num_timesteps = len(timesteps)
         self.num_warmup_steps = num_warmup_steps
 
@@ -576,11 +738,15 @@ class QwenImageScheduler(BaseScheduler):
         if self.config["task"] == "i2i":
             self.generator = torch.Generator().manual_seed(input_info.seed)
         elif self.config["task"] == "t2i":
-            self.generator = torch.Generator(device=AI_DEVICE).manual_seed(input_info.seed)
+            self.generator = torch.Generator(device=AI_DEVICE).manual_seed(
+                input_info.seed
+            )
         self.prepare_latents(input_info)
         self.set_timesteps()
 
-        self.image_rotary_emb = self.pos_embed(self.input_info.image_shapes, input_info.txt_seq_lens[0], device=AI_DEVICE)
+        self.image_rotary_emb = self.pos_embed(
+            self.input_info.image_shapes, input_info.txt_seq_lens[0], device=AI_DEVICE
+        )
         if self.config.get("rope_type", "flashinfer") == "flashinfer":
             cos_half_img = self.image_rotary_emb[0].real.contiguous()
             sin_half_img = self.image_rotary_emb[0].imag.contiguous()
@@ -594,29 +760,52 @@ class QwenImageScheduler(BaseScheduler):
             seqlen = self.image_rotary_emb[0].shape[0]
             padding_size = (world_size - (seqlen % world_size)) % world_size
             if padding_size > 0:
-                self.image_rotary_emb[0] = F.pad(self.image_rotary_emb[0], (0, 0, 0, padding_size))
-            self.image_rotary_emb[0] = torch.chunk(self.image_rotary_emb[0], world_size, dim=0)[cur_rank]
+                self.image_rotary_emb[0] = F.pad(
+                    self.image_rotary_emb[0], (0, 0, 0, padding_size)
+                )
+            self.image_rotary_emb[0] = torch.chunk(
+                self.image_rotary_emb[0], world_size, dim=0
+            )[cur_rank]
 
         if self.config["enable_cfg"]:
-            self.negative_image_rotary_emb = self.pos_embed(self.input_info.image_shapes, input_info.txt_seq_lens[1], device=AI_DEVICE)
+            self.negative_image_rotary_emb = self.pos_embed(
+                self.input_info.image_shapes,
+                input_info.txt_seq_lens[1],
+                device=AI_DEVICE,
+            )
             if self.config.get("rope_type", "flashinfer") == "flashinfer":
                 cos_half_img = self.negative_image_rotary_emb[0].real.contiguous()
                 sin_half_img = self.negative_image_rotary_emb[0].imag.contiguous()
                 cos_half_txt = self.negative_image_rotary_emb[1].real.contiguous()
                 sin_half_txt = self.negative_image_rotary_emb[1].imag.contiguous()
-                self.negative_image_rotary_emb[0] = torch.cat([cos_half_img, sin_half_img], dim=-1)
-                self.negative_image_rotary_emb[1] = torch.cat([cos_half_txt, sin_half_txt], dim=-1)
+                self.negative_image_rotary_emb[0] = torch.cat(
+                    [cos_half_img, sin_half_img], dim=-1
+                )
+                self.negative_image_rotary_emb[1] = torch.cat(
+                    [cos_half_txt, sin_half_txt], dim=-1
+                )
             if self.seq_p_group is not None:
                 world_size = dist.get_world_size(self.seq_p_group)
                 cur_rank = dist.get_rank(self.seq_p_group)
                 seqlen = self.negative_image_rotary_emb[0].shape[0]
                 padding_size = (world_size - (seqlen % world_size)) % world_size
                 if padding_size > 0:
-                    self.negative_image_rotary_emb[0] = F.pad(self.negative_image_rotary_emb[0], (0, 0, 0, padding_size))
-                self.negative_image_rotary_emb[0] = torch.chunk(self.negative_image_rotary_emb[0], world_size, dim=0)[cur_rank]
+                    self.negative_image_rotary_emb[0] = F.pad(
+                        self.negative_image_rotary_emb[0], (0, 0, 0, padding_size)
+                    )
+                self.negative_image_rotary_emb[0] = torch.chunk(
+                    self.negative_image_rotary_emb[0], world_size, dim=0
+                )[cur_rank]
 
         if self.zero_cond_t:
-            self.modulate_index = torch.tensor([[0] * prod(sample[0]) + [1] * sum([prod(s) for s in sample[1:]]) for sample in self.input_info.image_shapes], device=AI_DEVICE, dtype=torch.int)
+            self.modulate_index = torch.tensor(
+                [
+                    [0] * prod(sample[0]) + [1] * sum([prod(s) for s in sample[1:]])
+                    for sample in self.input_info.image_shapes
+                ],
+                device=AI_DEVICE,
+                dtype=torch.int,
+            )
             if self.seq_p_group is not None:
                 world_size = dist.get_world_size(self.seq_p_group)
                 cur_rank = dist.get_rank(self.seq_p_group)
@@ -624,13 +813,20 @@ class QwenImageScheduler(BaseScheduler):
                 padding_size = (world_size - (seqlen % world_size)) % world_size
                 if padding_size > 0:
                     self.modulate_index = F.pad(self.modulate_index, (0, padding_size))
-                self.modulate_index = torch.chunk(self.modulate_index, world_size, dim=1)[cur_rank]
+                self.modulate_index = torch.chunk(
+                    self.modulate_index, world_size, dim=1
+                )[cur_rank]
         else:
             self.modulate_index = None
 
     def step_pre(self, step_index):
         super().step_pre(step_index)
-        timestep_input = torch.tensor([self.timesteps[self.step_index]], device=AI_DEVICE, dtype=self.dtype) / 1000
+        timestep_input = (
+            torch.tensor(
+                [self.timesteps[self.step_index]], device=AI_DEVICE, dtype=self.dtype
+            )
+            / 1000
+        )
         if self.zero_cond_t:
             timestep_input = torch.cat([timestep_input, timestep_input * 0], dim=0)
         self.timesteps_proj = get_timestep_embedding(timestep_input).to(torch.bfloat16)
@@ -638,5 +834,7 @@ class QwenImageScheduler(BaseScheduler):
     def step_post(self):
         # compute the previous noisy sample x_t -> x_t-1
         t = self.timesteps[self.step_index]
-        latents = self.scheduler.step(self.noise_pred, t, self.latents, return_dict=False)[0]
+        latents = self.scheduler.step(
+            self.noise_pred, t, self.latents, return_dict=False
+        )[0]
         self.latents = latents

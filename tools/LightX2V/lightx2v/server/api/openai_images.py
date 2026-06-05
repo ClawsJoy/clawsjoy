@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import asyncio
 import base64
 import re
@@ -10,6 +9,8 @@ from typing import Literal, Optional
 from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 from loguru import logger
 from pydantic import BaseModel, Field
+
+from lib.smart_config import smart_config
 
 from ..schema import ImageTaskRequest
 from ..task_manager import TaskStatus, task_manager
@@ -51,34 +52,50 @@ def _shape_from_size(size: str) -> tuple[int, int]:
     return width, height
 
 
-async def _wait_task_result_png(task_id: str, timeout_seconds: int, poll_interval_seconds: float) -> bytes:
+async def _wait_task_result_png(
+    task_id: str, timeout_seconds: int, poll_interval_seconds: float
+) -> bytes:
     start_time = time.monotonic()
     while True:
         task_status = task_manager.get_task_status(task_id)
         if not task_status:
-            raise HTTPException(status_code=500, detail=f"Task status not found: {task_id}")
+            raise HTTPException(
+                status_code=500, detail=f"Task status not found: {task_id}"
+            )
 
         status = task_status.get("status")
         if status == TaskStatus.COMPLETED.value:
             result_png = task_manager.get_task_result_png(task_id)
             if result_png:
                 return result_png
-            raise HTTPException(status_code=500, detail=f"Task completed but no in-memory image found: {task_id}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Task completed but no in-memory image found: {task_id}",
+            )
 
         if status == TaskStatus.FAILED.value:
-            raise HTTPException(status_code=500, detail=task_status.get("error", "Task failed"))
+            raise HTTPException(
+                status_code=500, detail=task_status.get("error", "Task failed")
+            )
 
         if status == TaskStatus.CANCELLED.value:
-            raise HTTPException(status_code=409, detail=task_status.get("error", "Task cancelled"))
+            raise HTTPException(
+                status_code=409, detail=task_status.get("error", "Task cancelled")
+            )
 
         if (time.monotonic() - start_time) > timeout_seconds:
             task_manager.cancel_task(task_id)
-            raise HTTPException(status_code=504, detail=f"Task {task_id} timed out after {timeout_seconds} seconds")
+            raise HTTPException(
+                status_code=504,
+                detail=f"Task {task_id} timed out after {timeout_seconds} seconds",
+            )
 
         await asyncio.sleep(poll_interval_seconds)
 
 
-async def _watch_client_disconnect(request: Request, task_id: str, poll_interval_seconds: float = 0.2) -> bool:
+async def _watch_client_disconnect(
+    request: Request, task_id: str, poll_interval_seconds: float = 0.2
+) -> bool:
     while True:
         if await request.is_disconnected():
             task_manager.cancel_task(task_id)
@@ -97,10 +114,16 @@ async def _run_sync_image_task(request: Request, message: ImageTaskRequest) -> b
         task_id = task_manager.create_task(message)
         message.task_id = task_id
 
-        wait_task = asyncio.create_task(_wait_task_result_png(task_id, timeout_seconds, poll_interval_seconds))
-        disconnect_task = asyncio.create_task(_watch_client_disconnect(request, task_id))
+        wait_task = asyncio.create_task(
+            _wait_task_result_png(task_id, timeout_seconds, poll_interval_seconds)
+        )
+        disconnect_task = asyncio.create_task(
+            _watch_client_disconnect(request, task_id)
+        )
 
-        done, pending = await asyncio.wait({wait_task, disconnect_task}, return_when=asyncio.FIRST_COMPLETED)
+        done, pending = await asyncio.wait(
+            {wait_task, disconnect_task}, return_when=asyncio.FIRST_COMPLETED
+        )
         for pending_task in pending:
             pending_task.cancel()
         await asyncio.gather(*pending, return_exceptions=True)
@@ -109,7 +132,9 @@ async def _run_sync_image_task(request: Request, message: ImageTaskRequest) -> b
             if not wait_task.done():
                 wait_task.cancel()
                 await asyncio.gather(wait_task, return_exceptions=True)
-            raise HTTPException(status_code=499, detail=f"Client disconnected, task {task_id} cancelled")
+            raise HTTPException(
+                status_code=499, detail=f"Client disconnected, task {task_id} cancelled"
+            )
 
         return wait_task.result()
     except RuntimeError as e:
@@ -138,11 +163,22 @@ def _build_url_response(request: Request, task_id: str, image_bytes: bytes) -> s
     return f"{base}/v1/files/download/{file_name}"
 
 
-def _build_openai_response(request: Request, task_id: str, image_bytes: bytes, response_format: Literal["url", "b64_json"]):
+def _build_openai_response(
+    request: Request,
+    task_id: str,
+    image_bytes: bytes,
+    response_format: Literal["url", "b64_json"],
+):
     if response_format == "b64_json":
-        return OpenAIImageResponse(created=int(time.time()), data=[{"b64_json": base64.b64encode(image_bytes).decode("utf-8")}])
+        return OpenAIImageResponse(
+            created=int(time.time()),
+            data=[{"b64_json": base64.b64encode(image_bytes).decode("utf-8")}],
+        )
 
-    return OpenAIImageResponse(created=int(time.time()), data=[{"url": _build_url_response(request, task_id, image_bytes)}])
+    return OpenAIImageResponse(
+        created=int(time.time()),
+        data=[{"url": _build_url_response(request, task_id, image_bytes)}],
+    )
 
 
 def _build_image_task_request(
@@ -168,7 +204,9 @@ def _build_image_task_request(
 
 
 @router.post("/generations", response_model=OpenAIImageResponse)
-async def create_openai_image_generation(request: Request, body: OpenAIImageGenerationRequest):
+async def create_openai_image_generation(
+    request: Request, body: OpenAIImageGenerationRequest
+):
     if body.n != 1:
         raise HTTPException(status_code=400, detail="Only n=1 is currently supported")
     if not body.prompt.strip():
@@ -189,7 +227,9 @@ async def create_openai_image_generation(request: Request, body: OpenAIImageGene
     )
 
     result_png = await _run_sync_image_task(request, message)
-    return _build_openai_response(request, message.task_id, result_png, body.response_format)
+    return _build_openai_response(
+        request, message.task_id, result_png, body.response_format
+    )
 
 
 async def _save_upload_file(file: UploadFile, target_dir: Path) -> str:
@@ -202,7 +242,9 @@ async def _save_upload_file(file: UploadFile, target_dir: Path) -> str:
 
     content = await file.read()
     if not content:
-        raise HTTPException(status_code=400, detail=f"Uploaded file is empty: {file.filename}")
+        raise HTTPException(
+            status_code=400, detail=f"Uploaded file is empty: {file.filename}"
+        )
     await asyncio.to_thread(_write_file_sync, file_path, content)
     return str(file_path)
 
@@ -241,7 +283,9 @@ async def create_openai_image_edit(
     image_path = await _save_upload_file(image, services.file_service.input_image_dir)
     image_mask_path = ""
     if mask is not None:
-        image_mask_path = await _save_upload_file(mask, services.file_service.input_image_dir)
+        image_mask_path = await _save_upload_file(
+            mask, services.file_service.input_image_dir
+        )
 
     message = _build_image_task_request(
         prompt=prompt,

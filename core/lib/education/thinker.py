@@ -3,14 +3,8 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
-
-from core.lib.unified_config import unified_config
-
-from core.lib.unified_config import unified_config
-
-from core.lib.unified_config import unified_config
 
 from core.lib.unified_config import unified_config
 
@@ -18,21 +12,30 @@ from core.lib.unified_config import unified_config
 """教 LLM 思考的系统 - LLM Education System"""
 
 import json
-import requests
-from typing import Dict, Any, List, Tuple
 from pathlib import Path
+from typing import Any, Dict, List, Tuple
+
+import requests
 
 
 class LLMThinker:
     """教 LLM 如何思考"""
-    
+
     VERSION = "1.0.0"
-    
+
     def __init__(self):
         self.ollama_url = "config_loader.get_ollama_url()"
-        self.model = unified_config.get_llm_config().get("fast_model", unified_config.get_llm_config().get("fast_model", unified_config.get("llm.fast_model", config_helper.get_llm_model(fast=True))))
+        self.model = unified_config.get_llm_config().get(
+            "fast_model",
+            unified_config.get_llm_config().get(
+                "fast_model",
+                unified_config.get(
+                    "llm.fast_model", config_helper.get_llm_model(fast=True)
+                ),
+            ),
+        )
         self.think_history = []
-    
+
     def teach(self, task: str, example: str, principle: str) -> str:
         """教 LLM 一个思考范式"""
         prompt = f"""你要学习如何思考和解决问题。
@@ -54,7 +57,7 @@ class LLMThinker:
 【结果】...
 """
         return self._call_llm(prompt)
-    
+
     def think(self, problem: str, context: str = "") -> Dict:
         """让 LLM 按步骤思考"""
         prompt = f"""请按以下步骤思考问题：
@@ -73,14 +76,12 @@ class LLMThinker:
         response = self._call_llm(prompt)
 
         # 记录思考历史
-        self.think_history.append({
-            "problem": problem,
-            "thinking": response,
-            "timestamp": self._now()
-        })
+        self.think_history.append(
+            {"problem": problem, "thinking": response, "timestamp": self._now()}
+        )
 
         return {"thinking": response, "history_count": len(self.think_history)}
-    
+
     def solve(self, problem: str, tools: List[str] = None) -> Dict:
         """让 LLM 思考后调用工具解决"""
         tools_desc = "\n".join([f"- {t}" for t in (tools or [])])
@@ -106,14 +107,15 @@ class LLMThinker:
         try:
             # 提取 JSON
             import re
-            json_match = re.search(r'\{[^{}]*\}', response)
+
+            json_match = re.search(r"\{[^{}]*\}", response)
             if json_match:
                 return json.loads(json_match.group())
-        except:
+        except Exception as e:
             pass
 
         return {"analysis": response, "tool": None, "params": {}}
-    
+
     def reflect(self, task: str, result: str, feedback: str) -> str:
         """让 LLM 反思并改进"""
         prompt = f"""你刚才完成了一个任务，现在收到反馈。
@@ -130,28 +132,29 @@ class LLMThinker:
 输出你的反思。"""
 
         return self._call_llm(prompt)
-    
+
     def _call_llm(self, prompt: str) -> str:
         try:
             resp = requests.post(
                 f"{self.ollama_url}/api/generate",
                 json={"model": self.model, "prompt": prompt, "stream": False},
-                timeout=unified_config.get("timeouts.default", 30)
+                timeout=unified_config.get("timeouts.default", 30),
             )
             if resp.status_code == 200:
-                return resp.json().get('response', '')
+                return resp.json().get("response", "")
         except Exception as e:
             print(f"LLM 调用失败: {e}")
         return ""
-    
+
     def _now(self):
         from datetime import datetime
+
         return datetime.now().isoformat()
 
 
 class ThinkingLesson:
     """思考课程 - 预定义的思考范式"""
-    
+
     @staticmethod
     def lesson_svg_generation():
         """教 LLM 如何生成 SVG"""
@@ -172,7 +175,7 @@ class ThinkingLesson:
 - 颜色：#2ecc71, #3498db, #f39c12
 """
         return principle, example
-    
+
     @staticmethod
     def lesson_problem_solving():
         """教 LLM 如何解决问题"""
@@ -200,12 +203,14 @@ thinker = LLMThinker()
 if __name__ == "__main__":
     print(f"LLM 思考系统 v{thinker.VERSION}")
     print("=" * 50)
-    
+
     # 测试思考
     result = thinker.think("用户想生成一张ClawsJoy发展蓝图，但不知道包含哪些内容")
-    print(result['thinking'][:500])
-    
+    print(result["thinking"][:500])
+
     # 测试解决
     print("\n" + "=" * 50)
-    result = thinker.solve("生成一张4阶段蓝图", tools=["svg-generator", "chart-builder"])
+    result = thinker.solve(
+        "生成一张4阶段蓝图", tools=["svg-generator", "chart-builder"]
+    )
     print(json.dumps(result, indent=2, ensure_ascii=False))

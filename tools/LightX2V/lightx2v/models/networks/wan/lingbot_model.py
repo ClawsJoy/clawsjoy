@@ -1,14 +1,20 @@
-from lib.smart_config import smart_config
 import torch
 import torch.distributed as dist
 import torch.nn.functional as F
-
 from lightx2v.models.networks.wan.infer.lingbot.pre_infer import WanLingbotPreInfer
-from lightx2v.models.networks.wan.infer.lingbot.transformer_infer import WanLingbotTransformerInfer
+from lightx2v.models.networks.wan.infer.lingbot.transformer_infer import (
+    WanLingbotTransformerInfer,
+)
 from lightx2v.models.networks.wan.infer.post_infer import WanPostInfer
 from lightx2v.models.networks.wan.model import WanModel
-from lightx2v.models.networks.wan.weights.lingbot.pre_weights import WanLingbotPreWeights
-from lightx2v.models.networks.wan.weights.lingbot.transformer_weights import WanLingbotTransformerWeights
+from lightx2v.models.networks.wan.weights.lingbot.pre_weights import (
+    WanLingbotPreWeights,
+)
+from lightx2v.models.networks.wan.weights.lingbot.transformer_weights import (
+    WanLingbotTransformerWeights,
+)
+
+from lib.smart_config import smart_config
 
 
 class WanLingbotModel(WanModel):
@@ -35,5 +41,7 @@ class WanLingbotModel(WanModel):
         padding_size = (multiple - (c2ws_plucker_emb.shape[0] % multiple)) % multiple
         if padding_size > 0:
             c2ws_plucker_emb = F.pad(c2ws_plucker_emb, (0, 0, 0, padding_size))
-        pre_infer_out.conditional_dict["c2ws_plucker_emb"] = torch.chunk(c2ws_plucker_emb, world_size, dim=0)[cur_rank]
+        pre_infer_out.conditional_dict["c2ws_plucker_emb"] = torch.chunk(
+            c2ws_plucker_emb, world_size, dim=0
+        )[cur_rank]
         return pre_infer_out

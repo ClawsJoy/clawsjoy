@@ -3,7 +3,7 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
@@ -22,6 +22,7 @@ class SkillExecutor:
     def skill_loader(self):
         if self._skill_loader is None:
             from core.lib.skill_loader_v3 import skill_loader
+
             self._skill_loader = skill_loader
         return self._skill_loader
 
@@ -38,9 +39,9 @@ class SkillExecutor:
 
         try:
             # 动态导入技能模块
-            module_path = skill_info['path']
-            module = __import__(module_path, fromlist=['skill'])
-            if hasattr(module, 'skill') and hasattr(module.skill, 'execute'):
+            module_path = skill_info["path"]
+            module = __import__(module_path, fromlist=["skill"])
+            if hasattr(module, "skill") and hasattr(module.skill, "execute"):
                 result = module.skill.execute(params)
                 return {"success": True, "result": result, "skill": skill_name}
             else:

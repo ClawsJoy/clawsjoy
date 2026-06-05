@@ -11,4 +11,4 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from core.lib.skill_loader_v3 import SkillLoaderV3, skill_loader
 
 # 导出
-__all__ = ['SkillLoaderV3', 'skill_loader']
+__all__ = ["SkillLoaderV3", "skill_loader"]

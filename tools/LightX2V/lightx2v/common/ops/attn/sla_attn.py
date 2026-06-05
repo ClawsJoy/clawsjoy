@@ -1,15 +1,19 @@
-from lib.smart_config import smart_config
 import torch
+from lightx2v.utils.registry_factory import ATTN_WEIGHT_REGISTER
 from loguru import logger
 
-from lightx2v.utils.registry_factory import ATTN_WEIGHT_REGISTER
+from lib.smart_config import smart_config
 
 from .kernels.sla_kernel import _attention
 from .kernels.sla_kernel_ar import _attention_ar
 from .template import AttnWeightTemplate
 from .utils.sla_util import get_block_map, get_cuda_arch
 from .utils.sla_util_blhd import get_block_map_blhd
-from .utils.sparge_util import block_map_incremental_lut_triton, block_map_ordinal_lut_triton, sage2_block_sparse_attn
+from .utils.sparge_util import (
+    block_map_incremental_lut_triton,
+    block_map_ordinal_lut_triton,
+    sage2_block_sparse_attn,
+)
 
 try:
     from flash_attn.cute import flash_attn_func as flash_attn_func_v4
@@ -64,7 +68,9 @@ class SlaAttnWeight(AttnWeightTemplate):
         else:
             raise NotImplementedError(f"Not supported SLA operator: {self.operator}.")
 
-        logger.info(f"SlaAttnWeight: sparsity_ratio={self.sparsity_ratio}, operator={self.operator}, topk={self.topk}, BLKQ={self.BLKQ}, BLKK={self.BLKK}")
+        logger.info(
+            f"SlaAttnWeight: sparsity_ratio={self.sparsity_ratio}, operator={self.operator}, topk={self.topk}, BLKQ={self.BLKQ}, BLKK={self.BLKK}"
+        )
 
     def apply(
         self,
@@ -77,7 +83,9 @@ class SlaAttnWeight(AttnWeightTemplate):
         max_seqlen_kv=None,
         **kwargs,
     ):
-        return self.apply_func(q, k, v, cu_seqlens_q, cu_seqlens_kv, max_seqlen_q, max_seqlen_kv, **kwargs)
+        return self.apply_func(
+            q, k, v, cu_seqlens_q, cu_seqlens_kv, max_seqlen_q, max_seqlen_kv, **kwargs
+        )
 
     def apply_triton(
         self,
@@ -95,9 +103,13 @@ class SlaAttnWeight(AttnWeightTemplate):
         k = k.unsqueeze(0).transpose(1, 2).contiguous()
         v = v.unsqueeze(0).transpose(1, 2).contiguous()
 
-        sparse_map, lut, real_topk = get_block_map(q, k, topk_ratio=self.topk, BLKQ=self.BLKQ, BLKK=self.BLKK)
+        sparse_map, lut, real_topk = get_block_map(
+            q, k, topk_ratio=self.topk, BLKQ=self.BLKQ, BLKK=self.BLKK
+        )
 
-        out = _attention.apply(q, k, v, sparse_map, lut, real_topk, self.BLKQ, self.BLKK)
+        out = _attention.apply(
+            q, k, v, sparse_map, lut, real_topk, self.BLKQ, self.BLKK
+        )
         out = out.transpose(1, 2).reshape(max_seqlen_q, -1)
 
         return out
@@ -118,9 +130,13 @@ class SlaAttnWeight(AttnWeightTemplate):
         k = k.unsqueeze(0)
         v = v.unsqueeze(0)
 
-        sparse_map, lut, real_topk = get_block_map_blhd(q, k, topk_ratio=self.topk, BLKQ=self.BLKQ, BLKK=self.BLKK)
+        sparse_map, lut, real_topk = get_block_map_blhd(
+            q, k, topk_ratio=self.topk, BLKQ=self.BLKQ, BLKK=self.BLKK
+        )
 
-        out = _attention_ar.apply(q, k, v, sparse_map, lut, real_topk, self.BLKQ, self.BLKK)
+        out = _attention_ar.apply(
+            q, k, v, sparse_map, lut, real_topk, self.BLKQ, self.BLKK
+        )
         out = out.reshape(max_seqlen_q, -1)
 
         return out
@@ -141,10 +157,14 @@ class SlaAttnWeight(AttnWeightTemplate):
         k = k.unsqueeze(0).transpose(1, 2).contiguous()
         v = v.unsqueeze(0).transpose(1, 2).contiguous()
 
-        sparse_map, lut, real_topk = get_block_map(q, k, topk_ratio=self.topk, BLKQ=self.BLKQ, BLKK=self.BLKK)
+        sparse_map, lut, real_topk = get_block_map(
+            q, k, topk_ratio=self.topk, BLKQ=self.BLKQ, BLKK=self.BLKK
+        )
         lut, valid_block_num = block_map_incremental_lut_triton(sparse_map)
 
-        out = sage2_block_sparse_attn(q, k, v, lut, valid_block_num, self.BLKQ, self.BLKK, self.arch)
+        out = sage2_block_sparse_attn(
+            q, k, v, lut, valid_block_num, self.BLKQ, self.BLKK, self.arch
+        )
         out = out.transpose(1, 2).reshape(max_seqlen_q, -1)
         return out
 
@@ -164,9 +184,13 @@ class SlaAttnWeight(AttnWeightTemplate):
         k = k.unsqueeze(0).transpose(1, 2).contiguous()
         v = v.unsqueeze(0).transpose(1, 2).contiguous()
 
-        sparse_map, lut, real_topk = get_block_map(q, k, topk_ratio=self.topk, BLKQ=self.BLKQ, BLKK=self.BLKK)
+        sparse_map, lut, real_topk = get_block_map(
+            q, k, topk_ratio=self.topk, BLKQ=self.BLKQ, BLKK=self.BLKK
+        )
         lut, valid_block_num = block_map_ordinal_lut_triton(sparse_map)
-        out = sage3_block_sparse_attn(q, k, v, lut, valid_block_num, per_block_mean=self.per_block_mean)
+        out = sage3_block_sparse_attn(
+            q, k, v, lut, valid_block_num, per_block_mean=self.per_block_mean
+        )
         out = out.transpose(1, 2).reshape(max_seqlen_q, -1)
         return out
 
@@ -184,7 +208,9 @@ class SlaAttnWeight(AttnWeightTemplate):
         # (L, H, D) -> (B, L, H, D)
         qt = q.unsqueeze(0).transpose(1, 2).contiguous()
         kt = k.unsqueeze(0).transpose(1, 2).contiguous()
-        sparse_map, lut, real_topk = get_block_map(qt, kt, topk_ratio=self.topk, BLKQ=self.BLKQ, BLKK=self.BLKK)
+        sparse_map, lut, real_topk = get_block_map(
+            qt, kt, topk_ratio=self.topk, BLKQ=self.BLKQ, BLKK=self.BLKK
+        )
 
         # (L, H, D) -> (B, L, H, D)
         q = q.unsqueeze(0)
@@ -221,15 +247,27 @@ class SlaAttnWeight(AttnWeightTemplate):
         **kwargs,
     ):
         # (L, H, D) -> (B, H, L, D)
-        q_block_map, k_block_map = q.unsqueeze(0).transpose(1, 2), k.unsqueeze(0).transpose(1, 2)
+        q_block_map, k_block_map = q.unsqueeze(0).transpose(1, 2), k.unsqueeze(
+            0
+        ).transpose(1, 2)
         q_block_map = q_block_map.contiguous()
         k_block_map = k_block_map.contiguous()
 
-        sparse_map, lut, real_topk = get_block_map(q_block_map, k_block_map, topk_ratio=self.topk, BLKQ=self.BLKQ, BLKK=self.BLKK)
+        sparse_map, lut, real_topk = get_block_map(
+            q_block_map,
+            k_block_map,
+            topk_ratio=self.topk,
+            BLKQ=self.BLKQ,
+            BLKK=self.BLKK,
+        )
         seqlen, head_num, head_dim = q.shape
 
-        q_ranges, k_ranges = self.generate_qk_ranges(sparse_map[0], self.BLKQ, self.BLKK, seqlen)
-        attn_type_map = torch.zeros(len(q_ranges), dtype=torch.int32, device="cpu").to(q.device, non_blocking=True)
+        q_ranges, k_ranges = self.generate_qk_ranges(
+            sparse_map[0], self.BLKQ, self.BLKK, seqlen
+        )
+        attn_type_map = torch.zeros(len(q_ranges), dtype=torch.int32, device="cpu").to(
+            q.device, non_blocking=True
+        )
 
         q = q.permute(1, 0, 2).reshape(head_num * seqlen, 1, head_dim)
         k = k.permute(1, 0, 2).reshape(head_num * seqlen, 1, head_dim)

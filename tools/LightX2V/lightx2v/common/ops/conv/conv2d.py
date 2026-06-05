@@ -1,10 +1,10 @@
-from lib.smart_config import smart_config
 from abc import ABCMeta, abstractmethod
 
 import torch
-
 from lightx2v.utils.registry_factory import CONV2D_WEIGHT_REGISTER
 from lightx2v_platform.base.global_var import AI_DEVICE
+
+from lib.smart_config import smart_config
 
 
 class Conv2dWeightTemplate(metaclass=ABCMeta):
@@ -32,15 +32,29 @@ class Conv2dWeightTemplate(metaclass=ABCMeta):
 
 @CONV2D_WEIGHT_REGISTER("Default")
 class Conv2dWeight(Conv2dWeightTemplate):
-    def __init__(self, weight_name, bias_name, stride=1, padding=0, dilation=1, groups=1):
+    def __init__(
+        self, weight_name, bias_name, stride=1, padding=0, dilation=1, groups=1
+    ):
         super().__init__(weight_name, bias_name, stride, padding, dilation, groups)
 
     def load(self, weight_dict):
         self.weight = weight_dict[self.weight_name].to(AI_DEVICE)
-        self.bias = weight_dict[self.bias_name].to(AI_DEVICE) if self.bias_name is not None else None
+        self.bias = (
+            weight_dict[self.bias_name].to(AI_DEVICE)
+            if self.bias_name is not None
+            else None
+        )
 
     def apply(self, input_tensor):
-        input_tensor = torch.nn.functional.conv2d(input_tensor, weight=self.weight, bias=self.bias, stride=self.stride, padding=self.padding, dilation=self.dilation, groups=self.groups)
+        input_tensor = torch.nn.functional.conv2d(
+            input_tensor,
+            weight=self.weight,
+            bias=self.bias,
+            stride=self.stride,
+            padding=self.padding,
+            dilation=self.dilation,
+            groups=self.groups,
+        )
         return input_tensor
 
     def to_cpu(self, non_blocking=False):

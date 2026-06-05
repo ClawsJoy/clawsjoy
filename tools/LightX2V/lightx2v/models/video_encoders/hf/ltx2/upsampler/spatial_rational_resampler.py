@@ -1,17 +1,23 @@
-from lib.smart_config import smart_config
 from typing import Tuple
 
 import torch
 from einops import rearrange
+from lightx2v.models.video_encoders.hf.ltx2.upsampler.blur_downsample import (
+    BlurDownsample,
+)
+from lightx2v.models.video_encoders.hf.ltx2.upsampler.pixel_shuffle import (
+    PixelShuffleND,
+)
 
-from lightx2v.models.video_encoders.hf.ltx2.upsampler.blur_downsample import BlurDownsample
-from lightx2v.models.video_encoders.hf.ltx2.upsampler.pixel_shuffle import PixelShuffleND
+from lib.smart_config import smart_config
 
 
 def _rational_for_scale(scale: float) -> Tuple[int, int]:
     mapping = {0.75: (3, 4), 1.5: (3, 2), 2.0: (2, 1), 4.0: (4, 1)}
     if float(scale) not in mapping:
-        raise ValueError(f"Unsupported scale {scale}. Choose from {list(mapping.keys())}")
+        raise ValueError(
+            f"Unsupported scale {scale}. Choose from {list(mapping.keys())}"
+        )
     return mapping[float(scale)]
 
 
@@ -34,7 +40,9 @@ class SpatialRationalResampler(torch.nn.Module):
         super().__init__()
         self.scale = float(scale)
         self.num, self.den = _rational_for_scale(self.scale)
-        self.conv = torch.nn.Conv2d(mid_channels, (self.num**2) * mid_channels, kernel_size=3, padding=1)
+        self.conv = torch.nn.Conv2d(
+            mid_channels, (self.num**2) * mid_channels, kernel_size=3, padding=1
+        )
         self.pixel_shuffle = PixelShuffleND(2, upscale_factors=(self.num, self.num))
         self.blur_down = BlurDownsample(dims=2, stride=self.den)
 

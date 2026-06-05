@@ -1,6 +1,7 @@
-from lib.smart_config import smart_config
 import torch
 import torch.distributed as dist
+
+from lib.smart_config import smart_config
 
 try:
     from flashinfer.rope import apply_rope_with_cos_sin_cache_inplace
@@ -18,8 +19,12 @@ def apply_wan_rope_with_torch(
     n = xq.size(1)
     seq_len = cos_sin_cache.size(0)
 
-    xq = torch.view_as_complex(xq[:seq_len].to(torch.float32).reshape(seq_len, n, -1, 2))
-    xk = torch.view_as_complex(xk[:seq_len].to(torch.float32).reshape(seq_len, n, -1, 2))
+    xq = torch.view_as_complex(
+        xq[:seq_len].to(torch.float32).reshape(seq_len, n, -1, 2)
+    )
+    xk = torch.view_as_complex(
+        xk[:seq_len].to(torch.float32).reshape(seq_len, n, -1, 2)
+    )
     # Apply rotary embedding
     xq = torch.view_as_real(xq * cos_sin_cache).flatten(2)
     xk = torch.view_as_real(xk * cos_sin_cache).flatten(2)
@@ -109,7 +114,9 @@ def apply_wan_rope_with_flashinfer(
     query = xq.reshape(L, H * D).contiguous()
     key = xk.reshape(L, H * D).contiguous()
 
-    positions = torch.arange(L, device="cpu", dtype=torch.long).to(xq.device, non_blocking=True)
+    positions = torch.arange(L, device="cpu", dtype=torch.long).to(
+        xq.device, non_blocking=True
+    )
 
     apply_rope_with_cos_sin_cache_inplace(
         positions=positions,
@@ -158,7 +165,9 @@ def compute_freqs_dist(s, c, grid_sizes, freqs, seq_p_group):
 
     freqs_i = pad_freqs(freqs_i, s * world_size)
     s_per_rank = s
-    freqs_i_rank = freqs_i[(cur_rank * s_per_rank) : ((cur_rank + 1) * s_per_rank), :, :]
+    freqs_i_rank = freqs_i[
+        (cur_rank * s_per_rank) : ((cur_rank + 1) * s_per_rank), :, :
+    ]
     return freqs_i_rank
 
 
@@ -168,7 +177,9 @@ def compute_freqs_causvid(c, grid_sizes, freqs, start_frame=0):
     seq_len = f * h * w
     freqs_i = torch.cat(
         [
-            freqs[0][start_frame : start_frame + f].view(f, 1, 1, -1).expand(f, h, w, -1),
+            freqs[0][start_frame : start_frame + f]
+            .view(f, 1, 1, -1)
+            .expand(f, h, w, -1),
             freqs[1][:h].view(1, h, 1, -1).expand(f, h, w, -1),
             freqs[2][:w].view(1, 1, w, -1).expand(f, h, w, -1),
         ],
@@ -181,7 +192,9 @@ def compute_freqs_causvid(c, grid_sizes, freqs, start_frame=0):
 def pad_freqs(original_tensor, target_len):
     seq_len, s1, s2 = original_tensor.shape
     pad_size = target_len - seq_len
-    padding_tensor = torch.ones(pad_size, s1, s2, dtype=original_tensor.dtype, device=original_tensor.device)
+    padding_tensor = torch.ones(
+        pad_size, s1, s2, dtype=original_tensor.dtype, device=original_tensor.device
+    )
     padded_tensor = torch.cat([original_tensor, padding_tensor], dim=0)
     return padded_tensor
 
@@ -190,7 +203,9 @@ def apply_rotary_emb(x, freqs_i):
     n = x.size(1)
     seq_len = freqs_i.size(0)
 
-    x_i = torch.view_as_complex(x[:seq_len].to(torch.float32).reshape(seq_len, n, -1, 2))
+    x_i = torch.view_as_complex(
+        x[:seq_len].to(torch.float32).reshape(seq_len, n, -1, 2)
+    )
     # Apply rotary embedding
     x_i = torch.view_as_real(x_i * freqs_i).flatten(2)
     x_i = torch.cat([x_i, x[seq_len:]])
@@ -207,8 +222,12 @@ def apply_rotary_emb_chunk(x, freqs_i, chunk_size, remaining_chunk_size=100):
         x_chunk = x[start:end]
         freqs_chunk = freqs_i[start:end]
 
-        x_chunk_complex = torch.view_as_complex(x_chunk.to(torch.float32).reshape(end - start, n, -1, 2))
-        x_chunk_embedded = torch.view_as_real(x_chunk_complex * freqs_chunk).flatten(2).to(GET_DTYPE())
+        x_chunk_complex = torch.view_as_complex(
+            x_chunk.to(torch.float32).reshape(end - start, n, -1, 2)
+        )
+        x_chunk_embedded = (
+            torch.view_as_real(x_chunk_complex * freqs_chunk).flatten(2).to(GET_DTYPE())
+        )
         output_chunks.append(x_chunk_embedded)
         del x_chunk_complex, x_chunk_embedded
         torch.cuda.empty_cache()
@@ -247,13 +266,17 @@ def sinusoidal_embedding_1d(dim, position):
     position = position.type(torch.float32)
 
     # calculation
-    sinusoid = torch.outer(position, torch.pow(10000, -torch.arange(half).to(position).div(half)))
+    sinusoid = torch.outer(
+        position, torch.pow(10000, -torch.arange(half).to(position).div(half))
+    )
     x = torch.cat([torch.cos(sinusoid), torch.sin(sinusoid)], dim=1)
     x = x.to(GET_SENSITIVE_DTYPE())
     return x
 
 
-def guidance_scale_embedding(w, embedding_dim=256, cfg_range=(1.0, 6.0), target_range=1000.0, dtype=torch.float32):
+def guidance_scale_embedding(
+    w, embedding_dim=256, cfg_range=(1.0, 6.0), target_range=1000.0, dtype=torch.float32
+):
     """
     Args:
     timesteps: torch.Tensor: generate embedding vectors at these timesteps
@@ -271,7 +294,9 @@ def guidance_scale_embedding(w, embedding_dim=256, cfg_range=(1.0, 6.0), target_
     w = w * target_range
     half_dim = embedding_dim // 2
     emb = torch.log(torch.tensor(10000.0)) / (half_dim - 1)
-    emb = torch.exp(torch.arange(half_dim, dtype=dtype).to(w.device) * -emb).to(w.device)
+    emb = torch.exp(torch.arange(half_dim, dtype=dtype).to(w.device) * -emb).to(
+        w.device
+    )
     emb = w.to(dtype)[:, None] * emb[None, :]
     emb = torch.cat([torch.sin(emb), torch.cos(emb)], dim=1)
     if embedding_dim % 2 == 1:  # zero pad
@@ -287,9 +312,17 @@ def causal_rope_apply(x, grid_sizes, freqs, start_frame=0):
 
     for i, (f, h, w) in enumerate(grid_sizes.tolist()):
         seq_len = f * h * w
-        x_i = torch.view_as_complex(x[i, :seq_len].to(torch.float64).reshape(seq_len, n, -1, 2))
+        x_i = torch.view_as_complex(
+            x[i, :seq_len].to(torch.float64).reshape(seq_len, n, -1, 2)
+        )
         freqs_i = torch.cat(
-            [freqs[0][start_frame : start_frame + f].view(f, 1, 1, -1).expand(f, h, w, -1), freqs[1][:h].view(1, h, 1, -1).expand(f, h, w, -1), freqs[2][:w].view(1, 1, w, -1).expand(f, h, w, -1)],
+            [
+                freqs[0][start_frame : start_frame + f]
+                .view(f, 1, 1, -1)
+                .expand(f, h, w, -1),
+                freqs[1][:h].view(1, h, 1, -1).expand(f, h, w, -1),
+                freqs[2][:w].view(1, 1, w, -1).expand(f, h, w, -1),
+            ],
             dim=-1,
         ).reshape(seq_len, 1, -1)
         x_i = torch.view_as_real(x_i * freqs_i).flatten(2)

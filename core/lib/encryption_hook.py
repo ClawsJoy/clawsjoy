@@ -3,20 +3,21 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
-import json
 import base64
 import hashlib
+import json
 import secrets
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 # 兼容不同版本的 cryptography
 try:
     from cryptography.fernet import Fernet
+
     CRYPTO_AVAILABLE = True
 except ImportError:
     CRYPTO_AVAILABLE = False
@@ -37,12 +38,12 @@ class EncryptionHook:
             return
 
         if self.key_file.exists():
-            with open(self.key_file, 'rb') as f:
+            with open(self.key_file, "rb") as f:
                 self.key = f.read()
         else:
             self.key_file.parent.mkdir(parents=True, exist_ok=True)
             self.key = Fernet.generate_key()
-            with open(self.key_file, 'wb') as f:
+            with open(self.key_file, "wb") as f:
                 f.write(self.key)
 
     def encrypt(self, data: str) -> Optional[str]:
@@ -69,7 +70,7 @@ class EncryptionHook:
 
     def encrypt_dict(self, data: Dict) -> Dict:
         """加密字典中的敏感字段"""
-        sensitive_fields = ['password', 'secret', 'token', 'api_key']
+        sensitive_fields = ["password", "secret", "token", "api_key"]
         result = {}
         for key, value in data.items():
             if key.lower() in sensitive_fields and isinstance(value, str):

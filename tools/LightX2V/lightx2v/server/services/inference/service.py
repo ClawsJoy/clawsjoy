@@ -1,7 +1,8 @@
-from lib.smart_config import smart_config
 from typing import Optional
 
 from loguru import logger
+
+from lib.smart_config import smart_config
 
 from .worker import TorchrunInferenceWorker
 
@@ -25,7 +26,9 @@ class DistributedInferenceService:
                 raise RuntimeError("Worker initialization failed")
 
             self.is_running = True
-            logger.info(f"Rank {self.worker.rank} inference service started successfully")
+            logger.info(
+                f"Rank {self.worker.rank} inference service started successfully"
+            )
             return True
 
         except Exception as e:
@@ -57,7 +60,9 @@ class DistributedInferenceService:
 
         try:
             if self.worker.processing:
-                logger.info(f"Waiting for previous task to complete before processing task {task_data.get('task_id')}")
+                logger.info(
+                    f"Waiting for previous task to complete before processing task {task_data.get('task_id')}"
+                )
 
             self.worker.processing = True
             result = await self.worker.process_request(task_data)
@@ -74,8 +79,14 @@ class DistributedInferenceService:
             }
 
     def server_metadata(self):
-        assert hasattr(self, "args"), "Distributed inference service has not been started. Call start_distributed_inference() first."
-        return {"nproc_per_node": self.worker.world_size, "model_cls": self.args.model_cls, "model_path": self.args.model_path}
+        assert hasattr(
+            self, "args"
+        ), "Distributed inference service has not been started. Call start_distributed_inference() first."
+        return {
+            "nproc_per_node": self.worker.world_size,
+            "model_cls": self.args.model_cls,
+            "model_path": self.args.model_path,
+        }
 
     async def run_worker_loop(self):
         if self.worker and self.worker.rank != 0:

@@ -2,4 +2,4 @@
 
 from engine.embedding.local_embedding import local_embedding
 
-__all__ = ['local_embedding']
+__all__ = ["local_embedding"]

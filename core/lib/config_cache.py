@@ -3,22 +3,23 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 import hashlib
 import json
-from pathlib import Path
-from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any, Dict, Optional
+
 
 class ConfigCache:
     """配置缓存 - 减少IO和解析开销"""
-    
+
     def __init__(self, ttl_seconds: int = 300):
         self.cache: Dict[str, tuple] = {}  # key -> (value, timestamp)
         self.ttl = ttl_seconds
-    
+
     def get(self, key: str) -> Optional[Any]:
         """获取缓存"""
         if key in self.cache:
@@ -27,11 +28,11 @@ class ConfigCache:
                 return value
             del self.cache[key]
         return None
-    
+
     def set(self, key: str, value: Any):
         """设置缓存"""
         self.cache[key] = (value, datetime.now())
-    
+
     def invalidate(self, pattern: str = None):
         """使缓存失效"""
         if pattern:
@@ -40,5 +41,6 @@ class ConfigCache:
                 del self.cache[k]
         else:
             self.cache.clear()
+
 
 config_cache = ConfigCache()

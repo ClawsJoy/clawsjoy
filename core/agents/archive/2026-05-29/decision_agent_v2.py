@@ -1,17 +1,25 @@
-from core.lib.config_helper import get_data_root, get_llm_endpoint, get_llm_model, get_embedding_model, get_gateway_port, get_timeout
+from core.lib.config_helper import (
+    get_data_root,
+    get_embedding_model,
+    get_gateway_port,
+    get_llm_endpoint,
+    get_llm_model,
+    get_timeout,
+)
+
 """决策 Agent v4 - 集成主动服务"""
 
 import json
 import subprocess
 import threading
 import time
-from pathlib import Path
 from datetime import datetime
-from typing import Dict, Any
+from pathlib import Path
+from typing import Any, Dict
 
-from core.lib.unified_config import unified_config
 from core.lib.file_exchange import file_exchange
 from core.lib.smart_active_service import SmartActiveService
+from core.lib.unified_config import unified_config
 
 
 class DecisionAgentV4:
@@ -42,11 +50,11 @@ class DecisionAgentV4:
                 message = file_exchange.receive("decision")
                 if message:
                     self._process_analysis(message)
-                
+
                 # 2. 主动服务检查（每小时）
                 if self._should_check_active():
                     self._check_active_services()
-                
+
                 time.sleep(5)
             except Exception as e:
                 print(f"决策循环错误: {e}")
@@ -111,12 +119,14 @@ class DecisionAgentV4:
             "health_score": health_score,
             "task_completed": False,
             "error_detected": health_score < 70,
-            "first_interaction": False
+            "first_interaction": False,
         }
 
         result = self.smart_service.should_serve("decision_agent", context)
         if result.get("should"):
-            print(f"💡 主动服务触发: {result.get('reason')} (优先级: {result.get('priority')})")
+            print(
+                f"💡 主动服务触发: {result.get('reason')} (优先级: {result.get('priority')})"
+            )
             self._execute_service_action(result)
 
     def _execute_service_action(self, service_result: Dict):
@@ -138,7 +148,7 @@ class DecisionAgentV4:
 
     def _should_check_active(self):
         """检查是否需要主动服务（每小时一次）"""
-        if not hasattr(self, '_last_active_check'):
+        if not hasattr(self, "_last_active_check"):
             self._last_active_check = datetime.now()
             return True
         hour_passed = (datetime.now() - self._last_active_check).seconds >= 3600
@@ -149,7 +159,11 @@ class DecisionAgentV4:
     def _clear_cache(self):
         """清理缓存"""
         import shutil
-        cache_dirs = [f"{get_data_root()}/temp_sessions", f"{get_data_root()}/__pycache__"]
+
+        cache_dirs = [
+            f"{get_data_root()}/temp_sessions",
+            f"{get_data_root()}/__pycache__",
+        ]
         for d in cache_dirs:
             path = Path(d)
             if path.exists():
@@ -169,9 +183,13 @@ class DecisionAgentV4:
         """发送通知"""
         try:
             import requests
+
             webhook = unified_config.get("notification.webhook.url", "")
             if webhook:
-                requests.post(webhook, json={"title": title, "message": message, "level": "warning"})
+                requests.post(
+                    webhook,
+                    json={"title": title, "message": message, "level": "warning"},
+                )
         except Exception as e:
             print(f"    通知发送失败: {e}")
 

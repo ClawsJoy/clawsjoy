@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 from __future__ import annotations
 
 import logging
@@ -14,8 +13,9 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 import numpy.typing as npt
 import zmq
-
 from lightx2v.disagg.mooncake import MooncakeTransferEngine
+
+from lib.smart_config import smart_config
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,9 @@ class DisaggregationMode(Enum):
     DECODE = "decode"
 
 
-def group_concurrent_contiguous(src_indices: npt.NDArray[np.int64], dst_indices: npt.NDArray[np.int64]) -> Tuple[List[npt.NDArray[np.int64]], List[npt.NDArray[np.int64]]]:
+def group_concurrent_contiguous(
+    src_indices: npt.NDArray[np.int64], dst_indices: npt.NDArray[np.int64]
+) -> Tuple[List[npt.NDArray[np.int64]], List[npt.NDArray[np.int64]]]:
     src_groups = []
     dst_groups = []
     current_src = [src_indices[0]]
@@ -93,7 +95,11 @@ def _normalize_loopback_host(host: str) -> str:
 
 class DataManager:
     # TODO: make it general and support multiple transfer backend before merging
-    def __init__(self, disaggregation_phase: DisaggregationPhase, disaggregation_mode: DisaggregationMode):
+    def __init__(
+        self,
+        disaggregation_phase: DisaggregationPhase,
+        disaggregation_mode: DisaggregationMode,
+    ):
         self.engine = MooncakeTransferEngine()
         self.context = zmq.Context.instance()
         self.pool_lock = threading.Lock()
@@ -115,7 +121,9 @@ class DataManager:
             elif self.disaggregation_mode == DisaggregationMode.TRANSFORMER:
                 pass
             else:
-                raise ValueError(f"Unsupported DisaggregationMode in this phase: {self.disaggregation_phase}, {self.disaggregation_mode}")
+                raise ValueError(
+                    f"Unsupported DisaggregationMode in this phase: {self.disaggregation_phase}, {self.disaggregation_mode}"
+                )
         elif self.disaggregation_phase == DisaggregationPhase.PHASE2:
             if self.disaggregation_mode == DisaggregationMode.TRANSFORMER:
                 self.waiting_pool: WaitingPoolType = {}
@@ -123,16 +131,23 @@ class DataManager:
             elif self.disaggregation_mode == DisaggregationMode.DECODE:
                 pass
             else:
-                raise ValueError(f"Unsupported DisaggregationMode in this phase: {self.disaggregation_phase}, {self.disaggregation_mode}")
+                raise ValueError(
+                    f"Unsupported DisaggregationMode in this phase: {self.disaggregation_phase}, {self.disaggregation_mode}"
+                )
         else:
-            raise ValueError(f"Unsupported DisaggregationPhase: {self.disaggregation_phase}")
+            raise ValueError(
+                f"Unsupported DisaggregationPhase: {self.disaggregation_phase}"
+            )
 
     def start_transfer_thread(self):
         self.transfer_event = threading.Event()
         self.transfer_stop_event = threading.Event()
 
         def transfer_loop():
-            while self.transfer_stop_event is not None and not self.transfer_stop_event.is_set():
+            while (
+                self.transfer_stop_event is not None
+                and not self.transfer_stop_event.is_set()
+            ):
                 self.transfer_event.wait()
                 if self.transfer_stop_event.is_set():
                     break
@@ -152,7 +167,9 @@ class DataManager:
 
                         status = DataPoll.Transferring
                         self.request_status[pending_room] = status
-                        endpoint, mooncake_session_id, receiver_ptrs = self.waiting_pool.pop(pending_room)
+                        endpoint, mooncake_session_id, receiver_ptrs = (
+                            self.waiting_pool.pop(pending_room)
+                        )
                         sender_data_ptrs = self.request_pool.pop(pending_room)
 
                     self.sync_status_to_transformer_endpoint(endpoint, pending_room)
@@ -164,7 +181,11 @@ class DataManager:
                             receiver_ptrs,
                         )
                     except Exception:
-                        logger.exception("Transfer loop exception room=%s session=%s", pending_room, mooncake_session_id)
+                        logger.exception(
+                            "Transfer loop exception room=%s session=%s",
+                            pending_room,
+                            mooncake_session_id,
+                        )
                         ret = -1
                     with self.pool_lock:
                         if ret != 0:
@@ -174,9 +195,15 @@ class DataManager:
                     try:
                         self.sync_status_to_transformer_endpoint(endpoint, pending_room)
                     except Exception:
-                        logger.exception("Failed to sync final status room=%s endpoint=%s", pending_room, endpoint)
+                        logger.exception(
+                            "Failed to sync final status room=%s endpoint=%s",
+                            pending_room,
+                            endpoint,
+                        )
 
-        self.transfer_thread = threading.Thread(target=transfer_loop, name="data-transfer-thread")
+        self.transfer_thread = threading.Thread(
+            target=transfer_loop, name="data-transfer-thread"
+        )
         self.transfer_thread.start()
 
     def init(self, args: DataArgs, room: int):
@@ -190,16 +217,22 @@ class DataManager:
             elif self.disaggregation_mode == DisaggregationMode.TRANSFORMER:
                 self.start_phase1_transformer_thread(room)
             else:
-                raise ValueError(f"Unsupported DisaggregationMode in this phase: {self.disaggregation_phase}, {self.disaggregation_mode}")
+                raise ValueError(
+                    f"Unsupported DisaggregationMode in this phase: {self.disaggregation_phase}, {self.disaggregation_mode}"
+                )
         elif self.disaggregation_phase == DisaggregationPhase.PHASE2:
             if self.disaggregation_mode == DisaggregationMode.TRANSFORMER:
                 self.start_phase2_transformer_thread(room)
             elif self.disaggregation_mode == DisaggregationMode.DECODE:
                 self.start_phase2_decode_thread(room)
             else:
-                raise ValueError(f"Unsupported DisaggregationMode in this phase: {self.disaggregation_phase}, {self.disaggregation_mode}")
+                raise ValueError(
+                    f"Unsupported DisaggregationMode in this phase: {self.disaggregation_phase}, {self.disaggregation_mode}"
+                )
         else:
-            raise ValueError(f"Unsupported DisaggregationPhase: {self.disaggregation_phase}")
+            raise ValueError(
+                f"Unsupported DisaggregationPhase: {self.disaggregation_phase}"
+            )
 
     def remove(self, room: int):
         if self.disaggregation_phase == DisaggregationPhase.PHASE1:
@@ -208,16 +241,22 @@ class DataManager:
             elif self.disaggregation_mode == DisaggregationMode.TRANSFORMER:
                 self.end_phase1_transformer_thread(room)
             else:
-                raise ValueError(f"Unsupported DisaggregationMode in this phase: {self.disaggregation_phase}, {self.disaggregation_mode}")
+                raise ValueError(
+                    f"Unsupported DisaggregationMode in this phase: {self.disaggregation_phase}, {self.disaggregation_mode}"
+                )
         elif self.disaggregation_phase == DisaggregationPhase.PHASE2:
             if self.disaggregation_mode == DisaggregationMode.TRANSFORMER:
                 self.end_phase2_transformer_thread(room)
             elif self.disaggregation_mode == DisaggregationMode.DECODE:
                 self.end_phase2_decode_thread(room)
             else:
-                raise ValueError(f"Unsupported DisaggregationMode in this phase: {self.disaggregation_phase}, {self.disaggregation_mode}")
+                raise ValueError(
+                    f"Unsupported DisaggregationMode in this phase: {self.disaggregation_phase}, {self.disaggregation_mode}"
+                )
         else:
-            raise ValueError(f"Unsupported DisaggregationPhase: {self.disaggregation_phase}")
+            raise ValueError(
+                f"Unsupported DisaggregationPhase: {self.disaggregation_phase}"
+            )
 
         # Recycle room-scoped mappings.
         args = self.data_args.pop(room, None)
@@ -353,7 +392,11 @@ class DataManager:
     def start_phase1_encode_thread(self, room: int):
         self.prepare_room_threads(room)
         stop_event = self.room_stop_events[room]
-        sender_rank_port = DATASENDER_POLLING_PORT + self.data_args[room].sender_engine_rank + room * 10
+        sender_rank_port = (
+            DATASENDER_POLLING_PORT
+            + self.data_args[room].sender_engine_rank
+            + room * 10
+        )
         logger.info("Encoder sender_rank_port=%s", sender_rank_port)
         room_socket = self.get_or_create_room_socket(room, sender_rank_port)
 
@@ -369,13 +412,17 @@ class DataManager:
                     ) = room_socket.recv_multipart()
                 except zmq.Again:
                     continue
-                receiver_engine_rank = int.from_bytes(receiver_engine_rank_raw, byteorder="big")
+                receiver_engine_rank = int.from_bytes(
+                    receiver_engine_rank_raw, byteorder="big"
+                )
                 if bootstrap_room.decode("ascii") == "None":
                     continue
                 endpoint = endpoint.decode("ascii")
                 mooncake_session_id = mooncake_session_id.decode("ascii")
                 bootstrap_room = int(bootstrap_room.decode("ascii"))
-                transformer_ptrs = list(struct.unpack(f"{len(transformer_ptrs) // 8}Q", transformer_ptrs))
+                transformer_ptrs = list(
+                    struct.unpack(f"{len(transformer_ptrs) // 8}Q", transformer_ptrs)
+                )
                 logger.info(
                     "Encoder received ZMQ: endpoint=%s session_id=%s room=%s receiver_engine_rank=%s transformer_ptrs=%s",
                     endpoint,
@@ -391,7 +438,9 @@ class DataManager:
                         transformer_ptrs,
                     )
                     if bootstrap_room in self.data_args:
-                        self.data_args[bootstrap_room].receiver_engine_rank = receiver_engine_rank
+                        self.data_args[bootstrap_room].receiver_engine_rank = (
+                            receiver_engine_rank
+                        )
                 if self.transfer_event is not None:
                     self.transfer_event.set()
 
@@ -405,7 +454,11 @@ class DataManager:
     def start_phase1_transformer_thread(self, room: int):
         self.prepare_room_threads(room)
         stop_event = self.room_stop_events[room]
-        receiver_rank_port = DATARECEIVER_POLLING_PORT + self.data_args[room].receiver_engine_rank + room * 10
+        receiver_rank_port = (
+            DATARECEIVER_POLLING_PORT
+            + self.data_args[room].receiver_engine_rank
+            + room * 10
+        )
         room_socket = self.get_or_create_room_socket(room, receiver_rank_port)
 
         def transformer_thread():
@@ -428,7 +481,11 @@ class DataManager:
     def start_phase2_transformer_thread(self, room: int):
         self.prepare_room_threads(room)
         stop_event = self.room_stop_events[room]
-        sender_rank_port = DATASENDER_POLLING_PORT + self.data_args[room].sender_engine_rank + room * 10
+        sender_rank_port = (
+            DATASENDER_POLLING_PORT
+            + self.data_args[room].sender_engine_rank
+            + room * 10
+        )
         logger.info("Transformer sender_rank_port=%s", sender_rank_port)
         room_socket = self.get_or_create_room_socket(room, sender_rank_port)
 
@@ -444,13 +501,17 @@ class DataManager:
                     ) = room_socket.recv_multipart()
                 except zmq.Again:
                     continue
-                receiver_engine_rank = int.from_bytes(receiver_engine_rank_raw, byteorder="big")
+                receiver_engine_rank = int.from_bytes(
+                    receiver_engine_rank_raw, byteorder="big"
+                )
                 if bootstrap_room.decode("ascii") == "None":
                     continue
                 endpoint = endpoint.decode("ascii")
                 mooncake_session_id = mooncake_session_id.decode("ascii")
                 bootstrap_room = int(bootstrap_room.decode("ascii"))
-                decode_ptrs = list(struct.unpack(f"{len(decode_ptrs) // 8}Q", decode_ptrs))
+                decode_ptrs = list(
+                    struct.unpack(f"{len(decode_ptrs) // 8}Q", decode_ptrs)
+                )
                 logger.info(
                     "Transformer received ZMQ: endpoint=%s session_id=%s room=%s receiver_engine_rank=%s decode_ptrs=%s",
                     endpoint,
@@ -466,7 +527,9 @@ class DataManager:
                         decode_ptrs,
                     )
                     if bootstrap_room in self.data_args:
-                        self.data_args[bootstrap_room].receiver_engine_rank = receiver_engine_rank
+                        self.data_args[bootstrap_room].receiver_engine_rank = (
+                            receiver_engine_rank
+                        )
                 if self.transfer_event is not None:
                     self.transfer_event.set()
 
@@ -480,7 +543,11 @@ class DataManager:
     def start_phase2_decode_thread(self, room: int):
         self.prepare_room_threads(room)
         stop_event = self.room_stop_events[room]
-        receiver_rank_port = DATARECEIVER_POLLING_PORT + self.data_args[room].receiver_engine_rank + room * 10
+        receiver_rank_port = (
+            DATARECEIVER_POLLING_PORT
+            + self.data_args[room].receiver_engine_rank
+            + room * 10
+        )
         room_socket = self.get_or_create_room_socket(room, receiver_rank_port)
 
         def decode_thread():
@@ -519,7 +586,9 @@ class DataManager:
 
     def get_backlog_counts(self) -> Dict[str, int]:
         with self.pool_lock:
-            waiting_pool_size = len(self.waiting_pool) if hasattr(self, "waiting_pool") else 0
+            waiting_pool_size = (
+                len(self.waiting_pool) if hasattr(self, "waiting_pool") else 0
+            )
             return {
                 "request_pool": len(self.request_pool),
                 "waiting_pool": waiting_pool_size,
@@ -570,14 +639,21 @@ class DataSender:
 
 
 class DataReceiver:
-    def __init__(self, mgr: DataManager, bootstrap_addr: str, bootstrap_room: Optional[int] = None):
+    def __init__(
+        self,
+        mgr: DataManager,
+        bootstrap_addr: str,
+        bootstrap_room: Optional[int] = None,
+    ):
         self.bootstrap_room = bootstrap_room
         self.bootstrap_addr = bootstrap_addr
         self.data_mgr = mgr
         if self.bootstrap_room is None:
             raise ValueError("bootstrap_room is required for DataReceiver")
         args = self.data_mgr.data_args[self.bootstrap_room]
-        sender_rank_port = DATASENDER_POLLING_PORT + args.sender_engine_rank + self.bootstrap_room * 10
+        sender_rank_port = (
+            DATASENDER_POLLING_PORT + args.sender_engine_rank + self.bootstrap_room * 10
+        )
         sender_host = _normalize_loopback_host(bootstrap_addr.split(":")[0])
         self.sender_server_url = sender_host + ":" + str(sender_rank_port)
         logger.info("DataReceiver sender_server_url=%s", self.sender_server_url)

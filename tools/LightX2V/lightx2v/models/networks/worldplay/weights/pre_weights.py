@@ -1,6 +1,11 @@
+from lightx2v.models.networks.hunyuan_video.weights.pre_weights import (
+    HunyuanVideo15PreWeights,
+)
+from lightx2v.models.networks.worldplay.weights.action_weights import (
+    WorldPlayActionWeights,
+)
+
 from lib.smart_config import smart_config
-from lightx2v.models.networks.hunyuan_video.weights.pre_weights import HunyuanVideo15PreWeights
-from lightx2v.models.networks.worldplay.weights.action_weights import WorldPlayActionWeights
 
 
 class WorldPlayPreWeights(HunyuanVideo15PreWeights):

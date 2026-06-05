@@ -1,6 +1,7 @@
-from lib.smart_config import smart_config
 from dataclasses import dataclass
 from typing import Optional
+
+from lib.smart_config import smart_config
 
 
 class NaiveCache:

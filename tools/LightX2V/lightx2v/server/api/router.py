@@ -1,5 +1,6 @@
-from lib.smart_config import smart_config
 from fastapi import APIRouter
+
+from lib.smart_config import smart_config
 
 from .files import router as files_router
 from .openai_images import router as openai_images_router
@@ -18,10 +19,14 @@ def create_api_router() -> APIRouter:
     # backward compatibility : POST /v1/tasks default to video task
     from .tasks.video import create_video_task
 
-    tasks_router.post("/", response_model_exclude_unset=True, deprecated=True)(create_video_task)
+    tasks_router.post("/", response_model_exclude_unset=True, deprecated=True)(
+        create_video_task
+    )
 
     api_router.include_router(tasks_router)
-    api_router.include_router(openai_images_router, prefix="/v1/images", tags=["openai-images"])
+    api_router.include_router(
+        openai_images_router, prefix="/v1/images", tags=["openai-images"]
+    )
     api_router.include_router(files_router, prefix="/v1/files", tags=["files"])
     api_router.include_router(service_router, prefix="/v1/service", tags=["service"])
 

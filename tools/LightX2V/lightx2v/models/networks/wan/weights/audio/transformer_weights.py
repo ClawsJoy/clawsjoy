@@ -1,11 +1,14 @@
-from lib.smart_config import smart_config
 from lightx2v.common.modules.weight_module import WeightModule
-from lightx2v.models.networks.wan.weights.transformer_weights import WanTransformerWeights
+from lightx2v.models.networks.wan.weights.transformer_weights import (
+    WanTransformerWeights,
+)
 from lightx2v.utils.registry_factory import (
     LN_WEIGHT_REGISTER,
     MM_WEIGHT_REGISTER,
     TENSOR_REGISTER,
 )
+
+from lib.smart_config import smart_config
 
 
 class WanAudioTransformerWeights(WanTransformerWeights):
@@ -29,7 +32,10 @@ class WanAudioTransformerWeights(WanTransformerWeights):
         self._add_audio_adapter_ca_to_offload_buffers()
 
     def _add_audio_adapter_ca_to_offload_buffers(self):
-        if hasattr(self, "offload_block_cuda_buffers") and self.offload_block_cuda_buffers is not None:
+        if (
+            hasattr(self, "offload_block_cuda_buffers")
+            and self.offload_block_cuda_buffers is not None
+        ):
             for i in range(self.offload_blocks_num):
                 offload_buffer = self.offload_block_cuda_buffers[i]
                 adapter_ca = WanAudioAdapterCA(
@@ -59,7 +65,10 @@ class WanAudioTransformerWeights(WanTransformerWeights):
                     )
                     offload_buffer.compute_phases.append(adapter_ca)
 
-        elif hasattr(self, "offload_phase_cuda_buffers") and self.offload_phase_cuda_buffers is not None:
+        elif (
+            hasattr(self, "offload_phase_cuda_buffers")
+            and self.offload_phase_cuda_buffers is not None
+        ):
             adapter_ca = WanAudioAdapterCA(
                 block_index=0,
                 block_prefix=f"ca",
@@ -88,7 +97,18 @@ class WanAudioTransformerWeights(WanTransformerWeights):
 
 
 class WanAudioAdapterCA(WeightModule):
-    def __init__(self, block_index, block_prefix, task, mm_type, config, create_cuda_buffer, create_cpu_buffer, lazy_load, lazy_load_file):
+    def __init__(
+        self,
+        block_index,
+        block_prefix,
+        task,
+        mm_type,
+        config,
+        create_cuda_buffer,
+        create_cpu_buffer,
+        lazy_load,
+        lazy_load_file,
+    ):
         super().__init__()
         self.block_index = block_index
         self.mm_type = mm_type

@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import base64
 import os
 import re
@@ -8,6 +7,8 @@ from pathlib import Path
 from typing import Dict, Optional, Tuple
 
 from loguru import logger
+
+from lib.smart_config import smart_config
 
 
 class MediaHandler(ABC):

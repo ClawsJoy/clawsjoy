@@ -1,8 +1,9 @@
-from lib.smart_config import smart_config
 import functools
-from typing import Dict, Tuple, Callable, List
+from typing import Callable, Dict, List, Tuple
 
 import torch
+
+from lib.smart_config import smart_config
 
 
 def get_cuda_stream() -> int:
@@ -65,7 +66,9 @@ def error(y_pred: torch.Tensor, y_real: torch.Tensor) -> torch.Tensor:
     y_real = torch.flatten(y_real).float()
 
     if y_pred.shape != y_real.shape:
-        raise ValueError(f"Can not compute snr loss for tensors with different shape. ({y_pred.shape} and {y_real.shape})")
+        raise ValueError(
+            f"Can not compute snr loss for tensors with different shape. ({y_pred.shape} and {y_real.shape})"
+        )
 
     noise_power = torch.pow(y_pred - y_real, 2).sum(dim=-1)
     signal_power = torch.pow(y_real, 2).sum(dim=-1)
@@ -73,7 +76,9 @@ def error(y_pred: torch.Tensor, y_real: torch.Tensor) -> torch.Tensor:
     return snr.item()
 
 
-def benchmark(func: Callable, shape: List[int], tflops: float, steps: int, *args, **kwargs):
+def benchmark(
+    func: Callable, shape: List[int], tflops: float, steps: int, *args, **kwargs
+):
     """
     A decorator function to assist in performance testing of CUDA operations.
 
@@ -104,7 +109,9 @@ def benchmark(func: Callable, shape: List[int], tflops: float, steps: int, *args
 
     # Check for torch.Tensor in inputs and outputs
     input_tensors = [arg for arg in args if isinstance(arg, torch.Tensor)]
-    input_tensors += [value for value in kwargs.values() if isinstance(value, torch.Tensor)]
+    input_tensors += [
+        value for value in kwargs.values() if isinstance(value, torch.Tensor)
+    ]
 
     def calculate_memory(tensor: torch.Tensor):
         """Calculate memory usage in bytes for a tensor."""
@@ -120,7 +127,9 @@ def benchmark(func: Callable, shape: List[int], tflops: float, steps: int, *args
     if isinstance(output, torch.Tensor):
         output_memory = calculate_memory(output)
     elif isinstance(output, (list, tuple)):
-        output_memory = sum(calculate_memory(o) for o in output if isinstance(o, torch.Tensor))
+        output_memory = sum(
+            calculate_memory(o) for o in output if isinstance(o, torch.Tensor)
+        )
 
     total_memory = input_memory + output_memory
 

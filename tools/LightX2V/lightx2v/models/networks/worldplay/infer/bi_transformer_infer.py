@@ -1,8 +1,6 @@
-from lib.smart_config import smart_config
 import torch
 import torch.nn.functional as F
 from einops import rearrange
-
 from lightx2v.common.offload.manager import WeightAsyncStreamManager
 from lightx2v.models.networks.hunyuan_video.infer.module_io import (
     HunyuanVideo15ImgBranchOutput,
@@ -14,6 +12,8 @@ from lightx2v.models.networks.hunyuan_video.infer.transformer_infer import (
 )
 from lightx2v.models.networks.worldplay.prope.camera_rope import prope_qkv
 from lightx2v_platform.base.global_var import AI_DEVICE
+
+from lib.smart_config import smart_config
 
 torch_device_module = getattr(torch, AI_DEVICE)
 
@@ -73,7 +73,9 @@ class WorldPlayBITransformerInfer(HunyuanVideo15TransformerInfer):
             else:
                 raise NotImplementedError
             if offload_granularity != "model":
-                self.offload_manager = WeightAsyncStreamManager(offload_granularity=offload_granularity)
+                self.offload_manager = WeightAsyncStreamManager(
+                    offload_granularity=offload_granularity
+                )
 
     @property
     def _vec_is_per_token(self):
@@ -117,9 +119,13 @@ class WorldPlayBITransformerInfer(HunyuanVideo15TransformerInfer):
             ) = img_mod.chunk(6, dim=-1)
 
             # Apply per-token modulation
-            img_modulated = weights.img_branch.img_norm1.apply(infer_module_out.img.squeeze(0))
+            img_modulated = weights.img_branch.img_norm1.apply(
+                infer_module_out.img.squeeze(0)
+            )
             # img_modulated: [L, C], img_mod1_scale/shift: [B, L, C]
-            img_modulated = img_modulated * (1 + img_mod1_scale.squeeze(0)) + img_mod1_shift.squeeze(0)
+            img_modulated = img_modulated * (
+                1 + img_mod1_scale.squeeze(0)
+            ) + img_mod1_shift.squeeze(0)
         else:
             # Global vec: standard modulation
             mod_output = weights.img_branch.img_mod.apply(vec)
@@ -131,8 +137,12 @@ class WorldPlayBITransformerInfer(HunyuanVideo15TransformerInfer):
                 img_mod2_scale,
                 img_mod2_gate,
             ) = mod_output.chunk(6, dim=-1)
-            img_modulated = weights.img_branch.img_norm1.apply(infer_module_out.img.squeeze(0))
-            img_modulated = self.modulate_func(img_modulated, scale=img_mod1_scale, shift=img_mod1_shift).squeeze(0)
+            img_modulated = weights.img_branch.img_norm1.apply(
+                infer_module_out.img.squeeze(0)
+            )
+            img_modulated = self.modulate_func(
+                img_modulated, scale=img_mod1_scale, shift=img_mod1_shift
+            ).squeeze(0)
 
         img_q = weights.img_branch.img_attn_q.apply(img_modulated)
         img_k = weights.img_branch.img_attn_k.apply(img_modulated)
@@ -148,7 +158,9 @@ class WorldPlayBITransformerInfer(HunyuanVideo15TransformerInfer):
         img_k_pre_rope = img_k.unsqueeze(0)
 
         # Apply RoPE for standard attention branch
-        img_q, img_k = self.apply_rope_func(img_q.unsqueeze(0), img_k.unsqueeze(0), cos_sin_cache=self.scheduler.cos_sin)
+        img_q, img_k = self.apply_rope_func(
+            img_q.unsqueeze(0), img_k.unsqueeze(0), cos_sin_cache=self.scheduler.cos_sin
+        )
 
         return (
             img_q,
@@ -188,8 +200,12 @@ class WorldPlayBITransformerInfer(HunyuanVideo15TransformerInfer):
             txt_mod2_scale,
             txt_mod2_gate,
         ) = weights.txt_branch.txt_mod.apply(vec_for_txt).chunk(6, dim=-1)
-        txt_modulated = weights.txt_branch.txt_norm1.apply(infer_module_out.txt.squeeze(0))
-        txt_modulated = self.modulate_func(txt_modulated, scale=txt_mod1_scale, shift=txt_mod1_shift).squeeze(0)
+        txt_modulated = weights.txt_branch.txt_norm1.apply(
+            infer_module_out.txt.squeeze(0)
+        )
+        txt_modulated = self.modulate_func(
+            txt_modulated, scale=txt_mod1_scale, shift=txt_mod1_shift
+        ).squeeze(0)
         txt_q = weights.txt_branch.txt_attn_q.apply(txt_modulated)
         txt_k = weights.txt_branch.txt_attn_k.apply(txt_modulated)
         txt_v = weights.txt_branch.txt_attn_v.apply(txt_modulated)
@@ -211,7 +227,9 @@ class WorldPlayBITransformerInfer(HunyuanVideo15TransformerInfer):
         )
 
     @torch.no_grad()
-    def _infer_img_branch_after_attn(self, weights, img_attn, img, img_branch_out, img_attn_prope=None):
+    def _infer_img_branch_after_attn(
+        self, weights, img_attn, img, img_branch_out, img_attn_prope=None
+    ):
         """Override to handle per-token modulation in post-attention.
 
         Args:
@@ -224,8 +242,12 @@ class WorldPlayBITransformerInfer(HunyuanVideo15TransformerInfer):
         if self._vec_is_per_token and img_branch_out.img_mod2_scale.dim() == 3:
             # Per-token modulation
             img_seqlen = img.shape[1]
-            img_mod2_scale = img_branch_out.img_mod2_scale[:, :img_seqlen, :]  # [B, L, C]
-            img_mod2_shift = img_branch_out.img_mod2_shift[:, :img_seqlen, :]  # [B, L, C]
+            img_mod2_scale = img_branch_out.img_mod2_scale[
+                :, :img_seqlen, :
+            ]  # [B, L, C]
+            img_mod2_shift = img_branch_out.img_mod2_shift[
+                :, :img_seqlen, :
+            ]  # [B, L, C]
             img_mod1_gate = img_branch_out.img_mod1_gate[:, :img_seqlen, :]  # [B, L, C]
             img_mod2_gate = img_branch_out.img_mod2_gate[:, :img_seqlen, :]  # [B, L, C]
 
@@ -242,7 +264,9 @@ class WorldPlayBITransformerInfer(HunyuanVideo15TransformerInfer):
             img_squeezed = img.squeeze(0)  # [L, C]
             normed = weights.img_branch.img_norm2.apply(img_squeezed)
             # Per-token modulation: normed [L, C], scale/shift [B, L, C] -> squeeze to [L, C]
-            modulated = normed * (1 + img_mod2_scale.squeeze(0)) + img_mod2_shift.squeeze(0)
+            modulated = normed * (
+                1 + img_mod2_scale.squeeze(0)
+            ) + img_mod2_shift.squeeze(0)
             out = weights.img_branch.img_mlp_fc1.apply(modulated)
             out = weights.img_branch.img_mlp_fc2.apply(F.gelu(out, approximate="tanh"))
             # Apply per-token gate
@@ -251,13 +275,19 @@ class WorldPlayBITransformerInfer(HunyuanVideo15TransformerInfer):
         else:
             # Standard modulation
             # Project original attention through img_attn_proj
-            attn_proj = weights.img_branch.img_attn_proj.apply(img_attn).unsqueeze(0)  # [1, L, C]
+            attn_proj = weights.img_branch.img_attn_proj.apply(img_attn).unsqueeze(
+                0
+            )  # [1, L, C]
             # Add PRoPE attention output if available (already projected through prope_proj)
             if img_attn_prope is not None:
                 attn_proj = attn_proj + img_attn_prope.unsqueeze(0)  # [1, L, C]
             img = img + apply_gate(attn_proj, gate=img_branch_out.img_mod1_gate)
             out = weights.img_branch.img_mlp_fc1.apply(
-                self.modulate_func(weights.img_branch.img_norm2.apply(img.squeeze(0)), scale=img_branch_out.img_mod2_scale, shift=img_branch_out.img_mod2_shift).squeeze(0)
+                self.modulate_func(
+                    weights.img_branch.img_norm2.apply(img.squeeze(0)),
+                    scale=img_branch_out.img_mod2_scale,
+                    shift=img_branch_out.img_mod2_shift,
+                ).squeeze(0)
             )
             out = weights.img_branch.img_mlp_fc2.apply(F.gelu(out, approximate="tanh"))
             img = img + apply_gate(out.unsqueeze(0), gate=img_branch_out.img_mod2_gate)
@@ -286,8 +316,14 @@ class WorldPlayBITransformerInfer(HunyuanVideo15TransformerInfer):
             img = normed * (1 + scale.squeeze(0)) + shift.squeeze(0)
         else:
             # Global vec: standard modulation
-            shift, scale = weights.final_layer.adaLN_modulation.apply(vec).chunk(2, dim=1)
-            img = self.modulate_func(weights.final_layer.norm_final.apply(img.squeeze(0)), scale=scale, shift=shift).squeeze(0)
+            shift, scale = weights.final_layer.adaLN_modulation.apply(vec).chunk(
+                2, dim=1
+            )
+            img = self.modulate_func(
+                weights.final_layer.norm_final.apply(img.squeeze(0)),
+                scale=scale,
+                shift=shift,
+            ).squeeze(0)
 
         img = weights.final_layer.linear.apply(img)
         return img.unsqueeze(0)
@@ -307,44 +343,75 @@ class WorldPlayBITransformerInfer(HunyuanVideo15TransformerInfer):
         Returns:
             Tuple of (img, txt) tensors
         """
-        img_q, img_k, img_v, img_q_pre_rope, img_k_pre_rope, img_branch_out = self._infer_img_branch_before_attn(weights, infer_module_out)
-        txt_q, txt_k, txt_v, txt_branch_out = self._infer_txt_branch_before_attn(weights, infer_module_out)
+        img_q, img_k, img_v, img_q_pre_rope, img_k_pre_rope, img_branch_out = (
+            self._infer_img_branch_before_attn(weights, infer_module_out)
+        )
+        txt_q, txt_k, txt_v, txt_branch_out = self._infer_txt_branch_before_attn(
+            weights, infer_module_out
+        )
 
         # Apply ProPE if camera parameters are available
-        if self.use_prope and hasattr(self.scheduler, "viewmats") and self.scheduler.viewmats is not None:
+        if (
+            self.use_prope
+            and hasattr(self.scheduler, "viewmats")
+            and self.scheduler.viewmats is not None
+        ):
             # Apply PRoPE transform to pre-RoPE Q/K/V (PRoPE should NOT include RoPE)
-            img_q_prope, img_k_prope, img_v_prope, apply_fn_o = self._apply_prope(img_q_pre_rope, img_k_pre_rope, img_v, self.scheduler.viewmats, self.scheduler.Ks, infer_module_out.grid_sizes)
+            img_q_prope, img_k_prope, img_v_prope, apply_fn_o = self._apply_prope(
+                img_q_pre_rope,
+                img_k_pre_rope,
+                img_v,
+                self.scheduler.viewmats,
+                self.scheduler.Ks,
+                infer_module_out.grid_sizes,
+            )
 
             # First attention: original Q/K/V with RoPE (standard attention)
             # BI model uses bidirectional attention
-            img_attn, txt_attn = self._infer_attn(weights, img_q, img_k, img_v, txt_q, txt_k, txt_v)
+            img_attn, txt_attn = self._infer_attn(
+                weights, img_q, img_k, img_v, txt_q, txt_k, txt_v
+            )
 
             # Second attention: PRoPE transformed Q/K/V (PRoPE only, no RoPE)
-            img_attn_prope, _ = self._infer_attn(weights, img_q_prope, img_k_prope, img_v_prope, txt_q, txt_k, txt_v)
+            img_attn_prope, _ = self._infer_attn(
+                weights, img_q_prope, img_k_prope, img_v_prope, txt_q, txt_k, txt_v
+            )
 
             # Apply ProPE output transform and projection
             if apply_fn_o is not None and block_idx is not None:
                 # Get the prope projection weight for this block
-                prope_proj_weight = getattr(self.action_weights, f"img_attn_prope_proj_{block_idx}", None)
+                prope_proj_weight = getattr(
+                    self.action_weights, f"img_attn_prope_proj_{block_idx}", None
+                )
                 if prope_proj_weight is not None:
                     # img_attn_prope shape: [L, C] where L = img_seqlen, C = hidden_size
                     # Need to reshape to [B, H, L, D] for ProPE output transform
                     L, C = img_attn_prope.shape
                     head_dim = C // self.heads_num
                     # Reshape: [L, C] -> [1, L, H, D] -> [1, H, L, D]
-                    img_attn_prope_4d = img_attn_prope.reshape(1, L, self.heads_num, head_dim).transpose(1, 2)
+                    img_attn_prope_4d = img_attn_prope.reshape(
+                        1, L, self.heads_num, head_dim
+                    ).transpose(1, 2)
                     # Apply ProPE output transform
                     img_attn_prope_transformed = apply_fn_o(img_attn_prope_4d)
                     # Reshape back: [1, H, L, D] -> [1, L, H, D] -> [L, C]
-                    img_attn_prope = img_attn_prope_transformed.transpose(1, 2).reshape(L, C)
+                    img_attn_prope = img_attn_prope_transformed.transpose(1, 2).reshape(
+                        L, C
+                    )
                     # Project PRoPE attention output
                     img_attn_prope = prope_proj_weight.apply(img_attn_prope)
         else:
-            img_attn, txt_attn = self._infer_attn(weights, img_q, img_k, img_v, txt_q, txt_k, txt_v)
+            img_attn, txt_attn = self._infer_attn(
+                weights, img_q, img_k, img_v, txt_q, txt_k, txt_v
+            )
             img_attn_prope = None
 
-        img = self._infer_img_branch_after_attn(weights, img_attn, infer_module_out.img, img_branch_out, img_attn_prope)
-        txt = self._infer_txt_branch_after_attn(weights, txt_attn, infer_module_out.txt, txt_branch_out)
+        img = self._infer_img_branch_after_attn(
+            weights, img_attn, infer_module_out.img, img_branch_out, img_attn_prope
+        )
+        txt = self._infer_txt_branch_after_attn(
+            weights, txt_attn, infer_module_out.txt, txt_branch_out
+        )
         return img, txt
 
     def _apply_prope(self, q, k, v, viewmats, Ks, grid_sizes):
@@ -403,7 +470,9 @@ class WorldPlayBITransformerInfer(HunyuanVideo15TransformerInfer):
     def infer_without_offload(self, weights, infer_module_out):
         """Override to pass block index for ProPE projection."""
         for i in range(self.double_blocks_num):
-            infer_module_out.img, infer_module_out.txt = self.infer_double_block(weights.double_blocks[i], infer_module_out, block_idx=i)
+            infer_module_out.img, infer_module_out.txt = self.infer_double_block(
+                weights.double_blocks[i], infer_module_out, block_idx=i
+            )
 
     @torch.no_grad()
     def infer_with_blocks_offload(self, weights, infer_module_out):
@@ -413,9 +482,15 @@ class WorldPlayBITransformerInfer(HunyuanVideo15TransformerInfer):
             if block_idx == 0:
                 self.offload_manager.init_first_buffer(weights.double_blocks)
             if block_idx < self.double_blocks_num - 1:
-                self.offload_manager.prefetch_weights(block_idx + 1, weights.double_blocks)
+                self.offload_manager.prefetch_weights(
+                    block_idx + 1, weights.double_blocks
+                )
             with torch_device_module.stream(self.offload_manager.compute_stream):
-                infer_module_out.img, infer_module_out.txt = self.infer_double_block(self.offload_manager.cuda_buffers[0], infer_module_out, block_idx=block_idx)
+                infer_module_out.img, infer_module_out.txt = self.infer_double_block(
+                    self.offload_manager.cuda_buffers[0],
+                    infer_module_out,
+                    block_idx=block_idx,
+                )
             self.offload_manager.swap_blocks()
 
     def set_action_weights(self, action_weights):

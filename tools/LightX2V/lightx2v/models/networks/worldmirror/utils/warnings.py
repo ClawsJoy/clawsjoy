@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 Wrapper utilities for warnings.
 """

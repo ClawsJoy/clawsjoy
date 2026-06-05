@@ -3,15 +3,17 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
 import time
-import requests
 from datetime import datetime
-from core.lib.unified_config import unified_config
+
+import requests
+
 from core.lib.smart_config import smart_config
+from core.lib.unified_config import unified_config
 
 
 class RealClosedLoop:
@@ -20,29 +22,28 @@ class RealClosedLoop:
     def __init__(self):
         self.loop_count = 0
         self.strategies = ["健康检查", "服务重启", "端口释放"]
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("🧠 真实闭环系统启动")
-        print("="*60)
+        print("=" * 60)
         print(f"策略库: {self.strategies}")
         print("学习模式: 启用")
-        print("="*60)
+        print("=" * 60)
 
     def perceive(self):
         """感知 - 真实检测"""
-        state = {
-            'timestamp': datetime.now().isoformat(),
-            'services': {}
-        }
+        state = {"timestamp": datetime.now().isoformat(), "services": {}}
 
-        ports = [('gateway', 5002), ('agent', 5005), ('doc', 5008)]
+        ports = [("gateway", 5002), ("agent", 5005), ("doc", 5008)]
         for name, port in ports:
             try:
-                resp = requests.get(unified_config.get_service_url(f"{port}/health"), timeout=2)
+                resp = requests.get(
+                    unified_config.get_service_url(f"{port}/health"), timeout=2
+                )
                 healthy = resp.status_code == 200
-                state['services'][name] = healthy
+                state["services"][name] = healthy
                 print(f"  {name}: {'✅' if healthy else '❌'}")
             except Exception as e:
-                state['services'][name] = False
+                state["services"][name] = False
                 print(f"  {name}: ❌ ({str(e)[:30]})")
 
         return state
@@ -50,19 +51,17 @@ class RealClosedLoop:
     def decide(self, state):
         """决策 - 根据状态决定行动"""
         actions = []
-        for name, healthy in state['services'].items():
+        for name, healthy in state["services"].items():
             if not healthy:
-                actions.append({
-                    'type': 'restart_service',
-                    'service': name,
-                    'priority': 'high'
-                })
+                actions.append(
+                    {"type": "restart_service", "service": name, "priority": "high"}
+                )
         return actions
 
     def act(self, actions):
         """行动 - 执行修复"""
         for action in actions:
-            if action['type'] == 'restart_service':
+            if action["type"] == "restart_service":
                 print(f"🔧 重启服务: {action['service']}")
                 # 这里调用实际的修复逻辑
         return len(actions)

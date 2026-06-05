@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import random
 from datetime import datetime
 
@@ -13,6 +12,8 @@ from utils.model_utils import (
 )
 from utils.video_page import build_video_page
 
+from lib.smart_config import smart_config
+
 
 def get_gpu_rules(resolution):
     """根据分辨率获取 GPU 规则
@@ -26,8 +27,24 @@ def get_gpu_rules(resolution):
     if resolution in ["540p", "720p"]:
         return [
             (80, {}),
-            (40, {"cpu_offload_val": False, "t5_cpu_offload_val": True, "vae_cpu_offload_val": True, "clip_cpu_offload_val": True}),
-            (32, {"cpu_offload_val": True, "t5_cpu_offload_val": False, "vae_cpu_offload_val": False, "clip_cpu_offload_val": False}),
+            (
+                40,
+                {
+                    "cpu_offload_val": False,
+                    "t5_cpu_offload_val": True,
+                    "vae_cpu_offload_val": True,
+                    "clip_cpu_offload_val": True,
+                },
+            ),
+            (
+                32,
+                {
+                    "cpu_offload_val": True,
+                    "t5_cpu_offload_val": False,
+                    "vae_cpu_offload_val": False,
+                    "clip_cpu_offload_val": False,
+                },
+            ),
             (
                 24,
                 {
@@ -83,8 +100,24 @@ def get_gpu_rules(resolution):
     else:
         return [
             (80, {}),
-            (40, {"cpu_offload_val": False, "t5_cpu_offload_val": True, "vae_cpu_offload_val": True, "clip_cpu_offload_val": True}),
-            (32, {"cpu_offload_val": True, "t5_cpu_offload_val": False, "vae_cpu_offload_val": False, "clip_cpu_offload_val": False}),
+            (
+                40,
+                {
+                    "cpu_offload_val": False,
+                    "t5_cpu_offload_val": True,
+                    "vae_cpu_offload_val": True,
+                    "clip_cpu_offload_val": True,
+                },
+            ),
+            (
+                32,
+                {
+                    "cpu_offload_val": True,
+                    "t5_cpu_offload_val": False,
+                    "vae_cpu_offload_val": False,
+                    "clip_cpu_offload_val": False,
+                },
+            ),
             (
                 24,
                 {

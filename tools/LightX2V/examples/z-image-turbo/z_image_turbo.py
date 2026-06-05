@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 Z-Image image-to-image generation example.
 This example demonstrates how to use LightX2V with Z-Image-Turbo model for T2I generation.

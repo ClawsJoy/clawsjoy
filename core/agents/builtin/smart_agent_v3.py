@@ -3,25 +3,22 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 import logging
 
 from core.lib.unified_config import unified_config
 
-from core.lib.unified_config import unified_config
-
-from core.lib.unified_config import unified_config
 #!/usr/bin/env python3
 """真正智能 Agent v3 - 完整意图"""
 
 import sys
 import time
-from pathlib import Path
 from datetime import datetime
-from core.lib.config_manager import config_manager
+from pathlib import Path
 
+from core.lib.config_manager import config_manager
 
 
 class SmartAgentV3:
@@ -35,34 +32,46 @@ class SmartAgentV3:
             "分析Agent": "分析Agent：负责数据分析、优化建议、系统监控",
             "私人管家": "私人管家：用户的数字分身，1对1专属服务",
         }
-    
+
     def understand(self, user_input: str):
         lower = user_input.lower().strip()
 
-        if any(k in lower for k in ['你好', 'hi', 'hello', '你是谁', '你叫什么', '你干啥', '你能干嘛']):
+        if any(
+            k in lower
+            for k in ["你好", "hi", "hello", "你是谁", "你叫什么", "你干啥", "你能干嘛"]
+        ):
             return {"task": "greeting"}
 
-        if any(k in lower for k in ['clawsjoy', '系统是什么', '介绍', 'claws']):
+        if any(k in lower for k in ["clawsjoy", "系统是什么", "介绍", "claws"]):
             return {"task": "intro"}
 
-        if any(k in lower for k in ['有哪些 agent', '列出 agent', 'agent 列表', '什么 agent', 'agent有哪些']):
+        if any(
+            k in lower
+            for k in [
+                "有哪些 agent",
+                "列出 agent",
+                "agent 列表",
+                "什么 agent",
+                "agent有哪些",
+            ]
+        ):
             return {"task": "list_agents"}
 
         for agent in self.agent_details.keys():
             if agent in user_input:
                 return {"task": "agent_detail", "agent": agent}
 
-        if any(k in lower for k in ['会什么', '能做什么', '有什么功能', '能力']):
+        if any(k in lower for k in ["会什么", "能做什么", "有什么功能", "能力"]):
             return {"task": "capabilities"}
 
-        if any(k in lower for k in ['技能', 'skill']):
+        if any(k in lower for k in ["技能", "skill"]):
             return {"task": "list_skills"}
 
-        if any(k in lower for k in ['图', 'chart', '架构图', '蓝图']):
+        if any(k in lower for k in ["图", "chart", "架构图", "蓝图"]):
             return {"task": "generate_chart"}
 
         return {"task": "unknown"}
-    
+
     def execute(self, task: str, agent: str = None):
         if task == "greeting":
             return "你好！我是 ClawsJoy 智能助手。我可以帮你了解系统、查询 Agent、列出技能、生成图表等。"
@@ -92,23 +101,30 @@ class SmartAgentV3:
 
         if task == "list_skills":
             skills_dir = Path("unified_config.ROOT/skills")
-            skills = [d.name for d in skills_dir.iterdir() if d.is_dir() and not d.name.startswith('_')]
-            return f"共有 {len(skills)} 个原子技能：{', '.join(skills[:10])}" + (" 等" if len(skills) > 10 else "")
+            skills = [
+                d.name
+                for d in skills_dir.iterdir()
+                if d.is_dir() and not d.name.startswith("_")
+            ]
+            return f"共有 {len(skills)} 个原子技能：{', '.join(skills[:10])}" + (
+                " 等" if len(skills) > 10 else ""
+            )
 
         if task == "generate_chart":
             try:
                 from core.lib.education.retrieval_generator import RetrievalGenerator
+
                 gen = RetrievalGenerator()
                 svg = gen.generate_svg_content()
                 filename = f"chart_{datetime.now().strftime('%Y%m%d_%H%M%S')}.svg"
                 file_path = Path("unified_config.ROOT/output") / filename
-                file_path.write_text(svg, encoding='utf-8')
+                file_path.write_text(svg, encoding="utf-8")
                 return f"已生成架构图：{file_path}"
             except Exception as e:
                 return f"生成图表失败：{e}"
 
         return "抱歉，我没理解您的意思。你可以试试问：有哪些 Agent？、ClawsJoy 是什么？、你会什么？"
-    
+
     def process(self, user_input: str):
         start = time.time()
         intent = self.understand(user_input)
@@ -118,17 +134,17 @@ class SmartAgentV3:
         return {
             "response": response,
             "task": intent.get("task"),
-            "time_ms": round(elapsed, 2)
+            "time_ms": round(elapsed, 2),
         }
 
 
 if __name__ == "__main__":
     agent = SmartAgentV3()
-    
+
     print("=" * 60)
     print("ClawsJoy 智能助手 v3")
     print("=" * 60)
-    
+
     tests = [
         "你是谁",
         "你干啥的",
@@ -137,9 +153,9 @@ if __name__ == "__main__":
         "决策Agent是干什么的",
         "你会什么",
         "有哪些技能",
-        "生成架构图"
+        "生成架构图",
     ]
-    
+
     for test in tests:
         print(f"\n👤 {test}")
         result = agent.process(test)

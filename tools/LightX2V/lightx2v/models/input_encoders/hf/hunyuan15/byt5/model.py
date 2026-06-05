@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import glob
 import json
 import os
@@ -8,6 +7,8 @@ import torch
 import torch.nn as nn
 from safetensors import safe_open
 from transformers import AutoTokenizer
+
+from lib.smart_config import smart_config
 
 try:
     from transformers import T5ForConditionalGeneration
@@ -46,7 +47,10 @@ def add_special_token(
         idx_color_dict = json.load(f)
 
     if multilingual:
-        font_token = [f"<{font_code[:2]}-font-{idx_font_dict[font_code]}>" for font_code in idx_font_dict]
+        font_token = [
+            f"<{font_code[:2]}-font-{idx_font_dict[font_code]}>"
+            for font_code in idx_font_dict
+        ]
     else:
         font_token = [f"<font-{i}>" for i in range(len(idx_font_dict))]
     color_token = [f"<color-{i}>" for i in range(len(idx_color_dict))]
@@ -176,9 +180,21 @@ class ByT5TextEncoder:
         self.byt5_max_length = byt5_max_length
         self.enable_cfg = config.get("enable_cfg", False)
         byT5_google_path = os.path.join(checkpoint_path, "text_encoder", "byt5-small")
-        byT5_ckpt_path = os.path.join(checkpoint_path, "text_encoder", "Glyph-SDXL-v2", "checkpoints/byt5_model.pt")
-        multilingual_prompt_format_color_path = os.path.join(checkpoint_path, "text_encoder", "Glyph-SDXL-v2", "assets/color_idx.json")
-        multilingual_prompt_format_font_path = os.path.join(checkpoint_path, "text_encoder", "Glyph-SDXL-v2", "assets/multilingual_10-lang_idx.json")
+        byT5_ckpt_path = os.path.join(
+            checkpoint_path,
+            "text_encoder",
+            "Glyph-SDXL-v2",
+            "checkpoints/byt5_model.pt",
+        )
+        multilingual_prompt_format_color_path = os.path.join(
+            checkpoint_path, "text_encoder", "Glyph-SDXL-v2", "assets/color_idx.json"
+        )
+        multilingual_prompt_format_font_path = os.path.join(
+            checkpoint_path,
+            "text_encoder",
+            "Glyph-SDXL-v2",
+            "assets/multilingual_10-lang_idx.json",
+        )
         byt5_args = dict(
             byT5_google_path=byT5_google_path,
             byT5_ckpt_path=byT5_ckpt_path,
@@ -186,18 +202,41 @@ class ByT5TextEncoder:
             multilingual_prompt_format_font_path=multilingual_prompt_format_font_path,
             byt5_max_length=byt5_max_length,
         )
-        self.byt5_tokenizer, self.byt5_model, self.byt5_max_length = self.create_byt5(byt5_args, device)
+        self.byt5_tokenizer, self.byt5_model, self.byt5_max_length = self.create_byt5(
+            byt5_args, device
+        )
         self.byt5_model = self.byt5_model.to(device=device)
-        self.prompt_format = MultilingualPromptFormat(font_path=multilingual_prompt_format_font_path, color_path=multilingual_prompt_format_color_path)
+        self.prompt_format = MultilingualPromptFormat(
+            font_path=multilingual_prompt_format_font_path,
+            color_path=multilingual_prompt_format_color_path,
+        )
 
-        self.byt5_mapper = ByT5Mapper(in_dim=1472, out_dim=2048, hidden_dim=2048, out_dim1=self.config["hidden_size"], use_residual=False).to(torch.bfloat16)
+        self.byt5_mapper = ByT5Mapper(
+            in_dim=1472,
+            out_dim=2048,
+            hidden_dim=2048,
+            out_dim1=self.config["hidden_size"],
+            use_residual=False,
+        ).to(torch.bfloat16)
 
-        byt5_mapper_model_path = os.path.join(checkpoint_path, "transformer", self.config["transformer_model_name"])
-        safetensors_files = glob.glob(os.path.join(byt5_mapper_model_path, "*.safetensors"))
+        byt5_mapper_model_path = os.path.join(
+            checkpoint_path, "transformer", self.config["transformer_model_name"]
+        )
+        safetensors_files = glob.glob(
+            os.path.join(byt5_mapper_model_path, "*.safetensors")
+        )
         byt5_mapper_state_dict = {}
         for safetensor_path in safetensors_files:
             with safe_open(safetensor_path, framework="pt", device="cpu") as f:
-                byt5_mapper_state_dict.update({key.replace("byt5_in.", ""): f.get_tensor(key).to(torch.bfloat16) for key in f.keys() if "byt5_in" in key})
+                byt5_mapper_state_dict.update(
+                    {
+                        key.replace("byt5_in.", ""): f.get_tensor(key).to(
+                            torch.bfloat16
+                        )
+                        for key in f.keys()
+                        if "byt5_in" in key
+                    }
+                )
 
         self.byt5_mapper.load_state_dict(byt5_mapper_state_dict)
         self.byt5_mapper.to(device=device)
@@ -233,9 +272,13 @@ class ByT5TextEncoder:
         # Load custom checkpoint if provided
         if args["byT5_ckpt_path"] is not None:
             if "cuda" not in str(device):
-                byt5_state_dict = torch.load(args["byT5_ckpt_path"], map_location=device)
+                byt5_state_dict = torch.load(
+                    args["byT5_ckpt_path"], map_location=device
+                )
             else:
-                byt5_state_dict = torch.load(args["byT5_ckpt_path"], map_location=device)
+                byt5_state_dict = torch.load(
+                    args["byT5_ckpt_path"], map_location=device
+                )
             if "state_dict" in byt5_state_dict:
                 sd = byt5_state_dict["state_dict"]
                 newsd = {}
@@ -298,15 +341,21 @@ class ByT5TextEncoder:
             Tuple of (byt5_embeddings, byt5_mask)
         """
         byt5_embeddings = torch.zeros((1, self.byt5_max_length, 1472), device=device)
-        byt5_mask = torch.zeros((1, self.byt5_max_length), device=device, dtype=torch.int64)
+        byt5_mask = torch.zeros(
+            (1, self.byt5_max_length), device=device, dtype=torch.int64
+        )
 
         glyph_texts = self._extract_glyph_texts(prompt_text)
 
         if len(glyph_texts) > 0:
-            text_styles = [{"color": None, "font-family": None} for _ in range(len(glyph_texts))]
+            text_styles = [
+                {"color": None, "font-family": None} for _ in range(len(glyph_texts))
+            ]
             formatted_text = self.prompt_format.format_prompt(glyph_texts, text_styles)
 
-            text_ids, text_mask = self.get_byt5_text_tokens(self.byt5_tokenizer, self.byt5_max_length, formatted_text)
+            text_ids, text_mask = self.get_byt5_text_tokens(
+                self.byt5_tokenizer, self.byt5_max_length, formatted_text
+            )
             text_ids = text_ids.to(device)
             text_mask = text_mask.to(device)
 
@@ -392,9 +441,21 @@ class ByT5TextEncoderForBI(ByT5TextEncoder):
 
         # Load base ByT5 model from checkpoint_path
         byT5_google_path = os.path.join(checkpoint_path, "text_encoder", "byt5-small")
-        byT5_ckpt_path = os.path.join(checkpoint_path, "text_encoder", "Glyph-SDXL-v2", "checkpoints/byt5_model.pt")
-        multilingual_prompt_format_color_path = os.path.join(checkpoint_path, "text_encoder", "Glyph-SDXL-v2", "assets/color_idx.json")
-        multilingual_prompt_format_font_path = os.path.join(checkpoint_path, "text_encoder", "Glyph-SDXL-v2", "assets/multilingual_10-lang_idx.json")
+        byT5_ckpt_path = os.path.join(
+            checkpoint_path,
+            "text_encoder",
+            "Glyph-SDXL-v2",
+            "checkpoints/byt5_model.pt",
+        )
+        multilingual_prompt_format_color_path = os.path.join(
+            checkpoint_path, "text_encoder", "Glyph-SDXL-v2", "assets/color_idx.json"
+        )
+        multilingual_prompt_format_font_path = os.path.join(
+            checkpoint_path,
+            "text_encoder",
+            "Glyph-SDXL-v2",
+            "assets/multilingual_10-lang_idx.json",
+        )
         byt5_args = dict(
             byT5_google_path=byT5_google_path,
             byT5_ckpt_path=byT5_ckpt_path,
@@ -402,12 +463,23 @@ class ByT5TextEncoderForBI(ByT5TextEncoder):
             multilingual_prompt_format_font_path=multilingual_prompt_format_font_path,
             byt5_max_length=byt5_max_length,
         )
-        self.byt5_tokenizer, self.byt5_model, self.byt5_max_length = self.create_byt5(byt5_args, device)
+        self.byt5_tokenizer, self.byt5_model, self.byt5_max_length = self.create_byt5(
+            byt5_args, device
+        )
         self.byt5_model = self.byt5_model.to(device=device)
-        self.prompt_format = MultilingualPromptFormat(font_path=multilingual_prompt_format_font_path, color_path=multilingual_prompt_format_color_path)
+        self.prompt_format = MultilingualPromptFormat(
+            font_path=multilingual_prompt_format_font_path,
+            color_path=multilingual_prompt_format_color_path,
+        )
 
         # Create byt5_mapper with BI model's hidden_size
-        self.byt5_mapper = ByT5Mapper(in_dim=1472, out_dim=2048, hidden_dim=2048, out_dim1=self.config["hidden_size"], use_residual=False).to(torch.bfloat16)
+        self.byt5_mapper = ByT5Mapper(
+            in_dim=1472,
+            out_dim=2048,
+            hidden_dim=2048,
+            out_dim1=self.config["hidden_size"],
+            use_residual=False,
+        ).to(torch.bfloat16)
 
         # Load byt5_in weights from action_ckpt (BI model)
         if action_ckpt is not None:
@@ -419,24 +491,42 @@ class ByT5TextEncoderForBI(ByT5TextEncoder):
                 for key in f.keys():
                     if "byt5_in" in key:
                         new_key = key.replace("byt5_in.", "")
-                        byt5_mapper_state_dict[new_key] = f.get_tensor(key).to(torch.bfloat16)
+                        byt5_mapper_state_dict[new_key] = f.get_tensor(key).to(
+                            torch.bfloat16
+                        )
 
             self.byt5_mapper.load_state_dict(byt5_mapper_state_dict)
         else:
             # Fallback to base model path
-            byt5_mapper_model_path = os.path.join(checkpoint_path, "transformer", self.config["transformer_model_name"])
-            safetensors_files = glob.glob(os.path.join(byt5_mapper_model_path, "*.safetensors"))
+            byt5_mapper_model_path = os.path.join(
+                checkpoint_path, "transformer", self.config["transformer_model_name"]
+            )
+            safetensors_files = glob.glob(
+                os.path.join(byt5_mapper_model_path, "*.safetensors")
+            )
             byt5_mapper_state_dict = {}
             for safetensor_path in safetensors_files:
                 with safe_open(safetensor_path, framework="pt", device="cpu") as f:
-                    byt5_mapper_state_dict.update({key.replace("byt5_in.", ""): f.get_tensor(key).to(torch.bfloat16) for key in f.keys() if "byt5_in" in key})
+                    byt5_mapper_state_dict.update(
+                        {
+                            key.replace("byt5_in.", ""): f.get_tensor(key).to(
+                                torch.bfloat16
+                            )
+                            for key in f.keys()
+                            if "byt5_in" in key
+                        }
+                    )
             self.byt5_mapper.load_state_dict(byt5_mapper_state_dict)
 
         self.byt5_mapper.to(device=device)
 
 
 if __name__ == "__main__":
-    byt5 = ByT5TextEncoder(config={"transformer_model_name": "480p_t2v", "hidden_size": 2048}, device="cuda", checkpoint_path="/data/nvme1/yongyang/models/HunyuanVideo-1.5/ckpts/hunyuanvideo-1.5")
+    byt5 = ByT5TextEncoder(
+        config={"transformer_model_name": "480p_t2v", "hidden_size": 2048},
+        device="cuda",
+        checkpoint_path="/data/nvme1/yongyang/models/HunyuanVideo-1.5/ckpts/hunyuanvideo-1.5",
+    )
     prompt = "A close-up shot captures a scene on a polished, light-colored granite kitchen counter, illuminated by soft natural light from an unseen window. Initially, the frame focuses on a tall, clear glass filled with golden, translucent apple juice standing next to a single, shiny red apple with a green leaf still attached to its stem. The camera moves horizontally to the right. As the shot progresses, a white ceramic plate smoothly enters the frame, revealing a fresh arrangement of about seven or eight more apples, a mix of vibrant reds and greens, piled neatly upon it. A shallow depth of field keeps the focus sharply on the fruit and glass, while the kitchen backsplash in the background remains softly blurred. The scene is in a realistic style."
     byt5_features, byt5_masks = byt5.infer(prompt)
     print(byt5_features.shape, byt5_features.sum())

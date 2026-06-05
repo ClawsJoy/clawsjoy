@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 Distributed ops for supporting sequence parallel.
 """
@@ -45,7 +46,9 @@ def single_all_to_all(
 
     inp_shape = list(local_input.shape)
     inp_shape[scatter_dim] = inp_shape[scatter_dim] // seq_world_size
-    input_t = local_input.reshape([seq_world_size, inp_shape[scatter_dim]] + inp_shape[scatter_dim + 1 :]).contiguous()
+    input_t = local_input.reshape(
+        [seq_world_size, inp_shape[scatter_dim]] + inp_shape[scatter_dim + 1 :]
+    ).contiguous()
     output = torch.empty_like(input_t)
     comm = dist.all_to_all_single(output, input_t, group=group, async_op=async_op)
     if async_op:
@@ -66,7 +69,10 @@ def _all_to_all(
     group: dist.ProcessGroup,
 ):
     seq_world_size = dist.get_world_size(group)
-    input_list = [t.contiguous() for t in torch.tensor_split(local_input, seq_world_size, scatter_dim)]
+    input_list = [
+        t.contiguous()
+        for t in torch.tensor_split(local_input, seq_world_size, scatter_dim)
+    ]
     output_list = [torch.empty_like(input_list[0]) for _ in range(seq_world_size)]
     dist.all_to_all(output_list, input_list, group=group)
     return torch.cat(output_list, dim=gather_dim).contiguous()
@@ -87,7 +93,9 @@ class SeqAllToAll(torch.autograd.Function):
         ctx.gather_dim = gather_dim
         ctx.async_op = async_op
         if async_op:
-            output, comm, prev_scatter_dim = single_all_to_all(local_input, scatter_dim, gather_dim, group, async_op=async_op)
+            output, comm, prev_scatter_dim = single_all_to_all(
+                local_input, scatter_dim, gather_dim, group, async_op=async_op
+            )
             ctx.prev_scatter_dim = prev_scatter_dim
             return output, comm
 
@@ -96,7 +104,9 @@ class SeqAllToAll(torch.autograd.Function):
     @staticmethod
     def backward(ctx: Any, *grad_output: Tensor) -> Tuple[None, Tensor, None, None]:
         if ctx.async_op:
-            input_t = torch.cat(grad_output[0].split(1), dim=ctx.gather_dim + 1).squeeze(0)
+            input_t = torch.cat(
+                grad_output[0].split(1), dim=ctx.gather_dim + 1
+            ).squeeze(0)
             if ctx.prev_scatter_dim:
                 input_t = input_t.transpose(0, ctx.prev_scatter_dim)
         else:
@@ -112,21 +122,27 @@ class SeqAllToAll(torch.autograd.Function):
 
 class Slice(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: Any, group: dist.ProcessGroup, local_input: Tensor, dim: int) -> Tensor:
+    def forward(
+        ctx: Any, group: dist.ProcessGroup, local_input: Tensor, dim: int
+    ) -> Tensor:
         ctx.group = group
         ctx.rank = dist.get_rank(group)
         seq_world_size = dist.get_world_size(group)
         ctx.seq_world_size = seq_world_size
         ctx.dim = dim
         dim_size = local_input.shape[dim]
-        return local_input.split(dim_size // seq_world_size, dim=dim)[ctx.rank].contiguous()
+        return local_input.split(dim_size // seq_world_size, dim=dim)[
+            ctx.rank
+        ].contiguous()
 
     @staticmethod
     def backward(ctx: Any, grad_output: Tensor) -> Tuple[None, Tensor, None]:
         dim_size = list(grad_output.size())
         split_size = dim_size[0]
         dim_size[0] = dim_size[0] * ctx.seq_world_size
-        output = torch.empty(dim_size, dtype=grad_output.dtype, device=torch.cuda.current_device())
+        output = torch.empty(
+            dim_size, dtype=grad_output.dtype, device=torch.cuda.current_device()
+        )
         dist._all_gather_base(output, grad_output, group=ctx.group)
         return (None, torch.cat(output.split(split_size), dim=ctx.dim), None)
 
@@ -150,7 +166,9 @@ class Gather(torch.autograd.Function):
         split_size = dim_size[0]
         ctx.part_size = dim_size[dim]
         dim_size[0] = dim_size[0] * seq_world_size
-        output = torch.empty(dim_size, dtype=local_input.dtype, device=torch.cuda.current_device())
+        output = torch.empty(
+            dim_size, dtype=local_input.dtype, device=torch.cuda.current_device()
+        )
         dist._all_gather_base(output, local_input.contiguous(), group=ctx.group)
         return torch.cat(output.split(split_size), dim=dim)
 
@@ -201,7 +219,9 @@ def gather_seq_scatter_heads_qkv(
 
     # remove padding
     if qkv_shape is not None:
-        unpad_dim_size = cache("unpad_dim_size", lambda: torch.sum(torch.prod(qkv_shape, dim=-1)).item())
+        unpad_dim_size = cache(
+            "unpad_dim_size", lambda: torch.sum(torch.prod(qkv_shape, dim=-1)).item()
+        )
         if unpad_dim_size % world != 0:
             padding_size = qkv_tensor.size(seq_dim) - unpad_dim_size
             qkv_tensor = _unpad_tensor(qkv_tensor, seq_dim, padding_size)
@@ -304,7 +324,9 @@ def gather_outputs(
         return x
     x = Gather.apply(group, x, gather_dim, scale_grad)
     if padding_dim is not None:
-        unpad_dim_size = cache("unpad_dim_size", lambda: torch.sum(torch.prod(unpad_shape, dim=1)).item())
+        unpad_dim_size = cache(
+            "unpad_dim_size", lambda: torch.sum(torch.prod(unpad_shape, dim=1)).item()
+        )
         x = remove_seqeunce_parallel_padding(x, padding_dim, unpad_dim_size)
     return x
 
@@ -329,7 +351,9 @@ def _broadcast_data(data, shape, dtype, src, group, async_op):
             comms += _broadcast_data(data[i], sub_shape, dtype[i], src, group, async_op)
     elif isinstance(data, dict):
         for key, sub_data in data.items():
-            comms += _broadcast_data(sub_data, shape[key], dtype[key], src, group, async_op)
+            comms += _broadcast_data(
+                sub_data, shape[key], dtype[key], src, group, async_op
+            )
     elif isinstance(data, Tensor):
         comms.append(dist.broadcast(data, src=src, group=group, async_op=async_op))
     return comms
@@ -415,7 +439,9 @@ class SPDistForward:
                     local_dtypes = _get_dtypes(local_result)
                     if self.comm_shape:
                         group_shapes_lists = [None] * sp_world
-                        dist.all_gather_object(group_shapes_lists, local_shapes, group=group)
+                        dist.all_gather_object(
+                            group_shapes_lists, local_shapes, group=group
+                        )
                         _SEQ_DATA_META_SHAPES[self.name] = group_shapes_lists
                     else:
                         _SEQ_DATA_META_SHAPES[self.name] = [local_shapes] * sp_world
@@ -424,7 +450,11 @@ class SPDistForward:
                 dtypes = _SEQ_DATA_META_DTYPES[self.name]
                 buf_id = local_step % 2
                 if local_step == 0:
-                    sync_data = local_result if is_src else _construct_broadcast_buffer(shapes, dtypes, device)
+                    sync_data = (
+                        local_result
+                        if is_src
+                        else _construct_broadcast_buffer(shapes, dtypes, device)
+                    )
                     _broadcast_data(sync_data, shapes, dtypes, src_rank, group, False)
                     _SEQ_DATA_BUF[self.name][buf_id] = sync_data
 
@@ -438,8 +468,14 @@ class SPDistForward:
                     shapes = _SEQ_DATA_META_SHAPES[self.name][local_step + 1]
                     src_rank = dist.get_global_rank(group, local_step + 1)
                     is_src = sp_rank == local_step + 1
-                    next_sync_data = _SEQ_DATA_BUF[self.name][-1] if is_src else _construct_broadcast_buffer(shapes, dtypes, device)
-                    _SEQ_DATA_ASYNC_COMMS[self.name] = _broadcast_data(next_sync_data, shapes, dtypes, src_rank, group, True)
+                    next_sync_data = (
+                        _SEQ_DATA_BUF[self.name][-1]
+                        if is_src
+                        else _construct_broadcast_buffer(shapes, dtypes, device)
+                    )
+                    _SEQ_DATA_ASYNC_COMMS[self.name] = _broadcast_data(
+                        next_sync_data, shapes, dtypes, src_rank, group, True
+                    )
                     _SEQ_DATA_BUF[self.name][next_buf_id] = next_sync_data
                 yield _SEQ_DATA_BUF[self.name][buf_id]
 

@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 Kernel-Optimized Text Encoder
 
@@ -43,7 +44,9 @@ class LightLLMKernelTextEncoder:
         # Configuration
         self.tokenizer_max_length = 1024
         self.prompt_template_encode = config["prompt_template_encode"]
-        self.prompt_template_encode_start_idx = config["prompt_template_encode_start_idx"]
+        self.prompt_template_encode_start_idx = config[
+            "prompt_template_encode_start_idx"
+        ]
 
         self.CONDITION_IMAGE_SIZE = config.get("CONDITION_IMAGE_SIZE", 384 * 384)
         self.USE_IMAGE_ID_IN_PROMPT = config.get("USE_IMAGE_ID_IN_PROMPT", True)
@@ -71,19 +74,31 @@ class LightLLMKernelTextEncoder:
         """Load model and apply kernel optimizations"""
         logger.info("Loading model components...")
 
-        from transformers import Qwen2Tokenizer, Qwen2VLProcessor, Qwen2_5_VLForConditionalGeneration
+        from transformers import (
+            Qwen2_5_VLForConditionalGeneration,
+            Qwen2Tokenizer,
+            Qwen2VLProcessor,
+        )
 
         # 1. Load tokenizer
-        tokenizer_path = self.config.get("qwen25vl_tokenizer_path", os.path.join(self.model_path, "tokenizer"))
+        tokenizer_path = self.config.get(
+            "qwen25vl_tokenizer_path", os.path.join(self.model_path, "tokenizer")
+        )
         self.tokenizer = Qwen2Tokenizer.from_pretrained(tokenizer_path)
         logger.info(f"  ✓ Tokenizer loaded from {tokenizer_path}")
 
         # 2. Load processor and image processor
         if self.config["task"] == "i2i":
             if VaeImageProcessor is None:
-                raise ImportError("VaeImageProcessor could not be imported from diffusers")
-            self.image_processor = VaeImageProcessor(vae_scale_factor=self.config.get("vae_scale_factor", 8) * 2)
-            processor_path = self.config.get("qwen25vl_processor_path", os.path.join(self.model_path, "processor"))
+                raise ImportError(
+                    "VaeImageProcessor could not be imported from diffusers"
+                )
+            self.image_processor = VaeImageProcessor(
+                vae_scale_factor=self.config.get("vae_scale_factor", 8) * 2
+            )
+            processor_path = self.config.get(
+                "qwen25vl_processor_path", os.path.join(self.model_path, "processor")
+            )
             self.processor = Qwen2VLProcessor.from_pretrained(processor_path)
             logger.info(f"  ✓ Processor loaded from {processor_path}")
 
@@ -98,7 +113,9 @@ class LightLLMKernelTextEncoder:
             else:
                 attn_impl = "flash_attention_2"
         else:
-            attn_impl = "sdpa"  # Compatible with torch.compile and much faster than eager
+            attn_impl = (
+                "sdpa"  # Compatible with torch.compile and much faster than eager
+            )
 
         logger.info(f"  Loading model from {text_encoder_path}...")
         logger.info(f"  Attention implementation: {attn_impl}")
@@ -133,7 +150,9 @@ class LightLLMKernelTextEncoder:
                 self._replace_rmsnorm_with_kernel()
                 logger.info("  ✓ RMSNorm kernel integrated (from sgl_kernel)")
             except ImportError as e:
-                logger.warning(f"  ✗ Failed to import sgl_kernel: {e}. RMSNorm optimization disabled.")
+                logger.warning(
+                    f"  ✗ Failed to import sgl_kernel: {e}. RMSNorm optimization disabled."
+                )
                 self.use_rmsnorm_kernel = False
 
     def _replace_rmsnorm_with_kernel(self):
@@ -142,7 +161,9 @@ class LightLLMKernelTextEncoder:
         try:
             from transformers.models.qwen2.modeling_qwen2 import Qwen2RMSNorm
         except ImportError:
-            logger.warning("Could not import Qwen2RMSNorm, skipping RMSNorm optimization")
+            logger.warning(
+                "Could not import Qwen2RMSNorm, skipping RMSNorm optimization"
+            )
             return
 
         replaced_count = 0
@@ -214,10 +235,14 @@ class LightLLMKernelTextEncoder:
 
             if self.USE_IMAGE_ID_IN_PROMPT:
                 base_img_prompt = ""
-                img_prompt_template = "Picture {}: <|vision_start|><|image_pad|><|vision_end|>"
+                img_prompt_template = (
+                    "Picture {}: <|vision_start|><|image_pad|><|vision_end|>"
+                )
                 for i, image in enumerate(image_list):
                     base_img_prompt += img_prompt_template.format(i + 1)
-                    condition_image, vae_image, condition_image_info, vae_image_info = self.preprocess_image(image)
+                    condition_image, vae_image, condition_image_info, vae_image_info = (
+                        self.preprocess_image(image)
+                    )
                     condition_image_list.append(condition_image)
                     vae_image_list.append(vae_image)
                     condition_image_info_list.append(condition_image_info)
@@ -225,7 +250,9 @@ class LightLLMKernelTextEncoder:
             else:
                 base_img_prompt = "<|vision_start|><|image_pad|><|vision_end|>"
                 for i, image in enumerate(image_list):
-                    condition_image, vae_image, condition_image_info, vae_image_info = self.preprocess_image(image)
+                    condition_image, vae_image, condition_image_info, vae_image_info = (
+                        self.preprocess_image(image)
+                    )
                     condition_image_list.append(condition_image)
                     vae_image_list.append(vae_image)
                     condition_image_info_list.append(condition_image_info)
@@ -241,7 +268,11 @@ class LightLLMKernelTextEncoder:
             condition_image_list = None
 
         # Prepare text and model inputs
-        if self.config["task"] == "i2i" and not self.is_layered and image_list is not None:
+        if (
+            self.config["task"] == "i2i"
+            and not self.is_layered
+            and image_list is not None
+        ):
             txt = [template.format(base_img_prompt + e) for e in text]
 
             model_inputs = self.processor(
@@ -261,7 +292,13 @@ class LightLLMKernelTextEncoder:
         else:
             txt = [template.format(e) for e in text]
 
-            model_inputs = self.tokenizer(txt, max_length=self.tokenizer_max_length + drop_idx, padding=True, truncation=True, return_tensors="pt").to(AI_DEVICE)
+            model_inputs = self.tokenizer(
+                txt,
+                max_length=self.tokenizer_max_length + drop_idx,
+                padding=True,
+                truncation=True,
+                return_tensors="pt",
+            ).to(AI_DEVICE)
 
             encoder_hidden_states = self.model(
                 input_ids=model_inputs.input_ids,
@@ -275,11 +312,24 @@ class LightLLMKernelTextEncoder:
 
         split_hidden_states = self._extract_masked_hidden(hidden_states, attention_mask)
         split_hidden_states = [e[drop_idx:] for e in split_hidden_states]
-        attn_mask_list = [torch.ones(e.size(0), dtype=torch.long, device=e.device) for e in split_hidden_states]
+        attn_mask_list = [
+            torch.ones(e.size(0), dtype=torch.long, device=e.device)
+            for e in split_hidden_states
+        ]
         max_seq_len = max([e.size(0) for e in split_hidden_states])
 
-        prompt_embeds = torch.stack([torch.cat([u, u.new_zeros(max_seq_len - u.size(0), u.size(1))]) for u in split_hidden_states])
-        encoder_attention_mask = torch.stack([torch.cat([u, u.new_zeros(max_seq_len - u.size(0))]) for u in attn_mask_list])
+        prompt_embeds = torch.stack(
+            [
+                torch.cat([u, u.new_zeros(max_seq_len - u.size(0), u.size(1))])
+                for u in split_hidden_states
+            ]
+        )
+        encoder_attention_mask = torch.stack(
+            [
+                torch.cat([u, u.new_zeros(max_seq_len - u.size(0))])
+                for u in attn_mask_list
+            ]
+        )
 
         prompt_embeds = prompt_embeds.to(dtype=self.dtype, device=AI_DEVICE)
         prompt_embeds_mask = encoder_attention_mask
@@ -288,7 +338,9 @@ class LightLLMKernelTextEncoder:
         prompt_embeds = prompt_embeds.view(1, seq_len, -1)
         prompt_embeds_mask = prompt_embeds_mask.view(1, seq_len)
 
-        logger.info(f"✓ Kernel inference complete: prompt_embeds shape={prompt_embeds.shape}")
+        logger.info(
+            f"✓ Kernel inference complete: prompt_embeds shape={prompt_embeds.shape}"
+        )
 
         return prompt_embeds, prompt_embeds_mask, image_info
 
@@ -303,11 +355,24 @@ class LightLLMKernelTextEncoder:
     def preprocess_image(self, image):
         """Preprocess image"""
         image_width, image_height = image.size
-        condition_width, condition_height = self._calculate_dimensions(self.CONDITION_IMAGE_SIZE, image_width / image_height)
-        vae_width, vae_height = self._calculate_dimensions(self.VAE_IMAGE_SIZE, image_width / image_height)
-        condition_image = self.image_processor.resize(image, condition_height, condition_width)
-        vae_image = self.image_processor.preprocess(image, vae_height, vae_width).unsqueeze(2)
-        return condition_image, vae_image, (condition_height, condition_width), (vae_height, vae_width)
+        condition_width, condition_height = self._calculate_dimensions(
+            self.CONDITION_IMAGE_SIZE, image_width / image_height
+        )
+        vae_width, vae_height = self._calculate_dimensions(
+            self.VAE_IMAGE_SIZE, image_width / image_height
+        )
+        condition_image = self.image_processor.resize(
+            image, condition_height, condition_width
+        )
+        vae_image = self.image_processor.preprocess(
+            image, vae_height, vae_width
+        ).unsqueeze(2)
+        return (
+            condition_image,
+            vae_image,
+            (condition_height, condition_width),
+            (vae_height, vae_width),
+        )
 
     def offload_to_cpu(self):
         """Offload model to CPU to free GPU memory"""

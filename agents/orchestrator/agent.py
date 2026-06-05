@@ -1,150 +1,215 @@
-#!/usr/bin/env python3
-"""Agent - Agent 模块
+"""Orchestrator - 任务编排器 v5.1"""
 
-@version: 5.0.0
-@author: ClawsJoy
-@date: 2026-05-31
-"""
+import sys
 
-import logging
+sys.path.insert(0, "/home/flybo/clawsjoy_v5")
 
-"""编排器 Agent - 真正任务分解和分发"""
+import inspect
+from typing import Dict, List, Optional
 
-import time
-import requests
-import json
-from datetime import datetime
-from pathlib import Path
-from typing import Dict, Optional, List
-from core.agents.base.smart_agent import SmartAgent
-from core.lib.workspace_manager import workspace_manager
-from core.lib.smart_adapter import smart_adapter
+from core.agents.business.business_agent_v2 import BusinessAgentV2
 
 
-class OrchestratorAgent(SmartAgent):
-    """任务编排器 - 真正的任务分解"""
+class OrchestratorAgent(BusinessAgentV2):
+    """任务编排器 - 分解子任务，调度其他 Agent"""
 
     name = "orchestrator"
     description = "任务编排与分发"
-    type = "core"
+    version = "5.1.0"
+
+    AVAILABLE_AGENTS = [
+        "analysis_agent",
+        "calculator_agent",
+        "translate_agent",
+        "code_agent",
+        "writer_agent",
+        "vision_agent",
+        "video_agent",
+    ]
 
     def __init__(self, user_id: str = "default"):
         super().__init__(user_id=user_id)
-        self.behavior = workspace_manager.get_behavior_config("orchestrator")
-        print(f"[Orchestrator] 初始化完成")
+        self._agent_cache = {}
+        self.subtask_results = []
+        # 确保 engines 存在（BusinessAgentV2 应该已初始化）
+        if not hasattr(self, "engines"):
+            self.engines = {}
+        print(f"[Orchestrator] v{self.version} 初始化完成")
 
-    def _save_record(self, to_agent: str, request: str, response: dict, duration_ms: float):
-        """保存通信记录"""
-        record = {
-            "timestamp": datetime.now().isoformat(),
-            "from": self.name,
-            "to": to_agent,
-            "request": request,
-            "response": response,
-            "duration_ms": duration_ms,
-            "user_id": self.user_id
+    def _execute_business(self, user_input: str, context: Dict = None) -> Dict:
+        return self.process(user_input, context)
+
+    def process(self, user_input: str, context: dict = None) -> Dict:
+        print(f"[Orchestrator] 📋 开始编排: {user_input[:50]}...")
+
+        subtasks = self._decompose_task(user_input)
+        print(f"[Orchestrator] 分解为 {len(subtasks)} 个子任务")
+
+        results = []
+        previous_result = None
+
+        for i, subtask in enumerate(subtasks):
+            print(
+                f"[Orchestrator] 执行子任务 {i+1}/{len(subtasks)}: {subtask.get('agent')}"
+            )
+
+            if previous_result:
+                subtask["previous_result"] = previous_result
+                print(f"[Orchestrator] 传递前置结果给子任务 {i+1}")
+
+            result = self._execute_subtask(subtask)
+            results.append(result)
+
+            if result.get("success"):
+                previous_result = result.get("full_response") or result.get("response")
+
+        final_response = self._aggregate_results(user_input, subtasks, results)
+
+        return {
+            "success": True,
+            "response": final_response,
+            "subtasks_count": len(subtasks),
+            "subtask_results": results,
+            "agent": self.name,
+            "user_id": self.user_id,
         }
-        log_dir = Path("data/exchange")
-        log_dir.mkdir(parents=True, exist_ok=True)
-        filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}.json"
-        with open(log_dir / filename, 'w') as f:
-            json.dump(record, f, indent=2)
 
-    def _llm_decompose(self, task: str) -> List[Dict]:
-        """使用 LLM 分解任务"""
-        prompt = f"""请将以下复杂任务分解为多个简单的子任务。
+    def _decompose_task(self, task: str) -> List[Dict]:
+        task_lower = task.lower()
 
-任务: {task}
+        if "分析" in task_lower and ("写" in task_lower or "总结" in task_lower):
+            return [
+                {
+                    "step": 1,
+                    "description": "数据分析",
+                    "agent": "analysis_agent",
+                    "input": task,
+                },
+                {
+                    "step": 2,
+                    "description": "撰写报告",
+                    "agent": "writer_agent",
+                    "input": "根据分析结果写总结报告",
+                },
+            ]
+        elif "分析" in task_lower:
+            return [
+                {
+                    "step": 1,
+                    "description": "数据分析",
+                    "agent": "analysis_agent",
+                    "input": task,
+                }
+            ]
+        elif "翻译" in task_lower and len(task) > 50:
+            return [
+                {
+                    "step": 1,
+                    "description": "文本翻译",
+                    "agent": "translate_agent",
+                    "input": task,
+                }
+            ]
+        else:
+            return [
+                {
+                    "step": 1,
+                    "description": "任务处理",
+                    "agent": "analysis_agent",
+                    "input": task,
+                }
+            ]
 
-可用 Agent:
-- analysis_agent: 数据分析
-- code_agent: 代码生成
-- executor_agent: 计算执行
-- chat_agent: 通用对话
-
-输出 JSON 格式:
-[
-    {{"step": 1, "description": "子任务描述", "target": "目标Agent", "input": "输入参数"}},
-    {{"step": 2, "description": "子任务描述", "target": "目标Agent", "input": "输入参数"}}
-]
-
-只输出 JSON 数组:"""
-
-        try:
-            response = smart_adapter.generate(prompt, auto_select=True)
-            # 提取 JSON
-            import re
-            match = re.search(r'\[.*\]', response, re.DOTALL)
-            if match:
-                import json
-                return json.loads(match.group())
-        except Exception as e:
-            print(f"LLM 分解失败: {e}")
-
-        return [{"step": 1, "description": task, "target": "chat_agent", "input": task}]
+    def _get_agent(self, agent_name: str):
+        cache_key = f"{agent_name}:{self.user_id}"
+        if cache_key not in self._agent_cache:
+            try:
+                module = __import__(f"agents.{agent_name}.agent", fromlist=[agent_name])
+                for attr in dir(module):
+                    if attr.endswith("Agent") and attr not in [
+                        "BusinessAgent",
+                        "BusinessAgentV2",
+                        "SmartAgent",
+                    ]:
+                        agent_class = getattr(module, attr)
+                        self._agent_cache[cache_key] = agent_class(self.user_id)
+                        print(f"[Orchestrator] 加载 Agent: {agent_name}")
+                        break
+            except Exception as e:
+                print(f"[Orchestrator] 加载失败 {agent_name}: {e}")
+                return None
+        return self._agent_cache[cache_key]
 
     def _execute_subtask(self, subtask: Dict) -> Dict:
-        """执行子任务"""
-        target = subtask.get('target', 'chat_agent')
-        description = subtask.get('description', '')
-        input_data = subtask.get('input', description)
+        agent_name = subtask.get("agent", "analysis_agent")
+        input_text = subtask.get("input", subtask.get("description", ""))
 
-        start = time.time()
-        resp = requests.post(
-            f"http://localhost:5002/api/agent/{target}/message",
-            json={"message": input_data, "user_id": self.user_id},
-            timeout=30
-        )
-        duration_ms = (time.time() - start) * 1000
-        result = resp.json() if resp.status_code == 200 else {"error": f"HTTP {resp.status_code}"}
+        call_context = {}
+        if "previous_result" in subtask:
+            call_context["previous_result"] = subtask["previous_result"]
+            prev = (
+                subtask["previous_result"][:500]
+                if len(subtask["previous_result"]) > 500
+                else subtask["previous_result"]
+            )
+            input_text = f"{input_text}\n\n【上一任务结果】\n{prev}"
 
-        self._save_record(target, input_data, result, duration_ms)
-        return result
+        agent = self._get_agent(agent_name)
+        if not agent:
+            return {
+                "step": subtask.get("step"),
+                "agent": agent_name,
+                "success": False,
+                "response": f"Agent {agent_name} 无法加载",
+                "full_response": "",
+            }
 
-    def _synthesize_results(self, subtasks: List, results: List) -> str:
-        """综合结果"""
+        try:
+            if hasattr(agent, "process"):
+                sig = inspect.signature(agent.process)
+                if "context" in sig.parameters:
+                    result = agent.process(input_text, call_context)
+                else:
+                    result = agent.process(input_text)
+            else:
+                result = agent.handle(input_text)
+
+            return {
+                "step": subtask.get("step"),
+                "agent": agent_name,
+                "success": result.get("success", True),
+                "response": result.get("response", "")[:500],
+                "full_response": result.get("response", ""),
+            }
+        except Exception as e:
+            print(f"[Orchestrator] 子任务失败: {e}")
+            import traceback
+
+            traceback.print_exc()
+            return {
+                "step": subtask.get("step"),
+                "agent": agent_name,
+                "success": False,
+                "response": f"执行失败: {str(e)[:100]}",
+                "full_response": "",
+            }
+
+    def _aggregate_results(
+        self, original_task: str, subtasks: List[Dict], results: List[Dict]
+    ) -> str:
+        if not results:
+            return "任务执行失败"
+
         if len(results) == 1:
-            return results[0].get("response", "处理完成")
+            return results[0].get("response", "任务完成")
 
-        # 多结果综合
-        summary = f"已完成 {len(subtasks)} 个子任务:\n"
+        summary = f"✅ 已完成 {len(results)} 个子任务：\n\n"
         for i, (subtask, result) in enumerate(zip(subtasks, results), 1):
-            desc = subtask.get('description', '任务')[:50]
-            resp = result.get('response', '完成')[:100]
-            summary += f"{i}. {desc}: {resp}\n"
+            status = "✅" if result.get("success") else "❌"
+            summary += f"**步骤 {i}: {subtask.get('description', '任务')}** {status}\n"
+            summary += f"   {result.get('response', '完成')[:300]}\n\n"
 
         return summary
-
-    def process(self, user_input: str, context=None) -> Dict:
-        """处理任务 - LLM 分解 + 执行"""
-        print(f"[Orchestrator] 收到: {user_input}")
-
-        decomposition = self.behavior.get('decomposition', {}) if self.behavior else {}
-
-        if decomposition.get('enabled', True):
-            # 使用 LLM 分解任务
-            subtasks = self._llm_decompose(user_input)
-            print(f"[Orchestrator] LLM 分解为 {len(subtasks)} 个子任务")
-
-            if subtasks:
-                # 执行子任务
-                results = []
-                for subtask in subtasks:
-                    print(f"  执行: {subtask.get('description', '')[:50]} -> {subtask.get('target')}")
-                    result = self._execute_subtask(subtask)
-                    results.append(result)
-
-                response = self._synthesize_results(subtasks, results)
-
-                return {
-                    "success": True,
-                    "response": response,
-                    "subtasks": subtasks,
-                    "user_id": self.user_id,
-                    "agent": self.name
-                }
-
-        return {"response": "无法处理该任务", "success": False, "user_id": self.user_id}
 
 
 orchestrator_agent = OrchestratorAgent()

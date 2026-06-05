@@ -3,34 +3,35 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
-from core.lib.unified_config import unified_config
-
-from core.lib.unified_config import unified_config
-from core.lib.unified_config import unified_config
-
 from core.lib.constants import PROJECT_ROOT
+from core.lib.unified_config import unified_config
+
 #!/usr/bin/env python3
 """技能验证框架 v4.0.0 - 三层验证模型"""
 
-import sys
 import json
-import yaml
 import logging
 import subprocess
-from pathlib import Path
-from typing import Dict, Any, List, Tuple
+import sys
 from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Dict, List, Tuple
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+import yaml
+
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class ValidationResult:
     """验证结果"""
+
     skill_name: str
     passed: bool
     errors: List[str] = field(default_factory=list)
@@ -40,18 +41,18 @@ class ValidationResult:
 
 class SkillValidator:
     """技能验证器 - 三层验证"""
-    
+
     VERSION = "4.0.0"
-    
+
     # 必需的元数据字段
-    REQUIRED_METADATA = ['name', 'version', 'description']
-    
+    REQUIRED_METADATA = ["name", "version", "description"]
+
     # 可选但建议的字段
-    RECOMMENDED_METADATA = ['use_when', 'not_for', 'security_grade', 'dependencies']
-    
+    RECOMMENDED_METADATA = ["use_when", "not_for", "security_grade", "dependencies"]
+
     def __init__(self, skills_path: Path = None):
         self.skills_path = skills_path or Path("skills")
-    
+
     def validate_skill(self, skill_name: str) -> ValidationResult:
         """完整验证一个技能"""
         result = ValidationResult(skill_name=skill_name, passed=True)
@@ -69,7 +70,7 @@ class SkillValidator:
 
         result.passed = len(result.errors) == 0
         return result
-    
+
     def _validate_static(self, skill_name: str, result: ValidationResult):
         """Layer 1: 静态验证"""
         skill_dir = self.skills_path / skill_name
@@ -85,24 +86,30 @@ class SkillValidator:
             result.errors.append("Missing SKILL.md")
         else:
             try:
-                content = skill_md.read_text(encoding='utf-8')
-                if content.startswith('---'):
-                    parts = content.split('---', 2)
+                content = skill_md.read_text(encoding="utf-8")
+                if content.startswith("---"):
+                    parts = content.split("---", 2)
                     if len(parts) >= 2:
                         metadata = unified_config.get("skill_metadata", {})
-                        result.metadata['metadata'] = metadata
-                        
+                        result.metadata["metadata"] = metadata
+
                         # 检查必需字段
                         for field in self.REQUIRED_METADATA:
                             if field not in metadata:
-                                result.errors.append(f"Missing required field in SKILL.md: {field}")
-                        
+                                result.errors.append(
+                                    f"Missing required field in SKILL.md: {field}"
+                                )
+
                         # 记录缺失的建议字段
                         for field in self.RECOMMENDED_METADATA:
                             if field not in metadata:
-                                result.warnings.append(f"Recommended field missing: {field}")
+                                result.warnings.append(
+                                    f"Recommended field missing: {field}"
+                                )
                     else:
-                        result.errors.append("Invalid SKILL.md format (missing frontmatter)")
+                        result.errors.append(
+                            "Invalid SKILL.md format (missing frontmatter)"
+                        )
                 else:
                     result.warnings.append("SKILL.md missing YAML frontmatter")
             except Exception as e:
@@ -116,46 +123,52 @@ class SkillValidator:
             # 语法检查
             proc = subprocess.run(
                 [sys.executable, "-m", "py_compile", str(main_py)],
-                capture_output=True, text=True
+                capture_output=True,
+                text=True,
             )
             if proc.returncode != 0:
                 result.errors.append(f"Syntax error: {proc.stderr[:100]}")
             else:
-                result.metadata['has_main'] = True
-    
+                result.metadata["has_main"] = True
+
     def _validate_dynamic(self, skill_name: str, result: ValidationResult):
         """Layer 2: 动态验证"""
         main_py = self.skills_path / skill_name / "scripts" / "main.py"
 
         try:
             import importlib.util
+
             spec = importlib.util.spec_from_file_location(skill_name, main_py)
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
 
             # 检查 execute 函数
-            if not hasattr(module, 'execute'):
+            if not hasattr(module, "execute"):
                 result.errors.append("No 'execute' function in main.py")
                 return
 
             # 检查函数签名
             import inspect
+
             sig = inspect.signature(module.execute)
             params = list(sig.parameters.keys())
-            if len(params) != 1 or params[0] != 'params':
-                result.warnings.append(f"execute() should take 'params' dict, got: {params}")
+            if len(params) != 1 or params[0] != "params":
+                result.warnings.append(
+                    f"execute() should take 'params' dict, got: {params}"
+                )
 
-            result.metadata['has_execute'] = True
+            result.metadata["has_execute"] = True
 
         except Exception as e:
             result.errors.append(f"Import failed: {str(e)[:100]}")
-    
+
     def _validate_runtime(self, skill_name: str, result: ValidationResult):
         """Layer 3: 运行验证"""
         main_py = self.skills_path / skill_name / "scripts" / "main.py"
 
         try:
             import importlib.util
+
             spec = importlib.util.spec_from_file_location(skill_name, main_py)
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
@@ -165,23 +178,25 @@ class SkillValidator:
 
             if not isinstance(test_result, dict):
                 result.errors.append("execute() must return a dict")
-            elif not test_result.get('success', False):
+            elif not test_result.get("success", False):
                 # 测试失败不一定算错误，可能是设计如此
-                result.warnings.append(f"Test execution returned: {test_result.get('error', 'unknown')}")
+                result.warnings.append(
+                    f"Test execution returned: {test_result.get('error', 'unknown')}"
+                )
             else:
-                result.metadata['test_passed'] = True
-                
+                result.metadata["test_passed"] = True
+
         except Exception as e:
             result.errors.append(f"Runtime test failed: {str(e)[:100]}")
-    
+
     def validate_all(self) -> Dict[str, ValidationResult]:
         """验证所有技能"""
         results = {}
         for skill_dir in self.skills_path.iterdir():
-            if skill_dir.is_dir() and not skill_dir.name.startswith('__'):
+            if skill_dir.is_dir() and not skill_dir.name.startswith("__"):
                 results[skill_dir.name] = self.validate_skill(skill_dir.name)
         return results
-    
+
     def get_validation_report(self) -> str:
         """生成验证报告"""
         results = self.validate_all()

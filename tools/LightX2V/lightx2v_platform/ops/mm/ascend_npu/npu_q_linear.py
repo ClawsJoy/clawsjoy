@@ -1,6 +1,7 @@
-from lib.smart_config import smart_config
 import torch
 import torch.nn as nn
+
+from lib.smart_config import smart_config
 
 try:
     import torch_npu
@@ -14,8 +15,12 @@ class NpuQuantLinearInt8(nn.Module):
         self.in_features = in_features
         self.out_features = out_features
 
-        self.register_buffer("weight", torch.empty((out_features, in_features), dtype=torch.int8))
-        self.register_buffer("weight_scale", torch.empty((out_features, 1), dtype=torch.float32))
+        self.register_buffer(
+            "weight", torch.empty((out_features, in_features), dtype=torch.int8)
+        )
+        self.register_buffer(
+            "weight_scale", torch.empty((out_features, 1), dtype=torch.float32)
+        )
 
         if bias:
             self.register_buffer("bias", torch.empty(out_features, dtype=dtype))
@@ -30,7 +35,13 @@ class NpuQuantLinearInt8(nn.Module):
         dtype = input_tensor.dtype
         input_tensor_quant, input_tensor_scale = self.act_quant_func(input_tensor)
         output_tensor = torch_npu.npu_quant_matmul(
-            input_tensor_quant, self.weight.t(), self.weight_scale.reshape(-1), offset=None, bias=self.bias, pertoken_scale=input_tensor_scale.reshape(-1), output_dtype=dtype
+            input_tensor_quant,
+            self.weight.t(),
+            self.weight_scale.reshape(-1),
+            offset=None,
+            bias=self.bias,
+            pertoken_scale=input_tensor_scale.reshape(-1),
+            output_dtype=dtype,
         )
         if len(output_tensor.shape) == 2:
             return output_tensor.unsqueeze(0)

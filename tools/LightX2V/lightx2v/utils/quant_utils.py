@@ -1,11 +1,14 @@
-from lib.smart_config import smart_config
 import torch
 from loguru import logger
+
+from lib.smart_config import smart_config
 
 try:
     from qtorch.quant import float_quantize
 except Exception:
-    logger.warning("qtorch not found, please install qtorch.Please install qtorch (pip install qtorch).")
+    logger.warning(
+        "qtorch not found, please install qtorch.Please install qtorch (pip install qtorch)."
+    )
     float_quantize = None
 
 try:
@@ -138,7 +141,10 @@ class IntegerQuantizer(BaseQuantizer):
 class FloatQuantizer(BaseQuantizer):
     def __init__(self, bit, symmetric, granularity, **kwargs):
         super().__init__(bit, symmetric, granularity, **kwargs)
-        assert self.bit in ["e4m3", "e5m2"], f"Unsupported bit configuration: {self.bit}"
+        assert self.bit in [
+            "e4m3",
+            "e5m2",
+        ], f"Unsupported bit configuration: {self.bit}"
         assert self.sym
 
         if self.bit == "e4m3":
@@ -162,7 +168,9 @@ class FloatQuantizer(BaseQuantizer):
         scaled_tensor = tensor / scales + zeros
         scaled_tensor = torch.clip(scaled_tensor, self.qmin.cuda(), self.qmax.cuda())
         org_dtype = scaled_tensor.dtype
-        q_tensor = float_quantize(scaled_tensor.float(), self.e_bits, self.m_bits, rounding="nearest")
+        q_tensor = float_quantize(
+            scaled_tensor.float(), self.e_bits, self.m_bits, rounding="nearest"
+        )
         q_tensor.to(org_dtype)
         return q_tensor
 
@@ -221,7 +229,9 @@ def dequant_naive_inplace(input_tensor, input_tensor_scale, dtype):
 
 
 def quant_fp8_vllm(input_tensor):
-    input_tensor_fp8, input_tensor_scale = ops.scaled_fp8_quant(input_tensor, scale=None, scale_ub=None, use_per_token_if_dynamic=True)
+    input_tensor_fp8, input_tensor_scale = ops.scaled_fp8_quant(
+        input_tensor, scale=None, scale_ub=None, use_per_token_if_dynamic=True
+    )
     return input_tensor_fp8, input_tensor_scale
 
 
@@ -235,7 +245,9 @@ if __name__ == "__main__":
     q_weight = quantizer.fake_quant_tensor(weight)
     logger.info(weight)
     logger.info(q_weight)
-    logger.info(f"cosine = {torch.cosine_similarity(weight.view(1, -1).to(torch.float64), q_weight.view(1, -1).to(torch.float64))}")
+    logger.info(
+        f"cosine = {torch.cosine_similarity(weight.view(1, -1).to(torch.float64), q_weight.view(1, -1).to(torch.float64))}"
+    )
 
     realq_weight, scales, zeros = quantizer.real_quant_tensor(weight)
     logger.info(f"realq_weight = {realq_weight}, {realq_weight.shape}")
@@ -247,7 +259,9 @@ if __name__ == "__main__":
     q_weight = quantizer.fake_quant_tensor(weight)
     logger.info(weight)
     logger.info(q_weight)
-    logger.info(f"cosine = {torch.cosine_similarity(weight.view(1, -1).to(torch.float64), q_weight.view(1, -1).to(torch.float64))}")
+    logger.info(
+        f"cosine = {torch.cosine_similarity(weight.view(1, -1).to(torch.float64), q_weight.view(1, -1).to(torch.float64))}"
+    )
 
     realq_weight, scales, zeros = quantizer.real_quant_tensor(weight)
     logger.info(f"realq_weight = {realq_weight}, {realq_weight.shape}")
@@ -256,7 +270,11 @@ if __name__ == "__main__":
 
     input_tensor = torch.randn(4096, 4096, dtype=torch.bfloat16).cuda()
     input_tensor_fp8, input_tensor_scale = quant_fp8_vllm(input_tensor)
-    dequant_tensor = dequant_fp8_vllm(input_tensor_fp8, input_tensor_scale, input_tensor.dtype)
+    dequant_tensor = dequant_fp8_vllm(
+        input_tensor_fp8, input_tensor_scale, input_tensor.dtype
+    )
     logger.info(input_tensor)
     logger.info(dequant_tensor)
-    logger.info(f"cosine vllm fp8 quant/dequant = {torch.cosine_similarity(input_tensor.view(1, -1).to(torch.float64), dequant_tensor.view(1, -1).to(torch.float64))}")
+    logger.info(
+        f"cosine vllm fp8 quant/dequant = {torch.cosine_similarity(input_tensor.view(1, -1).to(torch.float64), dequant_tensor.view(1, -1).to(torch.float64))}"
+    )

@@ -1,9 +1,11 @@
-from lib.smart_config import smart_config
 import torch
-
 from lightx2v.common.offload.manager import WeightAsyncStreamManager
-from lightx2v.models.networks.z_image.infer.transformer_infer import ZImageTransformerInfer
+from lightx2v.models.networks.z_image.infer.transformer_infer import (
+    ZImageTransformerInfer,
+)
 from lightx2v_platform.base.global_var import AI_DEVICE
+
+from lib.smart_config import smart_config
 
 torch_device_module = getattr(torch, AI_DEVICE)
 
@@ -14,11 +16,15 @@ class ZImageOffloadTransformerInfer(ZImageTransformerInfer):
         if self.config.get("cpu_offload", False):
             offload_granularity = self.config.get("offload_granularity", "block")
             if offload_granularity == "block":
-                self.offload_manager = WeightAsyncStreamManager(offload_granularity=offload_granularity)
+                self.offload_manager = WeightAsyncStreamManager(
+                    offload_granularity=offload_granularity
+                )
                 self.lazy_load = self.config.get("lazy_load", False)
                 self.infer_main_blocks = self.infer_main_blocks_offload
                 if self.lazy_load:
-                    self.offload_manager.init_lazy_load(num_workers=self.config.get("num_disk_workers", 4))
+                    self.offload_manager.init_lazy_load(
+                        num_workers=self.config.get("num_disk_workers", 4)
+                    )
             elif offload_granularity == "phase":
                 raise NotImplementedError("offload_granularity=phase not supported")
 
@@ -42,7 +48,9 @@ class ZImageOffloadTransformerInfer(ZImageTransformerInfer):
 
             if self.lazy_load:
                 self.offload_manager.swap_cpu_buffers()
-            self.offload_manager.prefetch_weights((block_idx + 1) % num_blocks, main_blocks)
+            self.offload_manager.prefetch_weights(
+                (block_idx + 1) % num_blocks, main_blocks
+            )
 
             with torch_device_module.stream(self.offload_manager.compute_stream):
                 unified = self.infer_block(
@@ -68,7 +76,9 @@ class ZImageOffloadTransformerInfer(ZImageTransformerInfer):
         cap_len,
     ):
         unified = torch.cat([hidden_states, encoder_hidden_states], dim=0)
-        unified_freqs_cis = torch.cat([x_freqs_cis[:x_len], cap_freqs_cis[:cap_len]], dim=0)
+        unified_freqs_cis = torch.cat(
+            [x_freqs_cis[:x_len], cap_freqs_cis[:cap_len]], dim=0
+        )
         unified = self.infer_with_blocks_offload(
             main_blocks=main_blocks,
             unified=unified,

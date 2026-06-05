@@ -1,18 +1,35 @@
-from lib.smart_config import smart_config
 import torch
 import torch.distributed as dist
 import torch.nn.functional as F
-
 from lightx2v.models.networks.base_model import BaseTransformerModel
-from lightx2v.models.networks.hunyuan_video.infer.feature_caching.transformer_infer import HunyuanTransformerInferTeaCaching, HunyuanVideo15TransformerInferMagCaching
-from lightx2v.models.networks.hunyuan_video.infer.offload.transformer_infer import HunyuanVideo15OffloadTransformerInfer
-from lightx2v.models.networks.hunyuan_video.infer.post_infer import HunyuanVideo15PostInfer
-from lightx2v.models.networks.hunyuan_video.infer.pre_infer import HunyuanVideo15PreInfer
-from lightx2v.models.networks.hunyuan_video.infer.transformer_infer import HunyuanVideo15TransformerInfer
-from lightx2v.models.networks.hunyuan_video.weights.post_weights import HunyuanVideo15PostWeights
-from lightx2v.models.networks.hunyuan_video.weights.pre_weights import HunyuanVideo15PreWeights
-from lightx2v.models.networks.hunyuan_video.weights.transformer_weights import HunyuanVideo15TransformerWeights
+from lightx2v.models.networks.hunyuan_video.infer.feature_caching.transformer_infer import (
+    HunyuanTransformerInferTeaCaching,
+    HunyuanVideo15TransformerInferMagCaching,
+)
+from lightx2v.models.networks.hunyuan_video.infer.offload.transformer_infer import (
+    HunyuanVideo15OffloadTransformerInfer,
+)
+from lightx2v.models.networks.hunyuan_video.infer.post_infer import (
+    HunyuanVideo15PostInfer,
+)
+from lightx2v.models.networks.hunyuan_video.infer.pre_infer import (
+    HunyuanVideo15PreInfer,
+)
+from lightx2v.models.networks.hunyuan_video.infer.transformer_infer import (
+    HunyuanVideo15TransformerInfer,
+)
+from lightx2v.models.networks.hunyuan_video.weights.post_weights import (
+    HunyuanVideo15PostWeights,
+)
+from lightx2v.models.networks.hunyuan_video.weights.pre_weights import (
+    HunyuanVideo15PreWeights,
+)
+from lightx2v.models.networks.hunyuan_video.weights.transformer_weights import (
+    HunyuanVideo15TransformerWeights,
+)
 from lightx2v.utils.custom_compiler import compiled_method
+
+from lib.smart_config import smart_config
 
 
 class HunyuanVideo15Model(BaseTransformerModel):
@@ -31,7 +48,11 @@ class HunyuanVideo15Model(BaseTransformerModel):
         self.pre_infer_class = HunyuanVideo15PreInfer
         self.post_infer_class = HunyuanVideo15PostInfer
         if self.config["feature_caching"] == "NoCaching":
-            self.transformer_infer_class = HunyuanVideo15TransformerInfer if not self.cpu_offload else HunyuanVideo15OffloadTransformerInfer
+            self.transformer_infer_class = (
+                HunyuanVideo15TransformerInfer
+                if not self.cpu_offload
+                else HunyuanVideo15OffloadTransformerInfer
+            )
         elif self.config["feature_caching"] == "Mag":
             self.transformer_infer_class = HunyuanVideo15TransformerInferMagCaching
         elif self.config["feature_caching"] == "Tea":
@@ -89,7 +110,11 @@ class HunyuanVideo15Model(BaseTransformerModel):
     @torch.no_grad()
     def infer(self, inputs):
         if self.cpu_offload:
-            if self.offload_granularity == "model" and self.scheduler.step_index == 0 and "wan2.2_moe" not in self.config["model_cls"]:
+            if (
+                self.offload_granularity == "model"
+                and self.scheduler.step_index == 0
+                and "wan2.2_moe" not in self.config["model_cls"]
+            ):
                 self.to_cuda()
             elif self.offload_granularity != "model":
                 self.pre_weight.to_cuda()
@@ -99,13 +124,19 @@ class HunyuanVideo15Model(BaseTransformerModel):
             if self.config["cfg_parallel"]:
                 # ==================== CFG Parallel Processing ====================
                 cfg_p_group = self.config["device_mesh"].get_group(mesh_dim="cfg_p")
-                assert dist.get_world_size(cfg_p_group) == 2, "cfg_p_world_size must be equal to 2"
+                assert (
+                    dist.get_world_size(cfg_p_group) == 2
+                ), "cfg_p_world_size must be equal to 2"
                 cfg_p_rank = dist.get_rank(cfg_p_group)
 
                 if cfg_p_rank == 0:
-                    noise_pred = self._infer_cond_uncond(inputs, infer_condition=True).contiguous()
+                    noise_pred = self._infer_cond_uncond(
+                        inputs, infer_condition=True
+                    ).contiguous()
                 else:
-                    noise_pred = self._infer_cond_uncond(inputs, infer_condition=False).contiguous()
+                    noise_pred = self._infer_cond_uncond(
+                        inputs, infer_condition=False
+                    ).contiguous()
 
                 noise_pred_list = [torch.zeros_like(noise_pred) for _ in range(2)]
                 dist.all_gather(noise_pred_list, noise_pred, group=cfg_p_group)
@@ -114,15 +145,27 @@ class HunyuanVideo15Model(BaseTransformerModel):
             else:
                 # ==================== CFG Processing ====================
                 noise_pred_cond = self._infer_cond_uncond(inputs, infer_condition=True)
-                noise_pred_uncond = self._infer_cond_uncond(inputs, infer_condition=False)
+                noise_pred_uncond = self._infer_cond_uncond(
+                    inputs, infer_condition=False
+                )
 
-            self.scheduler.noise_pred = noise_pred_uncond + self.scheduler.sample_guide_scale * (noise_pred_cond - noise_pred_uncond)
+            self.scheduler.noise_pred = (
+                noise_pred_uncond
+                + self.scheduler.sample_guide_scale
+                * (noise_pred_cond - noise_pred_uncond)
+            )
         else:
             # ==================== No CFG ====================
-            self.scheduler.noise_pred = self._infer_cond_uncond(inputs, infer_condition=True)
+            self.scheduler.noise_pred = self._infer_cond_uncond(
+                inputs, infer_condition=True
+            )
 
         if self.cpu_offload:
-            if self.offload_granularity == "model" and self.scheduler.step_index == self.scheduler.infer_steps - 1 and "wan2.2_moe" not in self.config["model_cls"]:
+            if (
+                self.offload_granularity == "model"
+                and self.scheduler.step_index == self.scheduler.infer_steps - 1
+                and "wan2.2_moe" not in self.config["model_cls"]
+            ):
                 self.to_cpu()
             elif self.offload_granularity != "model":
                 self.pre_weight.to_cpu()

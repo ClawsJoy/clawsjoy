@@ -1,9 +1,9 @@
-from lib.smart_config import smart_config
 import torch
-
 from lightx2v.common.offload.manager import WeightAsyncStreamManager
 from lightx2v.models.networks.wan.infer.transformer_infer import WanTransformerInfer
 from lightx2v_platform.base.global_var import AI_DEVICE
+
+from lib.smart_config import smart_config
 
 torch_device_module = getattr(torch, AI_DEVICE)
 
@@ -32,10 +32,14 @@ class WanOffloadTransformerInfer(WanTransformerInfer):
                 self.infer_func = self.infer_without_offload
 
             if offload_granularity != "model":
-                self.offload_manager = WeightAsyncStreamManager(offload_granularity=offload_granularity)
+                self.offload_manager = WeightAsyncStreamManager(
+                    offload_granularity=offload_granularity
+                )
             self.lazy_load = self.config.get("lazy_load", False)
             if self.lazy_load:
-                self.offload_manager.init_lazy_load(num_workers=self.config.get("num_disk_workers", 4))
+                self.offload_manager.init_lazy_load(
+                    num_workers=self.config.get("num_disk_workers", 4)
+                )
 
     def infer_with_blocks_offload(self, blocks, x, pre_infer_out):
         for block_idx in range(len(blocks)):
@@ -55,10 +59,14 @@ class WanOffloadTransformerInfer(WanTransformerInfer):
             if AI_DEVICE == "xpu":
                 # XPU streams do not guarantee cross-stream memory visibility even
                 # after a device-wide sync, so run compute on the default stream.
-                x = self.infer_block(self.offload_manager.cuda_buffers[0], x, pre_infer_out)
+                x = self.infer_block(
+                    self.offload_manager.cuda_buffers[0], x, pre_infer_out
+                )
             else:
                 with torch_device_module.stream(self.offload_manager.compute_stream):
-                    x = self.infer_block(self.offload_manager.cuda_buffers[0], x, pre_infer_out)
+                    x = self.infer_block(
+                        self.offload_manager.cuda_buffers[0], x, pre_infer_out
+                    )
 
             self.offload_manager.swap_blocks()
 
@@ -96,7 +104,11 @@ class WanOffloadTransformerInfer(WanTransformerInfer):
         for phase_idx in range(self.phases_num):
             if self.offload_manager.need_init_first_buffer:
                 self.offload_manager.init_first_buffer(blocks)
-            next_block_idx = (block_idx + 1) % len(blocks) if phase_idx == self.phases_num - 1 else block_idx
+            next_block_idx = (
+                (block_idx + 1) % len(blocks)
+                if phase_idx == self.phases_num - 1
+                else block_idx
+            )
             next_phase_idx = (phase_idx + 1) % self.phases_num
             if self.lazy_load:
                 if phase_idx == self.phases_num - 1:
@@ -105,10 +117,20 @@ class WanOffloadTransformerInfer(WanTransformerInfer):
             if AI_DEVICE == "xpu":
                 # XPU streams do not guarantee cross-stream memory visibility even
                 # after a device-wide sync, so run compute on the default stream.
-                x = self.infer_phase(phase_idx, self.offload_manager.cuda_buffers[phase_idx], x, pre_infer_out)
+                x = self.infer_phase(
+                    phase_idx,
+                    self.offload_manager.cuda_buffers[phase_idx],
+                    x,
+                    pre_infer_out,
+                )
             else:
                 with torch_device_module.stream(self.offload_manager.compute_stream):
-                    x = self.infer_phase(phase_idx, self.offload_manager.cuda_buffers[phase_idx], x, pre_infer_out)
+                    x = self.infer_phase(
+                        phase_idx,
+                        self.offload_manager.cuda_buffers[phase_idx],
+                        x,
+                        pre_infer_out,
+                    )
 
             self.offload_manager.swap_phases()
 
@@ -116,7 +138,10 @@ class WanOffloadTransformerInfer(WanTransformerInfer):
 
     def infer_phase(self, cur_phase_idx, cur_phase, x, pre_infer_out):
         if cur_phase_idx == 0:
-            if hasattr(cur_phase, "before_proj") and cur_phase.before_proj.weight is not None:
+            if (
+                hasattr(cur_phase, "before_proj")
+                and cur_phase.before_proj.weight is not None
+            ):
                 x = cur_phase.before_proj.apply(x) + pre_infer_out.x
             (
                 self.phase_params["shift_msa"],
@@ -148,9 +173,16 @@ class WanOffloadTransformerInfer(WanTransformerInfer):
                 self.phase_params["c_shift_msa"],
                 self.phase_params["c_scale_msa"],
             )
-            x = self.post_process(x, self.phase_params["y"], self.phase_params["c_gate_msa"], pre_infer_out)
+            x = self.post_process(
+                x,
+                self.phase_params["y"],
+                self.phase_params["c_gate_msa"],
+                pre_infer_out,
+            )
             if hasattr(cur_phase, "after_proj"):
-                pre_infer_out.adapter_args["hints"].append(cur_phase.after_proj.apply(x))
+                pre_infer_out.adapter_args["hints"].append(
+                    cur_phase.after_proj.apply(x)
+                )
         elif cur_phase_idx == 3:
             x = self.infer_post_adapter(cur_phase, x, pre_infer_out)
         return x

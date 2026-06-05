@@ -1,8 +1,9 @@
-from lib.smart_config import smart_config
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange
+
+from lib.smart_config import smart_config
 
 CACHE_T = 2
 
@@ -19,7 +20,12 @@ class RMS_norm(nn.Module):
         self.bias = nn.Parameter(torch.zeros(shape)) if bias else 0.0
 
     def forward(self, x):
-        return F.normalize(x, dim=(1 if self.channel_first else -1)) * self.scale * self.gamma + self.bias
+        return (
+            F.normalize(x, dim=(1 if self.channel_first else -1))
+            * self.scale
+            * self.gamma
+            + self.bias
+        )
 
 
 class CausalConv3d(nn.Conv3d):
@@ -29,7 +35,14 @@ class CausalConv3d(nn.Conv3d):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._padding = (self.padding[2], self.padding[2], self.padding[1], self.padding[1], 2 * self.padding[0], 0)
+        self._padding = (
+            self.padding[2],
+            self.padding[2],
+            self.padding[1],
+            self.padding[1],
+            2 * self.padding[0],
+            0,
+        )
         self.padding = (0, 0, 0)
 
     def forward(self, x, cache_x=None):
@@ -55,7 +68,13 @@ class PixelShuffle3d(nn.Module):
 
     def forward(self, x):
         # x: (B, C, F, H, W)
-        return rearrange(x, "b c (f ff) (h hh) (w ww) -> b (c ff hh ww) f h w", ff=self.ff, hh=self.hh, ww=self.ww)
+        return rearrange(
+            x,
+            "b c (f ff) (h hh) (w ww) -> b (c ff hh ww) f h w",
+            ff=self.ff,
+            hh=self.hh,
+            ww=self.ww,
+        )
 
 
 class Buffer_LQ4x_Proj(nn.Module):
@@ -70,15 +89,29 @@ class Buffer_LQ4x_Proj(nn.Module):
 
         self.pixel_shuffle = PixelShuffle3d(self.ff, self.hh, self.ww)
 
-        self.conv1 = CausalConv3d(in_dim * self.ff * self.hh * self.ww, self.hidden_dim1, (4, 3, 3), stride=(2, 1, 1), padding=(1, 1, 1))  # f -> f/2 h -> h w -> w
+        self.conv1 = CausalConv3d(
+            in_dim * self.ff * self.hh * self.ww,
+            self.hidden_dim1,
+            (4, 3, 3),
+            stride=(2, 1, 1),
+            padding=(1, 1, 1),
+        )  # f -> f/2 h -> h w -> w
         self.norm1 = RMS_norm(self.hidden_dim1, images=False)
         self.act1 = nn.SiLU()
 
-        self.conv2 = CausalConv3d(self.hidden_dim1, self.hidden_dim2, (4, 3, 3), stride=(2, 1, 1), padding=(1, 1, 1))  # f -> f/2 h -> h w -> w
+        self.conv2 = CausalConv3d(
+            self.hidden_dim1,
+            self.hidden_dim2,
+            (4, 3, 3),
+            stride=(2, 1, 1),
+            padding=(1, 1, 1),
+        )  # f -> f/2 h -> h w -> w
         self.norm2 = RMS_norm(self.hidden_dim2, images=False)
         self.act2 = nn.SiLU()
 
-        self.linear_layers = nn.ModuleList([nn.Linear(self.hidden_dim2, out_dim) for _ in range(layer_num)])
+        self.linear_layers = nn.ModuleList(
+            [nn.Linear(self.hidden_dim2, out_dim) for _ in range(layer_num)]
+        )
 
         self.clip_idx = 0
 

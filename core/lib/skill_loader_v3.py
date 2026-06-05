@@ -19,118 +19,120 @@ class SkillLoaderV3:
         """加载所有技能"""
         # 1. 扫描 SKILL.md
         self._load_from_skill_md()
-        
+
         # 2. 扫描 manifest.json
         self._load_from_manifest()
-        
+
         # 3. 扫描 *_skill.py 文件
         self._load_from_skill_files()
-        
+
         # 4. 扫描 core/skills/ 目录
         self._load_from_core_skills()
-        
+
         # 5. 扫描 agents 作为技能
         self._load_from_agents()
-        
+
         print(f"✅ 技能加载完成，共 {len(self.skills)} 个技能")
 
     def _load_from_skill_md(self):
         """从 SKILL.md 文件加载技能"""
         for skill_md in Path(".").rglob("SKILL.md"):
-            if 'site-packages' in str(skill_md) or '__pycache__' in str(skill_md):
+            if "site-packages" in str(skill_md) or "__pycache__" in str(skill_md):
                 continue
-            
+
             name = skill_md.parent.name
             if name in self.skills:
                 continue
-            
+
             category = "general"
             description = ""
-            
+
             try:
-                with open(skill_md, 'r', encoding='utf-8') as f:
+                with open(skill_md, "r", encoding="utf-8") as f:
                     content = f.read()
-                
+
                 # 提取 category
-                for line in content.split('\n'):
+                for line in content.split("\n"):
                     if line.startswith("category:"):
                         category = line.split(":", 1)[1].strip()
                         break
                     if line.startswith("description:"):
                         description = line.split(":", 1)[1].strip()
-            except:
+            except Exception as e:
                 pass
-            
+
             self.skills[name] = {
                 "name": name,
                 "category": category,
                 "description": description,
                 "file": str(skill_md),
                 "source": "SKILL.md",
-                "type": "skill_md"
+                "type": "skill_md",
             }
             self._add_to_category(category, name)
 
     def _load_from_manifest(self):
         """从 manifest.json 文件加载技能"""
         for manifest_file in Path(".").rglob("manifest.json"):
-            if 'site-packages' in str(manifest_file) or '__pycache__' in str(manifest_file):
+            if "site-packages" in str(manifest_file) or "__pycache__" in str(
+                manifest_file
+            ):
                 continue
-            
+
             try:
-                with open(manifest_file, 'r') as f:
+                with open(manifest_file, "r") as f:
                     data = json.load(f)
-                
-                name = data.get('name', manifest_file.parent.name)
+
+                name = data.get("name", manifest_file.parent.name)
                 if name in self.skills:
                     continue
-                
-                category = data.get('category', 'general')
-                description = data.get('description', '')
-                
+
+                category = data.get("category", "general")
+                description = data.get("description", "")
+
                 self.skills[name] = {
                     "name": name,
                     "category": category,
                     "description": description,
                     "file": str(manifest_file),
                     "source": "manifest.json",
-                    "type": "manifest"
+                    "type": "manifest",
                 }
                 self._add_to_category(category, name)
-            except:
+            except Exception as e:
                 pass
 
     def _load_from_skill_files(self):
         """从 *_skill.py 文件加载技能"""
         for py_file in Path(".").rglob("*_skill.py"):
-            if 'site-packages' in str(py_file) or '__pycache__' in str(py_file):
+            if "site-packages" in str(py_file) or "__pycache__" in str(py_file):
                 continue
-            
+
             name = py_file.stem
             if name in self.skills:
                 continue
-            
+
             # 提取描述
             description = ""
             try:
-                with open(py_file, 'r', encoding='utf-8') as f:
+                with open(py_file, "r", encoding="utf-8") as f:
                     content = f.read()
-                    for line in content.split('\n'):
+                    for line in content.split("\n"):
                         if '"""' in line and not description:
                             desc = line.strip(' """').strip()
                             if desc and len(desc) > 5:
                                 description = desc[:100]
                                 break
-            except:
+            except Exception as e:
                 pass
-            
+
             self.skills[name] = {
                 "name": name,
                 "category": "skill_file",
                 "description": description,
                 "file": str(py_file),
                 "source": "skill_file",
-                "type": "skill_file"
+                "type": "skill_file",
             }
             self._add_to_category("skill_file", name)
 
@@ -139,36 +141,36 @@ class SkillLoaderV3:
         core_skills = Path("core/skills")
         if not core_skills.exists():
             return
-        
+
         for py_file in core_skills.glob("*.py"):
-            if py_file.name.startswith('__'):
+            if py_file.name.startswith("__"):
                 continue
-            
+
             name = py_file.stem
             if name in self.skills:
                 continue
-            
+
             # 提取描述
             description = ""
             try:
-                with open(py_file, 'r', encoding='utf-8') as f:
+                with open(py_file, "r", encoding="utf-8") as f:
                     content = f.read()
-                    for line in content.split('\n'):
+                    for line in content.split("\n"):
                         if '"""' in line and not description:
                             desc = line.strip(' """').strip()
                             if desc and len(desc) > 5:
                                 description = desc[:100]
                                 break
-            except:
+            except Exception as e:
                 pass
-            
+
             self.skills[name] = {
                 "name": name,
                 "category": "core",
                 "description": description,
                 "file": str(py_file),
                 "source": "core/skills",
-                "type": "core"
+                "type": "core",
             }
             self._add_to_category("core", name)
 
@@ -177,33 +179,33 @@ class SkillLoaderV3:
         agents_dir = Path("core/agents/builtin")
         if not agents_dir.exists():
             return
-        
+
         for agent_file in agents_dir.glob("*_agent.py"):
             name = agent_file.stem
             if name in self.skills:
                 continue
-            
+
             # 提取描述
             description = ""
             try:
-                with open(agent_file, 'r', encoding='utf-8') as f:
+                with open(agent_file, "r", encoding="utf-8") as f:
                     content = f.read()
-                    for line in content.split('\n'):
+                    for line in content.split("\n"):
                         if '"""' in line and not description:
                             desc = line.strip(' """').strip()
                             if desc and len(desc) > 5:
                                 description = desc[:100]
                                 break
-            except:
+            except Exception as e:
                 pass
-            
+
             self.skills[name] = {
                 "name": name,
                 "category": "agent",
                 "description": description,
                 "file": str(agent_file),
                 "source": "agents",
-                "type": "agent"
+                "type": "agent",
             }
             self._add_to_category("agent", name)
 
@@ -228,6 +230,7 @@ class SkillLoaderV3:
         """执行技能"""
         try:
             import importlib
+
             skill_info = self.get_skill(skill_name)
             if not skill_info:
                 return {"error": f"技能 {skill_name} 不存在"}
@@ -239,17 +242,17 @@ class SkillLoaderV3:
                 f"core.skills.{skill_name}",
                 f"core.agents.builtin.{skill_name}",
             ]
-            
+
             for module_path in module_paths:
                 try:
                     module = importlib.import_module(module_path)
-                    if hasattr(module, 'execute'):
+                    if hasattr(module, "execute"):
                         return module.execute(params)
-                    elif hasattr(module, 'run'):
+                    elif hasattr(module, "run"):
                         return module.run(params)
                 except ImportError:
                     continue
-            
+
             return {"error": f"技能 {skill_name} 无法执行"}
         except Exception as e:
             return {"error": str(e)}
@@ -259,7 +262,10 @@ class SkillLoaderV3:
         results = []
         keyword_lower = keyword.lower()
         for name, info in self.skills.items():
-            if keyword_lower in name.lower() or keyword_lower in info.get("category", "").lower():
+            if (
+                keyword_lower in name.lower()
+                or keyword_lower in info.get("category", "").lower()
+            ):
                 results.append(info)
         return results
 
@@ -274,4 +280,14 @@ class SkillLoaderV3:
         self._load_all()
 
 
-skill_loader = SkillLoaderV3()
+_skill_loader = None
+
+
+def get_skill_loader():
+    global _skill_loader
+    if _skill_loader is None:
+        _skill_loader = SkillLoaderV3()
+    return _skill_loader
+
+
+skill_loader = None

@@ -1,6 +1,12 @@
-from lib.smart_config import smart_config
 from lightx2v.common.modules.weight_module import WeightModule
-from lightx2v.utils.registry_factory import LN_WEIGHT_REGISTER, MM_WEIGHT_REGISTER, RMS_WEIGHT_REGISTER, TENSOR_REGISTER
+from lightx2v.utils.registry_factory import (
+    LN_WEIGHT_REGISTER,
+    MM_WEIGHT_REGISTER,
+    RMS_WEIGHT_REGISTER,
+    TENSOR_REGISTER,
+)
+
+from lib.smart_config import smart_config
 
 
 class SeedVRPostWeights(WeightModule):
@@ -32,10 +38,18 @@ class SeedVRPostWeights(WeightModule):
                     ),
                 )
             else:
-                raise NotImplementedError(f"Unsupported vid_out_norm type: {vid_out_norm}")
+                raise NotImplementedError(
+                    f"Unsupported vid_out_norm type: {vid_out_norm}"
+                )
 
-            self.add_module("vid_out_ada_out_shift", TENSOR_REGISTER["Default"]("vid_out_ada.out_shift"))
-            self.add_module("vid_out_ada_out_scale", TENSOR_REGISTER["Default"]("vid_out_ada.out_scale"))
+            self.add_module(
+                "vid_out_ada_out_shift",
+                TENSOR_REGISTER["Default"]("vid_out_ada.out_shift"),
+            )
+            self.add_module(
+                "vid_out_ada_out_scale",
+                TENSOR_REGISTER["Default"]("vid_out_ada.out_scale"),
+            )
 
         self.add_module(
             "vid_out_proj",

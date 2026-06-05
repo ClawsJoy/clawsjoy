@@ -3,33 +3,29 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 from core.lib.unified_config import unified_config
 
-from core.lib.unified_config import unified_config
-
-from core.lib.unified_config import unified_config
 #!/usr/bin/env python3
 """纯向量检索 Agent - 无硬编码关键词"""
 
-import sys
 import re
+import sys
 from typing import Dict, Tuple
 
-
-from core.lib.memory_vector import vector_memory
 from core.lib.cross_session_memory import CrossSessionMemory
+from core.lib.memory_vector import vector_memory
 
 
 class PureVectorAgent:
     VERSION = "6.7.0"
-    
+
     def __init__(self, user_id: str = "default"):
         self.user_id = user_id
         self.memory = CrossSessionMemory(user_id)
-    
+
     def _classify(self, user_input: str) -> Tuple[str, str]:
         """识别任务 - 无硬编码关键词"""
         lower = user_input.lower()
@@ -48,14 +44,14 @@ class PureVectorAgent:
         if "你好" in user_input or "hi" in lower:
             return "greeting", ""
 
-        if re.match(r'^[我][叫]', user_input):
+        if re.match(r"^[我][叫]", user_input):
             return "self_intro", user_input
 
         if "你是谁" in user_input:
             return "ask_who", ""
 
         return "chat", user_input
-    
+
     def _search(self, query: str, min_score: float = 0.4) -> str:
         """纯向量检索 - 只依赖 ChromaDB"""
         print(f"   🔍 检索: '{query}'")
@@ -67,8 +63,8 @@ class PureVectorAgent:
         best_score = 0
 
         for r in results:
-            text = r.get('text', '')
-            score = r.get('similarity', 0)
+            text = r.get("text", "")
+            score = r.get("similarity", 0)
 
             # 只取有实质内容且相似度较高的
             if len(text) > 200 and score > min_score and score > best_score:
@@ -80,7 +76,7 @@ class PureVectorAgent:
             return best
 
         return ""
-    
+
     def process(self, user_input: str) -> Dict:
         task_type, task_param = self._classify(user_input)
         print(f"   🎯 任务: {task_type} -> '{task_param[:40]}'")
@@ -98,7 +94,7 @@ class PureVectorAgent:
             response = f"你好{f'，{name}' if name else ''}！我是 ClawsJoy"
 
         elif task_type == "self_intro":
-            match = re.search(r'叫[\s]*([^\s，。]{2,4})', user_input)
+            match = re.search(r"叫[\s]*([^\s，。]{2,4})", user_input)
             if match:
                 self.memory.remember("name", match.group(1))
                 response = f"你好，{match.group(1)}！我是 ClawsJoy"
@@ -117,7 +113,7 @@ class PureVectorAgent:
 
 if __name__ == "__main__":
     agent = PureVectorAgent("John")
-    
+
     tests = [
         "你好",
         "我叫 John",
@@ -125,7 +121,7 @@ if __name__ == "__main__":
         "找一下架构师的总结",
         "创始人的资料",
     ]
-    
+
     for t in tests:
         print(f"\n👤 {t}")
         result = agent.process(t)

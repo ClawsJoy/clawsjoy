@@ -1,5 +1,6 @@
-from lib.smart_config import smart_config
 import torch
+
+from lib.smart_config import smart_config
 
 
 class KVCacheManager:
@@ -40,7 +41,9 @@ class KVCacheManager:
         self._kv_buf[:, :, :past_seq] = past_key_values
         self._kv_past_seq = past_seq
 
-    def update(self, layer_idx: int, key_states: torch.Tensor, value_states: torch.Tensor):
+    def update(
+        self, layer_idx: int, key_states: torch.Tensor, value_states: torch.Tensor
+    ):
         """Write current layer's K/V into the buffer tail and return full K/V views.
 
         Args:

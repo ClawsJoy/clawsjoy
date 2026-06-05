@@ -1,6 +1,7 @@
-from lib.smart_config import smart_config
 # -*-coding=utf-8-*-
 import threading
+
+from lib.smart_config import smart_config
 
 from .metrics import MetricsClient
 

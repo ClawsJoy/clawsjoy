@@ -1,9 +1,10 @@
-from lib.smart_config import smart_config
 from typing import List
 
 import torch
 import torch.distributed as dist
 from torch import Tensor
+
+from lib.smart_config import smart_config
 
 from .common.distributed.advanced import (
     get_sequence_parallel_group,
@@ -39,7 +40,10 @@ def causal_conv_slice_inputs(x, split_size, memory_state):
 
     split_sizes = torch.tensor(split_sizes)
     slices_per_rank = len(split_sizes) // sp_size
-    split_sizes = split_sizes.split([slices_per_rank] * (sp_size - 1) + [len(split_sizes) - slices_per_rank * (sp_size - 1)])
+    split_sizes = split_sizes.split(
+        [slices_per_rank] * (sp_size - 1)
+        + [len(split_sizes) - slices_per_rank * (sp_size - 1)]
+    )
     split_sizes = list(map(lambda s: s.sum().item(), split_sizes))
     logger.debug(f"split_sizes: {split_sizes}")
     return x.split(split_sizes, dim=2)[sp_rank]
@@ -54,7 +58,9 @@ def causal_conv_gather_outputs(x):
     # Communicate shapes.
     unpad_lens = torch.empty((sp_size,), device=get_device(), dtype=torch.long)
     local_unpad_len = torch.tensor([x.size(2)], device=get_device(), dtype=torch.long)
-    torch.distributed.all_gather_into_tensor(unpad_lens, local_unpad_len, group=sp_group)
+    torch.distributed.all_gather_into_tensor(
+        unpad_lens, local_unpad_len, group=sp_group
+    )
 
     # Padding to max_len for gather.
     max_len = unpad_lens.max()
@@ -72,18 +78,32 @@ def causal_conv_gather_outputs(x):
 
 
 def get_output_len(conv_module, input_len, pad_len, dim=0):
-    dilated_kernerl_size = conv_module.dilation[dim] * (conv_module.kernel_size[dim] - 1) + 1
-    output_len = (input_len + pad_len - dilated_kernerl_size) // conv_module.stride[dim] + 1
+    dilated_kernerl_size = (
+        conv_module.dilation[dim] * (conv_module.kernel_size[dim] - 1) + 1
+    )
+    output_len = (input_len + pad_len - dilated_kernerl_size) // conv_module.stride[
+        dim
+    ] + 1
     return output_len
 
 
 def get_cache_size(conv_module, input_len, pad_len, dim=0):
-    dilated_kernerl_size = conv_module.dilation[dim] * (conv_module.kernel_size[dim] - 1) + 1
-    output_len = (input_len + pad_len - dilated_kernerl_size) // conv_module.stride[dim] + 1
-    remain_len = input_len + pad_len - ((output_len - 1) * conv_module.stride[dim] + dilated_kernerl_size)
+    dilated_kernerl_size = (
+        conv_module.dilation[dim] * (conv_module.kernel_size[dim] - 1) + 1
+    )
+    output_len = (input_len + pad_len - dilated_kernerl_size) // conv_module.stride[
+        dim
+    ] + 1
+    remain_len = (
+        input_len
+        + pad_len
+        - ((output_len - 1) * conv_module.stride[dim] + dilated_kernerl_size)
+    )
     overlap_len = dilated_kernerl_size - conv_module.stride[dim]
     cache_len = overlap_len + remain_len  # >= 0
-    logger.debug(f"I:{input_len}, P:{pad_len}, K:{conv_module.kernel_size[dim]}, S:{conv_module.stride[dim]}, O:{output_len}, Cache:{cache_len}")
+    logger.debug(
+        f"I:{input_len}, P:{pad_len}, K:{conv_module.kernel_size[dim]}, S:{conv_module.stride[dim]}, O:{output_len}, Cache:{cache_len}"
+    )
     assert output_len > 0
     return cache_len
 
@@ -97,7 +117,9 @@ def cache_send_recv(tensor: List[Tensor], cache_size, times, memory=None):
     recv_buffer = None
     recv_req = None
 
-    logger.debug(f"[sp{sp_rank}] cur_tensors:{[(t.size(), t.dtype) for t in tensor]}, times: {times}")
+    logger.debug(
+        f"[sp{sp_rank}] cur_tensors:{[(t.size(), t.dtype) for t in tensor]}, times: {times}"
+    )
     if sp_rank == 0 or sp_group is None:
         if memory is not None:
             recv_buffer = memory.to(tensor[0])
@@ -110,19 +132,31 @@ def cache_send_recv(tensor: List[Tensor], cache_size, times, memory=None):
         if sp_rank > 0:
             shape = list(tensor[0].size())
             shape[2] = cache_size
-            recv_buffer = torch.empty(*shape, device=tensor[0].device, dtype=tensor[0].dtype).contiguous()
+            recv_buffer = torch.empty(
+                *shape, device=tensor[0].device, dtype=tensor[0].dtype
+            ).contiguous()
             recv_req = dist.irecv(recv_buffer, recv_src, group=sp_group)
         if sp_rank < sp_size - 1:
             if cache_size > tensor[-1].size(2) and len(tensor) == 1:
-                logger.debug(f"[sp{sp_rank}] force concat before send {tensor[-1].size()}")
+                logger.debug(
+                    f"[sp{sp_rank}] force concat before send {tensor[-1].size()}"
+                )
                 if recv_req is not None:
                     recv_req.wait()
                 tensor[0] = torch.cat([recv_buffer, tensor[0]], dim=2)
                 recv_buffer = None
-            assert cache_size <= tensor[-1].size(2), f"Not enough value to cache, got {tensor[-1].size()}, cache_size={cache_size}"
-            dist.isend(tensor[-1][:, :, -cache_size:].detach().contiguous(), send_dst, group=sp_group)
+            assert cache_size <= tensor[-1].size(
+                2
+            ), f"Not enough value to cache, got {tensor[-1].size()}, cache_size={cache_size}"
+            dist.isend(
+                tensor[-1][:, :, -cache_size:].detach().contiguous(),
+                send_dst,
+                group=sp_group,
+            )
         if recv_req is not None:
             recv_req.wait()
 
-    logger.debug(f"[sp{sp_rank}] recv_src:{recv_src}, recv_buffer:{recv_buffer.size() if recv_buffer is not None else None}")
+    logger.debug(
+        f"[sp{sp_rank}] recv_src:{recv_src}, recv_buffer:{recv_buffer.size() if recv_buffer is not None else None}"
+    )
     return recv_buffer

@@ -3,14 +3,14 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
 import json
-from pathlib import Path
 from datetime import datetime
-from typing import Dict, Optional, Any, List
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 
 class ButlerAsset:
@@ -41,10 +41,12 @@ class ButlerAsset:
         """加载 JSON 文件"""
         if file_path.exists():
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     # 确保 achievements 是列表
-                    if file_path == self.achievement_file and not isinstance(data, list):
+                    if file_path == self.achievement_file and not isinstance(
+                        data, list
+                    ):
                         return default
                     return data
             except Exception:
@@ -54,7 +56,7 @@ class ButlerAsset:
     def _save_json(self, file_path: Path, data):
         """保存 JSON 文件"""
         try:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
         except Exception as e:
             print(f"保存资产失败: {e}")
@@ -65,7 +67,7 @@ class ButlerAsset:
         self.memory[key] = {
             "value": value,
             "created_at": datetime.now().isoformat(),
-            "updated_at": datetime.now().isoformat()
+            "updated_at": datetime.now().isoformat(),
         }
         self._save_json(self.memory_file, self.memory)
         return True
@@ -110,7 +112,7 @@ class ButlerAsset:
         achievement = {
             "name": name,
             "earned_at": datetime.now().isoformat(),
-            "metadata": metadata or {}
+            "metadata": metadata or {},
         }
         self.achievements.append(achievement)
         self._save_json(self.achievement_file, self.achievements)
@@ -129,7 +131,7 @@ class ButlerAsset:
             "preferences_count": len(self.preferences),
             "knowledge_categories": len(self.knowledge),
             "achievements_count": len(self.achievements),
-            "asset_root": str(self.asset_root)
+            "asset_root": str(self.asset_root),
         }
 
 

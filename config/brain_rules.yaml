@@ -1,42 +1,47 @@
-version: "2.0.0"
-
-priority:
-  - name: math
-    keywords: ["计算", "加", "减", "乘", "除", "+", "-", "*", "/"]
-    pattern: '(\d+)\s*([+\-*/xX])\s*(\d+)'
-    handler: "math_executor"
-
-  - name: workflow
-    keywords: ["图片", "识别", "视频", "制作", "翻译"]
-    handler: "workflow_executor"
-
-  - name: hermes
-    keywords: ["帮我", "分析", "生成", "写", "创作", "复杂", "多个步骤", "然后", "接着"]
-    handler: "hermes_executor"
-    description: "Hermes 智能体 - 任务分解、工具调用、自我反思"
-
-  - name: llm
-    keywords: []
-    handler: "llm_executor"
-    default: true
+# 大脑调度器规则配置 v5.1 - 修复执行器路径
 
 executors:
   math_executor:
-    module: "core.executors.math_executor"
-    class: "math_executor"
     enabled: true
+    module: core.executors.math_executor
+    class: MathExecutor
+    description: 数学计算执行器
 
   workflow_executor:
-    module: "core.executors.workflow_executor"
-    class: "workflow_executor"
     enabled: true
+    module: core.lib.workflow_executor
+    class: WorkflowExecutor
+    description: 工作流执行器
 
-  hermes_executor:
-    module: "core.agents.builtin.hermes_executor"
-    class: "hermes_executor"
+  translate_executor:
     enabled: true
+    module: skills.translate.translate_skill
+    class: TranslateSkill
+    description: 翻译执行器
 
   llm_executor:
-    module: "core.executors.llm_executor"
-    class: "llm_executor"
     enabled: true
+    module: core.executors.llm_executor
+    class: LLMExecutor
+    description: LLM 通用执行器
+
+priority:
+  - name: math
+    keywords: ["计算", "加法", "减法", "乘法", "除法", "+", "-", "*", "/", "加", "减", "乘", "除"]
+    handler: math_executor
+    description: 数学计算
+
+  - name: translate
+    keywords: ["翻译", "translate", "译成", "翻成"]
+    handler: translate_executor
+    description: 文本翻译
+
+  - name: workflow
+    keywords: ["工作流", "流程", "编排"]
+    handler: workflow_executor
+    description: 工作流执行
+
+  - name: llm
+    default: true
+    handler: llm_executor
+    description: LLM 兜底

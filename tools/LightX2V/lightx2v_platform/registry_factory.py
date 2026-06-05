@@ -1,4 +1,6 @@
 from lib.smart_config import smart_config
+
+
 class Register(dict):
     def __init__(self, *args, **kwargs):
         super(Register, self).__init__(*args, **kwargs)

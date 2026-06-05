@@ -1,28 +1,43 @@
-from lib.smart_config import smart_config
 import copy
 import re
 
 import torch
-
 from lightx2v.common.modules.weight_module import WeightModule, WeightModuleList
 from lightx2v.models.networks.motus.primitives import sinusoidal_embedding_1d
-from lightx2v.utils.registry_factory import LN_WEIGHT_REGISTER, MM_WEIGHT_REGISTER, RMS_WEIGHT_REGISTER, TENSOR_REGISTER
+from lightx2v.utils.registry_factory import (
+    LN_WEIGHT_REGISTER,
+    MM_WEIGHT_REGISTER,
+    RMS_WEIGHT_REGISTER,
+    TENSOR_REGISTER,
+)
+
+from lib.smart_config import smart_config
 
 
 def slice_prefixed_state_dict(weight_dict, prefix):
-    return {key[len(prefix) :]: value for key, value in weight_dict.items() if key.startswith(prefix)}
+    return {
+        key[len(prefix) :]: value
+        for key, value in weight_dict.items()
+        if key.startswith(prefix)
+    }
 
 
 def load_prefixed_submodules(root, weight_dict, prefix_by_name):
     for name, prefix in prefix_by_name.items():
         module = getattr(root, name)
-        module_weights = weight_dict if prefix is None else slice_prefixed_state_dict(weight_dict, prefix)
+        module_weights = (
+            weight_dict
+            if prefix is None
+            else slice_prefixed_state_dict(weight_dict, prefix)
+        )
         module.load(module_weights)
 
 
 def get_motus_quant_flags(config):
     quantized = bool(config.get("motus_quantized", config.get("dit_quantized", False)))
-    quant_scheme = config.get("motus_quant_scheme", config.get("dit_quant_scheme", "Default"))
+    quant_scheme = config.get(
+        "motus_quant_scheme", config.get("dit_quant_scheme", "Default")
+    )
     return quantized and quant_scheme != "Default", quant_scheme
 
 
@@ -94,14 +109,22 @@ def projector_depth(projector_type):
 def projector_layer_prefixes(projector_type, base_prefix):
     if projector_type == "linear":
         return [base_prefix]
-    return [f"{base_prefix}.{idx * 2}" for idx in range(projector_depth(projector_type))]
+    return [
+        f"{base_prefix}.{idx * 2}" for idx in range(projector_depth(projector_type))
+    ]
 
 
-def apply_time_embedding(timestep, seq_len, freq_dim, hidden_dim, embedding_0, embedding_2, projection_1):
+def apply_time_embedding(
+    timestep, seq_len, freq_dim, hidden_dim, embedding_0, embedding_2, projection_1
+):
     if timestep.dim() == 1:
         timestep = timestep.unsqueeze(1).expand(timestep.size(0), seq_len)
     batch = timestep.size(0)
-    timestep_embed = sinusoidal_embedding_1d(freq_dim, timestep.flatten()).unflatten(0, (batch, seq_len)).float()
+    timestep_embed = (
+        sinusoidal_embedding_1d(freq_dim, timestep.flatten())
+        .unflatten(0, (batch, seq_len))
+        .float()
+    )
     time_hidden = apply_mm(embedding_0, timestep_embed)
     time_hidden = torch.nn.functional.silu(time_hidden)
     time_hidden = apply_mm(embedding_2, time_hidden)
@@ -215,9 +238,24 @@ class PackedQKVWeights(WeightModule):
         if self.tensor_name not in weight_dict:
             return
         packed_qkv = weight_dict[self.tensor_name]
-        q_weight = packed_qkv[0].permute(0, 2, 1).reshape(self.out_features, self.in_features).contiguous()
-        k_weight = packed_qkv[1].permute(0, 2, 1).reshape(self.out_features, self.in_features).contiguous()
-        v_weight = packed_qkv[2].permute(0, 2, 1).reshape(self.out_features, self.in_features).contiguous()
+        q_weight = (
+            packed_qkv[0]
+            .permute(0, 2, 1)
+            .reshape(self.out_features, self.in_features)
+            .contiguous()
+        )
+        k_weight = (
+            packed_qkv[1]
+            .permute(0, 2, 1)
+            .reshape(self.out_features, self.in_features)
+            .contiguous()
+        )
+        v_weight = (
+            packed_qkv[2]
+            .permute(0, 2, 1)
+            .reshape(self.out_features, self.in_features)
+            .contiguous()
+        )
         self.q.load({f"{self.tensor_name}.q.weight": q_weight})
         self.k.load({f"{self.tensor_name}.k.weight": k_weight})
         self.v.load({f"{self.tensor_name}.v.weight": v_weight})
@@ -272,20 +310,43 @@ class MotusJointExpertBlockWeights(WeightModule):
         )
         self.add_module(
             f"{attr_prefix}_norm_q",
-            RMS_WEIGHT_REGISTER["torch"](f"blocks.{block_idx}.{attr_prefix}_norm_q.weight", eps=norm_eps),
+            RMS_WEIGHT_REGISTER["torch"](
+                f"blocks.{block_idx}.{attr_prefix}_norm_q.weight", eps=norm_eps
+            ),
         )
         self.add_module(
             f"{attr_prefix}_norm_k",
-            RMS_WEIGHT_REGISTER["torch"](f"blocks.{block_idx}.{attr_prefix}_norm_k.weight", eps=norm_eps),
+            RMS_WEIGHT_REGISTER["torch"](
+                f"blocks.{block_idx}.{attr_prefix}_norm_k.weight", eps=norm_eps
+            ),
         )
-        self.add_module("ffn_0", build_mm_weight(f"blocks.{block_idx}.ffn.0.weight", f"blocks.{block_idx}.ffn.0.bias", config))
-        self.add_module("ffn_2", build_mm_weight(f"blocks.{block_idx}.ffn.2.weight", f"blocks.{block_idx}.ffn.2.bias", config))
+        self.add_module(
+            "ffn_0",
+            build_mm_weight(
+                f"blocks.{block_idx}.ffn.0.weight",
+                f"blocks.{block_idx}.ffn.0.bias",
+                config,
+            ),
+        )
+        self.add_module(
+            "ffn_2",
+            build_mm_weight(
+                f"blocks.{block_idx}.ffn.2.weight",
+                f"blocks.{block_idx}.ffn.2.bias",
+                config,
+            ),
+        )
         if include_modulation:
-            self.register_parameter("modulation", TENSOR_REGISTER["Default"](f"blocks.{block_idx}.modulation"))
+            self.register_parameter(
+                "modulation",
+                TENSOR_REGISTER["Default"](f"blocks.{block_idx}.modulation"),
+            )
 
 
 class MotusJointExpertTransformerWeights(WeightModule):
     def __init__(self, num_layers, block_factory):
         super().__init__()
-        self.blocks = WeightModuleList([block_factory(block_idx) for block_idx in range(num_layers)])
+        self.blocks = WeightModuleList(
+            [block_factory(block_idx) for block_idx in range(num_layers)]
+        )
         self.add_module("blocks", self.blocks)

@@ -1,6 +1,7 @@
-from lib.smart_config import smart_config
 import torch
 from loguru import logger
+
+from lib.smart_config import smart_config
 
 try:
     from magi_attention.functional import flex_flash_attn_func as magi_ffa_func
@@ -17,7 +18,14 @@ from lightx2v.utils.registry_factory import ATTN_WEIGHT_REGISTER
 from .template import AttnWeightTemplate
 
 
-def generate_nbhd_mask(a, block_num, attnmap_frame_num, coefficient=[1.0, 0.5, 0.056], min_width=1.0, device="cpu"):
+def generate_nbhd_mask(
+    a,
+    block_num,
+    attnmap_frame_num,
+    coefficient=[1.0, 0.5, 0.056],
+    min_width=1.0,
+    device="cpu",
+):
     """
     a : block num per frame
     block_num : block num per col/row
@@ -26,8 +34,12 @@ def generate_nbhd_mask(a, block_num, attnmap_frame_num, coefficient=[1.0, 0.5, 0
     i_indices = torch.arange(block_num, device=device).unsqueeze(1)  # [block_num, 1]
     j_indices = torch.arange(block_num, device=device).unsqueeze(0)  # [1, block_num]
 
-    assert len(coefficient) <= attnmap_frame_num, f"coefficient length {len(coefficient)} should <= attnmap_frame_num {attnmap_frame_num}"
-    width_list = [max(min_width, coefficient[i] * a) for i in range(len(coefficient))] + [min_width] * (attnmap_frame_num - len(coefficient))
+    assert (
+        len(coefficient) <= attnmap_frame_num
+    ), f"coefficient length {len(coefficient)} should <= attnmap_frame_num {attnmap_frame_num}"
+    width_list = [
+        max(min_width, coefficient[i] * a) for i in range(len(coefficient))
+    ] + [min_width] * (attnmap_frame_num - len(coefficient))
     logger.info(f"nbhd_attn width_list: {width_list}, len={len(width_list)}")
 
     # attention sink frame: j <= a
@@ -36,14 +48,26 @@ def generate_nbhd_mask(a, block_num, attnmap_frame_num, coefficient=[1.0, 0.5, 0
     mask_sparse = torch.zeros((block_num, block_num), dtype=torch.bool, device=device)
     for interval in range(0, attnmap_frame_num):
         n = i_indices // a
-        mask_sparse_base_1 = (j_indices >= (n + interval) * a) & (j_indices <= (n + interval + 1) * a)
+        mask_sparse_base_1 = (j_indices >= (n + interval) * a) & (
+            j_indices <= (n + interval + 1) * a
+        )
         n = j_indices // a
-        mask_sparse_base_2 = (i_indices >= (n + interval) * a) & (i_indices <= (n + interval + 1) * a)
+        mask_sparse_base_2 = (i_indices >= (n + interval) * a) & (
+            i_indices <= (n + interval + 1) * a
+        )
 
         width = width_list[interval]
 
-        mask_1 = mask_sparse_base_1 & (i_indices - j_indices + (interval * a + width) >= 0) & (i_indices - j_indices + (interval * a - width) <= 0)
-        mask_2 = mask_sparse_base_2 & (i_indices - j_indices - (interval * a - width) >= 0) & (i_indices - j_indices - (interval * a + width) <= 0)
+        mask_1 = (
+            mask_sparse_base_1
+            & (i_indices - j_indices + (interval * a + width) >= 0)
+            & (i_indices - j_indices + (interval * a - width) <= 0)
+        )
+        mask_2 = (
+            mask_sparse_base_2
+            & (i_indices - j_indices - (interval * a - width) >= 0)
+            & (i_indices - j_indices - (interval * a + width) <= 0)
+        )
 
         mask_sparse = mask_sparse | mask_1 | mask_2
 
@@ -90,9 +114,18 @@ class NbhdAttnWeight(AttnWeightTemplate):
             return
         block_num = (seqlen + cls.block_size - 1) // cls.block_size
         block_num_per_frame = seqlen / cls.attnmap_frame_num / cls.block_size
-        mask = generate_nbhd_mask(block_num_per_frame, block_num, cls.attnmap_frame_num, coefficient=cls.coefficient, min_width=cls.min_width, device="cpu")
+        mask = generate_nbhd_mask(
+            block_num_per_frame,
+            block_num,
+            cls.attnmap_frame_num,
+            coefficient=cls.coefficient,
+            min_width=cls.min_width,
+            device="cpu",
+        )
         repeat_mask = mask.unsqueeze(0).repeat(head_num, 1, 1)
-        q_ranges, k_ranges = generate_qk_ranges(repeat_mask, cls.block_size, cls.block_size, seqlen)
+        q_ranges, k_ranges = generate_qk_ranges(
+            repeat_mask, cls.block_size, cls.block_size, seqlen
+        )
         attn_type_map = torch.zeros(len(q_ranges), dtype=torch.int32, device="cuda")
         q_ranges = q_ranges.to(torch.int32).to("cuda")
         k_ranges = k_ranges.to(torch.int32).to("cuda")
@@ -161,13 +194,24 @@ class NbhdAttnWeightFlashInfer(AttnWeightTemplate):
             return
         block_num = (seqlen + cls.block_size - 1) // cls.block_size
         block_num_per_frame = seqlen / cls.attnmap_frame_num / cls.block_size
-        mask = generate_nbhd_mask(block_num_per_frame, block_num, cls.attnmap_frame_num, coefficient=cls.coefficient, min_width=cls.min_width, device="cpu")
+        mask = generate_nbhd_mask(
+            block_num_per_frame,
+            block_num,
+            cls.attnmap_frame_num,
+            coefficient=cls.coefficient,
+            min_width=cls.min_width,
+            device="cpu",
+        )
         mask = mask.unsqueeze(0).repeat(head_num, 1, 1)
         block_rowcol_size = torch.ones(block_num, dtype=torch.int32) * cls.block_size
         block_rowcol_size[-1] = seqlen - cls.block_size * (block_num - 1)
         block_rowcol_size = block_rowcol_size.unsqueeze(0).repeat(head_num, 1)
-        float_workspace_buffer = torch.empty(1024 * 1024 * 1024, dtype=torch.uint8, device="cuda:0")
-        cls.sparse_wrapper = flashinfer.sparse.VariableBlockSparseAttentionWrapper(float_workspace_buffer, backend="fa2")
+        float_workspace_buffer = torch.empty(
+            1024 * 1024 * 1024, dtype=torch.uint8, device="cuda:0"
+        )
+        cls.sparse_wrapper = flashinfer.sparse.VariableBlockSparseAttentionWrapper(
+            float_workspace_buffer, backend="fa2"
+        )
         cls.sparse_wrapper.plan(
             block_mask_map=mask,
             block_row_sz=block_rowcol_size,

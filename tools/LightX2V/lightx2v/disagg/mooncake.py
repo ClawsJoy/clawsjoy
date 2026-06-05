@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import json
 import logging
 import os
@@ -6,6 +5,8 @@ import random
 import socket
 import time
 from dataclasses import dataclass
+
+from lib.smart_config import smart_config
 
 logger = logging.getLogger(__name__)
 
@@ -71,9 +72,13 @@ class MooncakeTransferEngineConfig:
 
     @staticmethod
     def load_from_env() -> "MooncakeTransferEngineConfig":
-        config_file_path = os.getenv("MOONCAKE_CONFIG_PATH", "/root/zht/LightX2V/configs/mooncake_config.json")
+        config_file_path = os.getenv(
+            "MOONCAKE_CONFIG_PATH", "/root/zht/LightX2V/configs/mooncake_config.json"
+        )
         if config_file_path is None:
-            raise ValueError("The environment variable 'MOONCAKE_CONFIG_PATH' is not set.")
+            raise ValueError(
+                "The environment variable 'MOONCAKE_CONFIG_PATH' is not set."
+            )
         cfg = MooncakeTransferEngineConfig.from_file(config_file_path)
         local_ipv4s = _collect_local_ipv4_addresses()
 
@@ -91,7 +96,11 @@ class MooncakeTransferEngineConfig:
 
         # Keep session IDs and metadata endpoints stable on single-node runs.
         # localhost may resolve to IPv6 on some hosts while peers use IPv4.
-        force_ipv4 = os.getenv("MOONCAKE_FORCE_IPV4_LOOPBACK", "1") not in ("0", "false", "False")
+        force_ipv4 = os.getenv("MOONCAKE_FORCE_IPV4_LOOPBACK", "1") not in (
+            "0",
+            "false",
+            "False",
+        )
         env_host = os.getenv("MOONCAKE_LOCAL_HOSTNAME", "").strip()
         if env_host:
             if env_host in ("localhost", "::1", "127.0.0.1") or env_host in local_ipv4s:
@@ -114,7 +123,11 @@ class MooncakeTransferEngineConfig:
                 cfg.local_hostname = detected
             else:
                 cfg.local_hostname = "127.0.0.1"
-        elif cfg.local_hostname not in local_ipv4s and cfg.local_hostname not in ("localhost", "::1", "127.0.0.1"):
+        elif cfg.local_hostname not in local_ipv4s and cfg.local_hostname not in (
+            "localhost",
+            "::1",
+            "127.0.0.1",
+        ):
             detected = _detect_non_loopback_ipv4()
             if detected is not None:
                 logger.warning(
@@ -179,9 +192,13 @@ class MooncakeTransferEngine:
     ) -> None:
         """Initialize the mooncake instance."""
         if self.engine:
-            self.engine.initialize(local_hostname, metadata_server, protocol, device_name)
+            self.engine.initialize(
+                local_hostname, metadata_server, protocol, device_name
+            )
 
-    def transfer_sync(self, session_id: str, buffer: int, peer_buffer_address: int, length: int) -> int:
+    def transfer_sync(
+        self, session_id: str, buffer: int, peer_buffer_address: int, length: int
+    ) -> int:
         """Synchronously transfer data to the specified address."""
         if self.engine:
             if os.getenv("NETWORK_LATENCY"):
@@ -211,9 +228,13 @@ class MooncakeTransferEngine:
                     time.sleep(latency_sec)
 
             retry_count = int(os.getenv("MOONCAKE_TRANSFER_RETRY", "5"))
-            retry_backoff_s = float(os.getenv("MOONCAKE_TRANSFER_RETRY_BACKOFF_S", "0.05"))
+            retry_backoff_s = float(
+                os.getenv("MOONCAKE_TRANSFER_RETRY_BACKOFF_S", "0.05")
+            )
             for attempt in range(retry_count + 1):
-                ret = self.engine.transfer_sync_write(session_id, buffer, peer_buffer_address, length)
+                ret = self.engine.transfer_sync_write(
+                    session_id, buffer, peer_buffer_address, length
+                )
                 if ret >= 0:
                     return ret
 

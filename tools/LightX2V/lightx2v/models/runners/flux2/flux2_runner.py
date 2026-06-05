@@ -1,18 +1,21 @@
-from lib.smart_config import smart_config
 import gc
 import math
 import os
 
 import torch
-from loguru import logger
-
-from lightx2v.models.networks.flux2.model import Flux2DevTransformerModel, Flux2KleinTransformerModel
+from lightx2v.models.networks.flux2.model import (
+    Flux2DevTransformerModel,
+    Flux2KleinTransformerModel,
+)
 from lightx2v.models.runners.default_runner import DefaultRunner
 from lightx2v.models.schedulers.flux2.scheduler import Flux2DevScheduler, Flux2Scheduler
 from lightx2v.models.video_encoders.hf.flux2.vae import Flux2VAE
 from lightx2v.utils.profiler import ProfilingContext4DebugL1, ProfilingContext4DebugL2
 from lightx2v.utils.registry_factory import RUNNER_REGISTER
 from lightx2v_platform.base.global_var import AI_DEVICE
+from loguru import logger
+
+from lib.smart_config import smart_config
 
 torch_device_module = getattr(torch, AI_DEVICE)
 
@@ -48,7 +51,9 @@ class Flux2BaseRunner(DefaultRunner):
 
     def init_modules(self):
         logger.info(f"Initializing {self.config['model_cls']} modules...")
-        if not self.config.get("lazy_load", False) and not self.config.get("unload_modules", False):
+        if not self.config.get("lazy_load", False) and not self.config.get(
+            "unload_modules", False
+        ):
             self.load_model()
             self.model.set_scheduler(self.scheduler)
         elif self.config.get("lazy_load", False):
@@ -65,10 +70,16 @@ class Flux2BaseRunner(DefaultRunner):
     @ProfilingContext4DebugL2("Run Encoders")
     def _run_input_encoder_local_t2i(self):
         prompt = self.input_info.prompt
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             self.text_encoders = self.load_text_encoder()
-        text_encoder_output = self.run_text_encoder(prompt, neg_prompt=self.input_info.negative_prompt)
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        text_encoder_output = self.run_text_encoder(
+            prompt, neg_prompt=self.input_info.negative_prompt
+        )
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             del self.text_encoders[0]
         torch_device_module.empty_cache()
         gc.collect()
@@ -80,10 +91,16 @@ class Flux2BaseRunner(DefaultRunner):
     @ProfilingContext4DebugL2("Run Encoders I2I")
     def _run_input_encoder_local_i2i(self):
         prompt = self.input_info.prompt
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             self.text_encoders = self.load_text_encoder()
-        text_encoder_output = self.run_text_encoder(prompt, neg_prompt=self.input_info.negative_prompt)
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        text_encoder_output = self.run_text_encoder(
+            prompt, neg_prompt=self.input_info.negative_prompt
+        )
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             del self.text_encoders[0]
 
         image_path = self.input_info.image_path
@@ -91,8 +108,18 @@ class Flux2BaseRunner(DefaultRunner):
 
         if isinstance(image_path, str):
             if os.path.isdir(image_path):
-                image_files = sorted([os.path.join(image_path, f) for f in os.listdir(image_path) if f.lower().endswith((".png", ".jpg", ".jpeg", ".bmp", ".webp", ".tiff"))])
-                input_image = [Image.open(img_file).convert("RGB") for img_file in image_files]
+                image_files = sorted(
+                    [
+                        os.path.join(image_path, f)
+                        for f in os.listdir(image_path)
+                        if f.lower().endswith(
+                            (".png", ".jpg", ".jpeg", ".bmp", ".webp", ".tiff")
+                        )
+                    ]
+                )
+                input_image = [
+                    Image.open(img_file).convert("RGB") for img_file in image_files
+                ]
             else:
                 input_image = Image.open(image_path).convert("RGB")
         else:
@@ -117,7 +144,9 @@ class Flux2BaseRunner(DefaultRunner):
             multiple_of = vae_scale_factor * 2
             image_width = (image_width // multiple_of) * multiple_of
             image_height = (image_height // multiple_of) * multiple_of
-            img = image_processor.preprocess(img, height=image_height, width=image_width, resize_mode="crop")
+            img = image_processor.preprocess(
+                img, height=image_height, width=image_width, resize_mode="crop"
+            )
             condition_images.append(img.to(AI_DEVICE))
             if index == 0:
                 self.input_info.target_shape = (image_height, image_width)
@@ -134,7 +163,12 @@ class Flux2BaseRunner(DefaultRunner):
         B, L, _ = x.shape
         out_ids = []
         for i in range(B):
-            t, h, w, c = torch.arange(1), torch.arange(1), torch.arange(1), torch.arange(L)
+            t, h, w, c = (
+                torch.arange(1),
+                torch.arange(1),
+                torch.arange(1),
+                torch.arange(L),
+            )
             coords = torch.cartesian_prod(t, h, w, c)
             out_ids.append(coords)
         return torch.stack(out_ids)
@@ -150,7 +184,9 @@ class Flux2BaseRunner(DefaultRunner):
 
     @ProfilingContext4DebugL2("Run DiT")
     def _run_dit_local(self, total_steps=None):
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             self.model = self.load_transformer()
             self.model.set_scheduler(self.scheduler)
         self.model.scheduler.prepare(self.input_info)
@@ -159,7 +195,9 @@ class Flux2BaseRunner(DefaultRunner):
 
     @ProfilingContext4DebugL2("Run DiT I2I")
     def _run_dit_local_i2i(self, total_steps=None):
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             self.model = self.load_transformer()
             self.model.set_scheduler(self.scheduler)
 
@@ -219,10 +257,14 @@ class Flux2BaseRunner(DefaultRunner):
 
         if self.input_info.aspect_ratio and not self.config.get("_auto_resize", False):
             if self.input_info.aspect_ratio in as_maps:
-                logger.info(f"Flux2 Image Runner got aspect ratio: {self.input_info.aspect_ratio}")
+                logger.info(
+                    f"Flux2 Image Runner got aspect ratio: {self.input_info.aspect_ratio}"
+                )
                 width, height = as_maps[self.input_info.aspect_ratio]
                 return (width, height)
-            logger.warning(f"Invalid aspect ratio: {self.input_info.aspect_ratio}, not in {as_maps.keys()}")
+            logger.warning(
+                f"Invalid aspect ratio: {self.input_info.aspect_ratio}, not in {as_maps.keys()}"
+            )
 
         width, height = as_maps[self.config.get("aspect_ratio", "16:9")]
         return (width, height)
@@ -236,7 +278,9 @@ class Flux2BaseRunner(DefaultRunner):
             if custom_shape is not None:
                 width, height = custom_shape
             else:
-                calculated_width, calculated_height, _ = calculate_dimensions(self.resolution * self.resolution, 16 / 9)
+                calculated_width, calculated_height, _ = calculate_dimensions(
+                    self.resolution * self.resolution, 16 / 9
+                )
                 multiple_of = self.config.get("vae_scale_factor", 8) * 2
                 width = calculated_width // multiple_of * multiple_of
                 height = calculated_height // multiple_of * multiple_of
@@ -250,15 +294,23 @@ class Flux2BaseRunner(DefaultRunner):
         packed_channels = 128
 
         self.num_channels_latents = packed_channels
-        self.input_info.latent_shape = (packed_batch, packed_h * packed_w, packed_channels)
-        self.input_info.latent_image_ids = self._prepare_latent_ids(packed_batch, packed_h, packed_w).to(AI_DEVICE)
+        self.input_info.latent_shape = (
+            packed_batch,
+            packed_h * packed_w,
+            packed_channels,
+        )
+        self.input_info.latent_image_ids = self._prepare_latent_ids(
+            packed_batch, packed_h, packed_w
+        ).to(AI_DEVICE)
 
     def set_img_shapes(self):
         pass
 
     @ProfilingContext4DebugL1("Run VAE Decoder")
     def run_vae_decoder(self, latents):
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             self.vae = self.load_vae()
 
         B, _, C = latents.shape
@@ -268,8 +320,13 @@ class Flux2BaseRunner(DefaultRunner):
 
         latents = latents.view(B, H, W, C).permute(0, 3, 1, 2)
 
-        bn_mean = self.vae.vae.bn.running_mean.view(1, -1, 1, 1).to(latents.device, latents.dtype)
-        bn_std = torch.sqrt(self.vae.vae.bn.running_var.view(1, -1, 1, 1) + self.vae.vae.config.batch_norm_eps).to(latents.device, latents.dtype)
+        bn_mean = self.vae.vae.bn.running_mean.view(1, -1, 1, 1).to(
+            latents.device, latents.dtype
+        )
+        bn_std = torch.sqrt(
+            self.vae.vae.bn.running_var.view(1, -1, 1, 1)
+            + self.vae.vae.config.batch_norm_eps
+        ).to(latents.device, latents.dtype)
         latents = latents * bn_std + bn_mean
 
         latents = latents.reshape(B, C // 4, 2, 2, H, W)
@@ -278,7 +335,9 @@ class Flux2BaseRunner(DefaultRunner):
 
         images = self.vae.decode(latents, self.input_info)
 
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             del self.vae
             torch_device_module.empty_cache()
             gc.collect()
@@ -321,7 +380,9 @@ class Flux2KleinRunner(Flux2BaseRunner):
         return Flux2KleinTransformerModel(**model_kwargs)
 
     def load_text_encoder(self):
-        from lightx2v.models.input_encoders.hf.flux2.qwen3_model import Flux2Klein_TextEncoder
+        from lightx2v.models.input_encoders.hf.flux2.qwen3_model import (
+            Flux2Klein_TextEncoder,
+        )
 
         text_encoder = Flux2Klein_TextEncoder(self.config)
         return [text_encoder]
@@ -337,7 +398,9 @@ class Flux2KleinRunner(Flux2BaseRunner):
 
         text_encoder_output = {"prompt_embeds": prompt_embeds, "text_ids": text_ids}
 
-        if self.config.get("sample_guide_scale", 1.0) > 1.0 or self.config.get("enable_cfg", True):
+        if self.config.get("sample_guide_scale", 1.0) > 1.0 or self.config.get(
+            "enable_cfg", True
+        ):
             neg_prompt_embeds_list, _ = self.text_encoders[0].infer([""])
             neg_prompt_embeds = neg_prompt_embeds_list[0].unsqueeze(0)
             neg_text_ids = self._prepare_text_ids(neg_prompt_embeds).to(AI_DEVICE)
@@ -359,7 +422,9 @@ class Flux2DevRunner(Flux2BaseRunner):
         return Flux2DevTransformerModel(**model_kwargs)
 
     def load_text_encoder(self):
-        from lightx2v.models.input_encoders.hf.flux2.mistral3_model import Flux2Dev_TextEncoder
+        from lightx2v.models.input_encoders.hf.flux2.mistral3_model import (
+            Flux2Dev_TextEncoder,
+        )
 
         text_encoder = Flux2Dev_TextEncoder(self.config)
         return [text_encoder]

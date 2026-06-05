@@ -1,7 +1,8 @@
-from lib.smart_config import smart_config
 import os
 
 from lightx2v_platform.base.global_var import AI_DEVICE
+
+from lib.smart_config import smart_config
 
 PLATFORM = os.getenv("PLATFORM")
 if PLATFORM == "cambricon_mlu":

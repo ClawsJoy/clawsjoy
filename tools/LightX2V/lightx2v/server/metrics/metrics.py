@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 # -*-coding=utf-8-*-
 import threading
 from typing import List, Tuple
@@ -6,6 +5,8 @@ from typing import List, Tuple
 from loguru import logger
 from prometheus_client import Counter, Gauge, Histogram, start_http_server
 from pydantic import BaseModel
+
+from lib.smart_config import smart_config
 
 
 class MetricsConfig(BaseModel):
@@ -342,11 +343,15 @@ class MetricsClient:
             if config.type_ == "counter":
                 self.register_counter(config.name, config.desc, config.labels)
             elif config.type_ == "histogram":
-                self.register_histogram(config.name, config.desc, config.labels, buckets=config.buckets)
+                self.register_histogram(
+                    config.name, config.desc, config.labels, buckets=config.buckets
+                )
             elif config.type_ == "gauge":
                 self.register_gauge(config.name, config.desc, config.labels)
             else:
-                logger.warning(f"Unsupported metric type: {config.type_} for {metric_name}")
+                logger.warning(
+                    f"Unsupported metric type: {config.type_} for {metric_name}"
+                )
 
     def register_counter(self, name, desc, labels):
         metric_instance = Counter(name, desc, labels)

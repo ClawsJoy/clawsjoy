@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 # Copyright 2024-2025 The Alibaba Wan Team Authors. All rights reserved.
 import os
 from typing import List, Union
@@ -7,7 +6,16 @@ import cv2
 import numpy as np
 import onnxruntime
 import torch
-from pose2d_utils import bbox_from_detector, box_convert_simple, crop, keypoints_from_heatmaps, load_pose_metas_from_kp2ds_seq, read_img
+from pose2d_utils import (
+    bbox_from_detector,
+    box_convert_simple,
+    crop,
+    keypoints_from_heatmaps,
+    load_pose_metas_from_kp2ds_seq,
+    read_img,
+)
+
+from lib.smart_config import smart_config
 
 
 class SimpleOnnxInference(object):
@@ -16,7 +24,19 @@ class SimpleOnnxInference(object):
             device = torch.device(device)
         if device.type == "cuda":
             device = "{}:{}".format(device.type, device.index)
-            providers = [("CUDAExecutionProvider", {"device_id": device[-1:] if device[-1] in [str(_i) for _i in range(10)] else "0"}), "CPUExecutionProvider"]
+            providers = [
+                (
+                    "CUDAExecutionProvider",
+                    {
+                        "device_id": (
+                            device[-1:]
+                            if device[-1] in [str(_i) for _i in range(10)]
+                            else "0"
+                        )
+                    },
+                ),
+                "CPUExecutionProvider",
+            ]
         else:
             providers = ["CPUExecutionProvider"]
         self.device = device
@@ -29,7 +49,11 @@ class SimpleOnnxInference(object):
         self.session = onnxruntime.InferenceSession(checkpoint, providers=providers)
         self.input_name = self.session.get_inputs()[0].name
         self.output_name = self.session.get_outputs()[0].name
-        self.input_resolution = self.session.get_inputs()[0].shape[2:] if not reverse_input else self.session.get_inputs()[0].shape[2:][::-1]
+        self.input_resolution = (
+            self.session.get_inputs()[0].shape[2:]
+            if not reverse_input
+            else self.session.get_inputs()[0].shape[2:][::-1]
+        )
         self.input_resolution = np.array(self.input_resolution)
 
     def __call__(self, *args, **kwargs):
@@ -46,7 +70,19 @@ class SimpleOnnxInference(object):
             device = torch.device(device)
         if device.type == "cuda":
             device = "{}:{}".format(device.type, device.index)
-            providers = [("CUDAExecutionProvider", {"device_id": device[-1:] if device[-1] in [str(_i) for _i in range(10)] else "0"}), "CPUExecutionProvider"]
+            providers = [
+                (
+                    "CUDAExecutionProvider",
+                    {
+                        "device_id": (
+                            device[-1:]
+                            if device[-1] in [str(_i) for _i in range(10)]
+                            else "0"
+                        )
+                    },
+                ),
+                "CPUExecutionProvider",
+            ]
         else:
             providers = ["CPUExecutionProvider"]
         self.session.set_providers(providers)
@@ -188,7 +224,9 @@ class Yolo(SimpleOnnxInference):
         class_ids = classid.tolist()
 
         # Apply non-maximum suppression to filter out overlapping bounding boxes
-        indices = cv2.dnn.NMSBoxes(boxes, scores, self.threshold_conf, self.threshold_iou)
+        indices = cv2.dnn.NMSBoxes(
+            boxes, scores, self.threshold_conf, self.threshold_iou
+        )
         # Iterate over the selected indices after non-maximum suppression
 
         results = []
@@ -237,7 +275,11 @@ class Yolo(SimpleOnnxInference):
                     bbox_size = (abs((bbox[2] + bbox[0]) / 2 - shape_raw[1] / 2)) * -1
                 bbox_shape = max((bbox[2] - bbox[0]), (bbox[3] - bbox[1]))
                 if bbox_size > max_bbox_size:
-                    if (self.strict or max_idx != -1) and bbox_shape < max_bbox_shape * self.threshold_bbox_shape_ratio:
+                    if (
+                        (self.strict or max_idx != -1)
+                        and bbox_shape
+                        < max_bbox_shape * self.threshold_bbox_shape_ratio
+                    ):
                         continue
                     max_bbox_size = bbox_size
                     max_bbox_shape = bbox_shape
@@ -249,7 +291,9 @@ class Yolo(SimpleOnnxInference):
                 if self.select_type == "max":
                     max_bbox_size = (bbox[2] - bbox[0]) * (bbox[3] - bbox[1])
                 elif self.select_type == "center":
-                    max_bbox_size = (abs((bbox[2] + bbox[0]) / 2 - shape_raw[1] / 2)) * -1
+                    max_bbox_size = (
+                        abs((bbox[2] + bbox[0]) / 2 - shape_raw[1] / 2)
+                    ) * -1
 
             if max_idx != -1:
                 person_count = 1
@@ -266,8 +310,14 @@ class Yolo(SimpleOnnxInference):
                     if self.select_type == "max":
                         bbox_size = (bbox[2] - bbox[0]) * (bbox[3] - bbox[1])
                     elif self.select_type == "center":
-                        bbox_size = (abs((bbox[2] + bbox[0]) / 2 - shape_raw[1] / 2)) * -1
-                    if i != max_idx and bbox_size > max_bbox_size * self.threshold_multi_persons and bbox_size < max_bbox_size:
+                        bbox_size = (
+                            abs((bbox[2] + bbox[0]) / 2 - shape_raw[1] / 2)
+                        ) * -1
+                    if (
+                        i != max_idx
+                        and bbox_size > max_bbox_size * self.threshold_multi_persons
+                        and bbox_size < max_bbox_size
+                    ):
                         person_count += 1
                         if not single_person:
                             person = {}
@@ -278,9 +328,13 @@ class Yolo(SimpleOnnxInference):
         else:
             return None
 
-    def postprocess_threading(self, outputs, shape_raw, person_results, i, single_person=True, **kwargs):
+    def postprocess_threading(
+        self, outputs, shape_raw, person_results, i, single_person=True, **kwargs
+    ):
         result = self.postprocess(outputs[i], shape_raw[i], cat_id=self.cat_id)
-        result = self.process_results(result, shape_raw[i], cat_id=self.cat_id, single_person=single_person)
+        result = self.process_results(
+            result, shape_raw[i], cat_id=self.cat_id, single_person=single_person
+        )
         if result is not None and len(result) != 0:
             person_results[i] = result
 
@@ -296,7 +350,17 @@ class Yolo(SimpleOnnxInference):
             shape_raw = shape_raw.cpu().numpy()
 
         outputs = self.session.run(None, {self.session.get_inputs()[0].name: img})[0]
-        person_results = [[{"bbox": np.array([0.0, 0.0, 1.0 * shape_raw[i][1], 1.0 * shape_raw[i][0], -1]), "track_id": -1}] for i in range(len(outputs))]
+        person_results = [
+            [
+                {
+                    "bbox": np.array(
+                        [0.0, 0.0, 1.0 * shape_raw[i][1], 1.0 * shape_raw[i][0], -1]
+                    ),
+                    "track_id": -1,
+                }
+            ]
+            for i in range(len(outputs))
+        ]
 
         for i in range(len(outputs)):
             self.postprocess_threading(outputs, shape_raw, person_results, i, **kwargs)
@@ -309,12 +373,25 @@ class ViTPose(SimpleOnnxInference):
 
     def forward(self, img, center, scale, **kwargs):
         heatmaps = self.session.run([], {self.session.get_inputs()[0].name: img})[0]
-        points, prob = keypoints_from_heatmaps(heatmaps=heatmaps, center=center, scale=scale * 200, unbiased=True, use_udp=False)
+        points, prob = keypoints_from_heatmaps(
+            heatmaps=heatmaps,
+            center=center,
+            scale=scale * 200,
+            unbiased=True,
+            use_udp=False,
+        )
         return np.concatenate([points, prob], axis=2)
 
     @staticmethod
-    def preprocess(img, bbox=None, input_resolution=(256, 192), rescale=1.25, mask=None, **kwargs):
-        if bbox is None or bbox[-1] <= 0 or (bbox[2] - bbox[0]) < 10 or (bbox[3] - bbox[1]) < 10:
+    def preprocess(
+        img, bbox=None, input_resolution=(256, 192), rescale=1.25, mask=None, **kwargs
+    ):
+        if (
+            bbox is None
+            or bbox[-1] <= 0
+            or (bbox[2] - bbox[0]) < 10
+            or (bbox[3] - bbox[1]) < 10
+        ):
             bbox = np.array([0, 0, img.shape[1], img.shape[0]])
 
         bbox_xywh = bbox
@@ -322,11 +399,19 @@ class ViTPose(SimpleOnnxInference):
             img = np.where(mask > 128, img, mask)
 
         if isinstance(input_resolution, int):
-            center, scale = bbox_from_detector(bbox_xywh, (input_resolution, input_resolution), rescale=rescale)
-            img, new_shape, old_xy, new_xy = crop(img, center, scale, (input_resolution, input_resolution))
+            center, scale = bbox_from_detector(
+                bbox_xywh, (input_resolution, input_resolution), rescale=rescale
+            )
+            img, new_shape, old_xy, new_xy = crop(
+                img, center, scale, (input_resolution, input_resolution)
+            )
         else:
-            center, scale = bbox_from_detector(bbox_xywh, input_resolution, rescale=rescale)
-            img, new_shape, old_xy, new_xy = crop(img, center, scale, (input_resolution[0], input_resolution[1]))
+            center, scale = bbox_from_detector(
+                bbox_xywh, input_resolution, rescale=rescale
+            )
+            img, new_shape, old_xy, new_xy = crop(
+                img, center, scale, (input_resolution[0], input_resolution[1])
+            )
 
         IMG_NORM_MEAN = np.array([0.485, 0.456, 0.406])
         IMG_NORM_STD = np.array([0.229, 0.224, 0.225])
@@ -384,7 +469,12 @@ class Pose2d:
             images = [cv2.cvtColor(image, cv2.COLOR_BGR2RGB) for image in inputs]
         return images
 
-    def __call__(self, inputs: Union[str, np.ndarray, List[np.ndarray]], return_image: bool = False, **kwargs):
+    def __call__(
+        self,
+        inputs: Union[str, np.ndarray, List[np.ndarray]],
+        return_image: bool = False,
+        **kwargs,
+    ):
         """
         Process input and estimate 2D keypoints.
 

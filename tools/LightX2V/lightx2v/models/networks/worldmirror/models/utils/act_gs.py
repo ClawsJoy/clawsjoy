@@ -1,6 +1,7 @@
-from lib.smart_config import smart_config
 import torch
 from einops import rearrange
+
+from lib.smart_config import smart_config
 
 
 def reg_dense_offsets(xyz, shift=6.0):

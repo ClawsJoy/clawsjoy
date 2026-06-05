@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 Wan2.1 T2V 三段式 Disagg request script.
 三段式请求流程：

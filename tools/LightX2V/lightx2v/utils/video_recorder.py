@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import os
 import queue
 import socket
@@ -10,6 +9,8 @@ import traceback
 import numpy as np
 import torch
 from loguru import logger
+
+from lib.smart_config import smart_config
 
 
 def pseudo_random(a, b):
@@ -28,7 +29,9 @@ class VideoRecorder:
         self.fps = fps
         self.video_port = pseudo_random(32000, 40000)
         self.ffmpeg_log_level = os.getenv("FFMPEG_LOG_LEVEL", "error")
-        logger.info(f"VideoRecorder video port: {self.video_port}, ffmpeg_log_level: {self.ffmpeg_log_level}")
+        logger.info(
+            f"VideoRecorder video port: {self.video_port}, ffmpeg_log_level: {self.ffmpeg_log_level}"
+        )
 
         self.width = None
         self.height = None
@@ -58,7 +61,9 @@ class VideoRecorder:
         try:
             logger.info("Waiting for ffmpeg to connect to video socket...")
             self.video_conn, _ = self.video_socket.accept()
-            logger.info(f"Video connection established from {self.video_conn.getpeername()}")
+            logger.info(
+                f"Video connection established from {self.video_conn.getpeername()}"
+            )
             fail_time, max_fail_time = 0, 10
             packet_secs = 1.0 / self.fps
             while True:
@@ -73,11 +78,15 @@ class VideoRecorder:
                     # Convert to numpy and scale to [0, 255], convert RGB to BGR for OpenCV/FFmpeg
                     for i in range(data.shape[0]):
                         t0 = time.time()
-                        frame = (data[i] * 255).clamp(0, 255).to(torch.uint8).cpu().numpy()
+                        frame = (
+                            (data[i] * 255).clamp(0, 255).to(torch.uint8).cpu().numpy()
+                        )
                         try:
                             self.video_conn.send(frame.tobytes())
                         except (BrokenPipeError, OSError, ConnectionResetError) as e:
-                            logger.info(f"Video connection closed, stopping worker: {type(e).__name__}")
+                            logger.info(
+                                f"Video connection closed, stopping worker: {type(e).__name__}"
+                            )
                             return
                         if self.realtime:
                             time.sleep(max(0, packet_secs - (time.time() - t0)))
@@ -90,7 +99,9 @@ class VideoRecorder:
                     logger.error(f"Send video data error: {traceback.format_exc()}")
                     fail_time += 1
                     if fail_time > max_fail_time:
-                        logger.error(f"Video push worker thread failed {fail_time} times, stopping...")
+                        logger.error(
+                            f"Video push worker thread failed {fail_time} times, stopping..."
+                        )
                         break
         except Exception:
             logger.error(f"Video push worker thread error: {traceback.format_exc()}")
@@ -251,12 +262,18 @@ class VideoRecorder:
     def start(self, width: int, height: int):
         self.set_video_size(width, height)
         duration = 1.0
-        self.pub_video(torch.zeros((int(self.fps * duration), height, width, 3), dtype=torch.float16))
+        self.pub_video(
+            torch.zeros(
+                (int(self.fps * duration), height, width, 3), dtype=torch.float16
+            )
+        )
         time.sleep(duration)
 
     def set_video_size(self, width: int, height: int):
         if self.width is not None and self.height is not None:
-            assert self.width == width and self.height == height, "Video size already set"
+            assert (
+                self.width == width and self.height == height
+            ), "Video size already set"
             return
         self.width = width
         self.height = height
@@ -318,23 +335,35 @@ class VideoRecorder:
             is_local_file = not self.livestream_url.startswith(("rtmp://", "http"))
             # Local MP4 files need time to write moov atom and finalize the container
             timeout_seconds = 30 if is_local_file else 10
-            logger.info(f"Waiting for FFmpeg to finalize file (timeout={timeout_seconds}s, local_file={is_local_file})")
+            logger.info(
+                f"Waiting for FFmpeg to finalize file (timeout={timeout_seconds}s, local_file={is_local_file})"
+            )
             logger.info(f"FFmpeg output: {self.livestream_url}")
 
             try:
                 returncode = self.ffmpeg_process.wait(timeout=timeout_seconds)
                 if returncode == 0:
-                    logger.info(f"FFmpeg process exited successfully (exit code: {returncode})")
+                    logger.info(
+                        f"FFmpeg process exited successfully (exit code: {returncode})"
+                    )
                 else:
-                    logger.warning(f"FFmpeg process exited with non-zero code: {returncode}")
+                    logger.warning(
+                        f"FFmpeg process exited with non-zero code: {returncode}"
+                    )
             except subprocess.TimeoutExpired:
-                logger.warning(f"FFmpeg process did not exit within {timeout_seconds}s, sending SIGTERM...")
+                logger.warning(
+                    f"FFmpeg process did not exit within {timeout_seconds}s, sending SIGTERM..."
+                )
                 try:
                     self.ffmpeg_process.terminate()  # SIGTERM
                     returncode = self.ffmpeg_process.wait(timeout=5)
-                    logger.warning(f"FFmpeg process terminated with SIGTERM (exit code: {returncode})")
+                    logger.warning(
+                        f"FFmpeg process terminated with SIGTERM (exit code: {returncode})"
+                    )
                 except subprocess.TimeoutExpired:
-                    logger.error("FFmpeg process still running after SIGTERM, killing with SIGKILL...")
+                    logger.error(
+                        "FFmpeg process still running after SIGTERM, killing with SIGKILL..."
+                    )
                     self.ffmpeg_process.kill()
                     self.ffmpeg_process.wait()  # Wait for kill to complete
                     logger.error("FFmpeg process killed with SIGKILL")
@@ -361,7 +390,7 @@ class VideoRecorder:
             while self.video_queue.qsize() > 0:
                 try:
                     self.video_queue.get_nowait()
-                except:  # noqa
+                except Exception as e:  # noqa
                     break
         self.video_queue = None
         logger.info("VideoRecorder stopped and resources cleaned up")
@@ -416,7 +445,9 @@ if __name__ == "__main__":
 
         num_frames = int(interval * fps)
         images = create_simple_video(num_frames, height, width)
-        logger.info(f"images: {images.shape} {images.dtype} {images.min()} {images.max()}")
+        logger.info(
+            f"images: {images.shape} {images.dtype} {images.min()} {images.max()}"
+        )
 
         recorder.pub_video(images)
         time.sleep(interval)

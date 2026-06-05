@@ -1,9 +1,9 @@
-from lib.smart_config import smart_config
 from dataclasses import dataclass
 
 import torch
-
 from lightx2v.models.networks.seedvr.utils.cache import Cache
+
+from lib.smart_config import smart_config
 
 
 @dataclass

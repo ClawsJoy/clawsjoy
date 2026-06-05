@@ -3,29 +3,30 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 from core.lib.constants import PROJECT_ROOT
+
 #!/usr/bin/env python3
 """成功率监控器 v1.0.01 - 配置驱动，从日志读取真实数据"""
 
-import sys
 import re
-from pathlib import Path
+import sys
 from datetime import datetime
+from pathlib import Path
 from typing import Dict
 
-sys.path.insert(0, 'PROJECT_ROOT')
+sys.path.insert(0, "PROJECT_ROOT")
 
 from core.lib.unified_config import unified_config
 
 
 class SuccessMonitorV1_0_01:
     """成功率监控器 v1.0.01 - 配置驱动"""
-    
+
     VERSION = "1.0.01"
-    
+
     def __init__(self):
         self.root = smart_config.ROOT
 
@@ -38,15 +39,21 @@ class SuccessMonitorV1_0_01:
     def get_recent_success_rate(self) -> Dict:
         """从日志文件读取真实成功率"""
         if not self.log_path.exists():
-            return {"success": 0, "failed": 0, "total": 0, "rate": 0, "source": "no_log"}
+            return {
+                "success": 0,
+                "failed": 0,
+                "total": 0,
+                "rate": 0,
+                "source": "no_log",
+            }
 
-        content = self.log_path.read_text(encoding='utf-8', errors='ignore')
-        lines = content.strip().split('\n')
+        content = self.log_path.read_text(encoding="utf-8", errors="ignore")
+        lines = content.strip().split("\n")
 
         success = 0
         failed = 0
 
-        for line in lines[-self.window_size * 2:]:
+        for line in lines[-self.window_size * 2 :]:
             if self.success_pattern in line:
                 success += 1
             elif self.failure_pattern in line:
@@ -60,27 +67,23 @@ class SuccessMonitorV1_0_01:
             "failed": failed,
             "total": total,
             "rate": round(rate, 1),
-            "source": "log"
+            "source": "log",
         }
-    
+
     def get_alert_level(self, rate: float) -> str:
         if rate < 30:
-            return 'critical'
+            return "critical"
         elif rate < 50:
-            return 'warning'
+            return "warning"
         else:
-            return 'normal'
-    
+            return "normal"
+
     def check_and_alert(self) -> Dict:
         stats = self.get_recent_success_rate()
-        rate = stats['rate']
+        rate = stats["rate"]
         level = self.get_alert_level(rate)
 
-        alerts = {
-            'critical': '🔴 紧急',
-            'warning': '🟡 警告',
-            'normal': '🟢 正常'
-        }
+        alerts = {"critical": "🔴 紧急", "warning": "🟡 警告", "normal": "🟢 正常"}
 
         alert_msg = f"{alerts[level]} 成功率: {rate:.1f}% (成功:{stats['success']}, 失败:{stats['failed']}, 来源:{stats.get('source', 'unknown')})"
 
@@ -91,15 +94,15 @@ class SuccessMonitorV1_0_01:
             "level": level,
             "alert": alert_msg,
             "stats": stats,
-            "version": self.VERSION
+            "version": self.VERSION,
         }
-    
+
     def get_status(self) -> Dict:
         return {
             "monitor_version": self.VERSION,
             "log_path": str(self.log_path),
             "window_size": self.window_size,
-            "last_check": datetime.now().isoformat()
+            "last_check": datetime.now().isoformat(),
         }
 
 

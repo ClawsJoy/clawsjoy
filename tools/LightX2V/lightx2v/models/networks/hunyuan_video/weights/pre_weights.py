@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 from lightx2v.common.modules.weight_module import WeightModule, WeightModuleList
 from lightx2v.utils.registry_factory import (
     CONV3D_WEIGHT_REGISTER,
@@ -6,6 +5,8 @@ from lightx2v.utils.registry_factory import (
     LN_WEIGHT_REGISTER,
     MM_WEIGHT_REGISTER,
 )
+
+from lib.smart_config import smart_config
 
 
 class HunyuanVideo15PreWeights(WeightModule):
@@ -120,29 +121,50 @@ class IndividualTokenRefinerBlock(WeightModule):
         self.mm_type = mm_type
         self.add_module(
             "norm1",
-            LN_WEIGHT_REGISTER["torch"](f"{block_prefix}.{block_idx}.norm1.weight", f"{block_prefix}.{block_idx}.norm1.bias"),
+            LN_WEIGHT_REGISTER["torch"](
+                f"{block_prefix}.{block_idx}.norm1.weight",
+                f"{block_prefix}.{block_idx}.norm1.bias",
+            ),
         )
         self.add_module(
             "self_attn_qkv",
-            MM_WEIGHT_REGISTER["Default"](f"{block_prefix}.{block_idx}.self_attn_qkv.weight", f"{block_prefix}.{block_idx}.self_attn_qkv.bias"),
+            MM_WEIGHT_REGISTER["Default"](
+                f"{block_prefix}.{block_idx}.self_attn_qkv.weight",
+                f"{block_prefix}.{block_idx}.self_attn_qkv.bias",
+            ),
         )
         self.add_module(
             "self_attn_proj",
-            MM_WEIGHT_REGISTER["Default"](f"{block_prefix}.{block_idx}.self_attn_proj.weight", f"{block_prefix}.{block_idx}.self_attn_proj.bias"),
+            MM_WEIGHT_REGISTER["Default"](
+                f"{block_prefix}.{block_idx}.self_attn_proj.weight",
+                f"{block_prefix}.{block_idx}.self_attn_proj.bias",
+            ),
         )
         self.add_module(
             "norm2",
-            LN_WEIGHT_REGISTER["torch"](f"{block_prefix}.{block_idx}.norm2.weight", f"{block_prefix}.{block_idx}.norm2.bias"),
+            LN_WEIGHT_REGISTER["torch"](
+                f"{block_prefix}.{block_idx}.norm2.weight",
+                f"{block_prefix}.{block_idx}.norm2.bias",
+            ),
         )
         self.add_module(
             "mlp_fc1",
-            MM_WEIGHT_REGISTER["Default"](f"{block_prefix}.{block_idx}.mlp.fc1.weight", f"{block_prefix}.{block_idx}.mlp.fc1.bias"),
+            MM_WEIGHT_REGISTER["Default"](
+                f"{block_prefix}.{block_idx}.mlp.fc1.weight",
+                f"{block_prefix}.{block_idx}.mlp.fc1.bias",
+            ),
         )
         self.add_module(
             "mlp_fc2",
-            MM_WEIGHT_REGISTER["Default"](f"{block_prefix}.{block_idx}.mlp.fc2.weight", f"{block_prefix}.{block_idx}.mlp.fc2.bias"),
+            MM_WEIGHT_REGISTER["Default"](
+                f"{block_prefix}.{block_idx}.mlp.fc2.weight",
+                f"{block_prefix}.{block_idx}.mlp.fc2.bias",
+            ),
         )
         self.add_module(
             "adaLN_modulation",
-            MM_WEIGHT_REGISTER["Default"](f"{block_prefix}.{block_idx}.adaLN_modulation.1.weight", f"{block_prefix}.{block_idx}.adaLN_modulation.1.bias"),
+            MM_WEIGHT_REGISTER["Default"](
+                f"{block_prefix}.{block_idx}.adaLN_modulation.1.weight",
+                f"{block_prefix}.{block_idx}.adaLN_modulation.1.bias",
+            ),
         )

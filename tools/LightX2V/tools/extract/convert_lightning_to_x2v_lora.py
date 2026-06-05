@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
@@ -24,10 +25,25 @@ from safetensors.torch import save_file
 
 def parse_args():
     """Parse command line arguments"""
-    parser = argparse.ArgumentParser(description="Convert Lightning LoRA format to Lightx2v LoRA format", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("--input-lora", type=str, required=True, help="Path to input Lightning LoRA model")
-    parser.add_argument("--output-lora", type=str, required=True, help="Path to output Lightx2v LoRA model")
-    parser.add_argument("--to-bf16", action="store_true", help="Convert output weights to bf16 format")
+    parser = argparse.ArgumentParser(
+        description="Convert Lightning LoRA format to Lightx2v LoRA format",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument(
+        "--input-lora",
+        type=str,
+        required=True,
+        help="Path to input Lightning LoRA model",
+    )
+    parser.add_argument(
+        "--output-lora",
+        type=str,
+        required=True,
+        help="Path to output Lightx2v LoRA model",
+    )
+    parser.add_argument(
+        "--to-bf16", action="store_true", help="Convert output weights to bf16 format"
+    )
     return parser.parse_args()
 
 
@@ -160,7 +176,9 @@ def convert_lightning_to_x2v(weights: dict, to_bf16: bool = False) -> dict:
         else:
             # If no alpha, assume alpha = rank (no scaling)
             alpha_value = float(rank)
-            print(f"Warning: No alpha found for {base_key}, using default alpha={alpha_value}")
+            print(
+                f"Warning: No alpha found for {base_key}, using default alpha={alpha_value}"
+            )
 
         # Compute scaling factor: alpha / rank
         scale = alpha_value / rank

@@ -1,8 +1,8 @@
-from lib.smart_config import smart_config
 from einops import rearrange
-
 from lightx2v.models.networks.seedvr.utils import na
 from lightx2v.models.networks.seedvr.utils.ops import gather_outputs
+
+from lib.smart_config import smart_config
 
 from .utils import apply_adaln_single
 
@@ -19,14 +19,26 @@ class SeedVRPostInfer:
         cache = cache.namespace("patch")
         vid_shape_before_patchify = cache.get("vid_shape_before_patchify")
 
-        t, h, w = self.patch_size if isinstance(self.patch_size, (list, tuple)) else (self.patch_size, self.patch_size, self.patch_size)
+        t, h, w = (
+            self.patch_size
+            if isinstance(self.patch_size, (list, tuple))
+            else (self.patch_size, self.patch_size, self.patch_size)
+        )
         vid = weights.vid_out_proj.apply(vid)
-        vid = gather_outputs(vid, gather_dim=0, padding_dim=0, unpad_shape=vid_shape, cache=cache.namespace("vid"))
+        vid = gather_outputs(
+            vid,
+            gather_dim=0,
+            padding_dim=0,
+            unpad_shape=vid_shape,
+            cache=cache.namespace("vid"),
+        )
 
         if not (t == h == w == 1):
             vid = na.unflatten(vid, vid_shape)
             for i in range(len(vid)):
-                vid[i] = rearrange(vid[i], "T H W (t h w c) -> (T t) (H h) (W w) c", t=t, h=h, w=w)
+                vid[i] = rearrange(
+                    vid[i], "T H W (t h w c) -> (T t) (H h) (W w) c", t=t, h=h, w=w
+                )
                 if t > 1 and vid_shape_before_patchify[i, 0] % t != 0:
                     vid[i] = vid[i][(t - vid_shape_before_patchify[i, 0] % t) :]
             vid, vid_shape = na.flatten(vid)

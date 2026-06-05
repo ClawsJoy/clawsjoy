@@ -1,11 +1,13 @@
-from lib.smart_config import smart_config
-# Licensed under the TENCENT HUNYUAN COMMUNITY LICENSE AGREEMENT
-# Ported from HY-WorldPlay for LightX2V integration
-
 import json
 
 import numpy as np
 import torch
+
+from lib.smart_config import smart_config
+
+# Licensed under the TENCENT HUNYUAN COMMUNITY LICENSE AGREEMENT
+# Ported from HY-WorldPlay for LightX2V integration
+
 
 try:
     from scipy.spatial.transform import Rotation as R
@@ -156,7 +158,9 @@ def parse_pose_string(pose_string):
 
         parts = cmd.split("-")
         if len(parts) != 2:
-            raise ValueError(f"Invalid pose command: {cmd}. Expected format: 'action-duration'")
+            raise ValueError(
+                f"Invalid pose command: {cmd}. Expected format: 'action-duration'"
+            )
 
         action = parts[0].strip()
         try:
@@ -200,7 +204,9 @@ def parse_pose_string(pose_string):
             for _ in range(num_frames):
                 motions.append({"yaw": yaw_speed})
         else:
-            raise ValueError(f"Unknown action: {action}. Supported actions: w, s, a, d, up, down, left, right")
+            raise ValueError(
+                f"Unknown action: {action}. Supported actions: w, s, a, d, up, down, left, right"
+            )
 
     return motions
 
@@ -275,11 +281,15 @@ def pose_to_input(pose_data, latent_num, tps=False):
     elif isinstance(pose_data, dict):
         pose_json = pose_data
     else:
-        raise ValueError(f"Invalid pose_data type: {type(pose_data)}. Expected str or dict.")
+        raise ValueError(
+            f"Invalid pose_data type: {type(pose_data)}. Expected str or dict."
+        )
 
     pose_keys = list(pose_json.keys())
     latent_num_from_pose = len(pose_keys)
-    assert latent_num_from_pose == latent_num, f"pose corresponds to {latent_num_from_pose * 4 - 3} frames, num_frames must be set to {latent_num_from_pose * 4 - 3} to ensure alignment."
+    assert (
+        latent_num_from_pose == latent_num
+    ), f"pose corresponds to {latent_num_from_pose * 4 - 3} frames, num_frames must be set to {latent_num_from_pose * 4 - 3} to ensure alignment."
 
     intrinsic_list = []
     w2c_list = []
@@ -324,7 +334,9 @@ def pose_to_input(pose_data, latent_num, tps=False):
 
         # Determine movement and rotation actions
         if move_norms > move_norm_valid:  # threshold for movement
-            if (not tps) or (tps and abs(rot_angles_deg[1]) < 5e-2 and abs(rot_angles_deg[0]) < 5e-2):
+            if (not tps) or (
+                tps and abs(rot_angles_deg[1]) < 5e-2 and abs(rot_angles_deg[0]) < 5e-2
+            ):
                 if trans_angles_deg[2] < 60:
                     trans_one_hot[i, 0] = 1  # forward
                 elif trans_angles_deg[2] > 120:

@@ -1,12 +1,10 @@
-from lib.smart_config import smart_config
 import gc
 import math
 
 import torch
-from PIL import Image
-from loguru import logger
-
-from lightx2v.models.input_encoders.hf.longcat.longcat_text_encoder import LongCatImageTextEncoder
+from lightx2v.models.input_encoders.hf.longcat.longcat_text_encoder import (
+    LongCatImageTextEncoder,
+)
 from lightx2v.models.networks.longcat_image.model import LongCatImageTransformerModel
 from lightx2v.models.runners.default_runner import DefaultRunner
 from lightx2v.models.schedulers.longcat_image.scheduler import LongCatImageScheduler
@@ -16,6 +14,10 @@ from lightx2v.utils.envs import *
 from lightx2v.utils.profiler import *
 from lightx2v.utils.registry_factory import RUNNER_REGISTER
 from lightx2v_platform.base.global_var import AI_DEVICE
+from loguru import logger
+from PIL import Image
+
+from lib.smart_config import smart_config
 
 try:
     from diffusers.image_processor import VaeImageProcessor
@@ -36,7 +38,9 @@ def calculate_dimensions(target_area, ratio):
     return width, height, None
 
 
-def calculate_target_dimensions_from_image(image_size, target_area=1024 * 1024, multiple_of=16):
+def calculate_target_dimensions_from_image(
+    image_size, target_area=1024 * 1024, multiple_of=16
+):
     """Calculate target dimensions from image size while preserving aspect ratio.
 
     Args:
@@ -52,8 +56,16 @@ def calculate_target_dimensions_from_image(image_size, target_area=1024 * 1024, 
     height = width / ratio
 
     # Round to multiple
-    width = int(width) if int(width) % multiple_of == 0 else (int(width) // multiple_of + 1) * multiple_of
-    height = int(height) if int(height) % multiple_of == 0 else (int(height) // multiple_of + 1) * multiple_of
+    width = (
+        int(width)
+        if int(width) % multiple_of == 0
+        else (int(width) // multiple_of + 1) * multiple_of
+    )
+    height = (
+        int(height)
+        if int(height) % multiple_of == 0
+        else (int(height) // multiple_of + 1) * multiple_of
+    )
 
     return width, height
 
@@ -68,7 +80,11 @@ class LongCatImageRunner(DefaultRunner):
         self.resolution = self.config.get("resolution", 1024)
 
     def load_transformer(self):
-        model = LongCatImageTransformerModel(os.path.join(self.config["model_path"], "transformer"), self.config, self.init_device)
+        model = LongCatImageTransformerModel(
+            os.path.join(self.config["model_path"], "transformer"),
+            self.config,
+            self.init_device,
+        )
         return model
 
     def load_text_encoder(self):
@@ -85,7 +101,9 @@ class LongCatImageRunner(DefaultRunner):
 
     def init_modules(self):
         logger.info("Initializing LongCat runner modules...")
-        if not self.config.get("lazy_load", False) and not self.config.get("unload_modules", False):
+        if not self.config.get("lazy_load", False) and not self.config.get(
+            "unload_modules", False
+        ):
             self.load_model()
             self.model.set_scheduler(self.scheduler)
         elif self.config.get("lazy_load", False):
@@ -102,7 +120,9 @@ class LongCatImageRunner(DefaultRunner):
 
     @ProfilingContext4DebugL2("Run DiT")
     def _run_dit_local(self, total_steps=None):
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             self.model = self.load_transformer()
             self.model.set_scheduler(self.scheduler)
         self.model.scheduler.prepare(self.input_info)
@@ -112,12 +132,16 @@ class LongCatImageRunner(DefaultRunner):
     @ProfilingContext4DebugL2("Run DiT I2I")
     def _run_dit_local_i2i(self, total_steps=None):
         """Run DiT for I2I (image editing) task."""
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             self.model = self.load_transformer()
             self.model.set_scheduler(self.scheduler)
 
         # Load VAE for encoding input image
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             self.vae = self.load_vae()
 
         # Prepare scheduler with input image
@@ -130,10 +154,16 @@ class LongCatImageRunner(DefaultRunner):
     @ProfilingContext4DebugL2("Run Encoders")
     def _run_input_encoder_local_t2i(self):
         prompt = self.input_info.prompt
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             self.text_encoders = self.load_text_encoder()
-        text_encoder_output = self.run_text_encoder(prompt, neg_prompt=self.input_info.negative_prompt)
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        text_encoder_output = self.run_text_encoder(
+            prompt, neg_prompt=self.input_info.negative_prompt
+        )
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             del self.text_encoders[0]
         torch_device_module.empty_cache()
         gc.collect()
@@ -157,13 +187,19 @@ class LongCatImageRunner(DefaultRunner):
 
         logger.info(f"Loaded input image: {input_image.size}")
 
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             self.text_encoders = self.load_text_encoder()
 
         # Encode text with image (VL encoding)
-        text_encoder_output = self.run_text_encoder_with_image(prompt, input_image, neg_prompt=neg_prompt)
+        text_encoder_output = self.run_text_encoder_with_image(
+            prompt, input_image, neg_prompt=neg_prompt
+        )
 
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             del self.text_encoders[0]
 
         # Preprocess image for VAE encoding
@@ -219,14 +255,18 @@ class LongCatImageRunner(DefaultRunner):
         prompt_image = image_processor.resize(image, height // 2, width // 2)
 
         # Encode with image
-        prompt_embeds, prompt_embeds_mask, _ = self.text_encoders[0].infer_with_image([text], prompt_image)
+        prompt_embeds, prompt_embeds_mask, _ = self.text_encoders[0].infer_with_image(
+            [text], prompt_image
+        )
         self.input_info.txt_seq_lens = [prompt_embeds.shape[1]]
         text_encoder_output["prompt_embeds"] = prompt_embeds
 
         # Encode negative prompt with image
         if self.config.get("enable_cfg", True) and neg_prompt is not None:
             neg_prompt = neg_prompt if neg_prompt else ""
-            neg_prompt_embeds, neg_prompt_embeds_mask, _ = self.text_encoders[0].infer_with_image([neg_prompt], prompt_image)
+            neg_prompt_embeds, neg_prompt_embeds_mask, _ = self.text_encoders[
+                0
+            ].infer_with_image([neg_prompt], prompt_image)
             self.input_info.txt_seq_lens.append(neg_prompt_embeds.shape[1])
             text_encoder_output["negative_prompt_embeds"] = neg_prompt_embeds
 
@@ -257,7 +297,9 @@ class LongCatImageRunner(DefaultRunner):
         text_encoder_output["prompt_embeds"] = prompt_embeds
 
         if self.config["enable_cfg"] and neg_prompt is not None:
-            neg_prompt_embeds, neg_prompt_embeds_mask, _ = self.text_encoders[0].infer([neg_prompt])
+            neg_prompt_embeds, neg_prompt_embeds_mask, _ = self.text_encoders[0].infer(
+                [neg_prompt]
+            )
             self.input_info.txt_seq_lens.append(neg_prompt_embeds.shape[1])
             text_encoder_output["negative_prompt_embeds"] = neg_prompt_embeds
 
@@ -270,10 +312,14 @@ class LongCatImageRunner(DefaultRunner):
         metrics_labels=["LongCatImageRunner"],
     )
     def run_vae_decoder(self, latents):
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             self.vae = self.load_vae()
         images = self.vae.decode(latents, self.input_info)
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             del self.vae
             torch_device_module.empty_cache()
             gc.collect()
@@ -326,10 +372,14 @@ class LongCatImageRunner(DefaultRunner):
 
         if self.input_info.aspect_ratio and not self.config.get("_auto_resize", False):
             if self.input_info.aspect_ratio in as_maps:
-                logger.info(f"LongCat Image Runner got aspect ratio: {self.input_info.aspect_ratio}")
+                logger.info(
+                    f"LongCat Image Runner got aspect ratio: {self.input_info.aspect_ratio}"
+                )
                 width, height = as_maps[self.input_info.aspect_ratio]
                 return (width, height)
-            logger.warning(f"Invalid aspect ratio: {self.input_info.aspect_ratio}, not in {as_maps.keys()}")
+            logger.warning(
+                f"Invalid aspect ratio: {self.input_info.aspect_ratio}, not in {as_maps.keys()}"
+            )
 
         width, height = as_maps[self.config.get("aspect_ratio", "16:9")]
         return (width, height)
@@ -337,7 +387,11 @@ class LongCatImageRunner(DefaultRunner):
     def set_target_shape(self):
         # For I2I task, use dimensions from _preprocess_image() if already set
         task = self.config.get("task", "t2i")
-        if task == "i2i" and hasattr(self.input_info, "auto_width") and self.input_info.auto_width:
+        if (
+            task == "i2i"
+            and hasattr(self.input_info, "auto_width")
+            and self.input_info.auto_width
+        ):
             width = self.input_info.auto_width
             height = self.input_info.auto_height
         else:
@@ -345,7 +399,9 @@ class LongCatImageRunner(DefaultRunner):
             if custom_shape is not None:
                 width, height = custom_shape
             else:
-                calculated_width, calculated_height, _ = calculate_dimensions(self.resolution * self.resolution, 16 / 9)
+                calculated_width, calculated_height, _ = calculate_dimensions(
+                    self.resolution * self.resolution, 16 / 9
+                )
                 multiple_of = self.config.get("vae_scale_factor", 8) * 2
                 width = calculated_width // multiple_of * multiple_of
                 height = calculated_height // multiple_of * multiple_of
@@ -367,7 +423,9 @@ class LongCatImageRunner(DefaultRunner):
         width, height = self.input_info.auto_width, self.input_info.auto_height
         vae_scale_factor = self.config.get("vae_scale_factor", 8)
         # For T2I task
-        image_shapes = [(1, height // vae_scale_factor // 2, width // vae_scale_factor // 2)] * 1
+        image_shapes = [
+            (1, height // vae_scale_factor // 2, width // vae_scale_factor // 2)
+        ] * 1
         self.input_info.image_shapes = image_shapes
 
     def init_scheduler(self):
@@ -385,7 +443,11 @@ class LongCatImageRunner(DefaultRunner):
         self.text_encoders = self.load_text_encoder()
         self.image_encoder = self.load_image_encoder()
         self.vae = self.load_vae()
-        self.vfi_model = self.load_vfi_model() if "video_frame_interpolation" in self.config else None
+        self.vfi_model = (
+            self.load_vfi_model()
+            if "video_frame_interpolation" in self.config
+            else None
+        )
 
     def run_pipeline(self, input_info):
         self.input_info = input_info

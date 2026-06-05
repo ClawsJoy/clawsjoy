@@ -1,7 +1,8 @@
-from lib.smart_config import smart_config
 import torch
 import torch.distributed as dist
 from loguru import logger
+
+from lib.smart_config import smart_config
 
 try:
     import flash_attn  # noqa: F401
@@ -10,8 +11,14 @@ except ImportError:
     logger.info("flash_attn_varlen_func not found, please install flash_attn2 first")
     flash_attn_varlen_func = None
 
-from lightx2v.models.input_encoders.hf.seko_audio.audio_adapter import align_hidden_states_and_mask, calculate_n_query_tokens, get_qk_lens_audio_range
-from lightx2v.models.networks.wan.infer.offload.transformer_infer import WanOffloadTransformerInfer
+from lightx2v.models.input_encoders.hf.seko_audio.audio_adapter import (
+    align_hidden_states_and_mask,
+    calculate_n_query_tokens,
+    get_qk_lens_audio_range,
+)
+from lightx2v.models.networks.wan.infer.offload.transformer_infer import (
+    WanOffloadTransformerInfer,
+)
 from lightx2v.utils.registry_factory import ATTN_WEIGHT_REGISTER
 from lightx2v_platform.base.global_var import AI_DEVICE
 
@@ -46,22 +53,54 @@ class WanAudioTransformerInfer(WanOffloadTransformerInfer):
 
         if not self.post_adapter_states_ready:
             n_tokens_per_rank = torch.tensor(x.size(0), dtype=torch.int32)
-            self.n_query_tokens = calculate_n_query_tokens(sp_rank, sp_size, n_tokens_per_rank, n_tokens)
-            self.q_lens, self.k_lens, self.max_seqlen_q, self.max_seqlen_k, self.t0, self.t1 = get_qk_lens_audio_range(
-                n_tokens_per_rank=n_tokens_per_rank, n_query_tokens=self.n_query_tokens, n_tokens_per_frame=pre_frame_tokens, sp_rank=sp_rank, num_tokens_x4=128
+            self.n_query_tokens = calculate_n_query_tokens(
+                sp_rank, sp_size, n_tokens_per_rank, n_tokens
             )
-            self.perceiver_attn_cu_seqlens_q = torch.cat([self.q_lens.new_zeros([1]), self.q_lens]).cumsum(0, dtype=torch.int32).to(device, non_blocking=True)
-            self.perceiver_attn_cu_seqlens_k = torch.cat([self.k_lens.new_zeros([1]), self.k_lens]).cumsum(0, dtype=torch.int32).to(device, non_blocking=True)
+            (
+                self.q_lens,
+                self.k_lens,
+                self.max_seqlen_q,
+                self.max_seqlen_k,
+                self.t0,
+                self.t1,
+            ) = get_qk_lens_audio_range(
+                n_tokens_per_rank=n_tokens_per_rank,
+                n_query_tokens=self.n_query_tokens,
+                n_tokens_per_frame=pre_frame_tokens,
+                sp_rank=sp_rank,
+                num_tokens_x4=128,
+            )
+            self.perceiver_attn_cu_seqlens_q = (
+                torch.cat([self.q_lens.new_zeros([1]), self.q_lens])
+                .cumsum(0, dtype=torch.int32)
+                .to(device, non_blocking=True)
+            )
+            self.perceiver_attn_cu_seqlens_k = (
+                torch.cat([self.k_lens.new_zeros([1]), self.k_lens])
+                .cumsum(0, dtype=torch.int32)
+                .to(device, non_blocking=True)
+            )
             self.post_adapter_states_ready = True
 
-        hidden_states_aligned, hidden_states_tail, person_mask_aligned = align_hidden_states_and_mask(self.n_query_tokens, x, person_mask_latens)
+        hidden_states_aligned, hidden_states_tail, person_mask_aligned = (
+            align_hidden_states_and_mask(self.n_query_tokens, x, person_mask_latens)
+        )
         total_residual = None
         for i in range(audio_encoder_output.shape[0]):
             audio_encoder = audio_encoder_output[i]
-            audio_encoder = audio_encoder[self.t0 : self.t1].reshape(-1, audio_encoder.size(-1))
-            residual = self.perceiver_attention_ca(phase, audio_encoder, hidden_states_aligned, self.scheduler.audio_adapter_t_emb)
+            audio_encoder = audio_encoder[self.t0 : self.t1].reshape(
+                -1, audio_encoder.size(-1)
+            )
+            residual = self.perceiver_attention_ca(
+                phase,
+                audio_encoder,
+                hidden_states_aligned,
+                self.scheduler.audio_adapter_t_emb,
+            )
 
-            residual = residual.to(ori_dtype)  # audio做了CrossAttention之后以Residual的方式注入
+            residual = residual.to(
+                ori_dtype
+            )  # audio做了CrossAttention之后以Residual的方式注入
             if self.n_query_tokens == 0:
                 residual = residual * 0.0
             if person_mask_aligned is not None:
@@ -72,7 +111,9 @@ class WanAudioTransformerInfer(WanOffloadTransformerInfer):
             else:
                 total_residual += residual
 
-        x = torch.cat([hidden_states_aligned + total_residual, hidden_states_tail], dim=0)
+        x = torch.cat(
+            [hidden_states_aligned + total_residual, hidden_states_tail], dim=0
+        )
         return x
 
     @torch.no_grad()
@@ -90,7 +131,13 @@ class WanAudioTransformerInfer(WanOffloadTransformerInfer):
 
         if "npu" in AI_DEVICE:
             out = ATTN_WEIGHT_REGISTER.get("npu_flash_attn")().apply(
-                q=q, k=k, v=v, cu_seqlens_q=self.perceiver_attn_cu_seqlens_q, cu_seqlens_kv=self.perceiver_attn_cu_seqlens_k, max_seqlen_q=self.max_seqlen_q, max_seqlen_kv=self.max_seqlen_k
+                q=q,
+                k=k,
+                v=v,
+                cu_seqlens_q=self.perceiver_attn_cu_seqlens_q,
+                cu_seqlens_kv=self.perceiver_attn_cu_seqlens_k,
+                max_seqlen_q=self.max_seqlen_q,
+                max_seqlen_kv=self.max_seqlen_k,
             )
         else:
             out = flash_attn_varlen_func(

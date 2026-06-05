@@ -1,5 +1,6 @@
-from lib.smart_config import smart_config
 import torch
+
+from lib.smart_config import smart_config
 
 try:
     from flashinfer.fused_moe.core import get_cutlass_fused_moe_module
@@ -39,7 +40,9 @@ class NeoppTransformerWeights(WeightModule):
 
         self.add_module(
             "norm_mot_gen",
-            RMS_WEIGHT_REGISTER["fp32_variance_qwen"]("language_model.model.norm_mot_gen.weight", eps=1e-6),
+            RMS_WEIGHT_REGISTER["fp32_variance_qwen"](
+                "language_model.model.norm_mot_gen.weight", eps=1e-6
+            ),
         )
 
         self.add_module(
@@ -49,27 +52,46 @@ class NeoppTransformerWeights(WeightModule):
 
 
 class NeoppDecoderLayerWeights(WeightModule):
-    def __init__(self, block_index, config, mm_type, attn_type="flash_attn2", lora_path=None):
+    def __init__(
+        self, block_index, config, mm_type, attn_type="flash_attn2", lora_path=None
+    ):
         super().__init__()
         prefix = f"language_model.model.layers.{block_index}"
 
         self.add_module(
             "input_layernorm_mot_gen",
-            RMS_WEIGHT_REGISTER["fp32_variance_qwen"](f"{prefix}.input_layernorm_mot_gen.weight", eps=1e-6),
+            RMS_WEIGHT_REGISTER["fp32_variance_qwen"](
+                f"{prefix}.input_layernorm_mot_gen.weight", eps=1e-6
+            ),
         )
 
         use_triton_qknorm_rope = config.get("use_triton_qknorm_rope", True)
-        attn = NeoppAttentionWeights(config, block_index, mm_type, attn_type, use_triton_qknorm_rope, lora_path=lora_path)
+        attn = NeoppAttentionWeights(
+            config,
+            block_index,
+            mm_type,
+            attn_type,
+            use_triton_qknorm_rope,
+            lora_path=lora_path,
+        )
         self.add_module("self_attn", attn)
 
         self.add_module(
             "post_attention_layernorm_mot_gen",
-            RMS_WEIGHT_REGISTER["fp32_variance_qwen"](f"{prefix}.post_attention_layernorm_mot_gen.weight", eps=1e-6),
+            RMS_WEIGHT_REGISTER["fp32_variance_qwen"](
+                f"{prefix}.post_attention_layernorm_mot_gen.weight", eps=1e-6
+            ),
         )
 
         if config["version"] == "moe":
             gen_num_experts = int(config["llm_config"]["gen_num_experts"])
-            mlp_mot_gen = NeoppSparseMoeWeights(block_index, mm_type, "mlp_mot_gen", gen_num_experts, lora_path=lora_path)
+            mlp_mot_gen = NeoppSparseMoeWeights(
+                block_index,
+                mm_type,
+                "mlp_mot_gen",
+                gen_num_experts,
+                lora_path=lora_path,
+            )
         elif config["version"] == "dense":
             mlp_mot_gen = NeoppMlpWeights(block_index, mm_type, lora_path=lora_path)
         else:
@@ -78,18 +100,58 @@ class NeoppDecoderLayerWeights(WeightModule):
 
 
 class NeoppAttentionWeights(WeightModule):
-    def __init__(self, config, block_index, mm_type, attn_type="flash_attn2", use_triton_qknorm_rope=True, lora_path=None):
+    def __init__(
+        self,
+        config,
+        block_index,
+        mm_type,
+        attn_type="flash_attn2",
+        use_triton_qknorm_rope=True,
+        lora_path=None,
+    ):
         super().__init__()
         prefix = f"language_model.model.layers.{block_index}.self_attn"
         lora_prefix = "language_model"
 
-        self.add_module("q_proj_mot_gen", MM_WEIGHT_REGISTER[mm_type](f"{prefix}.q_proj_mot_gen.weight", None, lora_prefix=lora_prefix, lora_path=lora_path))
+        self.add_module(
+            "q_proj_mot_gen",
+            MM_WEIGHT_REGISTER[mm_type](
+                f"{prefix}.q_proj_mot_gen.weight",
+                None,
+                lora_prefix=lora_prefix,
+                lora_path=lora_path,
+            ),
+        )
 
-        self.add_module("k_proj_mot_gen", MM_WEIGHT_REGISTER[mm_type](f"{prefix}.k_proj_mot_gen.weight", None, lora_prefix=lora_prefix, lora_path=lora_path))
+        self.add_module(
+            "k_proj_mot_gen",
+            MM_WEIGHT_REGISTER[mm_type](
+                f"{prefix}.k_proj_mot_gen.weight",
+                None,
+                lora_prefix=lora_prefix,
+                lora_path=lora_path,
+            ),
+        )
 
-        self.add_module("v_proj_mot_gen", MM_WEIGHT_REGISTER[mm_type](f"{prefix}.v_proj_mot_gen.weight", None, lora_prefix=lora_prefix, lora_path=lora_path))
+        self.add_module(
+            "v_proj_mot_gen",
+            MM_WEIGHT_REGISTER[mm_type](
+                f"{prefix}.v_proj_mot_gen.weight",
+                None,
+                lora_prefix=lora_prefix,
+                lora_path=lora_path,
+            ),
+        )
 
-        self.add_module("o_proj_mot_gen", MM_WEIGHT_REGISTER[mm_type](f"{prefix}.o_proj_mot_gen.weight", None, lora_prefix=lora_prefix, lora_path=lora_path))
+        self.add_module(
+            "o_proj_mot_gen",
+            MM_WEIGHT_REGISTER[mm_type](
+                f"{prefix}.o_proj_mot_gen.weight",
+                None,
+                lora_prefix=lora_prefix,
+                lora_path=lora_path,
+            ),
+        )
 
         if use_triton_qknorm_rope:
             # Fused triton kernel: single module holds all 4 norm weights and applies
@@ -107,26 +169,36 @@ class NeoppAttentionWeights(WeightModule):
             # Pure torch: 4 separate RMSNorm modules, logic expanded in transformer_infer.py.
             self.add_module(
                 "q_norm_mot_gen",
-                RMS_WEIGHT_REGISTER["fp32_variance_qwen"](f"{prefix}.q_norm_mot_gen.weight", eps=1e-6),
+                RMS_WEIGHT_REGISTER["fp32_variance_qwen"](
+                    f"{prefix}.q_norm_mot_gen.weight", eps=1e-6
+                ),
             )
             self.add_module(
                 "q_norm_hw_mot_gen",
-                RMS_WEIGHT_REGISTER["fp32_variance_qwen"](f"{prefix}.q_norm_hw_mot_gen.weight", eps=1e-6),
+                RMS_WEIGHT_REGISTER["fp32_variance_qwen"](
+                    f"{prefix}.q_norm_hw_mot_gen.weight", eps=1e-6
+                ),
             )
             self.add_module(
                 "k_norm_mot_gen",
-                RMS_WEIGHT_REGISTER["fp32_variance_qwen"](f"{prefix}.k_norm_mot_gen.weight", eps=1e-6),
+                RMS_WEIGHT_REGISTER["fp32_variance_qwen"](
+                    f"{prefix}.k_norm_mot_gen.weight", eps=1e-6
+                ),
             )
             self.add_module(
                 "k_norm_hw_mot_gen",
-                RMS_WEIGHT_REGISTER["fp32_variance_qwen"](f"{prefix}.k_norm_hw_mot_gen.weight", eps=1e-6),
+                RMS_WEIGHT_REGISTER["fp32_variance_qwen"](
+                    f"{prefix}.k_norm_hw_mot_gen.weight", eps=1e-6
+                ),
             )
 
         self.add_module("cross_attn", ATTN_WEIGHT_REGISTER[attn_type]())
         if config["seq_parallel"]:
             self.add_module(
                 "cross_attn_parallel",
-                ATTN_WEIGHT_REGISTER[config["parallel"].get("seq_p_attn_type", "ulysses")](),
+                ATTN_WEIGHT_REGISTER[
+                    config["parallel"].get("seq_p_attn_type", "ulysses")
+                ](),
             )
 
 
@@ -136,10 +208,23 @@ class NeoppSparseMoeWeights(WeightModule):
         prefix = f"language_model.model.layers.{block_index}.{subname}"
         lora_prefix = "language_model"
 
-        self.add_module("gate", MM_WEIGHT_REGISTER[mm_type](f"{prefix}.gate.weight", None, lora_prefix=lora_prefix, lora_path=lora_path))
+        self.add_module(
+            "gate",
+            MM_WEIGHT_REGISTER[mm_type](
+                f"{prefix}.gate.weight",
+                None,
+                lora_prefix=lora_prefix,
+                lora_path=lora_path,
+            ),
+        )
 
         self.num_experts = num_experts
-        experts = WeightModuleList(NeoppMoeSingleExpertWeights(block_index, mm_type, subname, j, lora_path=lora_path) for j in range(num_experts))
+        experts = WeightModuleList(
+            NeoppMoeSingleExpertWeights(
+                block_index, mm_type, subname, j, lora_path=lora_path
+            )
+            for j in range(num_experts)
+        )
         self.add_module("experts", experts)
 
     def load(self, weight_dict):
@@ -165,9 +250,33 @@ class NeoppMoeSingleExpertWeights(WeightModule):
         super().__init__()
         prefix = f"language_model.model.layers.{block_index}.{subname}.experts.{expert_index}"
         lora_prefix = "language_model"
-        self.add_module("gate_proj", MM_WEIGHT_REGISTER[mm_type](f"{prefix}.gate_proj.weight", None, lora_prefix=lora_prefix, lora_path=lora_path))
-        self.add_module("up_proj", MM_WEIGHT_REGISTER[mm_type](f"{prefix}.up_proj.weight", None, lora_prefix=lora_prefix, lora_path=lora_path))
-        self.add_module("down_proj", MM_WEIGHT_REGISTER[mm_type](f"{prefix}.down_proj.weight", None, lora_prefix=lora_prefix, lora_path=lora_path))
+        self.add_module(
+            "gate_proj",
+            MM_WEIGHT_REGISTER[mm_type](
+                f"{prefix}.gate_proj.weight",
+                None,
+                lora_prefix=lora_prefix,
+                lora_path=lora_path,
+            ),
+        )
+        self.add_module(
+            "up_proj",
+            MM_WEIGHT_REGISTER[mm_type](
+                f"{prefix}.up_proj.weight",
+                None,
+                lora_prefix=lora_prefix,
+                lora_path=lora_path,
+            ),
+        )
+        self.add_module(
+            "down_proj",
+            MM_WEIGHT_REGISTER[mm_type](
+                f"{prefix}.down_proj.weight",
+                None,
+                lora_prefix=lora_prefix,
+                lora_path=lora_path,
+            ),
+        )
 
 
 class NeoppMlpWeights(WeightModule):
@@ -175,9 +284,33 @@ class NeoppMlpWeights(WeightModule):
         super().__init__()
         prefix = f"language_model.model.layers.{block_index}.mlp_mot_gen"
         lora_prefix = "language_model"
-        self.add_module("gate_proj", MM_WEIGHT_REGISTER[mm_type](f"{prefix}.gate_proj.weight", None, lora_prefix=lora_prefix, lora_path=lora_path))
-        self.add_module("up_proj", MM_WEIGHT_REGISTER[mm_type](f"{prefix}.up_proj.weight", None, lora_prefix=lora_prefix, lora_path=lora_path))
-        self.add_module("down_proj", MM_WEIGHT_REGISTER[mm_type](f"{prefix}.down_proj.weight", None, lora_prefix=lora_prefix, lora_path=lora_path))
+        self.add_module(
+            "gate_proj",
+            MM_WEIGHT_REGISTER[mm_type](
+                f"{prefix}.gate_proj.weight",
+                None,
+                lora_prefix=lora_prefix,
+                lora_path=lora_path,
+            ),
+        )
+        self.add_module(
+            "up_proj",
+            MM_WEIGHT_REGISTER[mm_type](
+                f"{prefix}.up_proj.weight",
+                None,
+                lora_prefix=lora_prefix,
+                lora_path=lora_path,
+            ),
+        )
+        self.add_module(
+            "down_proj",
+            MM_WEIGHT_REGISTER[mm_type](
+                f"{prefix}.down_proj.weight",
+                None,
+                lora_prefix=lora_prefix,
+                lora_path=lora_path,
+            ),
+        )
 
     # def load(self, weight_dict):
     #     super().load(weight_dict)

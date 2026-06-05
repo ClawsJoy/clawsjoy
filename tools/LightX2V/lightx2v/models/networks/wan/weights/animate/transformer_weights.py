@@ -1,7 +1,4 @@
-from lib.smart_config import smart_config
 import os
-
-from safetensors import safe_open
 
 from lightx2v.common.modules.weight_module import WeightModule
 from lightx2v.models.networks.wan.weights.transformer_weights import (
@@ -13,6 +10,9 @@ from lightx2v.utils.registry_factory import (
     MM_WEIGHT_REGISTER,
     RMS_WEIGHT_REGISTER,
 )
+from safetensors import safe_open
+
+from lib.smart_config import smart_config
 
 
 class WanAnimateTransformerWeights(WanTransformerWeights):
@@ -21,25 +21,75 @@ class WanAnimateTransformerWeights(WanTransformerWeights):
         self.adapter_blocks_num = self.blocks_num // 5
         for i in range(self.blocks_num):
             if i % 5 == 0:
-                self.blocks[i].compute_phases.append(WanAnimateFuserBlock(self.config, i // 5, "face_adapter.fuser_blocks", self.mm_type))
+                self.blocks[i].compute_phases.append(
+                    WanAnimateFuserBlock(
+                        self.config, i // 5, "face_adapter.fuser_blocks", self.mm_type
+                    )
+                )
             else:
                 self.blocks[i].compute_phases.append(WeightModule())
         self._add_animate_fuserblock_to_offload_buffers()
 
     def _add_animate_fuserblock_to_offload_buffers(self):
-        if hasattr(self, "offload_block_cuda_buffers") and self.offload_block_cuda_buffers is not None:
+        if (
+            hasattr(self, "offload_block_cuda_buffers")
+            and self.offload_block_cuda_buffers is not None
+        ):
             for i in range(self.offload_blocks_num):
-                self.offload_block_cuda_buffers[i].compute_phases.append(WanAnimateFuserBlock(self.config, 0, "face_adapter.fuser_blocks", self.mm_type, create_cuda_buffer=True))
+                self.offload_block_cuda_buffers[i].compute_phases.append(
+                    WanAnimateFuserBlock(
+                        self.config,
+                        0,
+                        "face_adapter.fuser_blocks",
+                        self.mm_type,
+                        create_cuda_buffer=True,
+                    )
+                )
                 if self.lazy_load:
-                    self.offload_block_cpu_buffers[i].compute_phases.append(WanAnimateFuserBlock(self.config, 0, "face_adapter.fuser_blocks", self.mm_type, create_cpu_buffer=True))
-        elif hasattr(self, "offload_phase_cuda_buffers") and self.offload_phase_cuda_buffers is not None:
-            self.offload_phase_cuda_buffers.append(WanAnimateFuserBlock(self.config, 0, "face_adapter.fuser_blocks", self.mm_type, create_cuda_buffer=True))
+                    self.offload_block_cpu_buffers[i].compute_phases.append(
+                        WanAnimateFuserBlock(
+                            self.config,
+                            0,
+                            "face_adapter.fuser_blocks",
+                            self.mm_type,
+                            create_cpu_buffer=True,
+                        )
+                    )
+        elif (
+            hasattr(self, "offload_phase_cuda_buffers")
+            and self.offload_phase_cuda_buffers is not None
+        ):
+            self.offload_phase_cuda_buffers.append(
+                WanAnimateFuserBlock(
+                    self.config,
+                    0,
+                    "face_adapter.fuser_blocks",
+                    self.mm_type,
+                    create_cuda_buffer=True,
+                )
+            )
             if self.lazy_load:
-                self.offload_phase_cpu_buffers.append(WanAnimateFuserBlock(self.config, 0, "face_adapter.fuser_blocks", self.mm_type, create_cpu_buffer=True))
+                self.offload_phase_cpu_buffers.append(
+                    WanAnimateFuserBlock(
+                        self.config,
+                        0,
+                        "face_adapter.fuser_blocks",
+                        self.mm_type,
+                        create_cpu_buffer=True,
+                    )
+                )
 
 
 class WanAnimateFuserBlock(WeightModule):
-    def __init__(self, config, block_index, block_prefix, mm_type, create_cuda_buffer=False, create_cpu_buffer=False):
+    def __init__(
+        self,
+        config,
+        block_index,
+        block_prefix,
+        mm_type,
+        create_cuda_buffer=False,
+        create_cpu_buffer=False,
+    ):
         super().__init__()
         self.config = config
         self.is_post_adapter = True
@@ -125,4 +175,6 @@ class WanAnimateFuserBlock(WeightModule):
             LN_WEIGHT_REGISTER["torch"](),
         )
 
-        self.add_module("adapter_attn", ATTN_WEIGHT_REGISTER[config["adapter_attn_type"]]())
+        self.add_module(
+            "adapter_attn", ATTN_WEIGHT_REGISTER[config["adapter_attn_type"]]()
+        )

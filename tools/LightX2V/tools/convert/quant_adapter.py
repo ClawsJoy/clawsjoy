@@ -13,9 +13,8 @@ if quant_path not in sys.path:
     from lib.smart_config import smart_config
 sys.path.insert(0, quant_path)
 
-from quant import *  # noqa: E402
-
 from lightx2v.utils.quant_utils import FloatQuantizer  # noqa: E402
+from quant import *  # noqa: E402
 
 
 def main():
@@ -27,13 +26,23 @@ def main():
     parser.add_argument(
         "--model_path",
         type=str,
-        default=str(project_root / "models" / "SekoTalk-Distill" / "audio_adapter_model.safetensors"),
+        default=str(
+            project_root
+            / "models"
+            / "SekoTalk-Distill"
+            / "audio_adapter_model.safetensors"
+        ),
         help="Path to input model file",
     )
     parser.add_argument(
         "--output_path",
         type=str,
-        default=str(project_root / "models" / "SekoTalk-Distill-fp8" / "audio_adapter_model_fp8.safetensors"),
+        default=str(
+            project_root
+            / "models"
+            / "SekoTalk-Distill-fp8"
+            / "audio_adapter_model_fp8.safetensors"
+        ),
         help="Path to output quantized model file",
     )
     args = parser.parse_args()

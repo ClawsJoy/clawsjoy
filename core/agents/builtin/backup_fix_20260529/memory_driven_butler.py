@@ -1,30 +1,33 @@
-from core.lib.config_helper import get_data_root, get_llm_endpoint, get_llm_model, get_embedding_model, get_gateway_port, get_timeout
+from core.lib.config_helper import (get_data_root, get_embedding_model,
+                                    get_gateway_port, get_llm_endpoint,
+                                    get_llm_model, get_timeout)
 from core.lib.unified_config import unified_config
 
-from core.lib.unified_config import unified_config
-
-from core.lib.unified_config import unified_config
 #!/usr/bin/env python3
 """记忆驱动管家 - 从系统记忆加载，不硬编码"""
 
-import sys
-import time
 import json
 import re
-import requests
-from pathlib import Path
+import sys
+import time
 from datetime import datetime
-from typing import Dict, Optional, Any
-from core.lib.config_manager import config_manager
+from pathlib import Path
+from typing import Any, Dict, Optional
 
+import requests
+
+from core.lib.config_manager import config_manager
 
 
 class MemoryDrivenButler:
     """记忆驱动 - 从系统记忆层读取"""
-    
+
     def __init__(self, user_id: str = "default"):
         self.user_id = user_id
-        self.user_dir = Path(funified_config.get("paths.users_dir", f"{get_data_root()}/users/") + "/{user_id}/butler_memory")
+        self.user_dir = Path(
+            funified_config.get("paths.users_dir", f"{get_data_root()}/users/")
+            + "/{user_id}/butler_memory"
+        )
         self.user_dir.mkdir(parents=True, exist_ok=True)
 
         # ========== 记忆驱动：所有数据从记忆加载 ==========
@@ -36,53 +39,59 @@ class MemoryDrivenButler:
 
         self.ollama_url = "config_loader.get_ollama_url()"
         self.model = config_manager.get_model()
-    
+
     def _load_memory(self):
         """从记忆文件加载用户数据"""
         if self.memory_file.exists():
-            with open(self.memory_file, 'r') as f:
+            with open(self.memory_file, "r") as f:
                 self.profile = json.load(f)
         else:
             self.profile = {
-                "user": {
-                    "name": None,
-                    "first_seen": datetime.now().isoformat()
-                },
+                "user": {"name": None, "first_seen": datetime.now().isoformat()},
                 "preferences": {},
                 "history": [],
-                "stats": {"total": 0}
+                "stats": {"total": 0},
             }
-    
+
     def _save_memory(self):
-        with open(self.memory_file, 'w') as f:
+        with open(self.memory_file, "w") as f:
             json.dump(self.profile, f, indent=2, ensure_ascii=False)
-    
+
     def _load_rules(self) -> Dict:
         """加载规则配置（从配置文件，不硬编码）"""
         rules_file = Path("config/butler_rules.json")
         if rules_file.exists():
-            with open(rules_file, 'r') as f:
+            with open(rules_file, "r") as f:
                 return json.load(f)
 
         # 默认规则（可从配置修改）
         return {
             "greeting_keywords": ["你好", "hi", "hello", "嗨"],
             "name_patterns": [
-                {"pattern": r'[我][叫][\s]*([^\s，。！？]{2,4})', "group": 1},
-                {"pattern": r'[我][是][\s]*([^\s，。！？]{2,4})', "group": 1}
+                {"pattern": r"[我][叫][\s]*([^\s，。！？]{2,4})", "group": 1},
+                {"pattern": r"[我][是][\s]*([^\s，。！？]{2,4})", "group": 1},
             ],
             "preference_patterns": [
-                {"pattern": r'喜欢[\s]*([^，。！？]{2,10})', "group": 1}
+                {"pattern": r"喜欢[\s]*([^，。！？]{2,10})", "group": 1}
             ],
             "query_name_keywords": ["我叫什么", "我名字", "我是谁", "还记得我吗"],
             "query_pref_keywords": ["喜欢什么", "偏好", "我的风格"],
             "fast_tasks": {
-                "list_agents": {"keywords": ["agent", "Agent"], "response": "决策Agent、聊天Agent、执行Agent、采集Agent、安全Agent、分析Agent"},
-                "list_skills": {"keywords": ["技能", "skill"], "response": "图像生成、视频制作、任务调度等20+原子技能"},
-                "generate_chart": {"keywords": ["图", "架构图"], "response": "正在生成架构图..."}
-            }
+                "list_agents": {
+                    "keywords": ["agent", "Agent"],
+                    "response": "决策Agent、聊天Agent、执行Agent、采集Agent、安全Agent、分析Agent",
+                },
+                "list_skills": {
+                    "keywords": ["技能", "skill"],
+                    "response": "图像生成、视频制作、任务调度等20+原子技能",
+                },
+                "generate_chart": {
+                    "keywords": ["图", "架构图"],
+                    "response": "正在生成架构图...",
+                },
+            },
         }
-    
+
     def _update_from_input(self, text: str):
         """从输入更新记忆（驱动学习）"""
         # 提取名字
@@ -101,10 +110,12 @@ class MemoryDrivenButler:
             if match:
                 pref = match.group(pattern_cfg.get("group", 1)).strip()
                 if pref and len(pref) < 15:
-                    self.profile["preferences"][pref] = self.profile["preferences"].get(pref, 0) + 1
+                    self.profile["preferences"][pref] = (
+                        self.profile["preferences"].get(pref, 0) + 1
+                    )
                     self._save_memory()
                     break
-    
+
     def _get_greeting(self) -> str:
         """生成问候（基于记忆）"""
         name = self.profile["user"].get("name")
@@ -120,7 +131,7 @@ class MemoryDrivenButler:
         if name:
             return f"{time_word}，{name}！很高兴又见到你"
         return f"{time_word}！我是你的私人管家，请问怎么称呼？"
-    
+
     def _fast_task(self, text: str) -> Optional[tuple]:
         """快速任务（基于配置）"""
         lower = text.lower()
@@ -153,7 +164,7 @@ class MemoryDrivenButler:
                     return (task_cfg.get("response", "处理中"), task_name)
 
         return None
-    
+
     def process(self, user_input: str) -> Dict:
         start = time.time()
 
@@ -181,21 +192,28 @@ class MemoryDrivenButler:
             try:
                 resp = requests.post(
                     f"{self.ollama_url}/api/generate",
-                    json={"model": self.model, "prompt": prompt, "stream": False, "options": {"num_predict": 150}},
-                    timeout=20
+                    json={
+                        "model": self.model,
+                        "prompt": prompt,
+                        "stream": False,
+                        "options": {"num_predict": 150},
+                    },
+                    timeout=20,
                 )
-                response = resp.json().get('response', '')
-            except:
+                response = resp.json().get("response", "")
+            except Exception as e:
                 response = "让我想想"
             task = "chat"
             used_llm = True
 
         # 记录历史
-        self.profile["history"].append({
-            "user": user_input[:100],
-            "assistant": response[:100],
-            "time": datetime.now().isoformat()
-        })
+        self.profile["history"].append(
+            {
+                "user": user_input[:100],
+                "assistant": response[:100],
+                "time": datetime.now().isoformat(),
+            }
+        )
         if len(self.profile["history"]) > 50:
             self.profile["history"] = self.profile["history"][-50:]
         self.profile["stats"]["total"] += 1
@@ -211,8 +229,8 @@ class MemoryDrivenButler:
             "memory": {
                 "name": self.profile["user"].get("name"),
                 "prefs": list(self.profile["preferences"].keys()),
-                "total": self.profile["stats"]["total"]
-            }
+                "total": self.profile["stats"]["total"],
+            },
         }
 
 
@@ -220,9 +238,9 @@ if __name__ == "__main__":
     print("=" * 60)
     print("记忆驱动管家 - 无硬编码")
     print("=" * 60)
-    
+
     butler = MemoryDrivenButler("user_demo")
-    
+
     tests = [
         "你好",
         "我叫王小明",
@@ -232,14 +250,18 @@ if __name__ == "__main__":
         "我喜欢什么风格？",
         "生成架构图",
     ]
-    
+
     for msg in tests:
         print(f"\n👤 {msg}")
         result = butler.process(msg)
         print(f"👔 {result['response']}")
-        print(f"   📝 记忆: 名字={result['memory']['name']}, 偏好={result['memory']['prefs']}")
-        print(f"   ⚡ 模式: {'规则' if not result['used_llm'] else 'LLM'}, {result['time_ms']}ms")
-    
+        print(
+            f"   📝 记忆: 名字={result['memory']['name']}, 偏好={result['memory']['prefs']}"
+        )
+        print(
+            f"   ⚡ 模式: {'规则' if not result['used_llm'] else 'LLM'}, {result['time_ms']}ms"
+        )
+
     print("\n" + "=" * 60)
     print("记忆文件:")
     print(f"  位置: data/users/user_demo/butler_memory/profile.json")

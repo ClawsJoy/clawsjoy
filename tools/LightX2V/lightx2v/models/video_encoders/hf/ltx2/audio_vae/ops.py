@@ -1,9 +1,10 @@
-from lib.smart_config import smart_config
 from dataclasses import dataclass, replace
 
 import torch
 import torchaudio
 from torch import nn
+
+from lib.smart_config import smart_config
 
 
 @dataclass(frozen=True)
@@ -54,8 +55,12 @@ class AudioProcessor(nn.Module):
         """Resample audio to the processor's target sample rate if needed."""
         if audio.sampling_rate == self.target_sample_rate:
             return audio
-        resampled = torchaudio.functional.resample(audio.waveform, audio.sampling_rate, self.target_sample_rate)
-        resampled = resampled.to(device=audio.waveform.device, dtype=audio.waveform.dtype)
+        resampled = torchaudio.functional.resample(
+            audio.waveform, audio.sampling_rate, self.target_sample_rate
+        )
+        resampled = resampled.to(
+            device=audio.waveform.device, dtype=audio.waveform.dtype
+        )
         return Audio(waveform=resampled, sampling_rate=self.target_sample_rate)
 
     def waveform_to_mel(
@@ -84,7 +89,11 @@ class PerChannelStatistics(nn.Module):
         self.register_buffer("mean-of-means", torch.empty(latent_channels))
 
     def un_normalize(self, x: torch.Tensor) -> torch.Tensor:
-        return (x * self.get_buffer("std-of-means").to(x)) + self.get_buffer("mean-of-means").to(x)
+        return (x * self.get_buffer("std-of-means").to(x)) + self.get_buffer(
+            "mean-of-means"
+        ).to(x)
 
     def normalize(self, x: torch.Tensor) -> torch.Tensor:
-        return (x - self.get_buffer("mean-of-means").to(x)) / self.get_buffer("std-of-means").to(x)
+        return (x - self.get_buffer("mean-of-means").to(x)) / self.get_buffer(
+            "std-of-means"
+        ).to(x)

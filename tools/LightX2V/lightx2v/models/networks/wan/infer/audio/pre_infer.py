@@ -1,9 +1,9 @@
-from lib.smart_config import smart_config
 import torch
-
 from lightx2v.models.networks.wan.infer.pre_infer import WanPreInfer
 from lightx2v.utils.envs import *
 from lightx2v_platform.base.global_var import AI_DEVICE
+
+from lib.smart_config import smart_config
 
 from ..module_io import GridOutput, WanPreInferModuleOutput
 from ..utils import sinusoidal_embedding_1d
@@ -15,7 +15,9 @@ class WanAudioPreInfer(WanPreInfer):
         if self.task in ["rs2v"]:
             self.freqs = torch.cat(
                 [
-                    self.neg_temporal_rope_params(1024, self.head_size - 4 * (self.head_size // 6)),
+                    self.neg_temporal_rope_params(
+                        1024, self.head_size - 4 * (self.head_size // 6)
+                    ),
                     self.neg_temporal_rope_params(1024, 2 * (self.head_size // 6)),
                     self.neg_temporal_rope_params(1024, 2 * (self.head_size // 6)),
                 ],
@@ -31,7 +33,13 @@ class WanAudioPreInfer(WanPreInfer):
         freqs = torch.polar(torch.ones_like(freqs), freqs)
         return freqs
 
-    def init_rope_param(self, grid_sizes, valid_latent_num=None, ref_latent_num=None, prev_latent_num=None):
+    def init_rope_param(
+        self,
+        grid_sizes,
+        valid_latent_num=None,
+        ref_latent_num=None,
+        prev_latent_num=None,
+    ):
         freqs = self.freqs.clone()  # self.freqs init param can not be changed
         if self.task in ["rs2v"]:
             # using neg temporal rope
@@ -49,14 +57,20 @@ class WanAudioPreInfer(WanPreInfer):
             # init rope
             cos_sin = self.prepare_cos_sin(grid_sizes, freqs)
         else:
-            freqs[valid_latent_num:, : self.rope_t_dim] = 0  # set ref_latent index temporal to zero
+            freqs[valid_latent_num:, : self.rope_t_dim] = (
+                0  # set ref_latent index temporal to zero
+            )
             cos_sin = self.prepare_cos_sin(grid_sizes, freqs)
 
         return cos_sin
 
     @torch.no_grad()
     def infer(self, weights, inputs):
-        infer_condition, latents, timestep_input = self.scheduler.infer_condition, self.scheduler.latents, self.scheduler.timestep_input
+        infer_condition, latents, timestep_input = (
+            self.scheduler.infer_condition,
+            self.scheduler.latents,
+            self.scheduler.timestep_input,
+        )
         prev_latents = inputs["previmg_encoder_output"]["prev_latents"]
         hidden_states = latents
         if self.config["model_cls"] != "wan2.2_audio" and self.task != "rs2v":
@@ -72,7 +86,9 @@ class WanAudioPreInfer(WanPreInfer):
             context = inputs["text_encoder_output"]["context_null"]
 
         clip_fea = inputs["image_encoder_output"]["clip_encoder_out"]
-        ref_image_encoder = inputs["image_encoder_output"]["vae_encoder_out"].to(latents.dtype)
+        ref_image_encoder = inputs["image_encoder_output"]["vae_encoder_out"].to(
+            latents.dtype
+        )
 
         num_channels, _, height, width = x.shape
         ref_num_channels, ref_num_frames, _, _ = ref_image_encoder.shape
@@ -105,19 +121,29 @@ class WanAudioPreInfer(WanPreInfer):
             x = x.flatten(2).transpose(1, 2).contiguous()
             valid_token_len = x.size(1)
 
-            ref_image_encoder = weights.ref_patch_embedding.apply(ref_image_encoder.unsqueeze(0))
+            ref_image_encoder = weights.ref_patch_embedding.apply(
+                ref_image_encoder.unsqueeze(0)
+            )
             ref_latent_num = ref_image_encoder.shape[0]
-            ref_image_encoder = ref_image_encoder.flatten(2).transpose(1, 2).contiguous()
+            ref_image_encoder = (
+                ref_image_encoder.flatten(2).transpose(1, 2).contiguous()
+            )
 
             # reference state embedding
-            state_ids = torch.zeros(ref_image_encoder.shape[1], dtype=torch.long, device=ref_image_encoder.device)
+            state_ids = torch.zeros(
+                ref_image_encoder.shape[1],
+                dtype=torch.long,
+                device=ref_image_encoder.device,
+            )
             state_ids.fill_(inputs["ref_state"])
             state_emb = weights.state_embedding.apply(state_ids).contiguous()
             ref_image_encoder = ref_image_encoder + state_emb
             x = torch.cat([x, ref_image_encoder], dim=1)
 
             if prev_latents is not None:
-                prev_latents = weights.prev_patch_embedding.apply(prev_latents.unsqueeze(0))
+                prev_latents = weights.prev_patch_embedding.apply(
+                    prev_latents.unsqueeze(0)
+                )
                 prev_latent_num = prev_latents.shape[0]
                 prev_latents = prev_latents.flatten(2).transpose(1, 2).contiguous()
                 x = torch.cat([x, prev_latents], dim=1)
@@ -141,7 +167,9 @@ class WanAudioPreInfer(WanPreInfer):
         person_mask_latens = inputs["person_mask_latens"]
         if person_mask_latens is not None:
             person_mask_latens = person_mask_latens.expand(-1, grid_sizes_t, -1, -1)
-            person_mask_latens = person_mask_latens.reshape(person_mask_latens.shape[0], -1)
+            person_mask_latens = person_mask_latens.reshape(
+                person_mask_latens.shape[0], -1
+            )
 
         embed = sinusoidal_embedding_1d(self.freq_dim, t.flatten())
         if self.sensitive_layer_dtype != self.infer_dtype:
@@ -156,7 +184,9 @@ class WanAudioPreInfer(WanPreInfer):
 
         # text embeddings
         if self.sensitive_layer_dtype != self.infer_dtype:
-            out = weights.text_embedding_0.apply(context.squeeze(0).to(self.sensitive_layer_dtype))
+            out = weights.text_embedding_0.apply(
+                context.squeeze(0).to(self.sensitive_layer_dtype)
+            )
         else:
             out = weights.text_embedding_0.apply(context.squeeze(0))
         out = torch.nn.functional.gelu(out, approximate="tanh")
@@ -165,7 +195,9 @@ class WanAudioPreInfer(WanPreInfer):
             del out
             torch.cuda.empty_cache()
 
-        if self.task in ["i2v", "s2v", "rs2v"] and self.config.get("use_image_encoder", True):
+        if self.task in ["i2v", "s2v", "rs2v"] and self.config.get(
+            "use_image_encoder", True
+        ):
             context_clip = weights.proj_0.apply(clip_fea)
             if self.clean_cuda_cache:
                 del clip_fea
@@ -183,12 +215,21 @@ class WanAudioPreInfer(WanPreInfer):
                 del context_clip
             torch.cuda.empty_cache()
 
-        grid_sizes = GridOutput(tensor=torch.tensor([[grid_sizes_t, grid_sizes_h, grid_sizes_w]], dtype=torch.int32, device=x.device), tuple=(grid_sizes_t, grid_sizes_h, grid_sizes_w))
+        grid_sizes = GridOutput(
+            tensor=torch.tensor(
+                [[grid_sizes_t, grid_sizes_h, grid_sizes_w]],
+                dtype=torch.int32,
+                device=x.device,
+            ),
+            tuple=(grid_sizes_t, grid_sizes_h, grid_sizes_w),
+        )
 
         if self.cos_sin is None or self.grid_sizes != grid_sizes.tuple:
             self.grid_sizes = grid_sizes.tuple
             if self.task in ["rs2v"]:
-                self.cos_sin = self.init_rope_param(grid_sizes.tuple, valid_latent_num, ref_latent_num, prev_latent_num)
+                self.cos_sin = self.init_rope_param(
+                    grid_sizes.tuple, valid_latent_num, ref_latent_num, prev_latent_num
+                )
             else:
                 self.cos_sin = self.init_rope_param(grid_sizes.tuple, valid_latent_num)
 
@@ -201,5 +242,8 @@ class WanAudioPreInfer(WanPreInfer):
             cos_sin=self.cos_sin,
             valid_token_len=valid_token_len,
             valid_latent_num=valid_latent_num,
-            adapter_args={"audio_encoder_output": inputs["audio_encoder_output"], "person_mask_latens": person_mask_latens},
+            adapter_args={
+                "audio_encoder_output": inputs["audio_encoder_output"],
+                "person_mask_latens": person_mask_latens,
+            },
         )

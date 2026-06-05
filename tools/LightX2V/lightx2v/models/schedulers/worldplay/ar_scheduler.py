@@ -1,9 +1,9 @@
-from lib.smart_config import smart_config
 import torch
-from loguru import logger
-
 from lightx2v.models.schedulers.hunyuan_video.scheduler import HunyuanVideo15Scheduler
 from lightx2v_platform.base.global_var import AI_DEVICE
+from loguru import logger
+
+from lib.smart_config import smart_config
 
 
 class WorldPlayARScheduler(HunyuanVideo15Scheduler):
@@ -66,10 +66,16 @@ class WorldPlayARScheduler(HunyuanVideo15Scheduler):
 
         self.sigmas = sigmas
         # timesteps should exclude the final sigma (0)
-        self.timesteps = (sigmas[:-1] * self.num_train_timesteps).to(dtype=torch.float32, device=device)
+        self.timesteps = (sigmas[:-1] * self.num_train_timesteps).to(
+            dtype=torch.float32, device=device
+        )
 
-        logger.info(f"[WorldPlayARScheduler] Timesteps (first 5): {self.timesteps[:5].tolist()}")
-        logger.info(f"[WorldPlayARScheduler] Sigmas (first 5): {self.sigmas[:5].tolist()}")
+        logger.info(
+            f"[WorldPlayARScheduler] Timesteps (first 5): {self.timesteps[:5].tolist()}"
+        )
+        logger.info(
+            f"[WorldPlayARScheduler] Sigmas (first 5): {self.sigmas[:5].tolist()}"
+        )
 
     def step_post(self):
         """Euler step for flow matching.
@@ -97,9 +103,21 @@ class WorldPlayARScheduler(HunyuanVideo15Scheduler):
         self.set_timesteps(self.infer_steps, device=AI_DEVICE, shift=self.sample_shift)
         self.multitask_mask = self.get_task_mask(self.config["task"], latent_shape[-3])
 
-        cond_latents = image_encoder_output.get("cond_latents") if image_encoder_output else None
-        self.cond_latents_concat, self.mask_concat = self._prepare_cond_latents_and_mask(self.config["task"], cond_latents, self.latents, self.multitask_mask, self.reorg_token)
-        self.cos_sin = self.prepare_cos_sin((latent_shape[1], latent_shape[2], latent_shape[3]))
+        cond_latents = (
+            image_encoder_output.get("cond_latents") if image_encoder_output else None
+        )
+        self.cond_latents_concat, self.mask_concat = (
+            self._prepare_cond_latents_and_mask(
+                self.config["task"],
+                cond_latents,
+                self.latents,
+                self.multitask_mask,
+                self.reorg_token,
+            )
+        )
+        self.cos_sin = self.prepare_cos_sin(
+            (latent_shape[1], latent_shape[2], latent_shape[3])
+        )
 
         # Store pose conditioning if provided
         if pose_output is not None:
@@ -109,7 +127,9 @@ class WorldPlayARScheduler(HunyuanVideo15Scheduler):
 
         # Calculate total chunks for AR generation
         total_frames = latent_shape[1]
-        self.total_chunks = (total_frames + self.chunk_latent_frames - 1) // self.chunk_latent_frames
+        self.total_chunks = (
+            total_frames + self.chunk_latent_frames - 1
+        ) // self.chunk_latent_frames
         self.chunk_idx = 0
         self.generated_chunks = []
 

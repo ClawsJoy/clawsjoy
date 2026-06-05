@@ -1,5 +1,8 @@
+from lightx2v.models.networks.hunyuan_video.weights.transformer_weights import (
+    HunyuanVideo15TransformerWeights,
+)
+
 from lib.smart_config import smart_config
-from lightx2v.models.networks.hunyuan_video.weights.transformer_weights import HunyuanVideo15TransformerWeights
 
 
 class WorldPlayTransformerWeights(HunyuanVideo15TransformerWeights):

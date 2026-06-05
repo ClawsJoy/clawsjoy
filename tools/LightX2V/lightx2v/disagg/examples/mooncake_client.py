@@ -1,7 +1,8 @@
-from lib.smart_config import smart_config
 import torch
 import zmq
 from mooncake.engine import TransferEngine
+
+from lib.smart_config import smart_config
 
 
 def main():
@@ -30,7 +31,9 @@ def main():
     session_id = f"{HOSTNAME}:{client_engine.get_rpc_port()}"
 
     # Allocate and initialize client buffer (1MB)
-    client_buffer = torch.ones(1024 * 1024, dtype=torch.uint8, device=torch.device("cuda:0"))  # Fill with ones
+    client_buffer = torch.ones(
+        1024 * 1024, dtype=torch.uint8, device=torch.device("cuda:0")
+    )  # Fill with ones
     client_ptr = client_buffer.data_ptr()
     client_len = client_buffer.element_size() * client_buffer.nelement()
 

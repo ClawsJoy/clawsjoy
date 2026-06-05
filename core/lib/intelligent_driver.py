@@ -3,12 +3,12 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
 import os
-from typing import Dict, Any
+from typing import Any, Dict
 
 
 class IntelligentDriver:
@@ -25,11 +25,7 @@ class IntelligentDriver:
 
     def get_port(self, service: str) -> int:
         """获取服务端口"""
-        ports = {
-            "ollama": 11434,
-            "gateway": 5002,
-            "multi_agent": 5005
-        }
+        ports = {"ollama": 11434, "gateway": 5002, "multi_agent": 5005}
         return ports.get(service, 5002)
 
 

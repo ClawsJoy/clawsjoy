@@ -3,47 +3,55 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
-from core.lib.config_helper import get_data_root, get_llm_endpoint, get_llm_model, get_embedding_model, get_gateway_port, get_timeout
-from core.lib.unified_config import unified_config
-
+from core.lib.config_helper import (
+    get_data_root,
+    get_embedding_model,
+    get_gateway_port,
+    get_llm_endpoint,
+    get_llm_model,
+    get_timeout,
+)
 from core.lib.unified_config import unified_config
 
 """技能学习器 - 从成功组合中自动生成新技能"""
 
 import json
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+
 
 class SkillLearner:
     def __init__(self):
         self.combos_file = Path(f"{get_data_root()}/skill_stats/successful_combos.json")
-        self.generated_file = Path(f"{get_data_root()}/skill_stats/generated_skills.json")
+        self.generated_file = Path(
+            f"{get_data_root()}/skill_stats/generated_skills.json"
+        )
         self._load()
-    
+
     def _load(self):
         if self.combos_file.exists():
-            with open(self.combos_file, 'r') as f:
+            with open(self.combos_file, "r") as f:
                 self.combos = json.load(f)
         else:
             self.combos = {"combos": [], "stats": {}}
 
         if self.generated_file.exists():
-            with open(self.generated_file, 'r') as f:
+            with open(self.generated_file, "r") as f:
                 self.generated = json.load(f)
         else:
             self.generated = {"skills": []}
-    
+
     def _save_combos(self):
-        with open(self.combos_file, 'w') as f:
+        with open(self.combos_file, "w") as f:
             json.dump(self.combos, f, indent=2, default=str)
-    
+
     def _save_generated(self):
-        with open(self.generated_file, 'w') as f:
+        with open(self.generated_file, "w") as f:
             json.dump(self.generated, f, indent=2)
-    
+
     def record_success(self, intent: str, skills: list, task: str = ""):
         combo_key = f"{intent}|{'|'.join(skills)}"
 
@@ -60,7 +68,7 @@ class SkillLearner:
 
         if count >= 3:
             self._generate_skill(intent, skills, combo_key)
-    
+
     def _generate_skill(self, intent: str, skills: list, combo_key: str):
         for existing in self.generated.get("skills", []):
             if existing.get("combo_key") == combo_key:
@@ -104,9 +112,10 @@ skill = {skill_name.title().replace('_', '')}Skill()
         skill_file.write_text(code)
 
         import json
+
         registry_file = Path(f"{get_data_root()}/skill_registry_v2.json")
         if registry_file.exists():
-            with open(registry_file, 'r') as f:
+            with open(registry_file, "r") as f:
                 registry = json.load(f)
         else:
             registry = {}
@@ -118,24 +127,27 @@ skill = {skill_name.title().replace('_', '')}Skill()
             "version": "1.0.0",
             "enabled": True,
             "created_at": datetime.now().isoformat(),
-            "composed_skills": skills
+            "composed_skills": skills,
         }
 
-        with open(registry_file, 'w') as f:
+        with open(registry_file, "w") as f:
             json.dump(registry, f, indent=2)
 
-        self.generated["skills"].append({
-            "skill_name": skill_name,
-            "intent": intent,
-            "composed_skills": skills,
-            "combo_key": combo_key,
-            "created_at": datetime.now().isoformat()
-        })
+        self.generated["skills"].append(
+            {
+                "skill_name": skill_name,
+                "intent": intent,
+                "composed_skills": skills,
+                "combo_key": combo_key,
+                "created_at": datetime.now().isoformat(),
+            }
+        )
         self._save_generated()
 
         print(f"🎉 自动生成新技能: {skill_name}")
         print(f"   组合: {skills}")
         print(f"   意图: {intent}")
+
 
 skill_learner = SkillLearner()
 

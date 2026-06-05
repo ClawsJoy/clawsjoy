@@ -1,8 +1,8 @@
-from lib.smart_config import smart_config
 import torch
-
 from lightx2v_platform.ops.mm.template import MMWeightQuantTemplate
 from lightx2v_platform.registry_factory import PLATFORM_MM_WEIGHT_REGISTER
+
+from lib.smart_config import smart_config
 
 try:
     from vllm import _custom_ops as ops
@@ -38,7 +38,15 @@ class MMWeightWint8channelAint8channeldynamicVllmHygonDcu(MMWeightQuantTemplate)
         lora_prefix="diffusion_model.blocks",
         lora_path="",
     ):
-        super().__init__(weight_name, bias_name, create_cuda_buffer, create_cpu_buffer, lazy_load, lazy_load_file, is_post_adapter)
+        super().__init__(
+            weight_name,
+            bias_name,
+            create_cuda_buffer,
+            create_cpu_buffer,
+            lazy_load,
+            lazy_load_file,
+            is_post_adapter,
+        )
         self.load_func = self.load_int8_perchannel_sym
         self.weight_need_transpose = False
         self.act_quant_func = self.act_quant_int8_perchannel_sym_vllm
@@ -47,10 +55,14 @@ class MMWeightWint8channelAint8channeldynamicVllmHygonDcu(MMWeightQuantTemplate)
         """Load INT8 per-channel symmetric quantized weights."""
         if self.config.get("weight_auto_quant", False):
             if IntegerQuantizer is None:
-                raise ImportError("IntegerQuantizer not available. Please ensure lightx2v.utils.quant_utils is available.")
+                raise ImportError(
+                    "IntegerQuantizer not available. Please ensure lightx2v.utils.quant_utils is available."
+                )
             self.weight = weight_dict[self.weight_name].to(torch.float32)
             w_quantizer = IntegerQuantizer(8, True, "per_channel")
-            self.weight, self.weight_scale, _ = w_quantizer.real_quant_tensor(self.weight)
+            self.weight, self.weight_scale, _ = w_quantizer.real_quant_tensor(
+                self.weight
+            )
             self.weight = self.weight.to(torch.int8)
             self.weight_scale = self.weight_scale.to(torch.float32)
         else:
@@ -60,7 +72,9 @@ class MMWeightWint8channelAint8channeldynamicVllmHygonDcu(MMWeightQuantTemplate)
         """Activation quantization using vLLM's scaled_int8_quant."""
         if ops is None:
             raise ImportError("vLLM _custom_ops not available. Please install vLLM.")
-        input_tensor_quant, input_tensor_scale, _ = ops.scaled_int8_quant(x, scale=None, azp=None, symmetric=True)
+        input_tensor_quant, input_tensor_scale, _ = ops.scaled_int8_quant(
+            x, scale=None, azp=None, symmetric=True
+        )
         return input_tensor_quant, input_tensor_scale
 
     def apply(self, input_tensor):
@@ -73,7 +87,9 @@ class MMWeightWint8channelAint8channeldynamicVllmHygonDcu(MMWeightQuantTemplate)
         # Use ops.blaslt_scaled_mm from vllm for ROCm/DCU instead of torch.ops._C.cutlass_scaled_mm
         if ops is not None and hasattr(ops, "blaslt_scaled_mm"):
             # Ensure out_dtype is bfloat16 or float16 as required by blaslt_scaled_mm
-            out_dtype = dtype if dtype in (torch.bfloat16, torch.float16) else torch.bfloat16
+            out_dtype = (
+                dtype if dtype in (torch.bfloat16, torch.float16) else torch.bfloat16
+            )
 
             # Ensure input tensor is contiguous for optimal performance
             input_tensor_quant = input_tensor_quant.contiguous()

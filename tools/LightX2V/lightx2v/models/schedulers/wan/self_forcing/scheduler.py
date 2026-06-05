@@ -1,10 +1,10 @@
-from lib.smart_config import smart_config
 import numpy as np
 import torch
-
 from lightx2v.models.schedulers.wan.scheduler import WanScheduler
 from lightx2v.utils.envs import *
 from lightx2v_platform.base.global_var import AI_DEVICE
+
+from lib.smart_config import smart_config
 
 
 class WanSFScheduler(WanScheduler):
@@ -13,7 +13,9 @@ class WanSFScheduler(WanScheduler):
         self.dtype = torch.bfloat16
         ar = config.get("ar_config", {})
         self.num_frame_per_chunk = int(ar.get("num_frame_per_chunk", 3))
-        self.num_output_frames = int(config.get("num_output_frames", config.get("target_video_length", 81)))
+        self.num_output_frames = int(
+            config.get("num_output_frames", config.get("target_video_length", 81))
+        )
         self.context_noise = 0
 
         if "denoising_step_list" in ar:
@@ -39,7 +41,9 @@ class WanSFScheduler(WanScheduler):
             self._prepare_index_schedule()
 
     def _prepare_index_schedule(self):
-        alphas = np.linspace(1, 1 / self.num_train_timesteps, self.num_train_timesteps)[::-1].copy()
+        alphas = np.linspace(1, 1 / self.num_train_timesteps, self.num_train_timesteps)[
+            ::-1
+        ].copy()
         sigmas = 1.0 - alphas
         sigmas = torch.from_numpy(sigmas).to(dtype=torch.float32)
         sigmas = self.shift * sigmas / (1 + (self.shift - 1) * sigmas)
@@ -48,15 +52,29 @@ class WanSFScheduler(WanScheduler):
         self.sigmas = self.sigmas.to("cpu")
         self.sigma_min = self.sigmas[-1].item()
         self.sigma_max = self.sigmas[0].item()
-        self.set_timesteps(self.num_train_timesteps, device=AI_DEVICE, shift=self.sample_shift)
+        self.set_timesteps(
+            self.num_train_timesteps, device=AI_DEVICE, shift=self.sample_shift
+        )
         self.selected_timesteps = self.timesteps[self.timesteps_index].tolist()
 
     def _prepare_denoise_schedule(self):
         sigma_start = self.denoising_strength
         if self.extra_one_step:
-            s = torch.linspace(sigma_start, 0.0, self.num_train_timesteps + 1, device=AI_DEVICE, dtype=torch.float32)[:-1]
+            s = torch.linspace(
+                sigma_start,
+                0.0,
+                self.num_train_timesteps + 1,
+                device=AI_DEVICE,
+                dtype=torch.float32,
+            )[:-1]
         else:
-            s = torch.linspace(sigma_start, 0.0, self.num_train_timesteps, device=AI_DEVICE, dtype=torch.float32)
+            s = torch.linspace(
+                sigma_start,
+                0.0,
+                self.num_train_timesteps,
+                device=AI_DEVICE,
+                dtype=torch.float32,
+            )
         if self.inverse_timesteps:
             s = torch.flip(s, dims=[0])
         s = self.sample_shift * s / (1 + (self.sample_shift - 1) * s)
@@ -78,7 +96,9 @@ class WanSFScheduler(WanScheduler):
         return x0_pred.to(original_dtype)
 
     def _add_noise(self, original_samples, noise, timestep):
-        sigmas = self.sigmas.to(device=original_samples.device, dtype=original_samples.dtype)
+        sigmas = self.sigmas.to(
+            device=original_samples.device, dtype=original_samples.dtype
+        )
         schedule_timesteps = self.timesteps.to(original_samples.device)
         step_index = self.index_for_timestep(timestep, schedule_timesteps)
         sigma = sigmas[step_index]
@@ -105,19 +125,35 @@ class WanSFScheduler(WanScheduler):
             self.latents = self.latents.to(GET_DTYPE())
 
         seg_start = self.seg_index * self.num_frame_per_chunk
-        seg_end = min((self.seg_index + 1) * self.num_frame_per_chunk, self.num_output_frames)
+        seg_end = min(
+            (self.seg_index + 1) * self.num_frame_per_chunk, self.num_output_frames
+        )
         self.latents_input = self.latents[:, seg_start:seg_end]
 
         if self._mode == "denoise":
-            t = float(self.context_noise if is_rerun else self.denoising_step_list[self.step_index])
-            self.timestep_input = torch.full((1, self.num_frame_per_chunk), t, device=AI_DEVICE, dtype=torch.float32)
+            t = float(
+                self.context_noise
+                if is_rerun
+                else self.denoising_step_list[self.step_index]
+            )
+            self.timestep_input = torch.full(
+                (1, self.num_frame_per_chunk), t, device=AI_DEVICE, dtype=torch.float32
+            )
         else:
-            t_val = self.context_noise if is_rerun else self.selected_timesteps[self.step_index]
-            self.timestep_input = torch.full((1, self.num_frame_per_chunk), t_val, device=AI_DEVICE, dtype=torch.long)
+            t_val = (
+                self.context_noise
+                if is_rerun
+                else self.selected_timesteps[self.step_index]
+            )
+            self.timestep_input = torch.full(
+                (1, self.num_frame_per_chunk), t_val, device=AI_DEVICE, dtype=torch.long
+            )
 
     def step_post(self):
         seg_start = self.seg_index * self.num_frame_per_chunk
-        seg_end = min((self.seg_index + 1) * self.num_frame_per_chunk, self.num_output_frames)
+        seg_end = min(
+            (self.seg_index + 1) * self.num_frame_per_chunk, self.num_output_frames
+        )
         if self._mode == "denoise":
             self._step_post_denoise(seg_start, seg_end)
             return
@@ -129,7 +165,9 @@ class WanSFScheduler(WanScheduler):
         if self.step_index < self.infer_steps - 1:
             next_timestep = self.selected_timesteps[self.step_index + 1]
             noise = torch.randn_like(x0)
-            self.latents[:, seg_start:seg_end] = self._add_noise(x0, noise, next_timestep)
+            self.latents[:, seg_start:seg_end] = self._add_noise(
+                x0, noise, next_timestep
+            )
         else:
             self.latents[:, seg_start:seg_end] = x0
             self.stream_output = x0
@@ -144,7 +182,9 @@ class WanSFScheduler(WanScheduler):
         original_dtype = self.noise_pred.dtype
         flow_pred = self.noise_pred[:, seg_start:seg_end].transpose(0, 1).double()
         xt = self.latents_input.transpose(0, 1).double()
-        timestep = self.timestep_input.squeeze(0).to(device=flow_pred.device, dtype=torch.float64)
+        timestep = self.timestep_input.squeeze(0).to(
+            device=flow_pred.device, dtype=torch.float64
+        )
         sigma_t = self._sigma_at_timestep(timestep).reshape(-1, 1, 1, 1).double()
         x0 = (xt - sigma_t * flow_pred).to(original_dtype)
         if self.step_index < self.infer_steps - 1:

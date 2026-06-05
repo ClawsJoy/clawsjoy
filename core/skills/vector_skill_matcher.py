@@ -3,7 +3,7 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
@@ -12,7 +12,7 @@ from core.lib.vector_knowledge_center import vector_knowledge_center
 
 class VectorSkillMatcher:
     """用向量匹配技能，不依赖关键词"""
-    
+
     # 技能向量库
     SKILL_VECTORS = {
         "weather": "查询天气、气温、温度、会不会下雨、今天热吗、明天冷吗",
@@ -25,7 +25,7 @@ class VectorSkillMatcher:
         "location": "在哪里、位置、城市、宁波、北京、上海",
         "memory": "记住、忘记、回忆、我叫、我在",
     }
-    
+
     @classmethod
     def match(cls, user_input: str) -> str:
         """向量匹配最合适的技能"""
@@ -34,25 +34,25 @@ class VectorSkillMatcher:
             collection = vector_knowledge_center._get_collection("skill_vectors")
             if not collection:
                 return cls._keyword_match(user_input)
-            
+
             results = collection.query(query_texts=[user_input], n_results=1)
-            if results and results.get('ids') and results['ids'][0]:
-                metadata = results['metadatas'][0][0]
-                return metadata.get('skill', 'chat')
-        except:
+            if results and results.get("ids") and results["ids"][0]:
+                metadata = results["metadatas"][0][0]
+                return metadata.get("skill", "chat")
+        except Exception as e:
             pass
         return cls._keyword_match(user_input)
-    
+
     @classmethod
     def _keyword_match(cls, user_input: str) -> str:
         """关键词兜底"""
         user_lower = user_input.lower()
         for skill, keywords in cls.SKILL_VECTORS.items():
-            for kw in keywords.split('、'):
+            for kw in keywords.split("、"):
                 if kw in user_lower:
                     return skill
-        return 'chat'
-    
+        return "chat"
+
     @classmethod
     def init_vectors(cls):
         """初始化技能向量库"""
@@ -61,8 +61,9 @@ class VectorSkillMatcher:
             collection.upsert(
                 ids=[f"skill_{skill}"],
                 documents=[desc],
-                metadatas=[{"skill": skill, "description": desc}]
+                metadatas=[{"skill": skill, "description": desc}],
             )
         print(f"✅ 已初始化 {len(cls.SKILL_VECTORS)} 个技能向量")
+
 
 vector_matcher = VectorSkillMatcher()

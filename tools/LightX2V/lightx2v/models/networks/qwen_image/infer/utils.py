@@ -1,7 +1,8 @@
-from lib.smart_config import smart_config
 from typing import Tuple
 
 import torch
+
+from lib.smart_config import smart_config
 
 try:
     from flashinfer.rope import apply_rope_with_cos_sin_cache_inplace
@@ -19,7 +20,9 @@ def apply_qwen_rope_with_flashinfer(
     query = xq.reshape(L, H * D).contiguous()
     key = xk.reshape(L, H * D).contiguous()
 
-    positions = torch.arange(L, device="cpu", dtype=torch.long).to(xq.device, non_blocking=True)
+    positions = torch.arange(L, device="cpu", dtype=torch.long).to(
+        xq.device, non_blocking=True
+    )
 
     apply_rope_with_cos_sin_cache_inplace(
         positions=positions,
@@ -40,8 +43,12 @@ def apply_qwen_rope_with_torch(
     xk: torch.Tensor,
     cos_sin_cache: torch.Tensor,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
-    xq_rotated = torch.view_as_complex(xq.float().reshape(*xq.shape[:-1], -1, 2)).squeeze(0)
-    xk_rotated = torch.view_as_complex(xk.float().reshape(*xk.shape[:-1], -1, 2)).squeeze(0)
+    xq_rotated = torch.view_as_complex(
+        xq.float().reshape(*xq.shape[:-1], -1, 2)
+    ).squeeze(0)
+    xk_rotated = torch.view_as_complex(
+        xk.float().reshape(*xk.shape[:-1], -1, 2)
+    ).squeeze(0)
     freqs_cis = cos_sin_cache.unsqueeze(1)
     xq_out = torch.view_as_real(xq_rotated * freqs_cis).flatten(-2)
     xk_out = torch.view_as_real(xk_rotated * freqs_cis).flatten(-2)

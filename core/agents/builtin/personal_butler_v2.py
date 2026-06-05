@@ -3,13 +3,14 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
-from typing import Dict, Optional, Any
-from pathlib import Path
 import json
+from pathlib import Path
+from typing import Any, Dict, Optional
+
 from core.agents.base.smart_agent import SmartAgent
 
 
@@ -47,11 +48,12 @@ class PersonalButlerV2(SmartAgent):
         user_dir.mkdir(parents=True, exist_ok=True)
         pref_file = user_dir / "butler_preferences.json"
         try:
-            with open(pref_file, 'w') as f:
-                json.dump({
-                    "preferences": self.preferences,
-                    "context": self.user_context
-                }, f, indent=2)
+            with open(pref_file, "w") as f:
+                json.dump(
+                    {"preferences": self.preferences, "context": self.user_context},
+                    f,
+                    indent=2,
+                )
         except Exception as e:
             print(f"保存用户数据失败: {e}")
 
@@ -101,6 +103,7 @@ class PersonalButlerV2(SmartAgent):
         """记录交互到俱乐部"""
         try:
             from core.butler_club.center import butler_club
+
             butler_club.record_interaction(self.user_id)
         except Exception as e:
             print(f"记录交互失败: {e}")
@@ -112,12 +115,12 @@ class PersonalButlerV2(SmartAgent):
             "version": self.version,
             "user_id": self.user_id,
             "preferences_count": len(self.preferences),
-            "context_size": len(self.user_context)
+            "context_size": len(self.user_context),
         }
-
 
     def get_preference(self, key: str, default=None):
         """获取单个偏好"""
         return self.preferences.get(key, default)
+
 
 personal_butler = PersonalButlerV2()

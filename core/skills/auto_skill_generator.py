@@ -3,13 +3,14 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
 import json
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+
 from core.lib.skill_loader_v3 import skill_loader
 
 
@@ -24,7 +25,7 @@ class AutoSkillGenerator:
 
     def _load_combos(self):
         if self.combos_file.exists():
-            with open(self.combos_file, 'r') as f:
+            with open(self.combos_file, "r") as f:
                 self.combos = json.load(f)
         else:
             self.combos = {"combos": [], "stats": {}}
@@ -62,7 +63,7 @@ class AutoSkillGenerator:
     def _generate_skill(self, skill_name: str, skills: list):
         """生成符合 OpenClaw 规范的技能（标准化参数）"""
 
-        class_name = ''.join(word.capitalize() for word in skill_name.split('_'))
+        class_name = "".join(word.capitalize() for word in skill_name.split("_"))
         description = f"自动组合技能: {' → '.join(skills)}"
 
         # 生成参数映射代码
@@ -99,7 +100,7 @@ skill = {class_name}()
 '''
 
         py_file = self.generated_dir / f"{skill_name}.py"
-        py_file.write_text(code, encoding='utf-8')
+        py_file.write_text(code, encoding="utf-8")
 
         # 生成 SKILL.md
         self._generate_skill_md(skill_name, description, skills)
@@ -112,17 +113,20 @@ skill = {class_name}()
 
         for skill in skills:
             if skill == "vision":
-                mappings.append(f'''        # {skill}: 需要 image_path
+                mappings.append(
+                    f"""        # {skill}: 需要 image_path
         if "image_path" in params or "image" in params:
             results["{skill}"] = skill_loader.execute("{skill}", {{
                 "image_path": params.get("image_path") or params.get("image", ""),
                 **{{k: v for k, v in params.items() if k not in ["image_path", "image"]}}
             }})
         else:
-            results["{skill}"] = {{"success": False, "error": "image_path required"}}''')
+            results["{skill}"] = {{"success": False, "error": "image_path required"}}"""
+                )
 
             elif skill == "translate":
-                mappings.append(f'''        # {skill}: 需要 text
+                mappings.append(
+                    f"""        # {skill}: 需要 text
         if "text" in params:
             results["{skill}"] = skill_loader.execute("{skill}", {{
                 "text": params.get("text", ""),
@@ -139,11 +143,14 @@ skill = {class_name}()
             else:
                 results["{skill}"] = {{"success": False, "error": "no text to translate"}}
         else:
-            results["{skill}"] = {{"success": False, "error": "text required"}}''')
+            results["{skill}"] = {{"success": False, "error": "text required"}}"""
+                )
 
             else:
-                mappings.append(f'''        # {skill}: 通用传递
-        results["{skill}"] = skill_loader.execute("{skill}", params)''')
+                mappings.append(
+                    f"""        # {skill}: 通用传递
+        results["{skill}"] = skill_loader.execute("{skill}", params)"""
+                )
 
         return "\n\n".join(mappings)
 
@@ -152,7 +159,7 @@ skill = {class_name}()
         md_file = self.generated_dir / "SKILL.md"
         existing = md_file.read_text() if md_file.exists() else ""
 
-        skill_entry = f'''
+        skill_entry = f"""
 ## {skill_name}
 
 {description}
@@ -160,17 +167,19 @@ skill = {class_name}()
 **组合技能:** {', '.join(skills)}
 
 **参数传递规则:**
-'''
+"""
         for skill in skills:
             if skill == "vision":
-                skill_entry += f'\n- {skill}: 需要 `image_path` 参数'
+                skill_entry += f"\n- {skill}: 需要 `image_path` 参数"
             elif skill == "translate":
-                skill_entry += f'\n- {skill}: 需要 `text` 参数，会自动从前置技能结果提取'
+                skill_entry += (
+                    f"\n- {skill}: 需要 `text` 参数，会自动从前置技能结果提取"
+                )
             else:
-                skill_entry += f'\n- {skill}: 接收所有参数'
+                skill_entry += f"\n- {skill}: 接收所有参数"
 
         if skill_name not in existing:
-            with open(md_file, 'a') as f:
+            with open(md_file, "a") as f:
                 f.write(skill_entry)
 
 

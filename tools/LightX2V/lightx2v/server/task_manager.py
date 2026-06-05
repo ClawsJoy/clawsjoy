@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import threading
 import uuid
 from collections import OrderedDict
@@ -8,6 +7,8 @@ from enum import Enum
 from typing import Any, Dict, Optional
 
 from loguru import logger
+
+from lib.smart_config import smart_config
 
 from .metrics import monitor_cli
 
@@ -55,12 +56,23 @@ class TaskManager:
             if hasattr(message, "task_id") and message.task_id in self._tasks:
                 raise RuntimeError(f"Task ID {message.task_id} already exists")
 
-            active_tasks = sum(1 for t in self._tasks.values() if t.status in [TaskStatus.PENDING, TaskStatus.PROCESSING])
+            active_tasks = sum(
+                1
+                for t in self._tasks.values()
+                if t.status in [TaskStatus.PENDING, TaskStatus.PROCESSING]
+            )
             if active_tasks >= self.max_queue_size:
-                raise RuntimeError(f"Task queue is full (max {self.max_queue_size} tasks)")
+                raise RuntimeError(
+                    f"Task queue is full (max {self.max_queue_size} tasks)"
+                )
 
             task_id = getattr(message, "task_id", str(uuid.uuid4()))
-            task_info = TaskInfo(task_id=task_id, status=TaskStatus.PENDING, message=message, save_result_path=getattr(message, "save_result_path", None))
+            task_info = TaskInfo(
+                task_id=task_id,
+                status=TaskStatus.PENDING,
+                message=message,
+                save_result_path=getattr(message, "save_result_path", None),
+            )
 
             self._tasks[task_id] = task_info
             self.total_tasks += 1
@@ -84,7 +96,12 @@ class TaskManager:
 
             return task
 
-    def complete_task(self, task_id: str, save_result_path: Optional[str] = None, result_png: Optional[bytes] = None):
+    def complete_task(
+        self,
+        task_id: str,
+        save_result_path: Optional[str] = None,
+        result_png: Optional[bytes] = None,
+    ):
         with self._lock:
             if task_id not in self._tasks:
                 logger.warning(f"Task {task_id} not found for completion")
@@ -173,17 +190,25 @@ class TaskManager:
 
     def get_active_task_count(self) -> int:
         with self._lock:
-            return sum(1 for t in self._tasks.values() if t.status in [TaskStatus.PENDING, TaskStatus.PROCESSING])
+            return sum(
+                1
+                for t in self._tasks.values()
+                if t.status in [TaskStatus.PENDING, TaskStatus.PROCESSING]
+            )
 
     def get_pending_task_count(self) -> int:
         with self._lock:
-            return sum(1 for t in self._tasks.values() if t.status == TaskStatus.PENDING)
+            return sum(
+                1 for t in self._tasks.values() if t.status == TaskStatus.PENDING
+            )
 
     def is_processing(self) -> bool:
         with self._lock:
             return self._current_processing_task is not None
 
-    def acquire_processing_lock(self, task_id: str, timeout: Optional[float] = None) -> bool:
+    def acquire_processing_lock(
+        self, task_id: str, timeout: Optional[float] = None
+    ) -> bool:
         acquired = self._processing_lock.acquire(timeout=timeout if timeout else False)
         if acquired:
             with self._lock:
@@ -199,7 +224,9 @@ class TaskManager:
                     self._processing_lock.release()
                     logger.info(f"Task {task_id} released processing lock")
                 except RuntimeError as e:
-                    logger.warning(f"Task {task_id} tried to release lock but failed: {e}")
+                    logger.warning(
+                        f"Task {task_id} tried to release lock but failed: {e}"
+                    )
 
     def get_next_pending_task(self) -> Optional[str]:
         with self._lock:
@@ -210,9 +237,15 @@ class TaskManager:
 
     def get_service_status(self) -> Dict[str, Any]:
         with self._lock:
-            active_tasks = [task_id for task_id, task in self._tasks.items() if task.status == TaskStatus.PROCESSING]
+            active_tasks = [
+                task_id
+                for task_id, task in self._tasks.items()
+                if task.status == TaskStatus.PROCESSING
+            ]
 
-            pending_count = sum(1 for t in self._tasks.values() if t.status == TaskStatus.PENDING)
+            pending_count = sum(
+                1 for t in self._tasks.values() if t.status == TaskStatus.PENDING
+            )
 
             return {
                 "service_status": "busy" if self._current_processing_task else "idle",
@@ -236,7 +269,12 @@ class TaskManager:
         if len(self._tasks) <= keep_count:
             return
 
-        completed_tasks = [(task_id, task) for task_id, task in self._tasks.items() if task.status in [TaskStatus.COMPLETED, TaskStatus.FAILED, TaskStatus.CANCELLED]]
+        completed_tasks = [
+            (task_id, task)
+            for task_id, task in self._tasks.items()
+            if task.status
+            in [TaskStatus.COMPLETED, TaskStatus.FAILED, TaskStatus.CANCELLED]
+        ]
 
         completed_tasks.sort(key=lambda x: x[1].end_time or x[1].start_time)
 
@@ -246,8 +284,14 @@ class TaskManager:
             logger.debug(f"Cleaned up old task: {task_id}")
 
     def _emit_queue_metrics_unlocked(self):
-        pending_tasks = sum(1 for t in self._tasks.values() if t.status == TaskStatus.PENDING)
-        active_tasks = sum(1 for t in self._tasks.values() if t.status in [TaskStatus.PENDING, TaskStatus.PROCESSING])
+        pending_tasks = sum(
+            1 for t in self._tasks.values() if t.status == TaskStatus.PENDING
+        )
+        active_tasks = sum(
+            1
+            for t in self._tasks.values()
+            if t.status in [TaskStatus.PENDING, TaskStatus.PROCESSING]
+        )
         try:
             monitor_cli.lightx2v_task_queue_pending_size.set(pending_tasks)
             monitor_cli.lightx2v_task_queue_active_size.set(active_tasks)

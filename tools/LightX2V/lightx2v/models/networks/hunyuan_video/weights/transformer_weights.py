@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 from lightx2v.common.modules.weight_module import WeightModule, WeightModuleList
 from lightx2v.utils.registry_factory import (
     ATTN_WEIGHT_REGISTER,
@@ -6,6 +5,8 @@ from lightx2v.utils.registry_factory import (
     MM_WEIGHT_REGISTER,
     RMS_WEIGHT_REGISTER,
 )
+
+from lib.smart_config import smart_config
 
 
 class HunyuanVideo15TransformerWeights(WeightModule):
@@ -18,7 +19,17 @@ class HunyuanVideo15TransformerWeights(WeightModule):
         self.rms_norm_type = config.get("rms_norm_type", "sgl-kernel")
         self.double_blocks_num = config["mm_double_blocks_depth"]
         self.register_offload_buffers(config)
-        self.add_module("double_blocks", WeightModuleList([MMDoubleStreamBlock(i, self.task, self.config, block_prefix="double_blocks") for i in range(self.double_blocks_num)]))
+        self.add_module(
+            "double_blocks",
+            WeightModuleList(
+                [
+                    MMDoubleStreamBlock(
+                        i, self.task, self.config, block_prefix="double_blocks"
+                    )
+                    for i in range(self.double_blocks_num)
+                ]
+            ),
+        )
         self.add_module("final_layer", FinalLayerWeights(self.config))
 
     def register_offload_buffers(self, config):
@@ -37,7 +48,9 @@ class HunyuanVideo15TransformerWeights(WeightModule):
                         for i in range(self.offload_blocks_num)
                     ]
                 )
-                self.add_module("offload_block_cuda_buffers", self.offload_block_cuda_buffers)
+                self.add_module(
+                    "offload_block_cuda_buffers", self.offload_block_cuda_buffers
+                )
                 self.offload_phase_cuda_buffers = None
 
     def non_block_weights_to_cuda(self):
@@ -48,7 +61,15 @@ class HunyuanVideo15TransformerWeights(WeightModule):
 
 
 class MMDoubleStreamBlock(WeightModule):
-    def __init__(self, block_index, task, config, block_prefix="double_blocks", create_cuda_buffer=False, create_cpu_buffer=False):
+    def __init__(
+        self,
+        block_index,
+        task,
+        config,
+        block_prefix="double_blocks",
+        create_cuda_buffer=False,
+        create_cpu_buffer=False,
+    ):
         super().__init__()
         self.block_index = block_index
         self.task = task
@@ -61,23 +82,47 @@ class MMDoubleStreamBlock(WeightModule):
 
         self.add_module(
             "img_branch",
-            MMDoubleStreamBlockImgBranch(block_index, task, config, block_prefix, create_cuda_buffer, create_cpu_buffer),
+            MMDoubleStreamBlockImgBranch(
+                block_index,
+                task,
+                config,
+                block_prefix,
+                create_cuda_buffer,
+                create_cpu_buffer,
+            ),
         )
         self.add_module(
             "txt_branch",
-            MMDoubleStreamBlockTxtBranch(block_index, task, config, block_prefix, create_cuda_buffer, create_cpu_buffer),
+            MMDoubleStreamBlockTxtBranch(
+                block_index,
+                task,
+                config,
+                block_prefix,
+                create_cuda_buffer,
+                create_cpu_buffer,
+            ),
         )
         attention_weights_cls = ATTN_WEIGHT_REGISTER[self.config["attn_type"]]
         self.add_module("self_attention", attention_weights_cls())
         if self.config["seq_parallel"]:
             self.add_module(
                 "self_attention_parallel",
-                ATTN_WEIGHT_REGISTER[self.config["parallel"].get("seq_p_attn_type", "ulysses")](),
+                ATTN_WEIGHT_REGISTER[
+                    self.config["parallel"].get("seq_p_attn_type", "ulysses")
+                ](),
             )
 
 
 class MMDoubleStreamBlockImgBranch(WeightModule):
-    def __init__(self, block_index, task, config, block_prefix="double_blocks", create_cuda_buffer=False, create_cpu_buffer=False):
+    def __init__(
+        self,
+        block_index,
+        task,
+        config,
+        block_prefix="double_blocks",
+        create_cuda_buffer=False,
+        create_cpu_buffer=False,
+    ):
         super().__init__()
         self.block_index = block_index
         self.task = task
@@ -212,7 +257,15 @@ class MMDoubleStreamBlockImgBranch(WeightModule):
 
 
 class MMDoubleStreamBlockTxtBranch(WeightModule):
-    def __init__(self, block_index, task, config, block_prefix="double_blocks", create_cuda_buffer=False, create_cpu_buffer=False):
+    def __init__(
+        self,
+        block_index,
+        task,
+        config,
+        block_prefix="double_blocks",
+        create_cuda_buffer=False,
+        create_cpu_buffer=False,
+    ):
         super().__init__()
         self.block_index = block_index
         self.task = task

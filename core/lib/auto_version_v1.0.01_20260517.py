@@ -3,10 +3,8 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
-
-from core.lib.unified_config import unified_config
 
 from core.lib.unified_config import unified_config
 
@@ -15,10 +13,13 @@ from core.lib.unified_config import unified_config
 
 import functools
 from pathlib import Path
+
 from core.lib.version_registry_v1_0_01_20260517 import version_registry
+
 
 def auto_version(module_name: str, module_path: str = None):
     """自动版本装饰器：为模块自动注入版本号"""
+
     def decorator(cls_or_func):
         # 自动注册并获取版本
         if module_path:
@@ -28,7 +29,7 @@ def auto_version(module_name: str, module_path: str = None):
             version = version_registry.get_version(module_name) or "v0.0.00"
 
         # 注入版本属性
-        if hasattr(cls_or_func, '__version__'):
+        if hasattr(cls_or_func, "__version__"):
             cls_or_func.__version__ = version
 
         @functools.wraps(cls_or_func)
@@ -37,19 +38,20 @@ def auto_version(module_name: str, module_path: str = None):
 
         wrapper.__version__ = version
         return wrapper
+
     return decorator
 
 
 class VersionedModule:
     """版本化模块基类 - 继承即可获得自动版本"""
-    
+
     @property
     def version(self):
-        return getattr(self, '__version__', 'v0.0.00')
-    
+        return getattr(self, "__version__", "v0.0.00")
+
     @classmethod
     def get_version(cls):
-        return getattr(cls, '__version__', 'v0.0.00')
+        return getattr(cls, "__version__", "v0.0.00")
 
 
 # 使用示例:

@@ -1,11 +1,9 @@
-from lib.smart_config import smart_config
 from typing import Dict, List, Optional, Tuple
 
 import torch
 import torch.distributed as dist
 import torch.nn.functional as F
 from einops import rearrange
-
 from lightx2v.common.offload.manager import WeightAsyncStreamManager
 from lightx2v.models.networks.hunyuan_video.infer.module_io import (
     HunyuanVideo15ImgBranchOutput,
@@ -18,6 +16,8 @@ from lightx2v.models.networks.hunyuan_video.infer.transformer_infer import (
 from lightx2v.models.networks.worldplay.prope.camera_rope import prope_qkv
 from lightx2v.utils.registry_factory import ATTN_WEIGHT_REGISTER
 from lightx2v_platform.base.global_var import AI_DEVICE
+
+from lib.smart_config import smart_config
 
 torch_device_module = getattr(torch, AI_DEVICE)
 
@@ -61,7 +61,9 @@ class KVCache:
         self._cache[block_idx]["k_txt"] = k
         self._cache[block_idx]["v_txt"] = v
 
-    def get_txt_cache(self, block_idx: int) -> Tuple[Optional[torch.Tensor], Optional[torch.Tensor]]:
+    def get_txt_cache(
+        self, block_idx: int
+    ) -> Tuple[Optional[torch.Tensor], Optional[torch.Tensor]]:
         """Get text KV cache."""
         return self._cache[block_idx]["k_txt"], self._cache[block_idx]["v_txt"]
 
@@ -71,10 +73,16 @@ class KVCache:
             self._cache[block_idx]["k_vision"] = k
             self._cache[block_idx]["v_vision"] = v
         else:
-            self._cache[block_idx]["k_vision"] = torch.cat([self._cache[block_idx]["k_vision"], k], dim=2)
-            self._cache[block_idx]["v_vision"] = torch.cat([self._cache[block_idx]["v_vision"], v], dim=2)
+            self._cache[block_idx]["k_vision"] = torch.cat(
+                [self._cache[block_idx]["k_vision"], k], dim=2
+            )
+            self._cache[block_idx]["v_vision"] = torch.cat(
+                [self._cache[block_idx]["v_vision"], v], dim=2
+            )
 
-    def get_vision_cache(self, block_idx: int) -> Tuple[Optional[torch.Tensor], Optional[torch.Tensor]]:
+    def get_vision_cache(
+        self, block_idx: int
+    ) -> Tuple[Optional[torch.Tensor], Optional[torch.Tensor]]:
         """Get vision KV cache."""
         return self._cache[block_idx]["k_vision"], self._cache[block_idx]["v_vision"]
 
@@ -153,7 +161,9 @@ class WorldPlayARTransformerInfer(HunyuanVideo15TransformerInfer):
             else:
                 raise NotImplementedError
             if offload_granularity != "model":
-                self.offload_manager = WeightAsyncStreamManager(offload_granularity=offload_granularity)
+                self.offload_manager = WeightAsyncStreamManager(
+                    offload_granularity=offload_granularity
+                )
 
     @property
     def _vec_is_per_token(self):
@@ -207,8 +217,12 @@ class WorldPlayARTransformerInfer(HunyuanVideo15TransformerInfer):
                 img_mod2_gate,
             ) = img_mod.chunk(6, dim=-1)
 
-            img_modulated = weights.img_branch.img_norm1.apply(infer_module_out.img.squeeze(0))
-            img_modulated = img_modulated * (1 + img_mod1_scale.squeeze(0)) + img_mod1_shift.squeeze(0)
+            img_modulated = weights.img_branch.img_norm1.apply(
+                infer_module_out.img.squeeze(0)
+            )
+            img_modulated = img_modulated * (
+                1 + img_mod1_scale.squeeze(0)
+            ) + img_mod1_shift.squeeze(0)
         else:
             mod_output = weights.img_branch.img_mod.apply(vec)
             (
@@ -219,8 +233,12 @@ class WorldPlayARTransformerInfer(HunyuanVideo15TransformerInfer):
                 img_mod2_scale,
                 img_mod2_gate,
             ) = mod_output.chunk(6, dim=-1)
-            img_modulated = weights.img_branch.img_norm1.apply(infer_module_out.img.squeeze(0))
-            img_modulated = self.modulate_func(img_modulated, scale=img_mod1_scale, shift=img_mod1_shift).squeeze(0)
+            img_modulated = weights.img_branch.img_norm1.apply(
+                infer_module_out.img.squeeze(0)
+            )
+            img_modulated = self.modulate_func(
+                img_modulated, scale=img_mod1_scale, shift=img_mod1_shift
+            ).squeeze(0)
 
         img_q = weights.img_branch.img_attn_q.apply(img_modulated)
         img_k = weights.img_branch.img_attn_k.apply(img_modulated)
@@ -236,7 +254,9 @@ class WorldPlayARTransformerInfer(HunyuanVideo15TransformerInfer):
         img_k_pre_rope = img_k.unsqueeze(0)
 
         # Apply RoPE for standard attention branch
-        img_q, img_k = self.apply_rope_func(img_q.unsqueeze(0), img_k.unsqueeze(0), cos_sin_cache=self.scheduler.cos_sin)
+        img_q, img_k = self.apply_rope_func(
+            img_q.unsqueeze(0), img_k.unsqueeze(0), cos_sin_cache=self.scheduler.cos_sin
+        )
 
         return (
             img_q,
@@ -271,8 +291,12 @@ class WorldPlayARTransformerInfer(HunyuanVideo15TransformerInfer):
             txt_mod2_gate,
         ) = weights.txt_branch.txt_mod.apply(vec_for_txt).chunk(6, dim=-1)
 
-        txt_modulated = weights.txt_branch.txt_norm1.apply(infer_module_out.txt.squeeze(0))
-        txt_modulated = self.modulate_func(txt_modulated, scale=txt_mod1_scale, shift=txt_mod1_shift).squeeze(0)
+        txt_modulated = weights.txt_branch.txt_norm1.apply(
+            infer_module_out.txt.squeeze(0)
+        )
+        txt_modulated = self.modulate_func(
+            txt_modulated, scale=txt_mod1_scale, shift=txt_mod1_shift
+        ).squeeze(0)
 
         txt_q = weights.txt_branch.txt_attn_q.apply(txt_modulated)
         txt_k = weights.txt_branch.txt_attn_k.apply(txt_modulated)
@@ -296,7 +320,18 @@ class WorldPlayARTransformerInfer(HunyuanVideo15TransformerInfer):
         )
 
     @torch.no_grad()
-    def _infer_causal_attn(self, weights, img_q, img_k, img_v, txt_q, txt_k, txt_v, block_idx=None, use_kv_cache=True):
+    def _infer_causal_attn(
+        self,
+        weights,
+        img_q,
+        img_k,
+        img_v,
+        txt_q,
+        txt_k,
+        txt_v,
+        block_idx=None,
+        use_kv_cache=True,
+    ):
         """
         Perform attention for AR model.
 
@@ -346,7 +381,9 @@ class WorldPlayARTransformerInfer(HunyuanVideo15TransformerInfer):
         return img_attn, txt_attn
 
     @torch.no_grad()
-    def _infer_img_branch_after_attn(self, weights, img_attn, img, img_branch_out, img_attn_prope=None):
+    def _infer_img_branch_after_attn(
+        self, weights, img_attn, img, img_branch_out, img_attn_prope=None
+    ):
         """Override to handle per-token modulation in post-attention."""
         if self._vec_is_per_token and img_branch_out.img_mod2_scale.dim() == 3:
             img_seqlen = img.shape[1]
@@ -364,7 +401,9 @@ class WorldPlayARTransformerInfer(HunyuanVideo15TransformerInfer):
 
             img_squeezed = img.squeeze(0)
             normed = weights.img_branch.img_norm2.apply(img_squeezed)
-            modulated = normed * (1 + img_mod2_scale.squeeze(0)) + img_mod2_shift.squeeze(0)
+            modulated = normed * (
+                1 + img_mod2_scale.squeeze(0)
+            ) + img_mod2_shift.squeeze(0)
             out = weights.img_branch.img_mlp_fc1.apply(modulated)
             out = weights.img_branch.img_mlp_fc2.apply(F.gelu(out, approximate="tanh"))
             gated_out = out * img_mod2_gate.squeeze(0)
@@ -375,7 +414,11 @@ class WorldPlayARTransformerInfer(HunyuanVideo15TransformerInfer):
                 attn_proj = attn_proj + img_attn_prope.unsqueeze(0)
             img = img + apply_gate(attn_proj, gate=img_branch_out.img_mod1_gate)
             out = weights.img_branch.img_mlp_fc1.apply(
-                self.modulate_func(weights.img_branch.img_norm2.apply(img.squeeze(0)), scale=img_branch_out.img_mod2_scale, shift=img_branch_out.img_mod2_shift).squeeze(0)
+                self.modulate_func(
+                    weights.img_branch.img_norm2.apply(img.squeeze(0)),
+                    scale=img_branch_out.img_mod2_scale,
+                    shift=img_branch_out.img_mod2_shift,
+                ).squeeze(0)
             )
             out = weights.img_branch.img_mlp_fc2.apply(F.gelu(out, approximate="tanh"))
             img = img + apply_gate(out.unsqueeze(0), gate=img_branch_out.img_mod2_gate)
@@ -384,9 +427,16 @@ class WorldPlayARTransformerInfer(HunyuanVideo15TransformerInfer):
     @torch.no_grad()
     def _infer_txt_branch_after_attn(self, weights, txt_attn, txt, txt_branch_out):
         """Standard text branch post-attention processing."""
-        txt = txt + apply_gate(weights.txt_branch.txt_attn_proj.apply(txt_attn).unsqueeze(0), gate=txt_branch_out.txt_mod1_gate)
+        txt = txt + apply_gate(
+            weights.txt_branch.txt_attn_proj.apply(txt_attn).unsqueeze(0),
+            gate=txt_branch_out.txt_mod1_gate,
+        )
         out = weights.txt_branch.txt_mlp_fc1.apply(
-            self.modulate_func(weights.txt_branch.txt_norm2.apply(txt.squeeze(0)), scale=txt_branch_out.txt_mod2_scale, shift=txt_branch_out.txt_mod2_shift).squeeze(0)
+            self.modulate_func(
+                weights.txt_branch.txt_norm2.apply(txt.squeeze(0)),
+                scale=txt_branch_out.txt_mod2_scale,
+                shift=txt_branch_out.txt_mod2_shift,
+            ).squeeze(0)
         )
         out = weights.txt_branch.txt_mlp_fc2.apply(F.gelu(out, approximate="tanh"))
         txt = txt + apply_gate(out.unsqueeze(0), gate=txt_branch_out.txt_mod2_gate)
@@ -454,35 +504,90 @@ class WorldPlayARTransformerInfer(HunyuanVideo15TransformerInfer):
             Tuple of (img, txt) tensors
         """
         # Get Q/K/V for both branches
-        (img_q, img_k, img_v, img_q_pre_rope, img_k_pre_rope, img_branch_out) = self._infer_img_branch_before_attn(weights, infer_module_out)
-        txt_q, txt_k, txt_v, txt_branch_out = self._infer_txt_branch_before_attn(weights, infer_module_out)
+        (img_q, img_k, img_v, img_q_pre_rope, img_k_pre_rope, img_branch_out) = (
+            self._infer_img_branch_before_attn(weights, infer_module_out)
+        )
+        txt_q, txt_k, txt_v, txt_branch_out = self._infer_txt_branch_before_attn(
+            weights, infer_module_out
+        )
 
         # Apply ProPE if camera parameters are available
         img_attn_prope = None
-        if self.use_prope and hasattr(self.scheduler, "viewmats") and self.scheduler.viewmats is not None:
-            img_q_prope, img_k_prope, img_v_prope, apply_fn_o = self._apply_prope(img_q_pre_rope, img_k_pre_rope, img_v, self.scheduler.viewmats, self.scheduler.Ks, infer_module_out.grid_sizes)
+        if (
+            self.use_prope
+            and hasattr(self.scheduler, "viewmats")
+            and self.scheduler.viewmats is not None
+        ):
+            img_q_prope, img_k_prope, img_v_prope, apply_fn_o = self._apply_prope(
+                img_q_pre_rope,
+                img_k_pre_rope,
+                img_v,
+                self.scheduler.viewmats,
+                self.scheduler.Ks,
+                infer_module_out.grid_sizes,
+            )
 
             # First attention: original Q/K/V with RoPE (causal)
-            img_attn, txt_attn = self._infer_causal_attn(weights, img_q, img_k, img_v, txt_q, txt_k, txt_v, block_idx=block_idx, use_kv_cache=True)
+            img_attn, txt_attn = self._infer_causal_attn(
+                weights,
+                img_q,
+                img_k,
+                img_v,
+                txt_q,
+                txt_k,
+                txt_v,
+                block_idx=block_idx,
+                use_kv_cache=True,
+            )
 
             # Second attention: PRoPE transformed Q/K/V (causal)
-            img_attn_prope, _ = self._infer_causal_attn(weights, img_q_prope, img_k_prope, img_v_prope, txt_q, txt_k, txt_v, block_idx=None, use_kv_cache=False)
+            img_attn_prope, _ = self._infer_causal_attn(
+                weights,
+                img_q_prope,
+                img_k_prope,
+                img_v_prope,
+                txt_q,
+                txt_k,
+                txt_v,
+                block_idx=None,
+                use_kv_cache=False,
+            )
 
             # Apply ProPE output transform and projection
             if apply_fn_o is not None and block_idx is not None:
-                prope_proj_weight = getattr(self.action_weights, f"img_attn_prope_proj_{block_idx}", None)
+                prope_proj_weight = getattr(
+                    self.action_weights, f"img_attn_prope_proj_{block_idx}", None
+                )
                 if prope_proj_weight is not None:
                     L, C = img_attn_prope.shape
                     head_dim = C // self.heads_num
-                    img_attn_prope_4d = img_attn_prope.reshape(1, L, self.heads_num, head_dim).transpose(1, 2)
+                    img_attn_prope_4d = img_attn_prope.reshape(
+                        1, L, self.heads_num, head_dim
+                    ).transpose(1, 2)
                     img_attn_prope_transformed = apply_fn_o(img_attn_prope_4d)
-                    img_attn_prope = img_attn_prope_transformed.transpose(1, 2).reshape(L, C)
+                    img_attn_prope = img_attn_prope_transformed.transpose(1, 2).reshape(
+                        L, C
+                    )
                     img_attn_prope = prope_proj_weight.apply(img_attn_prope)
         else:
-            img_attn, txt_attn = self._infer_causal_attn(weights, img_q, img_k, img_v, txt_q, txt_k, txt_v, block_idx=block_idx, use_kv_cache=True)
+            img_attn, txt_attn = self._infer_causal_attn(
+                weights,
+                img_q,
+                img_k,
+                img_v,
+                txt_q,
+                txt_k,
+                txt_v,
+                block_idx=block_idx,
+                use_kv_cache=True,
+            )
 
-        img = self._infer_img_branch_after_attn(weights, img_attn, infer_module_out.img, img_branch_out, img_attn_prope)
-        txt = self._infer_txt_branch_after_attn(weights, txt_attn, infer_module_out.txt, txt_branch_out)
+        img = self._infer_img_branch_after_attn(
+            weights, img_attn, infer_module_out.img, img_branch_out, img_attn_prope
+        )
+        txt = self._infer_txt_branch_after_attn(
+            weights, txt_attn, infer_module_out.txt, txt_branch_out
+        )
         return img, txt
 
     @torch.no_grad()
@@ -505,8 +610,14 @@ class WorldPlayARTransformerInfer(HunyuanVideo15TransformerInfer):
             normed = weights.final_layer.norm_final.apply(img.squeeze(0))
             img = normed * (1 + scale.squeeze(0)) + shift.squeeze(0)
         else:
-            shift, scale = weights.final_layer.adaLN_modulation.apply(vec).chunk(2, dim=1)
-            img = self.modulate_func(weights.final_layer.norm_final.apply(img.squeeze(0)), scale=scale, shift=shift).squeeze(0)
+            shift, scale = weights.final_layer.adaLN_modulation.apply(vec).chunk(
+                2, dim=1
+            )
+            img = self.modulate_func(
+                weights.final_layer.norm_final.apply(img.squeeze(0)),
+                scale=scale,
+                shift=shift,
+            ).squeeze(0)
 
         img = weights.final_layer.linear.apply(img)
         return img.unsqueeze(0)
@@ -515,7 +626,9 @@ class WorldPlayARTransformerInfer(HunyuanVideo15TransformerInfer):
     def infer_without_offload(self, weights, infer_module_out):
         """Override to pass block index for KV cache and ProPE projection."""
         for i in range(self.double_blocks_num):
-            infer_module_out.img, infer_module_out.txt = self.infer_double_block(weights.double_blocks[i], infer_module_out, block_idx=i)
+            infer_module_out.img, infer_module_out.txt = self.infer_double_block(
+                weights.double_blocks[i], infer_module_out, block_idx=i
+            )
 
     @torch.no_grad()
     def infer_with_blocks_offload(self, weights, infer_module_out):
@@ -525,9 +638,15 @@ class WorldPlayARTransformerInfer(HunyuanVideo15TransformerInfer):
             if block_idx == 0:
                 self.offload_manager.init_first_buffer(weights.double_blocks)
             if block_idx < self.double_blocks_num - 1:
-                self.offload_manager.prefetch_weights(block_idx + 1, weights.double_blocks)
+                self.offload_manager.prefetch_weights(
+                    block_idx + 1, weights.double_blocks
+                )
             with torch_device_module.stream(self.offload_manager.compute_stream):
-                infer_module_out.img, infer_module_out.txt = self.infer_double_block(self.offload_manager.cuda_buffers[0], infer_module_out, block_idx=block_idx)
+                infer_module_out.img, infer_module_out.txt = self.infer_double_block(
+                    self.offload_manager.cuda_buffers[0],
+                    infer_module_out,
+                    block_idx=block_idx,
+                )
             self.offload_manager.swap_blocks()
 
     @torch.no_grad()
@@ -537,12 +656,18 @@ class WorldPlayARTransformerInfer(HunyuanVideo15TransformerInfer):
             if block_idx == 0:
                 self.offload_manager.init_first_buffer(weights.double_blocks)
             if block_idx < self.double_blocks_num - 1:
-                self.offload_manager.prefetch_weights(block_idx + 1, weights.double_blocks)
+                self.offload_manager.prefetch_weights(
+                    block_idx + 1, weights.double_blocks
+                )
             with torch_device_module.stream(self.offload_manager.compute_stream):
                 block_weights = self.offload_manager.cuda_buffers[0]
-                txt_q, txt_k, txt_v, txt_branch_out = self._infer_txt_branch_before_attn(block_weights, infer_module_out)
+                txt_q, txt_k, txt_v, txt_branch_out = (
+                    self._infer_txt_branch_before_attn(block_weights, infer_module_out)
+                )
                 txt_seqlen = txt_q.shape[1]
-                cu_seqlens_qkv = torch.tensor([0, txt_seqlen], dtype=torch.int32, device="cpu")
+                cu_seqlens_qkv = torch.tensor(
+                    [0, txt_seqlen], dtype=torch.int32, device="cpu"
+                )
                 txt_attn = block_weights.self_attention.apply(
                     q=txt_q,
                     k=txt_k,
@@ -553,50 +678,88 @@ class WorldPlayARTransformerInfer(HunyuanVideo15TransformerInfer):
                     max_seqlen_kv=txt_seqlen,
                 )
                 if cache_txt and self._kv_cache is not None:
-                    self._kv_cache.set_txt_cache(block_idx, txt_k.transpose(1, 2), txt_v.transpose(1, 2))
-                infer_module_out.txt = self._infer_txt_branch_after_attn(block_weights, txt_attn, infer_module_out.txt, txt_branch_out)
+                    self._kv_cache.set_txt_cache(
+                        block_idx, txt_k.transpose(1, 2), txt_v.transpose(1, 2)
+                    )
+                infer_module_out.txt = self._infer_txt_branch_after_attn(
+                    block_weights, txt_attn, infer_module_out.txt, txt_branch_out
+                )
             self.offload_manager.swap_blocks()
         return self._kv_cache
 
     @torch.no_grad()
     def infer_vision_with_offload(self, weights, infer_module_out, cache_vision=False):
         """Vision inference using cached text KV with block-level CPU offload."""
-        use_prope = self.use_prope and hasattr(self.scheduler, "viewmats") and self.scheduler.viewmats is not None
-        use_seq_parallel = self.seq_p_group is not None and self.config.get("seq_parallel", False)
+        use_prope = (
+            self.use_prope
+            and hasattr(self.scheduler, "viewmats")
+            and self.scheduler.viewmats is not None
+        )
+        use_seq_parallel = self.seq_p_group is not None and self.config.get(
+            "seq_parallel", False
+        )
 
         for block_idx in range(self.double_blocks_num):
             if block_idx == 0:
                 self.offload_manager.init_first_buffer(weights.double_blocks)
             if block_idx < self.double_blocks_num - 1:
-                self.offload_manager.prefetch_weights(block_idx + 1, weights.double_blocks)
+                self.offload_manager.prefetch_weights(
+                    block_idx + 1, weights.double_blocks
+                )
             with torch_device_module.stream(self.offload_manager.compute_stream):
                 block_weights = self.offload_manager.cuda_buffers[0]
 
-                (img_q, img_k, img_v, img_q_pre_rope, img_k_pre_rope, img_branch_out) = self._infer_img_branch_before_attn(block_weights, infer_module_out)
+                (
+                    img_q,
+                    img_k,
+                    img_v,
+                    img_q_pre_rope,
+                    img_k_pre_rope,
+                    img_branch_out,
+                ) = self._infer_img_branch_before_attn(block_weights, infer_module_out)
                 txt_k_cached, txt_v_cached = self._kv_cache.get_txt_cache(block_idx)
-                vision_k_cached, vision_v_cached = self._kv_cache.get_vision_cache(block_idx)
+                vision_k_cached, vision_v_cached = self._kv_cache.get_vision_cache(
+                    block_idx
+                )
                 img_attn_prope = None
                 apply_fn_o = None
 
                 if use_prope:
-                    img_q_prope, img_k_prope, img_v_prope, apply_fn_o = self._apply_prope(
-                        img_q_pre_rope, img_k_pre_rope, img_v, self.scheduler.viewmats, self.scheduler.Ks, infer_module_out.grid_sizes
+                    img_q_prope, img_k_prope, img_v_prope, apply_fn_o = (
+                        self._apply_prope(
+                            img_q_pre_rope,
+                            img_k_pre_rope,
+                            img_v,
+                            self.scheduler.viewmats,
+                            self.scheduler.Ks,
+                            infer_module_out.grid_sizes,
+                        )
                     )
                     query = torch.cat([img_q, img_q_prope], dim=0)
                     key_current = torch.cat([img_k, img_k_prope], dim=0)
                     value_current = torch.cat([img_v, img_v_prope], dim=0)
                     if use_seq_parallel:
-                        key_current = self._all_gather_seq(key_current, self.seq_p_group)
-                        value_current = self._all_gather_seq(value_current, self.seq_p_group)
+                        key_current = self._all_gather_seq(
+                            key_current, self.seq_p_group
+                        )
+                        value_current = self._all_gather_seq(
+                            value_current, self.seq_p_group
+                        )
                     key_current_t = key_current.transpose(1, 2)
                     value_current_t = value_current.transpose(1, 2)
                     if cache_vision:
-                        self._kv_cache.set_vision_cache(block_idx, key_current_t, value_current_t)
+                        self._kv_cache.set_vision_cache(
+                            block_idx, key_current_t, value_current_t
+                        )
                     txt_k_repeated = txt_k_cached.repeat(2, 1, 1, 1)
                     txt_v_repeated = txt_v_cached.repeat(2, 1, 1, 1)
                     if vision_k_cached is not None and not cache_vision:
-                        key_full = torch.cat([txt_k_repeated, vision_k_cached, key_current_t], dim=2)
-                        value_full = torch.cat([txt_v_repeated, vision_v_cached, value_current_t], dim=2)
+                        key_full = torch.cat(
+                            [txt_k_repeated, vision_k_cached, key_current_t], dim=2
+                        )
+                        value_full = torch.cat(
+                            [txt_v_repeated, vision_v_cached, value_current_t], dim=2
+                        )
                     else:
                         key_full = torch.cat([txt_k_repeated, key_current_t], dim=2)
                         value_full = torch.cat([txt_v_repeated, value_current_t], dim=2)
@@ -604,8 +767,12 @@ class WorldPlayARTransformerInfer(HunyuanVideo15TransformerInfer):
                     value_full = value_full.transpose(1, 2)
                     img_seqlen = query.shape[1]
                     kv_seqlen = key_full.shape[1]
-                    cu_seqlens_q = torch.tensor([0, img_seqlen, 2 * img_seqlen], dtype=torch.int32, device="cpu")
-                    cu_seqlens_kv = torch.tensor([0, kv_seqlen, 2 * kv_seqlen], dtype=torch.int32, device="cpu")
+                    cu_seqlens_q = torch.tensor(
+                        [0, img_seqlen, 2 * img_seqlen], dtype=torch.int32, device="cpu"
+                    )
+                    cu_seqlens_kv = torch.tensor(
+                        [0, kv_seqlen, 2 * kv_seqlen], dtype=torch.int32, device="cpu"
+                    )
                     attn_out = block_weights.self_attention.apply(
                         q=query,
                         k=key_full,
@@ -619,13 +786,21 @@ class WorldPlayARTransformerInfer(HunyuanVideo15TransformerInfer):
                     img_attn = attn_out[: total_len // 2]
                     img_attn_prope = attn_out[total_len // 2 :]
                     if apply_fn_o is not None:
-                        prope_proj_weight = getattr(self.action_weights, f"img_attn_prope_proj_{block_idx}", None)
+                        prope_proj_weight = getattr(
+                            self.action_weights,
+                            f"img_attn_prope_proj_{block_idx}",
+                            None,
+                        )
                         if prope_proj_weight is not None:
                             L, C = img_attn_prope.shape
                             head_dim = C // self.heads_num
-                            img_attn_prope_4d = img_attn_prope.reshape(1, L, self.heads_num, head_dim).transpose(1, 2)
+                            img_attn_prope_4d = img_attn_prope.reshape(
+                                1, L, self.heads_num, head_dim
+                            ).transpose(1, 2)
                             img_attn_prope_transformed = apply_fn_o(img_attn_prope_4d)
-                            img_attn_prope = img_attn_prope_transformed.transpose(1, 2).reshape(L, C)
+                            img_attn_prope = img_attn_prope_transformed.transpose(
+                                1, 2
+                            ).reshape(L, C)
                             img_attn_prope = prope_proj_weight.apply(img_attn_prope)
                 else:
                     if use_seq_parallel:
@@ -637,7 +812,9 @@ class WorldPlayARTransformerInfer(HunyuanVideo15TransformerInfer):
                         self._kv_cache.set_vision_cache(block_idx, img_k_t, img_v_t)
                     if vision_k_cached is not None and not cache_vision:
                         key = torch.cat([txt_k_cached, vision_k_cached, img_k_t], dim=2)
-                        value = torch.cat([txt_v_cached, vision_v_cached, img_v_t], dim=2)
+                        value = torch.cat(
+                            [txt_v_cached, vision_v_cached, img_v_t], dim=2
+                        )
                     else:
                         key = torch.cat([txt_k_cached, img_k_t], dim=2)
                         value = torch.cat([txt_v_cached, img_v_t], dim=2)
@@ -645,8 +822,12 @@ class WorldPlayARTransformerInfer(HunyuanVideo15TransformerInfer):
                     value = value.transpose(1, 2)
                     img_seqlen = img_q.shape[1]
                     kv_seqlen = key.shape[1]
-                    cu_seqlens_q = torch.tensor([0, img_seqlen], dtype=torch.int32, device="cpu")
-                    cu_seqlens_kv = torch.tensor([0, kv_seqlen], dtype=torch.int32, device="cpu")
+                    cu_seqlens_q = torch.tensor(
+                        [0, img_seqlen], dtype=torch.int32, device="cpu"
+                    )
+                    cu_seqlens_kv = torch.tensor(
+                        [0, kv_seqlen], dtype=torch.int32, device="cpu"
+                    )
                     img_attn = block_weights.self_attention.apply(
                         q=img_q,
                         k=key,
@@ -657,7 +838,13 @@ class WorldPlayARTransformerInfer(HunyuanVideo15TransformerInfer):
                         max_seqlen_kv=kv_seqlen,
                     )
 
-                infer_module_out.img = self._infer_img_branch_after_attn(block_weights, img_attn, infer_module_out.img, img_branch_out, img_attn_prope)
+                infer_module_out.img = self._infer_img_branch_after_attn(
+                    block_weights,
+                    img_attn,
+                    infer_module_out.img,
+                    img_branch_out,
+                    img_attn_prope,
+                )
             self.offload_manager.swap_blocks()
 
         if cache_vision:
@@ -693,17 +880,23 @@ class WorldPlayARTransformerInfer(HunyuanVideo15TransformerInfer):
             KV cache reference
         """
         if hasattr(self, "offload_manager"):
-            return self.infer_txt_with_offload(weights, infer_module_out, cache_txt=cache_txt)
+            return self.infer_txt_with_offload(
+                weights, infer_module_out, cache_txt=cache_txt
+            )
 
         for block_idx in range(self.double_blocks_num):
             block_weights = weights.double_blocks[block_idx]
 
             # Compute text Q/K/V
-            txt_q, txt_k, txt_v, txt_branch_out = self._infer_txt_branch_before_attn(block_weights, infer_module_out)
+            txt_q, txt_k, txt_v, txt_branch_out = self._infer_txt_branch_before_attn(
+                block_weights, infer_module_out
+            )
 
             # Text self-attention (is_causal=False)
             txt_seqlen = txt_q.shape[1]
-            cu_seqlens_qkv = torch.tensor([0, txt_seqlen], dtype=torch.int32, device="cpu")
+            cu_seqlens_qkv = torch.tensor(
+                [0, txt_seqlen], dtype=torch.int32, device="cpu"
+            )
             txt_attn = block_weights.self_attention.apply(
                 q=txt_q,
                 k=txt_k,
@@ -717,10 +910,14 @@ class WorldPlayARTransformerInfer(HunyuanVideo15TransformerInfer):
             # Cache text K/V in [B, H, L, D] format
             if cache_txt and self._kv_cache is not None:
                 # txt_k/v are [B, L, H, D], transpose to [B, H, L, D]
-                self._kv_cache.set_txt_cache(block_idx, txt_k.transpose(1, 2), txt_v.transpose(1, 2))
+                self._kv_cache.set_txt_cache(
+                    block_idx, txt_k.transpose(1, 2), txt_v.transpose(1, 2)
+                )
 
             # Update text representation
-            infer_module_out.txt = self._infer_txt_branch_after_attn(block_weights, txt_attn, infer_module_out.txt, txt_branch_out)
+            infer_module_out.txt = self._infer_txt_branch_after_attn(
+                block_weights, txt_attn, infer_module_out.txt, txt_branch_out
+            )
 
         return self._kv_cache
 
@@ -746,32 +943,51 @@ class WorldPlayARTransformerInfer(HunyuanVideo15TransformerInfer):
             If cache_vision=False: Final layer output (noise prediction)
         """
         if hasattr(self, "offload_manager"):
-            return self.infer_vision_with_offload(weights, infer_module_out, cache_vision=cache_vision)
+            return self.infer_vision_with_offload(
+                weights, infer_module_out, cache_vision=cache_vision
+            )
 
         # Check if ProPE is enabled
-        use_prope = self.use_prope and hasattr(self.scheduler, "viewmats") and self.scheduler.viewmats is not None
+        use_prope = (
+            self.use_prope
+            and hasattr(self.scheduler, "viewmats")
+            and self.scheduler.viewmats is not None
+        )
 
         for block_idx in range(self.double_blocks_num):
             block_weights = weights.double_blocks[block_idx]
 
             # Compute image Q/K/V (includes RoPE and pre-RoPE for ProPE)
-            (img_q, img_k, img_v, img_q_pre_rope, img_k_pre_rope, img_branch_out) = self._infer_img_branch_before_attn(block_weights, infer_module_out)
+            (img_q, img_k, img_v, img_q_pre_rope, img_k_pre_rope, img_branch_out) = (
+                self._infer_img_branch_before_attn(block_weights, infer_module_out)
+            )
 
             # Get cached text K/V [B, H, L, D]
             txt_k_cached, txt_v_cached = self._kv_cache.get_txt_cache(block_idx)
 
             # Get cached vision K/V (may contain both normal and prope if use_prope)
-            vision_k_cached, vision_v_cached = self._kv_cache.get_vision_cache(block_idx)
+            vision_k_cached, vision_v_cached = self._kv_cache.get_vision_cache(
+                block_idx
+            )
 
             img_attn_prope = None
             apply_fn_o = None
 
             # All-gather K/V when seq_parallel is active so cache stores full sequences
-            use_seq_parallel = self.seq_p_group is not None and self.config.get("seq_parallel", False)
+            use_seq_parallel = self.seq_p_group is not None and self.config.get(
+                "seq_parallel", False
+            )
 
             if use_prope:
                 # Apply ProPE transformation to get prope Q/K/V
-                img_q_prope, img_k_prope, img_v_prope, apply_fn_o = self._apply_prope(img_q_pre_rope, img_k_pre_rope, img_v, self.scheduler.viewmats, self.scheduler.Ks, infer_module_out.grid_sizes)
+                img_q_prope, img_k_prope, img_v_prope, apply_fn_o = self._apply_prope(
+                    img_q_pre_rope,
+                    img_k_pre_rope,
+                    img_v,
+                    self.scheduler.viewmats,
+                    self.scheduler.Ks,
+                    infer_module_out.grid_sizes,
+                )
 
                 # Concatenate normal and prope along batch dimension (matching HY-WorldPlay)
                 # query: [B, L, H, D] -> [2B, L, H, D]
@@ -783,7 +999,9 @@ class WorldPlayARTransformerInfer(HunyuanVideo15TransformerInfer):
                 # All-gather K/V along seq dim when seq_parallel is active
                 if use_seq_parallel:
                     key_current = self._all_gather_seq(key_current, self.seq_p_group)
-                    value_current = self._all_gather_seq(value_current, self.seq_p_group)
+                    value_current = self._all_gather_seq(
+                        value_current, self.seq_p_group
+                    )
 
                 # Transpose to [2B, H, L, D] for KV cache operations
                 key_current_t = key_current.transpose(1, 2)
@@ -791,7 +1009,9 @@ class WorldPlayARTransformerInfer(HunyuanVideo15TransformerInfer):
 
                 # Cache current vision K/V if requested (stores both normal and prope)
                 if cache_vision:
-                    self._kv_cache.set_vision_cache(block_idx, key_current_t, value_current_t)
+                    self._kv_cache.set_vision_cache(
+                        block_idx, key_current_t, value_current_t
+                    )
 
                 # Repeat text KV with R=2 to match doubled batch
                 # txt_k_cached: [B, H, L, D] -> [2B, H, L, D]
@@ -802,8 +1022,12 @@ class WorldPlayARTransformerInfer(HunyuanVideo15TransformerInfer):
                 if vision_k_cached is not None and not cache_vision:
                     # During generation: use cached context + current
                     # vision_k_cached is already [2B, H, L, D] from previous caching
-                    key_full = torch.cat([txt_k_repeated, vision_k_cached, key_current_t], dim=2)
-                    value_full = torch.cat([txt_v_repeated, vision_v_cached, value_current_t], dim=2)
+                    key_full = torch.cat(
+                        [txt_k_repeated, vision_k_cached, key_current_t], dim=2
+                    )
+                    value_full = torch.cat(
+                        [txt_v_repeated, vision_v_cached, value_current_t], dim=2
+                    )
                 else:
                     # During context caching or first chunk: just text + current
                     key_full = torch.cat([txt_k_repeated, key_current_t], dim=2)
@@ -818,8 +1042,12 @@ class WorldPlayARTransformerInfer(HunyuanVideo15TransformerInfer):
                 kv_seqlen = key_full.shape[1]
 
                 # cu_seqlens for 2 sequences (normal and prope)
-                cu_seqlens_q = torch.tensor([0, img_seqlen, 2 * img_seqlen], dtype=torch.int32, device="cpu")
-                cu_seqlens_kv = torch.tensor([0, kv_seqlen, 2 * kv_seqlen], dtype=torch.int32, device="cpu")
+                cu_seqlens_q = torch.tensor(
+                    [0, img_seqlen, 2 * img_seqlen], dtype=torch.int32, device="cpu"
+                )
+                cu_seqlens_kv = torch.tensor(
+                    [0, kv_seqlen, 2 * kv_seqlen], dtype=torch.int32, device="cpu"
+                )
 
                 # Single attention call for both streams
                 attn_out = block_weights.self_attention.apply(
@@ -840,13 +1068,19 @@ class WorldPlayARTransformerInfer(HunyuanVideo15TransformerInfer):
 
                 # Apply ProPE output transform and projection
                 if apply_fn_o is not None:
-                    prope_proj_weight = getattr(self.action_weights, f"img_attn_prope_proj_{block_idx}", None)
+                    prope_proj_weight = getattr(
+                        self.action_weights, f"img_attn_prope_proj_{block_idx}", None
+                    )
                     if prope_proj_weight is not None:
                         L, C = img_attn_prope.shape
                         head_dim = C // self.heads_num
-                        img_attn_prope_4d = img_attn_prope.reshape(1, L, self.heads_num, head_dim).transpose(1, 2)
+                        img_attn_prope_4d = img_attn_prope.reshape(
+                            1, L, self.heads_num, head_dim
+                        ).transpose(1, 2)
                         img_attn_prope_transformed = apply_fn_o(img_attn_prope_4d)
-                        img_attn_prope = img_attn_prope_transformed.transpose(1, 2).reshape(L, C)
+                        img_attn_prope = img_attn_prope_transformed.transpose(
+                            1, 2
+                        ).reshape(L, C)
                         img_attn_prope = prope_proj_weight.apply(img_attn_prope)
 
             else:
@@ -879,8 +1113,12 @@ class WorldPlayARTransformerInfer(HunyuanVideo15TransformerInfer):
                 # Attention computation
                 img_seqlen = img_q.shape[1]
                 kv_seqlen = key.shape[1]
-                cu_seqlens_q = torch.tensor([0, img_seqlen], dtype=torch.int32, device="cpu")
-                cu_seqlens_kv = torch.tensor([0, kv_seqlen], dtype=torch.int32, device="cpu")
+                cu_seqlens_q = torch.tensor(
+                    [0, img_seqlen], dtype=torch.int32, device="cpu"
+                )
+                cu_seqlens_kv = torch.tensor(
+                    [0, kv_seqlen], dtype=torch.int32, device="cpu"
+                )
 
                 img_attn = block_weights.self_attention.apply(
                     q=img_q,
@@ -893,7 +1131,13 @@ class WorldPlayARTransformerInfer(HunyuanVideo15TransformerInfer):
                 )
 
             # Update image representation
-            infer_module_out.img = self._infer_img_branch_after_attn(block_weights, img_attn, infer_module_out.img, img_branch_out, img_attn_prope)
+            infer_module_out.img = self._infer_img_branch_after_attn(
+                block_weights,
+                img_attn,
+                infer_module_out.img,
+                img_branch_out,
+                img_attn_prope,
+            )
 
         if cache_vision:
             return self._kv_cache

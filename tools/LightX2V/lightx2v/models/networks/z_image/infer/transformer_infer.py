@@ -1,9 +1,9 @@
-from lib.smart_config import smart_config
 import torch
 import torch.nn.functional as F
-
 from lightx2v.common.transformer_infer.transformer_infer import BaseTransformerInfer
 from lightx2v.utils.registry_factory import ROPE_REGISTER
+
+from lib.smart_config import smart_config
 
 from .utils import apply_rotary_emb_qwen, apply_wan_rope_with_flashinfer
 
@@ -17,7 +17,9 @@ class ZImageTransformerInfer(BaseTransformerInfer):
         self.zero_cond_t = config.get("zero_cond_t", False)
         self.n_heads = config.get("n_heads", config.get("num_attention_heads", 24))
         if self.config["seq_parallel"]:
-            self.seq_p_group = self.config.get("device_mesh").get_group(mesh_dim="seq_p")
+            self.seq_p_group = self.config.get("device_mesh").get_group(
+                mesh_dim="seq_p"
+            )
         else:
             self.seq_p_group = None
         self.seq_p_fp8_comm = False
@@ -137,18 +139,24 @@ class ZImageTransformerInfer(BaseTransformerInfer):
         freqs_cis,
         adaln_input=None,
     ):
-        mod_phase = block_weight.compute_phases[0] if block_weight.has_modulation else None
+        mod_phase = (
+            block_weight.compute_phases[0] if block_weight.has_modulation else None
+        )
         attn_phase = block_weight.compute_phases[1]
         ffn_phase = block_weight.compute_phases[2]
 
-        scale_msa, gate_msa, scale_mlp, gate_mlp = self.infer_mod(mod_phase, hidden_states, adaln_input)
+        scale_msa, gate_msa, scale_mlp, gate_mlp = self.infer_mod(
+            mod_phase, hidden_states, adaln_input
+        )
         attn_out = self.infer_attn(attn_phase, hidden_states, freqs_cis, scale_msa)
 
         if gate_msa is not None:
             hidden_states.add_(gate_msa * attn_out)
         else:
             hidden_states.add_(attn_out)
-        norm2_ffn, gate_mlp = self.infer_ffn(ffn_phase, hidden_states, scale_mlp, gate_mlp)
+        norm2_ffn, gate_mlp = self.infer_ffn(
+            ffn_phase, hidden_states, scale_mlp, gate_mlp
+        )
 
         if gate_mlp is not None:
             hidden_states.add_(gate_mlp * norm2_ffn)
@@ -211,7 +219,9 @@ class ZImageTransformerInfer(BaseTransformerInfer):
         cap_len,
     ):
         unified = torch.cat([hidden_states, encoder_hidden_states], dim=0)
-        unified_freqs_cis = torch.cat([x_freqs_cis[:x_len], cap_freqs_cis[:cap_len]], dim=0)
+        unified_freqs_cis = torch.cat(
+            [x_freqs_cis[:x_len], cap_freqs_cis[:cap_len]], dim=0
+        )
         for block_weight in main_blocks:
             unified = self.infer_block(
                 block_weight=block_weight,

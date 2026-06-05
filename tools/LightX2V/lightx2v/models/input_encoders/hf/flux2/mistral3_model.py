@@ -1,10 +1,10 @@
-from lib.smart_config import smart_config
 import os
 
 import torch
-
 from lightx2v.utils.envs import GET_DTYPE
 from lightx2v_platform.base.global_var import AI_DEVICE
+
+from lib.smart_config import smart_config
 
 try:
     from transformers import AutoProcessor, Mistral3ForConditionalGeneration
@@ -24,18 +24,33 @@ def format_input(prompts, system_message=SYSTEM_MESSAGE, images=None):
     if images is None or len(images) == 0:
         return [
             [
-                {"role": "system", "content": [{"type": "text", "text": system_message}]},
+                {
+                    "role": "system",
+                    "content": [{"type": "text", "text": system_message}],
+                },
                 {"role": "user", "content": [{"type": "text", "text": prompt}]},
             ]
             for prompt in cleaned_txt
         ]
     else:
-        assert len(images) == len(prompts), "Number of images must match number of prompts"
-        messages = [[{"role": "system", "content": [{"type": "text", "text": system_message}]}] for _ in cleaned_txt]
+        assert len(images) == len(
+            prompts
+        ), "Number of images must match number of prompts"
+        messages = [
+            [{"role": "system", "content": [{"type": "text", "text": system_message}]}]
+            for _ in cleaned_txt
+        ]
         for i, (el, imgs) in enumerate(zip(messages, images)):
             if imgs is not None:
-                el.append({"role": "user", "content": [{"type": "image", "image": img} for img in imgs]})
-            el.append({"role": "user", "content": [{"type": "text", "text": cleaned_txt[i]}]})
+                el.append(
+                    {
+                        "role": "user",
+                        "content": [{"type": "image", "image": img} for img in imgs],
+                    }
+                )
+            el.append(
+                {"role": "user", "content": [{"type": "text", "text": cleaned_txt[i]}]}
+            )
         return messages
 
 
@@ -43,8 +58,12 @@ class Flux2Dev_TextEncoder:
     def __init__(self, config):
         self.config = config
         self.tokenizer_max_length = config.get("tokenizer_max_length", 512)
-        self.cpu_offload = config.get("mistral3_cpu_offload", config.get("cpu_offload", False))
-        self.text_encoder_out_layers = config.get("text_encoder_out_layers", (10, 20, 30))
+        self.cpu_offload = config.get(
+            "mistral3_cpu_offload", config.get("cpu_offload", False)
+        )
+        self.text_encoder_out_layers = config.get(
+            "text_encoder_out_layers", (10, 20, 30)
+        )
         self.load()
 
     def load(self):
@@ -56,16 +75,29 @@ class Flux2Dev_TextEncoder:
             tokenizer_path = model_path
             tokenizer_kwargs = {"subfolder": "tokenizer"}
         else:
-            text_encoder_path = self.config.get("text_encoder_path", os.path.join(model_path, "text_encoder"))
-            tokenizer_path = self.config.get("tokenizer_path", os.path.join(model_path, "tokenizer"))
+            text_encoder_path = self.config.get(
+                "text_encoder_path", os.path.join(model_path, "text_encoder")
+            )
+            tokenizer_path = self.config.get(
+                "tokenizer_path", os.path.join(model_path, "tokenizer")
+            )
             tokenizer_kwargs = {}
 
         if self.cpu_offload:
-            self.text_encoder = Mistral3ForConditionalGeneration.from_pretrained(text_encoder_path, torch_dtype=GET_DTYPE(), device_map="cpu", **kwargs)
+            self.text_encoder = Mistral3ForConditionalGeneration.from_pretrained(
+                text_encoder_path, torch_dtype=GET_DTYPE(), device_map="cpu", **kwargs
+            )
         else:
-            self.text_encoder = Mistral3ForConditionalGeneration.from_pretrained(text_encoder_path, torch_dtype=GET_DTYPE(), device_map=AI_DEVICE, **kwargs)
+            self.text_encoder = Mistral3ForConditionalGeneration.from_pretrained(
+                text_encoder_path,
+                torch_dtype=GET_DTYPE(),
+                device_map=AI_DEVICE,
+                **kwargs
+            )
 
-        self.tokenizer = AutoProcessor.from_pretrained(tokenizer_path, **tokenizer_kwargs)
+        self.tokenizer = AutoProcessor.from_pretrained(
+            tokenizer_path, **tokenizer_kwargs
+        )
 
     @torch.no_grad()
     def infer(self, prompt, image_list=None):
@@ -75,7 +107,9 @@ class Flux2Dev_TextEncoder:
         if isinstance(prompt, str):
             prompt = [prompt]
 
-        messages_batch = format_input(prompts=prompt, system_message=SYSTEM_MESSAGE, images=image_list)
+        messages_batch = format_input(
+            prompts=prompt, system_message=SYSTEM_MESSAGE, images=image_list
+        )
 
         inputs = self.tokenizer.apply_chat_template(
             messages_batch,
@@ -98,11 +132,15 @@ class Flux2Dev_TextEncoder:
             use_cache=False,
         )
 
-        out = torch.stack([output.hidden_states[k] for k in self.text_encoder_out_layers], dim=1)
+        out = torch.stack(
+            [output.hidden_states[k] for k in self.text_encoder_out_layers], dim=1
+        )
         out = out.to(dtype=GET_DTYPE(), device=AI_DEVICE)
 
         batch_size, num_channels, seq_len, hidden_dim = out.shape
-        prompt_embeds = out.permute(0, 2, 1, 3).reshape(batch_size, seq_len, num_channels * hidden_dim)
+        prompt_embeds = out.permute(0, 2, 1, 3).reshape(
+            batch_size, seq_len, num_channels * hidden_dim
+        )
 
         if self.cpu_offload:
             self.text_encoder.to(torch.device("cpu"))

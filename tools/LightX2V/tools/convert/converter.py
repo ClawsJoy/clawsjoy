@@ -23,10 +23,9 @@ if quant_path not in sys.path:
     from lib.smart_config import smart_config
 sys.path.insert(0, quant_path)
 
-from quant import *  # noqa: E402
-
 from lightx2v.utils.lora_loader import LoRALoader  # noqa: E402
 from lightx2v.utils.registry_factory import CONVERT_WEIGHT_REGISTER  # noqa: E402
+from quant import *  # noqa: E402
 
 dtype_mapping = {
     "int8": torch.int8,
@@ -356,7 +355,9 @@ def quantize_model(
             if not isinstance(tensor, torch.Tensor) or tensor.dim() != 2:
                 if tensor.dtype != non_linear_dtype:
                     weights[key] = tensor.to(non_linear_dtype)
-                    non_quantized_size += weights[key].numel() * weights[key].element_size()
+                    non_quantized_size += (
+                        weights[key].numel() * weights[key].element_size()
+                    )
                 else:
                     non_quantized_size += tensor.numel() * tensor.element_size()
                 continue
@@ -370,13 +371,17 @@ def quantize_model(
                 if adapter_keys is None:
                     if tensor.dtype != non_linear_dtype:
                         weights[key] = tensor.to(non_linear_dtype)
-                        non_quantized_size += weights[key].numel() * weights[key].element_size()
+                        non_quantized_size += (
+                            weights[key].numel() * weights[key].element_size()
+                        )
                     else:
                         non_quantized_size += tensor.numel() * tensor.element_size()
                 elif not any(adapter_key in parts for adapter_key in adapter_keys):
                     if tensor.dtype != non_linear_dtype:
                         weights[key] = tensor.to(non_linear_dtype)
-                        non_quantized_size += weights[key].numel() * weights[key].element_size()
+                        non_quantized_size += (
+                            weights[key].numel() * weights[key].element_size()
+                        )
                     else:
                         non_quantized_size += tensor.numel() * tensor.element_size()
                 else:
@@ -384,12 +389,16 @@ def quantize_model(
                 continue
 
             # ignore_quant_keys: keep tensor but skip quantization when key matches.
-            if ignore_quant_keys is not None and any(ig_q in key for ig_q in ignore_quant_keys):
+            if ignore_quant_keys is not None and any(
+                ig_q in key for ig_q in ignore_quant_keys
+            ):
                 original_tensor_size = tensor.numel() * tensor.element_size()
                 original_size += original_tensor_size
                 if tensor.dtype != non_linear_dtype:
                     weights[key] = tensor.to(non_linear_dtype)
-                    non_quantized_size += weights[key].numel() * weights[key].element_size()
+                    non_quantized_size += (
+                        weights[key].numel() * weights[key].element_size()
+                    )
                 else:
                     non_quantized_size += tensor.numel() * tensor.element_size()
                 continue
@@ -432,10 +441,14 @@ def quantize_model(
 
     logger.info(f"Quantized {total_quantized} tensors")
     logger.info(f"Original quantized tensors size: {original_size_mb:.2f} MB")
-    logger.info(f"After quantization size: {quantized_size_mb:.2f} MB (includes scales)")
+    logger.info(
+        f"After quantization size: {quantized_size_mb:.2f} MB (includes scales)"
+    )
     logger.info(f"Non-quantized tensors size: {non_quantized_size_mb:.2f} MB")
     logger.info(f"Total final model size: {total_final_size_mb:.2f} MB")
-    logger.info(f"Size reduction in quantized tensors: {size_reduction_mb:.2f} MB ({size_reduction_mb / original_size_mb * 100:.1f}%)")
+    logger.info(
+        f"Size reduction in quantized tensors: {size_reduction_mb:.2f} MB ({size_reduction_mb / original_size_mb * 100:.1f}%)"
+    )
 
     if comfyui_mode:
         weights["scaled_fp8"] = torch.zeros(2, dtype=torch.float8_e4m3fn)
@@ -454,7 +467,9 @@ def load_loras(lora_path, weight_dict, alpha, key_mapping_rules=None, strength=1
         key_mapping_rules: Optional list of (pattern, replacement) regex rules for key mapping
         strength: Additional strength factor for LoRA deltas
     """
-    logger.info(f"Loading LoRA from: {lora_path} with alpha={alpha}, strength={strength}")
+    logger.info(
+        f"Loading LoRA from: {lora_path} with alpha={alpha}, strength={strength}"
+    )
 
     # Load LoRA weights from safetensors file
     with safe_open(lora_path, framework="pt") as f:
@@ -474,7 +489,9 @@ def load_loras(lora_path, weight_dict, alpha, key_mapping_rules=None, strength=1
 
 def convert_weights(args):
     if os.path.isdir(args.source):
-        src_files = glob.glob(os.path.join(args.source, "*.safetensors"), recursive=True)
+        src_files = glob.glob(
+            os.path.join(args.source, "*.safetensors"), recursive=True
+        )
     elif args.source.endswith((".pth", ".safetensors", "pt")):
         src_files = [args.source]
     else:
@@ -501,14 +518,18 @@ def convert_weights(args):
 
                 # For large files, show progress
                 if len(keys) > 100:
-                    for k in tqdm(keys, desc=f"Loading {os.path.basename(file_path)}", leave=False):
+                    for k in tqdm(
+                        keys, desc=f"Loading {os.path.basename(file_path)}", leave=False
+                    ):
                         weights[k] = f.get_tensor(k)
                 else:
                     weights = {k: f.get_tensor(k) for k in keys}
 
         duplicate_keys = set(weights.keys()) & set(merged_weights.keys())
         if duplicate_keys:
-            raise ValueError(f"Duplicate keys found: {duplicate_keys} in file {file_path}")
+            raise ValueError(
+                f"Duplicate keys found: {duplicate_keys} in file {file_path}"
+            )
 
         # Update weights more efficiently
         merged_weights.update(weights)
@@ -524,7 +545,9 @@ def convert_weights(args):
         logger.info("Converting keys...")
 
         # Pre-compile regex patterns for better performance
-        compiled_rules = [(re.compile(pattern), replacement) for pattern, replacement in rules]
+        compiled_rules = [
+            (re.compile(pattern), replacement) for pattern, replacement in rules
+        ]
 
         def convert_key(key):
             """Convert a single key using compiled rules"""
@@ -544,10 +567,16 @@ def convert_weights(args):
 
             with ThreadPoolExecutor(max_workers=num_workers) as executor:
                 # Submit all conversion tasks
-                future_to_key = {executor.submit(convert_key, key): key for key in keys_list}
+                future_to_key = {
+                    executor.submit(convert_key, key): key for key in keys_list
+                }
 
                 # Process results as they complete with progress bar
-                for future in tqdm(as_completed(future_to_key), total=len(keys_list), desc="Converting keys (parallel)"):
+                for future in tqdm(
+                    as_completed(future_to_key),
+                    total=len(keys_list),
+                    desc="Converting keys (parallel)",
+                ):
                     original_key = future_to_key[future]
                     new_key = future.result()
                     converted_weights[new_key] = merged_weights[original_key]
@@ -566,14 +595,18 @@ def convert_weights(args):
             if len(args.lora_alpha) == 1 and len(args.lora_path) > 1:
                 args.lora_alpha = args.lora_alpha * len(args.lora_path)
             elif len(args.lora_alpha) != len(args.lora_path):
-                raise ValueError(f"Number of lora_alpha ({len(args.lora_alpha)}) must match number of lora_path ({len(args.lora_path)}) or be 1")
+                raise ValueError(
+                    f"Number of lora_alpha ({len(args.lora_alpha)}) must match number of lora_path ({len(args.lora_path)}) or be 1"
+                )
 
         # Normalize strength list
         if args.lora_strength is not None:
             if len(args.lora_strength) == 1 and len(args.lora_path) > 1:
                 args.lora_strength = args.lora_strength * len(args.lora_path)
             elif len(args.lora_strength) != len(args.lora_path):
-                raise ValueError(f"Number of strength ({len(args.lora_strength)}) must match number of lora_path ({len(args.lora_path)}) or be 1")
+                raise ValueError(
+                    f"Number of strength ({len(args.lora_strength)}) must match number of lora_path ({len(args.lora_path)}) or be 1"
+                )
 
         # Determine if we should apply key mapping rules to LoRA keys
         key_mapping_rules = None
@@ -587,21 +620,31 @@ def convert_weights(args):
         else:  # auto
             # Auto-detect: if model was converted, try with conversion first
             if args.direction is not None:
-                key_mapping_rules = get_key_mapping_rules(args.direction, args.model_type)
+                key_mapping_rules = get_key_mapping_rules(
+                    args.direction, args.model_type
+                )
                 logger.info("Auto mode: will try with key conversion first")
 
         for idx, path in enumerate(args.lora_path):
             # Pass key mapping rules to handle converted keys properly
-            strength = args.lora_strength[idx] if args.lora_strength is not None else 1.0
+            strength = (
+                args.lora_strength[idx] if args.lora_strength is not None else 1.0
+            )
             alpha = args.lora_alpha[idx] if args.lora_alpha is not None else None
-            load_loras(path, converted_weights, alpha, key_mapping_rules, strength=strength)
+            load_loras(
+                path, converted_weights, alpha, key_mapping_rules, strength=strength
+            )
 
     if args.quantized:
         if args.full_quantized and args.comfyui_mode:
             logger.info("Quant all tensors...")
-            assert args.linear_dtype, f"Error: only support 'torch.int8' and 'torch.float8_e4m3fn'."
+            assert (
+                args.linear_dtype
+            ), f"Error: only support 'torch.int8' and 'torch.float8_e4m3fn'."
             for k in converted_weights.keys():
-                converted_weights[k] = converted_weights[k].float().to(args.linear_dtype)
+                converted_weights[k] = (
+                    converted_weights[k].float().to(args.linear_dtype)
+                )
         else:
             converted_weights = quantize_model(
                 converted_weights,
@@ -620,7 +663,9 @@ def convert_weights(args):
     os.makedirs(args.output, exist_ok=True)
 
     if args.output_ext == ".pth":
-        torch.save(converted_weights, os.path.join(args.output, args.output_name + ".pth"))
+        torch.save(
+            converted_weights, os.path.join(args.output, args.output_name + ".pth")
+        )
 
     else:
         index = {"metadata": {"total_size": 0}, "weight_map": {}}
@@ -632,20 +677,33 @@ def convert_weights(args):
             # For memory efficiency with large models
             try:
                 # If model is very large (over threshold), consider warning
-                total_size = sum(tensor.numel() * tensor.element_size() for tensor in converted_weights.values())
+                total_size = sum(
+                    tensor.numel() * tensor.element_size()
+                    for tensor in converted_weights.values()
+                )
                 total_size_gb = total_size / (1024**3)
 
                 if total_size_gb > 10:  # Warn if model is larger than 10GB
-                    logger.warning(f"Model size is {total_size_gb:.2f}GB. This will require significant memory to save as a single file.")
-                    logger.warning("Consider using --save_by_block or default chunked saving for better memory efficiency.")
+                    logger.warning(
+                        f"Model size is {total_size_gb:.2f}GB. This will require significant memory to save as a single file."
+                    )
+                    logger.warning(
+                        "Consider using --save_by_block or default chunked saving for better memory efficiency."
+                    )
 
                 # Save the entire model as a single file
                 st.save_file(converted_weights, output_path)
-                logger.info(f"Model saved successfully to: {output_path} ({total_size_gb:.2f}GB)")
+                logger.info(
+                    f"Model saved successfully to: {output_path} ({total_size_gb:.2f}GB)"
+                )
 
             except MemoryError:
-                logger.error("Memory error while saving. The model is too large to save as a single file.")
-                logger.error("Please use --save_by_block or remove --single_file to use chunked saving.")
+                logger.error(
+                    "Memory error while saving. The model is too large to save as a single file."
+                )
+                logger.error(
+                    "Please use --save_by_block or remove --single_file to use chunked saving."
+                )
                 raise
             except Exception as e:
                 logger.error(f"Error saving model: {e}")
@@ -666,7 +724,9 @@ def convert_weights(args):
                 else:
                     non_block_weights[key] = tensor
 
-            for block_idx, weights_dict in tqdm(block_groups.items(), desc="Saving block chunks"):
+            for block_idx, weights_dict in tqdm(
+                block_groups.items(), desc="Saving block chunks"
+            ):
                 output_filename = f"block_{block_idx}.safetensors"
                 output_path = os.path.join(args.output, output_filename)
                 st.save_file(weights_dict, output_path)
@@ -685,7 +745,9 @@ def convert_weights(args):
         else:
             chunk_idx = 0
             current_chunk = {}
-            for idx, (k, v) in tqdm(enumerate(converted_weights.items()), desc="Saving chunks"):
+            for idx, (k, v) in tqdm(
+                enumerate(converted_weights.items()), desc="Saving chunks"
+            ):
                 current_chunk[k] = v
                 if args.chunk_size > 0 and (idx + 1) % args.chunk_size == 0:
                     output_filename = f"{args.output_name}_part{chunk_idx}.safetensors"
@@ -709,7 +771,9 @@ def convert_weights(args):
 
         # Save index file
         if not args.single_file:
-            index_path = os.path.join(args.output, "diffusion_pytorch_model.safetensors.index.json")
+            index_path = os.path.join(
+                args.output, "diffusion_pytorch_model.safetensors.index.json"
+            )
             with open(index_path, "w", encoding="utf-8") as f:
                 json.dump(index, f, indent=2)
             logger.info(f"Index file written to: {index_path}")
@@ -731,7 +795,9 @@ def copy_non_weight_files(source_dir, target_dir):
             if os.path.isdir(source_item):
                 os.makedirs(target_item, exist_ok=True)
                 copy_non_weight_files(source_item, target_item)
-            elif os.path.isfile(source_item) and not any(source_item.endswith(ext) for ext in ignore_extensions):
+            elif os.path.isfile(source_item) and not any(
+                source_item.endswith(ext) for ext in ignore_extensions
+            ):
                 shutil.copy2(source_item, target_item)
                 logger.debug(f"copy file: {source_item} -> {target_item}")
         except Exception as e:
@@ -742,9 +808,15 @@ def copy_non_weight_files(source_dir, target_dir):
 
 def main():
     parser = argparse.ArgumentParser(description="Model weight format converter")
-    parser.add_argument("-s", "--source", required=True, help="Input path (file or directory)")
-    parser.add_argument("-o_e", "--output_ext", default=".safetensors", choices=[".pth", ".safetensors"])
-    parser.add_argument("-o_n", "--output_name", type=str, default="converted", help="Output file name")
+    parser.add_argument(
+        "-s", "--source", required=True, help="Input path (file or directory)"
+    )
+    parser.add_argument(
+        "-o_e", "--output_ext", default=".safetensors", choices=[".pth", ".safetensors"]
+    )
+    parser.add_argument(
+        "-o_n", "--output_name", type=str, default="converted", help="Output file name"
+    )
     parser.add_argument("-o", "--output", required=True, help="Output directory path")
     parser.add_argument(
         "-d",
@@ -763,7 +835,17 @@ def main():
     parser.add_argument(
         "-t",
         "--model_type",
-        choices=["wan_dit", "hunyuan_dit", "wan_t5", "wan_clip", "wan_animate_dit", "qwen_image_dit", "qwen25vl_llm", "z_image_dit", "self_forcing"],
+        choices=[
+            "wan_dit",
+            "hunyuan_dit",
+            "wan_t5",
+            "wan_clip",
+            "wan_animate_dit",
+            "qwen_image_dit",
+            "qwen25vl_llm",
+            "z_image_dit",
+            "self_forcing",
+        ],
         default="wan_dit",
         help="Model type",
     )
@@ -771,7 +853,13 @@ def main():
 
     # Quantization module selection overrides.
     # If provided, these override the per-model_type defaults inside the quantized branch.
-    parser.add_argument("--key-idx", dest="key_idx_override", type=int, default=None, help="Override quantize key_idx selection")
+    parser.add_argument(
+        "--key-idx",
+        dest="key_idx_override",
+        type=int,
+        default=None,
+        help="Override quantize key_idx selection",
+    )
     parser.add_argument(
         "--target-keys",
         dest="target_keys_override",
@@ -792,14 +880,18 @@ def main():
         dest="ignore_quant_keys_override",
         type=str,
         default=None,
-        help=("Comma-separated substrings: if a tensor key contains any of these substrings, it will NOT be quantized but will still be kept and saved."),
+        help=(
+            "Comma-separated substrings: if a tensor key contains any of these substrings, it will NOT be quantized but will still be kept and saved."
+        ),
     )
 
     # Quantization
     parser.add_argument("--comfyui_mode", action="store_true")
     parser.add_argument("--full_quantized", action="store_true")
     parser.add_argument("--quantized", action="store_true")
-    parser.add_argument("--bits", type=int, default=8, choices=[8], help="Quantization bit width")
+    parser.add_argument(
+        "--bits", type=int, default=8, choices=[8], help="Quantization bit width"
+    )
     parser.add_argument(
         "--device",
         type=str,
@@ -819,7 +911,12 @@ def main():
         choices=["torch.bfloat16", "torch.float16"],
         help="Data type for non-linear",
     )
-    parser.add_argument("--lora_path", type=str, nargs="*", help="Path(s) to LoRA file(s). Can specify multiple paths separated by spaces.")
+    parser.add_argument(
+        "--lora_path",
+        type=str,
+        nargs="*",
+        help="Path(s) to LoRA file(s). Can specify multiple paths separated by spaces.",
+    )
     parser.add_argument(
         "--lora_alpha",
         type=float,
@@ -834,20 +931,36 @@ def main():
         help="Additional strength factor(s) for LoRA deltas; default 1.0",
     )
     parser.add_argument("--copy_no_weight_files", action="store_true")
-    parser.add_argument("--single_file", action="store_true", help="Save as a single safetensors file instead of chunking (warning: requires loading entire model in memory)")
+    parser.add_argument(
+        "--single_file",
+        action="store_true",
+        help="Save as a single safetensors file instead of chunking (warning: requires loading entire model in memory)",
+    )
     parser.add_argument(
         "--lora_key_convert",
         choices=["auto", "same", "convert"],
         default="auto",
         help="How to handle LoRA key conversion: 'auto' (detect from LoRA), 'same' (use original keys), 'convert' (apply same conversion as model)",
     )
-    parser.add_argument("--parallel", action="store_true", default=True, help="Use parallel processing for faster conversion (default: True)")
-    parser.add_argument("--no-parallel", dest="parallel", action="store_false", help="Disable parallel processing")
+    parser.add_argument(
+        "--parallel",
+        action="store_true",
+        default=True,
+        help="Use parallel processing for faster conversion (default: True)",
+    )
+    parser.add_argument(
+        "--no-parallel",
+        dest="parallel",
+        action="store_false",
+        help="Disable parallel processing",
+    )
     args = parser.parse_args()
 
     # Validate conflicting arguments
     if args.single_file and args.save_by_block:
-        parser.error("--single_file and --save_by_block cannot be used together. Choose one saving strategy.")
+        parser.error(
+            "--single_file and --save_by_block cannot be used together. Choose one saving strategy."
+        )
 
     if args.single_file and args.chunk_size > 0 and args.chunk_size != 100:
         logger.warning("--chunk_size is ignored when using --single_file option.")
@@ -865,7 +978,16 @@ def main():
         args.non_linear_dtype = eval(args.non_linear_dtype)
 
         model_type_keys_map = {
-            "z_image_dit": {"key_idx": 2, "target_keys": ["attention", "feed_forward", "adaLN_modulation", "linear"], "ignore_key": None},
+            "z_image_dit": {
+                "key_idx": 2,
+                "target_keys": [
+                    "attention",
+                    "feed_forward",
+                    "adaLN_modulation",
+                    "linear",
+                ],
+                "ignore_key": None,
+            },
             "qwen_image_dit": {
                 "key_idx": 2,
                 "target_keys": ["attn", "img_mlp", "txt_mlp", "txt_mod", "img_mod"],
@@ -889,7 +1011,12 @@ def main():
                 "target_keys": ["self_attn", "cross_attn", "ffn"],
                 "ignore_key": None,
             },
-            "wan_animate_dit": {"key_idx": 2, "target_keys": ["self_attn", "cross_attn", "ffn"], "adapter_keys": ["linear1_kv", "linear1_q", "linear2"], "ignore_key": None},
+            "wan_animate_dit": {
+                "key_idx": 2,
+                "target_keys": ["self_attn", "cross_attn", "ffn"],
+                "adapter_keys": ["linear1_kv", "linear1_q", "linear2"],
+                "ignore_key": None,
+            },
             "hunyuan_dit": {
                 "key_idx": 2,
                 "target_keys": [
@@ -908,7 +1035,11 @@ def main():
                 ],
                 "ignore_key": None,
             },
-            "wan_t5": {"key_idx": 2, "target_keys": ["attn", "ffn"], "ignore_key": None},
+            "wan_t5": {
+                "key_idx": 2,
+                "target_keys": ["attn", "ffn"],
+                "ignore_key": None,
+            },
             "wan_clip": {
                 "key_idx": 3,
                 "target_keys": ["attn", "mlp"],
@@ -925,13 +1056,23 @@ def main():
         # (This matters for programmatic usage / custom wrappers where args.model_type can be None.)
         if args.model_type is not None:
             if args.model_type not in model_type_keys_map:
-                raise ValueError(f"Unsupported model_type for quantization overrides: {args.model_type}")
+                raise ValueError(
+                    f"Unsupported model_type for quantization overrides: {args.model_type}"
+                )
 
             args.target_keys = model_type_keys_map[args.model_type]["target_keys"]
-            args.adapter_keys = model_type_keys_map[args.model_type]["adapter_keys"] if "adapter_keys" in model_type_keys_map[args.model_type] else None
+            args.adapter_keys = (
+                model_type_keys_map[args.model_type]["adapter_keys"]
+                if "adapter_keys" in model_type_keys_map[args.model_type]
+                else None
+            )
             args.key_idx = model_type_keys_map[args.model_type]["key_idx"]
             args.ignore_key = model_type_keys_map[args.model_type]["ignore_key"]
-            args.comfyui_keys = model_type_keys_map[args.model_type]["comfyui_keys"] if "comfyui_keys" in model_type_keys_map[args.model_type] else None
+            args.comfyui_keys = (
+                model_type_keys_map[args.model_type]["comfyui_keys"]
+                if "comfyui_keys" in model_type_keys_map[args.model_type]
+                else None
+            )
         else:
             args.target_keys = None
             args.adapter_keys = None

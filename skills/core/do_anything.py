@@ -1,11 +1,4 @@
-#!/usr/bin/env python3
-"""Do Anything - Do Anything 模块
-
-@version: 5.0.0
-@author: ClawsJoy
-@date: 2026-05-31
-"""
-
+"""大脑调度器 v5.0.0 - 配置驱动路由器"""
 
 import yaml
 from pathlib import Path

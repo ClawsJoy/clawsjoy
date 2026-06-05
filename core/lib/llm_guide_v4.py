@@ -3,10 +3,8 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
-
-from core.lib.unified_config import unified_config
 
 from core.lib.unified_config import unified_config
 
@@ -15,28 +13,33 @@ from core.lib.unified_config import unified_config
 
 import json
 import logging
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
 class LLMGuide:
     """LLM 指引器 - 确保输出稳定"""
-    
+
     VERSION = "4.0.0"
-    
+
     OUTPUT_SCHEMA = {
         "type": "object",
         "properties": {
-            "action": {"type": "string", "enum": ["execute", "compose", "query", "learn"]},
+            "action": {
+                "type": "string",
+                "enum": ["execute", "compose", "query", "learn"],
+            },
             "skills": {"type": "array", "items": {"type": "string"}},
             "params": {"type": "object"},
-            "reasoning": {"type": "string"}
+            "reasoning": {"type": "string"},
         },
-        "required": ["action", "reasoning"]
+        "required": ["action", "reasoning"],
     }
-    
+
     def get_stable_prompt(self, user_input: str, context: Dict = None) -> str:
         """生成稳定的提示词"""
         context = context or {}
@@ -60,23 +63,23 @@ class LLMGuide:
 ## Your Response (JSON only):"""
 
         return prompt
-    
+
     def parse_response(self, response: str) -> Optional[Dict]:
         """解析 LLM 响应"""
         try:
             response = response.strip()
-            if response.startswith('```json'):
+            if response.startswith("```json"):
                 response = response[7:]
-            if response.startswith('```'):
+            if response.startswith("```"):
                 response = response[3:]
-            if response.endswith('```'):
+            if response.endswith("```"):
                 response = response[:-3]
 
             return json.loads(response.strip())
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse LLM response: {e}")
             return None
-    
+
     def validate_response(self, response: Dict) -> bool:
         """验证响应格式"""
         required = self.OUTPUT_SCHEMA.get("required", [])
@@ -84,7 +87,7 @@ class LLMGuide:
             if field not in response:
                 return False
         return True
-    
+
     def get_schema(self) -> Dict:
         """获取输出格式 schema"""
         return self.OUTPUT_SCHEMA

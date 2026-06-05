@@ -1,18 +1,20 @@
-from lib.smart_config import smart_config
 import argparse
 import json
 import logging
 
-from loguru import logger
-
 from lightx2v.disagg.utils import set_config
 from lightx2v.utils.utils import seed_all
+from loguru import logger
+
+from lib.smart_config import smart_config
 
 logging.basicConfig(level=logging.INFO)
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Run a disaggregated LightX2V service process")
+    parser = argparse.ArgumentParser(
+        description="Run a disaggregated LightX2V service process"
+    )
     parser.add_argument("--model_cls", type=str, default="wan2.1")
     parser.add_argument("--task", type=str, default="t2v")
     parser.add_argument("--model_path", type=str, required=True)
@@ -85,7 +87,9 @@ def _resolve_service_mode(args: argparse.Namespace, raw_cfg: dict) -> str:
     mode = raw_cfg.get("disagg_mode")
     if mode in {"encoder", "transformer", "decoder", "controller"}:
         return mode
-    raise ValueError("Cannot resolve service mode: use --service or set disagg_mode in config_json")
+    raise ValueError(
+        "Cannot resolve service mode: use --service or set disagg_mode in config_json"
+    )
 
 
 def _build_runtime_config(args: argparse.Namespace) -> tuple[dict, dict]:
@@ -113,7 +117,11 @@ def main():
     config, raw_cfg = _build_runtime_config(args)
     service_mode = _resolve_service_mode(args, raw_cfg)
 
-    if args.engine_rank is not None and service_mode in {"encoder", "transformer", "decoder"}:
+    if args.engine_rank is not None and service_mode in {
+        "encoder",
+        "transformer",
+        "decoder",
+    }:
         rank_key = f"{service_mode}_engine_rank"
         config[rank_key] = int(args.engine_rank)
 

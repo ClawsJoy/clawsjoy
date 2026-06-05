@@ -1,7 +1,3 @@
-from lib.smart_config import smart_config
-#!/usr/bin/env python3
-# coding: utf-8
-
 import argparse
 import os
 import shutil
@@ -10,6 +6,11 @@ import zipfile
 from pathlib import Path
 
 import requests
+
+from lib.smart_config import smart_config
+
+#!/usr/bin/env python3
+# coding: utf-8
 
 
 def get_base_dir():
@@ -56,7 +57,9 @@ def find_flownet_pkl(extract_dir):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Download RIFE model to specified directory")
+    parser = argparse.ArgumentParser(
+        description="Download RIFE model to specified directory"
+    )
     parser.add_argument("target_directory", help="Target directory path")
 
     args = parser.parse_args()

@@ -1,7 +1,8 @@
-from lib.smart_config import smart_config
 import torch
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.optim import AdamW
+
+from lib.smart_config import smart_config
 
 from ..model.loss import *
 from .IFNet_HDv3 import *
@@ -19,7 +20,9 @@ class Model:
         # self.vgg = VGGPerceptualLoss().to(device)
         self.sobel = SOBEL()
         if local_rank != -1:
-            self.flownet = DDP(self.flownet, device_ids=[local_rank], output_device=local_rank)
+            self.flownet = DDP(
+                self.flownet, device_ids=[local_rank], output_device=local_rank
+            )
 
     def train(self):
         self.flownet.train()
@@ -33,7 +36,11 @@ class Model:
     def load_model(self, path, rank=0):
         def convert(param):
             if rank == -1:
-                return {k.replace("module.", ""): v for k, v in param.items() if "module." in k}
+                return {
+                    k.replace("module.", ""): v
+                    for k, v in param.items()
+                    if "module." in k
+                }
             else:
                 return param
 
@@ -66,7 +73,9 @@ class Model:
         else:
             self.eval()
         scale = [16, 8, 4, 2, 1]
-        flow, mask, merged = self.flownet(torch.cat((imgs, gt), 1), scale=scale, training=training)
+        flow, mask, merged = self.flownet(
+            torch.cat((imgs, gt), 1), scale=scale, training=training
+        )
         loss_l1 = (merged[-1] - gt).abs().mean()
         loss_smooth = self.sobel(flow[-1], flow[-1] * 0).mean()
         # loss_vgg = self.vgg(merged[-1], gt)

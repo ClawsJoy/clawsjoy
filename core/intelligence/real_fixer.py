@@ -3,18 +3,20 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
-import time
-import requests
-import subprocess
 import os
+import subprocess
+import sys
+import time
 from datetime import datetime
 from pathlib import Path
-import sys
-from core.lib.unified_config import unified_config
+
+import requests
+
 from core.lib.smart_config import smart_config
+from core.lib.unified_config import unified_config
 
 sys.path.insert(0, smart_config.ROOT)
 
@@ -36,8 +38,10 @@ class RealFixer:
         print(f"🔧 解决端口 {port} 冲突...")
 
         # 1. 找到占用端口的进程
-        result = subprocess.run(f"lsof -ti:{port}", shell=True, capture_output=True, text=True)
-        pids = result.stdout.strip().split('\n')
+        result = subprocess.run(
+            f"lsof -ti:{port}", shell=True, capture_output=True, text=True
+        )
+        pids = result.stdout.strip().split("\n")
 
         for pid in pids:
             if pid and pid.isdigit():
@@ -69,7 +73,9 @@ class RealFixer:
 
         # 3. 验证服务是否启动
         try:
-            resp = requests.get(unified_config.get_service_url(f"{port}/health"), timeout=5)
+            resp = requests.get(
+                unified_config.get_service_url(f"{port}/health"), timeout=5
+            )
             if resp.status_code == 200:
                 print(f"   ✅ {service_name} 启动成功")
                 return True
@@ -91,7 +97,10 @@ class RealFixer:
 
         # 2. 验证
         try:
-            resp = requests.get(f"http://{smart_config.HOST}:{unified_config.get_port('ollama')}/api/tags", timeout=10)
+            resp = requests.get(
+                f"http://{smart_config.HOST}:{unified_config.get_port('ollama')}/api/tags",
+                timeout=10,
+            )
             if resp.status_code == 200:
                 print("   ✅ Ollama 恢复")
                 return True
@@ -105,7 +114,9 @@ class RealFixer:
         """真正安装依赖"""
         print(f"🔧 安装依赖: {module_name}")
 
-        result = subprocess.run(f"pip install {module_name} -q", shell=True, capture_output=True)
+        result = subprocess.run(
+            f"pip install {module_name} -q", shell=True, capture_output=True
+        )
         if result.returncode == 0:
             print(f"   ✅ {module_name} 安装成功")
             return True
@@ -118,10 +129,15 @@ class RealFixer:
         print(f"🔧 清理内存缓存...")
 
         # 清理Python缓存
-        subprocess.run("find . -type d -name '__pycache__' -exec rm -rf {} + 2>/dev/null", shell=True)
+        subprocess.run(
+            "find . -type d -name '__pycache__' -exec rm -rf {} + 2>/dev/null",
+            shell=True,
+        )
 
         # 清理系统缓存（需要sudo）
-        subprocess.run("sync && echo 3 > /proc/sys/vm/drop_caches 2>/dev/null || true", shell=True)
+        subprocess.run(
+            "sync && echo 3 > /proc/sys/vm/drop_caches 2>/dev/null || true", shell=True
+        )
 
         print("   ✅ 内存清理完成")
         return True
@@ -136,25 +152,25 @@ class RealFaultLoop:
 
         # 真实服务配置
         self.services = {
-            'gateway': {'port': 5002, 'cmd': 'python3 agent_gateway_web.py'},
-            'agent': {'port': 5005, 'cmd': 'python3 multi_agent_service_v2.py'},
-            'doc': {'port': 5008, 'cmd': 'python3 doc_generator.py'}
+            "gateway": {"port": 5002, "cmd": "python3 agent_gateway_web.py"},
+            "agent": {"port": 5005, "cmd": "python3 multi_agent_service_v2.py"},
+            "doc": {"port": 5008, "cmd": "python3 doc_generator.py"},
         }
 
         # 真实故障处理映射
         self.fault_handlers = {
-            'port_in_use': self._handle_port_conflict,
-            'service_down': self._handle_service_down,
-            'connection_refused': self._handle_service_down,
-            'import_error': self._handle_import_error,
-            'ollama_down': self._handle_ollama_down
+            "port_in_use": self._handle_port_conflict,
+            "service_down": self._handle_service_down,
+            "connection_refused": self._handle_service_down,
+            "import_error": self._handle_import_error,
+            "ollama_down": self._handle_ollama_down,
         }
 
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("🔧 真实故障修复系统")
-        print("="*60)
+        print("=" * 60)
         print("可以修复: 端口冲突、服务重启、依赖安装、Ollama恢复")
-        print("="*60)
+        print("=" * 60)
 
     def _handle_port_conflict(self, port):
         """处理端口冲突"""
@@ -185,21 +201,24 @@ class RealFaultLoop:
         # 1. 检查并修复服务
         for name, config in self.services.items():
             try:
-                resp = requests.get(unified_config.get_service_url(f"{config['port']}/health"), timeout=3)
+                resp = requests.get(
+                    unified_config.get_service_url(f"{config['port']}/health"),
+                    timeout=3,
+                )
                 if resp.status_code != 200:
                     print(f"\n❌ {name} 异常 (HTTP {resp.status_code})")
-                    if self.fixer.fix_service(name, config['port'], config['cmd']):
+                    if self.fixer.fix_service(name, config["port"], config["cmd"]):
                         fixed.append(name)
                         if brain_core:
                             brain_core.record_experience(
                                 agent="real_fixer",
                                 action=f"fix_{name}",
                                 result={"success": True},
-                                context="auto_heal"
+                                context="auto_heal",
                             )
             except requests.exceptions.ConnectionError:
                 print(f"\n❌ {name} 连接失败")
-                if self.fixer.fix_service(name, config['port'], config['cmd']):
+                if self.fixer.fix_service(name, config["port"], config["cmd"]):
                     fixed.append(name)
             except Exception as e:
                 print(f"\n❌ {name} 故障: {str(e)[:50]}")
@@ -213,7 +232,10 @@ class RealFaultLoop:
 
         # 3. 检查Ollama
         try:
-            requests.get(f"http://{smart_config.HOST}:{unified_config.get_port('ollama')}/api/tags", timeout=3)
+            requests.get(
+                f"http://{smart_config.HOST}:{unified_config.get_port('ollama')}/api/tags",
+                timeout=3,
+            )
         except Exception:
             print(f"\n⚠️ Ollama 故障")
             self.fixer.fix_ollama()

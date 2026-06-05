@@ -1,6 +1,7 @@
-from lib.smart_config import smart_config
 import sys
 from datetime import datetime
+
+from lib.smart_config import smart_config
 
 lightx2v_path = "/path/to/LightX2V"
 model_path = "/path/to/Tongyi-MAI/Z-Image-Turbo"
@@ -22,7 +23,9 @@ pipe = LightX2VPipeline(
     task=task,
 )
 
-pipe.create_generator(config_json=f"{lightx2v_path}/configs/z_image/z_image_turbo_t2i.json")
+pipe.create_generator(
+    config_json=f"{lightx2v_path}/configs/z_image/z_image_turbo_t2i.json"
+)
 
 
 # Generation parameters

@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 Wan2.1 first-last-frame-to-video generation example.
 This example demonstrates how to use LightX2V with Wan2.1 model for FLF2V generation.

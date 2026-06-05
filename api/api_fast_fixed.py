@@ -3,15 +3,16 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
+from typing import Dict, Optional
+
+import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Optional, Dict
-import uvicorn
 
 app = FastAPI(title="ClawsJoy AI", version="5.0.0")
 
@@ -35,8 +36,8 @@ class ChatResponse(BaseModel):
     intent: Optional[str] = None
 
 
-from core.llm_enhanced import llm_enhanced
 from core.chroma_fixed import ChromaFixed
+from core.llm_enhanced import llm_enhanced
 from core.prompt_engineer import prompt_engineer
 
 
@@ -49,24 +50,21 @@ async def health():
 async def chat(request: ChatRequest):
     if not request.message:
         raise HTTPException(status_code=400, detail="message required")
-    
+
     store = ChromaFixed(request.user_id)
     similar = store.search(request.message, limit=2)
-    
+
     context = ""
     if similar:
         context = "\n相关记忆:\n" + "\n".join([f"- {s['text'][:100]}" for s in similar])
-    
+
     prompt = f"{context}\n用户: {request.message}\n助手:"
     response = llm_enhanced.generate(prompt)
-    
+
     store.add(f"用户: {request.message}\n助手: {response[:200]}")
-    
+
     return ChatResponse(
-        success=True,
-        response=response,
-        user_id=request.user_id,
-        intent="chat"
+        success=True, response=response, user_id=request.user_id, intent="chat"
     )
 
 

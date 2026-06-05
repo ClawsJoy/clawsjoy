@@ -1,6 +1,11 @@
-from lib.smart_config import smart_config
 from lightx2v.common.modules.weight_module import WeightModule, WeightModuleList
-from lightx2v.utils.registry_factory import MM_WEIGHT_REGISTER, RMS_WEIGHT_REGISTER, TENSOR_REGISTER
+from lightx2v.utils.registry_factory import (
+    MM_WEIGHT_REGISTER,
+    RMS_WEIGHT_REGISTER,
+    TENSOR_REGISTER,
+)
+
+from lib.smart_config import smart_config
 
 
 class SeedVRTransformerWeights(WeightModule):
@@ -25,7 +30,9 @@ class SeedVRTransformerWeights(WeightModule):
         blocks = WeightModuleList(
             SeedVRTransformerBlockWeights(
                 block_index=i,
-                shared_weights=not ((i < mm_layers) if isinstance(mm_layers, int) else mm_layers[i]),
+                shared_weights=not (
+                    (i < mm_layers) if isinstance(mm_layers, int) else mm_layers[i]
+                ),
                 is_last_layer=(i == self.blocks_num - 1),
                 mm_type=self.mm_type,
                 rms_norm_type=self.rms_norm_type,
@@ -70,7 +77,9 @@ class SeedVRTransformerBlockWeights(WeightModule):
 
         for branch in branches:
             # Attention projections
-            qkv_bias_name = f"blocks.{block_index}.attn.proj_qkv.{branch}.bias" if qk_bias else None
+            qkv_bias_name = (
+                f"blocks.{block_index}.attn.proj_qkv.{branch}.bias" if qk_bias else None
+            )
             self.add_module(
                 f"attn_qkv_{branch}",
                 MM_WEIGHT_REGISTER[mm_type](
@@ -144,25 +153,37 @@ class SeedVRTransformerBlockWeights(WeightModule):
             # AdaSingle parameters
             self.add_module(
                 f"ada_attn_shift_{branch}",
-                TENSOR_REGISTER["Default"](f"blocks.{block_index}.ada.{branch}.attn_shift"),
+                TENSOR_REGISTER["Default"](
+                    f"blocks.{block_index}.ada.{branch}.attn_shift"
+                ),
             )
             self.add_module(
                 f"ada_attn_scale_{branch}",
-                TENSOR_REGISTER["Default"](f"blocks.{block_index}.ada.{branch}.attn_scale"),
+                TENSOR_REGISTER["Default"](
+                    f"blocks.{block_index}.ada.{branch}.attn_scale"
+                ),
             )
             self.add_module(
                 f"ada_attn_gate_{branch}",
-                TENSOR_REGISTER["Default"](f"blocks.{block_index}.ada.{branch}.attn_gate"),
+                TENSOR_REGISTER["Default"](
+                    f"blocks.{block_index}.ada.{branch}.attn_gate"
+                ),
             )
             self.add_module(
                 f"ada_mlp_shift_{branch}",
-                TENSOR_REGISTER["Default"](f"blocks.{block_index}.ada.{branch}.mlp_shift"),
+                TENSOR_REGISTER["Default"](
+                    f"blocks.{block_index}.ada.{branch}.mlp_shift"
+                ),
             )
             self.add_module(
                 f"ada_mlp_scale_{branch}",
-                TENSOR_REGISTER["Default"](f"blocks.{block_index}.ada.{branch}.mlp_scale"),
+                TENSOR_REGISTER["Default"](
+                    f"blocks.{block_index}.ada.{branch}.mlp_scale"
+                ),
             )
             self.add_module(
                 f"ada_mlp_gate_{branch}",
-                TENSOR_REGISTER["Default"](f"blocks.{block_index}.ada.{branch}.mlp_gate"),
+                TENSOR_REGISTER["Default"](
+                    f"blocks.{block_index}.ada.{branch}.mlp_gate"
+                ),
             )

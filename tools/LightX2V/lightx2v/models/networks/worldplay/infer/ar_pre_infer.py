@@ -1,10 +1,14 @@
-from lib.smart_config import smart_config
 import torch
 from einops import repeat
-
-from lightx2v.models.networks.hunyuan_video.infer.module_io import HunyuanVideo15InferModuleOutput
-from lightx2v.models.networks.hunyuan_video.infer.pre_infer import HunyuanVideo15PreInfer
+from lightx2v.models.networks.hunyuan_video.infer.module_io import (
+    HunyuanVideo15InferModuleOutput,
+)
+from lightx2v.models.networks.hunyuan_video.infer.pre_infer import (
+    HunyuanVideo15PreInfer,
+)
 from lightx2v_platform.base.global_var import AI_DEVICE
+
+from lib.smart_config import smart_config
 
 
 class WorldPlayARPreInfer(HunyuanVideo15PreInfer):
@@ -44,9 +48,15 @@ class WorldPlayARPreInfer(HunyuanVideo15PreInfer):
 
         # Get text embeddings (no CFG for AR model)
         if self.scheduler.infer_condition:
-            txt, text_mask = (inputs["text_encoder_output"]["context"][0], inputs["text_encoder_output"]["context"][1])
+            txt, text_mask = (
+                inputs["text_encoder_output"]["context"][0],
+                inputs["text_encoder_output"]["context"][1],
+            )
         else:
-            txt, text_mask = (inputs["text_encoder_output"]["context_null"][0], inputs["text_encoder_output"]["context_null"][1])
+            txt, text_mask = (
+                inputs["text_encoder_output"]["context_null"][0],
+                inputs["text_encoder_output"]["context_null"][1],
+            )
 
         byt5_txt = inputs["text_encoder_output"]["byt5_features"]
         byt5_text_mask = inputs["text_encoder_output"]["byt5_masks"]
@@ -64,7 +74,9 @@ class WorldPlayARPreInfer(HunyuanVideo15PreInfer):
         else:
             cond_latents_concat = self.scheduler.cond_latents_concat
             mask_concat = self.scheduler.mask_concat
-            img = x = latent_model_input = torch.concat([latents, cond_latents_concat, mask_concat], dim=1)
+            img = x = latent_model_input = torch.concat(
+                [latents, cond_latents_concat, mask_concat], dim=1
+            )
 
         img = img.to(torch.bfloat16)
 
@@ -75,7 +87,9 @@ class WorldPlayARPreInfer(HunyuanVideo15PreInfer):
         img = img.flatten(2).transpose(1, 2)
 
         # Compute timestep embedding
-        t_freq = self.timestep_embedding(t_expand, self.frequency_embedding_size, self.max_period).to(torch.bfloat16)
+        t_freq = self.timestep_embedding(
+            t_expand, self.frequency_embedding_size, self.max_period
+        ).to(torch.bfloat16)
         vec = weights.time_in_0.apply(t_freq)
         vec = torch.nn.functional.silu(vec)
         vec = weights.time_in_2.apply(vec)
@@ -97,14 +111,18 @@ class WorldPlayARPreInfer(HunyuanVideo15PreInfer):
                 else:
                     # Pad with last action
                     pad_size = actual_T - T
-                    action = torch.cat([action, action[:, -1:].repeat(1, pad_size)], dim=1)
+                    action = torch.cat(
+                        [action, action[:, -1:].repeat(1, pad_size)], dim=1
+                    )
                 T = actual_T
 
             # Flatten action for per-frame embedding: [B, T] -> [(B*T),]
             action_flat = action.reshape(-1).float()
 
             # Compute per-frame action embeddings: [(B*T), C]
-            action_emb = self._compute_action_embedding(weights.action_weights, action_flat)
+            action_emb = self._compute_action_embedding(
+                weights.action_weights, action_flat
+            )
 
             # Expand vec for each frame
             vec_expanded = vec.repeat_interleave(T, dim=0)
@@ -118,29 +136,56 @@ class WorldPlayARPreInfer(HunyuanVideo15PreInfer):
             self.scheduler.vec_is_per_token = False
 
         # Process text embeddings
-        t_freq = self.timestep_embedding(t_expand, self.frequency_embedding_size, self.max_period).to(torch.bfloat16)
+        t_freq = self.timestep_embedding(
+            t_expand, self.frequency_embedding_size, self.max_period
+        ).to(torch.bfloat16)
         timestep_aware_representations = weights.txt_in_t_embedder_0.apply(t_freq)
-        timestep_aware_representations = torch.nn.functional.silu(timestep_aware_representations)
-        timestep_aware_representations = weights.txt_in_t_embedder_2.apply(timestep_aware_representations)
+        timestep_aware_representations = torch.nn.functional.silu(
+            timestep_aware_representations
+        )
+        timestep_aware_representations = weights.txt_in_t_embedder_2.apply(
+            timestep_aware_representations
+        )
 
         mask_float = text_mask.float().unsqueeze(-1)
-        context_aware_representations = (txt * mask_float).sum(dim=1) / mask_float.sum(dim=1)
+        context_aware_representations = (txt * mask_float).sum(dim=1) / mask_float.sum(
+            dim=1
+        )
         context_aware_representations = context_aware_representations.to(torch.bfloat16)
-        context_aware_representations = weights.txt_in_c_embedder_0.apply(context_aware_representations)
-        context_aware_representations = torch.nn.functional.silu(context_aware_representations)
-        context_aware_representations = weights.txt_in_c_embedder_2.apply(context_aware_representations)
+        context_aware_representations = weights.txt_in_c_embedder_0.apply(
+            context_aware_representations
+        )
+        context_aware_representations = torch.nn.functional.silu(
+            context_aware_representations
+        )
+        context_aware_representations = weights.txt_in_c_embedder_2.apply(
+            context_aware_representations
+        )
 
         c = timestep_aware_representations + context_aware_representations
         out = weights.txt_in_input_embedder.apply(txt[0].to(torch.bfloat16))
         txt = self.run_individual_token_refiner(weights, out, text_mask, c)
 
         txt = txt.unsqueeze(0)
-        txt = txt + weights.cond_type_embedding.apply(torch.zeros_like(txt[:, :, 0], device=txt.device, dtype=torch.long))
-        byt5_txt = byt5_txt + weights.cond_type_embedding.apply(torch.ones_like(byt5_txt[:, :, 0], device=byt5_txt.device, dtype=torch.long))
-        txt, text_mask = self.reorder_txt_token(byt5_txt, txt, byt5_text_mask, text_mask, zero_feat=True)
+        txt = txt + weights.cond_type_embedding.apply(
+            torch.zeros_like(txt[:, :, 0], device=txt.device, dtype=torch.long)
+        )
+        byt5_txt = byt5_txt + weights.cond_type_embedding.apply(
+            torch.ones_like(byt5_txt[:, :, 0], device=byt5_txt.device, dtype=torch.long)
+        )
+        txt, text_mask = self.reorder_txt_token(
+            byt5_txt, txt, byt5_text_mask, text_mask, zero_feat=True
+        )
 
-        siglip_output = siglip_output + weights.cond_type_embedding.apply(2 * torch.ones_like(siglip_output[:, :, 0], dtype=torch.long, device=AI_DEVICE))
-        txt, text_mask = self.reorder_txt_token(siglip_output, txt, siglip_mask, text_mask)
+        siglip_output = siglip_output + weights.cond_type_embedding.apply(
+            2
+            * torch.ones_like(
+                siglip_output[:, :, 0], dtype=torch.long, device=AI_DEVICE
+            )
+        )
+        txt, text_mask = self.reorder_txt_token(
+            siglip_output, txt, siglip_mask, text_mask
+        )
         txt = txt[:, : text_mask.sum(), :]
 
         # Apply silu only if NOT per-token
@@ -166,7 +211,9 @@ class WorldPlayARPreInfer(HunyuanVideo15PreInfer):
         Returns:
             Action embedding tensor [N, hidden_size]
         """
-        action_freq = self.timestep_embedding(action, self.frequency_embedding_size, self.max_period).to(torch.bfloat16)
+        action_freq = self.timestep_embedding(
+            action, self.frequency_embedding_size, self.max_period
+        ).to(torch.bfloat16)
 
         action_emb = action_weights.action_in_0.apply(action_freq)
         action_emb = torch.nn.functional.silu(action_emb)
@@ -223,9 +270,15 @@ class WorldPlayARPreInfer(HunyuanVideo15PreInfer):
         """
         # Get text embeddings (no CFG for AR model)
         if self.scheduler.infer_condition:
-            txt, text_mask = (inputs["text_encoder_output"]["context"][0], inputs["text_encoder_output"]["context"][1])
+            txt, text_mask = (
+                inputs["text_encoder_output"]["context"][0],
+                inputs["text_encoder_output"]["context"][1],
+            )
         else:
-            txt, text_mask = (inputs["text_encoder_output"]["context_null"][0], inputs["text_encoder_output"]["context_null"][1])
+            txt, text_mask = (
+                inputs["text_encoder_output"]["context_null"][0],
+                inputs["text_encoder_output"]["context_null"][1],
+            )
 
         byt5_txt = inputs["text_encoder_output"]["byt5_features"]
         byt5_text_mask = inputs["text_encoder_output"]["byt5_masks"]
@@ -238,34 +291,61 @@ class WorldPlayARPreInfer(HunyuanVideo15PreInfer):
         t_expand = t.repeat(1)  # Batch size 1
 
         # Compute timestep embedding
-        t_freq = self.timestep_embedding(t_expand, self.frequency_embedding_size, self.max_period).to(torch.bfloat16)
+        t_freq = self.timestep_embedding(
+            t_expand, self.frequency_embedding_size, self.max_period
+        ).to(torch.bfloat16)
         vec = weights.time_in_0.apply(t_freq)
         vec = torch.nn.functional.silu(vec)
         vec = weights.time_in_2.apply(vec)
 
         # Process text embeddings
         timestep_aware_representations = weights.txt_in_t_embedder_0.apply(t_freq)
-        timestep_aware_representations = torch.nn.functional.silu(timestep_aware_representations)
-        timestep_aware_representations = weights.txt_in_t_embedder_2.apply(timestep_aware_representations)
+        timestep_aware_representations = torch.nn.functional.silu(
+            timestep_aware_representations
+        )
+        timestep_aware_representations = weights.txt_in_t_embedder_2.apply(
+            timestep_aware_representations
+        )
 
         mask_float = text_mask.float().unsqueeze(-1)
-        context_aware_representations = (txt * mask_float).sum(dim=1) / mask_float.sum(dim=1)
+        context_aware_representations = (txt * mask_float).sum(dim=1) / mask_float.sum(
+            dim=1
+        )
         context_aware_representations = context_aware_representations.to(torch.bfloat16)
-        context_aware_representations = weights.txt_in_c_embedder_0.apply(context_aware_representations)
-        context_aware_representations = torch.nn.functional.silu(context_aware_representations)
-        context_aware_representations = weights.txt_in_c_embedder_2.apply(context_aware_representations)
+        context_aware_representations = weights.txt_in_c_embedder_0.apply(
+            context_aware_representations
+        )
+        context_aware_representations = torch.nn.functional.silu(
+            context_aware_representations
+        )
+        context_aware_representations = weights.txt_in_c_embedder_2.apply(
+            context_aware_representations
+        )
 
         c = timestep_aware_representations + context_aware_representations
         out = weights.txt_in_input_embedder.apply(txt[0].to(torch.bfloat16))
         txt = self.run_individual_token_refiner(weights, out, text_mask, c)
 
         txt = txt.unsqueeze(0)
-        txt = txt + weights.cond_type_embedding.apply(torch.zeros_like(txt[:, :, 0], device=txt.device, dtype=torch.long))
-        byt5_txt = byt5_txt + weights.cond_type_embedding.apply(torch.ones_like(byt5_txt[:, :, 0], device=byt5_txt.device, dtype=torch.long))
-        txt, text_mask = self.reorder_txt_token(byt5_txt, txt, byt5_text_mask, text_mask, zero_feat=True)
+        txt = txt + weights.cond_type_embedding.apply(
+            torch.zeros_like(txt[:, :, 0], device=txt.device, dtype=torch.long)
+        )
+        byt5_txt = byt5_txt + weights.cond_type_embedding.apply(
+            torch.ones_like(byt5_txt[:, :, 0], device=byt5_txt.device, dtype=torch.long)
+        )
+        txt, text_mask = self.reorder_txt_token(
+            byt5_txt, txt, byt5_text_mask, text_mask, zero_feat=True
+        )
 
-        siglip_output = siglip_output + weights.cond_type_embedding.apply(2 * torch.ones_like(siglip_output[:, :, 0], dtype=torch.long, device=AI_DEVICE))
-        txt, text_mask = self.reorder_txt_token(siglip_output, txt, siglip_mask, text_mask)
+        siglip_output = siglip_output + weights.cond_type_embedding.apply(
+            2
+            * torch.ones_like(
+                siglip_output[:, :, 0], dtype=torch.long, device=AI_DEVICE
+            )
+        )
+        txt, text_mask = self.reorder_txt_token(
+            siglip_output, txt, siglip_mask, text_mask
+        )
         txt = txt[:, : text_mask.sum(), :]
 
         # Apply silu to vec (no per-token for text-only)

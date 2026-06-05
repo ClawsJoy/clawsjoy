@@ -1,9 +1,6 @@
-from lib.smart_config import smart_config
 import gc
 
 import torch
-from loguru import logger
-
 from lightx2v.common.kvcache import KVCacheManager
 from lightx2v.models.networks.wan.sf_model import WanSFModel
 from lightx2v.models.runners.wan.wan_runner import WanRunner, build_wan_model_with_lora
@@ -15,6 +12,9 @@ from lightx2v.utils.profiler import *
 from lightx2v.utils.registry_factory import RUNNER_REGISTER
 from lightx2v.utils.utils import get_rank_and_world_size, wan_vae_to_comfy
 from lightx2v.utils.video_recorder import VideoRecorder
+from loguru import logger
+
+from lib.smart_config import smart_config
 
 
 @RUNNER_REGISTER("wan2.1_sf")
@@ -29,37 +29,63 @@ class WanSFRunner(WanRunner):
             self.run_main = self.run_main_live
 
     def load_transformer(self):
-        wan_model_kwargs = {"model_path": self.config["model_path"], "config": self.config, "device": self.init_device}
+        wan_model_kwargs = {
+            "model_path": self.config["model_path"],
+            "config": self.config,
+            "device": self.init_device,
+        }
         lora_configs = self.config.get("lora_configs")
         if not lora_configs:
             model = WanSFModel(**wan_model_kwargs)
         else:
-            model = build_wan_model_with_lora(WanSFModel, self.config, wan_model_kwargs, lora_configs, model_type="wan2.1")
+            model = build_wan_model_with_lora(
+                WanSFModel,
+                self.config,
+                wan_model_kwargs,
+                lora_configs,
+                model_type="wan2.1",
+            )
         return model
 
     def init_scheduler(self):
         self.scheduler = WanSFScheduler(self.config)
 
     def init_kv_cache_manager(self):
-        self.model.kv_cache_manager = KVCacheManager(config=self.config, device=torch.device("cuda"), sp_group=self.model.seq_p_group)
+        self.model.kv_cache_manager = KVCacheManager(
+            config=self.config,
+            device=torch.device("cuda"),
+            sp_group=self.model.seq_p_group,
+        )
         self.model.kv_cache_manager._create_kv_caches(self.input_info.latent_shape)
         self.model.transformer_infer.kv_cache_manager = self.model.kv_cache_manager
-        self.input_info.latent_shape = [self.input_info.latent_shape[0], self.model.kv_cache_manager.num_output_frames, self.input_info.latent_shape[2], self.input_info.latent_shape[3]]
+        self.input_info.latent_shape = [
+            self.input_info.latent_shape[0],
+            self.model.kv_cache_manager.num_output_frames,
+            self.input_info.latent_shape[2],
+            self.input_info.latent_shape[3],
+        ]
         self.scheduler.num_output_frames = self.model.kv_cache_manager.num_output_frames
-        self.scheduler.num_chunks = self.model.kv_cache_manager.num_output_frames // self.config.get("ar_config", {}).get("num_frame_per_chunk", 3)
+        self.scheduler.num_chunks = (
+            self.model.kv_cache_manager.num_output_frames
+            // self.config.get("ar_config", {}).get("num_frame_per_chunk", 3)
+        )
 
     def get_video_segment_num(self):
         self.video_segment_num = self.scheduler.num_chunks
 
     @ProfilingContext4DebugL1("Run VAE Decoder")
     def run_vae_decoder(self, latents):
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             self.vae_decoder = self.load_vae_decoder()
         if self.is_live:
             images = self.vae_decoder.decode(latents.to(GET_DTYPE()), use_cache=True)
         else:
             images = self.vae_decoder.decode(latents.to(GET_DTYPE()))
-        if self.config.get("lazy_load", False) or self.config.get("unload_modules", False):
+        if self.config.get("lazy_load", False) or self.config.get(
+            "unload_modules", False
+        ):
             del self.vae_decoder
             torch.cuda.empty_cache()
             gc.collect()
@@ -84,7 +110,9 @@ class WanSFRunner(WanRunner):
             self.model.kv_cache_manager.current_step = step_index
 
             with ProfilingContext4DebugL1("step_pre"):
-                self.model.scheduler.step_pre(seg_index=segment_idx, step_index=step_index, is_rerun=False)
+                self.model.scheduler.step_pre(
+                    seg_index=segment_idx, step_index=step_index, is_rerun=False
+                )
 
             with ProfilingContext4DebugL1("🚀 infer_main"):
                 self.model.infer(self.inputs)
@@ -108,7 +136,10 @@ class WanSFRunner(WanRunner):
         rank, world_size = get_rank_and_world_size()
         if output_video_path and rank == world_size - 1:
             record_fps = self.config.get("target_fps", 16)
-            if "video_frame_interpolation" in self.config and self.vfi_model is not None:
+            if (
+                "video_frame_interpolation" in self.config
+                and self.vfi_model is not None
+            ):
                 record_fps = self.config["video_frame_interpolation"]["target_fps"]
 
             self.video_recorder = VideoRecorder(
@@ -119,11 +150,19 @@ class WanSFRunner(WanRunner):
     @ProfilingContext4DebugL1("End run segment")
     def end_run_segment(self, segment_idx=None):
         with ProfilingContext4DebugL1("step_pre_in_rerun"):
-            self.model.scheduler.step_pre(seg_index=segment_idx, step_index=self.model.scheduler.infer_steps - 1, is_rerun=True)
+            self.model.scheduler.step_pre(
+                seg_index=segment_idx,
+                step_index=self.model.scheduler.infer_steps - 1,
+                is_rerun=True,
+            )
         with ProfilingContext4DebugL1("🚀 infer_main_in_rerun"):
             self.model.infer(self.inputs)
 
-        self.gen_video_final = torch.cat([self.gen_video_final, self.gen_video], dim=0) if self.gen_video_final is not None else self.gen_video
+        self.gen_video_final = (
+            torch.cat([self.gen_video_final, self.gen_video], dim=0)
+            if self.gen_video_final is not None
+            else self.gen_video
+        )
         if self.is_live:
             if self.video_recorder:
                 stream_video = wan_vae_to_comfy(self.gen_video)
@@ -182,7 +221,9 @@ class WanSFRunner(WanRunner):
             logger.info(f"init video_recorder: {self.video_recorder}")
             rank, world_size = get_rank_and_world_size()
             if rank == world_size - 1:
-                assert self.video_recorder is not None, "video_recorder is required for stream audio input for rank 2"
+                assert (
+                    self.video_recorder is not None
+                ), "video_recorder is required for stream audio input for rank 2"
                 self.video_recorder.start(self.width, self.height)
             if world_size > 1:
                 dist.barrier()
@@ -191,7 +232,9 @@ class WanSFRunner(WanRunner):
                 self.model.select_graph_for_compile(self.input_info)
 
             for segment_idx in range(self.video_segment_num):
-                logger.info(f"🔄 start segment {segment_idx + 1}/{self.video_segment_num}")
+                logger.info(
+                    f"🔄 start segment {segment_idx + 1}/{self.video_segment_num}"
+                )
                 with ProfilingContext4DebugL1(
                     f"segment end2end {segment_idx + 1}/{self.video_segment_num}",
                     recorder_mode=GET_RECORDER_MODE(),

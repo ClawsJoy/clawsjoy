@@ -1,13 +1,19 @@
-from lib.smart_config import smart_config
 import torch
 import torch.distributed as dist
+
+from lib.smart_config import smart_config
 
 
 def all2all(tensor, scatter_dim, gather_dim, cur_group, async_op):
     group_size = dist.get_world_size(group=cur_group)
-    scatter_tensor_list = list(chunk.contiguous() for chunk in torch.chunk(tensor, chunks=group_size, dim=scatter_dim))
+    scatter_tensor_list = list(
+        chunk.contiguous()
+        for chunk in torch.chunk(tensor, chunks=group_size, dim=scatter_dim)
+    )
     gather_tensor_list = [torch.zeros_like(x) for x in scatter_tensor_list]
-    comm = dist.all_to_all(gather_tensor_list, scatter_tensor_list, group=cur_group, async_op=async_op)
+    comm = dist.all_to_all(
+        gather_tensor_list, scatter_tensor_list, group=cur_group, async_op=async_op
+    )
     if async_op:
 
         def wait():
@@ -44,12 +50,24 @@ class _All2All(torch.autograd.Function):
         ctx.scatter_dim = scatter_dim
         ctx.gather_dim = gather_dim
         ctx.async_op = async_op
-        return all2all(tensor=tensor, scatter_dim=scatter_dim, gather_dim=gather_dim, cur_group=cur_group, async_op=async_op)
+        return all2all(
+            tensor=tensor,
+            scatter_dim=scatter_dim,
+            gather_dim=gather_dim,
+            cur_group=cur_group,
+            async_op=async_op,
+        )
 
     @staticmethod
     def backward(ctx, grad_outputs):
         input_t = grad_outputs
-        return (all2all(input_t, ctx.gather_dim, ctx.scatter_dim, ctx.cur_group, False), None, None, None, None)
+        return (
+            all2all(input_t, ctx.gather_dim, ctx.scatter_dim, ctx.cur_group, False),
+            None,
+            None,
+            None,
+            None,
+        )
 
 
 class _Allgather(torch.autograd.Function):
@@ -58,7 +76,9 @@ class _Allgather(torch.autograd.Function):
         ctx.gather_dim = gather_dim
         ctx.cur_group = cur_group
         ctx.async_op = async_op
-        return all_gather(tensor=tensor, gather_dim=gather_dim, cur_group=cur_group, async_op=async_op)
+        return all_gather(
+            tensor=tensor, gather_dim=gather_dim, cur_group=cur_group, async_op=async_op
+        )
 
     @staticmethod
     def backward(ctx, grad_outputs):
@@ -66,4 +86,11 @@ class _Allgather(torch.autograd.Function):
         sp_group_size = dist.get_world_size(group=sp_group)
         rank = dist.get_rank()
         rank_in_group = dist.get_group_rank(group=sp_group, global_rank=rank)
-        return (grad_outputs.split(grad_outputs.shape[ctx.gather_dim] // sp_group_size, dim=ctx.gather_dim)[rank_in_group], None, None, None)
+        return (
+            grad_outputs.split(
+                grad_outputs.shape[ctx.gather_dim] // sp_group_size, dim=ctx.gather_dim
+            )[rank_in_group],
+            None,
+            None,
+            None,
+        )

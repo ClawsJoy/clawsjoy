@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 # isort: skip_file
 import ctypes
 import os

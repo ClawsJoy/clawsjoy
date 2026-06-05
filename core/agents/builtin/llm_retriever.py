@@ -3,30 +3,27 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 from core.lib.unified_config import unified_config
 
-from core.lib.unified_config import unified_config
-
-from core.lib.unified_config import unified_config
 #!/usr/bin/env python3
 """LLM 辅助检索 Agent - 绕过向量库匹配问题"""
 
-import sys
-import re
 import json
-import requests
+import re
+import sys
 from pathlib import Path
 
+import requests
 
 from core.lib.cross_session_memory import CrossSessionMemory
 
 
 class LLMRetriever:
     VERSION = "6.3.0"
-    
+
     def __init__(self, user_id: str = "default"):
         self.user_id = user_id
         self.memory = CrossSessionMemory(user_id)
@@ -35,7 +32,7 @@ class LLMRetriever:
 
         # 加载内置知识库
         self.knowledge_base = self._load_knowledge()
-    
+
     def _load_knowledge(self) -> dict:
         """加载内置知识库"""
         knowledge = {}
@@ -43,24 +40,27 @@ class LLMRetriever:
         # 读取架构师总结
         arch_file = Path("docs/founder/ARCHITECT_SUMMARY.md")
         if arch_file.exists():
-            knowledge["架构师总结"] = arch_file.read_text(encoding='utf-8')
+            knowledge["架构师总结"] = arch_file.read_text(encoding="utf-8")
 
         # 读取创始人资料
         founder_file = Path("docs/founder/CLAWSJOY_ORIGIN.md")
         if founder_file.exists():
-            knowledge["创始人资料"] = founder_file.read_text(encoding='utf-8')
+            knowledge["创始人资料"] = founder_file.read_text(encoding="utf-8")
 
         # 读取 README
         readme_file = Path("README.md")
         if readme_file.exists():
-            knowledge["项目介绍"] = readme_file.read_text(encoding='utf-8')
+            knowledge["项目介绍"] = readme_file.read_text(encoding="utf-8")
 
         return knowledge
-    
+
     def _classify(self, user_input: str) -> tuple:
         lower = user_input.lower()
 
-        if any(kw in user_input for kw in ["找", "搜索", "查", "资料", "文档", "总结", "报告"]):
+        if any(
+            kw in user_input
+            for kw in ["找", "搜索", "查", "资料", "文档", "总结", "报告"]
+        ):
             # 提取关键词
             query = user_input
             for kw in ["找一下", "搜索", "查找", "查一下", "帮我找", "找", "查"]:
@@ -71,14 +71,14 @@ class LLMRetriever:
         if any(g in user_input for g in ["你好", "hi"]):
             return "greeting", ""
 
-        if re.match(r'^[我][叫][\s]*', user_input):
+        if re.match(r"^[我][叫][\s]*", user_input):
             return "self_intro", user_input
 
         if "你是谁" in user_input:
             return "ask_who", ""
 
         return "chat", user_input
-    
+
     def _search_knowledge(self, query: str) -> str:
         """在知识库中搜索"""
         results = []
@@ -86,14 +86,16 @@ class LLMRetriever:
         # 关键词匹配
         for title, content in self.knowledge_base.items():
             if any(kw in title for kw in ["架构师", "创始人", "总结", "资料"]):
-                if any(kw in query for kw in ["架构师", "创始人", "总结", "资料", "John"]):
+                if any(
+                    kw in query for kw in ["架构师", "创始人", "总结", "资料", "John"]
+                ):
                     results.append(f"【{title}】\n{content[:800]}")
 
         if results:
             return "\n\n---\n\n".join(results)
 
         return ""
-    
+
     def process(self, user_input: str) -> dict:
         task_type, task_param = self._classify(user_input)
         print(f"   🎯 任务: {task_type} -> '{task_param[:40]}'")
@@ -112,7 +114,7 @@ class LLMRetriever:
             response = f"你好{f'，{name}' if name else ''}！我是 ClawsJoy"
 
         elif task_type == "self_intro":
-            match = re.search(r'叫[\s]*([^\s，。]{2,4})', user_input)
+            match = re.search(r"叫[\s]*([^\s，。]{2,4})", user_input)
             if match:
                 self.memory.remember("name", match.group(1))
                 response = f"你好，{match.group(1)}！我是 ClawsJoy"
@@ -131,7 +133,7 @@ class LLMRetriever:
 
 if __name__ == "__main__":
     agent = LLMRetriever("John")
-    
+
     tests = [
         "你好",
         "我叫 John",
@@ -139,7 +141,7 @@ if __name__ == "__main__":
         "找一下架构师的总结",
         "创始人的资料",
     ]
-    
+
     for t in tests:
         print(f"\n👤 {t}")
         result = agent.process(t)

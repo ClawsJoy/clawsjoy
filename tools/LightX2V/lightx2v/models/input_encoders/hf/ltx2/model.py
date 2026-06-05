@@ -1,12 +1,7 @@
-from lib.smart_config import smart_config
 import gc
 from pathlib import Path
 
 import torch
-from loguru import logger
-from safetensors import safe_open
-from transformers import AutoImageProcessor, Gemma3ForConditionalGeneration, Gemma3Processor
-
 from lightx2v.models.input_encoders.hf.ltx2.gemma.encoders.base_encoder import (
     GemmaTextEncoder,
 )
@@ -19,21 +14,45 @@ from lightx2v.utils.envs import GET_DTYPE
 from lightx2v.utils.lora_loader import LoRALoader
 from lightx2v.utils.ltx2_utils import *
 from lightx2v_platform.base.global_var import AI_DEVICE
+from loguru import logger
+from safetensors import safe_open
+from transformers import (
+    AutoImageProcessor,
+    Gemma3ForConditionalGeneration,
+    Gemma3Processor,
+)
+
+from lib.smart_config import smart_config
 
 torch_device_module = getattr(torch, AI_DEVICE)
 
 EMBEDDINGS_PROCESSOR_KEY_OPS = (
     SDOps("EMBEDDINGS_PROCESSOR_KEY_OPS")
     .with_matching(prefix="text_embedding_projection.aggregate_embed.")
-    .with_replacement("text_embedding_projection.aggregate_embed.", "feature_extractor.aggregate_embed.")
+    .with_replacement(
+        "text_embedding_projection.aggregate_embed.",
+        "feature_extractor.aggregate_embed.",
+    )
     .with_matching(prefix="text_embedding_projection.video_aggregate_embed.")
-    .with_replacement("text_embedding_projection.video_aggregate_embed.", "feature_extractor.video_aggregate_embed.")
+    .with_replacement(
+        "text_embedding_projection.video_aggregate_embed.",
+        "feature_extractor.video_aggregate_embed.",
+    )
     .with_matching(prefix="text_embedding_projection.audio_aggregate_embed.")
-    .with_replacement("text_embedding_projection.audio_aggregate_embed.", "feature_extractor.audio_aggregate_embed.")
+    .with_replacement(
+        "text_embedding_projection.audio_aggregate_embed.",
+        "feature_extractor.audio_aggregate_embed.",
+    )
     .with_matching(prefix="model.diffusion_model.video_embeddings_connector.")
-    .with_replacement("model.diffusion_model.video_embeddings_connector.", "embeddings_processor.video_connector.")
+    .with_replacement(
+        "model.diffusion_model.video_embeddings_connector.",
+        "embeddings_processor.video_connector.",
+    )
     .with_matching(prefix="model.diffusion_model.audio_embeddings_connector.")
-    .with_replacement("model.diffusion_model.audio_embeddings_connector.", "embeddings_processor.audio_connector.")
+    .with_replacement(
+        "model.diffusion_model.audio_embeddings_connector.",
+        "embeddings_processor.audio_connector.",
+    )
 )
 
 
@@ -41,7 +60,9 @@ def _find_matching_dir(root_path: str, pattern: str) -> str:
     """Recursively search for files matching a glob pattern and return the parent directory of the first match."""
     matches = list(Path(root_path).rglob(pattern))
     if not matches:
-        raise FileNotFoundError(f"No files matching pattern '{pattern}' found under {root_path}")
+        raise FileNotFoundError(
+            f"No files matching pattern '{pattern}' found under {root_path}"
+        )
     return str(matches[0].parent)
 
 
@@ -93,7 +114,9 @@ class LTX2TextEncoder:
     def _load_gemma_model(self) -> Gemma3ForConditionalGeneration:
         """Load Gemma model from gemma_root."""
         gemma_path = _find_matching_dir(self.gemma_root, "model*.safetensors")
-        return Gemma3ForConditionalGeneration.from_pretrained(gemma_path, local_files_only=True, torch_dtype=torch.bfloat16)
+        return Gemma3ForConditionalGeneration.from_pretrained(
+            gemma_path, local_files_only=True, torch_dtype=torch.bfloat16
+        )
 
     def _load_tokenizer(self) -> LTXVGemmaTokenizer:
         """Load tokenizer from gemma_root."""
@@ -103,8 +126,12 @@ class LTX2TextEncoder:
     def _load_processor(self, tokenizer: LTXVGemmaTokenizer) -> Gemma3Processor:
         """Load processor from gemma_root."""
         processor_path = _find_matching_dir(self.gemma_root, "preprocessor_config.json")
-        image_processor = AutoImageProcessor.from_pretrained(processor_path, local_files_only=True)
-        return Gemma3Processor(image_processor=image_processor, tokenizer=tokenizer.tokenizer)
+        image_processor = AutoImageProcessor.from_pretrained(
+            processor_path, local_files_only=True
+        )
+        return Gemma3Processor(
+            image_processor=image_processor, tokenizer=tokenizer.tokenizer
+        )
 
     def load(self) -> GemmaTextEncoder:
         """
@@ -130,12 +157,16 @@ class LTX2TextEncoder:
         )
         state_dict = state_dict_obj.sd
         if self.dtype is not None:
-            state_dict = {key: value.to(dtype=self.dtype) for key, value in state_dict.items()}
+            state_dict = {
+                key: value.to(dtype=self.dtype) for key, value in state_dict.items()
+            }
         model.load_state_dict(state_dict, strict=False, assign=True)
         model = model.to(self.device).eval()
         return model
 
-    def encode_text(self, prompts: list[str]) -> list[tuple[torch.Tensor, torch.Tensor]]:
+    def encode_text(
+        self, prompts: list[str]
+    ) -> list[tuple[torch.Tensor, torch.Tensor]]:
         """
         Encode a list of prompts using the provided Gemma text encoder.
 
@@ -198,26 +229,41 @@ class LTX2TextEncoder:
             bool: True if LoRA was successfully applied, False otherwise
         """
         if not hasattr(self, "text_encoder"):
-            logger.warning("Text encoder does not have expected structure. Skipping LoRA application.")
+            logger.warning(
+                "Text encoder does not have expected structure. Skipping LoRA application."
+            )
             return False
 
         encoder_model = self.text_encoder
 
         if not hasattr(encoder_model, "feature_extractor"):
-            logger.warning("Text encoder does not have feature_extractor. Skipping LoRA application.")
+            logger.warning(
+                "Text encoder does not have feature_extractor. Skipping LoRA application."
+            )
             return False
 
         feature_extractor = encoder_model.feature_extractor
         target_modules = []
-        for attr in ("aggregate_embed", "video_aggregate_embed", "audio_aggregate_embed"):
+        for attr in (
+            "aggregate_embed",
+            "video_aggregate_embed",
+            "audio_aggregate_embed",
+        ):
             module = getattr(feature_extractor, attr, None)
             if module is not None and hasattr(module, "weight"):
                 target_modules.append(attr)
         if not target_modules:
-            logger.warning("feature_extractor does not expose supported projection layers. Skipping LoRA application.")
+            logger.warning(
+                "feature_extractor does not expose supported projection layers. Skipping LoRA application."
+            )
             return False
 
-        weight_dict = {f"feature_extractor.{name}.weight": getattr(feature_extractor, name).weight.data.clone() for name in target_modules}
+        weight_dict = {
+            f"feature_extractor.{name}.weight": getattr(
+                feature_extractor, name
+            ).weight.data.clone()
+            for name in target_modules
+        }
 
         key_mapping_rules = [
             (r"^text_embedding_projection\.", "feature_extractor."),
@@ -232,10 +278,17 @@ class LTX2TextEncoder:
             with safe_open(lora_path, framework="pt") as f:
                 # First, get all keys and filter for text_embedding_projection
                 all_keys = list(f.keys())
-                text_encoder_keys = [key for key in all_keys if key.startswith("text_embedding_projection.")]
+                text_encoder_keys = [
+                    key
+                    for key in all_keys
+                    if key.startswith("text_embedding_projection.")
+                ]
 
                 # Only load the filtered keys
-                text_encoder_lora_weights = {key: f.get_tensor(key).to(GET_DTYPE()).to(self.device) for key in text_encoder_keys}
+                text_encoder_lora_weights = {
+                    key: f.get_tensor(key).to(GET_DTYPE()).to(self.device)
+                    for key in text_encoder_keys
+                }
 
             if text_encoder_lora_weights:
                 applied_count = lora_loader.apply_lora(
@@ -246,12 +299,20 @@ class LTX2TextEncoder:
 
                 if applied_count > 0:
                     for name in target_modules:
-                        getattr(feature_extractor, name).weight.data = weight_dict[f"feature_extractor.{name}.weight"]
-                    logger.info(f"Successfully applied {applied_count} LoRA weights to text encoder from {lora_path} (strength: {lora_strength})")
+                        getattr(feature_extractor, name).weight.data = weight_dict[
+                            f"feature_extractor.{name}.weight"
+                        ]
+                    logger.info(
+                        f"Successfully applied {applied_count} LoRA weights to text encoder from {lora_path} (strength: {lora_strength})"
+                    )
                 else:
-                    logger.warning(f"No LoRA weights were applied to text encoder from {lora_path}")
+                    logger.warning(
+                        f"No LoRA weights were applied to text encoder from {lora_path}"
+                    )
             else:
-                logger.debug(f"No text_embedding_projection LoRA keys found in {lora_path}")
+                logger.debug(
+                    f"No text_embedding_projection LoRA keys found in {lora_path}"
+                )
 
             del text_encoder_lora_weights
             gc.collect()

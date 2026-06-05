@@ -1,9 +1,10 @@
-from lib.smart_config import smart_config
 import itertools
 from dataclasses import dataclass
 from typing import Callable, List, NamedTuple, Tuple
 
 import torch
+
+from lib.smart_config import smart_config
 
 
 def compute_trapezoidal_mask_1d(
@@ -58,13 +59,21 @@ class SpatialTilingConfig:
 
     def __post_init__(self) -> None:
         if self.tile_size_in_pixels < 64:
-            raise ValueError(f"tile_size_in_pixels must be at least 64, got {self.tile_size_in_pixels}")
+            raise ValueError(
+                f"tile_size_in_pixels must be at least 64, got {self.tile_size_in_pixels}"
+            )
         if self.tile_size_in_pixels % 32 != 0:
-            raise ValueError(f"tile_size_in_pixels must be divisible by 32, got {self.tile_size_in_pixels}")
+            raise ValueError(
+                f"tile_size_in_pixels must be divisible by 32, got {self.tile_size_in_pixels}"
+            )
         if self.tile_overlap_in_pixels % 32 != 0:
-            raise ValueError(f"tile_overlap_in_pixels must be divisible by 32, got {self.tile_overlap_in_pixels}")
+            raise ValueError(
+                f"tile_overlap_in_pixels must be divisible by 32, got {self.tile_overlap_in_pixels}"
+            )
         if self.tile_overlap_in_pixels >= self.tile_size_in_pixels:
-            raise ValueError(f"Overlap must be less than tile size, got {self.tile_overlap_in_pixels} and {self.tile_size_in_pixels}")
+            raise ValueError(
+                f"Overlap must be less than tile size, got {self.tile_overlap_in_pixels} and {self.tile_size_in_pixels}"
+            )
 
 
 @dataclass(frozen=True)
@@ -81,13 +90,21 @@ class TemporalTilingConfig:
 
     def __post_init__(self) -> None:
         if self.tile_size_in_frames < 16:
-            raise ValueError(f"tile_size_in_frames must be at least 16, got {self.tile_size_in_frames}")
+            raise ValueError(
+                f"tile_size_in_frames must be at least 16, got {self.tile_size_in_frames}"
+            )
         if self.tile_size_in_frames % 8 != 0:
-            raise ValueError(f"tile_size_in_frames must be divisible by 8, got {self.tile_size_in_frames}")
+            raise ValueError(
+                f"tile_size_in_frames must be divisible by 8, got {self.tile_size_in_frames}"
+            )
         if self.tile_overlap_in_frames % 8 != 0:
-            raise ValueError(f"tile_overlap_in_frames must be divisible by 8, got {self.tile_overlap_in_frames}")
+            raise ValueError(
+                f"tile_overlap_in_frames must be divisible by 8, got {self.tile_overlap_in_frames}"
+            )
         if self.tile_overlap_in_frames >= self.tile_size_in_frames:
-            raise ValueError(f"Overlap must be less than tile size, got {self.tile_overlap_in_frames} and {self.tile_size_in_frames}")
+            raise ValueError(
+                f"Overlap must be less than tile size, got {self.tile_overlap_in_frames} and {self.tile_size_in_frames}"
+            )
 
 
 @dataclass(frozen=True)
@@ -104,8 +121,12 @@ class TilingConfig:
     @classmethod
     def default(cls) -> "TilingConfig":
         return cls(
-            spatial_config=SpatialTilingConfig(tile_size_in_pixels=512, tile_overlap_in_pixels=64),
-            temporal_config=TemporalTilingConfig(tile_size_in_frames=64, tile_overlap_in_frames=24),
+            spatial_config=SpatialTilingConfig(
+                tile_size_in_pixels=512, tile_overlap_in_pixels=64
+            ),
+            temporal_config=TemporalTilingConfig(
+                tile_size_in_frames=64, tile_overlap_in_frames=24
+            ),
         )
 
 
@@ -138,11 +159,15 @@ class LatentIntervals:
 # Operation to split a single dimension of the tensor into intervals based on the length along the dimension.
 SplitOperation = Callable[[int], DimensionIntervals]
 # Operation to map the intervals in input dimension to slices and masks along a corresponding output dimension.
-MappingOperation = Callable[[DimensionIntervals], tuple[list[slice], list[torch.Tensor | None]]]
+MappingOperation = Callable[
+    [DimensionIntervals], tuple[list[slice], list[torch.Tensor | None]]
+]
 
 
 def default_split_operation(length: int) -> DimensionIntervals:
-    return DimensionIntervals(starts=[0], ends=[length], left_ramps=[0], right_ramps=[0])
+    return DimensionIntervals(
+        starts=[0], ends=[length], left_ramps=[0], right_ramps=[0]
+    )
 
 
 DEFAULT_SPLIT_OPERATION: SplitOperation = default_split_operation
@@ -226,7 +251,9 @@ def create_tiles_from_intervals_and_mappers(
     tile_in_coords = list(itertools.product(*full_dim_input_slices))
     tile_out_coords = list(itertools.product(*full_dim_output_slices))
     tile_mask_1ds = list(itertools.product(*full_dim_masks_1d))
-    for in_coord, out_coord, mask_1d in zip(tile_in_coords, tile_out_coords, tile_mask_1ds, strict=True):
+    for in_coord, out_coord, mask_1d in zip(
+        tile_in_coords, tile_out_coords, tile_mask_1ds, strict=True
+    ):
         tiles.append(
             Tile(
                 in_coords=in_coord,
@@ -243,9 +270,18 @@ def create_tiles(
     mappers: List[MappingOperation],
 ) -> List[Tile]:
     if len(splitters) != len(latent_shape):
-        raise ValueError(f"Number of splitters must be equal to number of dimensions in latent shape, got {len(splitters)} and {len(latent_shape)}")
+        raise ValueError(
+            f"Number of splitters must be equal to number of dimensions in latent shape, got {len(splitters)} and {len(latent_shape)}"
+        )
     if len(mappers) != len(latent_shape):
-        raise ValueError(f"Number of mappers must be equal to number of dimensions in latent shape, got {len(mappers)} and {len(latent_shape)}")
-    intervals = [splitter(length) for splitter, length in zip(splitters, latent_shape, strict=True)]
-    latent_intervals = LatentIntervals(original_shape=latent_shape, dimension_intervals=tuple(intervals))
+        raise ValueError(
+            f"Number of mappers must be equal to number of dimensions in latent shape, got {len(mappers)} and {len(latent_shape)}"
+        )
+    intervals = [
+        splitter(length)
+        for splitter, length in zip(splitters, latent_shape, strict=True)
+    ]
+    latent_intervals = LatentIntervals(
+        original_shape=latent_shape, dimension_intervals=tuple(intervals)
+    )
     return create_tiles_from_intervals_and_mappers(latent_intervals, mappers)

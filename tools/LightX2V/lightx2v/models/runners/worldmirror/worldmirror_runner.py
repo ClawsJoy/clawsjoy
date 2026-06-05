@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """Runner for HY-WorldMirror-2.0 (3D world reconstruction) model.
 
 Wraps the WorldMirror model (migrated from HY-World-2.0) and exposes it through
@@ -31,9 +32,6 @@ from pathlib import Path
 
 import torch
 import torch.distributed as dist
-from loguru import logger
-from safetensors.torch import load_file as load_safetensors
-
 from lightx2v.models.networks.worldmirror.model import WorldMirrorWeightModel
 from lightx2v.models.networks.worldmirror.utils.inference_utils import (
     compute_adaptive_target_size,
@@ -47,10 +45,14 @@ from lightx2v.models.networks.worldmirror.utils.inference_utils import (
     print_and_save_timings,
     save_results,
 )
-from lightx2v.models.networks.worldmirror.utils.render_utils import render_interpolated_video
+from lightx2v.models.networks.worldmirror.utils.render_utils import (
+    render_interpolated_video,
+)
 from lightx2v.models.runners.base_runner import BaseRunner
 from lightx2v.utils.registry_factory import RUNNER_REGISTER
 from lightx2v_platform.base.global_var import AI_DEVICE
+from loguru import logger
+from safetensors.torch import load_file as load_safetensors
 
 
 # ---------------------------------------------------------------------------
@@ -71,7 +73,10 @@ def _load_checkpoint_state_dict(ckpt_path: str) -> dict:
         # Only strip the leading "model." prefix; ``str.replace`` would also
         # substitute occurrences elsewhere in the key (e.g. "some_model.x").
         prefix = "model."
-        state = {(k[len(prefix) :] if k.startswith(prefix) else k): v for k, v in state.items()}
+        state = {
+            (k[len(prefix) :] if k.startswith(prefix) else k): v
+            for k, v in state.items()
+        }
     return state
 
 
@@ -92,7 +97,9 @@ def _get_model_config_from_yaml(cfg) -> dict:
 
 def _has_model_files(path: str) -> bool:
     has_weights = os.path.isfile(os.path.join(path, "model.safetensors"))
-    has_config = os.path.isfile(os.path.join(path, "config.yaml")) or os.path.isfile(os.path.join(path, "config.json"))
+    has_config = os.path.isfile(os.path.join(path, "config.yaml")) or os.path.isfile(
+        os.path.join(path, "config.json")
+    )
     return has_weights and has_config
 
 
@@ -173,7 +180,9 @@ class WorldMirrorRunner(BaseRunner):
         self.sp_group = dist.new_group(ranks=list(range(self.sp_size)))
         self.is_distributed = True
         if self.rank == 0:
-            logger.info(f"[WorldMirror] Multi-GPU: world_size={world_size}, sp_size={self.sp_size}")
+            logger.info(
+                f"[WorldMirror] Multi-GPU: world_size={world_size}, sp_size={self.sp_size}"
+            )
         return True
 
     # ------------------------------------------------------------------
@@ -197,7 +206,9 @@ class WorldMirrorRunner(BaseRunner):
         if os.path.isdir(model_path) and _has_model_files(model_path):
             return model_path
 
-        raise FileNotFoundError(f"Could not locate WorldMirror weights. Tried '{candidate}' and '{model_path}'. Make sure model.safetensors + config.{{json,yaml}} live under one of these paths.")
+        raise FileNotFoundError(
+            f"Could not locate WorldMirror weights. Tried '{candidate}' and '{model_path}'. Make sure model.safetensors + config.{{json,yaml}} live under one of these paths."
+        )
 
     def load_transformer(self):
         """Load the WorldMirror model.
@@ -233,7 +244,9 @@ class WorldMirrorRunner(BaseRunner):
         # the true-lazy path (cpu_offload + lazy_load + a safetensors file).
         # For that path we skip the bulk safetensors read entirely — it is
         # the single biggest CPU-RAM cost in the legacy flow.
-        want_true_lazy = bool(self.config.get("cpu_offload", False)) and bool(self.config.get("lazy_load", False))
+        want_true_lazy = bool(self.config.get("cpu_offload", False)) and bool(
+            self.config.get("lazy_load", False)
+        )
         state = None
         if config_path and ckpt_path:
             logger.info(f"[WorldMirror] Loading config={config_path}, ckpt={ckpt_path}")
@@ -280,7 +293,12 @@ class WorldMirrorRunner(BaseRunner):
         # read, one by one, through the safetensors mmap. WM keys stay on
         # disk and are pulled per-block-forward by the cpu_offload hook.
         # Saves ~3 GB of resident RSS during inference.
-        use_true_lazy = bool(self.config.get("cpu_offload", False)) and bool(self.config.get("lazy_load", False)) and weights_file is not None and weights_file.endswith(".safetensors")
+        use_true_lazy = (
+            bool(self.config.get("cpu_offload", False))
+            and bool(self.config.get("lazy_load", False))
+            and weights_file is not None
+            and weights_file.endswith(".safetensors")
+        )
         if use_true_lazy:
             if config_path and ckpt_path:
                 # The training-ckpt path already pulled state via torch.load;
@@ -295,9 +313,13 @@ class WorldMirrorRunner(BaseRunner):
             # calibration state before post_process anyway, so silently
             # dropping it would produce wrong numbers.
             if self.config.get("input_scale_file", None):
-                raise RuntimeError("lazy_load=true is not currently compatible with input_scale_file (fp8-pertensor calibration). Disable one of the two.")
+                raise RuntimeError(
+                    "lazy_load=true is not currently compatible with input_scale_file (fp8-pertensor calibration). Disable one of the two."
+                )
             if self.config.get("weight_auto_quant", False):
-                raise RuntimeError("lazy_load=true is not currently compatible with weight_auto_quant (quant schemes materialize weights at load-time). Disable one of the two.")
+                raise RuntimeError(
+                    "lazy_load=true is not currently compatible with weight_auto_quant (quant schemes materialize weights at load-time). Disable one of the two."
+                )
             model.load_from_safetensors_lazy(weights_file)
             logger.info(f"[WorldMirror] Lazy-loaded weights from {source_name}")
             # No ``state`` dict was built in this branch — skip the del.
@@ -315,12 +337,18 @@ class WorldMirrorRunner(BaseRunner):
             input_scale_file = self.config.get("input_scale_file", None)
             if input_scale_file:
                 if not os.path.isfile(input_scale_file):
-                    raise FileNotFoundError(f"input_scale_file '{input_scale_file}' not found — run scripts/worldmirror/run_calibration.py first.")
-                logger.info(f"[WorldMirror] Merging calibration from {input_scale_file}")
+                    raise FileNotFoundError(
+                        f"input_scale_file '{input_scale_file}' not found — run scripts/worldmirror/run_calibration.py first."
+                    )
+                logger.info(
+                    f"[WorldMirror] Merging calibration from {input_scale_file}"
+                )
                 calib_state = load_safetensors(input_scale_file)
                 collision = [k for k in calib_state if k in state]
                 if collision:
-                    logger.warning(f"[WorldMirror] {len(collision)} calibration keys already in state (first few: {collision[:3]}) — overwriting.")
+                    logger.warning(
+                        f"[WorldMirror] {len(collision)} calibration keys already in state (first few: {collision[:3]}) — overwriting."
+                    )
                 state.update(calib_state)
             model.load_from_safetensors(state)
             del state
@@ -354,9 +382,13 @@ class WorldMirrorRunner(BaseRunner):
         # Distributed init happens lazily here rather than in __init__ so
         # that merely constructing a runner doesn't join a collective.
         if self._init_distributed():
-            self.device = torch.device("cuda", int(os.environ.get("LOCAL_RANK", self.rank)))
+            self.device = torch.device(
+                "cuda", int(os.environ.get("LOCAL_RANK", self.rank))
+            )
         else:
-            self.device = torch.device(AI_DEVICE if torch.cuda.is_available() else "cpu")
+            self.device = torch.device(
+                AI_DEVICE if torch.cuda.is_available() else "cpu"
+            )
         self.model = self.load_transformer()
         # ``_inner_model`` is kept as the ``nn.Module`` handle for code
         # (e.g. the rendering block) that reaches into ``gs_renderer`` or
@@ -370,24 +402,38 @@ class WorldMirrorRunner(BaseRunner):
     # ------------------------------------------------------------------
     @torch.no_grad()
     def _run_inference(self, img_paths, target_size, prior_cam_path, prior_depth_path):
-        imgs = prepare_images_to_tensor(img_paths, target_size=target_size, resize_strategy="crop").to(self.device)
+        imgs = prepare_images_to_tensor(
+            img_paths, target_size=target_size, resize_strategy="crop"
+        ).to(self.device)
         views = {"img": imgs}
         B, S, C, H, W = imgs.shape
 
         if self.sp_size > 1 and S < self.sp_size:
-            raise ValueError(f"Number of input images ({S}) must be >= number of GPUs ({self.sp_size}) in multi-GPU mode. Please provide at least {self.sp_size} images, or use fewer GPUs.")
+            raise ValueError(
+                f"Number of input images ({S}) must be >= number of GPUs ({self.sp_size}) in multi-GPU mode. Please provide at least {self.sp_size} images, or use fewer GPUs."
+            )
 
         if self.rank == 0:
-            logger.info(f"[WorldMirror] {S} images, shape={imgs.shape}, sp_size={self.sp_size}")
+            logger.info(
+                f"[WorldMirror] {S} images, shape={imgs.shape}, sp_size={self.sp_size}"
+            )
 
         pp_xform = compute_preprocessing_transform(img_paths, target_size)
         cond_flags = [0, 0, 0]
 
         if prior_cam_path and os.path.isfile(prior_cam_path):
-            extr, intr = load_prior_camera(prior_cam_path, img_paths, preprocess_transform=pp_xform)
+            extr, intr = load_prior_camera(
+                prior_cam_path, img_paths, preprocess_transform=pp_xform
+            )
             if extr is not None:
                 first = extr[0, 0]
-                extr = torch.linalg.inv(first.float()).to(first.dtype).unsqueeze(0).unsqueeze(0) @ extr
+                extr = (
+                    torch.linalg.inv(first.float())
+                    .to(first.dtype)
+                    .unsqueeze(0)
+                    .unsqueeze(0)
+                    @ extr
+                )
                 views["camera_poses"] = extr.to(self.device)
                 cond_flags[0] = 1
             if intr is not None:
@@ -395,7 +441,9 @@ class WorldMirrorRunner(BaseRunner):
                 cond_flags[2] = 1
 
         if prior_depth_path and os.path.isdir(prior_depth_path):
-            depth = load_prior_depth(prior_depth_path, img_paths, H, W, preprocess_transform=pp_xform)
+            depth = load_prior_depth(
+                prior_depth_path, img_paths, H, W, preprocess_transform=pp_xform
+            )
             if depth is not None:
                 views["depthmap"] = depth.to(self.device)
                 cond_flags[1] = 1
@@ -404,7 +452,9 @@ class WorldMirrorRunner(BaseRunner):
         use_amp = torch.cuda.is_available() and torch.cuda.is_bf16_supported()
 
         t0 = time.perf_counter()
-        with torch.amp.autocast("cuda", enabled=(not model_bf16 and use_amp), dtype=torch.bfloat16):
+        with torch.amp.autocast(
+            "cuda", enabled=(not model_bf16 and use_amp), dtype=torch.bfloat16
+        ):
             predictions = self.model.infer(
                 views=views,
                 cond_flags=cond_flags,
@@ -428,8 +478,12 @@ class WorldMirrorRunner(BaseRunner):
             raise ValueError("input_info.input_path must be set")
 
         cfg = self.config
-        output_path = input_info.save_result_path or cfg.get("output_path", "inference_output")
-        strict_output_path = input_info.strict_output_path or cfg.get("strict_output_path", None)
+        output_path = input_info.save_result_path or cfg.get(
+            "output_path", "inference_output"
+        )
+        strict_output_path = input_info.strict_output_path or cfg.get(
+            "strict_output_path", None
+        )
 
         target_size = cfg.get("target_size", 952)
         fps = cfg.get("fps", 1)
@@ -466,7 +520,9 @@ class WorldMirrorRunner(BaseRunner):
         render_depth = cfg.get("render_depth", False)
 
         prior_cam_path = input_info.prior_cam_path or cfg.get("prior_cam_path", None)
-        prior_depth_path = input_info.prior_depth_path or cfg.get("prior_depth_path", None)
+        prior_depth_path = input_info.prior_depth_path or cfg.get(
+            "prior_depth_path", None
+        )
         log_time = cfg.get("log_time", True)
 
         case_t0 = time.perf_counter()
@@ -494,7 +550,9 @@ class WorldMirrorRunner(BaseRunner):
         # 2. Adaptive resolution
         effective = compute_adaptive_target_size(img_paths, target_size)
         if self.rank == 0 and effective != target_size:
-            logger.info(f"[WorldMirror] Adaptive resolution: {effective} (max={target_size})")
+            logger.info(
+                f"[WorldMirror] Adaptive resolution: {effective} (max={target_size})"
+            )
 
         # 3. Inference
         # Only synchronize when we need accurate preprocess/infer timings;
@@ -524,10 +582,15 @@ class WorldMirrorRunner(BaseRunner):
             peak = torch.cuda.max_memory_allocated(self.device) / (1024**3)
             if self.is_distributed:
                 peak_t = torch.tensor([peak], dtype=torch.float64, device=self.device)
-                gathered = [torch.zeros(1, dtype=torch.float64, device=self.device) for _ in range(self.sp_size)]
+                gathered = [
+                    torch.zeros(1, dtype=torch.float64, device=self.device)
+                    for _ in range(self.sp_size)
+                ]
                 dist.all_gather(gathered, peak_t, group=self.sp_group)
                 timings["gpu_mem_peak_per_rank_gb"] = [t.item() for t in gathered]
-                timings["gpu_mem_peak_avg_gb"] = sum(timings["gpu_mem_peak_per_rank_gb"]) / self.sp_size
+                timings["gpu_mem_peak_avg_gb"] = (
+                    sum(timings["gpu_mem_peak_per_rank_gb"]) / self.sp_size
+                )
             else:
                 timings["gpu_mem_peak_gb"] = peak
 
@@ -602,10 +665,17 @@ class WorldMirrorRunner(BaseRunner):
                 timings["save_total_wall"] = time.perf_counter() - t0
 
             # Optional: interpolated flythrough video rendered from Gaussian splats.
-            if save_rendered and "splats" in predictions and hasattr(self._inner_model, "gs_renderer"):
+            if (
+                save_rendered
+                and "splats" in predictions
+                and hasattr(self._inner_model, "gs_renderer")
+            ):
                 t0_render = time.perf_counter()
                 try:
-                    splats_f32 = {k: v.float() if isinstance(v, torch.Tensor) else v for k, v in predictions["splats"].items()}
+                    splats_f32 = {
+                        k: v.float() if isinstance(v, torch.Tensor) else v
+                        for k, v in predictions["splats"].items()
+                    }
                     camera_poses_f32 = predictions["camera_poses"].float()
                     camera_intrs_f32 = predictions["camera_intrs"].float()
                     # Original bf16 splat refs are no longer needed; dropping
@@ -652,7 +722,10 @@ class WorldMirrorRunner(BaseRunner):
             dist.barrier()
 
         if input_info.return_result_tensor:
-            return {"output_dir": str(outdir), "timings": timings if self.rank == 0 else None}
+            return {
+                "output_dir": str(outdir),
+                "timings": timings if self.rank == 0 else None,
+            }
         return {"output_dir": str(outdir)}
 
     def end_run(self):

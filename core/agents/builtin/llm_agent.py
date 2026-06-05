@@ -3,27 +3,25 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 import logging
 
 from core.lib.unified_config import unified_config
 
-from core.lib.unified_config import unified_config
-
-from core.lib.unified_config import unified_config
 #!/usr/bin/env python3
 """真正智能 Agent - 使用 LLM 理解意图"""
 
+import json
 import sys
 import time
-import json
-import requests
-from pathlib import Path
 from datetime import datetime
-from core.lib.config_manager import config_manager
+from pathlib import Path
 
+import requests
+
+from core.lib.config_manager import config_manager
 
 
 class LLMAgent:
@@ -31,22 +29,27 @@ class LLMAgent:
         self.ollama_url = "config_loader.get_ollama_url()"
         self.model = config_manager.get_model()
         self.conversation_history = []
-    
+
     def _call_llm(self, prompt: str) -> str:
         try:
             resp = requests.post(
                 f"{self.ollama_url}/api/generate",
-                json={"model": self.model, "prompt": prompt, "stream": False, "options": {"num_predict": 300}},
-                timeout=config_manager.get_timeout("normal")
+                json={
+                    "model": self.model,
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {"num_predict": 300},
+                },
+                timeout=config_manager.get_timeout("normal"),
             )
             if resp.status_code == 200:
-                return resp.json().get('response', '')
+                return resp.json().get("response", "")
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error(f"Unexpected error: {e}", exc_info=True)
             print(f"LLM 调用失败: {e}")
         return ""
-    
+
     def understand_intent(self, user_input: str) -> dict:
         """让 LLM 理解意图（真正的语义理解）"""
 
@@ -72,7 +75,8 @@ class LLMAgent:
         try:
             # 提取 JSON
             import re
-            match = re.search(r'\{[^{}]*\}', response)
+
+            match = re.search(r"\{[^{}]*\}", response)
             if match:
                 return json.loads(match.group())
         except Exception as e:
@@ -81,7 +85,7 @@ class LLMAgent:
             pass
 
         return {"task": "unknown", "confidence": 0.3}
-    
+
     def execute(self, task: str, entity: str = None) -> str:
         """执行任务"""
 
@@ -97,7 +101,15 @@ class LLMAgent:
 • 用户数字分身和隐私保护"""
 
         if task == "list_agents":
-            agents = ["决策Agent", "聊天Agent", "执行Agent", "采集Agent", "安全Agent", "分析Agent", "私人管家"]
+            agents = [
+                "决策Agent",
+                "聊天Agent",
+                "执行Agent",
+                "采集Agent",
+                "安全Agent",
+                "分析Agent",
+                "私人管家",
+            ]
             return f"共有 {len(agents)} 个专业 Agent：{', '.join(agents)}"
 
         if task == "agent_detail":
@@ -110,20 +122,27 @@ class LLMAgent:
 
         if task == "list_skills":
             skills_dir = Path("unified_config.ROOT/skills")
-            skills = [d.name for d in skills_dir.iterdir() if d.is_dir() and not d.name.startswith('_')]
-            return f"共有 {len(skills)} 个原子技能：{', '.join(skills[:10])}" + (" 等" if len(skills) > 10 else "")
+            skills = [
+                d.name
+                for d in skills_dir.iterdir()
+                if d.is_dir() and not d.name.startswith("_")
+            ]
+            return f"共有 {len(skills)} 个原子技能：{', '.join(skills[:10])}" + (
+                " 等" if len(skills) > 10 else ""
+            )
 
         if task == "generate_chart":
             from core.lib.education.retrieval_generator import RetrievalGenerator
+
             gen = RetrievalGenerator()
             svg = gen.generate_svg_content()
             filename = f"chart_{datetime.now().strftime('%Y%m%d_%H%M%S')}.svg"
             file_path = Path("unified_config.ROOT/output") / filename
-            file_path.write_text(svg, encoding='utf-8')
+            file_path.write_text(svg, encoding="utf-8")
             return f"已生成架构图：{file_path}"
 
         return "抱歉，我没理解您的意思。试试问：ClawsJoy 是什么？、有哪些 Agent？"
-    
+
     def process(self, user_input: str) -> dict:
         start = time.time()
 
@@ -136,11 +155,9 @@ class LLMAgent:
         response = self.execute(task, entity)
 
         # 3. 记录对话（用于上下文）
-        self.conversation_history.append({
-            "user": user_input,
-            "intent": task,
-            "response": response[:100]
-        })
+        self.conversation_history.append(
+            {"user": user_input, "intent": task, "response": response[:100]}
+        )
         if len(self.conversation_history) > 10:
             self.conversation_history.pop(0)
 
@@ -150,7 +167,7 @@ class LLMAgent:
             "response": response,
             "intent": task,
             "confidence": intent.get("confidence", 0),
-            "time_ms": round(elapsed, 2)
+            "time_ms": round(elapsed, 2),
         }
 
 
@@ -161,7 +178,7 @@ if __name__ == "__main__":
     print("=" * 60)
     print("真正智能 Agent - 使用 LLM 理解语义")
     print("=" * 60)
-    
+
     tests = [
         "你是谁",
         "这系统干嘛的",
@@ -170,11 +187,13 @@ if __name__ == "__main__":
         "决策Agent是做什么的",
         "你会不会生成图表",
         "来个架构图",
-        "今天天气怎么样"
+        "今天天气怎么样",
     ]
-    
+
     for test in tests:
         print(f"\n👤 {test}")
         result = agent.process(test)
         print(f"🤖 {result['response']}")
-        print(f"   [意图: {result['intent']}, 置信度: {result['confidence']}, 耗时: {result['time_ms']}ms]")
+        print(
+            f"   [意图: {result['intent']}, 置信度: {result['confidence']}, 耗时: {result['time_ms']}ms]"
+        )

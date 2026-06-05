@@ -3,13 +3,14 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
-import sys
 import re
+import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from core.lib.skill_chain_executor import skill_chain
@@ -17,12 +18,12 @@ from core.lib.skill_chain_executor import skill_chain
 
 class WorkflowExecutor:
     """工作流执行器"""
-    
+
     name = "workflow_executor"
-    
+
     def __init__(self):
         self.chain_executor = skill_chain
-    
+
     def execute(self, goal: str, params: dict = None) -> dict:
         """执行工作流"""
         print(f"[WorkflowExecutor] 处理目标: {goal[:50]}")
@@ -38,11 +39,11 @@ class WorkflowExecutor:
             exec_params.update(params)
 
         # 提取图片路径
-        path_match = re.search(r'[/\w\-\.]+\.(jpg|png|jpeg|gif)', goal, re.IGNORECASE)
+        path_match = re.search(r"[/\w\-\.]+\.(jpg|png|jpeg|gif)", goal, re.IGNORECASE)
         if path_match:
             exec_params["input_image"] = path_match.group()
         else:
-            path_match = re.search(r'(/tmp/[^\s]+)', goal)
+            path_match = re.search(r"(/tmp/[^\s]+)", goal)
             if path_match:
                 exec_params["input_image"] = path_match.group()
 
@@ -56,13 +57,22 @@ class WorkflowExecutor:
         print(f"[WorkflowExecutor] 结果: {result.get('success')}")
 
         return result
-    
+
     def _match_workflow(self, goal: str) -> str:
         """匹配工作流"""
         goal_lower = goal.lower()
 
         # 图片相关工作流
-        image_keywords = ["图片", "识别", "图像", "描述", "看图", "image", "picture", "识别图片"]
+        image_keywords = [
+            "图片",
+            "识别",
+            "图像",
+            "描述",
+            "看图",
+            "image",
+            "picture",
+            "识别图片",
+        ]
         for kw in image_keywords:
             if kw in goal_lower:
                 return "image_to_text"

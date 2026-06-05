@@ -3,11 +3,12 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
-from typing import Dict, Optional, Any
+from typing import Any, Dict, Optional
+
 from core.agents.base.smart_agent import SmartAgent
 
 
@@ -34,7 +35,7 @@ class MemoryDrivenButler(SmartAgent):
         return {
             "name": self.name,
             "version": self.version,
-            "memory_size": len(self.memory)
+            "memory_size": len(self.memory),
         }
 
 

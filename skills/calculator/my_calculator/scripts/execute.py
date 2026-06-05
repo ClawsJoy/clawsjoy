@@ -4,8 +4,9 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
+
 
 def execute(expression: str) -> dict:
     """执行计算"""
@@ -18,5 +19,6 @@ def execute(expression: str) -> dict:
 
 if __name__ == "__main__":
     import sys
+
     if len(sys.argv) > 1:
         print(execute(sys.argv[1]))

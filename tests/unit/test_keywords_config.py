@@ -1,8 +1,9 @@
 """keywords.yaml 配置测试"""
 
+from pathlib import Path
+
 import pytest
 import yaml
-from pathlib import Path
 
 
 class TestKeywordsConfig:

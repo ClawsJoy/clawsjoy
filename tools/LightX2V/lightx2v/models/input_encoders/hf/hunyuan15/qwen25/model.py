@@ -26,13 +26,13 @@ if str(project_root) not in sys.path:
     from lib.smart_config import smart_config
 sys.path.insert(0, str(project_root))
 
-from lightx2v.models.input_encoders.hf.q_linear import (  # noqa E402
-    Q8FQuantLinearFp8,  # noqa E402
-    Q8FQuantLinearInt8,  # noqa E402
-    SglQuantLinearFp8,  # noqa E402
-    TorchaoQuantLinearInt8,  # noqa E402
-    TorchaoQuantLinearFp8,  # noqa E402
-    VllmQuantLinearInt8,  # noqa E402
+from lightx2v.models.input_encoders.hf.q_linear import Q8FQuantLinearFp8  # noqa E402
+from lightx2v.models.input_encoders.hf.q_linear import Q8FQuantLinearInt8  # noqa E402
+from lightx2v.models.input_encoders.hf.q_linear import SglQuantLinearFp8  # noqa E402
+from lightx2v.models.input_encoders.hf.q_linear import (  # noqa E402; noqa E402; noqa E402
+    TorchaoQuantLinearFp8,
+    TorchaoQuantLinearInt8,
+    VllmQuantLinearInt8,
 )
 from lightx2v_platform.base.global_var import AI_DEVICE  # noqa E402
 
@@ -83,8 +83,14 @@ PROMPT_TEMPLATE_ENCODE_VIDEO_JSON = [
 ]
 
 PROMPT_TEMPLATE = {
-    "li-dit-encode-image-json": {"template": PROMPT_TEMPLATE_ENCODE_IMAGE_JSON, "crop_start": -1},  # auto-calculate crop_start
-    "li-dit-encode-video-json": {"template": PROMPT_TEMPLATE_ENCODE_VIDEO_JSON, "crop_start": -1},  # auto-calculate crop_start
+    "li-dit-encode-image-json": {
+        "template": PROMPT_TEMPLATE_ENCODE_IMAGE_JSON,
+        "crop_start": -1,
+    },  # auto-calculate crop_start
+    "li-dit-encode-video-json": {
+        "template": PROMPT_TEMPLATE_ENCODE_VIDEO_JSON,
+        "crop_start": -1,
+    },  # auto-calculate crop_start
 }
 
 
@@ -106,15 +112,30 @@ PRECISION_TO_TYPE = {
 def replace_linear(module, new_linear_cls):
     for name, child in list(module.named_children()):
         if isinstance(child, nn.Linear):
-            new_linear = new_linear_cls(child.in_features, child.out_features, bias=(child.bias is not None))
-            new_linear.to(device=next(child.parameters(), None).device if any(True for _ in child.parameters()) else torch.device("cpu"))
+            new_linear = new_linear_cls(
+                child.in_features, child.out_features, bias=(child.bias is not None)
+            )
+            new_linear.to(
+                device=(
+                    next(child.parameters(), None).device
+                    if any(True for _ in child.parameters())
+                    else torch.device("cpu")
+                )
+            )
             setattr(module, name, new_linear)
         else:
             replace_linear(child, new_linear_cls)
 
 
 def load_text_encoder(
-    text_encoder_type, text_encoder_precision=None, text_encoder_path=None, logger=None, device=None, text_encoder_quantized=False, text_encoder_quant_scheme=None, text_encoder_quant_ckpt=None
+    text_encoder_type,
+    text_encoder_precision=None,
+    text_encoder_path=None,
+    logger=None,
+    device=None,
+    text_encoder_quantized=False,
+    text_encoder_quant_scheme=None,
+    text_encoder_quant_ckpt=None,
 ):
     if text_encoder_path is None:
         if text_encoder_type not in TEXT_ENCODER_PATH:
@@ -140,7 +161,9 @@ def load_text_encoder(
         elif text_encoder_quant_scheme == "fp8-q8f":
             linear_cls = Q8FQuantLinearFp8
         else:
-            NotImplementedError(f"Unsupported Qwen25_vl quant scheme: {text_encoder_quant_scheme}")
+            NotImplementedError(
+                f"Unsupported Qwen25_vl quant scheme: {text_encoder_quant_scheme}"
+            )
 
         replace_linear(text_encoder.layers, linear_cls)
 
@@ -157,7 +180,9 @@ def load_text_encoder(
         text_encoder.load_state_dict(new_w_dict, assign=True)
 
     else:
-        text_encoder = AutoModel.from_pretrained(text_encoder_path, low_cpu_mem_usage=True)
+        text_encoder = AutoModel.from_pretrained(
+            text_encoder_path, low_cpu_mem_usage=True
+        )
         text_encoder = text_encoder.language_model
 
     text_encoder.final_layer_norm = text_encoder.norm
@@ -174,7 +199,9 @@ def load_text_encoder(
     return text_encoder, text_encoder_path
 
 
-def load_tokenizer(tokenizer_type, tokenizer_path=None, padding_side="right", logger=None):
+def load_tokenizer(
+    tokenizer_type, tokenizer_path=None, padding_side="right", logger=None
+):
     processor = None
     if tokenizer_path is None:
         if tokenizer_type not in TOKENIZER_PATH:
@@ -238,11 +265,17 @@ class TextEncoder(nn.Module):
         self.max_length = max_length
         self.precision = text_encoder_precision
         self.model_path = text_encoder_path
-        self.tokenizer_type = tokenizer_type if tokenizer_type is not None else text_encoder_type
-        self.tokenizer_path = tokenizer_path if tokenizer_path is not None else text_encoder_path
+        self.tokenizer_type = (
+            tokenizer_type if tokenizer_type is not None else text_encoder_type
+        )
+        self.tokenizer_path = (
+            tokenizer_path if tokenizer_path is not None else text_encoder_path
+        )
         self.use_attention_mask = use_attention_mask
         if prompt_template_video is not None:
-            assert use_attention_mask is True, "Attention mask is True required when training videos."
+            assert (
+                use_attention_mask is True
+            ), "Attention mask is True required when training videos."
         self.prompt_template = prompt_template
         self.prompt_template_video = prompt_template_video
         self.hidden_state_skip_layer = hidden_state_skip_layer
@@ -252,18 +285,24 @@ class TextEncoder(nn.Module):
 
         self.use_template = self.prompt_template is not None
         if self.use_template:
-            assert isinstance(self.prompt_template, dict) and "template" in self.prompt_template, f"`prompt_template` must be a dictionary with a key 'template', got {self.prompt_template}"
-            assert "{}" in str(self.prompt_template["template"]), f"`prompt_template['template']` must contain a placeholder `{{}}` for the input text, got {self.prompt_template['template']}"
+            assert (
+                isinstance(self.prompt_template, dict)
+                and "template" in self.prompt_template
+            ), f"`prompt_template` must be a dictionary with a key 'template', got {self.prompt_template}"
+            assert "{}" in str(
+                self.prompt_template["template"]
+            ), f"`prompt_template['template']` must contain a placeholder `{{}}` for the input text, got {self.prompt_template['template']}"
 
         self.use_video_template = self.prompt_template_video is not None
         if self.use_video_template:
             if self.prompt_template_video is not None:
-                assert isinstance(self.prompt_template_video, dict) and "template" in self.prompt_template_video, (
-                    f"`prompt_template_video` must be a dictionary with a key 'template', got {self.prompt_template_video}"
-                )
-            assert "{}" in str(self.prompt_template_video["template"]), (
-                f"`prompt_template_video['template']` must contain a placeholder `{{}}` for the input text, got {self.prompt_template_video['template']}"
-            )
+                assert (
+                    isinstance(self.prompt_template_video, dict)
+                    and "template" in self.prompt_template_video
+                ), f"`prompt_template_video` must be a dictionary with a key 'template', got {self.prompt_template_video}"
+            assert "{}" in str(
+                self.prompt_template_video["template"]
+            ), f"`prompt_template_video['template']` must contain a placeholder `{{}}` for the input text, got {self.prompt_template_video['template']}"
 
         if text_encoder_type != "qwen-2.5vl-7b":
             raise ValueError(f"Unsupported text encoder type: {text_encoder_type}")
@@ -327,7 +366,9 @@ class TextEncoder(nn.Module):
             for item in template_copy:
                 if isinstance(item, dict) and "content" in item:
                     # Replace placeholder with text in the content field
-                    item["content"] = item["content"].format(text if text else (" " if prevent_empty_text else ""))
+                    item["content"] = item["content"].format(
+                        text if text else (" " if prevent_empty_text else "")
+                    )
             return template_copy
         else:
             raise TypeError(f"Unsupported template type: {type(template)}")
@@ -342,7 +383,9 @@ class TextEncoder(nn.Module):
         Returns:
             int: The position where the actual prompt content begins (after user markers)
         """
-        input_ids = tokenized_input["input_ids"][0].tolist()  # Get the first example's tokens
+        input_ids = tokenized_input["input_ids"][
+            0
+        ].tolist()  # Get the first example's tokens
 
         # Qwen user marker
         marker = "<|im_start|>user\n"
@@ -387,7 +430,10 @@ class TextEncoder(nn.Module):
             else:
                 raise ValueError(f"Unsupported data type: {data_type}")
             if isinstance(text, (list, tuple)):
-                text = [self.apply_text_to_template(one_text, prompt_template) for one_text in text]
+                text = [
+                    self.apply_text_to_template(one_text, prompt_template)
+                    for one_text in text
+                ]
                 if isinstance(text[0], list):
                     tokenize_input_type = "list"
             elif isinstance(text, str):
@@ -494,14 +540,19 @@ class TextEncoder(nn.Module):
         """
         device = self.model.device if device is None else device
         use_attention_mask = use_default(use_attention_mask, self.use_attention_mask)
-        hidden_state_skip_layer = use_default(hidden_state_skip_layer, self.hidden_state_skip_layer)
+        hidden_state_skip_layer = use_default(
+            hidden_state_skip_layer, self.hidden_state_skip_layer
+        )
         do_sample = use_default(do_sample, not self.reproduce)
 
-        attention_mask = batch_encoding["attention_mask"].to(device) if use_attention_mask else None
+        attention_mask = (
+            batch_encoding["attention_mask"].to(device) if use_attention_mask else None
+        )
         outputs = self.model(
             input_ids=batch_encoding["input_ids"].to(device),
             attention_mask=attention_mask,
-            output_hidden_states=output_hidden_states or hidden_state_skip_layer is not None,
+            output_hidden_states=output_hidden_states
+            or hidden_state_skip_layer is not None,
         )
         if hidden_state_skip_layer is not None:
             last_hidden_state = outputs.hidden_states[-(hidden_state_skip_layer + 1)]
@@ -522,10 +573,14 @@ class TextEncoder(nn.Module):
                 raise ValueError(f"Unsupported data type: {data_type}")
             if crop_start > 0:
                 last_hidden_state = last_hidden_state[:, crop_start:]
-                attention_mask = attention_mask[:, crop_start:] if use_attention_mask else None
+                attention_mask = (
+                    attention_mask[:, crop_start:] if use_attention_mask else None
+                )
 
         if output_hidden_states:
-            return TextEncoderModelOutput(last_hidden_state, attention_mask, outputs.hidden_states)
+            return TextEncoderModelOutput(
+                last_hidden_state, attention_mask, outputs.hidden_states
+            )
         return TextEncoderModelOutput(last_hidden_state, attention_mask)
 
     def forward(
@@ -591,8 +646,12 @@ class Qwen25VL_TextEncoder:
     def infer(self, texts):
         if self.cpu_offload:
             self.text_encoder = self.text_encoder.to(AI_DEVICE)
-        text_inputs = self.text_encoder.text2tokens(texts, data_type="video", max_length=self.text_len)
-        prompt_outputs = self.text_encoder.encode(text_inputs, data_type="video", device=AI_DEVICE)
+        text_inputs = self.text_encoder.text2tokens(
+            texts, data_type="video", max_length=self.text_len
+        )
+        prompt_outputs = self.text_encoder.encode(
+            text_inputs, data_type="video", device=AI_DEVICE
+        )
         if self.cpu_offload:
             self.text_encoder = self.text_encoder.to("cpu")
         prompt_embeds = prompt_outputs.hidden_state
@@ -613,7 +672,9 @@ class Qwen25VL_TextEncoder:
 
 
 if __name__ == "__main__":
-    text_encoder_path = "/data/nvme0/models/hy1118/ckpts/hunyuanvideo-1.5/text_encoder/llm"
+    text_encoder_path = (
+        "/data/nvme0/models/hy1118/ckpts/hunyuanvideo-1.5/text_encoder/llm"
+    )
     device = "cuda"
     import torch.nn.functional as F
 
@@ -635,11 +696,23 @@ if __name__ == "__main__":
     print(f"prompt_embeds: {prompt_embeds}, {prompt_embeds.shape}")
     a = torch.load("prompt_embeds.pth")
     #  print(f"attention_mask: {attention_mask}, {attention_mask.sum()}, {attention_mask.shape}")
-    print(F.cosine_similarity(prompt_embeds.flatten().unsqueeze(0), a.flatten().unsqueeze(0), dim=1))
+    print(
+        F.cosine_similarity(
+            prompt_embeds.flatten().unsqueeze(0), a.flatten().unsqueeze(0), dim=1
+        )
+    )
 
     negative_prompt_embeds, negative_attention_mask = model.infer([negative_prompt])
-    print(f"negative_prompt_embeds: {negative_prompt_embeds}, {negative_prompt_embeds.shape}")
+    print(
+        f"negative_prompt_embeds: {negative_prompt_embeds}, {negative_prompt_embeds.shape}"
+    )
     b = torch.load("negative_prompt_embeds.pth")
-    print(F.cosine_similarity(negative_prompt_embeds.flatten().unsqueeze(0), b.flatten().unsqueeze(0), dim=1))
+    print(
+        F.cosine_similarity(
+            negative_prompt_embeds.flatten().unsqueeze(0),
+            b.flatten().unsqueeze(0),
+            dim=1,
+        )
+    )
 
 # print(f"negative_attention_mask: {negative_attention_mask}, {negative_attention_mask.sum()}, {negative_attention_mask.shape}")

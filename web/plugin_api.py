@@ -4,17 +4,18 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
-from flask import Blueprint, jsonify, send_file
-from io import BytesIO
 import json
+from io import BytesIO
 
-plugin_bp = Blueprint('plugin', __name__, url_prefix='/api/plugin')
+from flask import Blueprint, jsonify, send_file
+
+plugin_bp = Blueprint("plugin", __name__, url_prefix="/api/plugin")
 
 
-@plugin_bp.route('/plugin.js', methods=['GET'])
+@plugin_bp.route("/plugin.js", methods=["GET"])
 def get_plugin():
     """返回轻量插件本体"""
     plugin_code = """
@@ -46,19 +47,29 @@ def get_plugin():
 """
     return send_file(
         BytesIO(plugin_code.encode()),
-        mimetype='application/javascript',
-        download_name='clawsjoy-plugin.js'
+        mimetype="application/javascript",
+        download_name="clawsjoy-plugin.js",
     )
 
 
-@plugin_bp.route('/manifest', methods=['GET'])
+@plugin_bp.route("/manifest", methods=["GET"])
 def get_manifest():
     """获取能力清单"""
-    return jsonify({
-        "version": "1.0.0",
-        "plugins": [
-            {"name": "core", "url": "/api/plugin/plugin.js", "size": 50000},
-            {"name": "ai-image-gen", "url": "/api/driver/get/skill/ai-image-gen", "size": 8000},
-            {"name": "scheduler", "url": "/api/driver/get/skill/scheduler", "size": 3000}
-        ]
-    })
+    return jsonify(
+        {
+            "version": "1.0.0",
+            "plugins": [
+                {"name": "core", "url": "/api/plugin/plugin.js", "size": 50000},
+                {
+                    "name": "ai-image-gen",
+                    "url": "/api/driver/get/skill/ai-image-gen",
+                    "size": 8000,
+                },
+                {
+                    "name": "scheduler",
+                    "url": "/api/driver/get/skill/scheduler",
+                    "size": 3000,
+                },
+            ],
+        }
+    )

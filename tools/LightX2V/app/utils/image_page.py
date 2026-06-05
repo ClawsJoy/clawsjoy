@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import os
 import random
 from datetime import datetime
@@ -10,6 +9,8 @@ from utils.model_components import (
     build_z_image_turbo_components,
 )
 from utils.model_utils import HF_AVAILABLE, MS_AVAILABLE, is_fp8_supported_gpu
+
+from lib.smart_config import smart_config
 
 MAX_NUMPY_SEED = 2**32 - 1
 
@@ -41,7 +42,9 @@ def build_image_page(
         # 左侧：配置和输入区域
         with gr.Column(scale=5):
             # 模型配置区域
-            with gr.Accordion(t("model_config", lang), open=True, elem_classes=["model-config"]):
+            with gr.Accordion(
+                t("model_config", lang), open=True, elem_classes=["model-config"]
+            ):
                 gr.Markdown(t("model_config_hint_image", lang))
                 # FP8 支持提示
                 if not is_fp8_supported_gpu():
@@ -69,45 +72,111 @@ def build_image_page(
 
                 download_source_input = gr.Radio(
                     label=t("download_source", lang),
-                    choices=(["huggingface", "modelscope"] if (HF_AVAILABLE and MS_AVAILABLE) else (["huggingface"] if HF_AVAILABLE else ["modelscope"] if MS_AVAILABLE else [])),
-                    value=("modelscope" if MS_AVAILABLE else ("huggingface" if HF_AVAILABLE else None)),
+                    choices=(
+                        ["huggingface", "modelscope"]
+                        if (HF_AVAILABLE and MS_AVAILABLE)
+                        else (
+                            ["huggingface"]
+                            if HF_AVAILABLE
+                            else ["modelscope"] if MS_AVAILABLE else []
+                        )
+                    ),
+                    value=(
+                        "modelscope"
+                        if MS_AVAILABLE
+                        else ("huggingface" if HF_AVAILABLE else None)
+                    ),
                     info=t("download_source_info", lang),
                     visible=HF_AVAILABLE or MS_AVAILABLE,
                     elem_classes=["horizontal-radio"],
                 )
                 # 构建 Qwen 模型组件（默认显示）
-                qwen_image_components = build_qwen_image_components(model_path, model_path_input, download_source_input, model_type_input, lang)
-                qwen_image_dit_path_input = qwen_image_components["qwen_image_dit_path_input"]
-                qwen_image_vae_path_input = qwen_image_components["qwen_image_vae_path_input"]
-                qwen_image_scheduler_path_input = qwen_image_components["qwen_image_scheduler_path_input"]
-                qwen25vl_encoder_path_input = qwen_image_components["qwen25vl_encoder_path_input"]
-                qwen_image_dit_download_btn = qwen_image_components["qwen_image_dit_download_btn"]
-                qwen_image_vae_download_btn = qwen_image_components["qwen_image_vae_download_btn"]
-                qwen_image_scheduler_download_btn = qwen_image_components["qwen_image_scheduler_download_btn"]
-                qwen25vl_encoder_download_btn = qwen_image_components["qwen25vl_encoder_download_btn"]
+                qwen_image_components = build_qwen_image_components(
+                    model_path,
+                    model_path_input,
+                    download_source_input,
+                    model_type_input,
+                    lang,
+                )
+                qwen_image_dit_path_input = qwen_image_components[
+                    "qwen_image_dit_path_input"
+                ]
+                qwen_image_vae_path_input = qwen_image_components[
+                    "qwen_image_vae_path_input"
+                ]
+                qwen_image_scheduler_path_input = qwen_image_components[
+                    "qwen_image_scheduler_path_input"
+                ]
+                qwen25vl_encoder_path_input = qwen_image_components[
+                    "qwen25vl_encoder_path_input"
+                ]
+                qwen_image_dit_download_btn = qwen_image_components[
+                    "qwen_image_dit_download_btn"
+                ]
+                qwen_image_vae_download_btn = qwen_image_components[
+                    "qwen_image_vae_download_btn"
+                ]
+                qwen_image_scheduler_download_btn = qwen_image_components[
+                    "qwen_image_scheduler_download_btn"
+                ]
+                qwen25vl_encoder_download_btn = qwen_image_components[
+                    "qwen25vl_encoder_download_btn"
+                ]
                 qwen_image_use_lora_input = qwen_image_components["use_lora"]
                 qwen_image_lora_path_input = qwen_image_components["lora_path_input"]
                 qwen_image_lora_strength_input = qwen_image_components["lora_strength"]
 
                 # 构建 Z-Image-Turbo 模型组件（默认隐藏）
-                z_image_turbo_components = build_z_image_turbo_components(model_path, model_path_input, download_source_input, model_type_input, lang)
-                z_image_turbo_dit_path_input = z_image_turbo_components["z_image_turbo_dit_path_input"]
-                z_image_turbo_vae_path_input = z_image_turbo_components["z_image_turbo_vae_path_input"]
-                z_image_turbo_scheduler_path_input = z_image_turbo_components["z_image_turbo_scheduler_path_input"]
-                qwen3_encoder_path_input = z_image_turbo_components["qwen3_encoder_path_input"]
-                z_image_turbo_dit_download_btn = z_image_turbo_components["z_image_turbo_dit_download_btn"]
-                z_image_turbo_vae_download_btn = z_image_turbo_components["z_image_turbo_vae_download_btn"]
-                z_image_turbo_scheduler_download_btn = z_image_turbo_components["z_image_turbo_scheduler_download_btn"]
-                qwen3_encoder_download_btn = z_image_turbo_components["qwen3_encoder_download_btn"]
+                z_image_turbo_components = build_z_image_turbo_components(
+                    model_path,
+                    model_path_input,
+                    download_source_input,
+                    model_type_input,
+                    lang,
+                )
+                z_image_turbo_dit_path_input = z_image_turbo_components[
+                    "z_image_turbo_dit_path_input"
+                ]
+                z_image_turbo_vae_path_input = z_image_turbo_components[
+                    "z_image_turbo_vae_path_input"
+                ]
+                z_image_turbo_scheduler_path_input = z_image_turbo_components[
+                    "z_image_turbo_scheduler_path_input"
+                ]
+                qwen3_encoder_path_input = z_image_turbo_components[
+                    "qwen3_encoder_path_input"
+                ]
+                z_image_turbo_dit_download_btn = z_image_turbo_components[
+                    "z_image_turbo_dit_download_btn"
+                ]
+                z_image_turbo_vae_download_btn = z_image_turbo_components[
+                    "z_image_turbo_vae_download_btn"
+                ]
+                z_image_turbo_scheduler_download_btn = z_image_turbo_components[
+                    "z_image_turbo_scheduler_download_btn"
+                ]
+                qwen3_encoder_download_btn = z_image_turbo_components[
+                    "qwen3_encoder_download_btn"
+                ]
                 z_image_turbo_use_lora_input = z_image_turbo_components["use_lora"]
-                z_image_turbo_lora_path_input = z_image_turbo_components["lora_path_input"]
-                z_image_turbo_lora_strength_input = z_image_turbo_components["lora_strength"]
+                z_image_turbo_lora_path_input = z_image_turbo_components[
+                    "lora_path_input"
+                ]
+                z_image_turbo_lora_strength_input = z_image_turbo_components[
+                    "lora_strength"
+                ]
 
                 # 获取组件容器以便控制显示/隐藏
-                qwen_components_group = qwen_image_components.get("components_group", None)
-                z_image_turbo_components_group = z_image_turbo_components.get("components_group", None)
+                qwen_components_group = qwen_image_components.get(
+                    "components_group", None
+                )
+                z_image_turbo_components_group = z_image_turbo_components.get(
+                    "components_group", None
+                )
 
-            with gr.Accordion(t("input_params", lang), open=True, elem_classes=["input-params"]):
+            with gr.Accordion(
+                t("input_params", lang), open=True, elem_classes=["input-params"]
+            ):
                 image_files = gr.File(
                     label=t("input_image", lang),
                     file_count="multiple",
@@ -139,7 +208,10 @@ def build_image_page(
                     if task_type_val == "t2i":
                         # t2i 模式：显示 Qwen-Image-2512 和 Z-Image-Turbo，隐藏图片输入和宽高比
                         return (
-                            gr.update(choices=["Z-Image-Turbo", "Qwen-Image-2512"], value="Z-Image-Turbo"),  # model_type_input
+                            gr.update(
+                                choices=["Z-Image-Turbo", "Qwen-Image-2512"],
+                                value="Z-Image-Turbo",
+                            ),  # model_type_input
                             gr.update(visible=False),  # image_files
                             gr.update(visible=False),  # image_gallery
                             gr.update(value=""),  # image_path
@@ -148,7 +220,10 @@ def build_image_page(
                     else:
                         # i2i 模式：显示 Qwen-Image-Edit-2511，显示图片输入和宽高比
                         return (
-                            gr.update(choices=["Qwen-Image-Edit-2511"], value="Qwen-Image-Edit-2511"),  # model_type_input
+                            gr.update(
+                                choices=["Qwen-Image-Edit-2511"],
+                                value="Qwen-Image-Edit-2511",
+                            ),  # model_type_input
                             gr.update(visible=True),  # image_files
                             gr.update(visible=True),  # image_gallery
                             gr.update(),  # image_path (保持不变)
@@ -159,13 +234,22 @@ def build_image_page(
                 task_type_input.change(
                     fn=on_task_type_change,
                     inputs=[task_type_input],
-                    outputs=[model_type_input, image_files, image_gallery, image_path, aspect_ratio],
+                    outputs=[
+                        model_type_input,
+                        image_files,
+                        image_gallery,
+                        image_path,
+                        aspect_ratio,
+                    ],
                 )
 
                 # 模型类型变化处理函数
                 def on_model_type_change(model_type_val, model_path_val):
                     # 控制组件组显示/隐藏
-                    show_qwen = model_type_val in ["Qwen-Image-2512", "Qwen-Image-Edit-2511"]
+                    show_qwen = model_type_val in [
+                        "Qwen-Image-2512",
+                        "Qwen-Image-Edit-2511",
+                    ]
                     show_z_image_turbo = model_type_val == "Z-Image-Turbo"
 
                     # 导入更新函数
@@ -174,27 +258,70 @@ def build_image_page(
 
                     # 更新模型选择
                     if model_type_val == "Qwen-Image-2512":
-                        from utils.model_choices import get_qwen_image_2512_dit_choices, get_qwen_image_2512_scheduler_choices, get_qwen_image_2512_vae_choices
+                        from utils.model_choices import (
+                            get_qwen_image_2512_dit_choices,
+                            get_qwen_image_2512_scheduler_choices,
+                            get_qwen_image_2512_vae_choices,
+                        )
 
                         dit_choices = get_qwen_image_2512_dit_choices(model_path_val)
                         vae_choices = get_qwen_image_2512_vae_choices(model_path_val)
-                        scheduler_choices = get_qwen_image_2512_scheduler_choices(model_path_val)
+                        scheduler_choices = get_qwen_image_2512_scheduler_choices(
+                            model_path_val
+                        )
 
                         # 更新下载按钮状态
                         from utils.model_choices import get_qwen25vl_encoder_choices
 
-                        qwen25vl_encoder_choices = get_qwen25vl_encoder_choices(model_path_val)
-                        dit_btn_update = update_model_status(model_path_val, extract_model_name(dit_choices[0]) if dit_choices else "", "qwen_image_2512_dit")
-                        vae_btn_update = update_model_status(model_path_val, extract_model_name(vae_choices[0]) if vae_choices else "", "qwen_image_2512_vae")
-                        scheduler_btn_update = update_model_status(model_path_val, extract_model_name(scheduler_choices[0]) if scheduler_choices else "", "qwen_image_2512_scheduler")
-                        qwen25vl_btn_update = update_model_status(model_path_val, extract_model_name(qwen25vl_encoder_choices[0]) if qwen25vl_encoder_choices else "", "qwen25vl_encoder")
+                        qwen25vl_encoder_choices = get_qwen25vl_encoder_choices(
+                            model_path_val
+                        )
+                        dit_btn_update = update_model_status(
+                            model_path_val,
+                            extract_model_name(dit_choices[0]) if dit_choices else "",
+                            "qwen_image_2512_dit",
+                        )
+                        vae_btn_update = update_model_status(
+                            model_path_val,
+                            extract_model_name(vae_choices[0]) if vae_choices else "",
+                            "qwen_image_2512_vae",
+                        )
+                        scheduler_btn_update = update_model_status(
+                            model_path_val,
+                            (
+                                extract_model_name(scheduler_choices[0])
+                                if scheduler_choices
+                                else ""
+                            ),
+                            "qwen_image_2512_scheduler",
+                        )
+                        qwen25vl_btn_update = update_model_status(
+                            model_path_val,
+                            (
+                                extract_model_name(qwen25vl_encoder_choices[0])
+                                if qwen25vl_encoder_choices
+                                else ""
+                            ),
+                            "qwen25vl_encoder",
+                        )
 
                         return (
                             gr.update(visible=show_qwen),  # qwen_components_group
-                            gr.update(visible=show_z_image_turbo),  # z_image_turbo_components_group
-                            gr.update(choices=dit_choices, value=dit_choices[0] if dit_choices else ""),  # qwen_image_dit_path_input
-                            gr.update(choices=vae_choices, value=vae_choices[0] if vae_choices else ""),  # qwen_image_vae_path_input
-                            gr.update(choices=scheduler_choices, value=scheduler_choices[0] if scheduler_choices else ""),  # qwen_image_scheduler_path_input
+                            gr.update(
+                                visible=show_z_image_turbo
+                            ),  # z_image_turbo_components_group
+                            gr.update(
+                                choices=dit_choices,
+                                value=dit_choices[0] if dit_choices else "",
+                            ),  # qwen_image_dit_path_input
+                            gr.update(
+                                choices=vae_choices,
+                                value=vae_choices[0] if vae_choices else "",
+                            ),  # qwen_image_vae_path_input
+                            gr.update(
+                                choices=scheduler_choices,
+                                value=scheduler_choices[0] if scheduler_choices else "",
+                            ),  # qwen_image_scheduler_path_input
                             gr.update(),  # z_image_turbo_dit_path_input (保持不变)
                             gr.update(),  # z_image_turbo_vae_path_input (保持不变)
                             gr.update(),  # z_image_turbo_scheduler_path_input (保持不变)
@@ -210,29 +337,80 @@ def build_image_page(
                             gr.update(),  # qwen3_encoder_download_btn
                         )
                     elif model_type_val == "Z-Image-Turbo":
-                        from utils.model_choices import get_qwen3_encoder_choices, get_z_image_turbo_dit_choices, get_z_image_turbo_scheduler_choices, get_z_image_turbo_vae_choices
+                        from utils.model_choices import (
+                            get_qwen3_encoder_choices,
+                            get_z_image_turbo_dit_choices,
+                            get_z_image_turbo_scheduler_choices,
+                            get_z_image_turbo_vae_choices,
+                        )
 
                         dit_choices = get_z_image_turbo_dit_choices(model_path_val)
                         vae_choices = get_z_image_turbo_vae_choices(model_path_val)
-                        scheduler_choices = get_z_image_turbo_scheduler_choices(model_path_val)
-                        qwen3_encoder_choices = get_qwen3_encoder_choices(model_path_val)
+                        scheduler_choices = get_z_image_turbo_scheduler_choices(
+                            model_path_val
+                        )
+                        qwen3_encoder_choices = get_qwen3_encoder_choices(
+                            model_path_val
+                        )
 
                         # 更新下载按钮状态
-                        dit_btn_update = update_model_status(model_path_val, extract_model_name(dit_choices[0]) if dit_choices else "", "z_image_turbo_dit")
-                        vae_btn_update = update_model_status(model_path_val, extract_model_name(vae_choices[0]) if vae_choices else "", "z_image_turbo_vae")
-                        scheduler_btn_update = update_model_status(model_path_val, extract_model_name(scheduler_choices[0]) if scheduler_choices else "", "z_image_turbo_scheduler")
-                        qwen3_btn_update = update_model_status(model_path_val, extract_model_name(qwen3_encoder_choices[0]) if qwen3_encoder_choices else "", "qwen3_encoder")
+                        dit_btn_update = update_model_status(
+                            model_path_val,
+                            extract_model_name(dit_choices[0]) if dit_choices else "",
+                            "z_image_turbo_dit",
+                        )
+                        vae_btn_update = update_model_status(
+                            model_path_val,
+                            extract_model_name(vae_choices[0]) if vae_choices else "",
+                            "z_image_turbo_vae",
+                        )
+                        scheduler_btn_update = update_model_status(
+                            model_path_val,
+                            (
+                                extract_model_name(scheduler_choices[0])
+                                if scheduler_choices
+                                else ""
+                            ),
+                            "z_image_turbo_scheduler",
+                        )
+                        qwen3_btn_update = update_model_status(
+                            model_path_val,
+                            (
+                                extract_model_name(qwen3_encoder_choices[0])
+                                if qwen3_encoder_choices
+                                else ""
+                            ),
+                            "qwen3_encoder",
+                        )
 
                         return (
                             gr.update(visible=show_qwen),  # qwen_components_group
-                            gr.update(visible=show_z_image_turbo),  # z_image_turbo_components_group
+                            gr.update(
+                                visible=show_z_image_turbo
+                            ),  # z_image_turbo_components_group
                             gr.update(),  # qwen_image_dit_path_input (保持不变)
                             gr.update(),  # qwen_image_vae_path_input (保持不变)
                             gr.update(),  # qwen_image_scheduler_path_input (保持不变)
-                            gr.update(choices=dit_choices, value=dit_choices[0] if dit_choices else ""),  # z_image_turbo_dit_path_input
-                            gr.update(choices=vae_choices, value=vae_choices[0] if vae_choices else ""),  # z_image_turbo_vae_path_input
-                            gr.update(choices=scheduler_choices, value=scheduler_choices[0] if scheduler_choices else ""),  # z_image_turbo_scheduler_path_input
-                            gr.update(choices=qwen3_encoder_choices, value=qwen3_encoder_choices[0] if qwen3_encoder_choices else ""),  # qwen3_encoder_path_input
+                            gr.update(
+                                choices=dit_choices,
+                                value=dit_choices[0] if dit_choices else "",
+                            ),  # z_image_turbo_dit_path_input
+                            gr.update(
+                                choices=vae_choices,
+                                value=vae_choices[0] if vae_choices else "",
+                            ),  # z_image_turbo_vae_path_input
+                            gr.update(
+                                choices=scheduler_choices,
+                                value=scheduler_choices[0] if scheduler_choices else "",
+                            ),  # z_image_turbo_scheduler_path_input
+                            gr.update(
+                                choices=qwen3_encoder_choices,
+                                value=(
+                                    qwen3_encoder_choices[0]
+                                    if qwen3_encoder_choices
+                                    else ""
+                                ),
+                            ),  # qwen3_encoder_path_input
                             gr.update(visible=True),  # aspect_ratio
                             gr.update(),  # qwen_image_dit_download_btn
                             gr.update(),  # qwen_image_vae_download_btn
@@ -244,27 +422,70 @@ def build_image_page(
                             qwen3_btn_update,  # qwen3_encoder_download_btn
                         )
                     else:  # Qwen-Image-Edit-2511
-                        from utils.model_choices import get_qwen_image_dit_choices, get_qwen_image_scheduler_choices, get_qwen_image_vae_choices
+                        from utils.model_choices import (
+                            get_qwen_image_dit_choices,
+                            get_qwen_image_scheduler_choices,
+                            get_qwen_image_vae_choices,
+                        )
 
                         dit_choices = get_qwen_image_dit_choices(model_path_val)
                         vae_choices = get_qwen_image_vae_choices(model_path_val)
-                        scheduler_choices = get_qwen_image_scheduler_choices(model_path_val)
+                        scheduler_choices = get_qwen_image_scheduler_choices(
+                            model_path_val
+                        )
 
                         # 更新下载按钮状态
                         from utils.model_choices import get_qwen25vl_encoder_choices
 
-                        qwen25vl_encoder_choices = get_qwen25vl_encoder_choices(model_path_val)
-                        dit_btn_update = update_model_status(model_path_val, extract_model_name(dit_choices[0]) if dit_choices else "", "qwen_image_dit")
-                        vae_btn_update = update_model_status(model_path_val, extract_model_name(vae_choices[0]) if vae_choices else "", "qwen_image_vae")
-                        scheduler_btn_update = update_model_status(model_path_val, extract_model_name(scheduler_choices[0]) if scheduler_choices else "", "qwen_image_scheduler")
-                        qwen25vl_btn_update = update_model_status(model_path_val, extract_model_name(qwen25vl_encoder_choices[0]) if qwen25vl_encoder_choices else "", "qwen25vl_encoder")
+                        qwen25vl_encoder_choices = get_qwen25vl_encoder_choices(
+                            model_path_val
+                        )
+                        dit_btn_update = update_model_status(
+                            model_path_val,
+                            extract_model_name(dit_choices[0]) if dit_choices else "",
+                            "qwen_image_dit",
+                        )
+                        vae_btn_update = update_model_status(
+                            model_path_val,
+                            extract_model_name(vae_choices[0]) if vae_choices else "",
+                            "qwen_image_vae",
+                        )
+                        scheduler_btn_update = update_model_status(
+                            model_path_val,
+                            (
+                                extract_model_name(scheduler_choices[0])
+                                if scheduler_choices
+                                else ""
+                            ),
+                            "qwen_image_scheduler",
+                        )
+                        qwen25vl_btn_update = update_model_status(
+                            model_path_val,
+                            (
+                                extract_model_name(qwen25vl_encoder_choices[0])
+                                if qwen25vl_encoder_choices
+                                else ""
+                            ),
+                            "qwen25vl_encoder",
+                        )
 
                         return (
                             gr.update(visible=show_qwen),  # qwen_components_group
-                            gr.update(visible=show_z_image_turbo),  # z_image_turbo_components_group
-                            gr.update(choices=dit_choices, value=dit_choices[0] if dit_choices else ""),  # qwen_image_dit_path_input
-                            gr.update(choices=vae_choices, value=vae_choices[0] if vae_choices else ""),  # qwen_image_vae_path_input
-                            gr.update(choices=scheduler_choices, value=scheduler_choices[0] if scheduler_choices else ""),  # qwen_image_scheduler_path_input
+                            gr.update(
+                                visible=show_z_image_turbo
+                            ),  # z_image_turbo_components_group
+                            gr.update(
+                                choices=dit_choices,
+                                value=dit_choices[0] if dit_choices else "",
+                            ),  # qwen_image_dit_path_input
+                            gr.update(
+                                choices=vae_choices,
+                                value=vae_choices[0] if vae_choices else "",
+                            ),  # qwen_image_vae_path_input
+                            gr.update(
+                                choices=scheduler_choices,
+                                value=scheduler_choices[0] if scheduler_choices else "",
+                            ),  # qwen_image_scheduler_path_input
                             gr.update(),  # z_image_turbo_dit_path_input (保持不变)
                             gr.update(),  # z_image_turbo_vae_path_input (保持不变)
                             gr.update(),  # z_image_turbo_scheduler_path_input (保持不变)
@@ -388,7 +609,9 @@ def build_image_page(
 
         # 右侧：输出区域
         with gr.Column(scale=4):
-            with gr.Accordion(t("output_result", lang), open=True, elem_classes=["output-video"]):
+            with gr.Accordion(
+                t("output_result", lang), open=True, elem_classes=["output-video"]
+            ):
                 output_image = gr.Image(
                     label=t("output_image", lang),
                     height=600,

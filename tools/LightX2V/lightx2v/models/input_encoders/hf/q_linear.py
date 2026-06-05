@@ -1,6 +1,7 @@
-from lib.smart_config import smart_config
 import torch
 import torch.nn as nn
+
+from lib.smart_config import smart_config
 
 try:
     from vllm import _custom_ops as ops
@@ -13,12 +14,20 @@ except ImportError:
     sgl_kernel = None
 
 try:
-    from torchao.quantization.utils import quant_int8_per_token_matmul as torchao_int8_gemm
-    from torchao.quantization.utils import quantize_activation_per_token_absmax as torchao_int8_quant
+    from torchao.quantization.utils import (
+        quant_int8_per_token_matmul as torchao_int8_gemm,
+    )
+    from torchao.quantization.utils import (
+        quantize_activation_per_token_absmax as torchao_int8_quant,
+    )
 except ImportError:
     try:
-        from torchao.quantization.utils import _quant_int8_per_token_matmul as torchao_int8_gemm
-        from torchao.quantization.utils import _quantize_activation_per_token_absmax as torchao_int8_quant
+        from torchao.quantization.utils import (
+            _quant_int8_per_token_matmul as torchao_int8_gemm,
+        )
+        from torchao.quantization.utils import (
+            _quantize_activation_per_token_absmax as torchao_int8_quant,
+        )
     except ImportError:
         torchao_int8_gemm, torchao_int8_quant = None, None
 
@@ -32,7 +41,14 @@ try:
 except ImportError:
     fp8_linear = None
 
-from lightx2v.common.ops.mm.triton_kernels import fp8_gemm_bias_triton, fp8_gemm_triton, fp8_quantize_triton, int8_gemm_bias_triton, int8_gemm_triton, int8_quantize_triton
+from lightx2v.common.ops.mm.triton_kernels import (
+    fp8_gemm_bias_triton,
+    fp8_gemm_triton,
+    fp8_quantize_triton,
+    int8_gemm_bias_triton,
+    int8_gemm_triton,
+    int8_quantize_triton,
+)
 
 
 class TritonQuantLinearInt8(nn.Module):
@@ -41,8 +57,12 @@ class TritonQuantLinearInt8(nn.Module):
         self.in_features = in_features
         self.out_features = out_features
 
-        self.register_buffer("weight", torch.empty((out_features, in_features), dtype=torch.int8))
-        self.register_buffer("weight_scale", torch.empty((out_features, 1), dtype=torch.float32))
+        self.register_buffer(
+            "weight", torch.empty((out_features, in_features), dtype=torch.int8)
+        )
+        self.register_buffer(
+            "weight_scale", torch.empty((out_features, 1), dtype=torch.float32)
+        )
 
         if bias:
             self.register_buffer("bias", torch.empty(out_features, dtype=dtype))
@@ -58,7 +78,9 @@ class TritonQuantLinearInt8(nn.Module):
         shape = (input_tensor.shape[0], self.weight.shape[0])
         dtype = input_tensor.dtype
         device = input_tensor.device
-        output_tensor = torch.empty(shape, dtype=dtype, device=device, requires_grad=False)
+        output_tensor = torch.empty(
+            shape, dtype=dtype, device=device, requires_grad=False
+        )
 
         input_tensor_quant, input_tensor_scale = self.act_quant_func(input_tensor)
         if self.bias is not None:
@@ -101,8 +123,13 @@ class TritonQuantLinearFp8(nn.Module):
         self.in_features = in_features
         self.out_features = out_features
 
-        self.register_buffer("weight", torch.empty((out_features, in_features), dtype=torch.float8_e4m3fn))
-        self.register_buffer("weight_scale", torch.empty((out_features, 1), dtype=torch.float32))
+        self.register_buffer(
+            "weight",
+            torch.empty((out_features, in_features), dtype=torch.float8_e4m3fn),
+        )
+        self.register_buffer(
+            "weight_scale", torch.empty((out_features, 1), dtype=torch.float32)
+        )
 
         if bias:
             self.register_buffer("bias", torch.empty(out_features, dtype=dtype))
@@ -118,7 +145,9 @@ class TritonQuantLinearFp8(nn.Module):
         shape = (input_tensor.shape[0], self.weight.shape[0])
         dtype = input_tensor.dtype
         device = input_tensor.device
-        output_tensor = torch.empty(shape, dtype=dtype, device=device, requires_grad=False)
+        output_tensor = torch.empty(
+            shape, dtype=dtype, device=device, requires_grad=False
+        )
 
         input_tensor_quant, input_tensor_scale = self.act_quant_func(input_tensor)
         if self.bias is not None:
@@ -161,8 +190,12 @@ class VllmQuantLinearInt8(nn.Module):
         self.in_features = in_features
         self.out_features = out_features
 
-        self.register_buffer("weight", torch.empty((out_features, in_features), dtype=torch.int8))
-        self.register_buffer("weight_scale", torch.empty((out_features, 1), dtype=torch.float32))
+        self.register_buffer(
+            "weight", torch.empty((out_features, in_features), dtype=torch.int8)
+        )
+        self.register_buffer(
+            "weight_scale", torch.empty((out_features, 1), dtype=torch.float32)
+        )
 
         if bias:
             self.register_buffer("bias", torch.empty(out_features, dtype=dtype))
@@ -170,7 +203,9 @@ class VllmQuantLinearInt8(nn.Module):
             self.register_buffer("bias", None)
 
     def act_quant_func(self, x):
-        input_tensor_quant, input_tensor_scale, _ = ops.scaled_int8_quant(x, scale=None, azp=None, symmetric=True)
+        input_tensor_quant, input_tensor_scale, _ = ops.scaled_int8_quant(
+            x, scale=None, azp=None, symmetric=True
+        )
         return input_tensor_quant, input_tensor_scale
 
     def forward(self, input_tensor):
@@ -178,7 +213,9 @@ class VllmQuantLinearInt8(nn.Module):
         shape = (input_tensor.shape[0], self.weight.shape[0])
         dtype = input_tensor.dtype
         device = input_tensor.device
-        output_tensor = torch.empty(shape, dtype=dtype, device=device, requires_grad=False)
+        output_tensor = torch.empty(
+            shape, dtype=dtype, device=device, requires_grad=False
+        )
 
         input_tensor_quant, input_tensor_scale = self.act_quant_func(input_tensor)
         torch.ops._C.cutlass_scaled_mm(
@@ -211,15 +248,22 @@ class VllmQuantLinearFp8(nn.Module):
         super().__init__()
         self.in_features = in_features
         self.out_features = out_features
-        self.register_buffer("weight", torch.empty((out_features, in_features), dtype=torch.float8_e4m3fn))
-        self.register_buffer("weight_scale", torch.empty((out_features, 1), dtype=torch.float32))
+        self.register_buffer(
+            "weight",
+            torch.empty((out_features, in_features), dtype=torch.float8_e4m3fn),
+        )
+        self.register_buffer(
+            "weight_scale", torch.empty((out_features, 1), dtype=torch.float32)
+        )
         if bias:
             self.register_buffer("bias", torch.empty(out_features, dtype=dtype))
         else:
             self.register_buffer("bias", None)
 
     def act_quant_func(self, x):
-        input_tensor_quant, input_tensor_scale = ops.scaled_fp8_quant(x, None, scale_ub=None, use_per_token_if_dynamic=True)
+        input_tensor_quant, input_tensor_scale = ops.scaled_fp8_quant(
+            x, None, scale_ub=None, use_per_token_if_dynamic=True
+        )
         return input_tensor_quant, input_tensor_scale
 
     def forward(self, input_tensor):
@@ -227,7 +271,9 @@ class VllmQuantLinearFp8(nn.Module):
         shape = (input_tensor.shape[0], self.weight.shape[0])
         dtype = input_tensor.dtype
         device = input_tensor.device
-        output_tensor = torch.empty(shape, dtype=dtype, device=device, requires_grad=False)
+        output_tensor = torch.empty(
+            shape, dtype=dtype, device=device, requires_grad=False
+        )
         input_tensor_quant, input_tensor_scale = self.act_quant_func(input_tensor)
         torch.ops._C.cutlass_scaled_mm(
             output_tensor,
@@ -260,8 +306,13 @@ class SglQuantLinearFp8(nn.Module):
         super().__init__()
         self.in_features = in_features
         self.out_features = out_features
-        self.register_buffer("weight", torch.empty((out_features, in_features), dtype=torch.float8_e4m3fn))
-        self.register_buffer("weight_scale", torch.empty((out_features, 1), dtype=torch.float32))
+        self.register_buffer(
+            "weight",
+            torch.empty((out_features, in_features), dtype=torch.float8_e4m3fn),
+        )
+        self.register_buffer(
+            "weight_scale", torch.empty((out_features, 1), dtype=torch.float32)
+        )
         if bias:
             self.register_buffer("bias", torch.empty(out_features, dtype=dtype))
         else:
@@ -269,8 +320,12 @@ class SglQuantLinearFp8(nn.Module):
 
     def act_quant_func(self, x):
         m, k = x.shape
-        input_tensor_quant = torch.empty((m, k), dtype=torch.float8_e4m3fn, device="cuda", requires_grad=False)
-        input_tensor_scale = torch.empty((m, 1), dtype=torch.float32, device="cuda", requires_grad=False)
+        input_tensor_quant = torch.empty(
+            (m, k), dtype=torch.float8_e4m3fn, device="cuda", requires_grad=False
+        )
+        input_tensor_scale = torch.empty(
+            (m, 1), dtype=torch.float32, device="cuda", requires_grad=False
+        )
         sgl_kernel.sgl_per_token_quant_fp8(x, input_tensor_quant, input_tensor_scale)
         return input_tensor_quant, input_tensor_scale
 
@@ -279,7 +334,9 @@ class SglQuantLinearFp8(nn.Module):
         shape = (input_tensor.shape[0], self.weight.shape[0])
         dtype = input_tensor.dtype
         device = input_tensor.device
-        output_tensor = torch.empty(shape, dtype=dtype, device=device, requires_grad=False)
+        output_tensor = torch.empty(
+            shape, dtype=dtype, device=device, requires_grad=False
+        )
         input_tensor_quant, input_tensor_scale = self.act_quant_func(input_tensor)
         output_tensor = sgl_kernel.fp8_scaled_mm(
             input_tensor_quant,
@@ -313,8 +370,12 @@ class TorchaoQuantLinearInt8(nn.Module):
         self.in_features = in_features
         self.out_features = out_features
 
-        self.register_buffer("weight", torch.empty((out_features, in_features), dtype=torch.int8))
-        self.register_buffer("weight_scale", torch.empty((out_features, 1), dtype=torch.float32))
+        self.register_buffer(
+            "weight", torch.empty((out_features, in_features), dtype=torch.int8)
+        )
+        self.register_buffer(
+            "weight_scale", torch.empty((out_features, 1), dtype=torch.float32)
+        )
 
         if bias:
             self.register_buffer("bias", torch.empty(out_features, dtype=dtype))
@@ -328,7 +389,13 @@ class TorchaoQuantLinearInt8(nn.Module):
     def forward(self, input_tensor):
         input_tensor = input_tensor.squeeze(0)
         input_tensor_quant, input_tensor_scale = self.act_quant_func(input_tensor)
-        output_tensor = torchao_int8_gemm(input_tensor_quant, input_tensor_scale, self.weight.t(), self.weight_scale.t().float(), output_dtype=torch.bfloat16)
+        output_tensor = torchao_int8_gemm(
+            input_tensor_quant,
+            input_tensor_scale,
+            self.weight.t(),
+            self.weight_scale.t().float(),
+            output_dtype=torch.bfloat16,
+        )
         if self.bias is not None:
             output_tensor = output_tensor.add_(self.bias)
 
@@ -355,8 +422,13 @@ class TorchaoQuantLinearFp8(nn.Module):
         self.in_features = in_features
         self.out_features = out_features
 
-        self.register_buffer("weight", torch.empty((out_features, in_features), dtype=torch.float8_e4m3fn))
-        self.register_buffer("weight_scale", torch.empty((out_features, 1), dtype=torch.float32))
+        self.register_buffer(
+            "weight",
+            torch.empty((out_features, in_features), dtype=torch.float8_e4m3fn),
+        )
+        self.register_buffer(
+            "weight_scale", torch.empty((out_features, 1), dtype=torch.float32)
+        )
 
         if bias:
             self.register_buffer("bias", torch.empty(out_features, dtype=dtype))
@@ -405,8 +477,12 @@ class Q8FQuantLinearInt8(nn.Module):
         self.in_features = in_features
         self.out_features = out_features
 
-        self.register_buffer("weight", torch.empty((out_features, in_features), dtype=torch.int8))
-        self.register_buffer("weight_scale", torch.empty((out_features, 1), dtype=torch.float32))
+        self.register_buffer(
+            "weight", torch.empty((out_features, in_features), dtype=torch.int8)
+        )
+        self.register_buffer(
+            "weight_scale", torch.empty((out_features, 1), dtype=torch.float32)
+        )
 
         if bias:
             self.register_buffer("bias", torch.empty(out_features, dtype=torch.float32))
@@ -415,7 +491,9 @@ class Q8FQuantLinearInt8(nn.Module):
 
     def act_quant_func(self, x):
         if ops is not None:
-            input_tensor_quant, input_tensor_scale, _ = ops.scaled_int8_quant(x, scale=None, azp=None, symmetric=True)
+            input_tensor_quant, input_tensor_scale, _ = ops.scaled_int8_quant(
+                x, scale=None, azp=None, symmetric=True
+            )
         else:
             input_tensor_quant, input_tensor_scale = int8_quantize_triton(x)
         return input_tensor_quant, input_tensor_scale
@@ -454,8 +532,13 @@ class Q8FQuantLinearFp8(nn.Module):
         self.in_features = in_features
         self.out_features = out_features
 
-        self.register_buffer("weight", torch.empty((out_features, in_features), dtype=torch.float8_e4m3fn))
-        self.register_buffer("weight_scale", torch.empty((out_features, 1), dtype=torch.float32))
+        self.register_buffer(
+            "weight",
+            torch.empty((out_features, in_features), dtype=torch.float8_e4m3fn),
+        )
+        self.register_buffer(
+            "weight_scale", torch.empty((out_features, 1), dtype=torch.float32)
+        )
 
         if bias:
             self.register_buffer("bias", torch.empty(out_features, dtype=torch.float32))
@@ -464,7 +547,9 @@ class Q8FQuantLinearFp8(nn.Module):
 
     def act_quant_func(self, x):
         if ops is not None:
-            input_tensor_quant, input_tensor_scale = ops.scaled_fp8_quant(x.squeeze(0), None, scale_ub=None, use_per_token_if_dynamic=True)
+            input_tensor_quant, input_tensor_scale = ops.scaled_fp8_quant(
+                x.squeeze(0), None, scale_ub=None, use_per_token_if_dynamic=True
+            )
         else:
             input_tensor_quant, input_tensor_scale = fp8_quantize_triton(x)
         return input_tensor_quant, input_tensor_scale

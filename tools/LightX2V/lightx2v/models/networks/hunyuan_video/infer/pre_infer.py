@@ -1,14 +1,14 @@
-from lib.smart_config import smart_config
 import math
 from typing import Optional
 
 import torch
 import torch.distributed as dist
 from einops import rearrange
-from torch.nn import functional as F
-
 from lightx2v.utils.envs import *
 from lightx2v_platform.base.global_var import AI_DEVICE, PLATFORM
+from torch.nn import functional as F
+
+from lib.smart_config import smart_config
 
 from .attn_no_pad import flash_attn_no_pad, flash_attn_no_pad_v3, sage_attn_no_pad_v2
 from .module_io import HunyuanVideo15InferModuleOutput
@@ -43,7 +43,13 @@ def apply_gate(x, gate=None, tanh=False):
 
 @torch.compiler.disable
 def attention(
-    q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, drop_rate: float = 0.0, attn_mask: Optional[torch.Tensor] = None, causal: bool = False, attn_type: str = "flash_attn2"
+    q: torch.Tensor,
+    k: torch.Tensor,
+    v: torch.Tensor,
+    drop_rate: float = 0.0,
+    attn_mask: Optional[torch.Tensor] = None,
+    causal: bool = False,
+    attn_type: str = "flash_attn2",
 ) -> torch.Tensor:
     """
     Compute attention using flash_attn_no_pad.
@@ -63,11 +69,17 @@ def attention(
     if attn_mask is not None and attn_mask.dtype != torch.bool:
         attn_mask = attn_mask.bool()
     if attn_type == "flash_attn2":
-        x = flash_attn_no_pad(qkv, attn_mask, causal=causal, dropout_p=drop_rate, softmax_scale=None)
+        x = flash_attn_no_pad(
+            qkv, attn_mask, causal=causal, dropout_p=drop_rate, softmax_scale=None
+        )
     elif attn_type == "flash_attn3":
-        x = flash_attn_no_pad_v3(qkv, attn_mask, causal=causal, dropout_p=drop_rate, softmax_scale=None)
+        x = flash_attn_no_pad_v3(
+            qkv, attn_mask, causal=causal, dropout_p=drop_rate, softmax_scale=None
+        )
     elif attn_type == "sage_attn2":
-        x = sage_attn_no_pad_v2(qkv, attn_mask, causal=causal, dropout_p=drop_rate, softmax_scale=None)
+        x = sage_attn_no_pad_v2(
+            qkv, attn_mask, causal=causal, dropout_p=drop_rate, softmax_scale=None
+        )
     b, s, a, d = x.shape
     out = x.reshape(b, s, -1)
     return out
@@ -83,7 +95,9 @@ class HunyuanVideo15PreInfer:
         self.cos_sin = None
         self.grid_sizes = (0, 0, 0)  # (t, h, w)
         if self.config["seq_parallel"]:
-            self.seq_p_group = self.config.get("device_mesh").get_group(mesh_dim="seq_p")
+            self.seq_p_group = self.config.get("device_mesh").get_group(
+                mesh_dim="seq_p"
+            )
         else:
             self.seq_p_group = None
 
@@ -96,8 +110,17 @@ class HunyuanVideo15PreInfer:
         rope_dim_list = self.config["rope_dim_list"]
         if rope_dim_list is None:
             rope_dim_list = [head_dim // target_ndim for _ in range(target_ndim)]
-        assert sum(rope_dim_list) == head_dim, "sum(rope_dim_list) should equal to head_dim of attention layer"
-        freqs_cos, freqs_sin = get_nd_rotary_pos_embed(rope_dim_list, rope_sizes, theta=self.config["rope_theta"], use_real=True, theta_rescale_factor=1, device=AI_DEVICE)
+        assert (
+            sum(rope_dim_list) == head_dim
+        ), "sum(rope_dim_list) should equal to head_dim of attention layer"
+        freqs_cos, freqs_sin = get_nd_rotary_pos_embed(
+            rope_dim_list,
+            rope_sizes,
+            theta=self.config["rope_theta"],
+            use_real=True,
+            theta_rescale_factor=1,
+            device=AI_DEVICE,
+        )
         cos_half = freqs_cos[:, ::2].contiguous()
         sin_half = freqs_sin[:, ::2].contiguous()
         cos_sin = torch.cat([cos_half, sin_half], dim=-1)
@@ -120,12 +143,24 @@ class HunyuanVideo15PreInfer:
         t = timesteps[self.scheduler.step_index]
 
         if self.scheduler.infer_condition:
-            txt, text_mask = inputs["text_encoder_output"]["context"][0], inputs["text_encoder_output"]["context"][1]
+            txt, text_mask = (
+                inputs["text_encoder_output"]["context"][0],
+                inputs["text_encoder_output"]["context"][1],
+            )
         else:
-            txt, text_mask = inputs["text_encoder_output"]["context_null"][0], inputs["text_encoder_output"]["context_null"][1]
+            txt, text_mask = (
+                inputs["text_encoder_output"]["context_null"][0],
+                inputs["text_encoder_output"]["context_null"][1],
+            )
 
-        byt5_txt, byt5_text_mask = inputs["text_encoder_output"]["byt5_features"], inputs["text_encoder_output"]["byt5_masks"]
-        siglip_output, siglip_mask = inputs["image_encoder_output"]["siglip_output"], inputs["image_encoder_output"]["siglip_mask"]
+        byt5_txt, byt5_text_mask = (
+            inputs["text_encoder_output"]["byt5_features"],
+            inputs["text_encoder_output"]["byt5_masks"],
+        )
+        siglip_output, siglip_mask = (
+            inputs["image_encoder_output"]["siglip_output"],
+            inputs["image_encoder_output"]["siglip_mask"],
+        )
         txt = txt.to(torch.bfloat16)
 
         if self.config["is_sr_running"]:
@@ -138,7 +173,9 @@ class HunyuanVideo15PreInfer:
         else:
             cond_latents_concat = self.scheduler.cond_latents_concat
             mask_concat = self.scheduler.mask_concat
-            img = x = latent_model_input = torch.concat([latents, cond_latents_concat, mask_concat], dim=1)
+            img = x = latent_model_input = torch.concat(
+                [latents, cond_latents_concat, mask_concat], dim=1
+            )
 
         img = img.to(torch.bfloat16)
 
@@ -148,13 +185,17 @@ class HunyuanVideo15PreInfer:
         img = weights.img_in.apply(img)
         img = img.flatten(2).transpose(1, 2)
 
-        t_freq = self.timestep_embedding(t_expand, self.frequency_embedding_size, self.max_period).to(torch.bfloat16)
+        t_freq = self.timestep_embedding(
+            t_expand, self.frequency_embedding_size, self.max_period
+        ).to(torch.bfloat16)
         vec = weights.time_in_0.apply(t_freq)
         vec = torch.nn.functional.silu(vec)
         vec = weights.time_in_2.apply(vec)
 
         if self.config["is_sr_running"]:
-            use_meanflow = self.config.get("video_super_resolution", {}).get("use_meanflow", False)
+            use_meanflow = self.config.get("video_super_resolution", {}).get(
+                "use_meanflow", False
+            )
             if use_meanflow:
                 if self.scheduler.step_index == len(timesteps) - 1:
                     timesteps_r = torch.tensor([0.0], device=latent_model_input.device)
@@ -165,23 +206,39 @@ class HunyuanVideo15PreInfer:
                 timesteps_r = None
 
             if timesteps_r is not None:
-                t_freq = self.timestep_embedding(timesteps_r, self.frequency_embedding_size, self.max_period).to(torch.bfloat16)
+                t_freq = self.timestep_embedding(
+                    timesteps_r, self.frequency_embedding_size, self.max_period
+                ).to(torch.bfloat16)
                 vec_res = weights.time_r_in_0.apply(t_freq)
                 vec_res = torch.nn.functional.silu(vec_res)
                 vec_res = weights.time_r_in_2.apply(vec_res)
                 vec = vec + vec_res
 
-        t_freq = self.timestep_embedding(t_expand, self.frequency_embedding_size, self.max_period).to(torch.bfloat16)
+        t_freq = self.timestep_embedding(
+            t_expand, self.frequency_embedding_size, self.max_period
+        ).to(torch.bfloat16)
         timestep_aware_representations = weights.txt_in_t_embedder_0.apply(t_freq)
-        timestep_aware_representations = torch.nn.functional.silu(timestep_aware_representations)
-        timestep_aware_representations = weights.txt_in_t_embedder_2.apply(timestep_aware_representations)
+        timestep_aware_representations = torch.nn.functional.silu(
+            timestep_aware_representations
+        )
+        timestep_aware_representations = weights.txt_in_t_embedder_2.apply(
+            timestep_aware_representations
+        )
 
         mask_float = text_mask.float().unsqueeze(-1)
-        context_aware_representations = (txt * mask_float).sum(dim=1) / mask_float.sum(dim=1)
+        context_aware_representations = (txt * mask_float).sum(dim=1) / mask_float.sum(
+            dim=1
+        )
         context_aware_representations = context_aware_representations.to(torch.bfloat16)
-        context_aware_representations = weights.txt_in_c_embedder_0.apply(context_aware_representations)
-        context_aware_representations = torch.nn.functional.silu(context_aware_representations)
-        context_aware_representations = weights.txt_in_c_embedder_2.apply(context_aware_representations)
+        context_aware_representations = weights.txt_in_c_embedder_0.apply(
+            context_aware_representations
+        )
+        context_aware_representations = torch.nn.functional.silu(
+            context_aware_representations
+        )
+        context_aware_representations = weights.txt_in_c_embedder_2.apply(
+            context_aware_representations
+        )
 
         c = timestep_aware_representations + context_aware_representations
         out = weights.txt_in_input_embedder.apply(txt[0].to(torch.bfloat16))
@@ -189,12 +246,25 @@ class HunyuanVideo15PreInfer:
 
         # TODO: 可以删除这段计算
         txt = txt.unsqueeze(0)
-        txt = txt + weights.cond_type_embedding.apply(torch.zeros_like(txt[:, :, 0], device=txt.device, dtype=torch.long))
-        byt5_txt = byt5_txt + weights.cond_type_embedding.apply(torch.ones_like(byt5_txt[:, :, 0], device=byt5_txt.device, dtype=torch.long))
-        txt, text_mask = self.reorder_txt_token(byt5_txt, txt, byt5_text_mask, text_mask, zero_feat=True)
+        txt = txt + weights.cond_type_embedding.apply(
+            torch.zeros_like(txt[:, :, 0], device=txt.device, dtype=torch.long)
+        )
+        byt5_txt = byt5_txt + weights.cond_type_embedding.apply(
+            torch.ones_like(byt5_txt[:, :, 0], device=byt5_txt.device, dtype=torch.long)
+        )
+        txt, text_mask = self.reorder_txt_token(
+            byt5_txt, txt, byt5_text_mask, text_mask, zero_feat=True
+        )
 
-        siglip_output = siglip_output + weights.cond_type_embedding.apply(2 * torch.ones_like(siglip_output[:, :, 0], dtype=torch.long, device=AI_DEVICE))
-        txt, text_mask = self.reorder_txt_token(siglip_output, txt, siglip_mask, text_mask)
+        siglip_output = siglip_output + weights.cond_type_embedding.apply(
+            2
+            * torch.ones_like(
+                siglip_output[:, :, 0], dtype=torch.long, device=AI_DEVICE
+            )
+        )
+        txt, text_mask = self.reorder_txt_token(
+            siglip_output, txt, siglip_mask, text_mask
+        )
         txt = txt[:, : text_mask.sum(), :]
 
         grid_sizes = (grid_sizes_t, grid_sizes_h, grid_sizes_w)
@@ -219,8 +289,12 @@ class HunyuanVideo15PreInfer:
             norm_x = block.norm1.apply(out.unsqueeze(0)).squeeze(0)
             qkv = block.self_attn_qkv.apply(norm_x).unsqueeze(0)
             q, k, v = rearrange(qkv, "B L (K H D) -> K B L H D", K=3, H=self.heads_num)
-            attn = attention(q, k, v, attn_mask=mask, attn_type="flash_attn2").squeeze(0)
-            out = out + apply_gate(block.self_attn_proj.apply(attn).unsqueeze(0), gate_msa).squeeze(0)
+            attn = attention(q, k, v, attn_mask=mask, attn_type="flash_attn2").squeeze(
+                0
+            )
+            out = out + apply_gate(
+                block.self_attn_proj.apply(attn).unsqueeze(0), gate_msa
+            ).squeeze(0)
             tmp = block.mlp_fc1.apply(block.norm2.apply(out))
             tmp = torch.nn.functional.silu(tmp)
             tmp = block.mlp_fc2.apply(tmp)
@@ -255,14 +329,22 @@ class HunyuanVideo15PreInfer:
             )
 
         half = dim // 2
-        freqs = torch.exp(-math.log(max_period) * torch.arange(start=0, end=half, dtype=torch.float32) / half).to(device=t.device)
+        freqs = torch.exp(
+            -math.log(max_period)
+            * torch.arange(start=0, end=half, dtype=torch.float32)
+            / half
+        ).to(device=t.device)
         args = t[:, None].float() * freqs[None]
         embedding = torch.cat([torch.cos(args), torch.sin(args)], dim=-1)
         if dim % 2:
-            embedding = torch.cat([embedding, torch.zeros_like(embedding[:, :1])], dim=-1)
+            embedding = torch.cat(
+                [embedding, torch.zeros_like(embedding[:, :1])], dim=-1
+            )
         return embedding
 
-    def reorder_txt_token(self, byt5_txt, txt, byt5_text_mask, text_mask, zero_feat=False, is_reorder=True):
+    def reorder_txt_token(
+        self, byt5_txt, txt, byt5_text_mask, text_mask, zero_feat=False, is_reorder=True
+    ):
         if is_reorder:
             reorder_txt = []
             reorder_mask = []
@@ -276,10 +358,34 @@ class HunyuanVideo15PreInfer:
                     # When using block mask with approximate computation, set pad to zero to reduce error
                     pad_byt5 = torch.zeros_like(byt5_txt_i[~byt5_text_mask_i])
                     pad_text = torch.zeros_like(txt_i[~text_mask_i])
-                    reorder_txt_i = torch.cat([byt5_txt_i[byt5_text_mask_i], txt_i[text_mask_i], pad_byt5, pad_text], dim=0)
+                    reorder_txt_i = torch.cat(
+                        [
+                            byt5_txt_i[byt5_text_mask_i],
+                            txt_i[text_mask_i],
+                            pad_byt5,
+                            pad_text,
+                        ],
+                        dim=0,
+                    )
                 else:
-                    reorder_txt_i = torch.cat([byt5_txt_i[byt5_text_mask_i], txt_i[text_mask_i], byt5_txt_i[~byt5_text_mask_i], txt_i[~text_mask_i]], dim=0)
-                reorder_mask_i = torch.cat([byt5_text_mask_i[byt5_text_mask_i], text_mask_i[text_mask_i], byt5_text_mask_i[~byt5_text_mask_i], text_mask_i[~text_mask_i]], dim=0)
+                    reorder_txt_i = torch.cat(
+                        [
+                            byt5_txt_i[byt5_text_mask_i],
+                            txt_i[text_mask_i],
+                            byt5_txt_i[~byt5_text_mask_i],
+                            txt_i[~text_mask_i],
+                        ],
+                        dim=0,
+                    )
+                reorder_mask_i = torch.cat(
+                    [
+                        byt5_text_mask_i[byt5_text_mask_i],
+                        text_mask_i[text_mask_i],
+                        byt5_text_mask_i[~byt5_text_mask_i],
+                        text_mask_i[~text_mask_i],
+                    ],
+                    dim=0,
+                )
 
                 reorder_txt.append(reorder_txt_i)
                 reorder_mask.append(reorder_mask_i)
@@ -288,6 +394,8 @@ class HunyuanVideo15PreInfer:
             reorder_mask = torch.stack(reorder_mask).to(dtype=torch.int64)
         else:
             reorder_txt = torch.concat([byt5_txt, txt], dim=1)
-            reorder_mask = torch.concat([byt5_text_mask, text_mask], dim=1).to(dtype=torch.int64)
+            reorder_mask = torch.concat([byt5_text_mask, text_mask], dim=1).to(
+                dtype=torch.int64
+            )
 
         return reorder_txt, reorder_mask

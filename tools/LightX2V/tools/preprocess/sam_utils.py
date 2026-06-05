@@ -1,19 +1,20 @@
-from lib.smart_config import smart_config
-# Copyright (c) 2025. Your modifications here.
-# This file wraps and extends sam2.utils.misc for custom modifications.
-
 import os
 
 import numpy as np
 import torch
-from PIL import Image
 from hydra import compose
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
+from PIL import Image
 from sam2.build_sam import _load_checkpoint
 from sam2.utils.misc import *
 from sam2.utils.misc import AsyncVideoFrameLoader, _load_img_as_tensor
 from tqdm import tqdm
+
+from lib.smart_config import smart_config
+
+# Copyright (c) 2025. Your modifications here.
+# This file wraps and extends sam2.utils.misc for custom modifications.
 
 
 def _load_img_v2_as_tensor(img, image_size):
@@ -50,7 +51,11 @@ def load_video_frames(
     else:
         raise NotImplementedError("Only JPEG frames are supported at this moment")
     if frame_names is None:
-        frame_names = [p for p in os.listdir(jpg_folder) if os.path.splitext(p)[-1] in [".jpg", ".jpeg", ".JPG", ".JPEG", ".png"]]
+        frame_names = [
+            p
+            for p in os.listdir(jpg_folder)
+            if os.path.splitext(p)[-1] in [".jpg", ".jpeg", ".JPG", ".JPEG", ".png"]
+        ]
         frame_names.sort(key=lambda p: int(os.path.splitext(p)[0]))
 
     num_frames = len(frame_names)
@@ -61,7 +66,9 @@ def load_video_frames(
     img_std = torch.tensor(img_std, dtype=torch.float32)[:, None, None]
 
     if async_loading_frames:
-        lazy_images = AsyncVideoFrameLoader(img_paths, image_size, offload_video_to_cpu, img_mean, img_std)
+        lazy_images = AsyncVideoFrameLoader(
+            img_paths, image_size, offload_video_to_cpu, img_mean, img_std
+        )
         return lazy_images, lazy_images.video_height, lazy_images.video_width
 
     images = torch.zeros(num_frames, 3, image_size, image_size, dtype=torch.float32)

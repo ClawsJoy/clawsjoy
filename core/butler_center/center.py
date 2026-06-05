@@ -3,14 +3,14 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
-from typing import Dict, Optional, List
-from pathlib import Path
 import json
 from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional
 
 
 class ButlerCenter:
@@ -23,12 +23,17 @@ class ButlerCenter:
 
     def _load_butlers(self):
         """加载已注册的管家"""
-        butler_types = ["personal_butler_v2", "fixed_butler", "memory_driven_butler", "voice_butler"]
+        butler_types = [
+            "personal_butler_v2",
+            "fixed_butler",
+            "memory_driven_butler",
+            "voice_butler",
+        ]
         for bt in butler_types:
             self.butlers[bt] = {
                 "name": bt,
                 "status": "active",
-                "registered_at": datetime.now().isoformat()
+                "registered_at": datetime.now().isoformat(),
             }
 
     def register_butler(self, butler_name: str, metadata: Dict = None) -> bool:
@@ -37,7 +42,7 @@ class ButlerCenter:
             "name": butler_name,
             "metadata": metadata or {},
             "status": "active",
-            "registered_at": datetime.now().isoformat()
+            "registered_at": datetime.now().isoformat(),
         }
         return True
 
@@ -64,7 +69,7 @@ class ButlerCenter:
             "task": task,
             "target": target,
             "status": "dispatched",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
     def get_stats(self) -> Dict:
@@ -73,7 +78,7 @@ class ButlerCenter:
             "total_butlers": len(self.butlers),
             "active_butlers": len(self.get_active_butlers()),
             "queue_size": len(self.task_queue),
-            "butlers": list(self.butlers.keys())
+            "butlers": list(self.butlers.keys()),
         }
 
 

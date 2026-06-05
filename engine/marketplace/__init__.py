@@ -2,4 +2,4 @@
 
 from engine.marketplace.core import MarketplaceEngine, marketplace_engine
 
-__all__ = ['MarketplaceEngine', 'marketplace_engine']
+__all__ = ["MarketplaceEngine", "marketplace_engine"]

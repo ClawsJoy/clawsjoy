@@ -1,9 +1,9 @@
-from lib.smart_config import smart_config
 import torch
-from loguru import logger
-
 from lightx2v.models.schedulers.hunyuan_video.scheduler import HunyuanVideo15Scheduler
 from lightx2v_platform.base.global_var import AI_DEVICE
+from loguru import logger
+
+from lib.smart_config import smart_config
 
 
 class WorldPlayDistillScheduler(HunyuanVideo15Scheduler):
@@ -21,7 +21,9 @@ class WorldPlayDistillScheduler(HunyuanVideo15Scheduler):
         # Distill-specific parameters - use exact timesteps from HY-WorldPlay
         # These are the specific timesteps for 4-step distill inference
         self.distill_timesteps = [1000.0, 960.0, 888.8889, 727.2728, 0.0]
-        self.infer_steps = len(self.distill_timesteps) - 1  # 4 steps (5 timesteps including final 0)
+        self.infer_steps = (
+            len(self.distill_timesteps) - 1
+        )  # 4 steps (5 timesteps including final 0)
 
         self.num_train_timesteps = 1000
         self.sigma_max = 1.0
@@ -48,7 +50,9 @@ class WorldPlayDistillScheduler(HunyuanVideo15Scheduler):
         Sigmas are simply timesteps / 1000 (no shift applied for distill).
         """
         # Use exact timesteps from HY-WorldPlay for distill model
-        self.timesteps = torch.tensor(self.distill_timesteps, dtype=torch.float32, device=device)
+        self.timesteps = torch.tensor(
+            self.distill_timesteps, dtype=torch.float32, device=device
+        )
 
         # Compute sigmas - for distill model, NO shift is applied
         # sigmas = timesteps / 1000.0 directly
@@ -91,9 +95,21 @@ class WorldPlayDistillScheduler(HunyuanVideo15Scheduler):
         self.set_timesteps(self.infer_steps, device=AI_DEVICE, shift=self.sample_shift)
         self.multitask_mask = self.get_task_mask(self.config["task"], latent_shape[-3])
 
-        cond_latents = image_encoder_output.get("cond_latents") if image_encoder_output else None
-        self.cond_latents_concat, self.mask_concat = self._prepare_cond_latents_and_mask(self.config["task"], cond_latents, self.latents, self.multitask_mask, self.reorg_token)
-        self.cos_sin = self.prepare_cos_sin((latent_shape[1], latent_shape[2], latent_shape[3]))
+        cond_latents = (
+            image_encoder_output.get("cond_latents") if image_encoder_output else None
+        )
+        self.cond_latents_concat, self.mask_concat = (
+            self._prepare_cond_latents_and_mask(
+                self.config["task"],
+                cond_latents,
+                self.latents,
+                self.multitask_mask,
+                self.reorg_token,
+            )
+        )
+        self.cos_sin = self.prepare_cos_sin(
+            (latent_shape[1], latent_shape[2], latent_shape[3])
+        )
 
         # Store pose conditioning if provided
         if pose_output is not None:

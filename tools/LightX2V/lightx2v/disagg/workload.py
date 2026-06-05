@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 from __future__ import annotations
 
 import copy
@@ -8,6 +7,8 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional
+
+from lib.smart_config import smart_config
 
 try:
     from locust import LoadTestShape, User, events, task
@@ -40,8 +41,16 @@ except ModuleNotFoundError:
 from lightx2v.disagg.conn import REQUEST_POLLING_PORT, ReqManager
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_BASE_CONFIG_JSON = REPO_ROOT / "configs" / "disagg" / "single_node" / "wan22_i2v_distill_controller.json"
-DEFAULT_STAGE_DEFINITIONS_JSON = REPO_ROOT / "configs" / "disagg" / "wan22_i2v_workload_stages.json"
+DEFAULT_BASE_CONFIG_JSON = (
+    REPO_ROOT
+    / "configs"
+    / "disagg"
+    / "single_node"
+    / "wan22_i2v_distill_controller.json"
+)
+DEFAULT_STAGE_DEFINITIONS_JSON = (
+    REPO_ROOT / "configs" / "disagg" / "wan22_i2v_workload_stages.json"
+)
 
 _TEST_START_MONOTONIC: Optional[float] = None
 
@@ -78,7 +87,9 @@ def _load_base_config() -> dict[str, Any]:
 
 
 def _load_stage_definitions() -> list[dict[str, Any]]:
-    stage_file = Path(os.getenv("DISAGG_WORKLOAD_STAGES_JSON", str(DEFAULT_STAGE_DEFINITIONS_JSON)))
+    stage_file = Path(
+        os.getenv("DISAGG_WORKLOAD_STAGES_JSON", str(DEFAULT_STAGE_DEFINITIONS_JSON))
+    )
     if not stage_file.is_file():
         raise FileNotFoundError(f"workload stage config not found: {stage_file}")
 
@@ -116,7 +127,9 @@ class StageSpec:
             user_count=max(user_count, 1),
             spawn_rate=max(spawn_rate, 0.1),
             wait_time_s=max(wait_time_s, 0.0),
-            config_variants=[variant for variant in config_variants if isinstance(variant, dict)],
+            config_variants=[
+                variant for variant in config_variants if isinstance(variant, dict)
+            ],
         )
 
 
@@ -154,9 +167,15 @@ def _current_stage(stages: list[StageSpec]) -> StageSpec:
     return stages[_stage_index_for_elapsed(stages, _elapsed_since_start())]
 
 
-def _build_request_payload(base_config: dict[str, Any], stage: StageSpec, request_index: int) -> dict[str, Any]:
+def _build_request_payload(
+    base_config: dict[str, Any], stage: StageSpec, request_index: int
+) -> dict[str, Any]:
     payload = copy.deepcopy(base_config)
-    variant = stage.config_variants[request_index % len(stage.config_variants)] if stage.config_variants else {}
+    variant = (
+        stage.config_variants[request_index % len(stage.config_variants)]
+        if stage.config_variants
+        else {}
+    )
     payload = _deep_merge(payload, variant)
 
     payload.setdefault("request_metrics", {})
@@ -172,14 +191,20 @@ def _build_request_payload(base_config: dict[str, Any], stage: StageSpec, reques
     if save_path_prefix:
         save_root = Path(save_path_prefix)
         save_root.parent.mkdir(parents=True, exist_ok=True)
-        payload["save_path"] = str(save_root.with_name(f"{save_root.stem}_{stage.name}_{request_index}{save_root.suffix}"))
+        payload["save_path"] = str(
+            save_root.with_name(
+                f"{save_root.stem}_{stage.name}_{request_index}{save_root.suffix}"
+            )
+        )
 
     return payload
 
 
 def _get_controller_target() -> tuple[str, int]:
     host = os.getenv("DISAGG_CONTROLLER_HOST", "127.0.0.1")
-    port = int(os.getenv("DISAGG_CONTROLLER_REQUEST_PORT", str(REQUEST_POLLING_PORT - 2)))
+    port = int(
+        os.getenv("DISAGG_CONTROLLER_REQUEST_PORT", str(REQUEST_POLLING_PORT - 2))
+    )
     return host, port
 
 
@@ -198,7 +223,9 @@ def current_stage(stages: Optional[list[StageSpec]] = None) -> StageSpec:
     return _current_stage(loaded_stages)
 
 
-def build_payload(base_config: dict[str, Any], stage: StageSpec, request_index: int) -> dict[str, Any]:
+def build_payload(
+    base_config: dict[str, Any], stage: StageSpec, request_index: int
+) -> dict[str, Any]:
     return _build_request_payload(base_config, stage, request_index)
 
 

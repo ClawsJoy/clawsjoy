@@ -1,5 +1,6 @@
-from lib.smart_config import smart_config
 from abc import ABCMeta, abstractmethod
+
+from lib.smart_config import smart_config
 
 
 class AttnWeightTemplate(metaclass=ABCMeta):

@@ -3,40 +3,48 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 from core.lib.unified_config import unified_config
 
-from core.lib.unified_config import unified_config
-
-from core.lib.unified_config import unified_config
 #!/usr/bin/env python3
 """修复版检索 Agent"""
 
-import sys
 import re
-import requests
+import sys
 from typing import Dict, Tuple
 
+import requests
 
-from core.lib.memory_vector import vector_memory
 from core.lib.cross_session_memory import CrossSessionMemory
+from core.lib.memory_vector import vector_memory
 
 
 class FixedRetriever:
     VERSION = "6.2.0"
-    
+
     def __init__(self, user_id: str = "default"):
         self.user_id = user_id
         self.memory = CrossSessionMemory(user_id)
         self.ollama_url = "config_loader.get_ollama_url()"
         self.model = model_config.get_fast_model()
-    
+
     def _extract_search_term(self, user_input: str) -> str:
         """提取搜索词 - 保留完整关键词"""
         # 移除搜索动作词，保留完整名词
-        search_actions = ["找一下", "搜索", "查找", "查一下", "帮我找", "找", "查", "有没有", "在哪里", "在哪"]
+        search_actions = [
+            "找一下",
+            "搜索",
+            "查找",
+            "查一下",
+            "帮我找",
+            "找",
+            "查",
+            "有没有",
+            "在哪里",
+            "在哪",
+        ]
 
         term = user_input
         for action in search_actions:
@@ -50,7 +58,7 @@ class FixedRetriever:
             term = user_input
 
         return term
-    
+
     def _classify(self, user_input: str) -> Tuple[str, str]:
         lower = user_input.lower()
 
@@ -63,14 +71,14 @@ class FixedRetriever:
         if any(g in user_input for g in ["你好", "hi"]):
             return "greeting", ""
 
-        if re.match(r'^[我][叫][\s]*', user_input):
+        if re.match(r"^[我][叫][\s]*", user_input):
             return "self_intro", user_input
 
         if "你是谁" in user_input:
             return "ask_who", ""
 
         return "chat", user_input
-    
+
     def _search(self, query: str) -> str:
         """搜索向量库"""
         print(f"   🔍 搜索词: '{query}'")
@@ -80,7 +88,7 @@ class FixedRetriever:
 
         # 如果没找到，尝试拆分关键词
         if not results or len(results) == 0:
-            keywords = re.findall(r'[\u4e00-\u9fa5]{2,}', query)
+            keywords = re.findall(r"[\u4e00-\u9fa5]{2,}", query)
             for kw in keywords[:3]:
                 kw_results = vector_memory.search(kw, n=3)
                 results.extend(kw_results)
@@ -88,7 +96,7 @@ class FixedRetriever:
         # 过滤有效结果
         valid = []
         for r in results:
-            text = r.get('text', '')
+            text = r.get("text", "")
             if text and len(text) > 100:
                 valid.append(text[:800])
 
@@ -96,7 +104,7 @@ class FixedRetriever:
             return "\n\n---\n\n".join(valid[:2])
 
         return ""
-    
+
     def process(self, user_input: str) -> Dict:
         task_type, task_param = self._classify(user_input)
         print(f"   🎯 任务: {task_type} -> '{task_param[:40]}'")
@@ -114,7 +122,7 @@ class FixedRetriever:
             response = f"你好{f'，{name}' if name else ''}！我是 ClawsJoy"
 
         elif task_type == "self_intro":
-            match = re.search(r'叫[\s]*([^\s，。]{2,4})', user_input)
+            match = re.search(r"叫[\s]*([^\s，。]{2,4})", user_input)
             if match:
                 self.memory.remember("name", match.group(1))
                 response = f"你好，{match.group(1)}！我是 ClawsJoy"
@@ -133,7 +141,7 @@ class FixedRetriever:
 
 if __name__ == "__main__":
     agent = FixedRetriever("John")
-    
+
     tests = [
         "你好",
         "我叫 John",
@@ -141,7 +149,7 @@ if __name__ == "__main__":
         "找一下架构师的总结",
         "创始人的资料",
     ]
-    
+
     for t in tests:
         print(f"\n👤 {t}")
         result = agent.process(t)

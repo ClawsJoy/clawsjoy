@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import json
 import logging
 import math
@@ -7,13 +6,14 @@ from typing import Any, Dict, List
 
 import torch
 import torchvision.transforms.functional as TF
-from PIL import Image
-
 from lightx2v.models.networks.lora_adapter import LoraAdapter
 from lightx2v.utils.envs import GET_DTYPE
 from lightx2v.utils.set_config import set_config as set_config_base
 from lightx2v.utils.utils import find_torch_model_path
 from lightx2v_platform.base.global_var import AI_DEVICE
+from PIL import Image
+
+from lib.smart_config import smart_config
 
 logger = logging.getLogger(__name__)
 
@@ -91,7 +91,11 @@ def set_config(
         # Replicating set_infer_config logic
         if model_cls == "ltx2":
             args_dict["distilled_sigma_values"] = distilled_sigma_values
-            args_dict["infer_steps"] = len(distilled_sigma_values) - 1 if distilled_sigma_values is not None else infer_steps
+            args_dict["infer_steps"] = (
+                len(distilled_sigma_values) - 1
+                if distilled_sigma_values is not None
+                else infer_steps
+            )
         else:
             args_dict["infer_steps"] = infer_steps
 
@@ -101,7 +105,9 @@ def set_config(
         args_dict["sample_guide_scale"] = sample_guide_scale
         args_dict["sample_shift"] = sample_shift
 
-        if sample_guide_scale == 1 or (model_cls == "z_image" and sample_guide_scale == 0):
+        if sample_guide_scale == 1 or (
+            model_cls == "z_image" and sample_guide_scale == 0
+        ):
             args_dict["enable_cfg"] = False
         else:
             args_dict["enable_cfg"] = True
@@ -120,7 +126,14 @@ def set_config(
             args_dict["self_attn_1_type"] = attn_mode
             args_dict["cross_attn_1_type"] = attn_mode
             args_dict["cross_attn_2_type"] = attn_mode
-        elif model_cls in ["hunyuan_video_1.5", "hunyuan_video_1.5_distill", "qwen_image", "longcat_image", "ltx2", "z_image"]:
+        elif model_cls in [
+            "hunyuan_video_1.5",
+            "hunyuan_video_1.5_distill",
+            "qwen_image",
+            "longcat_image",
+            "ltx2",
+            "z_image",
+        ]:
             args_dict["attn_type"] = attn_mode
 
         args_dict["norm_modulate_backend"] = norm_modulate_backend
@@ -136,7 +149,9 @@ def set_config(
     return config
 
 
-def build_wan_model_with_lora(wan_module, config, model_kwargs, lora_configs, model_type="high_noise_model"):
+def build_wan_model_with_lora(
+    wan_module, config, model_kwargs, lora_configs, model_type="high_noise_model"
+):
     lora_dynamic_apply = config.get("lora_dynamic_apply", False)
 
     if lora_dynamic_apply:
@@ -154,12 +169,20 @@ def build_wan_model_with_lora(wan_module, config, model_kwargs, lora_configs, mo
         model_kwargs["lora_strength"] = lora_strength
         model = wan_module(**model_kwargs)
     else:
-        assert not config.get("dit_quantized", False), "Online LoRA only for quantized models; merging LoRA is unsupported."
-        assert not config.get("lazy_load", False), "Lazy load mode does not support LoRA merging."
+        assert not config.get(
+            "dit_quantized", False
+        ), "Online LoRA only for quantized models; merging LoRA is unsupported."
+        assert not config.get(
+            "lazy_load", False
+        ), "Lazy load mode does not support LoRA merging."
         model = wan_module(**model_kwargs)
         lora_wrapper = LoraAdapter(model)
         if model_type in ["high_noise_model", "low_noise_model"]:
-            lora_configs = [lora_config for lora_config in lora_configs if lora_config["name"] == model_type]
+            lora_configs = [
+                lora_config
+                for lora_config in lora_configs
+                if lora_config["name"] == model_type
+            ]
         lora_wrapper.apply_lora(lora_configs, model_type=model_type)
     return model
 
@@ -181,13 +204,17 @@ def load_wan_text_encoder(config: Dict[str, Any]):
         assert t5_quant_scheme is not None
         tmp_t5_quant_scheme = t5_quant_scheme.split("-")[0]
         t5_model_name = f"models_t5_umt5-xxl-enc-{tmp_t5_quant_scheme}.pth"
-        t5_quantized_ckpt = find_torch_model_path(config, "t5_quantized_ckpt", t5_model_name)
+        t5_quantized_ckpt = find_torch_model_path(
+            config, "t5_quantized_ckpt", t5_model_name
+        )
         t5_original_ckpt = None
     else:
         t5_quant_scheme = None
         t5_quantized_ckpt = None
         t5_model_name = "models_t5_umt5-xxl-enc-bf16.pth"
-        t5_original_ckpt = find_torch_model_path(config, "t5_original_ckpt", t5_model_name)
+        t5_original_ckpt = find_torch_model_path(
+            config, "t5_original_ckpt", t5_model_name
+        )
 
     text_encoder = T5EncoderModel(
         text_len=config["text_len"],
@@ -212,7 +239,9 @@ def load_wan_image_encoder(config: Dict[str, Any]):
     from lightx2v.models.input_encoders.hf.wan.xlm_roberta.model import CLIPModel
 
     image_encoder = None
-    if config["task"] in ["i2v", "flf2v", "animate", "s2v"] and config.get("use_image_encoder", True):
+    if config["task"] in ["i2v", "flf2v", "animate", "s2v"] and config.get(
+        "use_image_encoder", True
+    ):
         # offload config
         clip_offload = config.get("clip_cpu_offload", config.get("cpu_offload", False))
         if clip_offload:
@@ -226,13 +255,17 @@ def load_wan_image_encoder(config: Dict[str, Any]):
             assert clip_quant_scheme is not None
             tmp_clip_quant_scheme = clip_quant_scheme.split("-")[0]
             clip_model_name = f"models_clip_open-clip-xlm-roberta-large-vit-huge-14-{tmp_clip_quant_scheme}.pth"
-            clip_quantized_ckpt = find_torch_model_path(config, "clip_quantized_ckpt", clip_model_name)
+            clip_quantized_ckpt = find_torch_model_path(
+                config, "clip_quantized_ckpt", clip_model_name
+            )
             clip_original_ckpt = None
         else:
             clip_quantized_ckpt = None
             clip_quant_scheme = None
             clip_model_name = "models_clip_open-clip-xlm-roberta-large-vit-huge-14.pth"
-            clip_original_ckpt = find_torch_model_path(config, "clip_original_ckpt", clip_model_name)
+            clip_original_ckpt = find_torch_model_path(
+                config, "clip_original_ckpt", clip_model_name
+            )
 
         image_encoder = CLIPModel(
             dtype=torch.float16,
@@ -293,7 +326,10 @@ def load_wan_vae_encoder(config: Dict[str, Any]):
 def load_wan_vae_decoder(config: Dict[str, Any]):
     from lightx2v.models.video_encoders.hf.wan.vae import WanVAE
     from lightx2v.models.video_encoders.hf.wan.vae_2_2 import Wan2_2_VAE
-    from lightx2v.models.video_encoders.hf.wan.vae_tiny import Wan2_2_VAE_tiny, WanVAE_tiny
+    from lightx2v.models.video_encoders.hf.wan.vae_tiny import (
+        Wan2_2_VAE_tiny,
+        WanVAE_tiny,
+    )
 
     vae_name = config.get("vae_name", "Wan2.1_VAE.pth")
     tiny_vae_name = "taew2_1.pth"
@@ -326,7 +362,11 @@ def load_wan_vae_decoder(config: Dict[str, Any]):
     }
     if config.get("use_tae", False):
         tae_path = find_torch_model_path(config, "tae_path", tiny_vae_name)
-        vae_decoder = tiny_vae_cls(vae_path=tae_path, device=AI_DEVICE, need_scaled=config.get("need_scaled", False)).to(AI_DEVICE)
+        vae_decoder = tiny_vae_cls(
+            vae_path=tae_path,
+            device=AI_DEVICE,
+            need_scaled=config.get("need_scaled", False),
+        ).to(AI_DEVICE)
     else:
         vae_decoder = vae_cls(**vae_config)
     return vae_decoder
@@ -364,12 +404,18 @@ def load_wan_transformer(config: Dict[str, Any]):
         init_device = torch.device(AI_DEVICE)
 
     if config.get("model_cls") == "wan2.1":
-        wan_model_kwargs = {"model_path": config["model_path"], "config": config, "device": init_device}
+        wan_model_kwargs = {
+            "model_path": config["model_path"],
+            "config": config,
+            "device": init_device,
+        }
         lora_configs = config.get("lora_configs")
         if not lora_configs:
             model = WanModel(**wan_model_kwargs)
         else:
-            model = build_wan_model_with_lora(WanModel, config, wan_model_kwargs, lora_configs, model_type="wan2.1")
+            model = build_wan_model_with_lora(
+                WanModel, config, wan_model_kwargs, lora_configs, model_type="wan2.1"
+            )
         logger.info("WanModel construction finished")
         return model
     elif config.get("model_cls") == "wan2.2_moe":
@@ -379,18 +425,26 @@ def load_wan_transformer(config: Dict[str, Any]):
         print("Loading MultiModelStruct module done", flush=True)
 
         high_noise_model_path = os.path.join(config["model_path"], "high_noise_model")
-        if config.get("dit_quantized", False) and config.get("high_noise_quantized_ckpt", None):
+        if config.get("dit_quantized", False) and config.get(
+            "high_noise_quantized_ckpt", None
+        ):
             high_noise_model_path = config["high_noise_quantized_ckpt"]
         elif config.get("high_noise_original_ckpt", None):
             high_noise_model_path = config["high_noise_original_ckpt"]
 
         low_noise_model_path = os.path.join(config["model_path"], "low_noise_model")
-        if config.get("dit_quantized", False) and config.get("low_noise_quantized_ckpt", None):
+        if config.get("dit_quantized", False) and config.get(
+            "low_noise_quantized_ckpt", None
+        ):
             low_noise_model_path = config["low_noise_quantized_ckpt"]
-        elif not config.get("dit_quantized", False) and config.get("low_noise_original_ckpt", None):
+        elif not config.get("dit_quantized", False) and config.get(
+            "low_noise_original_ckpt", None
+        ):
             low_noise_model_path = config["low_noise_original_ckpt"]
 
-        if not config.get("lazy_load", False) and not config.get("unload_modules", False):
+        if not config.get("lazy_load", False) and not config.get(
+            "unload_modules", False
+        ):
             lora_configs = config.get("lora_configs")
             high_model_kwargs = {
                 "model_path": high_noise_model_path,
@@ -408,13 +462,31 @@ def load_wan_transformer(config: Dict[str, Any]):
                 high_noise_model = WanModel(**high_model_kwargs)
                 low_noise_model = WanModel(**low_model_kwargs)
             else:
-                high_noise_model = build_wan_model_with_lora(WanModel, config, high_model_kwargs, lora_configs, model_type="high_noise_model")
-                low_noise_model = build_wan_model_with_lora(WanModel, config, low_model_kwargs, lora_configs, model_type="low_noise_model")
+                high_noise_model = build_wan_model_with_lora(
+                    WanModel,
+                    config,
+                    high_model_kwargs,
+                    lora_configs,
+                    model_type="high_noise_model",
+                )
+                low_noise_model = build_wan_model_with_lora(
+                    WanModel,
+                    config,
+                    low_model_kwargs,
+                    lora_configs,
+                    model_type="low_noise_model",
+                )
 
             logger.info("WanModel construction finished for wan2.2_moe")
-            return MultiModelStruct([high_noise_model, low_noise_model], config, config.get("boundary", 0.875))
+            return MultiModelStruct(
+                [high_noise_model, low_noise_model],
+                config,
+                config.get("boundary", 0.875),
+            )
         else:
-            model_struct = MultiModelStruct([None, None], config, config.get("boundary", 0.875))
+            model_struct = MultiModelStruct(
+                [None, None], config, config.get("boundary", 0.875)
+            )
             model_struct.low_noise_model_path = low_noise_model_path
             model_struct.high_noise_model_path = high_noise_model_path
             model_struct.init_device = init_device

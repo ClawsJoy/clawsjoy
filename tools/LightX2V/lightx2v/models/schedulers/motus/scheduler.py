@@ -1,8 +1,8 @@
-from lib.smart_config import smart_config
 import numpy as np
 import torch
-
 from lightx2v.models.schedulers.wan.scheduler import WanScheduler
+
+from lib.smart_config import smart_config
 
 
 class MotusScheduler(WanScheduler):
@@ -17,7 +17,9 @@ class MotusScheduler(WanScheduler):
         self.vae_encoder_out = image_encoder_output["vae_encoder_out"]
         self.prepare_latents(seed, latent_shape, dtype=torch.float32)
 
-        alphas = np.linspace(1, 1 / self.num_train_timesteps, self.num_train_timesteps)[::-1].copy()
+        alphas = np.linspace(1, 1 / self.num_train_timesteps, self.num_train_timesteps)[
+            ::-1
+        ].copy()
         sigmas = 1.0 - alphas
         sigmas = torch.from_numpy(sigmas).to(dtype=torch.float32)
 
@@ -34,7 +36,9 @@ class MotusScheduler(WanScheduler):
         self.sigma_min = self.sigmas[-1].item()
         self.sigma_max = self.sigmas[0].item()
 
-        self.set_timesteps(self.infer_steps, device=self.latents.device, shift=self.sample_shift)
+        self.set_timesteps(
+            self.infer_steps, device=self.latents.device, shift=self.sample_shift
+        )
         self.video_latents = self.latents.unsqueeze(0)
         self.condition_frame_latent = self.vae_encoder_out.unsqueeze(0)
         self.action_latents = torch.randn(
@@ -46,7 +50,9 @@ class MotusScheduler(WanScheduler):
         self.latents = self.video_latents.squeeze(0)
 
     def prepare_latents(self, seed, latent_shape, dtype=torch.float32):
-        self.generator = torch.Generator(device=self.config.get("device", self.vae_encoder_out.device)).manual_seed(seed)
+        self.generator = torch.Generator(
+            device=self.config.get("device", self.vae_encoder_out.device)
+        ).manual_seed(seed)
         self.latents = torch.randn(
             latent_shape[0],
             latent_shape[1],
@@ -66,20 +72,33 @@ class MotusScheduler(WanScheduler):
             self.video_latents = self.latents.unsqueeze(0)
         else:
             self.video_latents = self.latents
-        timestep = self.sigmas[step_index].to(device=self.video_latents.device, dtype=self.video_latents.dtype)
+        timestep = self.sigmas[step_index].to(
+            device=self.video_latents.device, dtype=self.video_latents.dtype
+        )
         self.timestep_input = timestep.unsqueeze(0)
 
     def step_post(self):
         super().step_post()
-        self.video_latents = self.latents if self.latents.dim() == 5 else self.latents.unsqueeze(0)
+        self.video_latents = (
+            self.latents if self.latents.dim() == 5 else self.latents.unsqueeze(0)
+        )
         if self.action_noise_pred is None:
-            raise RuntimeError("MotusScheduler requires action_noise_pred before step_post().")
+            raise RuntimeError(
+                "MotusScheduler requires action_noise_pred before step_post()."
+            )
 
-        dt = self.sigmas[self.step_index + 1].to(device=self.action_latents.device, dtype=self.action_latents.dtype) - self.sigmas[self.step_index].to(
+        dt = self.sigmas[self.step_index + 1].to(
+            device=self.action_latents.device, dtype=self.action_latents.dtype
+        ) - self.sigmas[self.step_index].to(
             device=self.action_latents.device, dtype=self.action_latents.dtype
         )
-        self.action_latents = self.action_latents + self.action_noise_pred.to(self.action_latents.dtype) * dt
-        self.video_latents[:, :, 0:1] = self.condition_frame_latent.to(device=self.video_latents.device, dtype=self.video_latents.dtype)
+        self.action_latents = (
+            self.action_latents
+            + self.action_noise_pred.to(self.action_latents.dtype) * dt
+        )
+        self.video_latents[:, :, 0:1] = self.condition_frame_latent.to(
+            device=self.video_latents.device, dtype=self.video_latents.dtype
+        )
         self.latents = self.video_latents.squeeze(0)
 
     def clear(self):

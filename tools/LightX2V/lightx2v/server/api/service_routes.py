@@ -1,5 +1,6 @@
-from lib.smart_config import smart_config
 from fastapi import APIRouter
+
+from lib.smart_config import smart_config
 
 from ..task_manager import task_manager
 from .deps import get_services
@@ -15,5 +16,7 @@ async def get_service_status():
 @router.get("/metadata")
 async def get_service_metadata():
     services = get_services()
-    assert services.inference_service is not None, "Inference service is not initialized"
+    assert (
+        services.inference_service is not None
+    ), "Inference service is not initialized"
     return services.inference_service.server_metadata()

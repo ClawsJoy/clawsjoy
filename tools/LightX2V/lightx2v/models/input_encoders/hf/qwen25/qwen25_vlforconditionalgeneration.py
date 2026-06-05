@@ -1,12 +1,13 @@
-from lib.smart_config import smart_config
 import gc
 import math
 import os
 
 import torch
 
+from lib.smart_config import smart_config
+
 try:
-    from transformers import Qwen2Tokenizer, Qwen2_5_VLForConditionalGeneration
+    from transformers import Qwen2_5_VLForConditionalGeneration, Qwen2Tokenizer
 except ImportError:
     Qwen2Tokenizer = None
     Qwen2_5_VLForConditionalGeneration = None
@@ -58,7 +59,9 @@ class Qwen25_VLForConditionalGeneration_TextEncoder:
         self.config = config
         self.tokenizer_max_length = config.get("tokenizer_max_length", 4096)
         self.prompt_template_encode = config["prompt_template_encode"]
-        self.prompt_template_encode_start_idx = config["prompt_template_encode_start_idx"]
+        self.prompt_template_encode_start_idx = config[
+            "prompt_template_encode_start_idx"
+        ]
         """
         for Qwen-Image-Edit model, CONDITION_IMAGE_SIZE = 1024 * 1024
         for Qwen-Image-Edit-2509 model, CONDITION_IMAGE_SIZE = 384 * 384
@@ -71,7 +74,9 @@ class Qwen25_VLForConditionalGeneration_TextEncoder:
             self.resolution = self.config.get("resolution", 640)
             self.VAE_IMAGE_SIZE = self.resolution * self.resolution
 
-        self.cpu_offload = config.get("qwen25vl_cpu_offload", config.get("cpu_offload", False))
+        self.cpu_offload = config.get(
+            "qwen25vl_cpu_offload", config.get("cpu_offload", False)
+        )
         self.dtype = torch.bfloat16
         self.load()
 
@@ -86,22 +91,40 @@ class Qwen25_VLForConditionalGeneration_TextEncoder:
                 }
             else:
                 self.device_map = AI_DEVICE
-            self.text_encoder = Qwen2_5_VLForConditionalGeneration.from_pretrained(self.config["qwen25vl_quantized_ckpt"], dtype=torch.bfloat16, device_map=self.device_map, low_cpu_mem_usage=True)
+            self.text_encoder = Qwen2_5_VLForConditionalGeneration.from_pretrained(
+                self.config["qwen25vl_quantized_ckpt"],
+                dtype=torch.bfloat16,
+                device_map=self.device_map,
+                low_cpu_mem_usage=True,
+            )
         else:
-            self.text_encoder = Qwen2_5_VLForConditionalGeneration.from_pretrained(os.path.join(self.config["model_path"], "text_encoder"), torch_dtype=torch.bfloat16)
+            self.text_encoder = Qwen2_5_VLForConditionalGeneration.from_pretrained(
+                os.path.join(self.config["model_path"], "text_encoder"),
+                torch_dtype=torch.bfloat16,
+            )
 
         if not self.cpu_offload:
             self.text_encoder = self.text_encoder.to(AI_DEVICE)
 
-        qwen25vl_tokenizer_path = self.config.get("qwen25vl_tokenizer_path", os.path.join(self.config["model_path"], "tokenizer"))
+        qwen25vl_tokenizer_path = self.config.get(
+            "qwen25vl_tokenizer_path",
+            os.path.join(self.config["model_path"], "tokenizer"),
+        )
         self.tokenizer = Qwen2Tokenizer.from_pretrained(qwen25vl_tokenizer_path)
         if self.config["task"] == "i2i":
-            self.image_processor = VaeImageProcessor(vae_scale_factor=self.config["vae_scale_factor"] * 2)
-            qwen25vl_processor_path = self.config.get("qwen25vl_processor_path", os.path.join(self.config["model_path"], "processor"))
+            self.image_processor = VaeImageProcessor(
+                vae_scale_factor=self.config["vae_scale_factor"] * 2
+            )
+            qwen25vl_processor_path = self.config.get(
+                "qwen25vl_processor_path",
+                os.path.join(self.config["model_path"], "processor"),
+            )
             self.processor = Qwen2VLProcessor.from_pretrained(qwen25vl_processor_path)
 
         if self.is_layered:
-            self.vl_processor = Qwen2VLProcessor.from_pretrained(os.path.join(self.config["model_path"], "processor"))
+            self.vl_processor = Qwen2VLProcessor.from_pretrained(
+                os.path.join(self.config["model_path"], "processor")
+            )
             self.use_en_prompt = self.config["use_en_prompt"]
             self.image_caption_prompt_cn = """<|im_start|>system\nYou are a helpful assistant.<|im_end|>\n<|im_start|>user\n# 图像标注器\n你是一个专业的图像标注器。请基于输入图像，撰写图注:\n1.
     使用自然、描述性的语言撰写图注，不要使用结构化形式或富文本形式。\n2. 通过加入以下内容，丰富图注细节：\n - 对象的属性：如数量、颜色、形状、大小、位置、材质、状态、动作等\n -
@@ -128,11 +151,24 @@ class Qwen25_VLForConditionalGeneration_TextEncoder:
 
     def preprocess_image(self, image):
         image_width, image_height = image.size
-        condition_width, condition_height = calculate_dimensions(self.CONDITION_IMAGE_SIZE, image_width / image_height)
-        vae_width, vae_height = calculate_dimensions(self.VAE_IMAGE_SIZE, image_width / image_height)
-        condition_image = self.image_processor.resize(image, condition_height, condition_width)
-        vae_image = self.image_processor.preprocess(image, vae_height, vae_width).unsqueeze(2)
-        return condition_image, vae_image, (condition_height, condition_width), (vae_height, vae_width)
+        condition_width, condition_height = calculate_dimensions(
+            self.CONDITION_IMAGE_SIZE, image_width / image_height
+        )
+        vae_width, vae_height = calculate_dimensions(
+            self.VAE_IMAGE_SIZE, image_width / image_height
+        )
+        condition_image = self.image_processor.resize(
+            image, condition_height, condition_width
+        )
+        vae_image = self.image_processor.preprocess(
+            image, vae_height, vae_width
+        ).unsqueeze(2)
+        return (
+            condition_image,
+            vae_image,
+            (condition_height, condition_width),
+            (vae_height, vae_width),
+        )
 
     @torch.no_grad()
     def get_image_caption(self, prompt_image):
@@ -149,8 +185,15 @@ class Qwen25_VLForConditionalGeneration_TextEncoder:
         ).to(AI_DEVICE)
 
         generated_ids = self.text_encoder.generate(**model_inputs, max_new_tokens=512)
-        generated_ids_trimmed = [out_ids[len(in_ids) :] for in_ids, out_ids in zip(model_inputs.input_ids, generated_ids)]
-        output_text = self.vl_processor.batch_decode(generated_ids_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
+        generated_ids_trimmed = [
+            out_ids[len(in_ids) :]
+            for in_ids, out_ids in zip(model_inputs.input_ids, generated_ids)
+        ]
+        output_text = self.vl_processor.batch_decode(
+            generated_ids_trimmed,
+            skip_special_tokens=True,
+            clean_up_tokenization_spaces=False,
+        )[0]
         return output_text.strip()
 
     @torch.no_grad()
@@ -172,10 +215,14 @@ class Qwen25_VLForConditionalGeneration_TextEncoder:
             vae_image_info_list = []
             if self.USE_IMAGE_ID_IN_PROMPT:
                 base_img_prompt = ""
-                img_prompt_template = "Picture {}: <|vision_start|><|image_pad|><|vision_end|>"
+                img_prompt_template = (
+                    "Picture {}: <|vision_start|><|image_pad|><|vision_end|>"
+                )
                 for i, image in enumerate(image_list):
                     base_img_prompt += img_prompt_template.format(i + 1)
-                    condition_image, vae_image, condition_image_info, vae_image_info = self.preprocess_image(image)
+                    condition_image, vae_image, condition_image_info, vae_image_info = (
+                        self.preprocess_image(image)
+                    )
                     condition_image_list.append(condition_image)
                     vae_image_list.append(vae_image)
                     condition_image_info_list.append(condition_image_info)
@@ -183,7 +230,9 @@ class Qwen25_VLForConditionalGeneration_TextEncoder:
             else:
                 base_img_prompt = "<|vision_start|><|image_pad|><|vision_end|>"
                 for i, image in enumerate(image_list):
-                    condition_image, vae_image, condition_image_info, vae_image_info = self.preprocess_image(image)
+                    condition_image, vae_image, condition_image_info, vae_image_info = (
+                        self.preprocess_image(image)
+                    )
                     condition_image_list.append(condition_image)
                     vae_image_list.append(vae_image)
                     condition_image_info_list.append(condition_image_info)
@@ -219,11 +268,22 @@ class Qwen25_VLForConditionalGeneration_TextEncoder:
             drop_idx = self.prompt_template_encode_start_idx
             txt = [template.format(e) for e in text]
 
-            token_lengths = [len(ids) for ids in self.tokenizer(txt, add_special_tokens=True)["input_ids"]]
+            token_lengths = [
+                len(ids)
+                for ids in self.tokenizer(txt, add_special_tokens=True)["input_ids"]
+            ]
             max_token_len = max(token_lengths)
             if max_token_len > self.tokenizer_max_length + drop_idx:
-                raise ValueError(f"Input text token length ({max_token_len - drop_idx}) exceeds ({self.tokenizer_max_length}). Please shorten the input text.")
-            model_inputs = self.tokenizer(txt, max_length=self.tokenizer_max_length + drop_idx, padding=True, truncation=True, return_tensors="pt").to(AI_DEVICE)
+                raise ValueError(
+                    f"Input text token length ({max_token_len - drop_idx}) exceeds ({self.tokenizer_max_length}). Please shorten the input text."
+                )
+            model_inputs = self.tokenizer(
+                txt,
+                max_length=self.tokenizer_max_length + drop_idx,
+                padding=True,
+                truncation=True,
+                return_tensors="pt",
+            ).to(AI_DEVICE)
             encoder_hidden_states = self.text_encoder(
                 input_ids=model_inputs.input_ids,
                 attention_mask=model_inputs.attention_mask,
@@ -235,10 +295,23 @@ class Qwen25_VLForConditionalGeneration_TextEncoder:
 
         split_hidden_states = self._extract_masked_hidden(hidden_states, attention_mask)
         split_hidden_states = [e[drop_idx:] for e in split_hidden_states]
-        attn_mask_list = [torch.ones(e.size(0), dtype=torch.long, device=e.device) for e in split_hidden_states]
+        attn_mask_list = [
+            torch.ones(e.size(0), dtype=torch.long, device=e.device)
+            for e in split_hidden_states
+        ]
         max_seq_len = max([e.size(0) for e in split_hidden_states])
-        prompt_embeds = torch.stack([torch.cat([u, u.new_zeros(max_seq_len - u.size(0), u.size(1))]) for u in split_hidden_states])
-        encoder_attention_mask = torch.stack([torch.cat([u, u.new_zeros(max_seq_len - u.size(0))]) for u in attn_mask_list])
+        prompt_embeds = torch.stack(
+            [
+                torch.cat([u, u.new_zeros(max_seq_len - u.size(0), u.size(1))])
+                for u in split_hidden_states
+            ]
+        )
+        encoder_attention_mask = torch.stack(
+            [
+                torch.cat([u, u.new_zeros(max_seq_len - u.size(0))])
+                for u in attn_mask_list
+            ]
+        )
 
         prompt_embeds = prompt_embeds.to(dtype=self.dtype, device=AI_DEVICE)
         prompt_embeds_mask = encoder_attention_mask

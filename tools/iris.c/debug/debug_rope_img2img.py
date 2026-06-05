@@ -1,21 +1,27 @@
 from lib.smart_config import smart_config
+
 #!/usr/bin/env python3
 """
 Debug script to verify RoPE computation for img2img.
 Compares C implementation with Python reference.
 """
 
-import torch
 import math
+
+import torch
+
 
 def rope(pos, dim, theta):
     """Compute RoPE embeddings - same as model.py"""
     scale = torch.arange(0, dim, 2, dtype=pos.dtype, device=pos.device) / dim
     omega = 1.0 / (theta**scale)
     out = torch.einsum("...n,d->...nd", pos, omega)
-    out = torch.stack([torch.cos(out), -torch.sin(out), torch.sin(out), torch.cos(out)], dim=-1)
+    out = torch.stack(
+        [torch.cos(out), -torch.sin(out), torch.sin(out), torch.cos(out)], dim=-1
+    )
     out = out.reshape(*out.shape[:-1], 2, 2)
     return out.float()
+
 
 def compute_rope_c_style(pos, dim, theta):
     """Compute RoPE in C-style: store [cos, cos, sin, sin] for each frequency pair"""
@@ -25,7 +31,7 @@ def compute_rope_c_style(pos, dim, theta):
 
     for d in range(half_dim):
         scale = (2 * d) / dim
-        omega = 1.0 / (theta ** scale)
+        omega = 1.0 / (theta**scale)
         angle = float(pos) * omega
         cos_val = math.cos(angle)
         sin_val = math.sin(angle)
@@ -36,6 +42,7 @@ def compute_rope_c_style(pos, dim, theta):
         sin_out[d * 2 + 1] = sin_val
 
     return cos_out, sin_out
+
 
 def apply_rope_c_style(x, cos_vals, sin_vals):
     """Apply RoPE in C-style"""
@@ -48,6 +55,7 @@ def apply_rope_c_style(x, cos_vals, sin_vals):
         out[d] = x0 * cos_val - x1 * sin_val
         out[d + 1] = x1 * cos_val + x0 * sin_val
     return out
+
 
 def apply_rope_python_style(x, freqs_cis):
     """Apply RoPE in Python-style"""
@@ -66,6 +74,7 @@ def apply_rope_python_style(x, freqs_cis):
         out[i] = rot[:, 0] * x_pair[0] + rot[:, 1] * x_pair[1]
 
     return out.flatten()
+
 
 def main():
     theta = 2000  # Klein4B theta
@@ -175,10 +184,12 @@ def main():
     out_c = torch.zeros(128)
     for axis in range(4):
         axis_start = axis * 32
-        x_axis = x[axis_start:axis_start+32]
-        cos_axis = cos_full[axis_start:axis_start+32]
-        sin_axis = sin_full[axis_start:axis_start+32]
-        out_c[axis_start:axis_start+32] = apply_rope_c_style(x_axis, cos_axis, sin_axis)
+        x_axis = x[axis_start : axis_start + 32]
+        cos_axis = cos_full[axis_start : axis_start + 32]
+        sin_axis = sin_full[axis_start : axis_start + 32]
+        out_c[axis_start : axis_start + 32] = apply_rope_c_style(
+            x_axis, cos_axis, sin_axis
+        )
 
     # Python-style: apply using 64 rotation matrices
     out_py = apply_rope_python_style(x, full_freqs)
@@ -193,6 +204,7 @@ def main():
         print("    MATCH!")
     else:
         print("    MISMATCH!")
+
 
 if __name__ == "__main__":
     main()

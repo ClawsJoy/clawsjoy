@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import json
 import logging
 import os
@@ -15,8 +14,8 @@ from lightx2v.disagg.rdma_base import (
     QP,
     SGE,
     WR,
-    AHAttr,
     AccessFlag,
+    AHAttr,
     GlobalRoute,
     IBDevice,
     QPAttr,
@@ -32,6 +31,8 @@ from lightx2v.disagg.rdma_base import (
     rtr_path_mtu,
     rtr_path_mtu_negotiated,
 )
+
+from lib.smart_config import smart_config
 
 logger = logging.getLogger(__name__)
 
@@ -58,8 +59,12 @@ class RDMAClient:
         self.cq = CQ(self.ctx, 64)
         self.gid_index = self._resolve_gid_index()
 
-        qp_init_attr = QPCap(max_send_wr=64, max_recv_wr=64, max_send_sge=1, max_recv_sge=1)
-        self._qia = QPInitAttr(qp_type=QPType.RC, scq=self.cq, rcq=self.cq, cap=qp_init_attr)
+        qp_init_attr = QPCap(
+            max_send_wr=64, max_recv_wr=64, max_send_sge=1, max_recv_sge=1
+        )
+        self._qia = QPInitAttr(
+            qp_type=QPType.RC, scq=self.cq, rcq=self.cq, cap=qp_init_attr
+        )
         self._qa = QPAttr(port_num=self.port_num)
         self.qp = QP(self.pd, self._qia, self._qa)
 
@@ -156,15 +161,21 @@ class RDMAClient:
                 sock.connect((server_ip, port))
 
                 # 1. 接收 Server 信息 (包含 rkey 和 addr)
-                remote_info = recv_json_from_stream(sock, timeout_sec=connect_timeout_sec)
+                remote_info = recv_json_from_stream(
+                    sock, timeout_sec=connect_timeout_sec
+                )
                 if not isinstance(remote_info, dict):
-                    raise RuntimeError(f"Invalid handshake payload type: {type(remote_info)}")
+                    raise RuntimeError(
+                        f"Invalid handshake payload type: {type(remote_info)}"
+                    )
                 required_keys = {"addr", "rkey", "qpn", "psn", "gid"}
                 missing = required_keys.difference(remote_info.keys())
                 if missing:
                     raise RuntimeError(f"Handshake missing keys: {sorted(missing)}")
                 self.remote_info = remote_info
-                print(f"[Client] Got Server Info: Addr={hex(int(self.remote_info['addr']))}, RKey={self.remote_info['rkey']}")
+                print(
+                    f"[Client] Got Server Info: Addr={hex(int(self.remote_info['addr']))}, RKey={self.remote_info['rkey']}"
+                )
 
                 # 2. 发送我的信息给 Server
                 gid = self.ctx.query_gid(port_num=self.port_num, index=self.gid_index)
@@ -186,7 +197,9 @@ class RDMAClient:
                 self._connected_server_port = int(port)
                 self._qp_error_state = False
                 self._last_wc_error_message = ""
-                print(f"[Client] Connection established (RTS) to {server_ip}:{port} at attempt {attempt}/{max_retries}")
+                print(
+                    f"[Client] Connection established (RTS) to {server_ip}:{port} at attempt {attempt}/{max_retries}"
+                )
                 return
             except Exception as exc:
                 last_exc = exc
@@ -197,20 +210,30 @@ class RDMAClient:
                         pass
 
                 if attempt < max_retries:
-                    backoff = min(backoff_max_sec, backoff_base_sec * (2 ** (attempt - 1)))
+                    backoff = min(
+                        backoff_max_sec, backoff_base_sec * (2 ** (attempt - 1))
+                    )
                     if jitter_ratio > 0:
                         jitter = random.uniform(1.0 - jitter_ratio, 1.0 + jitter_ratio)
                         backoff = max(0.01, backoff * jitter)
-                    print(f"[Client] Handshake attempt {attempt}/{max_retries} failed to {server_ip}:{port}: {exc}. Retrying in {backoff:.2f}s")
+                    print(
+                        f"[Client] Handshake attempt {attempt}/{max_retries} failed to {server_ip}:{port}: {exc}. Retrying in {backoff:.2f}s"
+                    )
                     time.sleep(backoff)
 
-        raise RuntimeError(f"RDMA client failed to connect to {server_ip}:{port} after {max_retries} attempts") from last_exc
+        raise RuntimeError(
+            f"RDMA client failed to connect to {server_ip}:{port} after {max_retries} attempts"
+        ) from last_exc
 
     def _modify_qp_to_rts(self):
         # Follow the standard RC flow: INIT -> RTR -> RTS.
         remote_lid = int(self.remote_info.get("lid", 0))
         heuristic_dlid = rtr_ah_dest_dlid(self.ctx, self.port_num, remote_lid)
-        negotiated_mtu = int(rtr_path_mtu_negotiated(self.ctx, self.port_num, self.remote_info.get("active_mtu")))
+        negotiated_mtu = int(
+            rtr_path_mtu_negotiated(
+                self.ctx, self.port_num, self.remote_info.get("active_mtu")
+            )
+        )
         local_mtu = int(rtr_path_mtu(self.ctx, self.port_num))
         default_mtu = int(e.IBV_MTU_1024)
 
@@ -224,7 +247,9 @@ class RDMAClient:
             if v not in dlid_candidates:
                 dlid_candidates.append(v)
 
-        gr = GlobalRoute(dgid=GID(self.remote_info["gid"]), sgid_index=self.gid_index, hop_limit=1)
+        gr = GlobalRoute(
+            dgid=GID(self.remote_info["gid"]), sgid_index=self.gid_index, hop_limit=1
+        )
         last_exc = None
         for rd_atomic in (1, 0):
             for mtu in mtu_candidates:
@@ -232,7 +257,12 @@ class RDMAClient:
                     for is_global in (1, 0):
                         try:
                             init_attr = QPAttr(port_num=self.port_num)
-                            init_attr.qp_access_flags = AccessFlag.LOCAL_WRITE | AccessFlag.REMOTE_WRITE | AccessFlag.REMOTE_READ | AccessFlag.REMOTE_ATOMIC
+                            init_attr.qp_access_flags = (
+                                AccessFlag.LOCAL_WRITE
+                                | AccessFlag.REMOTE_WRITE
+                                | AccessFlag.REMOTE_READ
+                                | AccessFlag.REMOTE_ATOMIC
+                            )
                             self.qp.to_init(init_attr)
 
                             rtr_attr = QPAttr(port_num=self.port_num)
@@ -243,9 +273,16 @@ class RDMAClient:
                             rtr_attr.rq_psn = int(self.remote_info["psn"])
                             # Some drivers require GRH(is_global=1), others only accept non-GRH.
                             if is_global == 1:
-                                rtr_attr.ah_attr = AHAttr(port_num=self.port_num, is_global=1, gr=gr, dlid=int(dlid))
+                                rtr_attr.ah_attr = AHAttr(
+                                    port_num=self.port_num,
+                                    is_global=1,
+                                    gr=gr,
+                                    dlid=int(dlid),
+                                )
                             else:
-                                rtr_attr.ah_attr = AHAttr(port_num=self.port_num, is_global=0, dlid=int(dlid))
+                                rtr_attr.ah_attr = AHAttr(
+                                    port_num=self.port_num, is_global=0, dlid=int(dlid)
+                                )
                             self.qp.to_rtr(rtr_attr)
                             last_exc = None
                             break
@@ -435,9 +472,7 @@ class RDMAClient:
                     opcode = getattr(wc, "opcode", None)
                     status_name = self._wc_status_name(status)
                     self._qp_error_state = True
-                    self._last_wc_error_message = (
-                        f"status={status}({status_name}) vendor_err={vendor_err} wr_id={wr_id} opcode={opcode} server={self._connected_server_ip}:{self._connected_server_port}"
-                    )
+                    self._last_wc_error_message = f"status={status}({status_name}) vendor_err={vendor_err} wr_id={wr_id} opcode={opcode} server={self._connected_server_ip}:{self._connected_server_port}"
                     logger.error(
                         "RDMA CQ failure: status=%s(%s) vendor_err=%s wr_id=%s opcode=%s server=%s:%s",
                         status,
@@ -448,7 +483,9 @@ class RDMAClient:
                         self._connected_server_ip,
                         self._connected_server_port,
                     )
-                    raise RuntimeError(f"WC Error: {status}({status_name}), vendor_err: {vendor_err}, wr_id: {wr_id}, opcode: {opcode}")
+                    raise RuntimeError(
+                        f"WC Error: {status}({status_name}), vendor_err: {vendor_err}, wr_id: {wr_id}, opcode: {opcode}"
+                    )
                 break
             time.sleep(0.0001)
 

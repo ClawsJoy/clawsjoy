@@ -1,8 +1,8 @@
-from lib.smart_config import smart_config
 import torch
 import torch.distributed as dist
-
 from lightx2v.common.ops.attn.utils.all2all import all2all_head2seq, all2all_seq2head
+
+from lib.smart_config import smart_config
 
 
 class BaseKVCachePool:
@@ -34,12 +34,16 @@ class BaseKVCachePool:
             device=self._device,
         )
 
-    def k_cache(self, layer_id: int, attn_start: int | None = None, local_end: int | None = None) -> torch.Tensor:
+    def k_cache(
+        self, layer_id: int, attn_start: int | None = None, local_end: int | None = None
+    ) -> torch.Tensor:
         if attn_start is None and local_end is None:
             return self._k_buffer[layer_id]
         return self._k_buffer[layer_id][attn_start:local_end]
 
-    def v_cache(self, layer_id: int, attn_start: int | None = None, local_end: int | None = None) -> torch.Tensor:
+    def v_cache(
+        self, layer_id: int, attn_start: int | None = None, local_end: int | None = None
+    ) -> torch.Tensor:
         if attn_start is None and local_end is None:
             return self._v_buffer[layer_id]
         return self._v_buffer[layer_id][attn_start:local_end]
@@ -111,7 +115,9 @@ class BaseKVCachePool:
         attn_start: int | None = None,
         local_end: int | None = None,
     ):
-        raise TypeError(f"{self.__class__.__name__} does not support tuple K/V in SP path. Please use a cache class that implements _sp_quant_kv_to_head_shard.")
+        raise TypeError(
+            f"{self.__class__.__name__} does not support tuple K/V in SP path. Please use a cache class that implements _sp_quant_kv_to_head_shard."
+        )
 
     @property
     def device(self) -> torch.device:

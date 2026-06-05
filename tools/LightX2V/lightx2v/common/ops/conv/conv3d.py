@@ -1,16 +1,25 @@
-from lib.smart_config import smart_config
 from abc import ABCMeta, abstractmethod
 
 import torch
-from loguru import logger
-
 from lightx2v.common.ops.utils import *
 from lightx2v.utils.envs import *
 from lightx2v.utils.registry_factory import CONV3D_WEIGHT_REGISTER
+from loguru import logger
+
+from lib.smart_config import smart_config
 
 
 class Conv3dWeightTemplate(metaclass=ABCMeta):
-    def __init__(self, weight_name, bias_name, stride=1, padding=0, dilation=1, groups=1, lora_prefix="diffusion_model.blocks"):
+    def __init__(
+        self,
+        weight_name,
+        bias_name,
+        stride=1,
+        padding=0,
+        dilation=1,
+        groups=1,
+        lora_prefix="diffusion_model.blocks",
+    ):
         self.weight_name = weight_name
         self.bias_name = bias_name
         self.stride = stride
@@ -30,7 +39,9 @@ class Conv3dWeightTemplate(metaclass=ABCMeta):
         self.base_attrs.append((self.bias_name, "bias", False))
 
     def _get_lora_attr_mapping(self):
-        _, _, _, self.weight_diff_name, self.bias_diff_name = build_lora_and_diff_names(self.weight_name, self.lora_prefix)
+        _, _, _, self.weight_diff_name, self.bias_diff_name = build_lora_and_diff_names(
+            self.weight_name, self.lora_prefix
+        )
         self.lora_attrs = {
             "weight_diff": "weight_diff_name",
             "bias_diff": "bias_diff_name",
@@ -76,11 +87,24 @@ class Conv3dWeightTemplate(metaclass=ABCMeta):
 
 @CONV3D_WEIGHT_REGISTER("Default")
 class Conv3dWeight(Conv3dWeightTemplate):
-    def __init__(self, weight_name, bias_name, stride=1, padding=0, dilation=1, groups=1, lora_prefix="diffusion_model.blocks"):
-        super().__init__(weight_name, bias_name, stride, padding, dilation, groups, lora_prefix)
+    def __init__(
+        self,
+        weight_name,
+        bias_name,
+        stride=1,
+        padding=0,
+        dilation=1,
+        groups=1,
+        lora_prefix="diffusion_model.blocks",
+    ):
+        super().__init__(
+            weight_name, bias_name, stride, padding, dilation, groups, lora_prefix
+        )
 
     def load(self, weight_dict):
-        device_tensors, pin_tensors = create_default_tensors(self.base_attrs, weight_dict)
+        device_tensors, pin_tensors = create_default_tensors(
+            self.base_attrs, weight_dict
+        )
         self.weight = device_tensors.get("weight")
         self.bias = device_tensors.get("bias")
         self.pin_weight = pin_tensors.get("weight")
@@ -108,4 +132,11 @@ class Conv3dWeight(Conv3dWeightTemplate):
         return state_dict(self, self.base_attrs, self.lora_attrs, destination)
 
     def load_state_dict(self, destination, block_index, adapter_block_index=None):
-        return load_state_dict(self, self.base_attrs, self.lora_attrs, destination, block_index, adapter_block_index)
+        return load_state_dict(
+            self,
+            self.base_attrs,
+            self.lora_attrs,
+            destination,
+            block_index,
+            adapter_block_index,
+        )

@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """WeightModule-based weight containers for the WorldMirror ViT backbone
 and the CameraHead refinement trunk.
 
@@ -33,7 +34,6 @@ Key-naming: hard-coded to match the HY-WorldMirror-2.0 checkpoint layout
 from __future__ import annotations
 
 import torch
-
 from lightx2v.common.modules.weight_module import WeightModule, WeightModuleList
 from lightx2v.utils.global_paras import CALIB
 from lightx2v.utils.registry_factory import (
@@ -150,7 +150,9 @@ class CameraHeadParamPredictorWeights(WeightModule):
     so upstream callers can reason about the quant scope the same way.
     """
 
-    def __init__(self, *, mm_type: str, use_fp32_fc1: bool = False, use_fp32_fc2: bool = True):
+    def __init__(
+        self, *, mm_type: str, use_fp32_fc1: bool = False, use_fp32_fc2: bool = True
+    ):
         super().__init__()
         fc1_scheme = "Default-ForceFp32" if use_fp32_fc1 else mm_type
         self.add_module(
@@ -249,8 +251,12 @@ class WorldMirrorTransformerWeights(WeightModule):
         # has occasional high-magnitude attention outliers that EMA would
         # smooth past. The legacy ``Calib`` scheme (EMA, designed for
         # NVFP4) is still reachable via ``run_calib_mode="ema"``.
-        run_calib = bool(config.get("run_calib", False)) if hasattr(config, "get") else False
-        calib_mode = config.get("run_calib_mode", "max") if hasattr(config, "get") else "max"
+        run_calib = (
+            bool(config.get("run_calib", False)) if hasattr(config, "get") else False
+        )
+        calib_mode = (
+            config.get("run_calib_mode", "max") if hasattr(config, "get") else "max"
+        )
         if run_calib:
             mm_type = {"max": "CalibMax", "ema": "Calib"}.get(calib_mode, "CalibMax")
         else:
@@ -264,8 +270,16 @@ class WorldMirrorTransformerWeights(WeightModule):
         # few blocks shape patch features directly from the Dino backbone
         # and the last few feed DPT heads; empirically both regions are
         # disproportionately sensitive to fp8 activation quantization.
-        fp32_first = int(config.get("fp32_first_n_blocks", 0) or 0) if hasattr(config, "get") else 0
-        fp32_last = int(config.get("fp32_last_n_blocks", 0) or 0) if hasattr(config, "get") else 0
+        fp32_first = (
+            int(config.get("fp32_first_n_blocks", 0) or 0)
+            if hasattr(config, "get")
+            else 0
+        )
+        fp32_last = (
+            int(config.get("fp32_last_n_blocks", 0) or 0)
+            if hasattr(config, "get")
+            else 0
+        )
 
         def _block_mm_type(i: int) -> str:
             if i < fp32_first or i >= depth - fp32_last:
@@ -282,8 +296,16 @@ class WorldMirrorTransformerWeights(WeightModule):
         # of the ViT trunk. Leaving a knob per sublayer means we can push
         # proj into fp8 in 70%+ of blocks while still protecting the edges.
         def _sublayer_edge(key: str):
-            first = int(config.get(f"fp32_{key}_first_n_blocks", 0) or 0) if hasattr(config, "get") else 0
-            last = int(config.get(f"fp32_{key}_last_n_blocks", 0) or 0) if hasattr(config, "get") else 0
+            first = (
+                int(config.get(f"fp32_{key}_first_n_blocks", 0) or 0)
+                if hasattr(config, "get")
+                else 0
+            )
+            last = (
+                int(config.get(f"fp32_{key}_last_n_blocks", 0) or 0)
+                if hasattr(config, "get")
+                else 0
+            )
             return first, last
 
         _qkv_first, _qkv_last = _sublayer_edge("attn_qkv")
@@ -347,7 +369,11 @@ class WorldMirrorTransformerWeights(WeightModule):
         # world-space position. Keeping it fp32 is cheap (4 blocks, ~15 MB)
         # and recovers the last bit of gaussian-count agreement. Opt in via
         # ``cam_refine_fp32`` in the runtime config.
-        cam_refine_fp32 = bool(config.get("cam_refine_fp32", False)) if hasattr(config, "get") else False
+        cam_refine_fp32 = (
+            bool(config.get("cam_refine_fp32", False))
+            if hasattr(config, "get")
+            else False
+        )
         cam_mm_type = "Default-ForceFp32" if cam_refine_fp32 else mm_type
         self.add_module(
             "cam_refine_blocks",
@@ -357,10 +383,30 @@ class WorldMirrorTransformerWeights(WeightModule):
                     mm_type=cam_mm_type,
                     ln_type=ln_type,
                     qk_norm=cam_qk_norm,
-                    use_fp32_fc2=cam_refine_fp32 or (bool(config.get("use_fp32_fc2", False)) if hasattr(config, "get") else False),
-                    use_fp32_attn_proj=cam_refine_fp32 or (bool(config.get("use_fp32_attn_proj", False)) if hasattr(config, "get") else False),
-                    use_fp32_attn_qkv=cam_refine_fp32 or (bool(config.get("use_fp32_attn_qkv", False)) if hasattr(config, "get") else False),
-                    use_fp32_fc1=cam_refine_fp32 or (bool(config.get("use_fp32_fc1", False)) if hasattr(config, "get") else False),
+                    use_fp32_fc2=cam_refine_fp32
+                    or (
+                        bool(config.get("use_fp32_fc2", False))
+                        if hasattr(config, "get")
+                        else False
+                    ),
+                    use_fp32_attn_proj=cam_refine_fp32
+                    or (
+                        bool(config.get("use_fp32_attn_proj", False))
+                        if hasattr(config, "get")
+                        else False
+                    ),
+                    use_fp32_attn_qkv=cam_refine_fp32
+                    or (
+                        bool(config.get("use_fp32_attn_qkv", False))
+                        if hasattr(config, "get")
+                        else False
+                    ),
+                    use_fp32_fc1=cam_refine_fp32
+                    or (
+                        bool(config.get("use_fp32_fc1", False))
+                        if hasattr(config, "get")
+                        else False
+                    ),
                 )
                 for i in range(cam_trunk_depth)
             ),
@@ -373,7 +419,11 @@ class WorldMirrorTransformerWeights(WeightModule):
         # runs them at fp32 — putting them in the WM tree just formalises
         # that in the Default-ForceFp32 scheme, cleaning up the "identify
         # fp32 critical by isinstance" heuristic in bf16 cast.
-        self._extended_scope = bool(config.get("wm_extended_scope", False)) if hasattr(config, "get") else False
+        self._extended_scope = (
+            bool(config.get("wm_extended_scope", False))
+            if hasattr(config, "get")
+            else False
+        )
         if self._extended_scope:
             # cam_head.param_predictor: fc1 follows quant scheme; fc2 is
             # always fp32 because MlpFP32.forward_infer casts the input.
@@ -381,7 +431,11 @@ class WorldMirrorTransformerWeights(WeightModule):
                 "cam_param_predictor",
                 CameraHeadParamPredictorWeights(
                     mm_type=mm_type,
-                    use_fp32_fc1=bool(config.get("use_fp32_param_predictor_fc1", False)) if hasattr(config, "get") else False,
+                    use_fp32_fc1=(
+                        bool(config.get("use_fp32_param_predictor_fc1", False))
+                        if hasattr(config, "get")
+                        else False
+                    ),
                     use_fp32_fc2=True,
                 ),
             )
@@ -392,7 +446,9 @@ class WorldMirrorTransformerWeights(WeightModule):
             # output_conv2 container — registering it would just immediately
             # KeyError at load time because the disabled head's keys are
             # not in the safetensors. Mapping mirrors model.py:_HEAD_MAPPING.
-            disable_heads = config.get("disable_heads", None) if hasattr(config, "get") else None
+            disable_heads = (
+                config.get("disable_heads", None) if hasattr(config, "get") else None
+            )
             disabled = set(disable_heads or [])
             head_disable_map = {
                 "depth": "depth_head",
@@ -400,7 +456,9 @@ class WorldMirrorTransformerWeights(WeightModule):
                 "points": "pts_head",
                 "gs": "gs_head",
             }
-            disabled_attrs = {head_disable_map[n] for n in disabled if n in head_disable_map}
+            disabled_attrs = {
+                head_disable_map[n] for n in disabled if n in head_disable_map
+            }
             for head_name in ("depth_head", "norm_head", "pts_head", "gs_head"):
                 if head_name in disabled_attrs:
                     continue
@@ -428,7 +486,9 @@ class WorldMirrorTransformerWeights(WeightModule):
     # ------------------------------------------------------------------
     def load(self, weight_dict):
         cfg = self.config
-        auto_quant = bool(cfg.get("weight_auto_quant", False)) if hasattr(cfg, "get") else False
+        auto_quant = (
+            bool(cfg.get("weight_auto_quant", False)) if hasattr(cfg, "get") else False
+        )
         if not auto_quant:
             super().load(weight_dict)
             return
@@ -536,7 +596,11 @@ class WorldMirrorTransformerWeights(WeightModule):
             # downstream ``.to(AI_DEVICE)`` yields the same logical layout.
             for attr in ("pin_weight", "pin_bias"):
                 t = getattr(leaf, attr, None)
-                if not (isinstance(t, torch.Tensor) and t.is_floating_point() and t.dtype != dtype):
+                if not (
+                    isinstance(t, torch.Tensor)
+                    and t.is_floating_point()
+                    and t.dtype != dtype
+                ):
                     continue
                 transposed = not t.is_contiguous()
                 base = t.t().contiguous() if transposed else t

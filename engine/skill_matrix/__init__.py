@@ -2,5 +2,5 @@
 
 from engine.skill_matrix.core import SkillMatrixEngine, skill_matrix_engine
 
-__all__ = ['SkillMatrixEngine', 'skill_matrix_engine']
-__version__ = '2.0.0'
+__all__ = ["SkillMatrixEngine", "skill_matrix_engine"]
+__version__ = "2.0.0"

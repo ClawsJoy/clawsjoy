@@ -1,7 +1,7 @@
-from lib.smart_config import smart_config
 import torch
-
 from lightx2v.models.networks.wan.infer.post_infer import WanPostInfer
+
+from lib.smart_config import smart_config
 
 
 class WanMtxg3PostInfer(WanPostInfer):

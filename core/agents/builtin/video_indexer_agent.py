@@ -3,7 +3,7 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
@@ -11,6 +11,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 from typing import Dict, List, Optional
+
 from core.agents.base.smart_agent import SmartAgent
 
 
@@ -30,21 +31,33 @@ class VideoIndexerAgent(SmartAgent):
         """初始化视觉技能"""
         try:
             from skills.image.vision import VisionSkill
+
             self.vision_skill = VisionSkill()
             print("   ✅ 视觉技能已加载")
         except Exception as e:
             print(f"   ❌ 技能加载失败: {e}")
             self.vision_skill = None
 
-    def extract_frames(self, video_path: str, interval: int = 10, max_frames: int = 5) -> List[str]:
+    def extract_frames(
+        self, video_path: str, interval: int = 10, max_frames: int = 5
+    ) -> List[str]:
         """提取视频关键帧"""
         frames = []
         try:
             # 获取视频时长
             result = subprocess.run(
-                ['ffprobe', '-v', 'error', '-show_entries', 'format=duration',
-                 '-of', 'default=noprint_wrappers=1:nokey=1', video_path],
-                capture_output=True, text=True
+                [
+                    "ffprobe",
+                    "-v",
+                    "error",
+                    "-show_entries",
+                    "format=duration",
+                    "-of",
+                    "default=noprint_wrappers=1:nokey=1",
+                    video_path,
+                ],
+                capture_output=True,
+                text=True,
             )
             try:
                 duration = float(result.stdout.strip())
@@ -59,10 +72,21 @@ class VideoIndexerAgent(SmartAgent):
                     timestamp = step * (i + 1)
                     frame_path = Path(tmpdir) / f"frame_{i}.jpg"
 
-                    subprocess.run([
-                        'ffmpeg', '-ss', str(timestamp), '-i', video_path,
-                        '-vframes', '1', '-q:v', '2', str(frame_path)
-                    ], capture_output=True)
+                    subprocess.run(
+                        [
+                            "ffmpeg",
+                            "-ss",
+                            str(timestamp),
+                            "-i",
+                            video_path,
+                            "-vframes",
+                            "1",
+                            "-q:v",
+                            "2",
+                            str(frame_path),
+                        ],
+                        capture_output=True,
+                    )
 
                     if frame_path.exists():
                         frames.append(str(frame_path))
@@ -87,16 +111,15 @@ class VideoIndexerAgent(SmartAgent):
             return {
                 "success": True,
                 "description": f"视频文件: {path.name} (无法提取帧)",
-                "frames_analyzed": 0
+                "frames_analyzed": 0,
             }
 
         # 分析每一帧
         descriptions = []
         for frame_path in frames:
-            result = self.vision_skill.execute({
-                "image_path": frame_path,
-                "task": "describe"
-            })
+            result = self.vision_skill.execute(
+                {"image_path": frame_path, "task": "describe"}
+            )
             if result and result.get("success"):
                 descriptions.append(result.get("description", ""))
             else:
@@ -105,7 +128,7 @@ class VideoIndexerAgent(SmartAgent):
         return {
             "success": True,
             "description": " | ".join(descriptions),
-            "frames_analyzed": len(frames)
+            "frames_analyzed": len(frames),
         }
 
     def process(self, message: str, **kwargs) -> Dict:
@@ -113,12 +136,12 @@ class VideoIndexerAgent(SmartAgent):
         if "描述" in message or "分析" in message:
             # 提取视频路径
             import re
-            video_match = re.search(r'([^\s]+\.(mp4|avi|mov|mkv))', message)
+
+            video_match = re.search(r"([^\s]+\.(mp4|avi|mov|mkv))", message)
             if video_match:
                 return self.describe_video(video_match.group(1))
             return {"success": False, "error": "请提供视频文件路径"}
         return {"success": False, "error": "不支持的操作"}
-
 
     def can_handle(self, user_input: str) -> Dict:
         """判断是否能处理该请求"""
@@ -129,4 +152,6 @@ class VideoIndexerAgent(SmartAgent):
         return {"can": False, "confidence": 0.0}
 
     # 全局实例
+
+
 video_indexer_agent = VideoIndexerAgent()

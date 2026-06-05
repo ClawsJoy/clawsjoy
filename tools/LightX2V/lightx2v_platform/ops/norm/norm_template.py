@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import os
 import re
 from abc import ABCMeta, abstractmethod
@@ -6,9 +5,10 @@ from functools import lru_cache
 from pathlib import Path
 
 import torch
+from lightx2v_platform.base.global_var import AI_DEVICE
 from safetensors import safe_open
 
-from lightx2v_platform.base.global_var import AI_DEVICE
+from lib.smart_config import smart_config
 
 DTYPE_MAP = {
     "BF16": torch.bfloat16,
@@ -39,7 +39,18 @@ def GET_SENSITIVE_DTYPE():
 
 
 class RMSWeightTemplate(metaclass=ABCMeta):
-    def __init__(self, weight_name, create_cuda_buffer=False, create_cpu_buffer=False, lazy_load=False, lazy_load_file=None, is_post_adapter=False, eps=1e-6, lora_prefix="", lora_path=""):
+    def __init__(
+        self,
+        weight_name,
+        create_cuda_buffer=False,
+        create_cpu_buffer=False,
+        lazy_load=False,
+        lazy_load_file=None,
+        is_post_adapter=False,
+        eps=1e-6,
+        lora_prefix="",
+        lora_path="",
+    ):
         self.weight_name = weight_name
         self.eps = eps
         self.create_cuda_buffer = create_cuda_buffer
@@ -76,8 +87,13 @@ class RMSWeightTemplate(metaclass=ABCMeta):
             if Path(self.lazy_load_file).is_file():
                 lazy_load_file_path = self.lazy_load_file
             else:
-                lazy_load_file_path = os.path.join(self.lazy_load_file, f"block_{self.weight_name.split('.')[1]}.safetensors")
-            with safe_open(lazy_load_file_path, framework="pt", device="cpu") as lazy_load_file:
+                lazy_load_file_path = os.path.join(
+                    self.lazy_load_file,
+                    f"block_{self.weight_name.split('.')[1]}.safetensors",
+                )
+            with safe_open(
+                lazy_load_file_path, framework="pt", device="cpu"
+            ) as lazy_load_file:
                 tensor = lazy_load_file.get_tensor(self.weight_name)
                 if use_infer_dtype:
                     tensor = tensor.to(self.infer_dtype)
@@ -92,7 +108,9 @@ class RMSWeightTemplate(metaclass=ABCMeta):
         return pin_tensor
 
     def _load_cuda_buffer(self, weight_dict):
-        weight_tensor = self._get_weight_tensor(weight_dict, use_infer_dtype=self.lazy_load)
+        weight_tensor = self._get_weight_tensor(
+            weight_dict, use_infer_dtype=self.lazy_load
+        )
         self.weight_cuda_buffer = weight_tensor.to(AI_DEVICE)
 
     def _load_cpu_pin_buffer(self):
@@ -112,45 +130,75 @@ class RMSWeightTemplate(metaclass=ABCMeta):
 
     def to_cpu(self, non_blocking=False):
         if hasattr(self, "pin_weight"):
-            self.weight = self.pin_weight.copy_(self.weight, non_blocking=non_blocking).cpu()
+            self.weight = self.pin_weight.copy_(
+                self.weight, non_blocking=non_blocking
+            ).cpu()
         else:
             self.weight = self.weight.to("cpu", non_blocking=non_blocking)
 
     def state_dict(self, destination=None):
         if destination is None:
             destination = {}
-        destination[self.weight_name] = self.pin_weight if hasattr(self, "pin_weight") else self.weight
+        destination[self.weight_name] = (
+            self.pin_weight if hasattr(self, "pin_weight") else self.weight
+        )
         return destination
 
     def load_state_dict(self, destination, block_index, adapter_block_index=None):
         if self.is_post_adapter:
             assert adapter_block_index is not None
-            weight_name = re.sub(r"\.\d+", lambda m: f".{adapter_block_index}", self.weight_name, count=1)
+            weight_name = re.sub(
+                r"\.\d+", lambda m: f".{adapter_block_index}", self.weight_name, count=1
+            )
         else:
-            weight_name = re.sub(r"\.\d+", lambda m: f".{block_index}", self.weight_name, count=1)
+            weight_name = re.sub(
+                r"\.\d+", lambda m: f".{block_index}", self.weight_name, count=1
+            )
 
         if weight_name not in destination:
             self.weight = None
             return
-        self.weight = self.weight_cuda_buffer.copy_(destination[weight_name], non_blocking=True)
+        self.weight = self.weight_cuda_buffer.copy_(
+            destination[weight_name], non_blocking=True
+        )
 
     def load_state_dict_from_disk(self, block_index, adapter_block_index=None):
         if self.is_post_adapter:
-            self.weight_name = re.sub(r"\.\d+", lambda m: f".{adapter_block_index}", self.weight_name, count=1)
+            self.weight_name = re.sub(
+                r"\.\d+", lambda m: f".{adapter_block_index}", self.weight_name, count=1
+            )
         else:
-            self.weight_name = re.sub(r"\.\d+", lambda m: f".{block_index}", self.weight_name, count=1)
+            self.weight_name = re.sub(
+                r"\.\d+", lambda m: f".{block_index}", self.weight_name, count=1
+            )
         if Path(self.lazy_load_file).is_file():
             lazy_load_file_path = self.lazy_load_file
         else:
-            lazy_load_file_path = os.path.join(self.lazy_load_file, f"block_{block_index}.safetensors")
-        with safe_open(lazy_load_file_path, framework="pt", device="cpu") as lazy_load_file:
-            weight_tensor = lazy_load_file.get_tensor(self.weight_name).to(self.infer_dtype)
+            lazy_load_file_path = os.path.join(
+                self.lazy_load_file, f"block_{block_index}.safetensors"
+            )
+        with safe_open(
+            lazy_load_file_path, framework="pt", device="cpu"
+        ) as lazy_load_file:
+            weight_tensor = lazy_load_file.get_tensor(self.weight_name).to(
+                self.infer_dtype
+            )
             self.pin_weight = self.pin_weight.copy_(weight_tensor)
         del weight_tensor
 
 
 class LayerNormWeightTemplate(metaclass=ABCMeta):
-    def __init__(self, weight_name=None, bias_name=None, create_cuda_buffer=False, create_cpu_buffer=False, lazy_load=False, lazy_load_file=None, is_post_adapter=False, eps=1e-6):
+    def __init__(
+        self,
+        weight_name=None,
+        bias_name=None,
+        create_cuda_buffer=False,
+        create_cpu_buffer=False,
+        lazy_load=False,
+        lazy_load_file=None,
+        is_post_adapter=False,
+        eps=1e-6,
+    ):
         self.weight_name = weight_name
         self.bias_name = bias_name
         self.eps = eps
@@ -177,13 +225,25 @@ class LayerNormWeightTemplate(metaclass=ABCMeta):
             if device.type == "cpu":
                 weight_tensor = weight_dict[self.weight_name]
                 self.pin_weight = self._create_cpu_pin_tensor(weight_tensor)
-                bias_tensor = weight_dict[self.bias_name] if self.bias_name is not None and self.bias_name in weight_dict else None
-                self.pin_bias = self._create_cpu_pin_tensor(bias_tensor) if bias_tensor is not None else None
+                bias_tensor = (
+                    weight_dict[self.bias_name]
+                    if self.bias_name is not None and self.bias_name in weight_dict
+                    else None
+                )
+                self.pin_bias = (
+                    self._create_cpu_pin_tensor(bias_tensor)
+                    if bias_tensor is not None
+                    else None
+                )
                 self.bias = None
                 del weight_dict[self.weight_name]
             else:
                 self.weight = weight_dict[self.weight_name]
-                self.bias = weight_dict[self.bias_name] if self.bias_name is not None and self.bias_name in weight_dict else None
+                self.bias = (
+                    weight_dict[self.bias_name]
+                    if self.bias_name is not None and self.bias_name in weight_dict
+                    else None
+                )
         else:
             self.weight = None
             self.bias = None
@@ -195,8 +255,12 @@ class LayerNormWeightTemplate(metaclass=ABCMeta):
             if Path(self.lazy_load_file).is_file():
                 lazy_load_file_path = self.lazy_load_file
             else:
-                lazy_load_file_path = os.path.join(self.lazy_load_file, f"block_{name.split('.')[1]}.safetensors")
-            with safe_open(lazy_load_file_path, framework="pt", device="cpu") as lazy_load_file:
+                lazy_load_file_path = os.path.join(
+                    self.lazy_load_file, f"block_{name.split('.')[1]}.safetensors"
+                )
+            with safe_open(
+                lazy_load_file_path, framework="pt", device="cpu"
+            ) as lazy_load_file:
                 tensor = lazy_load_file.get_tensor(name)
                 if use_infer_dtype:
                     tensor = tensor.to(self.infer_dtype)
@@ -213,11 +277,15 @@ class LayerNormWeightTemplate(metaclass=ABCMeta):
         return pin_tensor
 
     def _load_cuda_buffers(self, weight_dict):
-        weight_tensor = self._get_tensor(self.weight_name, weight_dict, use_infer_dtype=self.lazy_load)
+        weight_tensor = self._get_tensor(
+            self.weight_name, weight_dict, use_infer_dtype=self.lazy_load
+        )
         if weight_tensor is not None:
             self.weight_cuda_buffer = weight_tensor.to(AI_DEVICE)
 
-        bias_tensor = self._get_tensor(self.bias_name, weight_dict, use_infer_dtype=self.lazy_load)
+        bias_tensor = self._get_tensor(
+            self.bias_name, weight_dict, use_infer_dtype=self.lazy_load
+        )
         if bias_tensor is not None:
             self.bias_cuda_buffer = bias_tensor.to(AI_DEVICE)
 
@@ -255,7 +323,9 @@ class LayerNormWeightTemplate(metaclass=ABCMeta):
 
     def to_cpu(self, non_blocking=False):
         if hasattr(self, "pin_weight"):
-            self.weight = self.pin_weight.copy_(self.weight, non_blocking=non_blocking).cpu()
+            self.weight = self.pin_weight.copy_(
+                self.weight, non_blocking=non_blocking
+            ).cpu()
         else:
             self.weight = self.weight.to("cpu", non_blocking=non_blocking)
         if hasattr(self, "pin_bias"):
@@ -267,42 +337,92 @@ class LayerNormWeightTemplate(metaclass=ABCMeta):
     def state_dict(self, destination=None):
         if destination is None:
             destination = {}
-        destination[self.weight_name] = self.pin_weight if hasattr(self, "pin_weight") else self.weight
+        destination[self.weight_name] = (
+            self.pin_weight if hasattr(self, "pin_weight") else self.weight
+        )
         if self.bias_name is not None:
-            destination[self.bias_name] = self.pin_bias if hasattr(self, "pin_bias") else self.bias
+            destination[self.bias_name] = (
+                self.pin_bias if hasattr(self, "pin_bias") else self.bias
+            )
         return destination
 
     def load_state_dict(self, destination, block_index, adapter_block_index=None):
         if self.is_post_adapter:
             assert adapter_block_index is not None
-            weight_name = re.sub(r"\.\d+", lambda m: f".{adapter_block_index}", self.weight_name, count=1)
-            bias_name = re.sub(r"\.\d+", lambda m: f".{adapter_block_index}", self.bias_name, count=1) if self.bias_name is not None else None
+            weight_name = re.sub(
+                r"\.\d+", lambda m: f".{adapter_block_index}", self.weight_name, count=1
+            )
+            bias_name = (
+                re.sub(
+                    r"\.\d+",
+                    lambda m: f".{adapter_block_index}",
+                    self.bias_name,
+                    count=1,
+                )
+                if self.bias_name is not None
+                else None
+            )
         else:
-            weight_name = re.sub(r"\.\d+", lambda m: f".{block_index}", self.weight_name, count=1)
-            bias_name = re.sub(r"\.\d+", lambda m: f".{block_index}", self.bias_name, count=1) if self.bias_name is not None else None
+            weight_name = re.sub(
+                r"\.\d+", lambda m: f".{block_index}", self.weight_name, count=1
+            )
+            bias_name = (
+                re.sub(r"\.\d+", lambda m: f".{block_index}", self.bias_name, count=1)
+                if self.bias_name is not None
+                else None
+            )
 
         if weight_name not in destination:
             self.weight = None
             return
-        self.weight = self.weight_cuda_buffer.copy_(destination[weight_name], non_blocking=True)
+        self.weight = self.weight_cuda_buffer.copy_(
+            destination[weight_name], non_blocking=True
+        )
         if bias_name is not None and bias_name in destination:
-            self.bias = self.bias_cuda_buffer.copy_(destination[bias_name], non_blocking=True)
+            self.bias = self.bias_cuda_buffer.copy_(
+                destination[bias_name], non_blocking=True
+            )
 
     def load_state_dict_from_disk(self, block_index, adapter_block_index=None):
         if self.is_post_adapter:
-            self.weight_name = re.sub(r"\.\d+", lambda m: f".{adapter_block_index}", self.weight_name, count=1)
-            self.bias_name = re.sub(r"\.\d+", lambda m: f".{adapter_block_index}", self.bias_name, count=1) if self.bias_name is not None else None
+            self.weight_name = re.sub(
+                r"\.\d+", lambda m: f".{adapter_block_index}", self.weight_name, count=1
+            )
+            self.bias_name = (
+                re.sub(
+                    r"\.\d+",
+                    lambda m: f".{adapter_block_index}",
+                    self.bias_name,
+                    count=1,
+                )
+                if self.bias_name is not None
+                else None
+            )
         else:
-            self.weight_name = re.sub(r"\.\d+", lambda m: f".{block_index}", self.weight_name, count=1)
-            self.bias_name = re.sub(r"\.\d+", lambda m: f".{block_index}", self.bias_name, count=1) if self.bias_name is not None else None
+            self.weight_name = re.sub(
+                r"\.\d+", lambda m: f".{block_index}", self.weight_name, count=1
+            )
+            self.bias_name = (
+                re.sub(r"\.\d+", lambda m: f".{block_index}", self.bias_name, count=1)
+                if self.bias_name is not None
+                else None
+            )
         if Path(self.lazy_load_file).is_file():
             lazy_load_file_path = self.lazy_load_file
         else:
-            lazy_load_file_path = os.path.join(self.lazy_load_file, f"block_{block_index}.safetensors")
-        with safe_open(lazy_load_file_path, framework="pt", device="cpu") as lazy_load_file:
-            weight_tensor = lazy_load_file.get_tensor(self.weight_name).to(self.infer_dtype)
+            lazy_load_file_path = os.path.join(
+                self.lazy_load_file, f"block_{block_index}.safetensors"
+            )
+        with safe_open(
+            lazy_load_file_path, framework="pt", device="cpu"
+        ) as lazy_load_file:
+            weight_tensor = lazy_load_file.get_tensor(self.weight_name).to(
+                self.infer_dtype
+            )
             self.pin_weight = self.pin_weight.copy_(weight_tensor)
             if self.bias_name is not None:
-                bias_tensor = lazy_load_file.get_tensor(self.bias_name).to(self.infer_dtype)
+                bias_tensor = lazy_load_file.get_tensor(self.bias_name).to(
+                    self.infer_dtype
+                )
                 self.pin_bias = self.pin_bias.copy_(bias_tensor)
         del weight_tensor

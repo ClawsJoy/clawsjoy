@@ -3,16 +3,18 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
-import time
-import requests
 import subprocess
+import time
 from datetime import datetime
-from core.lib.unified_config import unified_config
+
+import requests
+
 from core.lib.smart_config import smart_config
+from core.lib.unified_config import unified_config
 
 
 class RealBrain:
@@ -20,17 +22,15 @@ class RealBrain:
 
     def __init__(self):
         self.running = True
-        self.stats = {
-            'checks': 0,
-            'fixes': 0,
-            'start_time': datetime.now()
-        }
+        self.stats = {"checks": 0, "fixes": 0, "start_time": datetime.now()}
         print("🧠 真实大脑已启动")
 
     def check_service(self, port, name):
         """检查单个服务"""
         try:
-            resp = requests.get(unified_config.get_service_url(f"{port}/health"), timeout=2)
+            resp = requests.get(
+                unified_config.get_service_url(f"{port}/health"), timeout=2
+            )
             return resp.status_code == 200
         except Exception:
             return False
@@ -40,7 +40,7 @@ class RealBrain:
         print(f"🔧 修复 {name}...")
         try:
             subprocess.Popen(cmd, shell=True, cwd=smart_config.ROOT)
-            self.stats['fixes'] += 1
+            self.stats["fixes"] += 1
             return True
         except Exception as e:
             print(f"   修复失败: {e}")
@@ -48,17 +48,17 @@ class RealBrain:
 
     def run_once(self):
         """单次检查和修复"""
-        self.stats['checks'] += 1
+        self.stats["checks"] += 1
 
         services = {
-            'gateway': {'port': 5002, 'cmd': 'python3 agent_gateway_web.py'},
-            'agent': {'port': 5005, 'cmd': 'python3 multi_agent_service_v2.py'},
+            "gateway": {"port": 5002, "cmd": "python3 agent_gateway_web.py"},
+            "agent": {"port": 5005, "cmd": "python3 multi_agent_service_v2.py"},
         }
 
         for name, config in services.items():
-            if not self.check_service(config['port'], name):
+            if not self.check_service(config["port"], name):
                 print(f"⚠ {name} 异常，尝试修复...")
-                self.heal_service(name, config['cmd'])
+                self.heal_service(name, config["cmd"])
                 time.sleep(3)
 
         return self.stats

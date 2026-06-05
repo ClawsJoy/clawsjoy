@@ -3,13 +3,13 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
 import json
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, List, Optional
 
 
@@ -27,7 +27,7 @@ class UserDialectProfile:
         """获取用户方言画像"""
         profile_path = self._get_profile_path(user_id)
         if profile_path.exists():
-            with open(profile_path, 'r') as f:
+            with open(profile_path, "r") as f:
                 return json.load(f)
         return {
             "user_id": user_id,
@@ -36,7 +36,7 @@ class UserDialectProfile:
             "learned_words": {},
             "usage_count": {},
             "learning_history": [],
-            "confidence": {}
+            "confidence": {},
         }
 
     def save_profile(self, user_id: str, profile: Dict):
@@ -44,7 +44,7 @@ class UserDialectProfile:
         profile_path = self._get_profile_path(user_id)
         profile_path.parent.mkdir(parents=True, exist_ok=True)
         profile["updated_at"] = datetime.now().isoformat()
-        with open(profile_path, 'w') as f:
+        with open(profile_path, "w") as f:
             json.dump(profile, f, indent=2, ensure_ascii=False)
 
     def set_location(self, user_id: str, location: str):
@@ -60,12 +60,13 @@ class UserDialectProfile:
 
     def _detect_dialect_by_location(self, location: str) -> Optional[str]:
         """根据地点判断方言"""
-        import yaml
         from pathlib import Path
+
+        import yaml
 
         config_file = Path("config/dialect_learning.yaml")
         if config_file.exists():
-            with open(config_file, 'r') as f:
+            with open(config_file, "r") as f:
                 config = yaml.safe_load(f)
                 dialects = config.get("dialects", {})
                 for dialect, info in dialects.items():
@@ -74,7 +75,9 @@ class UserDialectProfile:
                             return dialect
         return None
 
-    def learn_word(self, user_id: str, dialect: str, standard: str, context: str = "") -> Dict:
+    def learn_word(
+        self, user_id: str, dialect: str, standard: str, context: str = ""
+    ) -> Dict:
         """学习方言词"""
         profile = self.get_profile(user_id)
 
@@ -84,14 +87,16 @@ class UserDialectProfile:
                 "learned_at": datetime.now().isoformat(),
                 "context": context,
                 "review_count": 0,
-                "mastered": False
+                "mastered": False,
             }
-            profile["learning_history"].append({
-                "word": dialect,
-                "action": "learn",
-                "timestamp": datetime.now().isoformat(),
-                "context": context
-            })
+            profile["learning_history"].append(
+                {
+                    "word": dialect,
+                    "action": "learn",
+                    "timestamp": datetime.now().isoformat(),
+                    "context": context,
+                }
+            )
         else:
             # 增加使用次数
             profile["learned_words"][dialect]["review_count"] += 1
@@ -99,10 +104,15 @@ class UserDialectProfile:
                 profile["learned_words"][dialect]["mastered"] = True
 
         # 更新置信度
-        profile["confidence"][dialect] = min(1.0, profile.get("confidence", {}).get(dialect, 0) + 0.2)
+        profile["confidence"][dialect] = min(
+            1.0, profile.get("confidence", {}).get(dialect, 0) + 0.2
+        )
 
         self.save_profile(user_id, profile)
-        return {"learned": True, "mastered": profile["learned_words"][dialect]["mastered"]}
+        return {
+            "learned": True,
+            "mastered": profile["learned_words"][dialect]["mastered"],
+        }
 
     def translate(self, user_id: str, text: str) -> str:
         """根据用户画像翻译方言"""
@@ -112,9 +122,7 @@ class UserDialectProfile:
         # 按掌握程度排序（已掌握的优先）
         learned = profile.get("learned_words", {})
         sorted_words = sorted(
-            learned.items(),
-            key=lambda x: x[1].get("review_count", 0),
-            reverse=True
+            learned.items(), key=lambda x: x[1].get("review_count", 0), reverse=True
         )
 
         for dialect, info in sorted_words:
@@ -135,7 +143,7 @@ class UserDialectProfile:
             "dialect": profile.get("dialect"),
             "total_learned": len(learned),
             "mastered": mastered,
-            "learning_progress": mastered / len(learned) if learned else 0
+            "learning_progress": mastered / len(learned) if learned else 0,
         }
 
 

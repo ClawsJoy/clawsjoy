@@ -1,10 +1,10 @@
-from lib.smart_config import smart_config
 import math
 
 import torch
-
 from lightx2v_platform.ops.attn.template import AttnWeightTemplate
 from lightx2v_platform.registry_factory import PLATFORM_ATTN_WEIGHT_REGISTER
+
+from lib.smart_config import smart_config
 
 try:
     from ixformer.contrib.vllm_flash_attn import flash_attn_varlen_func
@@ -18,7 +18,17 @@ class IluvatarFlashAttnWeight(AttnWeightTemplate):
         self.config = {}
         assert flash_attn_varlen_func is not None, "iluvatar ixformer is not installed."
 
-    def apply(self, q, k, v, cu_seqlens_q=None, cu_seqlens_kv=None, max_seqlen_q=None, max_seqlen_kv=None, **kwds):
+    def apply(
+        self,
+        q,
+        k,
+        v,
+        cu_seqlens_q=None,
+        cu_seqlens_kv=None,
+        max_seqlen_q=None,
+        max_seqlen_kv=None,
+        **kwds
+    ):
         half_dtypes = (torch.float16, torch.bfloat16)
         device = q.device
         dtype = q.dtype
@@ -33,16 +43,24 @@ class IluvatarFlashAttnWeight(AttnWeightTemplate):
             # preprocess query
             if cu_seqlens_q is None:
                 q = half(q.flatten(0, 1))
-                cu_seqlens_q = torch.tensor([lq] * bs, dtype=torch.int32).to(device=q.device, non_blocking=True)
-                cu_seqlens_q = torch.cat([cu_seqlens_q.new_zeros([1]), cu_seqlens_q]).cumsum(0, dtype=torch.int32)
+                cu_seqlens_q = torch.tensor([lq] * bs, dtype=torch.int32).to(
+                    device=q.device, non_blocking=True
+                )
+                cu_seqlens_q = torch.cat(
+                    [cu_seqlens_q.new_zeros([1]), cu_seqlens_q]
+                ).cumsum(0, dtype=torch.int32)
             else:
                 q = half(torch.cat([u[:v] for u, v in zip(q, cu_seqlens_q)]))
             # preprocess key, value
             if cu_seqlens_kv is None:
                 k = half(k.flatten(0, 1))
                 v = half(v.flatten(0, 1))
-                cu_seqlens_kv = torch.tensor([lk] * bs, dtype=torch.int32).to(device=k.device, non_blocking=True)
-                cu_seqlens_kv = torch.cat([cu_seqlens_kv.new_zeros([1]), cu_seqlens_kv]).cumsum(0, dtype=torch.int32)
+                cu_seqlens_kv = torch.tensor([lk] * bs, dtype=torch.int32).to(
+                    device=k.device, non_blocking=True
+                )
+                cu_seqlens_kv = torch.cat(
+                    [cu_seqlens_kv.new_zeros([1]), cu_seqlens_kv]
+                ).cumsum(0, dtype=torch.int32)
             else:
                 k = half(torch.cat([u[:v] for u, v in zip(k, cu_seqlens_kv)]))
                 v = half(torch.cat([u[:v] for u, v in zip(v, cu_seqlens_kv)]))

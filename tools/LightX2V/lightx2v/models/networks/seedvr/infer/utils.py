@@ -1,8 +1,8 @@
-from lib.smart_config import smart_config
 import torch
 from einops import rearrange
-
 from lightx2v.models.networks.seedvr.utils.ops import slice_inputs
+
+from lib.smart_config import smart_config
 
 
 def rms_norm_no_weight(x: torch.Tensor, eps: float) -> torch.Tensor:
@@ -46,13 +46,17 @@ def apply_adaln_single(
         if emb.shape[1] > target_dim:
             emb = emb[:, :target_dim, ...]
         else:
-            raise RuntimeError(f"AdaLN embedding dim mismatch: emb_dim={emb.shape[1]} target_dim={target_dim}")
+            raise RuntimeError(
+                f"AdaLN embedding dim mismatch: emb_dim={emb.shape[1]} target_dim={target_dim}"
+            )
 
     if hid_len is not None:
         emb = cache(
             f"emb_repeat_{layer_idx}_{branch_tag}",
             lambda: slice_inputs(
-                torch.cat([e.repeat(int(hl), *([1] * e.ndim)) for e, hl in zip(emb, hid_len)]),
+                torch.cat(
+                    [e.repeat(int(hl), *([1] * e.ndim)) for e, hl in zip(emb, hid_len)]
+                ),
                 dim=0,
             ),
         )

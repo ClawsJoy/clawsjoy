@@ -1,11 +1,11 @@
-from lib.smart_config import smart_config
 import os
 from typing import Optional
 
 import torch
+from lightx2v.utils.profiler import *
 from torch.nn import functional as F
 
-from lightx2v.utils.profiler import *
+from lib.smart_config import smart_config
 
 try:
     from diffsynth import FlashVSRTinyPipeline, ModelManager
@@ -22,7 +22,9 @@ def largest_8n1_leq(n):  # 8n+1
     return 0 if n < 1 else ((n - 1) // 8) * 8 + 1
 
 
-def compute_scaled_and_target_dims(w0: int, h0: int, scale: float = 4.0, multiple: int = 128):
+def compute_scaled_and_target_dims(
+    w0: int, h0: int, scale: float = 4.0, multiple: int = 128
+):
     if w0 <= 0 or h0 <= 0:
         raise ValueError("Invalid original size")
     if scale <= 0:
@@ -35,12 +37,16 @@ def compute_scaled_and_target_dims(w0: int, h0: int, scale: float = 4.0, multipl
     tH = (sH // multiple) * multiple
 
     if tW == 0 or tH == 0:
-        raise ValueError(f"Scaled size too small ({sW}x{sH}) for multiple={multiple}. Increase scale (got {scale}).")
+        raise ValueError(
+            f"Scaled size too small ({sW}x{sH}) for multiple={multiple}. Increase scale (got {scale})."
+        )
 
     return sW, sH, tW, tH
 
 
-def prepare_input_tensor(input_tensor, scale: float = 2.0, dtype=torch.bfloat16, device="cuda"):
+def prepare_input_tensor(
+    input_tensor, scale: float = 2.0, dtype=torch.bfloat16, device="cuda"
+):
     """
     视频预处理: [T,H,W,3] -> [1,C,F,H,W]
     1. GPU 上完成插值 + 中心裁剪
@@ -67,7 +73,9 @@ def prepare_input_tensor(input_tensor, scale: float = 2.0, dtype=torch.bfloat16,
     frames = frames.permute(0, 3, 1, 2) * 2.0 - 1.0  # [F,3,H,W] -> [-1,1]
 
     # 上采样 (Bilinear)
-    frames = F.interpolate(frames, scale_factor=scale, mode="bicubic", align_corners=False)
+    frames = F.interpolate(
+        frames, scale_factor=scale, mode="bicubic", align_corners=False
+    )
     _, _, sH, sW = frames.shape
 
     # 中心裁剪
@@ -89,15 +97,23 @@ def init_pipeline(model_path):
         ]
     )
     pipe = FlashVSRTinyPipeline.from_model_manager(mm, device="cuda")
-    pipe.denoising_model().LQ_proj_in = Buffer_LQ4x_Proj(in_dim=3, out_dim=1536, layer_num=1).to("cuda", dtype=torch.bfloat16)
+    pipe.denoising_model().LQ_proj_in = Buffer_LQ4x_Proj(
+        in_dim=3, out_dim=1536, layer_num=1
+    ).to("cuda", dtype=torch.bfloat16)
     LQ_proj_in_path = model_path + "/LQ_proj_in.ckpt"
     if os.path.exists(LQ_proj_in_path):
-        pipe.denoising_model().LQ_proj_in.load_state_dict(torch.load(LQ_proj_in_path, map_location="cpu"), strict=True)
+        pipe.denoising_model().LQ_proj_in.load_state_dict(
+            torch.load(LQ_proj_in_path, map_location="cpu"), strict=True
+        )
     pipe.denoising_model().LQ_proj_in.to("cuda")
 
     multi_scale_channels = [512, 256, 128, 128]
-    pipe.TCDecoder = build_tcdecoder(new_channels=multi_scale_channels, new_latent_channels=16 + 768)
-    mis = pipe.TCDecoder.load_state_dict(torch.load(model_path + "/TCDecoder.ckpt"), strict=False)
+    pipe.TCDecoder = build_tcdecoder(
+        new_channels=multi_scale_channels, new_latent_channels=16 + 768
+    )
+    mis = pipe.TCDecoder.load_state_dict(
+        torch.load(model_path + "/TCDecoder.ckpt"), strict=False
+    )
     # print(mis)
 
     pipe.to("cuda")
@@ -109,7 +125,9 @@ def init_pipeline(model_path):
 
 class VSRWrapper:
     def __init__(self, model_path, device: Optional[torch.device] = None):
-        self.device = device or torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = device or torch.device(
+            "cuda" if torch.cuda.is_available() else "cpu"
+        )
 
         # Setup torch for optimal performance
         torch.set_grad_enabled(False)
@@ -119,7 +137,9 @@ class VSRWrapper:
 
         # Load model
         self.dtype, self.device = torch.bfloat16, "cuda"
-        self.sparse_ratio = 2.0  # Recommended: 1.5 or 2.0. 1.5 → faster; 2.0 → more stable.
+        self.sparse_ratio = (
+            2.0  # Recommended: 1.5 or 2.0. 1.5 → faster; 2.0 → more stable.
+        )
         with ProfilingContext4DebugL2("Load VSR model"):
             self.pipe = init_pipeline(model_path)
         self._warm_up()
@@ -139,7 +159,9 @@ class VSRWrapper:
     ) -> torch.Tensor:
         torch.cuda.empty_cache()
         torch.cuda.ipc_collect()
-        LQ, th, tw, F = prepare_input_tensor(video, scale=scale, dtype=self.dtype, device=self.device)
+        LQ, th, tw, F = prepare_input_tensor(
+            video, scale=scale, dtype=self.dtype, device=self.device
+        )
 
         video = self.pipe(
             prompt="",

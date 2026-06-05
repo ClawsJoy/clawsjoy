@@ -5,19 +5,21 @@ from core.lib.unified_config import unified_config
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
-import requests
 import json
 import re
-from typing import List, Dict
+from typing import Dict, List
+
+import requests
+
 
 class TaskDecomposer:
     def __init__(self):
         self.decomposition_cache = {}
-    
+
     def decompose(self, complex_task: str) -> List[Dict]:
         if complex_task in self.decomposition_cache:
             return self.decomposition_cache[complex_task]
@@ -45,19 +47,21 @@ class TaskDecomposer:
         try:
             resp = requests.post(
                 'http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/chat',
-                json={'message': prompt, 'user_role': 'system'},
-                timeout=config_helper.get_timeout("default")
+                json={"message": prompt, "user_role": "system"},
+                timeout=config_helper.get_timeout("default"),
             )
-            response = resp.json().get('response', '')
+            response = resp.json().get("response", "")
 
             # 提取 JSON
-            match = re.search(r'\{[^{}]*"sub_tasks"[^{}]*\[.*\]\s*\}', response, re.DOTALL)
+            match = re.search(
+                r'\{[^{}]*"sub_tasks"[^{}]*\[.*\]\s*\}', response, re.DOTALL
+            )
             if not match:
-                match = re.search(r'\{.*\}', response, re.DOTALL)
+                match = re.search(r"\{.*\}", response, re.DOTALL)
 
             if match:
                 data = json.loads(match.group())
-                sub_tasks = data.get('sub_tasks', [])
+                sub_tasks = data.get("sub_tasks", [])
                 if len(sub_tasks) > 1:
                     self.decomposition_cache[complex_task] = sub_tasks
                     return sub_tasks
@@ -66,37 +70,58 @@ class TaskDecomposer:
 
         # 降级：手动分解
         return self._manual_decompose(complex_task)
-    
+
     def _manual_decompose(self, task: str) -> List[Dict]:
         """手动分解常见任务"""
         if "优化" in task:
             return [
                 {"name": "检查系统状态", "action": "check_health", "depends_on": []},
-                {"name": "清理缓存", "action": "clean_cache", "depends_on": ["检查系统状态"]},
-                {"name": "同步知识库", "action": "sync_knowledge", "depends_on": ["清理缓存"]},
-                {"name": "验证优化效果", "action": "verify", "depends_on": ["同步知识库"]}
+                {
+                    "name": "清理缓存",
+                    "action": "clean_cache",
+                    "depends_on": ["检查系统状态"],
+                },
+                {
+                    "name": "同步知识库",
+                    "action": "sync_knowledge",
+                    "depends_on": ["清理缓存"],
+                },
+                {
+                    "name": "验证优化效果",
+                    "action": "verify",
+                    "depends_on": ["同步知识库"],
+                },
             ]
         elif "备份" in task:
             return [
                 {"name": "检查磁盘空间", "action": "check_disk", "depends_on": []},
-                {"name": "执行备份", "action": "do_backup", "depends_on": ["检查磁盘空间"]},
-                {"name": "验证备份", "action": "verify_backup", "depends_on": ["执行备份"]}
+                {
+                    "name": "执行备份",
+                    "action": "do_backup",
+                    "depends_on": ["检查磁盘空间"],
+                },
+                {
+                    "name": "验证备份",
+                    "action": "verify_backup",
+                    "depends_on": ["执行备份"],
+                },
             ]
         else:
             return [{"name": task, "action": "execute", "depends_on": []}]
-    
+
     def get_execution_order(self, sub_tasks: List[Dict]) -> List[str]:
         executed = []
-        pending = [t['name'] for t in sub_tasks]
+        pending = [t["name"] for t in sub_tasks]
 
         while pending:
             for task in sub_tasks:
-                if task['name'] in pending:
-                    deps = task.get('depends_on', [])
+                if task["name"] in pending:
+                    deps = task.get("depends_on", [])
                     if all(d in executed for d in deps):
-                        executed.append(task['name'])
-                        pending.remove(task['name'])
+                        executed.append(task["name"])
+                        pending.remove(task["name"])
                         break
         return executed
+
 
 task_decomposer = TaskDecomposer()

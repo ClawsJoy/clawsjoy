@@ -1,12 +1,17 @@
-from lib.smart_config import smart_config
 from typing import Set, Tuple
 
 import torch
-
-from lightx2v.models.video_encoders.hf.ltx2.audio_vae.attention import AttentionType, make_attn
-from lightx2v.models.video_encoders.hf.ltx2.audio_vae.causality_axis import CausalityAxis
+from lightx2v.models.video_encoders.hf.ltx2.audio_vae.attention import (
+    AttentionType,
+    make_attn,
+)
+from lightx2v.models.video_encoders.hf.ltx2.audio_vae.causality_axis import (
+    CausalityAxis,
+)
 from lightx2v.models.video_encoders.hf.ltx2.audio_vae.resnet import ResnetBlock
 from lightx2v.models.video_encoders.hf.ltx2.video_vae.normalization import NormType
+
+from lib.smart_config import smart_config
 
 
 class Downsample(torch.nn.Module):
@@ -32,7 +37,9 @@ class Downsample(torch.nn.Module):
         if self.with_conv:
             # Do time downsampling here
             # no asymmetric padding in torch conv, must do it ourselves
-            self.conv = torch.nn.Conv2d(in_channels, in_channels, kernel_size=3, stride=2, padding=0)
+            self.conv = torch.nn.Conv2d(
+                in_channels, in_channels, kernel_size=3, stride=2, padding=0
+            )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         if self.with_conv:
@@ -98,13 +105,17 @@ def build_downsampling_path(  # noqa: PLR0913
             )
             block_in = block_out
             if curr_res in attn_resolutions:
-                attn.append(make_attn(block_in, attn_type=attn_type, norm_type=norm_type))
+                attn.append(
+                    make_attn(block_in, attn_type=attn_type, norm_type=norm_type)
+                )
 
         down = torch.nn.Module()
         down.block = block
         down.attn = attn
         if i_level != num_resolutions - 1:
-            down.downsample = Downsample(block_in, resamp_with_conv, causality_axis=causality_axis)
+            down.downsample = Downsample(
+                block_in, resamp_with_conv, causality_axis=causality_axis
+            )
             curr_res = curr_res // 2
         down_modules.append(down)
 

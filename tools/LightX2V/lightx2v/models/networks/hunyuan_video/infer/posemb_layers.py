@@ -1,9 +1,9 @@
-from lib.smart_config import smart_config
 from typing import List, Tuple, Union
 
 import torch
-
 from lightx2v_platform.base.global_var import AI_DEVICE
+
+from lib.smart_config import smart_config
 
 
 def _to_tuple(x, dim=2):
@@ -98,7 +98,9 @@ def reshape_for_broadcast(
 
 
 def rotate_half(x):
-    x_real, x_imag = x.float().reshape(*x.shape[:-1], -1, 2).unbind(-1)  # [B, S, H, D//2]
+    x_real, x_imag = (
+        x.float().reshape(*x.shape[:-1], -1, 2).unbind(-1)
+    )  # [B, S, H, D//2]
     return torch.stack([-x_imag, x_real], dim=-1).flatten(3)
 
 
@@ -198,19 +200,25 @@ def get_nd_rotary_pos_embed(
         pos_embed (torch.Tensor): [HW, D/2]
     """
 
-    grid = get_meshgrid_nd(start, *args, dim=len(rope_dim_list))  # [3, W, H, D] / [2, W, H]
+    grid = get_meshgrid_nd(
+        start, *args, dim=len(rope_dim_list)
+    )  # [3, W, H, D] / [2, W, H]
 
     if isinstance(theta_rescale_factor, int) or isinstance(theta_rescale_factor, float):
         theta_rescale_factor = [theta_rescale_factor] * len(rope_dim_list)
     elif isinstance(theta_rescale_factor, list) and len(theta_rescale_factor) == 1:
         theta_rescale_factor = [theta_rescale_factor[0]] * len(rope_dim_list)
-    assert len(theta_rescale_factor) == len(rope_dim_list), "len(theta_rescale_factor) should equal to len(rope_dim_list)"
+    assert len(theta_rescale_factor) == len(
+        rope_dim_list
+    ), "len(theta_rescale_factor) should equal to len(rope_dim_list)"
 
     if isinstance(interpolation_factor, int) or isinstance(interpolation_factor, float):
         interpolation_factor = [interpolation_factor] * len(rope_dim_list)
     elif isinstance(interpolation_factor, list) and len(interpolation_factor) == 1:
         interpolation_factor = [interpolation_factor[0]] * len(rope_dim_list)
-    assert len(interpolation_factor) == len(rope_dim_list), "len(interpolation_factor) should equal to len(rope_dim_list)"
+    assert len(interpolation_factor) == len(
+        rope_dim_list
+    ), "len(interpolation_factor) should equal to len(rope_dim_list)"
 
     # use 1/ndim of dimensions to encode grid_axis
     embs = []
@@ -272,7 +280,9 @@ def get_1d_rotary_pos_embed(
     if theta_rescale_factor != 1.0:
         theta *= theta_rescale_factor ** (dim / (dim - 2))
 
-    freqs = 1.0 / (theta ** (torch.arange(0, dim, 2)[: (dim // 2)].float() / dim))  # [D/2]
+    freqs = 1.0 / (
+        theta ** (torch.arange(0, dim, 2)[: (dim // 2)].float() / dim)
+    )  # [D/2]
     # assert interpolation_factor == 1.0, f"interpolation_factor: {interpolation_factor}"
     freqs = torch.outer(pos * interpolation_factor, freqs).to(AI_DEVICE)  # [S, D/2]
     if use_real:
@@ -280,5 +290,7 @@ def get_1d_rotary_pos_embed(
         freqs_sin = freqs.sin().repeat_interleave(2, dim=1)  # [S, D]
         return freqs_cos, freqs_sin
     else:
-        freqs_cis = torch.polar(torch.ones_like(freqs), freqs)  # complex64     # [S, D/2]
+        freqs_cis = torch.polar(
+            torch.ones_like(freqs), freqs
+        )  # complex64     # [S, D/2]
         return freqs_cis

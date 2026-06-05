@@ -1,9 +1,11 @@
-from lib.smart_config import smart_config
 import torch
 import torch.nn.functional as F
 from einops import rearrange
+from lightx2v.models.networks.wan.infer.offload.transformer_infer import (
+    WanOffloadTransformerInfer,
+)
 
-from lightx2v.models.networks.wan.infer.offload.transformer_infer import WanOffloadTransformerInfer
+from lib.smart_config import smart_config
 
 
 class WanAnimateTransformerInfer(WanOffloadTransformerInfer):
@@ -18,10 +20,14 @@ class WanAnimateTransformerInfer(WanOffloadTransformerInfer):
             if block_idx == 0:
                 self.offload_manager.init_first_buffer(blocks, block_idx // 5)
             if block_idx < len(blocks) - 1:
-                self.offload_manager.prefetch_weights(block_idx + 1, blocks, (block_idx + 1) // 5)
+                self.offload_manager.prefetch_weights(
+                    block_idx + 1, blocks, (block_idx + 1) // 5
+                )
 
             with torch.cuda.stream(self.offload_manager.compute_stream):
-                x = self.infer_block(self.offload_manager.cuda_buffers[0], x, pre_infer_out)
+                x = self.infer_block(
+                    self.offload_manager.cuda_buffers[0], x, pre_infer_out
+                )
             self.offload_manager.swap_blocks()
         return x
 
@@ -37,14 +43,25 @@ class WanAnimateTransformerInfer(WanOffloadTransformerInfer):
                     self.offload_manager.cuda_buffers[0] = (obj_key, phase)
                 else:
                     self.offload_manager.init_first_buffer(blocks, block_idx // 5)
-            is_last_phase = block_idx == len(blocks) - 1 and phase_idx == self.phases_num - 1
+            is_last_phase = (
+                block_idx == len(blocks) - 1 and phase_idx == self.phases_num - 1
+            )
             if not is_last_phase:
-                next_block_idx = block_idx + 1 if phase_idx == self.phases_num - 1 else block_idx
+                next_block_idx = (
+                    block_idx + 1 if phase_idx == self.phases_num - 1 else block_idx
+                )
                 next_phase_idx = (phase_idx + 1) % self.phases_num
-                self.offload_manager.prefetch_phase(next_block_idx, next_phase_idx, blocks, (block_idx + 1) // 5)
+                self.offload_manager.prefetch_phase(
+                    next_block_idx, next_phase_idx, blocks, (block_idx + 1) // 5
+                )
 
             with torch.cuda.stream(self.offload_manager.compute_stream):
-                x = self.infer_phase(phase_idx, self.offload_manager.cuda_buffers[phase_idx], x, pre_infer_out)
+                x = self.infer_phase(
+                    phase_idx,
+                    self.offload_manager.cuda_buffers[phase_idx],
+                    x,
+                    pre_infer_out,
+                )
 
             self.offload_manager.swap_phases()
 
@@ -60,7 +77,9 @@ class WanAnimateTransformerInfer(WanOffloadTransformerInfer):
         kv = phase.linear1_kv.apply(x_motion.view(-1, x_motion.shape[-1]))
         kv = kv.view(T, -1, kv.shape[-1])
         q = phase.linear1_q.apply(x_feat)
-        k, v = rearrange(kv, "L N (K H D) -> K L N H D", K=2, H=self.config["num_heads"])
+        k, v = rearrange(
+            kv, "L N (K H D) -> K L N H D", K=2, H=self.config["num_heads"]
+        )
         q = rearrange(q, "S (H D) -> S H D", H=self.config["num_heads"])
 
         q = phase.q_norm.apply(q).view(T, q.shape[0] // T, q.shape[1], q.shape[2])

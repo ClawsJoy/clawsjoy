@@ -1,5 +1,6 @@
-from lib.smart_config import smart_config
 from lightx2v_platform.base.global_var import AI_DEVICE
+
+from lib.smart_config import smart_config
 
 
 class WeightModule:
@@ -128,7 +129,9 @@ class WeightModule:
         for name, param in self._parameters.items():
             if param is not None:
                 if hasattr(param, "cuda"):
-                    self._parameters[name] = param.to(AI_DEVICE, non_blocking=non_blocking)
+                    self._parameters[name] = param.to(
+                        AI_DEVICE, non_blocking=non_blocking
+                    )
                 elif hasattr(param, "to_cuda"):
                     self._parameters[name].to_cuda()
                 setattr(self, name, self._parameters[name])
@@ -171,7 +174,9 @@ class WeightModule:
         for name, param in self._parameters.items():
             if param is not None:
                 if hasattr(param, "cuda"):
-                    self._parameters[name] = param.to(AI_DEVICE, non_blocking=non_blocking)
+                    self._parameters[name] = param.to(
+                        AI_DEVICE, non_blocking=non_blocking
+                    )
                 elif hasattr(param, "to_cuda"):
                     self._parameters[name].to_cuda(non_blocking=True)
                 setattr(self, name, self._parameters[name])

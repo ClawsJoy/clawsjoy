@@ -1,7 +1,8 @@
-from lib.smart_config import smart_config
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+from lib.smart_config import smart_config
 
 from ..model.warplayer import warp
 
@@ -74,16 +75,28 @@ class Contextnet(nn.Module):
 
     def forward(self, x, flow):
         x = self.conv1(x)
-        flow = F.interpolate(flow, scale_factor=0.5, mode="bilinear", align_corners=False) * 0.5
+        flow = (
+            F.interpolate(flow, scale_factor=0.5, mode="bilinear", align_corners=False)
+            * 0.5
+        )
         f1 = warp(x, flow)
         x = self.conv2(x)
-        flow = F.interpolate(flow, scale_factor=0.5, mode="bilinear", align_corners=False) * 0.5
+        flow = (
+            F.interpolate(flow, scale_factor=0.5, mode="bilinear", align_corners=False)
+            * 0.5
+        )
         f2 = warp(x, flow)
         x = self.conv3(x)
-        flow = F.interpolate(flow, scale_factor=0.5, mode="bilinear", align_corners=False) * 0.5
+        flow = (
+            F.interpolate(flow, scale_factor=0.5, mode="bilinear", align_corners=False)
+            * 0.5
+        )
         f3 = warp(x, flow)
         x = self.conv4(x)
-        flow = F.interpolate(flow, scale_factor=0.5, mode="bilinear", align_corners=False) * 0.5
+        flow = (
+            F.interpolate(flow, scale_factor=0.5, mode="bilinear", align_corners=False)
+            * 0.5
+        )
         f4 = warp(x, flow)
         return [f1, f2, f3, f4]
 
@@ -102,7 +115,9 @@ class Unet(nn.Module):
         self.conv = nn.Conv2d(c, 3, 3, 1, 1)
 
     def forward(self, img0, img1, warped_img0, warped_img1, mask, flow, c0, c1):
-        s0 = self.down0(torch.cat((img0, img1, warped_img0, warped_img1, mask, flow), 1))
+        s0 = self.down0(
+            torch.cat((img0, img1, warped_img0, warped_img1, mask, flow), 1)
+        )
         s1 = self.down1(torch.cat((s0, c0[0], c1[0]), 1))
         s2 = self.down2(torch.cat((s1, c0[1], c1[1]), 1))
         s3 = self.down3(torch.cat((s2, c0[2], c1[2]), 1))

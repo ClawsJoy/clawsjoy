@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
@@ -43,23 +44,58 @@ def _get_torch_dtype(dtype_str: str) -> torch.dtype:
 
 def parse_args():
     """Parse command line arguments"""
-    parser = argparse.ArgumentParser(description="Merge a source model with LoRA weights to create a new model", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description="Merge a source model with LoRA weights to create a new model",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
 
     # Source model parameters
-    parser.add_argument("--source-model", type=str, required=True, help="Path to source model")
-    parser.add_argument("--source-type", type=str, choices=["safetensors", "pytorch"], default="safetensors", help="Source model format type")
+    parser.add_argument(
+        "--source-model", type=str, required=True, help="Path to source model"
+    )
+    parser.add_argument(
+        "--source-type",
+        type=str,
+        choices=["safetensors", "pytorch"],
+        default="safetensors",
+        help="Source model format type",
+    )
 
     # LoRA parameters
-    parser.add_argument("--lora-model", type=str, required=True, help="Path to LoRA weights")
-    parser.add_argument("--lora-type", type=str, choices=["safetensors", "pytorch"], default="safetensors", help="LoRA weights format type")
+    parser.add_argument(
+        "--lora-model", type=str, required=True, help="Path to LoRA weights"
+    )
+    parser.add_argument(
+        "--lora-type",
+        type=str,
+        choices=["safetensors", "pytorch"],
+        default="safetensors",
+        help="LoRA weights format type",
+    )
 
     # Output parameters
-    parser.add_argument("--output", type=str, required=True, help="Path to output merged model")
-    parser.add_argument("--output-format", type=str, choices=["safetensors", "pytorch"], default="safetensors", help="Output model format")
+    parser.add_argument(
+        "--output", type=str, required=True, help="Path to output merged model"
+    )
+    parser.add_argument(
+        "--output-format",
+        type=str,
+        choices=["safetensors", "pytorch"],
+        default="safetensors",
+        help="Output model format",
+    )
 
     # Merge parameters
-    parser.add_argument("--alpha", type=float, default=1.0, help="LoRA merge strength (alpha value)")
-    parser.add_argument("--output-dtype", type=str, choices=["float32", "fp32", "float16", "fp16", "bfloat16", "bf16"], default="bf16", help="Output weight data type")
+    parser.add_argument(
+        "--alpha", type=float, default=1.0, help="LoRA merge strength (alpha value)"
+    )
+    parser.add_argument(
+        "--output-dtype",
+        type=str,
+        choices=["float32", "fp32", "float16", "fp16", "bfloat16", "bf16"],
+        default="bf16",
+        help="Output weight data type",
+    )
 
     return parser.parse_args()
 
@@ -91,7 +127,9 @@ def load_model_weights(model_path: str, model_type: str) -> Dict[str, torch.Tens
                     safetensors_files.append(os.path.join(model_path, file))
 
             if not safetensors_files:
-                raise ValueError(f"No .safetensors files found in directory: {model_path}")
+                raise ValueError(
+                    f"No .safetensors files found in directory: {model_path}"
+                )
 
             print(f"Found {len(safetensors_files)} safetensors files")
 
@@ -101,7 +139,9 @@ def load_model_weights(model_path: str, model_type: str) -> Dict[str, torch.Tens
                 with safe_open(file_path, framework="pt", device="cpu") as f:
                     for key in f.keys():
                         if key in weights:
-                            print(f"Warning: weight key '{key}' is duplicated in multiple files, will be overwritten")
+                            print(
+                                f"Warning: weight key '{key}' is duplicated in multiple files, will be overwritten"
+                            )
                         weights[key] = f.get_tensor(key)
 
         elif os.path.isfile(model_path):
@@ -111,7 +151,9 @@ def load_model_weights(model_path: str, model_type: str) -> Dict[str, torch.Tens
                     for key in f.keys():
                         weights[key] = f.get_tensor(key)
             else:
-                raise ValueError(f"safetensors type file should end with .safetensors: {model_path}")
+                raise ValueError(
+                    f"safetensors type file should end with .safetensors: {model_path}"
+                )
         else:
             raise ValueError(f"Invalid path type: {model_path}")
 
@@ -131,7 +173,9 @@ def load_model_weights(model_path: str, model_type: str) -> Dict[str, torch.Tens
             else:
                 weights = checkpoint
         else:
-            raise ValueError(f"pytorch type file should end with .pt or .pth: {model_path}")
+            raise ValueError(
+                f"pytorch type file should end with .pt or .pth: {model_path}"
+            )
     else:
         raise ValueError(f"Unsupported model type: {model_type}")
 
@@ -150,7 +194,12 @@ def load_model_weights(model_path: str, model_type: str) -> Dict[str, torch.Tens
     return converted_weights
 
 
-def save_model_weights(model_weights: Dict[str, torch.Tensor], output_path: str, output_format: str, output_dtype: str = "bf16"):
+def save_model_weights(
+    model_weights: Dict[str, torch.Tensor],
+    output_path: str,
+    output_format: str,
+    output_dtype: str = "bf16",
+):
     """
     Save model weights
 
@@ -160,7 +209,9 @@ def save_model_weights(model_weights: Dict[str, torch.Tensor], output_path: str,
         output_format: Output format
         output_dtype: Output data type
     """
-    print(f"Saving merged model to: {output_path} (format: {output_format}, data type: {output_dtype})")
+    print(
+        f"Saving merged model to: {output_path} (format: {output_format}, data type: {output_dtype})"
+    )
 
     # Ensure output directory exists
     output_dir = os.path.dirname(output_path)
@@ -172,7 +223,9 @@ def save_model_weights(model_weights: Dict[str, torch.Tensor], output_path: str,
     print(f"Converting model weights to {output_dtype} type...")
 
     converted_weights = {}
-    with tqdm(model_weights.items(), desc="Converting data type", unit="weights") as pbar:
+    with tqdm(
+        model_weights.items(), desc="Converting data type", unit="weights"
+    ) as pbar:
         for key, tensor in pbar:
             # Only convert floating point tensors, keep integer tensors unchanged
             if tensor.dtype.is_floating_point:
@@ -197,7 +250,11 @@ def save_model_weights(model_weights: Dict[str, torch.Tensor], output_path: str,
     print(f"Merged model saved to: {output_path}")
 
 
-def merge_lora_weights(source_weights: Dict[str, torch.Tensor], lora_weights: Dict[str, torch.Tensor], alpha: float = 1.0) -> Dict[str, torch.Tensor]:
+def merge_lora_weights(
+    source_weights: Dict[str, torch.Tensor],
+    lora_weights: Dict[str, torch.Tensor],
+    alpha: float = 1.0,
+) -> Dict[str, torch.Tensor]:
     """
     Merge source model with LoRA weights
 
@@ -254,7 +311,10 @@ def merge_lora_weights(source_weights: Dict[str, torch.Tensor], lora_weights: Di
                 # Find corresponding source weight
                 source_key = _find_source_key(base_key, source_weights)
                 if source_key:
-                    if source_weights[source_key].shape != (lora_pair["up"].shape[0], lora_pair["down"].shape[1]):
+                    if source_weights[source_key].shape != (
+                        lora_pair["up"].shape[0],
+                        lora_pair["down"].shape[1],
+                    ):
                         skipped_source_count += 1
                         skipped_source_keys.append(source_key)
                         continue
@@ -285,7 +345,9 @@ def merge_lora_weights(source_weights: Dict[str, torch.Tensor], lora_weights: Di
                     skipped_source_keys.append(source_key)
                     continue
                 # Apply diff: source + alpha * diff
-                merged_weights[source_key] = source_weights[source_key] + alpha * diff_tensor
+                merged_weights[source_key] = (
+                    source_weights[source_key] + alpha * diff_tensor
+                )
                 diff_merged_count += 1
                 pbar.set_postfix_str(f"Diff: {source_key.split('.')[-1]}")
             else:
@@ -316,7 +378,9 @@ def merge_lora_weights(source_weights: Dict[str, torch.Tensor], lora_weights: Di
     return merged_weights
 
 
-def _find_source_key(lora_base_key: str, source_weights: Dict[str, torch.Tensor]) -> Optional[str]:
+def _find_source_key(
+    lora_base_key: str, source_weights: Dict[str, torch.Tensor]
+) -> Optional[str]:
     """
     Find corresponding source weight key for LoRA base key
 
@@ -329,7 +393,9 @@ def _find_source_key(lora_base_key: str, source_weights: Dict[str, torch.Tensor]
     """
     # Remove diffusion_model prefix if present
     if lora_base_key.startswith("diffusion_model."):
-        source_key = lora_base_key[16:] + ".weight"  # Remove "diffusion_model." and add ".weight"
+        source_key = (
+            lora_base_key[16:] + ".weight"
+        )  # Remove "diffusion_model." and add ".weight"
     else:
         source_key = lora_base_key + ".weight"
 
@@ -348,7 +414,9 @@ def _find_source_key(lora_base_key: str, source_weights: Dict[str, torch.Tensor]
     return None
 
 
-def _find_source_key_from_diff(diff_key: str, source_weights: Dict[str, torch.Tensor]) -> Optional[str]:
+def _find_source_key_from_diff(
+    diff_key: str, source_weights: Dict[str, torch.Tensor]
+) -> Optional[str]:
     """
     Find corresponding source weight key for diff key
 
@@ -371,7 +439,9 @@ def _find_source_key_from_diff(diff_key: str, source_weights: Dict[str, torch.Te
     elif base_key.endswith(".diff_b"):
         source_key = base_key[:-7] + ".bias"  # Replace ".diff_b" with ".bias"
     elif base_key.endswith(".diff_m"):
-        source_key = base_key[:-7] + ".modulation"  # Replace ".diff_m" with ".modulation"
+        source_key = (
+            base_key[:-7] + ".modulation"
+        )  # Replace ".diff_m" with ".modulation"
     else:
         source_key = base_key
 
@@ -401,10 +471,14 @@ def main():
         lora_weights = load_model_weights(args.lora_model, args.lora_type)
 
         # Merge LoRA weights with source model
-        merged_weights = merge_lora_weights(source_weights, lora_weights, alpha=args.alpha)
+        merged_weights = merge_lora_weights(
+            source_weights, lora_weights, alpha=args.alpha
+        )
 
         # Save merged model
-        save_model_weights(merged_weights, args.output, args.output_format, args.output_dtype)
+        save_model_weights(
+            merged_weights, args.output, args.output_format, args.output_dtype
+        )
 
         print("=" * 50)
         print("LoRA merge completed!")

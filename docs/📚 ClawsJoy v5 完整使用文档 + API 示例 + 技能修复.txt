@@ -1,0 +1,488 @@
+📚 ClawsJoy v5 完整使用文档 + API 示例 + 技能修复
+📖 ClawsJoy v5 完整使用文档
+一、系统概述
+ClawsJoy v5 是一个多智能体 AI 操作系统，支持：
+
+18+ 智能体 (Agents)
+
+45+ 引擎 (Engines)
+
+217+ 技能 (Skills)
+
+多租户支持
+
+向量记忆系统
+
+WebSocket 实时通信
+
+二、快速开始
+2.1 启动服务
+bash
+# 进入项目目录
+cd /home/flybo/clawsjoy_v5
+
+# 启动生产服务
+./start_prod.sh
+
+# 或使用 nohup 后台启动
+nohup gunicorn -c gunicorn.conf.py agent_gateway_enhanced:app > logs/gateway.log 2>&1 &
+
+# 查看服务状态
+curl http://127.0.0.1:5002/health
+2.2 服务端点
+端点	方法	说明
+/health	GET	健康检查
+/metrics	GET	监控指标
+/api/v5/enhanced/chat	POST	增强聊天
+/api/v5/enhanced/chat/stream	POST	流式聊天
+/api/v5/memory/remember	POST	存储记忆
+/api/v5/memory/recall	POST	检索记忆
+/api/v5/memory/stats	GET	记忆统计
+三、API 调用示例
+3.1 基础聊天
+bash
+# 普通聊天
+curl -X POST http://127.0.0.1:5002/api/v5/enhanced/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "user_001",
+    "message": "你好，我是张三"
+  }'
+python
+# Python 示例
+import requests
+
+url = "http://127.0.0.1:5002/api/v5/enhanced/chat"
+payload = {
+    "user_id": "user_001",
+    "message": "今天天气怎么样"
+}
+response = requests.post(url, json=payload)
+print(response.json())
+# 输出: {"agent": "atomic_skill", "response": "📍 今天天气：晴 ☀️", "success": true}
+3.2 代码生成
+bash
+# 代码生成
+curl -X POST http://127.0.0.1:5002/api/v5/enhanced/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "user_001",
+    "message": "写一个快速排序的 Python 函数"
+  }'
+3.3 记忆系统 API
+bash
+# 存储事实记忆
+curl -X POST http://127.0.0.1:5002/api/v5/memory/remember \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "user_001",
+    "fact": "用户喜欢 Python 编程"
+  }'
+
+# 存储偏好
+curl -X POST http://127.0.0.1:5002/api/v5/memory/remember \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "user_001",
+    "preference": {"theme": "dark", "language": "zh-CN"}
+  }'
+
+# 检索记忆
+curl -X POST http://127.0.0.1:5002/api/v5/memory/recall \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "user_001",
+    "limit": 10
+  }'
+
+# 获取记忆统计
+curl http://127.0.0.1:5002/api/v5/memory/stats?user_id=user_001
+3.4 监控指标
+bash
+# 获取系统监控数据
+curl http://127.0.0.1:5002/metrics
+
+# 响应示例
+{
+  "connections": 23,
+  "cpu_percent": 5.2,
+  "disk_usage": 23.0,
+  "memory_percent": 24.5,
+  "status": "ok"
+}
+四、Python SDK 完整示例
+python
+#!/usr/bin/env python3
+"""ClawsJoy v5 Python SDK 示例"""
+
+import requests
+import json
+
+class ClawsJoyClient:
+    """ClawsJoy v5 客户端"""
+    
+    def __init__(self, base_url="http://127.0.0.1:5002"):
+        self.base_url = base_url
+        self.user_id = "default_user"
+    
+    def chat(self, message: str, user_id: str = None) -> dict:
+        """发送聊天消息"""
+        url = f"{self.base_url}/api/v5/enhanced/chat"
+        payload = {
+            "user_id": user_id or self.user_id,
+            "message": message
+        }
+        response = requests.post(url, json=payload)
+        return response.json()
+    
+    def remember_fact(self, fact: str, user_id: str = None) -> dict:
+        """存储事实记忆"""
+        url = f"{self.base_url}/api/v5/memory/remember"
+        payload = {
+            "user_id": user_id or self.user_id,
+            "fact": fact
+        }
+        return requests.post(url, json=payload).json()
+    
+    def remember_preference(self, key: str, value: str, user_id: str = None) -> dict:
+        """存储用户偏好"""
+        url = f"{self.base_url}/api/v5/memory/remember"
+        payload = {
+            "user_id": user_id or self.user_id,
+            "preference": {key: value}
+        }
+        return requests.post(url, json=payload).json()
+    
+    def recall_memory(self, limit: int = 10, user_id: str = None) -> dict:
+        """检索记忆"""
+        url = f"{self.base_url}/api/v5/memory/recall"
+        payload = {
+            "user_id": user_id or self.user_id,
+            "limit": limit
+        }
+        return requests.post(url, json=payload).json()
+    
+    def health_check(self) -> dict:
+        """健康检查"""
+        return requests.get(f"{self.base_url}/health").json()
+    
+    def get_metrics(self) -> dict:
+        """获取监控指标"""
+        return requests.get(f"{self.base_url}/metrics").json()
+
+
+# 使用示例
+if __name__ == "__main__":
+    client = ClawsJoyClient()
+    
+    # 1. 健康检查
+    print("=== 健康检查 ===")
+    print(client.health_check())
+    
+    # 2. 聊天
+    print("\n=== 聊天测试 ===")
+    print(client.chat("你好"))
+    print(client.chat("今天天气怎么样"))
+    print(client.chat("1+2等于多少"))
+    print(client.chat("用粤语说你好"))
+    
+    # 3. 记忆系统
+    print("\n=== 记忆系统 ===")
+    client.remember_fact("用户喜欢简洁风格")
+    client.remember_preference("theme", "dark")
+    memories = client.recall_memory(limit=5)
+    print(f"记忆数量: {len(memories.get('results', []))}")
+    
+    # 4. 监控
+    print("\n=== 监控指标 ===")
+    metrics = client.get_metrics()
+    print(f"CPU: {metrics.get('cpu_percent')}%")
+    print(f"内存: {metrics.get('memory_percent')}%")
+五、内部 API 调用示例
+5.1 Agent 直接调用
+python
+#!/usr/bin/env python3
+"""Agent 直接调用示例"""
+
+import sys
+sys.path.insert(0, '/home/flybo/clawsjoy_v5')
+
+# 1. ChatAgent
+from agents.chat_agent.agent import ChatAgent
+
+chat = ChatAgent("user_001")
+result = chat.process("你好，我叫张三")
+print(f"ChatAgent: {result['response']}")
+
+# 2. CodeAgent
+from agents.code_agent.agent import CodeAgent
+
+code = CodeAgent("user_001")
+result = code.process("写一个斐波那契数列函数")
+print(f"CodeAgent: {result['response'][:100]}...")
+
+# 3. Orchestrator (智能路由)
+from agents.orchestrator.agent import OrchestratorAgent
+
+orchestrator = OrchestratorAgent("user_001")
+agent_name = orchestrator.smart_route("今天天气怎么样")
+print(f"路由到: {agent_name}")
+5.2 记忆系统内部调用
+python
+#!/usr/bin/env python3
+"""记忆系统内部调用示例"""
+
+import sys
+sys.path.insert(0, '/home/flybo/clawsjoy_v5')
+
+# 1. SmartMemoryManager
+from core.butler.memory_manager import SmartMemoryManager
+
+memory = SmartMemoryManager("user_001")
+
+# 存储事实
+memory.remember_fact("用户喜欢 Python", importance=5)
+
+# 存储偏好
+memory.remember_preference("language", "zh-CN")
+
+# 添加对话
+memory.add_conversation("你好", "你好！有什么可以帮助您的吗？")
+
+# 检索上下文
+context = memory.recall_context("Python", limit=3)
+print(f"上下文: {context}")
+
+# 获取统计
+stats = memory.get_stats()
+print(f"记忆统计: {stats}")
+
+# 2. 跨会话记忆
+from core.lib.cross_session_memory import CrossSessionMemory
+
+session = CrossSessionMemory("user_001")
+session.remember("name", "张三")
+session.record_interaction("你好", "你好！")
+user_info = session.recall()
+print(f"用户信息: {user_info}")
+5.3 引擎调用示例
+python
+#!/usr/bin/env python3
+"""引擎调用示例"""
+
+import sys
+sys.path.insert(0, '/home/flybo/clawsjoy_v5')
+
+# 1. 语义理解引擎
+from engine.semantic import semantic_engine
+
+result = semantic_engine.understand("今天天气怎么样")
+print(f"意图: {result.get('intent')}, 置信度: {result.get('confidence')}")
+
+# 2. 规划引擎
+from engine.planning import planning_engine
+
+plan = planning_engine.decompose("写一篇关于AI的文章")
+print(f"规划步骤: {plan}")
+
+# 3. 知识引擎
+from engine.knowledge import knowledge_engine
+
+results = knowledge_engine.query("ClawsJoy", limit=3)
+print(f"知识搜索结果: {results}")
+
+# 4. 获取所有引擎状态
+from engine.manager import engine_manager
+
+# 注意：使用 get_status 需要查看正确的方法名
+# status = engine_manager.get_status()
+5.4 技能系统调用
+python
+#!/usr/bin/env python3
+"""技能系统调用示例"""
+
+import sys
+sys.path.insert(0, '/home/flybo/clawsjoy_v5')
+
+from core.lib.skill_loader_v3 import skill_loader
+
+# 1. 列出所有技能
+skills = skill_loader.list_skills()
+print(f"技能总数: {len(skills)}")
+print(f"技能分类: {list(skills.keys())[:10]}")
+
+# 2. 搜索技能
+search_results = skill_loader.search_skills("weather")
+print(f"天气相关技能: {search_results}")
+
+# 3. 获取技能详情
+skill_info = skill_loader.get_skill("math")
+print(f"技能详情: {skill_info}")
+
+# 4. 获取技能分类
+categories = skill_loader.get_categories()
+print(f"技能分类: {list(categories.keys())}")
+
+# 5. 执行技能（需要知道正确的参数格式）
+# result = skill_loader.execute("math", {"expression": "1+1"})
+六、技能执行问题修复
+问题诊断
+python
+# 查看技能的正确调用方式
+python3 -c "
+import sys
+sys.path.insert(0, '/home/flybo/clawsjoy_v5')
+from core.lib.skill_loader_v3 import skill_loader
+
+# 查看 math 技能的详情
+skill_info = skill_loader.get_skill('math')
+print('Math 技能信息:', skill_info)
+
+# 查看 weather 技能的详情
+skill_info = skill_loader.get_skill('get_weather')
+print('Weather 技能信息:', skill_info)
+"
+修复后的技能执行
+python
+#!/usr/bin/env python3
+"""技能执行修复示例"""
+
+import sys
+sys.path.insert(0, '/home/flybo/clawsjoy_v5')
+
+from core.lib.skill_loader_v3 import skill_loader
+
+def execute_skill_safe(skill_name: str, params: dict = None):
+    """安全执行技能"""
+    try:
+        # 获取技能信息
+        skill_info = skill_loader.get_skill(skill_name)
+        if not skill_info:
+            return {"error": f"技能 {skill_name} 不存在"}
+        
+        # 执行技能
+        result = skill_loader.execute(skill_name, params or {})
+        return {"success": True, "result": result}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+# 测试执行
+if __name__ == "__main__":
+    # 注意：实际的技能名称和参数需要根据技能定义调整
+    test_skills = [
+        ("math", {"expression": "2+2"}),
+        ("calculator", {"a": 10, "b": 5, "op": "+"}),
+        ("get_weather", {"city": "北京"}),
+    ]
+    
+    for skill_name, params in test_skills:
+        result = execute_skill_safe(skill_name, params)
+        print(f"{skill_name}: {result}")
+七、WebSocket 语音识别示例
+python
+#!/usr/bin/env python3
+"""WebSocket 语音识别示例"""
+
+import asyncio
+import websockets
+import json
+
+async def voice_recognition():
+    uri = "ws://localhost:5003/ws/voice"
+    async with websockets.connect(uri) as websocket:
+        # 发送音频数据
+        with open("test_audio.wav", "rb") as f:
+            audio_data = f.read()
+            await websocket.send(audio_data)
+        
+        # 接收识别结果
+        response = await websocket.recv()
+        result = json.loads(response)
+        print(f"识别结果: {result}")
+
+# 运行
+# asyncio.run(voice_recognition())
+八、配置文件说明
+8.1 环境变量 (.env)
+bash
+# JWT 认证密钥
+JWT_SECRET=your-secret-key-here
+
+# 项目根目录
+PROJECT_ROOT=/home/flybo/clawsjoy_v5
+
+# JWT 过期时间（小时）
+JWT_EXPIRE_HOURS=24
+
+# 日志级别
+LOG_LEVEL=INFO
+8.2 Gunicorn 配置 (gunicorn.conf.py)
+python
+workers = 2          # Worker 进程数
+threads = 4          # 每进程线程数
+bind = "0.0.0.0:5002"  # 绑定地址
+timeout = 120        # 超时时间
+max_requests = 1000  # 最大请求数（防内存泄漏）
+九、故障排查
+9.1 服务无法启动
+bash
+# 检查端口占用
+netstat -tlnp | grep 5002
+
+# 查看错误日志
+tail -50 logs/error.log
+
+# 手动前台启动查看错误
+gunicorn -c gunicorn.conf.py agent_gateway_enhanced:app
+9.2 内存不足
+bash
+# 减少 worker 数量
+sed -i 's/workers = 4/workers = 2/' gunicorn.conf.py
+
+# 重启服务
+pkill -f gunicorn && ./start_prod.sh
+9.3 API 返回 404
+bash
+# 检查路由注册
+curl http://127.0.0.1:5002/
+curl http://127.0.0.1:5002/health
+十、性能优化建议
+10.1 生产环境配置
+python
+# gunicorn.conf.py 优化
+workers = 4          # 根据 CPU 核心数调整
+threads = 8          # 根据并发需求调整
+max_requests = 1000  # 防止内存泄漏
+preload_app = True   # 减少启动时间
+10.2 监控脚本
+bash
+#!/bin/bash
+# monitor.sh - 服务监控脚本
+
+while true; do
+    if ! curl -s http://127.0.0.1:5002/health > /dev/null; then
+        echo "服务异常，正在重启..."
+        pkill -f gunicorn
+        ./start_prod.sh
+    fi
+    sleep 30
+done
+📝 总结
+ClawsJoy v5 提供了完整的：
+
+✅ HTTP API 接口
+
+✅ WebSocket 实时通信
+
+✅ 内部 Python SDK
+
+✅ 记忆系统
+
+✅ 技能系统
+
+✅ 多 Agent 协作
+
+✅ 监控指标
+
+文档版本: v5.0.3
+最后更新: 2026-06-03

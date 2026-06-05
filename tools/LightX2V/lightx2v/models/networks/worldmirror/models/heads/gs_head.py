@@ -1,8 +1,9 @@
-from lib.smart_config import smart_config
 from typing import List
 
 import torch
 import torch.nn as nn
+
+from lib.smart_config import smart_config
 
 from .dense_head import _BaseDPTHead
 
@@ -57,7 +58,9 @@ class GSFeatHead(_BaseDPTHead):
         gs_chunks = []
         for frame_start in range(0, S, frames_chunk_size):
             frame_end = min(frame_start + frames_chunk_size, S)
-            gs = self._forward_impl(token_list, images, patch_start_idx, frame_start, frame_end)
+            gs = self._forward_impl(
+                token_list, images, patch_start_idx, frame_start, frame_end
+            )
             gs_chunks.append(gs)
 
         return torch.cat(gs_chunks, dim=1)
@@ -75,7 +78,9 @@ class GSFeatHead(_BaseDPTHead):
 
         B, S, _, H, W = images.shape
 
-        fused = self._extract_fused_features(token_list, B, S, H, W, patch_start_idx, frame_start, frame_end)
+        fused = self._extract_fused_features(
+            token_list, B, S, H, W, patch_start_idx, frame_start, frame_end
+        )
 
         img_flat = images.reshape(B * S, -1, H, W)
         img_feat = self.input_merger(img_flat)

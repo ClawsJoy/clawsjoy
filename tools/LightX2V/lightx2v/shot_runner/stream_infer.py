@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import argparse
 import os
 
@@ -6,13 +5,14 @@ import numpy as np
 import torch
 import torch.distributed as dist
 import torchaudio as ta
-from loguru import logger
-
 from lightx2v.shot_runner.shot_base import ShotPipeline, load_clip_configs
 from lightx2v.shot_runner.utils import SlidingWindowReader, save_audio, save_to_video
 from lightx2v.utils.input_info import init_input_info_from_args
 from lightx2v.utils.profiler import *
 from lightx2v.utils.utils import seed_all
+from loguru import logger
+
+from lib.smart_config import smart_config
 
 
 class ShotStreamPipeline(ShotPipeline):  # type:ignore
@@ -24,18 +24,25 @@ class ShotStreamPipeline(ShotPipeline):  # type:ignore
         s2v = self.clip_generators["s2v_clip"]  # s2v一致性强，动态相应差
         f2v = self.clip_generators["f2v_clip"]  # f2v一致性差，动态响应强
         # 根据 pipe 最长 overlap_len 初始化 tail buffer
-        self.max_tail_len = max(s2v.config.get("prev_frame_length", None), f2v.config.get("prev_frame_length", None))
+        self.max_tail_len = max(
+            s2v.config.get("prev_frame_length", None),
+            f2v.config.get("prev_frame_length", None),
+        )
         model_fps = s2v.config.get("target_fps", 16)
         model_sr = s2v.config.get("audio_sr", 16000)
 
         # 获取用户输入信息
-        s2v_input_info = init_input_info_from_args(s2v.config["task"], args, infer_steps=3)
+        s2v_input_info = init_input_info_from_args(
+            s2v.config["task"], args, infer_steps=3
+        )
         f2v_input_info = init_input_info_from_args(f2v.config["task"], args)
         # 从默认配置中补全输入信息
         s2v_input_info = self.check_input_info(s2v_input_info, s2v.config)
         f2v_input_info = self.check_input_info(f2v_input_info, f2v.config)
 
-        assert s2v_input_info.audio_path == f2v_input_info.audio_path, "s2v and f2v must use the same audio input"
+        assert (
+            s2v_input_info.audio_path == f2v_input_info.audio_path
+        ), "s2v and f2v must use the same audio input"
 
         self.global_tail_video = None
 
@@ -71,12 +78,18 @@ class ShotStreamPipeline(ShotPipeline):  # type:ignore
             # if i % 4 == 0:
             #    inputs.infer_steps = 2#s2v 一半时间用2步推理
 
-            if self.global_tail_video is not None:  # 根据当前 pipe 需要多少 overlap_len 来裁剪 tail
-                inputs.overlap_frame = self.global_tail_video[:, :, -pipe.prev_frame_length :]
+            if (
+                self.global_tail_video is not None
+            ):  # 根据当前 pipe 需要多少 overlap_len 来裁剪 tail
+                inputs.overlap_frame = self.global_tail_video[
+                    :, :, -pipe.prev_frame_length :
+                ]
             gen_clip_video, audio_clip, _ = pipe.run_clip_pipeline(inputs)
             aligned_len = gen_clip_video.shape[2] - overlap
             gen_video_list.append(gen_clip_video[:, :, :aligned_len])
-            cut_audio_list.append(audio_clip[: aligned_len * audio_reader.audio_per_frame])
+            cut_audio_list.append(
+                audio_clip[: aligned_len * audio_reader.audio_per_frame]
+            )
 
             overlap = pipe.prev_frame_length
             self.global_tail_video = gen_clip_video[:, :, -self.max_tail_len :]
@@ -95,15 +108,43 @@ class ShotStreamPipeline(ShotPipeline):  # type:ignore
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--seed", type=int, default=42, help="The seed for random generator")
+    parser.add_argument(
+        "--seed", type=int, default=42, help="The seed for random generator"
+    )
     parser.add_argument("--config_json", type=str, required=True)
-    parser.add_argument("--prompt", type=str, default="", help="The input prompt for text-to-video generation")
+    parser.add_argument(
+        "--prompt",
+        type=str,
+        default="",
+        help="The input prompt for text-to-video generation",
+    )
     parser.add_argument("--negative_prompt", type=str, default="")
-    parser.add_argument("--image_path", type=str, default="", help="The path to input image file for image-to-video (i2v) task")
-    parser.add_argument("--audio_path", type=str, default="", help="The path to input audio file or directory for audio-to-video (s2v) task")
-    parser.add_argument("--save_result_path", type=str, default=None, help="The path to save video path/file")
-    parser.add_argument("--return_result_tensor", action="store_true", help="Whether to return result tensor. (Useful for comfyui)")
-    parser.add_argument("--target_shape", nargs="+", default=[], help="Set return video or image shape")
+    parser.add_argument(
+        "--image_path",
+        type=str,
+        default="",
+        help="The path to input image file for image-to-video (i2v) task",
+    )
+    parser.add_argument(
+        "--audio_path",
+        type=str,
+        default="",
+        help="The path to input audio file or directory for audio-to-video (s2v) task",
+    )
+    parser.add_argument(
+        "--save_result_path",
+        type=str,
+        default=None,
+        help="The path to save video path/file",
+    )
+    parser.add_argument(
+        "--return_result_tensor",
+        action="store_true",
+        help="Whether to return result tensor. (Useful for comfyui)",
+    )
+    parser.add_argument(
+        "--target_shape", nargs="+", default=[], help="Set return video or image shape"
+    )
     args = parser.parse_args()
 
     seed_all(args.seed)

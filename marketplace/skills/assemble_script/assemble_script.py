@@ -1,12 +1,14 @@
 from lib.smart_config import smart_config
+
 #!/usr/bin/env python3
 """将AI提取的内容组装成3分钟脚本"""
 
-import sys
 import json
+import sys
+
 
 def assemble_script(content, topic):
-    template = f'''🎬 开场（0:00-0:20）
+    template = f"""🎬 开场（0:00-0:20）
 哈喽大家好！今天我们来聊一个超重磅的话题——{topic}。
 很多朋友都在问，今天3分钟给你讲清楚，全是干货！
 
@@ -24,16 +26,18 @@ def assemble_script(content, topic):
 🎯 给你们的建议（2:30-3:00）
 {content.get("advice", "分数够就赶紧递交！")}
 
-最后，如果觉得有用，记得点赞关注！评论区告诉我你的分数，帮你评估。'''
+最后，如果觉得有用，记得点赞关注！评论区告诉我你的分数，帮你评估。"""
     return template
+
 
 if __name__ == "__main__":
     import sys
+
     content_file = sys.argv[1] if len(sys.argv) > 1 else "content.json"
     topic = sys.argv[2] if len(sys.argv) > 2 else "话题"
-    
-    with open(content_file, 'r') as f:
+
+    with open(content_file, "r") as f:
         content = json.load(f)
-    
+
     script = assemble_script(content, topic)
     print(script)

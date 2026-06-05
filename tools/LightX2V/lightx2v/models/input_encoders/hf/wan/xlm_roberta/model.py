@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 # Modified from ``https://github.com/openai/CLIP'' and ``https://github.com/mlfoundations/open_clip''
 # Copyright 2024-2025 The Alibaba Wan Team Authors. All rights reserved.
 import math
@@ -7,7 +6,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.transforms as T
-from loguru import logger
 
 # from lightx2v.attentions import attention
 from lightx2v.common.ops.attn import TorchSDPAWeight
@@ -26,6 +24,9 @@ from lightx2v.utils.utils import load_weights
 from lightx2v_platform.base.global_var import AI_DEVICE
 from lightx2v_platform.ops.mm.cambricon_mlu.q_linear import MluQuantLinearInt8
 from lightx2v_platform.ops.mm.iluvatar_cuda.q_linear import IluvatarQuantLinearInt8
+from loguru import logger
+
+from lib.smart_config import smart_config
 
 __all__ = [
     "XLMRobertaCLIP",
@@ -44,7 +45,17 @@ def pos_interpolate(pos, seq_len):
         return torch.cat(
             [
                 pos[:, :n],
-                F.interpolate(pos[:, n:].float().reshape(1, src_grid, src_grid, -1).permute(0, 3, 1, 2), size=(tar_grid, tar_grid), mode="bicubic", align_corners=False).flatten(2).transpose(1, 2),
+                F.interpolate(
+                    pos[:, n:]
+                    .float()
+                    .reshape(1, src_grid, src_grid, -1)
+                    .permute(0, 3, 1, 2),
+                    size=(tar_grid, tar_grid),
+                    mode="bicubic",
+                    align_corners=False,
+                )
+                .flatten(2)
+                .transpose(1, 2),
             ],
             dim=1,
         )
@@ -61,7 +72,17 @@ class LayerNorm(nn.LayerNorm):
 
 
 class SelfAttention(nn.Module):
-    def __init__(self, dim, num_heads, causal=False, attn_dropout=0.0, proj_dropout=0.0, quantized=False, quant_scheme=None, dtype=None):
+    def __init__(
+        self,
+        dim,
+        num_heads,
+        causal=False,
+        attn_dropout=0.0,
+        proj_dropout=0.0,
+        quantized=False,
+        quant_scheme=None,
+        dtype=None,
+    ):
         assert dim % num_heads == 0
         super().__init__()
         self.dim = dim
@@ -96,7 +117,9 @@ class SelfAttention(nn.Module):
             elif quant_scheme == "int8-iluvatar":
                 linear_cls = IluvatarQuantLinearInt8
             else:
-                raise NotImplementedError(f"Unsupported CLip quant scheme: {quant_scheme}")
+                raise NotImplementedError(
+                    f"Unsupported CLip quant scheme: {quant_scheme}"
+                )
         else:
             linear_cls = nn.Linear
 
@@ -188,12 +211,23 @@ class AttentionBlock(nn.Module):
             elif quant_scheme == "int8-iluvatar":
                 linear_cls = IluvatarQuantLinearInt8
             else:
-                raise NotImplementedError(f"Unsupported T5 quant scheme: {quant_scheme}")
+                raise NotImplementedError(
+                    f"Unsupported T5 quant scheme: {quant_scheme}"
+                )
         else:
             linear_cls = nn.Linear
 
         self.norm1 = LayerNorm(dim, eps=norm_eps, dtype=dtype)
-        self.attn = SelfAttention(dim, num_heads, causal, attn_dropout, proj_dropout, quantized, quant_scheme, dtype)
+        self.attn = SelfAttention(
+            dim,
+            num_heads,
+            causal,
+            attn_dropout,
+            proj_dropout,
+            quantized,
+            quant_scheme,
+            dtype,
+        )
         self.norm2 = LayerNorm(dim, eps=norm_eps, dtype=dtype)
         if activation == "swi_glu":
             self.mlp = SwiGLU(dim, int(dim * mlp_ratio), dtype=dtype)
@@ -216,7 +250,16 @@ class AttentionBlock(nn.Module):
 
 
 class AttentionPool(nn.Module):
-    def __init__(self, dim, mlp_ratio, num_heads, activation="gelu", proj_dropout=0.0, norm_eps=1e-5, dtype=torch.float16):
+    def __init__(
+        self,
+        dim,
+        mlp_ratio,
+        num_heads,
+        activation="gelu",
+        proj_dropout=0.0,
+        norm_eps=1e-5,
+        dtype=torch.float16,
+    ):
         assert dim % num_heads == 0
         super().__init__()
         self.dim = dim
@@ -234,7 +277,10 @@ class AttentionPool(nn.Module):
         self.proj = nn.Linear(dim, dim, dtype=dtype)
         self.norm = LayerNorm(dim, eps=norm_eps, dtype=dtype)
         self.mlp = nn.Sequential(
-            nn.Linear(dim, int(dim * mlp_ratio), dtype=dtype), QuickGELU() if activation == "quick_gelu" else nn.GELU(), nn.Linear(int(dim * mlp_ratio), dim, dtype=dtype), nn.Dropout(proj_dropout)
+            nn.Linear(dim, int(dim * mlp_ratio), dtype=dtype),
+            QuickGELU() if activation == "quick_gelu" else nn.GELU(),
+            nn.Linear(int(dim * mlp_ratio), dim, dtype=dtype),
+            nn.Dropout(proj_dropout),
         )
 
     def forward(self, x):
@@ -283,7 +329,9 @@ class VisionTransformer(nn.Module):
         quant_scheme=None,
     ):
         if image_size % patch_size != 0:
-            logger.info("[WARNING] image_size is not divisible by patch_size", flush=True)
+            logger.info(
+                "[WARNING] image_size is not divisible by patch_size", flush=True
+            )
         assert pool_type in ("token", "token_fc", "attn_pool")
         out_dim = out_dim or dim
         super().__init__()
@@ -301,16 +349,49 @@ class VisionTransformer(nn.Module):
 
         # embeddings
         gain = 1.0 / math.sqrt(dim)
-        self.patch_embedding = nn.Conv2d(3, dim, kernel_size=patch_size, stride=patch_size, bias=not pre_norm, dtype=dtype)
+        self.patch_embedding = nn.Conv2d(
+            3,
+            dim,
+            kernel_size=patch_size,
+            stride=patch_size,
+            bias=not pre_norm,
+            dtype=dtype,
+        )
         if pool_type in ("token", "token_fc"):
-            self.cls_embedding = nn.Parameter(gain * torch.randn(1, 1, dim, dtype=dtype))
-        self.pos_embedding = nn.Parameter(gain * torch.randn(1, self.num_patches + (1 if pool_type in ("token", "token_fc") else 0), dim, dtype=dtype))
+            self.cls_embedding = nn.Parameter(
+                gain * torch.randn(1, 1, dim, dtype=dtype)
+            )
+        self.pos_embedding = nn.Parameter(
+            gain
+            * torch.randn(
+                1,
+                self.num_patches + (1 if pool_type in ("token", "token_fc") else 0),
+                dim,
+                dtype=dtype,
+            )
+        )
         self.dropout = nn.Dropout(embedding_dropout)
 
         # transformer
         self.pre_norm = LayerNorm(dim, eps=norm_eps, dtype=dtype) if pre_norm else None
         self.transformer = nn.Sequential(
-            *[AttentionBlock(dim, mlp_ratio, num_heads, post_norm, False, activation, attn_dropout, proj_dropout, norm_eps, quantized, quant_scheme, dtype) for _ in range(num_layers)]
+            *[
+                AttentionBlock(
+                    dim,
+                    mlp_ratio,
+                    num_heads,
+                    post_norm,
+                    False,
+                    activation,
+                    attn_dropout,
+                    proj_dropout,
+                    norm_eps,
+                    quantized,
+                    quant_scheme,
+                    dtype,
+                )
+                for _ in range(num_layers)
+            ]
         )
         self.post_norm = LayerNorm(dim, eps=norm_eps, dtype=dtype)
 
@@ -320,13 +401,25 @@ class VisionTransformer(nn.Module):
         elif pool_type == "token_fc":
             self.head = nn.Linear(dim, out_dim, dtype=dtype)
         elif pool_type == "attn_pool":
-            self.head = AttentionPool(dim, mlp_ratio, num_heads, activation, proj_dropout, norm_eps, dtype=dtype)
+            self.head = AttentionPool(
+                dim,
+                mlp_ratio,
+                num_heads,
+                activation,
+                proj_dropout,
+                norm_eps,
+                dtype=dtype,
+            )
 
     def forward(self, x, interpolation=False, use_31_block=False):
         b = x.size(0)
 
         # embeddings
-        x = self.patch_embedding(x.type(self.patch_embedding.weight.type())).flatten(2).permute(0, 2, 1)
+        x = (
+            self.patch_embedding(x.type(self.patch_embedding.weight.type()))
+            .flatten(2)
+            .permute(0, 2, 1)
+        )
         if self.pool_type in ("token", "token_fc"):
             x = torch.cat([self.cls_embedding.expand(b, -1, -1), x], dim=1)
         if interpolation:
@@ -413,7 +506,17 @@ class XLMRobertaCLIP(nn.Module):
         self.log_scale = nn.Parameter(math.log(1 / 0.07) * torch.ones([]))
 
 
-def _clip(pretrained=False, pretrained_name=None, model_cls=XLMRobertaCLIP, return_transforms=False, return_tokenizer=False, tokenizer_padding="eos", dtype=torch.float32, device="cpu", **kwargs):
+def _clip(
+    pretrained=False,
+    pretrained_name=None,
+    model_cls=XLMRobertaCLIP,
+    return_transforms=False,
+    return_tokenizer=False,
+    tokenizer_padding="eos",
+    dtype=torch.float32,
+    device="cpu",
+    **kwargs,
+):
     # init a model on device
     with torch.device(device):
         model = model_cls(dtype=dtype, **kwargs)
@@ -431,12 +534,25 @@ def _clip(pretrained=False, pretrained_name=None, model_cls=XLMRobertaCLIP, retu
             std = [0.26862954, 0.26130258, 0.27577711]
 
         # transforms
-        transforms = T.Compose([T.Resize((model.image_size, model.image_size), interpolation=T.InterpolationMode.BICUBIC), T.ToTensor(), T.Normalize(mean=mean, std=std)])
+        transforms = T.Compose(
+            [
+                T.Resize(
+                    (model.image_size, model.image_size),
+                    interpolation=T.InterpolationMode.BICUBIC,
+                ),
+                T.ToTensor(),
+                T.Normalize(mean=mean, std=std),
+            ]
+        )
         output += (transforms,)
     return output[0] if len(output) == 1 else output
 
 
-def clip_xlm_roberta_vit_h_14(pretrained=False, pretrained_name="open-clip-xlm-roberta-large-vit-huge-14", **kwargs):
+def clip_xlm_roberta_vit_h_14(
+    pretrained=False,
+    pretrained_name="open-clip-xlm-roberta-large-vit-huge-14",
+    **kwargs,
+):
     cfg = dict(
         embed_dim=1024,
         image_size=224,
@@ -460,7 +576,19 @@ def clip_xlm_roberta_vit_h_14(pretrained=False, pretrained_name="open-clip-xlm-r
 
 
 class CLIPModel:
-    def __init__(self, dtype, device, checkpoint_path, clip_quantized, clip_quantized_ckpt, quant_scheme, cpu_offload=False, use_31_block=True, load_from_rank0=False, dummy_model=False):
+    def __init__(
+        self,
+        dtype,
+        device,
+        checkpoint_path,
+        clip_quantized,
+        clip_quantized_ckpt,
+        quant_scheme,
+        cpu_offload=False,
+        use_31_block=True,
+        load_from_rank0=False,
+        dummy_model=False,
+    ):
         self.dtype = dtype
         self.quantized = clip_quantized
         self.cpu_offload = cpu_offload
@@ -473,11 +601,22 @@ class CLIPModel:
 
         # init model
         self.model, self.transforms = clip_xlm_roberta_vit_h_14(
-            pretrained=False, return_transforms=True, return_tokenizer=False, dtype=dtype, device=device, quantized=self.quantized, quant_scheme=quant_scheme
+            pretrained=False,
+            return_transforms=True,
+            return_tokenizer=False,
+            dtype=dtype,
+            device=device,
+            quantized=self.quantized,
+            quant_scheme=quant_scheme,
         )
         self.model = self.model.eval().requires_grad_(False)
         if not dummy_model:
-            weight_dict = load_weights(self.checkpoint_path, cpu_offload=cpu_offload, remove_key="textual", load_from_rank0=load_from_rank0)
+            weight_dict = load_weights(
+                self.checkpoint_path,
+                cpu_offload=cpu_offload,
+                remove_key="textual",
+                load_from_rank0=load_from_rank0,
+            )
             self.model.load_state_dict(weight_dict)
         else:
             from loguru import logger
@@ -489,7 +628,12 @@ class CLIPModel:
             self.to_cuda()
         # preprocess
         size = (self.model.image_size,) * 2
-        videos = torch.cat([F.interpolate(u, size=size, mode="bicubic", align_corners=False) for u in videos])
+        videos = torch.cat(
+            [
+                F.interpolate(u, size=size, mode="bicubic", align_corners=False)
+                for u in videos
+            ]
+        )
         videos = self.transforms.transforms[-1](videos.mul_(0.5).add_(0.5))
         # forward
         with torch.amp.autocast(str(AI_DEVICE), dtype=self.dtype):

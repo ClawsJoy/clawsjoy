@@ -3,25 +3,30 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
-from core.lib.config_helper import get_data_root, get_llm_endpoint, get_llm_model, get_embedding_model, get_gateway_port, get_timeout
-from core.lib.unified_config import unified_config
-
+from core.lib.config_helper import (
+    get_data_root,
+    get_embedding_model,
+    get_gateway_port,
+    get_llm_endpoint,
+    get_llm_model,
+    get_timeout,
+)
 from core.lib.unified_config import unified_config
 
 """语音版私人管家 - 增强版（支持唤醒词、连续对话）"""
 
-import threading
-import queue
 import json
+import queue
+import threading
 from pathlib import Path
-from typing import Optional, Dict
+from typing import Dict, Optional
 
 from core.agents.personal_butler_v2 import PersonalButlerV2
-from core.lib.voice_service import voice_service
 from core.lib.user_crypto import UserCrypto
+from core.lib.voice_service import voice_service
 
 
 class VoiceButler:
@@ -41,11 +46,15 @@ class VoiceButler:
 
     def _get_user_key(self) -> str:
         """获取用户密钥（实际应从用户输入或配置文件获取）"""
-        key_file = Path(funified_config.get("paths.users_dir", f"{get_data_root()}/users/") + "/{self.user_id}/butler_v2/key.secret")
+        key_file = Path(
+            funified_config.get("paths.users_dir", f"{get_data_root()}/users/")
+            + "/{self.user_id}/butler_v2/key.secret"
+        )
         if key_file.exists():
             return key_file.read_text().strip()
         else:
             import secrets
+
             key = secrets.token_urlsafe(32)
             key_file.parent.mkdir(parents=True, exist_ok=True)
             key_file.write_text(key)
@@ -80,31 +89,31 @@ class VoiceButler:
         result = self.butler.process(text)
 
         # 5. 记录对话上下文
-        self._conversation_context.append({
-            "user": text,
-            "butler": result.get('response', ''),
-            "timestamp": datetime.now().isoformat()
-        })
+        self._conversation_context.append(
+            {
+                "user": text,
+                "butler": result.get("response", ""),
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
         if len(self._conversation_context) > 50:
             self._conversation_context = self._conversation_context[-50:]
 
         # 6. 加密存储敏感对话
         if "密码" in text or "私密" in text or "secret" in text.lower():
-            self.crypto.encrypt(self._conversation_context[-1], f"secret_{int(time.time())}")
+            self.crypto.encrypt(
+                self._conversation_context[-1], f"secret_{int(time.time())}"
+            )
 
         # 7. 文字转语音
-        return self._respond_with_voice(result.get('response', '收到'))
+        return self._respond_with_voice(result.get("response", "收到"))
 
     def _respond_with_voice(self, text: str) -> Dict:
         """语音回复"""
         audio_out = voice_service.text_to_speech(text)
-        result = {
-            "success": True,
-            "activated": self.is_activated,
-            "response": text
-        }
+        result = {"success": True, "activated": self.is_activated, "response": text}
         if audio_out:
-            result['audio'] = audio_out
+            result["audio"] = audio_out
         return result
 
     def start_listening(self):
@@ -120,14 +129,14 @@ class VoiceButler:
     def _on_audio_received(self, audio_file: str):
         """收到音频时的回调"""
         result = self.process_voice(audio_file)
-        if result.get('activated') is False and result.get('response'):
+        if result.get("activated") is False and result.get("response"):
             # 播放唤醒提示
-            voice_service.text_to_speech(result['response'], play_immediately=True)
+            voice_service.text_to_speech(result["response"], play_immediately=True)
 
     def stop_listening(self):
         """停止监听"""
         self.is_listening = False
-        if hasattr(self, 'listener'):
+        if hasattr(self, "listener"):
             self.listener.stop()
         print("🎤 语音管家已停止")
         return {"success": True}

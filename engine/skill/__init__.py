@@ -2,4 +2,4 @@
 
 from engine.skill.core import SkillEngine, skill_engine
 
-__all__ = ['SkillEngine', 'skill_engine']
+__all__ = ["SkillEngine", "skill_engine"]

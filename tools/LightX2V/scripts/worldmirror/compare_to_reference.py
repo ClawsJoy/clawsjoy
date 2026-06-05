@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """Compare WorldMirror inference outputs against a reference snapshot.
 
 Acceptance criteria (decision 6 = B + C in the alignment checklist):
@@ -69,7 +70,9 @@ def read_ply_xyz(path: Path) -> Optional[np.ndarray]:
             if line.strip() == b"end_header":
                 break
         header_text = b"".join(header).decode("utf-8", errors="replace")
-        fmt_line = next(ln for ln in header_text.splitlines() if ln.startswith("format"))
+        fmt_line = next(
+            ln for ln in header_text.splitlines() if ln.startswith("format")
+        )
         fmt = fmt_line.split()[1]
         # Parse first "element vertex N"
         vcount = None
@@ -117,10 +120,21 @@ def read_ply_xyz(path: Path) -> Optional[np.ndarray]:
                 "int32": "<i4" if "little" in fmt else ">i4",
             }
             struct_dtype = np.dtype([(p[1], dtype_map[p[0]]) for p in prop_types])
-            arr = np.frombuffer(f.read(vcount * struct_dtype.itemsize), dtype=struct_dtype)
+            arr = np.frombuffer(
+                f.read(vcount * struct_dtype.itemsize), dtype=struct_dtype
+            )
             if len(arr) != vcount:
-                raise RuntimeError(f"Truncated PLY binary body: got {len(arr)} / {vcount} verts in {path}")
-            xyz = np.stack([arr["x"].astype(np.float64), arr["y"].astype(np.float64), arr["z"].astype(np.float64)], axis=1)
+                raise RuntimeError(
+                    f"Truncated PLY binary body: got {len(arr)} / {vcount} verts in {path}"
+                )
+            xyz = np.stack(
+                [
+                    arr["x"].astype(np.float64),
+                    arr["y"].astype(np.float64),
+                    arr["z"].astype(np.float64),
+                ],
+                axis=1,
+            )
             return xyz
         else:
             raise RuntimeError(f"Unknown PLY format {fmt} in {path}")
@@ -270,7 +284,9 @@ def main() -> int:
             failures.append(f"depth/{n}: MAE={m}")
 
     normal_results = png_u8_mae(ref, cand, "normal", "normal")
-    report["normal"] = [{"file": n, "mae": m, "ok": ok} for (n, m, ok) in normal_results]
+    report["normal"] = [
+        {"file": n, "mae": m, "ok": ok} for (n, m, ok) in normal_results
+    ]
     for n, m, ok in normal_results:
         if not ok:
             failures.append(f"normal/{n}: MAE={m}")
@@ -290,9 +306,13 @@ def main() -> int:
         if not ok_count:
             failures.append(f"{ply_name}: count_diff={stats['count_diff_pct']:.4%}")
         if not ok_vol:
-            failures.append(f"{ply_name}: bbox_vol_diff={stats['bbox_vol_diff_pct']:.4%}")
+            failures.append(
+                f"{ply_name}: bbox_vol_diff={stats['bbox_vol_diff_pct']:.4%}"
+            )
         if not ok_centroid:
-            failures.append(f"{ply_name}: centroid_diff={stats['centroid_diff_normalized']:.4%}")
+            failures.append(
+                f"{ply_name}: centroid_diff={stats['centroid_diff_normalized']:.4%}"
+            )
     report["point_clouds"] = pc_report
 
     if args.json:
@@ -307,9 +327,15 @@ def main() -> int:
         print("\n=== Point cloud (threshold {:.0%}): ===".format(PCT_THRESHOLD))
         for name, stats in pc_report.items():
             print(f"  [{name}]")
-            print(f"    points: ref={stats['ref_points']}, cand={stats['cand_points']}, diff={stats['count_diff_pct']:.4%}  {'OK' if stats['ok_count'] else 'FAIL'}")
-            print(f"    bbox vol: ref={stats['ref_bbox_vol']:.4g}, cand={stats['cand_bbox_vol']:.4g}, diff={stats['bbox_vol_diff_pct']:.4%}  {'OK' if stats['ok_vol'] else 'FAIL'}")
-            print(f"    centroid shift (norm by ref bbox diag): {stats['centroid_diff_normalized']:.4%}  {'OK' if stats['ok_centroid'] else 'FAIL'}")
+            print(
+                f"    points: ref={stats['ref_points']}, cand={stats['cand_points']}, diff={stats['count_diff_pct']:.4%}  {'OK' if stats['ok_count'] else 'FAIL'}"
+            )
+            print(
+                f"    bbox vol: ref={stats['ref_bbox_vol']:.4g}, cand={stats['cand_bbox_vol']:.4g}, diff={stats['bbox_vol_diff_pct']:.4%}  {'OK' if stats['ok_vol'] else 'FAIL'}"
+            )
+            print(
+                f"    centroid shift (norm by ref bbox diag): {stats['centroid_diff_normalized']:.4%}  {'OK' if stats['ok_centroid'] else 'FAIL'}"
+            )
 
     if failures:
         print(f"\n[compare] RESULT: FAIL ({len(failures)} checks)")

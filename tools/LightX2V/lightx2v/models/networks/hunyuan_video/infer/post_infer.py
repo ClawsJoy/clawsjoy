@@ -1,7 +1,7 @@
-from lib.smart_config import smart_config
 import torch
-
 from lightx2v.utils.envs import *
+
+from lib.smart_config import smart_config
 
 
 class HunyuanVideo15PostInfer:
@@ -15,7 +15,12 @@ class HunyuanVideo15PostInfer:
 
     @torch.no_grad()
     def infer(self, x, pre_infer_out):
-        x = self.unpatchify(x, pre_infer_out.grid_sizes[0], pre_infer_out.grid_sizes[1], pre_infer_out.grid_sizes[2])
+        x = self.unpatchify(
+            x,
+            pre_infer_out.grid_sizes[0],
+            pre_infer_out.grid_sizes[1],
+            pre_infer_out.grid_sizes[2],
+        )
         return x
 
     def unpatchify(self, x, t, h, w):

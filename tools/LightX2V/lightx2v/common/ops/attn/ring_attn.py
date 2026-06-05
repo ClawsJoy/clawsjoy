@@ -1,12 +1,12 @@
-from lib.smart_config import smart_config
 import torch
 import torch.distributed as dist
 import torch.nn.functional as F
-from loguru import logger
-
 from lightx2v.utils.envs import *
 from lightx2v.utils.quant_utils import dequant_fp8_vllm, quant_fp8_vllm
 from lightx2v.utils.registry_factory import ATTN_WEIGHT_REGISTER
+from loguru import logger
+
+from lib.smart_config import smart_config
 
 from .template import AttnWeightTemplate
 from .utils.ring_comm import RingComm
@@ -22,7 +22,9 @@ try:
     from sageattn3_sparse import dequant_fp4 as dequant_fp4_sage3
     from sageattn3_sparse import quant_fp4 as quant_fp4_sage3
 except ImportError:
-    logger.info("sageattn3_sparse not found, to use quant_fp4 and dequant_fp4, please install sageattention sparse first")
+    logger.info(
+        "sageattn3_sparse not found, to use quant_fp4 and dequant_fp4, please install sageattention sparse first"
+    )
     quant_fp4_sage3 = None
     dequant_fp4_sage3 = None
 
@@ -83,7 +85,9 @@ class RingAttnWeight(AttnWeightTemplate):
             torch.Tensor: 计算得到的注意力结果
         """
         assert not enable_head_parallel, "RingAttn can't support head parallel mode."
-        assert not (use_fp8_comm and use_fp4_comm), "use_fp8_comm and use_fp4_comm can't be enabled at the same time."
+        assert not (
+            use_fp8_comm and use_fp4_comm
+        ), "use_fp8_comm and use_fp4_comm can't be enabled at the same time."
 
         use_kv_fusion = use_tensor_fusion
         # 获取当前进程的排名和全局进程数
@@ -91,7 +95,9 @@ class RingAttnWeight(AttnWeightTemplate):
         world_size = dist.get_world_size(seq_p_group)
 
         img_qkv_len = slice_qkv_len
-        txt_qkv_len, txt_mask_len = self.helper._get_text_lengths(cu_seqlens_qkv, img_qkv_len)
+        txt_qkv_len, txt_mask_len = self.helper._get_text_lengths(
+            cu_seqlens_qkv, img_qkv_len
+        )
 
         # if RING_COMM is None:
         #     init_ring_comm()
@@ -109,7 +115,11 @@ class RingAttnWeight(AttnWeightTemplate):
         v = v.unsqueeze(0)
 
         heads, hidden_dims = k.shape[-2], k.shape[-1]
-        img_q, img_k, img_v = q[:, :img_qkv_len, :, :].contiguous(), k[:, :img_qkv_len, :, :].contiguous(), v[:, :img_qkv_len, :, :].contiguous()
+        img_q, img_k, img_v = (
+            q[:, :img_qkv_len, :, :].contiguous(),
+            k[:, :img_qkv_len, :, :].contiguous(),
+            v[:, :img_qkv_len, :, :].contiguous(),
+        )
         txt_q, txt_k, txt_v = (
             q[:, img_qkv_len : img_qkv_len + txt_qkv_len, :, :].contiguous(),
             k[:, img_qkv_len : img_qkv_len + txt_qkv_len, :, :].contiguous(),
@@ -124,8 +134,14 @@ class RingAttnWeight(AttnWeightTemplate):
         v = img_v
 
         if use_kv_fusion:
-            txt_kv = torch.stack([txt_k, txt_v], dim=0).reshape(2, txt_qkv_len, heads, hidden_dims).contiguous()
-            kv, original_dtype, original_shape = self.helper._prepare_kv_tensors(k, v, use_kv_fusion)
+            txt_kv = (
+                torch.stack([txt_k, txt_v], dim=0)
+                .reshape(2, txt_qkv_len, heads, hidden_dims)
+                .contiguous()
+            )
+            kv, original_dtype, original_shape = self.helper._prepare_kv_tensors(
+                k, v, use_kv_fusion
+            )
         else:
             original_dtype = k.dtype
             original_shape = k.shape
@@ -134,16 +150,58 @@ class RingAttnWeight(AttnWeightTemplate):
             if step + 1 != world_size:
                 if use_fp8_comm or use_fp4_comm:
                     if use_kv_fusion:
-                        next_kv_quant, next_kv_scale = self.helper._send_recv_tensor(kv, hidden_dims, RING_COMM, use_fp8_comm, use_fp4_comm, original_shape)
+                        next_kv_quant, next_kv_scale = self.helper._send_recv_tensor(
+                            kv,
+                            hidden_dims,
+                            RING_COMM,
+                            use_fp8_comm,
+                            use_fp4_comm,
+                            original_shape,
+                        )
                     else:
-                        next_k_quant, next_k_scale = self.helper._send_recv_tensor(k, hidden_dims, RING_COMM, use_fp8_comm, use_fp4_comm, original_shape)
-                        next_v_quant, next_v_scale = self.helper._send_recv_tensor(v, hidden_dims, RING_COMM, use_fp8_comm, use_fp4_comm, original_shape)
+                        next_k_quant, next_k_scale = self.helper._send_recv_tensor(
+                            k,
+                            hidden_dims,
+                            RING_COMM,
+                            use_fp8_comm,
+                            use_fp4_comm,
+                            original_shape,
+                        )
+                        next_v_quant, next_v_scale = self.helper._send_recv_tensor(
+                            v,
+                            hidden_dims,
+                            RING_COMM,
+                            use_fp8_comm,
+                            use_fp4_comm,
+                            original_shape,
+                        )
                 else:
                     if use_kv_fusion:
-                        next_kv = self.helper._send_recv_tensor(kv, hidden_dims, RING_COMM, use_fp8_comm, use_fp4_comm, original_shape)[0]
+                        next_kv = self.helper._send_recv_tensor(
+                            kv,
+                            hidden_dims,
+                            RING_COMM,
+                            use_fp8_comm,
+                            use_fp4_comm,
+                            original_shape,
+                        )[0]
                     else:
-                        next_k = self.helper._send_recv_tensor(k, hidden_dims, RING_COMM, use_fp8_comm, use_fp4_comm, original_shape)[0]
-                        next_v = self.helper._send_recv_tensor(v, hidden_dims, RING_COMM, use_fp8_comm, use_fp4_comm, original_shape)[0]
+                        next_k = self.helper._send_recv_tensor(
+                            k,
+                            hidden_dims,
+                            RING_COMM,
+                            use_fp8_comm,
+                            use_fp4_comm,
+                            original_shape,
+                        )[0]
+                        next_v = self.helper._send_recv_tensor(
+                            v,
+                            hidden_dims,
+                            RING_COMM,
+                            use_fp8_comm,
+                            use_fp4_comm,
+                            original_shape,
+                        )[0]
                 RING_COMM.commit()
 
             if step + 1 == world_size:
@@ -165,10 +223,28 @@ class RingAttnWeight(AttnWeightTemplate):
 
                 if use_fp8_comm or use_fp4_comm:
                     if use_kv_fusion:
-                        kv = self.helper._dequantize_received(next_kv_quant, next_kv_scale, original_dtype, original_shape, use_fp8_comm, use_fp4_comm, use_kv_fusion=True, is_kv_fusion=True)
+                        kv = self.helper._dequantize_received(
+                            next_kv_quant,
+                            next_kv_scale,
+                            original_dtype,
+                            original_shape,
+                            use_fp8_comm,
+                            use_fp4_comm,
+                            use_kv_fusion=True,
+                            is_kv_fusion=True,
+                        )
                     else:
                         k, v = self.helper._dequantize_received(
-                            next_k_quant, next_k_scale, original_dtype, original_shape, use_fp8_comm, use_fp4_comm, use_kv_fusion=False, is_kv_fusion=False, v_quant=next_v_quant, v_scale=next_v_scale
+                            next_k_quant,
+                            next_k_scale,
+                            original_dtype,
+                            original_shape,
+                            use_fp8_comm,
+                            use_fp4_comm,
+                            use_kv_fusion=False,
+                            is_kv_fusion=False,
+                            v_quant=next_v_quant,
+                            v_scale=next_v_scale,
                         )
                 else:
                     if use_kv_fusion:
@@ -193,45 +269,76 @@ class RingAttnWeight(AttnWeightTemplate):
                 return_softmax=False,
             )
 
-            attn2 = attn2.to(GET_DTYPE()).squeeze(0).reshape((txt_mask_len - txt_qkv_len), -1)
+            attn2 = (
+                attn2.to(GET_DTYPE())
+                .squeeze(0)
+                .reshape((txt_mask_len - txt_qkv_len), -1)
+            )
             attn1 = torch.cat([attn1, attn2], dim=0)
 
         return attn1
 
-    def ring_attn_sub_kv_fusion(self, q, kv, dropout_p=0.0, softmax_scale=None, causal=False, window_size=(-1, -1), softcap=0.0, alibi_slopes=None, return_softmax=False):
+    def ring_attn_sub_kv_fusion(
+        self,
+        q,
+        kv,
+        dropout_p=0.0,
+        softmax_scale=None,
+        causal=False,
+        window_size=(-1, -1),
+        softcap=0.0,
+        alibi_slopes=None,
+        return_softmax=False,
+    ):
         if softmax_scale is None:
             softmax_scale = q.shape[-1] ** (-0.5)
 
-        block_out, block_lse, _, _ = flash_attn.flash_attn_interface._flash_attn_forward(
-            q,
-            kv[:1, :, :, :],
-            kv[1:, :, :, :],
-            dropout_p=dropout_p,
-            softmax_scale=softmax_scale,
-            causal=causal,
-            window_size_left=window_size[0],
-            window_size_right=window_size[1],
-            softcap=softcap,
-            alibi_slopes=alibi_slopes,
-            return_softmax=return_softmax,
+        block_out, block_lse, _, _ = (
+            flash_attn.flash_attn_interface._flash_attn_forward(
+                q,
+                kv[:1, :, :, :],
+                kv[1:, :, :, :],
+                dropout_p=dropout_p,
+                softmax_scale=softmax_scale,
+                causal=causal,
+                window_size_left=window_size[0],
+                window_size_right=window_size[1],
+                softcap=softcap,
+                alibi_slopes=alibi_slopes,
+                return_softmax=return_softmax,
+            )
         )
         return block_out, block_lse
 
-    def ring_attn_sub(self, q, k, v, dropout_p=0.0, softmax_scale=None, causal=False, window_size=(-1, -1), softcap=0.0, alibi_slopes=None, return_softmax=False):
+    def ring_attn_sub(
+        self,
+        q,
+        k,
+        v,
+        dropout_p=0.0,
+        softmax_scale=None,
+        causal=False,
+        window_size=(-1, -1),
+        softcap=0.0,
+        alibi_slopes=None,
+        return_softmax=False,
+    ):
         if softmax_scale is None:
             softmax_scale = q.shape[-1] ** (-0.5)
-        block_out, block_lse, _, _ = flash_attn.flash_attn_interface._flash_attn_forward(
-            q,
-            k,
-            v,
-            dropout_p=dropout_p,
-            softmax_scale=softmax_scale,
-            causal=causal,
-            window_size_left=window_size[0],
-            window_size_right=window_size[1],
-            softcap=softcap,
-            alibi_slopes=alibi_slopes,
-            return_softmax=return_softmax,
+        block_out, block_lse, _, _ = (
+            flash_attn.flash_attn_interface._flash_attn_forward(
+                q,
+                k,
+                v,
+                dropout_p=dropout_p,
+                softmax_scale=softmax_scale,
+                causal=causal,
+                window_size_left=window_size[0],
+                window_size_right=window_size[1],
+                softcap=softcap,
+                alibi_slopes=alibi_slopes,
+                return_softmax=return_softmax,
+            )
         )
         return block_out, block_lse
 
@@ -245,12 +352,16 @@ class RingAttnWeight(AttnWeightTemplate):
     ):
         if out is None:
             if slice_ is not None:
-                raise RuntimeError("first update_out_and_lse should not pass slice_ args")
+                raise RuntimeError(
+                    "first update_out_and_lse should not pass slice_ args"
+                )
             out = block_out.to(torch.float32)
             lse = block_lse.transpose(-2, -1).unsqueeze(dim=-1)
         elif slice_ is not None:
             slice_out, slice_lse = out[slice_], lse[slice_]
-            slice_out, slice_lse = _update_out_and_lse(slice_out, slice_lse, block_out, block_lse)
+            slice_out, slice_lse = _update_out_and_lse(
+                slice_out, slice_lse, block_out, block_lse
+            )
             out[slice_], lse[slice_] = slice_out, slice_lse
         else:
             out, lse = _update_out_and_lse(out, lse, block_out, block_lse)
@@ -261,7 +372,9 @@ class RingAttnHelper:
     """辅助函数类，处理 Ring Attention 中的量化、通信和反量化逻辑"""
 
     @staticmethod
-    def _quant_and_send(tensor, hidden_dims, comm, use_fp8_comm, use_fp4_comm, original_shape=None):
+    def _quant_and_send(
+        tensor, hidden_dims, comm, use_fp8_comm, use_fp4_comm, original_shape=None
+    ):
         """
         对张量进行 FP8 量化并通过通信器发送/接收
 
@@ -276,7 +389,9 @@ class RingAttnHelper:
         返回:
             tuple: (量化后的张量, scale 张量)
         """
-        assert not (use_fp8_comm and use_fp4_comm), "use_fp8_comm and use_fp4_comm can't be enabled at the same time."
+        assert not (
+            use_fp8_comm and use_fp4_comm
+        ), "use_fp8_comm and use_fp4_comm can't be enabled at the same time."
 
         if original_shape is None:
             original_shape = tensor.shape
@@ -285,11 +400,25 @@ class RingAttnHelper:
         if use_fp8_comm:
             tensor_quant, tensor_scale = quant_fp8_vllm(tensor.reshape(-1, hidden_dims))
             tensor_quant = tensor_quant.reshape(original_shape)
-            tensor_scale = tensor_scale.reshape(original_shape[0], original_shape[1], original_shape[2], 1)
+            tensor_scale = tensor_scale.reshape(
+                original_shape[0], original_shape[1], original_shape[2], 1
+            )
         else:
-            tensor_quant, tensor_scale = quant_fp4_sage3(tensor.reshape(1, 1, -1, hidden_dims))
-            tensor_quant = tensor_quant.reshape(original_shape[0], original_shape[1], original_shape[2], original_shape[3] // 2)
-            tensor_scale = tensor_scale.reshape(original_shape[0], original_shape[1], original_shape[2], original_shape[3] // 16)
+            tensor_quant, tensor_scale = quant_fp4_sage3(
+                tensor.reshape(1, 1, -1, hidden_dims)
+            )
+            tensor_quant = tensor_quant.reshape(
+                original_shape[0],
+                original_shape[1],
+                original_shape[2],
+                original_shape[3] // 2,
+            )
+            tensor_scale = tensor_scale.reshape(
+                original_shape[0],
+                original_shape[1],
+                original_shape[2],
+                original_shape[3] // 16,
+            )
 
         # 发送/接收量化后的张量
         next_tensor_quant = comm.send_recv(tensor_quant)
@@ -315,13 +444,28 @@ class RingAttnHelper:
 
         if use_kv_fusion:
             # 融合 K 和 V
-            kv = torch.stack([k, v], dim=0).reshape(2, k.shape[1], k.shape[2], k.shape[3]).contiguous()
+            kv = (
+                torch.stack([k, v], dim=0)
+                .reshape(2, k.shape[1], k.shape[2], k.shape[3])
+                .contiguous()
+            )
             return kv, original_dtype, kv.shape
         else:
             return k, original_dtype, original_shape
 
     @staticmethod
-    def _dequantize_received(next_tensor_quant, next_tensor_scale, original_dtype, original_shape, use_fp8_comm, use_fp4_comm, use_kv_fusion=False, is_kv_fusion=False, v_quant=None, v_scale=None):
+    def _dequantize_received(
+        next_tensor_quant,
+        next_tensor_scale,
+        original_dtype,
+        original_shape,
+        use_fp8_comm,
+        use_fp4_comm,
+        use_kv_fusion=False,
+        is_kv_fusion=False,
+        v_quant=None,
+        v_scale=None,
+    ):
         """
         反量化接收到的 FP8 张量
 
@@ -339,35 +483,56 @@ class RingAttnHelper:
         返回:
             tuple: 反量化后的张量 (k, v) 或 kv
         """
-        assert not (use_fp8_comm and use_fp4_comm), "use_fp8_comm and use_fp4_comm can't be enabled at the same time."
+        assert not (
+            use_fp8_comm and use_fp4_comm
+        ), "use_fp8_comm and use_fp4_comm can't be enabled at the same time."
         B, H, N, D2 = next_tensor_quant.shape
         D = D2 * 2
         D16 = D // 16
         if use_kv_fusion and is_kv_fusion:
             # KV 融合模式
             if use_fp8_comm:
-                return dequant_fp8_vllm(next_tensor_quant, next_tensor_scale, original_dtype)
+                return dequant_fp8_vllm(
+                    next_tensor_quant, next_tensor_scale, original_dtype
+                )
             else:
-                return dequant_fp4_sage3(next_tensor_quant.reshape(1, 1, -1, D2), next_tensor_scale.reshape(1, 1, -1, D16)).reshape(B, H, N, D)
+                return dequant_fp4_sage3(
+                    next_tensor_quant.reshape(1, 1, -1, D2),
+                    next_tensor_scale.reshape(1, 1, -1, D16),
+                ).reshape(B, H, N, D)
         elif not use_kv_fusion:
             # 分离模式
             if use_fp8_comm:
-                k = dequant_fp8_vllm(next_tensor_quant, next_tensor_scale, original_dtype)
+                k = dequant_fp8_vllm(
+                    next_tensor_quant, next_tensor_scale, original_dtype
+                )
                 v = dequant_fp8_vllm(v_quant, v_scale, original_dtype)
                 return k, v
             else:
-                k = dequant_fp4_sage3(next_tensor_quant.reshape(1, 1, -1, D2), next_tensor_scale.reshape(1, 1, -1, D16)).reshape(B, H, N, D)
-                v = dequant_fp4_sage3(v_quant.reshape(1, 1, -1, D2), v_scale.reshape(1, 1, -1, D16)).reshape(B, H, N, D)
+                k = dequant_fp4_sage3(
+                    next_tensor_quant.reshape(1, 1, -1, D2),
+                    next_tensor_scale.reshape(1, 1, -1, D16),
+                ).reshape(B, H, N, D)
+                v = dequant_fp4_sage3(
+                    v_quant.reshape(1, 1, -1, D2), v_scale.reshape(1, 1, -1, D16)
+                ).reshape(B, H, N, D)
                 return k, v
         else:
             # 默认返回单个张量
             if use_fp8_comm:
-                return dequant_fp8_vllm(next_tensor_quant, next_tensor_scale, original_dtype)
+                return dequant_fp8_vllm(
+                    next_tensor_quant, next_tensor_scale, original_dtype
+                )
             else:
-                return dequant_fp4_sage3(next_tensor_quant.reshape(1, 1, -1, D2), next_tensor_scale.reshape(1, 1, -1, D16)).reshape(B, H, N, D)
+                return dequant_fp4_sage3(
+                    next_tensor_quant.reshape(1, 1, -1, D2),
+                    next_tensor_scale.reshape(1, 1, -1, D16),
+                ).reshape(B, H, N, D)
 
     @staticmethod
-    def _send_recv_tensor(tensor, hidden_dims, comm, use_fp8_comm, use_fp4_comm, original_shape=None):
+    def _send_recv_tensor(
+        tensor, hidden_dims, comm, use_fp8_comm, use_fp4_comm, original_shape=None
+    ):
         """
         发送/接收张量，根据是否使用 FP8 选择通信方式
 
@@ -382,9 +547,13 @@ class RingAttnHelper:
         返回:
             tuple: 接收到的张量（和可能的 scale）
         """
-        assert not (use_fp8_comm and use_fp4_comm), "use_fp8_comm and use_fp4_comm can't be enabled at the same time."
+        assert not (
+            use_fp8_comm and use_fp4_comm
+        ), "use_fp8_comm and use_fp4_comm can't be enabled at the same time."
         if use_fp8_comm or use_fp4_comm:
-            return RingAttnHelper._quant_and_send(tensor, hidden_dims, comm, use_fp8_comm, use_fp4_comm, original_shape)
+            return RingAttnHelper._quant_and_send(
+                tensor, hidden_dims, comm, use_fp8_comm, use_fp4_comm, original_shape
+            )
         else:
             next_tensor = comm.send_recv(tensor)
             return next_tensor, None

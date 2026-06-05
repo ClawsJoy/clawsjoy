@@ -1,8 +1,9 @@
-from lib.smart_config import smart_config
 from collections.abc import Callable
 
 import torch
 from packaging.version import parse
+
+from lib.smart_config import smart_config
 
 _KV_TORCH_VER = None
 

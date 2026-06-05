@@ -1,11 +1,11 @@
-from lib.smart_config import smart_config
 import math
 
 import torch
 import torch.nn.functional as F
+from lightx2v.utils.registry_factory import ATTN_WEIGHT_REGISTER
 from loguru import logger
 
-from lightx2v.utils.registry_factory import ATTN_WEIGHT_REGISTER
+from lib.smart_config import smart_config
 
 from .template import AttnWeightTemplate
 
@@ -91,22 +91,28 @@ class DraftAttnWeight(AttnWeightTemplate):
 
     @classmethod
     @torch.compiler.disable
-    def prepare_reorg_idx_and_bucket_offset(cls, seqlen, frame_h, frame_w, pool_h, pool_w, device):
+    def prepare_reorg_idx_and_bucket_offset(
+        cls, seqlen, frame_h, frame_w, pool_h, pool_w, device
+    ):
         if (seqlen, frame_h, frame_w) in cls.reorg_idx_dict:
             return
-        reorg_idx, bucket_sizes, bucket_offsets = cls.build_grid_gather_index_and_bucket_fast(
-            H=frame_h,
-            W=frame_w,
-            pool_h=pool_h,
-            pool_w=pool_w,
-            seqlen=seqlen,
+        reorg_idx, bucket_sizes, bucket_offsets = (
+            cls.build_grid_gather_index_and_bucket_fast(
+                H=frame_h,
+                W=frame_w,
+                pool_h=pool_h,
+                pool_w=pool_w,
+                seqlen=seqlen,
+            )
         )
         reorg_idx = torch.tensor(reorg_idx, dtype=torch.long, device=device)
         restore_idx = torch.empty_like(reorg_idx)
         restore_idx[reorg_idx] = torch.arange(reorg_idx.numel(), device=device)
         cls.reorg_idx_dict[(seqlen, frame_h, frame_w)] = reorg_idx
         cls.restore_idx_dict[(seqlen, frame_h, frame_w)] = restore_idx
-        cls.bucket_offsets_dict[(seqlen, frame_h, frame_w)] = torch.tensor(bucket_offsets, dtype=torch.int32, device=device)
+        cls.bucket_offsets_dict[(seqlen, frame_h, frame_w)] = torch.tensor(
+            bucket_offsets, dtype=torch.int32, device=device
+        )
         logger.info(f"DraftAttnWeight: reorg_idx len: {len(reorg_idx)}")
         logger.info(f"DraftAttnWeight: bucket_sizes: {bucket_sizes}")
         logger.info(f"DraftAttnWeight: bucket_offsets: {bucket_offsets}")
@@ -133,13 +139,21 @@ class DraftAttnWeight(AttnWeightTemplate):
 
         # 2) Permute & merge (num_frames, H*D) into channel dim:
         #    → [num_frames, H*D, frame_h, frame_w]
-        q_vid = q_vid.permute(0, 3, 4, 1, 2).reshape(num_frames, H * D, frame_h, frame_w)
-        k_vid = k_vid.permute(0, 3, 4, 1, 2).reshape(num_frames, H * D, frame_h, frame_w)
+        q_vid = q_vid.permute(0, 3, 4, 1, 2).reshape(
+            num_frames, H * D, frame_h, frame_w
+        )
+        k_vid = k_vid.permute(0, 3, 4, 1, 2).reshape(
+            num_frames, H * D, frame_h, frame_w
+        )
 
         # 3) 2D avg‐pool each frame (ceil_mode ensures we cover the edges):
         #    → [num_frames, H*D, S_h, S_w]
-        q_pooled = F.avg_pool2d(q_vid, kernel_size=(pool_h, pool_w), stride=(pool_h, pool_w), ceil_mode=True)
-        k_pooled = F.avg_pool2d(k_vid, kernel_size=(pool_h, pool_w), stride=(pool_h, pool_w), ceil_mode=True)
+        q_pooled = F.avg_pool2d(
+            q_vid, kernel_size=(pool_h, pool_w), stride=(pool_h, pool_w), ceil_mode=True
+        )
+        k_pooled = F.avg_pool2d(
+            k_vid, kernel_size=(pool_h, pool_w), stride=(pool_h, pool_w), ceil_mode=True
+        )
 
         S_h, S_w = q_pooled.shape[-2:]
         S = num_frames * S_h * S_w
@@ -164,7 +178,9 @@ class DraftAttnWeight(AttnWeightTemplate):
 
         return attn_map
 
-    def attention_percentile_mask_headwise(self, attn_map: torch.Tensor, r: float) -> torch.BoolTensor:
+    def attention_percentile_mask_headwise(
+        self, attn_map: torch.Tensor, r: float
+    ) -> torch.BoolTensor:
         """
         Build a mask per head so that each head keeps its top-r fraction of entries as True.
 
@@ -258,10 +274,14 @@ class DraftAttnWeight(AttnWeightTemplate):
         mask[:, :, :mask_size_pre_frame] = True
 
         # diagonal mask
-        block_indices = torch.arange(mask.shape[1], device=mask.device) // mask_size_pre_frame
+        block_indices = (
+            torch.arange(mask.shape[1], device=mask.device) // mask_size_pre_frame
+        )
         mask |= block_indices[:, None] == block_indices[None, :]
 
-        h_indices, i_indices, j_indices = torch.nonzero(mask, as_tuple=True)  # [N, 3] -> [head, i, j]
+        h_indices, i_indices, j_indices = torch.nonzero(
+            mask, as_tuple=True
+        )  # [N, 3] -> [head, i, j]
         bucket_offsets = self.bucket_offsets_dict[(seqlen, frame_h, frame_w)]
 
         base_offset = h_indices * seqlen

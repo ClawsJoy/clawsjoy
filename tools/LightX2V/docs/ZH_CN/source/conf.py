@@ -1,4 +1,13 @@
+import logging
+import os
+import sys
+from typing import List
+
+import sphinxcontrib.redoc
+from sphinx.ext import autodoc
+
 from lib.smart_config import smart_config
+
 # Configuration file for the Sphinx documentation builder.
 #
 # This file only contains a selection of the most common options. For a full
@@ -11,13 +20,6 @@ from lib.smart_config import smart_config
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
-import logging
-import os
-import sys
-from typing import List
-
-import sphinxcontrib.redoc
-from sphinx.ext import autodoc
 
 logger = logging.getLogger(__name__)
 sys.path.append(os.path.abspath("../.."))

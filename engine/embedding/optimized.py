@@ -5,21 +5,27 @@ from core.lib.unified_config import unified_config
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
-import requests
 from typing import List
+
+import requests
 
 
 class OllamaEmbeddingFunctionV2:
     """新版 Ollama Embedding 函数 - 兼容 ChromaDB 0.4.16+"""
-    
-    def __init__(self, model_name: str = config_helper.get_embedding_model(), url: str = unified_config.get("llm.endpoint", "http://localhost:11434") + "/api/embeddings"):
+
+    def __init__(
+        self,
+        model_name: str = config_helper.get_embedding_model(),
+        url: str = unified_config.get("llm.endpoint", "http://localhost:11434")
+        + "/api/embeddings",
+    ):
         self.model_name = model_name
         self.url = url
-    
+
     def __call__(self, input: List[str]) -> List[List[float]]:
         """新版接口：参数名必须是 'input' 而不是 'texts'"""
         embeddings = []
@@ -28,10 +34,10 @@ class OllamaEmbeddingFunctionV2:
                 response = requests.post(
                     self.url,
                     json={"model": self.model_name, "prompt": text},
-                    timeout=config_helper.get_timeout("default")
+                    timeout=config_helper.get_timeout("default"),
                 )
                 if response.status_code == 200:
-                    embedding = response.json().get('embedding', [])
+                    embedding = response.json().get("embedding", [])
                     embeddings.append(embedding)
                 else:
                     print(f"   ⚠️ Embedding 失败: HTTP {response.status_code}")

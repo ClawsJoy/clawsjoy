@@ -3,26 +3,30 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 import json
-from datetime import datetime
 import sys
+from datetime import datetime
+
 from core.lib.unified_config import unified_config
+
 sys.path.insert(0, smart_config.ROOT)
+
+from agent_core.brain_enhanced import brain
 
 from intelligence.log_analyzer import LogAnalyzer
 from intelligence.performance_monitor import PerformanceMonitor
 from intelligence.recommendation_engine import RecommendationEngine
-from agent_core.brain_enhanced import brain
+
 
 class IntelligentDashboard:
     def __init__(self):
         self.log_analyzer = LogAnalyzer()
         self.performance_monitor = PerformanceMonitor()
         self.recommendation_engine = RecommendationEngine()
-    
+
     def display(self):
         """显示完整仪表盘"""
         print("\n" + "=" * 60)
@@ -50,15 +54,17 @@ class IntelligentDashboard:
 
         print("\n" + "=" * 60)
 
+
 if __name__ == "__main__":
     dashboard = IntelligentDashboard()
     dashboard.display()
+
 
 # 添加备份和配置信息
 def display_extra(self):
     from intelligence.backup_manager import BackupManager
     from intelligence.config_manager import ConfigManager
-    
+
     backup_manager = BackupManager()
     backups = backup_manager.list_backups()
     print(f"\n💾 备份信息:")
@@ -66,7 +72,7 @@ def display_extra(self):
     if backups:
         latest = backups[-1]
         print(f"   最新备份: {latest['name']} ({latest['size']})")
-    
+
     config_manager = ConfigManager()
     print(f"\n⚙️ 智能配置:")
     print(f"   自动备份: {'开启' if config_manager.get('auto_backup') else '关闭'}")

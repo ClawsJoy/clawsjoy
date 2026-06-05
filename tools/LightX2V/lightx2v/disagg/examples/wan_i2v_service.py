@@ -1,8 +1,5 @@
-from lib.smart_config import smart_config
 import logging
 import threading
-
-from loguru import logger
 
 from lightx2v.disagg.services.controller import ControllerService
 from lightx2v.disagg.services.decoder import DecoderService
@@ -10,6 +7,9 @@ from lightx2v.disagg.services.encoder import EncoderService
 from lightx2v.disagg.services.transformer import TransformerService
 from lightx2v.disagg.utils import set_config
 from lightx2v.utils.utils import seed_all
+from loguru import logger
+
+from lib.smart_config import smart_config
 
 # Setup basic logging
 logging.basicConfig(level=logging.INFO)
@@ -41,7 +41,9 @@ def main():
         "画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，"
         "三条腿，背景人很多，倒着走"
     )
-    image_path = "/root/zht/LightX2V/models/Wan-AI/Wan2.2-I2V-A14B/examples/i2v_input.JPG"
+    image_path = (
+        "/root/zht/LightX2V/models/Wan-AI/Wan2.2-I2V-A14B/examples/i2v_input.JPG"
+    )
     save_result_path = "/root/zht/LightX2V/save_results/wan_i2v_A14B_disagg_service.mp4"
 
     # Initialize configuration

@@ -1,8 +1,9 @@
-from lib.smart_config import smart_config
 import argparse
 
 import safetensors.torch as st
 import torch
+
+from lib.smart_config import smart_config
 
 
 def main() -> None:
@@ -21,12 +22,18 @@ def main() -> None:
     new_dict = {}
     for key in state_dict.keys():
         if "weight_global_scale" in key:
-            input_absmax = calib["absmax"][key.replace("weight_global_scale", "weight").replace("model.", "")]
-            input_global_scale = (args.scale_const / input_absmax).to(torch.float32).to(device)
+            input_absmax = calib["absmax"][
+                key.replace("weight_global_scale", "weight").replace("model.", "")
+            ]
+            input_global_scale = (
+                (args.scale_const / input_absmax).to(torch.float32).to(device)
+            )
             weight_global_scale = state_dict[key].to(device)
             alpha = 1.0 / (input_global_scale * weight_global_scale)
             new_dict[key.replace("weight_global_scale", "alpha")] = alpha
-            new_dict[key.replace("weight_global_scale", "input_global_scale")] = input_global_scale
+            new_dict[key.replace("weight_global_scale", "input_global_scale")] = (
+                input_global_scale
+            )
 
     for key in new_dict.keys():
         state_dict[key] = new_dict[key]

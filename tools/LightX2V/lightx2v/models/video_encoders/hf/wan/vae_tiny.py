@@ -1,8 +1,8 @@
-from lib.smart_config import smart_config
 import torch
 import torch.nn as nn
-
 from lightx2v.models.video_encoders.hf.tae import TAEHV
+
+from lib.smart_config import smart_config
 
 
 class DotDict(dict):
@@ -11,7 +11,13 @@ class DotDict(dict):
 
 
 class WanVAE_tiny(nn.Module):
-    def __init__(self, vae_path="taew2_1.pth", dtype=torch.bfloat16, device="cuda", need_scaled=False):
+    def __init__(
+        self,
+        vae_path="taew2_1.pth",
+        dtype=torch.bfloat16,
+        device="cuda",
+        need_scaled=False,
+    ):
         super().__init__()
         self.dtype = dtype
         self.device = torch.device("cuda")
@@ -65,12 +71,25 @@ class WanVAE_tiny(nn.Module):
         latents = latents.unsqueeze(0)
 
         if self.need_scaled:
-            latents_mean = torch.tensor(self.latents_mean).view(1, self.z_dim, 1, 1, 1).to(latents.device, latents.dtype)
-            latents_std = 1.0 / torch.tensor(self.latents_std).view(1, self.z_dim, 1, 1, 1).to(latents.device, latents.dtype)
+            latents_mean = (
+                torch.tensor(self.latents_mean)
+                .view(1, self.z_dim, 1, 1, 1)
+                .to(latents.device, latents.dtype)
+            )
+            latents_std = 1.0 / torch.tensor(self.latents_std).view(
+                1, self.z_dim, 1, 1, 1
+            ).to(latents.device, latents.dtype)
             latents = latents / latents_std + latents_mean
 
         # low-memory, set parallel=True for faster + higher memory
-        return self.taehv.decode_video(latents.transpose(1, 2).to(self.dtype), parallel=False).transpose(1, 2).mul_(2).sub_(1)
+        return (
+            self.taehv.decode_video(
+                latents.transpose(1, 2).to(self.dtype), parallel=False
+            )
+            .transpose(1, 2)
+            .mul_(2)
+            .sub_(1)
+        )
 
     @torch.no_grad()
     def encode_video(self, vid):
@@ -82,7 +101,13 @@ class WanVAE_tiny(nn.Module):
 
 
 class Wan2_2_VAE_tiny(nn.Module):
-    def __init__(self, vae_path="taew2_2.pth", dtype=torch.bfloat16, device="cuda", need_scaled=False):
+    def __init__(
+        self,
+        vae_path="taew2_2.pth",
+        dtype=torch.bfloat16,
+        device="cuda",
+        need_scaled=False,
+    ):
         super().__init__()
         self.dtype = dtype
         self.device = torch.device("cuda")
@@ -198,12 +223,25 @@ class Wan2_2_VAE_tiny(nn.Module):
         latents = latents.unsqueeze(0)
 
         if self.need_scaled:
-            latents_mean = torch.tensor(self.latents_mean).view(1, self.z_dim, 1, 1, 1).to(latents.device, latents.dtype)
-            latents_std = 1.0 / torch.tensor(self.latents_std).view(1, self.z_dim, 1, 1, 1).to(latents.device, latents.dtype)
+            latents_mean = (
+                torch.tensor(self.latents_mean)
+                .view(1, self.z_dim, 1, 1, 1)
+                .to(latents.device, latents.dtype)
+            )
+            latents_std = 1.0 / torch.tensor(self.latents_std).view(
+                1, self.z_dim, 1, 1, 1
+            ).to(latents.device, latents.dtype)
             latents = latents / latents_std + latents_mean
 
         # low-memory, set parallel=True for faster + higher memory
-        return self.taehv.decode_video(latents.transpose(1, 2).to(self.dtype), parallel=False).transpose(1, 2).mul_(2).sub_(1)
+        return (
+            self.taehv.decode_video(
+                latents.transpose(1, 2).to(self.dtype), parallel=False
+            )
+            .transpose(1, 2)
+            .mul_(2)
+            .sub_(1)
+        )
 
     @torch.no_grad()
     def encode_video(self, vid):

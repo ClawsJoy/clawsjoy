@@ -1,6 +1,6 @@
-"""安全模块 - 脱敏、加密、审计"""
+#!/usr/bin/env python3
+"""Security 模块"""
 
-from engine.security.desensitize import desensitizer
-from engine.security.audit import audit_logger
+from engine.security.desensitizer import desensitizer
 
-__all__ = ['desensitizer', 'audit_logger']
+__all__ = ["desensitizer"]

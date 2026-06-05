@@ -1,8 +1,8 @@
-from lib.smart_config import smart_config
 import torch
-
 from lightx2v.models.networks.wan.infer.module_io import GridOutput
 from lightx2v.models.networks.wan.infer.pre_infer import WanPreInfer
+
+from lib.smart_config import smart_config
 
 from .module_io import MotusPreInferModuleOutput
 
@@ -33,11 +33,19 @@ class MotusPreInfer(WanPreInfer):
 
         video_latents = self.scheduler.video_latents
         if video_latents.dim() != 5:
-            raise RuntimeError(f"Expected video latents with shape [B, C, T, H, W], got {tuple(video_latents.shape)}")
+            raise RuntimeError(
+                f"Expected video latents with shape [B, C, T, H, W], got {tuple(video_latents.shape)}"
+            )
         batch_size = state.shape[0]
         _, _, latent_t, latent_h, latent_w = video_latents.shape
         grid_sizes = torch.tensor(
-            [[latent_t, latent_h // self.model.video_backbone.patch_size[1], latent_w // self.model.video_backbone.patch_size[2]]],
+            [
+                [
+                    latent_t,
+                    latent_h // self.model.video_backbone.patch_size[1],
+                    latent_w // self.model.video_backbone.patch_size[2],
+                ]
+            ],
             dtype=torch.long,
             device=state.device,
         ).expand(batch_size, -1)
@@ -50,7 +58,9 @@ class MotusPreInfer(WanPreInfer):
             self.grid_sizes = grid_output.tuple
             self.cos_sin = self.prepare_cos_sin(grid_output.tuple, self.freqs.clone())
 
-        dummy_embed = torch.empty(0, device=state.device, dtype=processed_t5_context.dtype)
+        dummy_embed = torch.empty(
+            0, device=state.device, dtype=processed_t5_context.dtype
+        )
 
         return MotusPreInferModuleOutput(
             embed=dummy_embed,

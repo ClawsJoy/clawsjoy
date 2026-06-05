@@ -4,12 +4,14 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
+
 
 def main():
     """主函数"""
     print("语音助手功能")
+
 
 if __name__ == "__main__":
     main()

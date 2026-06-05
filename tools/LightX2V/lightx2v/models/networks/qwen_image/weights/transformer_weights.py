@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 from lightx2v.common.modules.weight_module import WeightModule, WeightModuleList
 from lightx2v.utils.registry_factory import (
     ATTN_WEIGHT_REGISTER,
@@ -6,6 +5,8 @@ from lightx2v.utils.registry_factory import (
     MM_WEIGHT_REGISTER,
     RMS_WEIGHT_REGISTER,
 )
+
+from lib.smart_config import smart_config
 
 
 class QwenImageTransformerWeights(WeightModule):
@@ -55,7 +56,9 @@ class QwenImageTransformerWeights(WeightModule):
                         for i in range(self.offload_blocks_num)
                     ]
                 )
-                self.add_module("offload_block_cuda_buffers", self.offload_block_cuda_buffers)
+                self.add_module(
+                    "offload_block_cuda_buffers", self.offload_block_cuda_buffers
+                )
                 self.offload_phase_cuda_buffers = None
                 if self.lazy_load:
                     self.offload_blocks_num = 2
@@ -76,7 +79,9 @@ class QwenImageTransformerWeights(WeightModule):
                             for i in range(self.offload_blocks_num)
                         ]
                     )
-                    self.add_module("offload_block_cpu_buffers", self.offload_block_cpu_buffers)
+                    self.add_module(
+                        "offload_block_cpu_buffers", self.offload_block_cpu_buffers
+                    )
                     self.offload_phase_cpu_buffers = None
 
             elif config["offload_granularity"] == "phase":
@@ -91,18 +96,31 @@ class QwenImageTransformerWeights(WeightModule):
                     lazy_load=self.lazy_load,
                     lazy_load_path=lazy_load_path,
                 ).compute_phases
-                self.add_module("offload_phase_cuda_buffers", self.offload_phase_cuda_buffers)
+                self.add_module(
+                    "offload_phase_cuda_buffers", self.offload_phase_cuda_buffers
+                )
                 self.offload_block_cuda_buffers = None
                 if self.lazy_load:
                     self.offload_phase_cpu_buffers = WeightModuleList(
                         [
                             QwenImageTransformerAttentionBlock(
-                                i, self.task, self.mm_type, self.config, False, True, "transformer_blocks", lazy_load=self.lazy_load, lazy_load_path=lazy_load_path, lora_path=lora_path
+                                i,
+                                self.task,
+                                self.mm_type,
+                                self.config,
+                                False,
+                                True,
+                                "transformer_blocks",
+                                lazy_load=self.lazy_load,
+                                lazy_load_path=lazy_load_path,
+                                lora_path=lora_path,
                             ).compute_phases
                             for i in range(2)
                         ]
                     )
-                    self.add_module("offload_phase_cpu_buffers", self.offload_phase_cpu_buffers)
+                    self.add_module(
+                        "offload_phase_cpu_buffers", self.offload_phase_cpu_buffers
+                    )
                     self.offload_block_cpu_buffers = None
 
 
@@ -487,7 +505,9 @@ class QwenImageCrossAttention(WeightModule):
         if self.config["seq_parallel"]:
             self.add_module(
                 "calculate_parallel",
-                ATTN_WEIGHT_REGISTER[self.config["parallel"].get("seq_p_attn_type", "ulysses")](),
+                ATTN_WEIGHT_REGISTER[
+                    self.config["parallel"].get("seq_p_attn_type", "ulysses")
+                ](),
             )
 
     def to_cpu(self, non_blocking=True):
@@ -502,7 +522,19 @@ class QwenImageCrossAttention(WeightModule):
 
 
 class QwenImageFFN(WeightModule):
-    def __init__(self, block_index, block_prefix, task, mm_type, config, create_cuda_buffer, create_cpu_buffer, lazy_load, lazy_load_file, lora_path):
+    def __init__(
+        self,
+        block_index,
+        block_prefix,
+        task,
+        mm_type,
+        config,
+        create_cuda_buffer,
+        create_cpu_buffer,
+        lazy_load,
+        lazy_load_file,
+        lora_path,
+    ):
         super().__init__()
         self.block_index = block_index
         self.mm_type = mm_type

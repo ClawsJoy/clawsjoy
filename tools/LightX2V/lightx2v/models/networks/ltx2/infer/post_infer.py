@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 Post-inference module for LTX2 transformer model.
 
@@ -9,7 +10,6 @@ This module handles output processing including:
 """
 
 import torch
-
 from lightx2v.models.networks.ltx2.infer.triton_ops import fused_rmsnorm_modulate
 from lightx2v.models.networks.ltx2.infer.utils import modulate_with_rmsnorm_torch_naive
 
@@ -124,9 +124,14 @@ class LTX2PostInfer:
         # scale_shift_table shape: [2, hidden_dim]
         # embedded_timestep shape: [seq_len, hidden_dim]
         # Result shape: [seq_len, 2, hidden_dim]
-        scale_shift_values = scale_shift_table[None, :, :].to(device=x.device, dtype=x.dtype) + embedded_timestep[:, None, :]
+        scale_shift_values = (
+            scale_shift_table[None, :, :].to(device=x.device, dtype=x.dtype)
+            + embedded_timestep[:, None, :]
+        )
         shift, scale = scale_shift_values[:, 0], scale_shift_values[:, 1]
-        x = self.modulate_with_rmsnorm_func(x, scale, shift, weight=None, bias=None, eps=1e-6)
+        x = self.modulate_with_rmsnorm_func(
+            x, scale, shift, weight=None, bias=None, eps=1e-6
+        )
         # Output projection
         x = proj_out.apply(x)
 

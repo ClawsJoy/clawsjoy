@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 from __future__ import annotations
 
 import ctypes
@@ -8,6 +7,8 @@ import threading
 import time
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
+
+from lib.smart_config import smart_config
 
 try:
     from lightx2v.disagg.rdma_client import RDMAClient
@@ -90,8 +91,12 @@ class RDMABuffer:
                 base_addr = int(info["addr"])
                 need_bytes = 16 + self.buffer_size * self.slot_size
                 self.rdma_server.register_memory(base_addr, need_bytes)
-                self.rdma_server.write_memory(base_addr, (0).to_bytes(8, byteorder="little", signed=False))
-                self.rdma_server.write_memory(base_addr + 8, (0).to_bytes(8, byteorder="little", signed=False))
+                self.rdma_server.write_memory(
+                    base_addr, (0).to_bytes(8, byteorder="little", signed=False)
+                )
+                self.rdma_server.write_memory(
+                    base_addr + 8, (0).to_bytes(8, byteorder="little", signed=False)
+                )
                 self._descriptor = RDMABufferDescriptor(
                     slot_addr=base_addr + 16,
                     slot_bytes=self.buffer_size * self.slot_size,
@@ -135,24 +140,32 @@ class RDMABuffer:
 
     def _rdma_faa(self, ptr_addr: int, add_value: int) -> int:
         if self.rdma_client is not None:
-            return self.rdma_client.rdma_faa(ptr_addr, int(add_value), rkey=self.descriptor.rkey)
+            return self.rdma_client.rdma_faa(
+                ptr_addr, int(add_value), rkey=self.descriptor.rkey
+            )
 
         if self.rdma_server is not None:
             with self._lock:
                 old = self._read_remote_u64(ptr_addr)
                 new = (old + int(add_value)) & ((1 << 64) - 1)
-                self._rdma_write_bytes(ptr_addr, new.to_bytes(8, byteorder="little", signed=False))
+                self._rdma_write_bytes(
+                    ptr_addr, new.to_bytes(8, byteorder="little", signed=False)
+                )
                 return old
 
         # Fallback: local atomic emulation (useful for single-process validation).
         with self._lock:
             if ptr_addr == self.descriptor.head_addr:
                 old = self._read_local_u64(self._head_mem)
-                self._write_local_u64(self._head_mem, (old + int(add_value)) & _U64_MASK)
+                self._write_local_u64(
+                    self._head_mem, (old + int(add_value)) & _U64_MASK
+                )
                 return old
             if ptr_addr == self.descriptor.tail_addr:
                 old = self._read_local_u64(self._tail_mem)
-                self._write_local_u64(self._tail_mem, (old + int(add_value)) & _U64_MASK)
+                self._write_local_u64(
+                    self._tail_mem, (old + int(add_value)) & _U64_MASK
+                )
                 return old
         raise RuntimeError("rdma_faa failed and no local fallback for ptr")
 
@@ -170,7 +183,9 @@ class RDMABuffer:
                 old = self._read_remote_u64(ptr_addr)
                 if old == (int(compare_value) & _U64_MASK):
                     new = int(swap_value) & _U64_MASK
-                    self._rdma_write_bytes(ptr_addr, new.to_bytes(8, byteorder="little", signed=False))
+                    self._rdma_write_bytes(
+                        ptr_addr, new.to_bytes(8, byteorder="little", signed=False)
+                    )
                 return old
 
         # Local fallback for single-process testing.
@@ -195,7 +210,9 @@ class RDMABuffer:
                 return self.rdma_server.read_memory(int(remote_addr), int(length))
 
         if self.rdma_client is not None:
-            data = self.rdma_client.rdma_read_from(int(remote_addr), int(length), rkey=self.descriptor.rkey)
+            data = self.rdma_client.rdma_read_from(
+                int(remote_addr), int(length), rkey=self.descriptor.rkey
+            )
             if isinstance(data, (bytes, bytearray)):
                 return bytes(data)
             raise RuntimeError("rdma_read_from returned non-bytes payload")
@@ -221,7 +238,9 @@ class RDMABuffer:
                 return
 
         if self.rdma_client is not None:
-            self.rdma_client.rdma_write_to(int(remote_addr), payload, rkey=self.descriptor.rkey)
+            self.rdma_client.rdma_write_to(
+                int(remote_addr), payload, rkey=self.descriptor.rkey
+            )
             return
 
         # Local fallback for single-process testing.
@@ -247,9 +266,13 @@ class RDMABuffer:
         return (index % self.buffer_size) * self.slot_size
 
     def _serialize_config(self, config: Dict[str, Any]) -> bytes:
-        payload = json.dumps(config, ensure_ascii=True, separators=(",", ":")).encode("utf-8")
+        payload = json.dumps(config, ensure_ascii=True, separators=(",", ":")).encode(
+            "utf-8"
+        )
         if len(payload) > self.slot_size - 4:
-            raise ValueError(f"config payload too large: {len(payload)} > {self.slot_size - 4}")
+            raise ValueError(
+                f"config payload too large: {len(payload)} > {self.slot_size - 4}"
+            )
         return len(payload).to_bytes(4, byteorder="little", signed=False) + payload
 
     def _deserialize_config(self, raw_slot: bytes) -> Dict[str, Any]:
@@ -346,7 +369,9 @@ class RDMABuffer:
                     (cur_head + 1) & _U64_MASK,
                 )
             except Exception as exc:
-                logger.warning("RDMA buffer head CAS failed for slot %d: %s", slot_idx, exc)
+                logger.warning(
+                    "RDMA buffer head CAS failed for slot %d: %s", slot_idx, exc
+                )
                 return None
 
             if old_head != cur_head:

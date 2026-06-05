@@ -1,18 +1,22 @@
-from lib.smart_config import smart_config
 import glob
 import os
 
 import torch
-from loguru import logger
-
 from lightx2v.models.networks.hunyuan_video.model import HunyuanVideo15Model
 from lightx2v.models.networks.worldplay.infer.post_infer import WorldPlayPostInfer
 from lightx2v.models.networks.worldplay.infer.pre_infer import WorldPlayPreInfer
-from lightx2v.models.networks.worldplay.infer.transformer_infer import WorldPlayTransformerInfer
+from lightx2v.models.networks.worldplay.infer.transformer_infer import (
+    WorldPlayTransformerInfer,
+)
 from lightx2v.models.networks.worldplay.weights.post_weights import WorldPlayPostWeights
 from lightx2v.models.networks.worldplay.weights.pre_weights import WorldPlayPreWeights
-from lightx2v.models.networks.worldplay.weights.transformer_weights import WorldPlayTransformerWeights
+from lightx2v.models.networks.worldplay.weights.transformer_weights import (
+    WorldPlayTransformerWeights,
+)
 from lightx2v.utils.envs import *
+from loguru import logger
+
+from lib.smart_config import smart_config
 
 
 class WorldPlayModel(HunyuanVideo15Model):
@@ -48,7 +52,9 @@ class WorldPlayModel(HunyuanVideo15Model):
             elif self.config["feature_caching"] == "Tea":
                 self.transformer_infer_class = HunyuanTransformerInferTeaCaching
             else:
-                raise NotImplementedError(f"Feature caching {self.config['feature_caching']} not supported")
+                raise NotImplementedError(
+                    f"Feature caching {self.config['feature_caching']} not supported"
+                )
 
     def _init_weights(self):
         """Initialize weights including action conditioning weights."""
@@ -83,7 +89,9 @@ class WorldPlayModel(HunyuanVideo15Model):
         weight_dict = {}
         for file_path in safetensors_files:
             logger.info(f"Loading action weights from {file_path}")
-            file_weights = self._load_safetensor_to_dict(file_path, unified_dtype, sensitive_layer)
+            file_weights = self._load_safetensor_to_dict(
+                file_path, unified_dtype, sensitive_layer
+            )
             weight_dict.update(file_weights)
 
         return weight_dict
@@ -93,7 +101,9 @@ class WorldPlayModel(HunyuanVideo15Model):
         super()._init_infer()
 
         # Connect action weights to transformer for ProPE projection
-        if hasattr(self.pre_weight, "action_weights") and hasattr(self.transformer_infer, "set_action_weights"):
+        if hasattr(self.pre_weight, "action_weights") and hasattr(
+            self.transformer_infer, "set_action_weights"
+        ):
             self.transformer_infer.set_action_weights(self.pre_weight.action_weights)
 
     def set_scheduler(self, scheduler):

@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 # Copyright 2024-2025 The Alibaba Wan Team Authors. All rights reserved.
 import html
 import string
@@ -6,6 +5,8 @@ import string
 import ftfy
 import regex as re
 from transformers import AutoTokenizer
+
+from lib.smart_config import smart_config
 
 __all__ = ["HuggingfaceTokenizer"]
 
@@ -25,7 +26,10 @@ def whitespace_clean(text):
 def canonicalize(text, keep_punctuation_exact_string=None):
     text = text.replace("_", " ")
     if keep_punctuation_exact_string:
-        text = keep_punctuation_exact_string.join(part.translate(str.maketrans("", "", string.punctuation)) for part in text.split(keep_punctuation_exact_string))
+        text = keep_punctuation_exact_string.join(
+            part.translate(str.maketrans("", "", string.punctuation))
+            for part in text.split(keep_punctuation_exact_string)
+        )
     else:
         text = text.translate(str.maketrans("", "", string.punctuation))
     text = text.lower()

@@ -1,11 +1,13 @@
+import torch
+import torch.nn.functional as F
+from torch import Tensor, nn
+
 from lib.smart_config import smart_config
+
 # References:
 #   https://github.com/facebookresearch/dino/blob/master/vision_transformer.py
 #   https://github.com/rwightman/pytorch-image-models/tree/master/timm/models/vision_transformer.py
 
-import torch
-import torch.nn.functional as F
-from torch import Tensor, nn
 
 try:
     from flash_attn_interface import flash_attn_func as flash_attn_func_v3
@@ -50,7 +52,11 @@ class Attention(nn.Module):
 
     def _compute_qkv(self, x: Tensor):
         B, N, C = x.shape
-        qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, self.head_dim).permute(2, 0, 3, 1, 4)
+        qkv = (
+            self.qkv(x)
+            .reshape(B, N, 3, self.num_heads, self.head_dim)
+            .permute(2, 0, 3, 1, 4)
+        )
         q, k, v = qkv.unbind(0)
         q, k = self.q_norm(q).to(v.dtype), self.k_norm(k).to(v.dtype)
         return q, k, v, B, N, C
@@ -72,13 +78,17 @@ class Attention(nn.Module):
             if _USE_FLASH_ATTN_V3:
                 x = flash_attn_func_v3(q, k, v)
             else:
-                x = flash_attn_func_v2(q, k, v, dropout_p=self.attn_drop.p if self.training else 0.0)
+                x = flash_attn_func_v2(
+                    q, k, v, dropout_p=self.attn_drop.p if self.training else 0.0
+                )
             if x.is_contiguous():
                 x = x.transpose(1, 2)
             else:
                 x = x.transpose(1, 2).contiguous()
         else:
-            x = F.scaled_dot_product_attention(q, k, v, dropout_p=self.attn_drop.p if self.training else 0.0)
+            x = F.scaled_dot_product_attention(
+                q, k, v, dropout_p=self.attn_drop.p if self.training else 0.0
+            )
         return x
 
     def _project_output(self, x: Tensor, B: int, N: int, C: int) -> Tensor:
@@ -99,7 +109,9 @@ class Attention(nn.Module):
 
 
 class DistAttention(Attention):
-    def forward(self, x: Tensor, pos=None, sp_size=1, sp_group=None, padding_tokens=0) -> Tensor:
+    def forward(
+        self, x: Tensor, pos=None, sp_size=1, sp_group=None, padding_tokens=0
+    ) -> Tensor:
         q, k, v, B, N, C = self._compute_qkv(x)
 
         if sp_size > 1:

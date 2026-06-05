@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 # Copyright 2024-2025 The Alibaba Wan Team Authors. All rights reserved.
 import math
 import random
@@ -9,6 +8,8 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from pose2d_utils import AAPoseMeta
+
+from lib.smart_config import smart_config
 
 
 def draw_handpose(canvas, keypoints, hand_score_th=0.6):
@@ -183,7 +184,9 @@ def draw_ellipse_by_2kp(img, keypoint1, keypoint2, color, threshold=0.6):
     mY = np.mean(Y)
     length = ((X[0] - X[1]) ** 2 + (Y[0] - Y[1]) ** 2) ** 0.5
     angle = math.degrees(math.atan2(X[0] - X[1], Y[0] - Y[1]))
-    polygon = cv2.ellipse2Poly((int(mY), int(mX)), (int(length / 2), stickwidth), int(angle), 0, 360, 1)
+    polygon = cv2.ellipse2Poly(
+        (int(mY), int(mX)), (int(length / 2), stickwidth), int(angle), 0, 360, 1
+    )
     cv2.fillConvexPoly(img, polygon, [int(float(c) * 0.6) for c in color])
     return img
 
@@ -197,25 +200,60 @@ def split_pose2d_kps_to_aa(kp2ds: np.ndarray) -> List[np.ndarray]:
     Returns:
         List[np.ndarray]: _description_
     """
-    kp2ds_body = (kp2ds[[0, 6, 6, 8, 10, 5, 7, 9, 12, 14, 16, 11, 13, 15, 2, 1, 4, 3, 17, 20]] + kp2ds[[0, 5, 6, 8, 10, 5, 7, 9, 12, 14, 16, 11, 13, 15, 2, 1, 4, 3, 18, 21]]) / 2
+    kp2ds_body = (
+        kp2ds[[0, 6, 6, 8, 10, 5, 7, 9, 12, 14, 16, 11, 13, 15, 2, 1, 4, 3, 17, 20]]
+        + kp2ds[[0, 5, 6, 8, 10, 5, 7, 9, 12, 14, 16, 11, 13, 15, 2, 1, 4, 3, 18, 21]]
+    ) / 2
     kp2ds_lhand = kp2ds[91:112]
     kp2ds_rhand = kp2ds[112:133]
     return kp2ds_body.copy(), kp2ds_lhand.copy(), kp2ds_rhand.copy()
 
 
-def draw_aapose_by_meta(img, meta: AAPoseMeta, threshold=0.5, stick_width_norm=200, draw_hand=True, draw_head=True):
+def draw_aapose_by_meta(
+    img,
+    meta: AAPoseMeta,
+    threshold=0.5,
+    stick_width_norm=200,
+    draw_hand=True,
+    draw_head=True,
+):
     kp2ds = np.concatenate([meta.kps_body, meta.kps_body_p[:, None]], axis=1)
     kp2ds_lhand = np.concatenate([meta.kps_lhand, meta.kps_lhand_p[:, None]], axis=1)
     kp2ds_rhand = np.concatenate([meta.kps_rhand, meta.kps_rhand_p[:, None]], axis=1)
-    pose_img = draw_aapose(img, kp2ds, threshold, kp2ds_lhand=kp2ds_lhand, kp2ds_rhand=kp2ds_rhand, stick_width_norm=stick_width_norm, draw_hand=draw_hand, draw_head=draw_head)
+    pose_img = draw_aapose(
+        img,
+        kp2ds,
+        threshold,
+        kp2ds_lhand=kp2ds_lhand,
+        kp2ds_rhand=kp2ds_rhand,
+        stick_width_norm=stick_width_norm,
+        draw_hand=draw_hand,
+        draw_head=draw_head,
+    )
     return pose_img
 
 
-def draw_aapose_by_meta_new(img, meta: AAPoseMeta, threshold=0.5, stickwidth_type="v2", draw_hand=True, draw_head=True):
+def draw_aapose_by_meta_new(
+    img,
+    meta: AAPoseMeta,
+    threshold=0.5,
+    stickwidth_type="v2",
+    draw_hand=True,
+    draw_head=True,
+):
     kp2ds = np.concatenate([meta.kps_body, meta.kps_body_p[:, None]], axis=1)
     kp2ds_lhand = np.concatenate([meta.kps_lhand, meta.kps_lhand_p[:, None]], axis=1)
     kp2ds_rhand = np.concatenate([meta.kps_rhand, meta.kps_rhand_p[:, None]], axis=1)
-    pose_img = draw_aapose_new(img, kp2ds, threshold, kp2ds_lhand=kp2ds_lhand, kp2ds_rhand=kp2ds_rhand, stickwidth_type=stickwidth_type, draw_hand=draw_hand, draw_head=draw_head)
+    pose_img = draw_aapose_new(
+        img,
+        kp2ds,
+        threshold,
+        kp2ds_lhand=kp2ds_lhand,
+        kp2ds_rhand=kp2ds_rhand,
+        stickwidth_type=stickwidth_type,
+        draw_hand=draw_hand,
+        draw_head=draw_head,
+    )
     return pose_img
 
 
@@ -223,31 +261,79 @@ def draw_hand_by_meta(img, meta: AAPoseMeta, threshold=0.5, stick_width_norm=200
     kp2ds = np.concatenate([meta.kps_body, meta.kps_body_p[:, None] * 0], axis=1)
     kp2ds_lhand = np.concatenate([meta.kps_lhand, meta.kps_lhand_p[:, None]], axis=1)
     kp2ds_rhand = np.concatenate([meta.kps_rhand, meta.kps_rhand_p[:, None]], axis=1)
-    pose_img = draw_aapose(img, kp2ds, threshold, kp2ds_lhand=kp2ds_lhand, kp2ds_rhand=kp2ds_rhand, stick_width_norm=stick_width_norm, draw_hand=True, draw_head=False)
+    pose_img = draw_aapose(
+        img,
+        kp2ds,
+        threshold,
+        kp2ds_lhand=kp2ds_lhand,
+        kp2ds_rhand=kp2ds_rhand,
+        stick_width_norm=stick_width_norm,
+        draw_hand=True,
+        draw_head=False,
+    )
     return pose_img
 
 
-def draw_aaface_by_meta(img, meta: AAPoseMeta, threshold=0.5, stick_width_norm=200, draw_hand=False, draw_head=True):
+def draw_aaface_by_meta(
+    img,
+    meta: AAPoseMeta,
+    threshold=0.5,
+    stick_width_norm=200,
+    draw_hand=False,
+    draw_head=True,
+):
     kp2ds = np.concatenate([meta.kps_body, meta.kps_body_p[:, None]], axis=1)
     # kp2ds_lhand = np.concatenate([meta.kps_lhand, meta.kps_lhand_p[:, None]], axis=1)
     # kp2ds_rhand = np.concatenate([meta.kps_rhand, meta.kps_rhand_p[:, None]], axis=1)
-    pose_img = draw_M(img, kp2ds, threshold, kp2ds_lhand=None, kp2ds_rhand=None, stick_width_norm=stick_width_norm, draw_hand=draw_hand, draw_head=draw_head)
+    pose_img = draw_M(
+        img,
+        kp2ds,
+        threshold,
+        kp2ds_lhand=None,
+        kp2ds_rhand=None,
+        stick_width_norm=stick_width_norm,
+        draw_hand=draw_hand,
+        draw_head=draw_head,
+    )
     return pose_img
 
 
-def draw_aanose_by_meta(img, meta: AAPoseMeta, threshold=0.5, stick_width_norm=100, draw_hand=False):
+def draw_aanose_by_meta(
+    img, meta: AAPoseMeta, threshold=0.5, stick_width_norm=100, draw_hand=False
+):
     kp2ds = np.concatenate([meta.kps_body, meta.kps_body_p[:, None]], axis=1)
     # kp2ds_lhand = np.concatenate([meta.kps_lhand, meta.kps_lhand_p[:, None]], axis=1)
     # kp2ds_rhand = np.concatenate([meta.kps_rhand, meta.kps_rhand_p[:, None]], axis=1)
-    pose_img = draw_nose(img, kp2ds, threshold, kp2ds_lhand=None, kp2ds_rhand=None, stick_width_norm=stick_width_norm, draw_hand=draw_hand)
+    pose_img = draw_nose(
+        img,
+        kp2ds,
+        threshold,
+        kp2ds_lhand=None,
+        kp2ds_rhand=None,
+        stick_width_norm=stick_width_norm,
+        draw_hand=draw_hand,
+    )
     return pose_img
 
 
-def gen_face_motion_seq(img, metas: List[AAPoseMeta], threshold=0.5, stick_width_norm=200):
+def gen_face_motion_seq(
+    img, metas: List[AAPoseMeta], threshold=0.5, stick_width_norm=200
+):
     return
 
 
-def draw_M(img, kp2ds, threshold=0.6, data_to_json=None, idx=-1, kp2ds_lhand=None, kp2ds_rhand=None, draw_hand=False, stick_width_norm=200, draw_head=True):
+def draw_M(
+    img,
+    kp2ds,
+    threshold=0.6,
+    data_to_json=None,
+    idx=-1,
+    kp2ds_lhand=None,
+    kp2ds_rhand=None,
+    draw_hand=False,
+    stick_width_norm=200,
+    draw_head=True,
+):
     """
     Draw keypoints and connections representing hand pose on a given canvas.
 
@@ -288,7 +374,7 @@ def draw_M(img, kp2ds, threshold=0.6, data_to_json=None, idx=-1, kp2ds_lhand=Non
     # kp2ds_body = (kp2ds.copy()[[0, 6, 6, 8, 10, 5, 7, 9, 12, 14, 16, 11, 13, 15, 2, 1, 4, 3, 17, 20]] + \
     #              kp2ds.copy()[[0, 5, 6, 8, 10, 5, 7, 9, 12, 14, 16, 11, 13, 15, 2, 1, 4, 3, 18, 21]]) / 2
     kp2ds = kp2ds.copy()
-    # import ipdb; ipdb.set_trace()
+    # # # import ipdb; # # ipdb.set_trace()
     kp2ds[[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 18, 19], 2] = 0
     if not draw_head:
         kp2ds[[0, 14, 15, 16, 17], 2] = 0
@@ -360,7 +446,9 @@ def draw_M(img, kp2ds, threshold=0.6, data_to_json=None, idx=-1, kp2ds_lhand=Non
         mY = np.mean(Y)
         length = ((X[0] - X[1]) ** 2 + (Y[0] - Y[1]) ** 2) ** 0.5
         angle = math.degrees(math.atan2(X[0] - X[1], Y[0] - Y[1]))
-        polygon = cv2.ellipse2Poly((int(mY), int(mX)), (int(length / 2), stickwidth), int(angle), 0, 360, 1)
+        polygon = cv2.ellipse2Poly(
+            (int(mY), int(mX)), (int(length / 2), stickwidth), int(angle), 0, 360, 1
+        )
         cv2.fillConvexPoly(img, polygon, [int(float(c) * 0.6) for c in color])
 
     for _idx, (keypoint, color) in enumerate(zip(kp2ds_body, colors)):
@@ -567,7 +655,18 @@ def draw_nose(
     return img
 
 
-def draw_aapose(img, kp2ds, threshold=0.6, data_to_json=None, idx=-1, kp2ds_lhand=None, kp2ds_rhand=None, draw_hand=False, stick_width_norm=200, draw_head=True):
+def draw_aapose(
+    img,
+    kp2ds,
+    threshold=0.6,
+    data_to_json=None,
+    idx=-1,
+    kp2ds_lhand=None,
+    kp2ds_rhand=None,
+    draw_hand=False,
+    stick_width_norm=200,
+    draw_head=True,
+):
     """
     Draw keypoints and connections representing hand pose on a given canvas.
 
@@ -677,7 +776,9 @@ def draw_aapose(img, kp2ds, threshold=0.6, data_to_json=None, idx=-1, kp2ds_lhan
         mY = np.mean(Y)
         length = ((X[0] - X[1]) ** 2 + (Y[0] - Y[1]) ** 2) ** 0.5
         angle = math.degrees(math.atan2(X[0] - X[1], Y[0] - Y[1]))
-        polygon = cv2.ellipse2Poly((int(mY), int(mX)), (int(length / 2), stickwidth), int(angle), 0, 360, 1)
+        polygon = cv2.ellipse2Poly(
+            (int(mY), int(mX)), (int(length / 2), stickwidth), int(angle), 0, 360, 1
+        )
         cv2.fillConvexPoly(img, polygon, [int(float(c) * 0.6) for c in color])
 
     for _idx, (keypoint, color) in enumerate(zip(kp2ds_body, colors)):
@@ -720,7 +821,18 @@ def draw_aapose(img, kp2ds, threshold=0.6, data_to_json=None, idx=-1, kp2ds_lhan
     return img
 
 
-def draw_aapose_new(img, kp2ds, threshold=0.6, data_to_json=None, idx=-1, kp2ds_lhand=None, kp2ds_rhand=None, draw_hand=False, stickwidth_type="v2", draw_head=True):
+def draw_aapose_new(
+    img,
+    kp2ds,
+    threshold=0.6,
+    data_to_json=None,
+    idx=-1,
+    kp2ds_lhand=None,
+    kp2ds_rhand=None,
+    draw_hand=False,
+    stickwidth_type="v2",
+    draw_head=True,
+):
     """
     Draw keypoints and connections representing hand pose on a given canvas.
 
@@ -837,7 +949,9 @@ def draw_aapose_new(img, kp2ds, threshold=0.6, data_to_json=None, idx=-1, kp2ds_
         mY = np.mean(Y)
         length = ((X[0] - X[1]) ** 2 + (Y[0] - Y[1]) ** 2) ** 0.5
         angle = math.degrees(math.atan2(X[0] - X[1], Y[0] - Y[1]))
-        polygon = cv2.ellipse2Poly((int(mY), int(mX)), (int(length / 2), stickwidth), int(angle), 0, 360, 1)
+        polygon = cv2.ellipse2Poly(
+            (int(mY), int(mX)), (int(length / 2), stickwidth), int(angle), 0, 360, 1
+        )
         cv2.fillConvexPoly(img, polygon, [int(float(c) * 0.6) for c in color])
 
     for _idx, (keypoint, color) in enumerate(zip(kp2ds_body, colors)):
@@ -848,8 +962,12 @@ def draw_aapose_new(img, kp2ds, threshold=0.6, data_to_json=None, idx=-1, kp2ds_
         cv2.circle(img, (int(x), int(y)), stickwidth, color, thickness=-1)
 
     if draw_hand:
-        img = draw_handpose_new(img, kp2ds_lhand, stickwidth_type=stickwidth_type, hand_score_th=threshold)
-        img = draw_handpose_new(img, kp2ds_rhand, stickwidth_type=stickwidth_type, hand_score_th=threshold)
+        img = draw_handpose_new(
+            img, kp2ds_lhand, stickwidth_type=stickwidth_type, hand_score_th=threshold
+        )
+        img = draw_handpose_new(
+            img, kp2ds_rhand, stickwidth_type=stickwidth_type, hand_score_th=threshold
+        )
 
     kp2ds_body[:, 0] /= W
     kp2ds_body[:, 1] /= H
@@ -887,7 +1005,9 @@ def draw_bbox(img, bbox, color=(255, 0, 0)):
     return img
 
 
-def draw_kp2ds(img, kp2ds, threshold=0, color=(255, 0, 0), skeleton=None, reverse=False):
+def draw_kp2ds(
+    img, kp2ds, threshold=0, color=(255, 0, 0), skeleton=None, reverse=False
+):
     img = load_image(img, reverse)
 
     if skeleton is not None:
@@ -1099,10 +1219,26 @@ FACE_CUSTOM_STYLE = {
     "eyeball": {"indexs": [68, 69], "color": [255, 255, 255], "connect": False},
     "left_eyebrow": {"indexs": [17, 18, 19, 20, 21], "color": [0, 255, 0]},
     "right_eyebrow": {"indexs": [22, 23, 24, 25, 26], "color": [0, 0, 255]},
-    "left_eye": {"indexs": [36, 37, 38, 39, 40, 41], "color": [255, 255, 0], "close": True},
-    "right_eye": {"indexs": [42, 43, 44, 45, 46, 47], "color": [255, 0, 255], "close": True},
-    "mouth_outside": {"indexs": list(range(48, 60)), "color": [100, 255, 50], "close": True},
-    "mouth_inside": {"indexs": [60, 61, 62, 63, 64, 65, 66, 67], "color": [255, 100, 50], "close": True},
+    "left_eye": {
+        "indexs": [36, 37, 38, 39, 40, 41],
+        "color": [255, 255, 0],
+        "close": True,
+    },
+    "right_eye": {
+        "indexs": [42, 43, 44, 45, 46, 47],
+        "color": [255, 0, 255],
+        "close": True,
+    },
+    "mouth_outside": {
+        "indexs": list(range(48, 60)),
+        "color": [100, 255, 50],
+        "close": True,
+    },
+    "mouth_inside": {
+        "indexs": [60, 61, 62, 63, 64, 65, 66, 67],
+        "color": [255, 100, 50],
+        "close": True,
+    },
 }
 
 
@@ -1189,7 +1325,11 @@ def draw_traj(metas: List[AAPoseMeta], threshold=0.6):
     new_limbSeq = []
     key_point_list = []
     for _idx, ((k1_index, k2_index)) in enumerate(limbSeq):
-        vis = (kp_body_p[:, k1_index] > threshold) * (kp_body_p[:, k2_index] > threshold) * 1
+        vis = (
+            (kp_body_p[:, k1_index] > threshold)
+            * (kp_body_p[:, k2_index] > threshold)
+            * 1
+        )
         if vis.sum() * 1.0 / vis.shape[0] > 0.4:
             new_limbSeq.append([k1_index, k2_index])
 
@@ -1249,7 +1389,9 @@ def draw_traj(metas: List[AAPoseMeta], threshold=0.6):
         for idx, point in enumerate(points):
             x, y, vis = point
             if vis == 1:
-                cv2.circle(_image_vis, (x, y), stickwidth, sample_colors[idx], thickness=-1)
+                cv2.circle(
+                    _image_vis, (x, y), stickwidth, sample_colors[idx], thickness=-1
+                )
 
         image_list_ori.append(_image_vis)
 

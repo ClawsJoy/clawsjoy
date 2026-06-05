@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 from typing import Dict, List
 
 import torch
@@ -6,6 +5,8 @@ import torch.distributed as dist
 import torch.nn as nn
 import torch.nn.functional as F
 from huggingface_hub import PyTorchModelHubMixin
+
+from lib.smart_config import smart_config
 
 from ..heads.camera_head import CameraHead
 from ..heads.dense_head import DPTHead
@@ -202,7 +203,9 @@ class WorldMirror(nn.Module, PyTorchModelHubMixin):
                 dim_in=2 * dim,
                 output_dim=2 if not self.enable_depth_mask else 3,
                 patch_size=patch_size,
-                activation="exp+expp1" if not self.enable_depth_mask else "exp+expp1+linear",
+                activation=(
+                    "exp+expp1" if not self.enable_depth_mask else "exp+expp1+linear"
+                ),
                 enable_depth_mask=self.enable_depth_mask,
                 gradient_checkpoint=self.dpt_checkpoint,
             )
@@ -223,7 +226,9 @@ class WorldMirror(nn.Module, PyTorchModelHubMixin):
                 patch_size=patch_size,
                 features=gs_dim,
                 is_gsdpt=True,
-                activation="exp+expp1" if not self.enable_depth_mask else "exp+expp1+linear",
+                activation=(
+                    "exp+expp1" if not self.enable_depth_mask else "exp+expp1+linear"
+                ),
                 enable_depth_mask=self.enable_depth_mask,
                 gradient_checkpoint=self.dpt_checkpoint,
             )
@@ -236,7 +241,9 @@ class WorldMirror(nn.Module, PyTorchModelHubMixin):
 
     def _bf16_to(self, *args, **kwargs):
         """Custom to() for bf16 mode: selectively move heads to target device/dtype."""
-        self.visual_geometry_transformer = self.visual_geometry_transformer.to(*args, **kwargs)
+        self.visual_geometry_transformer = self.visual_geometry_transformer.to(
+            *args, **kwargs
+        )
         if self.enable_cam:
             self.cam_head = self.cam_head.to(*args, **kwargs)
         if self.enable_pts:
@@ -294,7 +301,9 @@ class WorldMirror(nn.Module, PyTorchModelHubMixin):
                 sp_group=sp_group,
             )
 
-        with torch.amp.autocast("cuda", enabled=(not self.enable_bf16), dtype=torch.float32):
+        with torch.amp.autocast(
+            "cuda", enabled=(not self.enable_bf16), dtype=torch.float32
+        ):
             if sp_size > 1:
                 preds = self._gen_all_preds_frame_sp(
                     token_list,
@@ -350,7 +359,9 @@ class WorldMirror(nn.Module, PyTorchModelHubMixin):
                 my_start = rank_in_sp * (base_chunk + 1)
             else:
                 my_count = base_chunk
-                my_start = remainder * (base_chunk + 1) + (rank_in_sp - remainder) * base_chunk
+                my_start = (
+                    remainder * (base_chunk + 1) + (rank_in_sp - remainder) * base_chunk
+                )
         else:
             if rank_in_sp < S:
                 my_count = 1
@@ -379,10 +390,12 @@ class WorldMirror(nn.Module, PyTorchModelHubMixin):
         if self.enable_depth:
             if has_frames:
                 if self.enable_depth_mask:
-                    depth_chunk, depth_conf_chunk, depth_mask_logits_chunk = self.depth_head(
-                        token_list_chunk,
-                        images=imgs_chunk,
-                        patch_start_idx=patch_start_idx,
+                    depth_chunk, depth_conf_chunk, depth_mask_logits_chunk = (
+                        self.depth_head(
+                            token_list_chunk,
+                            images=imgs_chunk,
+                            patch_start_idx=patch_start_idx,
+                        )
                     )
                 else:
                     depth_chunk, depth_conf_chunk = self.depth_head(
@@ -391,13 +404,23 @@ class WorldMirror(nn.Module, PyTorchModelHubMixin):
                         patch_start_idx=patch_start_idx,
                     )
             else:
-                depth_chunk = torch.zeros(B, 0, H, W, 1, dtype=imgs.dtype, device=imgs.device)
-                depth_conf_chunk = torch.zeros(B, 0, H, W, dtype=imgs.dtype, device=imgs.device)
+                depth_chunk = torch.zeros(
+                    B, 0, H, W, 1, dtype=imgs.dtype, device=imgs.device
+                )
+                depth_conf_chunk = torch.zeros(
+                    B, 0, H, W, dtype=imgs.dtype, device=imgs.device
+                )
                 if self.enable_depth_mask:
-                    depth_mask_logits_chunk = torch.zeros(B, 0, H, W, dtype=imgs.dtype, device=imgs.device)
+                    depth_mask_logits_chunk = torch.zeros(
+                        B, 0, H, W, dtype=imgs.dtype, device=imgs.device
+                    )
 
-            preds["depth"] = self._frame_allgather_variable(depth_chunk, my_count, S, sp_size, sp_group, dim=1)
-            preds["depth_conf"] = self._frame_allgather_variable(depth_conf_chunk, my_count, S, sp_size, sp_group, dim=1)
+            preds["depth"] = self._frame_allgather_variable(
+                depth_chunk, my_count, S, sp_size, sp_group, dim=1
+            )
+            preds["depth_conf"] = self._frame_allgather_variable(
+                depth_conf_chunk, my_count, S, sp_size, sp_group, dim=1
+            )
             if self.enable_depth_mask:
                 depth_mask_logits_full = self._frame_allgather_variable(
                     depth_mask_logits_chunk,
@@ -418,11 +441,19 @@ class WorldMirror(nn.Module, PyTorchModelHubMixin):
                     patch_start_idx=patch_start_idx,
                 )
             else:
-                pts_chunk = torch.zeros(B, 0, H, W, 3, dtype=imgs.dtype, device=imgs.device)
-                pts_conf_chunk = torch.zeros(B, 0, H, W, dtype=imgs.dtype, device=imgs.device)
+                pts_chunk = torch.zeros(
+                    B, 0, H, W, 3, dtype=imgs.dtype, device=imgs.device
+                )
+                pts_conf_chunk = torch.zeros(
+                    B, 0, H, W, dtype=imgs.dtype, device=imgs.device
+                )
 
-            preds["pts3d"] = self._frame_allgather_variable(pts_chunk, my_count, S, sp_size, sp_group, dim=1)
-            preds["pts3d_conf"] = self._frame_allgather_variable(pts_conf_chunk, my_count, S, sp_size, sp_group, dim=1)
+            preds["pts3d"] = self._frame_allgather_variable(
+                pts_chunk, my_count, S, sp_size, sp_group, dim=1
+            )
+            preds["pts3d_conf"] = self._frame_allgather_variable(
+                pts_conf_chunk, my_count, S, sp_size, sp_group, dim=1
+            )
 
         if self.enable_norm:
             if has_frames:
@@ -432,25 +463,42 @@ class WorldMirror(nn.Module, PyTorchModelHubMixin):
                     patch_start_idx=patch_start_idx,
                 )
             else:
-                normals_chunk = torch.zeros(B, 0, H, W, 3, dtype=imgs.dtype, device=imgs.device)
-                norm_conf_chunk = torch.zeros(B, 0, H, W, dtype=imgs.dtype, device=imgs.device)
+                normals_chunk = torch.zeros(
+                    B, 0, H, W, 3, dtype=imgs.dtype, device=imgs.device
+                )
+                norm_conf_chunk = torch.zeros(
+                    B, 0, H, W, dtype=imgs.dtype, device=imgs.device
+                )
 
-            preds["normals"] = self._frame_allgather_variable(normals_chunk, my_count, S, sp_size, sp_group, dim=1)
-            preds["normals_conf"] = self._frame_allgather_variable(norm_conf_chunk, my_count, S, sp_size, sp_group, dim=1)
+            preds["normals"] = self._frame_allgather_variable(
+                normals_chunk, my_count, S, sp_size, sp_group, dim=1
+            )
+            preds["normals_conf"] = self._frame_allgather_variable(
+                norm_conf_chunk, my_count, S, sp_size, sp_group, dim=1
+            )
 
         # GS head: frame-parallel, then render on full gathered data
         if self.enable_gs:
-            context_preds, context_nums = self.prepare_contexts(views, cond_flags, is_inference)
+            context_preds, context_nums = self.prepare_contexts(
+                views, cond_flags, is_inference
+            )
             gs_token_list = context_preds.get("token_list", token_list)
             gs_imgs = context_preds.get("imgs", imgs)
             gs_S = gs_imgs.shape[1]
 
             if gs_S == S and has_frames:
-                gs_token_chunk = [t[:, my_start:my_end].contiguous() for t in gs_token_list]
+                gs_token_chunk = [
+                    t[:, my_start:my_end].contiguous() for t in gs_token_list
+                ]
                 gs_imgs_chunk = gs_imgs[:, my_start:my_end].contiguous()
 
                 if self.enable_depth_mask:
-                    gs_feat_chunk, gs_depth_chunk, gs_depth_conf_chunk, gs_dmask_chunk = self.gs_head(
+                    (
+                        gs_feat_chunk,
+                        gs_depth_chunk,
+                        gs_depth_conf_chunk,
+                        gs_dmask_chunk,
+                    ) = self.gs_head(
                         gs_token_chunk,
                         images=gs_imgs_chunk,
                         patch_start_idx=patch_start_idx,
@@ -462,9 +510,15 @@ class WorldMirror(nn.Module, PyTorchModelHubMixin):
                         patch_start_idx=patch_start_idx,
                     )
 
-                gs_feat = self._frame_allgather_variable(gs_feat_chunk, my_count, gs_S, sp_size, sp_group, dim=1)
-                gs_depth = self._frame_allgather_variable(gs_depth_chunk, my_count, gs_S, sp_size, sp_group, dim=1)
-                gs_depth_conf = self._frame_allgather_variable(gs_depth_conf_chunk, my_count, gs_S, sp_size, sp_group, dim=1)
+                gs_feat = self._frame_allgather_variable(
+                    gs_feat_chunk, my_count, gs_S, sp_size, sp_group, dim=1
+                )
+                gs_depth = self._frame_allgather_variable(
+                    gs_depth_chunk, my_count, gs_S, sp_size, sp_group, dim=1
+                )
+                gs_depth_conf = self._frame_allgather_variable(
+                    gs_depth_conf_chunk, my_count, gs_S, sp_size, sp_group, dim=1
+                )
                 if self.enable_depth_mask:
                     gs_depth_mask_logits = self._frame_allgather_variable(
                         gs_dmask_chunk,
@@ -479,15 +533,29 @@ class WorldMirror(nn.Module, PyTorchModelHubMixin):
 
             elif gs_S == S and not has_frames:
                 gs_feat_c = self.gs_dim // 2
-                gs_feat_chunk = torch.zeros(B, 0, gs_feat_c, H, W, dtype=imgs.dtype, device=imgs.device)
-                gs_depth_chunk = torch.zeros(B, 0, H, W, 1, dtype=imgs.dtype, device=imgs.device)
-                gs_depth_conf_chunk = torch.zeros(B, 0, H, W, dtype=imgs.dtype, device=imgs.device)
+                gs_feat_chunk = torch.zeros(
+                    B, 0, gs_feat_c, H, W, dtype=imgs.dtype, device=imgs.device
+                )
+                gs_depth_chunk = torch.zeros(
+                    B, 0, H, W, 1, dtype=imgs.dtype, device=imgs.device
+                )
+                gs_depth_conf_chunk = torch.zeros(
+                    B, 0, H, W, dtype=imgs.dtype, device=imgs.device
+                )
 
-                gs_feat = self._frame_allgather_variable(gs_feat_chunk, 0, gs_S, sp_size, sp_group, dim=1)
-                gs_depth = self._frame_allgather_variable(gs_depth_chunk, 0, gs_S, sp_size, sp_group, dim=1)
-                gs_depth_conf = self._frame_allgather_variable(gs_depth_conf_chunk, 0, gs_S, sp_size, sp_group, dim=1)
+                gs_feat = self._frame_allgather_variable(
+                    gs_feat_chunk, 0, gs_S, sp_size, sp_group, dim=1
+                )
+                gs_depth = self._frame_allgather_variable(
+                    gs_depth_chunk, 0, gs_S, sp_size, sp_group, dim=1
+                )
+                gs_depth_conf = self._frame_allgather_variable(
+                    gs_depth_conf_chunk, 0, gs_S, sp_size, sp_group, dim=1
+                )
                 if self.enable_depth_mask:
-                    gs_dmask_chunk = torch.zeros(B, 0, H, W, dtype=imgs.dtype, device=imgs.device)
+                    gs_dmask_chunk = torch.zeros(
+                        B, 0, H, W, dtype=imgs.dtype, device=imgs.device
+                    )
                     gs_depth_mask_logits = self._frame_allgather_variable(
                         gs_dmask_chunk,
                         0,
@@ -500,10 +568,12 @@ class WorldMirror(nn.Module, PyTorchModelHubMixin):
                     preds["gs_depth_mask"] = gs_depth_mask_logits.sigmoid()
             else:
                 if self.enable_depth_mask:
-                    gs_feat, gs_depth, gs_depth_conf, gs_depth_mask_logits = self.gs_head(
-                        gs_token_list,
-                        images=gs_imgs,
-                        patch_start_idx=patch_start_idx,
+                    gs_feat, gs_depth, gs_depth_conf, gs_depth_mask_logits = (
+                        self.gs_head(
+                            gs_token_list,
+                            images=gs_imgs,
+                            patch_start_idx=patch_start_idx,
+                        )
                     )
                     preds["gs_depth_mask_logits"] = gs_depth_mask_logits
                     preds["gs_depth_mask"] = gs_depth_mask_logits.sigmoid()
@@ -528,7 +598,9 @@ class WorldMirror(nn.Module, PyTorchModelHubMixin):
 
         return preds
 
-    def _frame_allgather_variable(self, chunk, my_count, total_S, sp_size, sp_group, dim=1):
+    def _frame_allgather_variable(
+        self, chunk, my_count, total_S, sp_size, sp_group, dim=1
+    ):
         """Allgather tensors with potentially variable chunk sizes across ranks.
 
         Pads each chunk to max_chunk_size, allgathers, then extracts valid frames
@@ -540,7 +612,10 @@ class WorldMirror(nn.Module, PyTorchModelHubMixin):
         if total_S >= sp_size:
             base_chunk = total_S // sp_size
             remainder = total_S % sp_size
-            counts = [(base_chunk + 1) if r < remainder else base_chunk for r in range(sp_size)]
+            counts = [
+                (base_chunk + 1) if r < remainder else base_chunk
+                for r in range(sp_size)
+            ]
         else:
             counts = [1 if r < total_S else 0 for r in range(sp_size)]
 
@@ -568,7 +643,9 @@ class WorldMirror(nn.Module, PyTorchModelHubMixin):
 
         return torch.cat(valid_chunks, dim=dim).contiguous()
 
-    def _gen_all_preds(self, token_list, imgs, patch_start_idx, views, cond_flags, is_inference):
+    def _gen_all_preds(
+        self, token_list, imgs, patch_start_idx, views, cond_flags, is_inference
+    ):
         """Generate all enabled predictions (single-GPU path)."""
         preds = {}
 
@@ -576,7 +653,9 @@ class WorldMirror(nn.Module, PyTorchModelHubMixin):
             cam_seq = self.cam_head(token_list)
             cam_params = cam_seq[-1]
             preds["camera_params"] = cam_params
-            c2w_mat, int_mat = self.transform_camera_vector(cam_params, imgs.shape[-2], imgs.shape[-1])
+            c2w_mat, int_mat = self.transform_camera_vector(
+                cam_params, imgs.shape[-2], imgs.shape[-1]
+            )
             preds["camera_poses"] = c2w_mat
             preds["camera_intrs"] = int_mat
 
@@ -617,7 +696,9 @@ class WorldMirror(nn.Module, PyTorchModelHubMixin):
             preds["normals_conf"] = norm_conf
 
         if self.enable_gs:
-            context_preds, context_nums = self.prepare_contexts(views, cond_flags, is_inference)
+            context_preds, context_nums = self.prepare_contexts(
+                views, cond_flags, is_inference
+            )
             if self.enable_depth_mask:
                 gs_feat, gs_depth, gs_depth_conf, gs_depth_mask_logits = self.gs_head(
                     context_preds.get("token_list", token_list),
@@ -667,7 +748,9 @@ class WorldMirror(nn.Module, PyTorchModelHubMixin):
             depth_h, depth_w = views["depthmap"].shape[-2:]
             depths = views["depthmap"]
             if depth_h != h or depth_w != w:
-                depths = F.interpolate(depths, size=(h, w), mode="bilinear", align_corners=False)
+                depths = F.interpolate(
+                    depths, size=(h, w), mode="bilinear", align_corners=False
+                )
             depths = normalize_depth(depths)
             if self.enable_bf16:
                 depths = depths.to(torch.bfloat16)
@@ -713,10 +796,15 @@ class WorldMirror(nn.Module, PyTorchModelHubMixin):
         if self.enable_bf16:
             context_imgs = context_imgs.to(torch.bfloat16)
 
-        with torch.amp.autocast("cuda", enabled=(not self.enable_bf16), dtype=torch.bfloat16):
+        with torch.amp.autocast(
+            "cuda", enabled=(not self.enable_bf16), dtype=torch.bfloat16
+        ):
             if use_cond:
                 priors = self.extract_priors(views)
-                context_priors = (prior[:, :context_nums] if prior is not None else None for prior in priors)
+                context_priors = (
+                    prior[:, :context_nums] if prior is not None else None
+                    for prior in priors
+                )
                 context_token_list, _ = self.visual_geometry_transformer(
                     context_imgs,
                     context_priors,
@@ -731,7 +819,9 @@ class WorldMirror(nn.Module, PyTorchModelHubMixin):
 
         context_cam_seq = self.cam_head(context_token_list)
         context_cam_params = context_cam_seq[-1]
-        context_c2w_mat, context_int_mat = self.transform_camera_vector(context_cam_params, context_imgs.shape[-2], context_imgs.shape[-1])
+        context_c2w_mat, context_int_mat = self.transform_camera_vector(
+            context_cam_params, context_imgs.shape[-2], context_imgs.shape[-1]
+        )
         context_preds["camera_poses"] = context_c2w_mat
         context_preds["camera_intrs"] = context_int_mat
         context_preds["token_list"] = context_token_list

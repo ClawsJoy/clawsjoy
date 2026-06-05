@@ -1,5 +1,6 @@
-from lib.smart_config import smart_config
 from lightx2v_train.utils.registry import build_inferencer
+
+from lib.smart_config import smart_config
 
 from .image import ImageInferencer
 from .image_native import NativeImageInferencer

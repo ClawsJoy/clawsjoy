@@ -1,12 +1,12 @@
-from lib.smart_config import smart_config
 import math
 from typing import List, Optional, Union
 
 import torch
-from loguru import logger
-
 from lightx2v.models.schedulers.scheduler import BaseScheduler
 from lightx2v_platform.base.global_var import AI_DEVICE
+from loguru import logger
+
+from lib.smart_config import smart_config
 
 
 class NeoppMoeScheduler(BaseScheduler):
@@ -16,23 +16,33 @@ class NeoppMoeScheduler(BaseScheduler):
         self.timestep_shift = config.get("timestep_shift", 1.0)
         self.noise_scale_init = self.config.get("noise_scale", 1.0)
         self.noise_scale_mode = self.config.get("noise_scale_mode", "resolution")
-        self.noise_scale_base_image_seq_len = self.config.get("noise_scale_base_image_seq_len", 64)
+        self.noise_scale_base_image_seq_len = self.config.get(
+            "noise_scale_base_image_seq_len", 64
+        )
         self.noise_scale_max_value = self.config.get("noise_scale_max_value", 8.0)
         self.patch_size = self.config.get("patch_size", 16)
         self.merge_size = 2
 
     def prepare(self, seed, latent_shape, image_encoder_output=None):
         self.prepare_latents(seed, latent_shape)
-        self.set_timesteps(self.infer_steps, device=AI_DEVICE, shift=self.timestep_shift)
+        self.set_timesteps(
+            self.infer_steps, device=AI_DEVICE, shift=self.timestep_shift
+        )
 
     def prepare_latents(self, seed, latent_shape, dtype=torch.bfloat16):
         self.grid_h = latent_shape[2] // self.patch_size
         self.grid_w = latent_shape[3] // self.patch_size
-        self.grid_hw = torch.tensor([[self.grid_h, self.grid_w]] * latent_shape[0], device=AI_DEVICE)
+        self.grid_hw = torch.tensor(
+            [[self.grid_h, self.grid_w]] * latent_shape[0], device=AI_DEVICE
+        )
 
         noise_scale = self.noise_scale_init
         if self.noise_scale_mode in ("resolution", "dynamic", "dynamic_sqrt"):
-            noise_scale = math.sqrt((self.grid_h * self.grid_w) / (self.merge_size**2) / self.noise_scale_base_image_seq_len)
+            noise_scale = math.sqrt(
+                (self.grid_h * self.grid_w)
+                / (self.merge_size**2)
+                / self.noise_scale_base_image_seq_len
+            )
             base = float(self.noise_scale_base_image_seq_len)
             scale = math.sqrt((self.grid_h * self.grid_w) / (self.merge_size**2) / base)
             noise_scale = scale * float(self.noise_scale_init)
@@ -62,7 +72,9 @@ class NeoppMoeScheduler(BaseScheduler):
         timesteps = torch.linspace(0.0, 1.0, self.infer_steps + 1, device=device)
         self.timesteps = self._apply_time_schedule(timesteps, timestep_shift=shift)
 
-    def _apply_time_schedule(self, t: torch.Tensor, timestep_shift: float) -> torch.Tensor:
+    def _apply_time_schedule(
+        self, t: torch.Tensor, timestep_shift: float
+    ) -> torch.Tensor:
         sigma = 1 - t
         if timestep_shift != 1:
             self.time_schedule = "standard"

@@ -3,13 +3,13 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
-import time
-import threading
 import hashlib
+import threading
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List
@@ -74,7 +74,7 @@ class SmartActiveService:
                     continue
 
                 suffix = file_path.suffix.lower()
-                if suffix not in ['.md', '.png', '.jpg', '.mp4']:
+                if suffix not in [".md", ".png", ".jpg", ".mp4"]:
                     continue
 
                 # 检查是否需要索引
@@ -89,25 +89,27 @@ class SmartActiveService:
     def _index_file(self, file_path: Path, vector_center):
         """索引单个文件"""
         try:
-            if file_path.suffix in ['.png', '.jpg', '.jpeg']:
+            if file_path.suffix in [".png", ".jpg", ".jpeg"]:
                 # 图片索引
                 from core.agents.builtin.vision_agent import VisionAgent
+
                 vision = VisionAgent()
                 result = vision.describe_image(str(file_path))
-                description = result.get('description', f"图片: {file_path.name}")
+                description = result.get("description", f"图片: {file_path.name}")
                 doc_id = f"image_{file_path.stem}_{hashlib.md5(str(file_path).encode()).hexdigest()[:8]}"
 
-            elif file_path.suffix == '.mp4':
+            elif file_path.suffix == ".mp4":
                 # 视频索引
                 from core.agents.builtin.video_indexer_agent import VideoIndexerAgent
+
                 indexer = VideoIndexerAgent()
                 result = indexer.describe_video(str(file_path))
-                description = result.get('description', f"视频: {file_path.name}")
+                description = result.get("description", f"视频: {file_path.name}")
                 doc_id = f"video_{file_path.stem}_{hashlib.md5(str(file_path).encode()).hexdigest()[:8]}"
 
             else:
                 # 文档索引
-                content = file_path.read_text(encoding='utf-8')[:2000]
+                content = file_path.read_text(encoding="utf-8")[:2000]
                 description = f"文档: {file_path.name}\n内容: {content[:500]}"
                 doc_id = f"doc_{file_path.stem}_{hashlib.md5(str(file_path).encode()).hexdigest()[:8]}"
 
@@ -119,8 +121,8 @@ class SmartActiveService:
                     "file": str(file_path),
                     "filename": file_path.name,
                     "auto_indexed": True,
-                    "indexed_at": datetime.now().isoformat()
-                }
+                    "indexed_at": datetime.now().isoformat(),
+                },
             )
             print(f"   📄 [主动服务] 自动索引: {file_path.name}")
 
@@ -134,6 +136,7 @@ class SmartActiveService:
     def _health_check(self):
         """健康检查"""
         from core.lib.vector_knowledge_center import vector_knowledge_center
+
         print(f"   💚 [主动服务] 健康检查...")
         for name, col in vector_knowledge_center.collections.items():
             print(f"      {name}: {col.count()} 条")
@@ -152,10 +155,11 @@ class SmartActiveService:
 
     def _check_performance(self):
         """性能检查"""
-        import psutil
         import platform
 
-        if platform.system() == 'Windows':
+        import psutil
+
+        if platform.system() == "Windows":
             return
 
         try:
@@ -169,6 +173,43 @@ class SmartActiveService:
         except Exception as e:
             print(f"性能监控错误: {e}")
 
+    def emit_event(self, event_type: str, payload: Dict):
+        """发送事件到事件总线"""
+        try:
+            from core.lib.agent_communication import agent_communication
 
-# 全局实例
+            agent_communication.emit_event(event_type, payload, "active_service")
+        except Exception as e:
+            pass
+
+    def on_task_arrived(self, task: Dict):
+        """任务到达时的主动处理"""
+        self.emit_event("task.arrived", task)
+        print(f"📋 主动服务: 检测到新任务 {task.get('name', 'unknown')}")
+
+    def wake_on_event(self, event_type: str):
+        """事件触发时唤醒相关 Agent"""
+        from core.lib.agent_communication import agent_communication
+
+        # 获取订阅该事件的 Agent
+        if event_type in agent_communication.subscribers:
+            for agent_name in agent_communication.subscribers[event_type]:
+                try:
+                    module = __import__(
+                        f"agents.{agent_name}.agent", fromlist=[f"{agent_name}Agent"]
+                    )
+                    class_name = (
+                        "".join(w.capitalize() for w in agent_name.split("_")) + "Agent"
+                    )
+                    agent_class = getattr(module, class_name)
+                    agent = agent_class("active_service")
+                    if hasattr(agent, "wake_now"):
+                        agent.wake_now()
+                        print(f"   🌞 事件触发唤醒: {agent_name}")
+                except Exception as e:
+                    pass
+
+                # 全局实例
+
+
 smart_service = SmartActiveService()

@@ -1,37 +1,35 @@
 from core.lib.unified_config import unified_config
 
-from core.lib.unified_config import unified_config
-
-from core.lib.unified_config import unified_config
 #!/usr/bin/env python3
 """完整生命闭环 Agent v5.2 - 感知+记忆+思考+行动+学习+反思+梦境"""
 
-import sys
-import time
 import json
 import re
-import requests
-from pathlib import Path
+import sys
+import time
 from datetime import datetime
-from typing import Dict, Optional, Tuple, List
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
-sys.path.insert(0, 'unified_config.ROOT')
+import requests
 
+sys.path.insert(0, "unified_config.ROOT")
+
+from core.lib.config_manager import config_manager
 from core.lib.cross_session_memory import CrossSessionMemory
 from core.lib.metacognition import Metacognition
-from core.lib.config_manager import config_manager
 
 
 class LifeCycleAgentV5:
     """完整生命闭环 Agent"""
-    
+
     VERSION = "5.2.0"
-    
+
     def __init__(self, user_id: str = "default"):
         self.user_id = user_id
 
         # ========== 各层初始化 ==========
-        self.memory = CrossSessionMemory(user_id)      # 记忆层
+        self.memory = CrossSessionMemory(user_id)  # 记忆层
         self.metacognition = Metacognition(f"agent_{user_id}")  # 反思层
 
         # 梦境数据
@@ -39,7 +37,7 @@ class LifeCycleAgentV5:
             "short_term_memories": [],
             "long_term_memories": [],
             "dream_cycles": 0,
-            "last_dream": None
+            "last_dream": None,
         }
 
         self.ollama_url = "config_loader.get_ollama_url()"
@@ -50,53 +48,55 @@ class LifeCycleAgentV5:
         print(f"📝 用户: {user_info.get('name', '新用户')}")
         print(f"📊 历史: {user_info.get('total_interactions', 0)} 次")
         print(f"💭 梦境周期: {self.dreaming_data['dream_cycles']}")
-    
+
     # ========== 感知层 ==========
     def _perceive(self, text: str) -> Dict:
         """感知用户输入"""
         # 提取名字
         name_patterns = [
-            r'^[我][叫][\s]*([^\s，。]{2,4})$',
-            r'^[我][是][\s]*([^\s，。]{2,4})$'
+            r"^[我][叫][\s]*([^\s，。]{2,4})$",
+            r"^[我][是][\s]*([^\s，。]{2,4})$",
         ]
         for pattern in name_patterns:
             match = re.search(pattern, text.strip())
             if match:
                 name = match.group(1)
-                if name not in ['什么', '谁', '怎么']:
+                if name not in ["什么", "谁", "怎么"]:
                     self.memory.remember("name", name)
                     return {"type": "self_intro", "value": name}
 
         # 提取偏好
-        pref_match = re.search(r'喜欢[\s]*([^，。]{2,8})$', text)
+        pref_match = re.search(r"喜欢[\s]*([^，。]{2,8})$", text)
         if pref_match:
             pref = pref_match.group(1)
-            if pref not in ['什么', '哪个']:
+            if pref not in ["什么", "哪个"]:
                 self.memory.remember("preference", pref)
                 return {"type": "preference", "value": pref}
 
         # 问候
-        if any(g in text.lower() for g in ['你好', 'hi']):
+        if any(g in text.lower() for g in ["你好", "hi"]):
             return {"type": "greeting"}
 
         # 问名字
-        if any(q in text.lower() for q in ['我叫什么', '我名字', '还记得我吗']):
+        if any(q in text.lower() for q in ["我叫什么", "我名字", "还记得我吗"]):
             return {"type": "ask_name"}
 
         # 问偏好
-        if any(q in text.lower() for q in ['喜欢什么', '偏好']):
+        if any(q in text.lower() for q in ["喜欢什么", "偏好"]):
             return {"type": "ask_preference"}
 
         # Agent 列表
-        if 'agent' in text.lower() and ('有哪些' in text.lower() or '列表' in text.lower()):
+        if "agent" in text.lower() and (
+            "有哪些" in text.lower() or "列表" in text.lower()
+        ):
             return {"type": "list_agents"}
 
         # 生成图表
-        if any(g in text.lower() for g in ['图', '架构图']):
+        if any(g in text.lower() for g in ["图", "架构图"]):
             return {"type": "generate_chart"}
 
         return {"type": "chat", "text": text}
-    
+
     # ========== 行动层 ==========
     def _act(self, perception: Dict) -> Tuple[str, str]:
         """执行行动"""
@@ -127,7 +127,10 @@ class LifeCycleAgentV5:
             return ("你还没告诉我你的偏好呢", "query_pref")
 
         elif ptype == "list_agents":
-            return ("系统有决策Agent、聊天Agent、执行Agent、采集Agent、安全Agent、分析Agent", "list_agents")
+            return (
+                "系统有决策Agent、聊天Agent、执行Agent、采集Agent、安全Agent、分析Agent",
+                "list_agents",
+            )
 
         elif ptype == "generate_chart":
             return ("正在生成架构图...", "generate_chart")
@@ -135,7 +138,7 @@ class LifeCycleAgentV5:
         else:
             # 复杂对话用 LLM
             return (self._think(user_info), "chat")
-    
+
     def _think(self, user_info: Dict) -> str:
         """思考层 - LLM 推理"""
         name = user_info.get("name", "")
@@ -151,32 +154,41 @@ class LifeCycleAgentV5:
         try:
             resp = requests.post(
                 f"{self.ollama_url}/api/generate",
-                json={"model": self.model, "prompt": prompt, "stream": False, "options": {"num_predict": 100, "temperature": 0.3}},
-                timeout=20
+                json={
+                    "model": self.model,
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {"num_predict": 100, "temperature": 0.3},
+                },
+                timeout=20,
             )
             if resp.status_code == 200:
-                return resp.json().get('response', '').strip()
-        except:
+                return resp.json().get("response", "").strip()
+        except Exception as e:
             pass
         return "我在思考..."
-    
+
     # ========== 记忆层（记录交互）==========
     def _record(self, user_input: str, response: str, task: str):
         """记录交互到记忆"""
         self.memory.record_interaction(user_input, response, task)
 
         # 短期记忆（用于梦境）
-        self.dreaming_data["short_term_memories"].append({
-            "user": user_input[:100],
-            "response": response[:100],
-            "task": task,
-            "time": datetime.now().isoformat()
-        })
+        self.dreaming_data["short_term_memories"].append(
+            {
+                "user": user_input[:100],
+                "response": response[:100],
+                "task": task,
+                "time": datetime.now().isoformat(),
+            }
+        )
 
         # 限制短期记忆大小
         if len(self.dreaming_data["short_term_memories"]) > 20:
-            self.dreaming_data["short_term_memories"] = self.dreaming_data["short_term_memories"][-20:]
-    
+            self.dreaming_data["short_term_memories"] = self.dreaming_data[
+                "short_term_memories"
+            ][-20:]
+
     # ========== 梦境层（记忆晋升）==========
     def _dream(self):
         """梦境 - 记忆晋升到长期"""
@@ -192,17 +204,21 @@ class LifeCycleAgentV5:
 
         # 限制长期记忆大小
         if len(self.dreaming_data["long_term_memories"]) > 100:
-            self.dreaming_data["long_term_memories"] = self.dreaming_data["long_term_memories"][-100:]
+            self.dreaming_data["long_term_memories"] = self.dreaming_data[
+                "long_term_memories"
+            ][-100:]
 
-        print(f"   💭 梦境循环 #{self.dreaming_data['dream_cycles']}: 晋升 {promoted} 条记忆")
+        print(
+            f"   💭 梦境循环 #{self.dreaming_data['dream_cycles']}: 晋升 {promoted} 条记忆"
+        )
         return promoted
-    
+
     # ========== 反思层 ==========
     def _reflect(self, user_input: str, response: str):
         """反思 - 元认知"""
         reflection = self.metacognition.reflect(user_input, response)
-        quality = reflection.get('quality_score', 0.5)
-        insight = reflection.get('insight', '')
+        quality = reflection.get("quality_score", 0.5)
+        insight = reflection.get("insight", "")
 
         if quality < 0.5:
             print(f"   💭 反思: 回答质量偏低 ({quality:.0%})，{insight}")
@@ -212,7 +228,7 @@ class LifeCycleAgentV5:
             print(f"   💭 反思: 回答质量优秀 ({quality:.0%})")
 
         return reflection
-    
+
     # ========== 主流程 ==========
     def process(self, user_input: str) -> Dict:
         start = time.time()
@@ -245,9 +261,9 @@ class LifeCycleAgentV5:
             "perception": perception["type"],
             "memory": self.memory.recall(),
             "dream_cycles": self.dreaming_data["dream_cycles"],
-            "long_term_memories": len(self.dreaming_data["long_term_memories"])
+            "long_term_memories": len(self.dreaming_data["long_term_memories"]),
         }
-    
+
     def get_status(self) -> Dict:
         return {
             "version": self.VERSION,
@@ -257,8 +273,8 @@ class LifeCycleAgentV5:
                 "cycles": self.dreaming_data["dream_cycles"],
                 "short_term": len(self.dreaming_data["short_term_memories"]),
                 "long_term": len(self.dreaming_data["long_term_memories"]),
-                "last_dream": self.dreaming_data["last_dream"]
-            }
+                "last_dream": self.dreaming_data["last_dream"],
+            },
         }
 
 
@@ -268,9 +284,9 @@ if __name__ == "__main__":
     print("=" * 60)
     print("感知 → 记忆 → 思考 → 行动 → 学习 → 反思 → 梦境")
     print("=" * 60)
-    
+
     agent = LifeCycleAgentV5("john")
-    
+
     tests = [
         "你好",
         "我叫 John",
@@ -278,16 +294,18 @@ if __name__ == "__main__":
         "ClawsJoy 有哪些 Agent？",
         "你还记得我叫什么吗？",
         "我喜欢什么风格？",
-        "生成架构图"
+        "生成架构图",
     ]
-    
+
     for msg in tests:
         print(f"\n👤 {msg}")
         result = agent.process(msg)
         print(f"🤖 {result['response']}")
-        print(f"   [感知: {result['perception']}, 记忆: {result['memory']['name']}, 梦境: {result['dream_cycles']}次]")
+        print(
+            f"   [感知: {result['perception']}, 记忆: {result['memory']['name']}, 梦境: {result['dream_cycles']}次]"
+        )
         print(f"   [耗时: {result['time_ms']}ms]")
-    
+
     print("\n" + "=" * 60)
     print("📊 完整状态:")
     print(json.dumps(agent.get_status(), indent=2, ensure_ascii=False))

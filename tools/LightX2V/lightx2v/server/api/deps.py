@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 from pathlib import Path
 from typing import Optional
 from urllib.parse import urlparse
@@ -6,7 +5,14 @@ from urllib.parse import urlparse
 import httpx
 from loguru import logger
 
-from ..services import DistributedInferenceService, FileService, ImageGenerationService, VideoGenerationService
+from lib.smart_config import smart_config
+
+from ..services import (
+    DistributedInferenceService,
+    FileService,
+    ImageGenerationService,
+    VideoGenerationService,
+)
 
 
 class ServiceContainer:
@@ -25,11 +31,20 @@ class ServiceContainer:
             cls._instance = cls()
         return cls._instance
 
-    def initialize(self, cache_dir: Path, inference_service: DistributedInferenceService, max_queue_size: int = 10):
+    def initialize(
+        self,
+        cache_dir: Path,
+        inference_service: DistributedInferenceService,
+        max_queue_size: int = 10,
+    ):
         self.file_service = FileService(cache_dir)
         self.inference_service = inference_service
-        self.video_service = VideoGenerationService(self.file_service, inference_service)
-        self.image_service = ImageGenerationService(self.file_service, inference_service)
+        self.video_service = VideoGenerationService(
+            self.file_service, inference_service
+        )
+        self.image_service = ImageGenerationService(
+            self.file_service, inference_service
+        )
         self.max_queue_size = max_queue_size
 
 

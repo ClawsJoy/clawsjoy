@@ -1,25 +1,28 @@
+from core.lib import config_helper
+
 #!/usr/bin/env python3
 """Decision - Decision 模块
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
+
+from datetime import datetime
+from typing import Dict
 
 from core.v5.agent.base import BaseAgent
 from core.v5.llm.client import llm
 from core.v5.memory.manager import MemoryManager
-from typing import Dict
-from datetime import datetime
 
 
 class DecisionAgent(BaseAgent):
     """决策助手 - 完整功能"""
-    
+
     def __init__(self, user_id: str = "default"):
         super().__init__("decision", user_id)
         self.mem_mgr = MemoryManager(user_id, "decision")
-    
+
     def process(self, user_input: str) -> Dict:
         """处理决策请求"""
         self.update_stats()
@@ -56,5 +59,5 @@ class DecisionAgent(BaseAgent):
             "success": True,
             "type": "decision",
             "response": response,
-            "user_id": self.user_id
+            "user_id": self.user_id,
         }

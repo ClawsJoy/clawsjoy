@@ -1,8 +1,9 @@
-from lib.smart_config import smart_config
 import math
 
 from lightx2v_platform.ops.attn.template import AttnWeightTemplate
 from lightx2v_platform.registry_factory import PLATFORM_ATTN_WEIGHT_REGISTER
+
+from lib.smart_config import smart_config
 
 try:
     import torch_npu
@@ -16,7 +17,17 @@ class NpuFlashAttnWeight(AttnWeightTemplate):
         self.config = {}
         assert torch_npu is not None, "torch_npu is not installed."
 
-    def apply(self, q, k, v, cu_seqlens_q=None, cu_seqlens_kv=None, max_seqlen_q=None, max_seqlen_kv=None, **kwds):
+    def apply(
+        self,
+        q,
+        k,
+        v,
+        cu_seqlens_q=None,
+        cu_seqlens_kv=None,
+        max_seqlen_q=None,
+        max_seqlen_kv=None,
+        **kwds
+    ):
         if len(q.shape) == 3:
             bs = 1
         elif len(q.shape) == 4:

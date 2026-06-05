@@ -1,9 +1,10 @@
-from lib.smart_config import smart_config
 from copy import deepcopy
 from typing import Optional
 
 import torch
 import torch.nn.functional as F
+
+from lib.smart_config import smart_config
 
 try:
     import flash_attn  # noqa: F401
@@ -99,9 +100,15 @@ class BagelTransformerInfer(BaseTransformerInfer):
         layer_idx,
     ):
         if mode == "und":
-            packed_query_states = weights.q_proj.apply(packed_query_sequence).view(-1, self.num_heads, self.head_dim)
-            packed_key_states = weights.k_proj.apply(packed_query_sequence).view(-1, self.num_key_value_heads, self.head_dim)
-            packed_value_states = weights.v_proj.apply(packed_query_sequence).view(-1, self.num_key_value_heads, self.head_dim)
+            packed_query_states = weights.q_proj.apply(packed_query_sequence).view(
+                -1, self.num_heads, self.head_dim
+            )
+            packed_key_states = weights.k_proj.apply(packed_query_sequence).view(
+                -1, self.num_key_value_heads, self.head_dim
+            )
+            packed_value_states = weights.v_proj.apply(packed_query_sequence).view(
+                -1, self.num_key_value_heads, self.head_dim
+            )
             packed_query_states = weights.q_norm.apply(packed_query_states)
             packed_key_states = weights.k_norm.apply(packed_key_states)
         elif mode == "gen":
@@ -109,48 +116,101 @@ class BagelTransformerInfer(BaseTransformerInfer):
             packed_vae_token_indexes = packed_vae_token_indexes.to(AI_DEVICE)
 
             packed_query_sequence = packed_query_sequence.to(torch.bfloat16)
-            packed_query_states = packed_query_sequence.new_zeros((packed_query_sequence.shape[0], self.num_heads * self.head_dim))
-            packed_key_states = packed_query_sequence.new_zeros((packed_query_sequence.shape[0], self.num_key_value_heads * self.head_dim))
-            packed_value_states = packed_query_sequence.new_zeros((packed_query_sequence.shape[0], self.num_key_value_heads * self.head_dim))
+            packed_query_states = packed_query_sequence.new_zeros(
+                (packed_query_sequence.shape[0], self.num_heads * self.head_dim)
+            )
+            packed_key_states = packed_query_sequence.new_zeros(
+                (
+                    packed_query_sequence.shape[0],
+                    self.num_key_value_heads * self.head_dim,
+                )
+            )
+            packed_value_states = packed_query_sequence.new_zeros(
+                (
+                    packed_query_sequence.shape[0],
+                    self.num_key_value_heads * self.head_dim,
+                )
+            )
 
             packed_text_query_sequence = packed_query_sequence[packed_text_indexes]
             packed_vae_query_sequence = packed_query_sequence[packed_vae_token_indexes]
 
-            packed_query_states[packed_text_indexes] = weights.q_proj.apply(packed_text_query_sequence)
-            packed_query_states[packed_vae_token_indexes] = weights.q_proj_moe_gen.apply(packed_vae_query_sequence)
+            packed_query_states[packed_text_indexes] = weights.q_proj.apply(
+                packed_text_query_sequence
+            )
+            packed_query_states[packed_vae_token_indexes] = (
+                weights.q_proj_moe_gen.apply(packed_vae_query_sequence)
+            )
 
-            packed_key_states[packed_text_indexes] = weights.k_proj.apply(packed_text_query_sequence)
-            packed_key_states[packed_vae_token_indexes] = weights.k_proj_moe_gen.apply(packed_vae_query_sequence)
+            packed_key_states[packed_text_indexes] = weights.k_proj.apply(
+                packed_text_query_sequence
+            )
+            packed_key_states[packed_vae_token_indexes] = weights.k_proj_moe_gen.apply(
+                packed_vae_query_sequence
+            )
 
-            packed_value_states[packed_text_indexes] = weights.v_proj.apply(packed_text_query_sequence)
-            packed_value_states[packed_vae_token_indexes] = weights.v_proj_moe_gen.apply(packed_vae_query_sequence)
+            packed_value_states[packed_text_indexes] = weights.v_proj.apply(
+                packed_text_query_sequence
+            )
+            packed_value_states[packed_vae_token_indexes] = (
+                weights.v_proj_moe_gen.apply(packed_vae_query_sequence)
+            )
 
-            packed_query_states = packed_query_states.view(-1, self.num_heads, self.head_dim)
-            packed_key_states = packed_key_states.view(-1, self.num_key_value_heads, self.head_dim)
-            packed_value_states = packed_value_states.view(-1, self.num_key_value_heads, self.head_dim)
+            packed_query_states = packed_query_states.view(
+                -1, self.num_heads, self.head_dim
+            )
+            packed_key_states = packed_key_states.view(
+                -1, self.num_key_value_heads, self.head_dim
+            )
+            packed_value_states = packed_value_states.view(
+                -1, self.num_key_value_heads, self.head_dim
+            )
 
             packed_query_states = packed_query_states.to(torch.float32)
-            packed_query_states[packed_text_indexes] = weights.q_norm.apply(packed_query_states[packed_text_indexes])
-            packed_query_states[packed_vae_token_indexes] = weights.q_norm_moe_gen.apply(packed_query_states[packed_vae_token_indexes])
+            packed_query_states[packed_text_indexes] = weights.q_norm.apply(
+                packed_query_states[packed_text_indexes]
+            )
+            packed_query_states[packed_vae_token_indexes] = (
+                weights.q_norm_moe_gen.apply(
+                    packed_query_states[packed_vae_token_indexes]
+                )
+            )
 
             packed_key_states = packed_key_states.to(torch.float32)
-            packed_key_states[packed_text_indexes] = weights.k_norm.apply(packed_key_states[packed_text_indexes])
-            packed_key_states[packed_vae_token_indexes] = weights.k_norm_moe_gen.apply(packed_key_states[packed_vae_token_indexes])
+            packed_key_states[packed_text_indexes] = weights.k_norm.apply(
+                packed_key_states[packed_text_indexes]
+            )
+            packed_key_states[packed_vae_token_indexes] = weights.k_norm_moe_gen.apply(
+                packed_key_states[packed_vae_token_indexes]
+            )
 
         packed_cos, packed_sin = packed_query_position_embeddings
-        packed_query_states, packed_key_states = apply_rotary_pos_emb(packed_query_states, packed_key_states, packed_cos, packed_sin, unsqueeze_dim=1)
+        packed_query_states, packed_key_states = apply_rotary_pos_emb(
+            packed_query_states,
+            packed_key_states,
+            packed_cos,
+            packed_sin,
+            unsqueeze_dim=1,
+        )
 
         packed_query_states = packed_query_states.to(torch.bfloat16)
         packed_key_states = packed_key_states.to(torch.bfloat16)
         packed_value_states = packed_value_states.to(torch.bfloat16)
 
-        if past_key_values is not None and past_key_values.key_cache[layer_idx] is not None:
+        if (
+            past_key_values is not None
+            and past_key_values.key_cache[layer_idx] is not None
+        ):
             past_key_states = past_key_values.key_cache[layer_idx]
             past_value_states = past_key_values.value_cache[layer_idx]
 
             seqlens = sum(query_lens) + sum(key_values_lens)
-            merged_key_states = past_key_states.new_zeros(size=[seqlens, self.num_key_value_heads, self.head_dim])
-            merged_value_states = past_key_states.new_zeros(size=[seqlens, self.num_key_value_heads, self.head_dim])
+            merged_key_states = past_key_states.new_zeros(
+                size=[seqlens, self.num_key_value_heads, self.head_dim]
+            )
+            merged_value_states = past_key_states.new_zeros(
+                size=[seqlens, self.num_key_value_heads, self.head_dim]
+            )
             merged_key_states[packed_query_indexes] = packed_key_states
             merged_key_states[packed_key_value_indexes] = past_key_states
             merged_value_states[packed_query_indexes] = packed_value_states
@@ -161,8 +221,12 @@ class BagelTransformerInfer(BaseTransformerInfer):
             merged_value_states = packed_value_states
             key_values_lens = query_lens
 
-        cu_seqlens_q = torch.nn.functional.pad(torch.cumsum(query_lens, dim=0), (1, 0)).to(AI_DEVICE)
-        cu_seqlens_k = torch.nn.functional.pad(torch.cumsum(key_values_lens, dim=0), (1, 0)).to(AI_DEVICE)
+        cu_seqlens_q = torch.nn.functional.pad(
+            torch.cumsum(query_lens, dim=0), (1, 0)
+        ).to(AI_DEVICE)
+        cu_seqlens_k = torch.nn.functional.pad(
+            torch.cumsum(key_values_lens, dim=0), (1, 0)
+        ).to(AI_DEVICE)
 
         packed_attn_output = flash_attn_varlen_func(
             q=packed_query_states,
@@ -179,8 +243,12 @@ class BagelTransformerInfer(BaseTransformerInfer):
         if mode == "und":
             packed_attn_output = weights.o_proj.apply(packed_attn_output)
         elif mode == "gen":
-            packed_attn_output[packed_text_indexes] = weights.o_proj.apply(packed_attn_output[packed_text_indexes])
-            packed_attn_output[packed_vae_token_indexes] = weights.o_proj_moe_gen.apply(packed_attn_output[packed_vae_token_indexes])
+            packed_attn_output[packed_text_indexes] = weights.o_proj.apply(
+                packed_attn_output[packed_text_indexes]
+            )
+            packed_attn_output[packed_vae_token_indexes] = weights.o_proj_moe_gen.apply(
+                packed_attn_output[packed_vae_token_indexes]
+            )
 
         if update_past_key_values:
             past_key_values.key_cache[layer_idx] = merged_key_states
@@ -221,15 +289,27 @@ class BagelTransformerInfer(BaseTransformerInfer):
     ):
         enable_taylorseer = getattr(self, "enable_taylorseer", False)
 
-        if not enable_taylorseer or (enable_taylorseer and self.current["type"] == "full"):
+        if not enable_taylorseer or (
+            enable_taylorseer and self.current["type"] == "full"
+        ):
             residual = packed_query_sequence
             if mode == "und":
-                packed_query_sequence = block_weight.input_layernorm.apply(packed_query_sequence)
+                packed_query_sequence = block_weight.input_layernorm.apply(
+                    packed_query_sequence
+                )
 
             elif mode == "gen":
                 packed_query_sequence_ = torch.zeros_like(packed_query_sequence)
-                packed_query_sequence_[packed_text_indexes] = block_weight.input_layernorm.apply(packed_query_sequence[packed_text_indexes])
-                packed_query_sequence_[packed_vae_token_indexes] = block_weight.input_layernorm_moe_gen.apply(packed_query_sequence[packed_vae_token_indexes])
+                packed_query_sequence_[packed_text_indexes] = (
+                    block_weight.input_layernorm.apply(
+                        packed_query_sequence[packed_text_indexes]
+                    )
+                )
+                packed_query_sequence_[packed_vae_token_indexes] = (
+                    block_weight.input_layernorm_moe_gen.apply(
+                        packed_query_sequence[packed_vae_token_indexes]
+                    )
+                )
                 packed_query_sequence = packed_query_sequence_
 
             # Self Attention
@@ -255,17 +335,37 @@ class BagelTransformerInfer(BaseTransformerInfer):
             # Fully Connected
             residual = packed_query_sequence
             if mode == "und":
-                packed_query_sequence = block_weight.post_attention_layernorm.apply(packed_query_sequence)
-                packed_query_sequence = self.mlp(block_weight.mlp, packed_query_sequence)
+                packed_query_sequence = block_weight.post_attention_layernorm.apply(
+                    packed_query_sequence
+                )
+                packed_query_sequence = self.mlp(
+                    block_weight.mlp, packed_query_sequence
+                )
             elif mode == "gen":
                 packed_text_query_sequence = packed_query_sequence[packed_text_indexes]
-                packed_vae_query_sequence = packed_query_sequence[packed_vae_token_indexes]
-                packed_text_query_sequence = block_weight.post_attention_layernorm.apply(packed_text_query_sequence).to(torch.bfloat16)
-                packed_vae_query_sequence = block_weight.post_attention_layernorm_moe_gen.apply(packed_vae_query_sequence).to(torch.bfloat16)
+                packed_vae_query_sequence = packed_query_sequence[
+                    packed_vae_token_indexes
+                ]
+                packed_text_query_sequence = (
+                    block_weight.post_attention_layernorm.apply(
+                        packed_text_query_sequence
+                    ).to(torch.bfloat16)
+                )
+                packed_vae_query_sequence = (
+                    block_weight.post_attention_layernorm_moe_gen.apply(
+                        packed_vae_query_sequence
+                    ).to(torch.bfloat16)
+                )
 
-                packed_query_sequence_ = torch.zeros_like(packed_query_sequence).to(torch.bfloat16)
-                packed_query_sequence_[packed_text_indexes] = self.mlp(block_weight.mlp, packed_text_query_sequence)
-                packed_query_sequence_[packed_vae_token_indexes] = self.mlp_moe_gen(block_weight.mlp_moe_gen, packed_vae_query_sequence)
+                packed_query_sequence_ = torch.zeros_like(packed_query_sequence).to(
+                    torch.bfloat16
+                )
+                packed_query_sequence_[packed_text_indexes] = self.mlp(
+                    block_weight.mlp, packed_text_query_sequence
+                )
+                packed_query_sequence_[packed_vae_token_indexes] = self.mlp_moe_gen(
+                    block_weight.mlp_moe_gen, packed_vae_query_sequence
+                )
                 packed_query_sequence = packed_query_sequence_
 
             packed_query_sequence = residual + packed_query_sequence

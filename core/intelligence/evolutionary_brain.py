@@ -3,15 +3,17 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
 import time
-import requests
 from datetime import datetime
-from core.lib.unified_config import unified_config
+
+import requests
+
 from core.lib.smart_config import smart_config
+from core.lib.unified_config import unified_config
 
 
 class EvolutionaryBrain:
@@ -26,7 +28,9 @@ class EvolutionaryBrain:
     def _check_service(self, port):
         """检查服务"""
         try:
-            resp = requests.get(unified_config.get_service_url(f"{port}/health"), timeout=2)
+            resp = requests.get(
+                unified_config.get_service_url(f"{port}/health"), timeout=2
+            )
             return resp.status_code == 200
         except Exception:
             return False
@@ -43,9 +47,9 @@ class EvolutionaryBrain:
 
             # 做出决策
             decision = {
-                'timestamp': datetime.now().isoformat(),
-                'action': 'maintain' if services_healthy else 'repair',
-                'services_healthy': services_healthy
+                "timestamp": datetime.now().isoformat(),
+                "action": "maintain" if services_healthy else "repair",
+                "services_healthy": services_healthy,
             }
             self.decisions.append(decision)
 
@@ -58,28 +62,29 @@ class EvolutionaryBrain:
     def evolve(self):
         """进化"""
         self.evolution_count += 1
-        return {'evolved': True, 'count': self.evolution_count}
+        return {"evolved": True, "count": self.evolution_count}
 
     def get_stats(self):
         """获取统计信息"""
         return {
-            'evolution_count': self.evolution_count,
-            'decisions_count': len(self.decisions),
-            'running': self.running
+            "evolution_count": self.evolution_count,
+            "decisions_count": len(self.decisions),
+            "running": self.running,
         }
 
     def start(self):
         """启动大脑"""
         self.running = True
         import threading
+
         thread = threading.Thread(target=self.decision_loop, daemon=True)
         thread.start()
-        return {'status': 'started'}
+        return {"status": "started"}
 
     def stop(self):
         """停止大脑"""
         self.running = False
-        return {'status': 'stopped'}
+        return {"status": "stopped"}
 
 
 evolutionary_brain = EvolutionaryBrain()

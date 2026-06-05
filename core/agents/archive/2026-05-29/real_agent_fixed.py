@@ -1,21 +1,18 @@
 from core.lib.unified_config import unified_config
 
-from core.lib.unified_config import unified_config
-
-from core.lib.unified_config import unified_config
 #!/usr/bin/env python3
 """真正智能 Agent - 修复版"""
 
 import sys
 import time
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
-sys.path.insert(0, 'unified_config.ROOT')
+sys.path.insert(0, "unified_config.ROOT")
 
-from core.lib.real_learner import real_learner
-from core.lib.config_query import config_query
 from core.lib.config_manager import config_manager
+from core.lib.config_query import config_query
+from core.lib.real_learner import real_learner
 
 
 class RealAgent:
@@ -31,30 +28,51 @@ class RealAgent:
             "personal_butler": "私人管家：用户的数字分身，1对1专属服务",
             "memory_manager": "记忆Agent：负责记忆存储、回忆、向量搜索",
             "orchestrator": "编排Agent：负责任务规划、工作流管理",
-            "code_agent": "代码Agent：负责代码生成、审查、调试"
+            "code_agent": "代码Agent：负责代码生成、审查、调试",
         }
-    
+
     def execute(self, task: str, params: dict = None) -> dict:
         params = params or {}
 
-        if task == 'list_agents':
+        if task == "list_agents":
             agents = self.config.get_all_agents()
-            result = [{"name": k, "display": v.get('name', k)} for k, v in agents.items()]
-            return {"success": True, "data": result, "count": len(result), "type": "list"}
+            result = [
+                {"name": k, "display": v.get("name", k)} for k, v in agents.items()
+            ]
+            return {
+                "success": True,
+                "data": result,
+                "count": len(result),
+                "type": "list",
+            }
 
-        elif task == 'agent_detail':
-            agent_name = params.get('agent_name', '')
+        elif task == "agent_detail":
+            agent_name = params.get("agent_name", "")
             for key, detail in self.agent_details.items():
                 if agent_name in key or key in agent_name:
-                    return {"success": True, "data": detail, "agent": key, "type": "text"}
+                    return {
+                        "success": True,
+                        "data": detail,
+                        "agent": key,
+                        "type": "text",
+                    }
             return {"success": False, "error": f"未找到 Agent: {agent_name}"}
 
-        elif task == 'list_skills':
+        elif task == "list_skills":
             skills_dir = Path("unified_config.ROOT/skills")
-            skills = [d.name for d in skills_dir.iterdir() if d.is_dir() and not d.name.startswith('_')]
-            return {"success": True, "data": skills[:20], "count": len(skills), "type": "list"}
+            skills = [
+                d.name
+                for d in skills_dir.iterdir()
+                if d.is_dir() and not d.name.startswith("_")
+            ]
+            return {
+                "success": True,
+                "data": skills[:20],
+                "count": len(skills),
+                "type": "list",
+            }
 
-        elif task == 'system_intro':
+        elif task == "system_intro":
             intro = """ClawsJoy 是一个智能体操作系统，核心功能：
 - 10个专业Agent协同工作
 - 20+原子技能可调用
@@ -64,21 +82,26 @@ class RealAgent:
 - 配置驱动架构"""
             return {"success": True, "data": intro, "type": "text"}
 
-        elif task == 'greeting':
-            return {"success": True, "data": "你好！我是 ClawsJoy 智能助手，有什么可以帮你的？", "type": "text"}
+        elif task == "greeting":
+            return {
+                "success": True,
+                "data": "你好！我是 ClawsJoy 智能助手，有什么可以帮你的？",
+                "type": "text",
+            }
 
-        elif task == 'generate_chart':
+        elif task == "generate_chart":
             from core.lib.education.retrieval_generator import RetrievalGenerator
+
             gen = RetrievalGenerator()
             svg = gen.generate_svg_content()
             filename = f"chart_{datetime.now().strftime('%Y%m%d_%H%M%S')}.svg"
             file_path = Path("unified_config.ROOT/output") / filename
-            file_path.write_text(svg, encoding='utf-8')
+            file_path.write_text(svg, encoding="utf-8")
             return {"success": True, "file_path": str(file_path), "type": "file"}
 
         else:
             return {"success": False, "error": f"未知任务: {task}"}
-    
+
     def process(self, user_input: str) -> dict:
         start_time = time.time()
         cache_key = user_input.lower().strip()
@@ -87,59 +110,68 @@ class RealAgent:
         cached = real_learner.get_cached(cache_key)
         if cached:
             response_time = time.time() - start_time
-            real_learner.record_request(user_input, cached.get('task', 'cached'), 
-                                        response_time, True, cache_hit=True)
-            result_data = cached.get('result', {})
+            real_learner.record_request(
+                user_input,
+                cached.get("task", "cached"),
+                response_time,
+                True,
+                cache_hit=True,
+            )
+            result_data = cached.get("result", {})
             return {
                 "success": True,
-                "data": result_data.get('data'),
-                "type": result_data.get('type'),
+                "data": result_data.get("data"),
+                "type": result_data.get("type"),
                 "cached": True,
                 "response_time_ms": round(response_time * 1000, 2),
-                "task": cached.get('task')
+                "task": cached.get("task"),
             }
 
         # 意图识别
         lower = user_input.lower()
-        task = 'unknown'
+        task = "unknown"
         params = {}
 
-        if 'agent' in lower and ('有哪些' in lower or '列表' in lower or 'list' in lower):
-            task = 'list_agents'
-        elif '介绍' in lower or '是什么' in lower or '什么是' in lower:
-            if 'clawsjoy' in lower or '系统' in lower:
-                task = 'system_intro'
-            elif 'agent' in lower:
-                task = 'agent_detail'
+        if "agent" in lower and (
+            "有哪些" in lower or "列表" in lower or "list" in lower
+        ):
+            task = "list_agents"
+        elif "介绍" in lower or "是什么" in lower or "什么是" in lower:
+            if "clawsjoy" in lower or "系统" in lower:
+                task = "system_intro"
+            elif "agent" in lower:
+                task = "agent_detail"
                 for agent in self.agent_details.keys():
-                    if agent.replace('_', '') in lower.replace('_', ''):
-                        params['agent_name'] = agent
+                    if agent.replace("_", "") in lower.replace("_", ""):
+                        params["agent_name"] = agent
                         break
-        elif '技能' in lower or 'skill' in lower:
-            task = 'list_skills'
-        elif '图' in lower or 'chart' in lower:
-            task = 'generate_chart'
-        elif any(g in lower for g in ['你好', 'hi', 'hello', '嗨']):
-            task = 'greeting'
+        elif "技能" in lower or "skill" in lower:
+            task = "list_skills"
+        elif "图" in lower or "chart" in lower:
+            task = "generate_chart"
+        elif any(g in lower for g in ["你好", "hi", "hello", "嗨"]):
+            task = "greeting"
 
         # 执行
         result = self.execute(task, params)
         response_time = time.time() - start_time
 
         # 记录
-        real_learner.record_request(user_input, task, response_time, result.get('success', False))
+        real_learner.record_request(
+            user_input, task, response_time, result.get("success", False)
+        )
 
         # 缓存
-        if result.get('success'):
+        if result.get("success"):
             real_learner.cache_result(cache_key, {"task": task, "result": result})
 
         return {
-            "success": result.get('success', False),
-            "data": result.get('data'),
-            "type": result.get('type'),
+            "success": result.get("success", False),
+            "data": result.get("data"),
+            "type": result.get("type"),
             "task": task,
             "cached": False,
-            "response_time_ms": round(response_time * 1000, 2)
+            "response_time_ms": round(response_time * 1000, 2),
         }
 
 
@@ -148,23 +180,28 @@ real_agent = RealAgent()
 
 def format_output(result: dict) -> str:
     """格式化输出"""
-    if not result.get('success'):
+    if not result.get("success"):
         return "抱歉，我没理解您的意思"
-    
-    data = result.get('data')
-    output_type = result.get('type')
-    
-    if output_type == 'list':
+
+    data = result.get("data")
+    output_type = result.get("type")
+
+    if output_type == "list":
         if isinstance(data, list):
             if len(data) > 5:
                 return f"找到 {len(data)} 项：{', '.join([str(d.get('display', d)) if isinstance(d, dict) else str(d) for d in data[:5]])} 等"
             else:
-                return ', '.join([str(d.get('display', d)) if isinstance(d, dict) else str(d) for d in data])
-    elif output_type == 'text':
+                return ", ".join(
+                    [
+                        str(d.get("display", d)) if isinstance(d, dict) else str(d)
+                        for d in data
+                    ]
+                )
+    elif output_type == "text":
         return str(data)[:200]
-    elif output_type == 'file':
+    elif output_type == "file":
         return f"已生成文件: {data}"
-    
+
     return str(data)[:200] if data else "处理完成"
 
 
@@ -173,17 +210,19 @@ if __name__ == "__main__":
     print("ClawsJoy 智能助手")
     print("=" * 60)
     print("输入 'exit' 退出\n")
-    
+
     while True:
         try:
             user_input = input("👤 你: ")
-            if user_input.lower() == 'exit':
+            if user_input.lower() == "exit":
                 break
 
             result = real_agent.process(user_input)
             output = format_output(result)
             print(f"🤖 助手: {output}")
-            print(f"   [任务: {result.get('task')}, 耗时: {result.get('response_time_ms')}ms]\n")
+            print(
+                f"   [任务: {result.get('task')}, 耗时: {result.get('response_time_ms')}ms]\n"
+            )
 
         except KeyboardInterrupt:
             print("\n再见！")

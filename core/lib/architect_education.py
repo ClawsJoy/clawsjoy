@@ -3,35 +3,43 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
-from core.lib.config_helper import get_data_root, get_llm_endpoint, get_llm_model, get_embedding_model, get_gateway_port, get_timeout
-from core.lib.unified_config import unified_config
-
-from core.lib.unified_config import unified_config
-
-from core.lib.unified_config import unified_config
-
+from core.lib.config_helper import (
+    get_data_root,
+    get_embedding_model,
+    get_gateway_port,
+    get_llm_endpoint,
+    get_llm_model,
+    get_timeout,
+)
 from core.lib.unified_config import unified_config
 
 #!/usr/bin/env python3
 """把我的架构思维教给 LLM"""
 
 import json
-import requests
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+
+import requests
 
 
 class ArchitectEducation:
     """架构师教育体系 - 把我的思考方法教给 LLM"""
-    
+
     def __init__(self):
         self.ollama_url = "config_loader.get_ollama_url()"
-        self.model = unified_config.get_llm_config().get("fast_model", unified_config.get_llm_config().get("fast_model", unified_config.get("llm.fast_model", get_llm_model(fast=True))))
+        self.model = unified_config.get_llm_config().get(
+            "fast_model",
+            unified_config.get_llm_config().get(
+                "fast_model",
+                unified_config.get("llm.fast_model", get_llm_model(fast=True)),
+            ),
+        )
         self.lessons = []
-    
+
     # ========== 课程1：系统化思维 ==========
     def teach_system_thinking(self, problem: str) -> str:
         """教 LLM 系统化思考"""
@@ -49,7 +57,7 @@ class ArchitectEducation:
 请按此框架输出分析。"""
 
         return self._call_llm(prompt)
-    
+
     # ========== 课程2：分层思维 ==========
     def teach_layer_thinking(self, requirement: str) -> str:
         """教 LLM 分层设计"""
@@ -67,7 +75,7 @@ class ArchitectEducation:
 请逐层分析并输出设计方案。"""
 
         return self._call_llm(prompt)
-    
+
     # ========== 课程3：权衡思维 ==========
     def teach_tradeoff_thinking(self, options: str, constraints: str) -> str:
         """教 LLM 做权衡决策"""
@@ -86,7 +94,7 @@ class ArchitectEducation:
 请输出决策分析。"""
 
         return self._call_llm(prompt)
-    
+
     # ========== 课程4：演进思维 ==========
     def teach_evolution_thinking(self, current: str, target: str) -> str:
         """教 LLM 如何规划演进路线"""
@@ -105,7 +113,7 @@ class ArchitectEducation:
 请输出演进路线图。"""
 
         return self._call_llm(prompt)
-    
+
     # ========== 课程5：故障思维 ==========
     def teach_fault_thinking(self, symptom: str) -> str:
         """教 LLM 如何排查问题"""
@@ -124,46 +132,36 @@ class ArchitectEducation:
 请输出排查分析。"""
 
         return self._call_llm(prompt)
-    
+
     # ========== 综合训练：真实问题 ==========
     def train_on_real_problems(self):
         """用 ClawsJoy 真实问题训练"""
 
         problems = [
-            {
-                "type": "system",
-                "question": "ClawsJoy 如何实现多用户数据隔离？"
-            },
-            {
-                "type": "performance", 
-                "question": "Agent 通信延迟高，如何优化？"
-            },
-            {
-                "type": "security",
-                "question": "如何保护用户隐私数据不被泄露？"
-            },
-            {
-                "type": "scalability",
-                "question": "如何设计系统支持 10000 并发用户？"
-            }
+            {"type": "system", "question": "ClawsJoy 如何实现多用户数据隔离？"},
+            {"type": "performance", "question": "Agent 通信延迟高，如何优化？"},
+            {"type": "security", "question": "如何保护用户隐私数据不被泄露？"},
+            {"type": "scalability", "question": "如何设计系统支持 10000 并发用户？"},
         ]
 
         results = []
         for p in problems:
             print(f"\n📚 训练: {p['question']}")
 
-            if p['type'] == 'system':
-                answer = self.teach_system_thinking(p['question'])
-            elif p['type'] == 'performance':
-                answer = self.teach_fault_thinking(p['question'])
+            if p["type"] == "system":
+                answer = self.teach_system_thinking(p["question"])
+            elif p["type"] == "performance":
+                answer = self.teach_fault_thinking(p["question"])
             else:
-                answer = self.teach_layer_thinking(p['question'])
+                answer = self.teach_layer_thinking(p["question"])
 
-            results.append({
-                "question": p['question'],
-                "answer": answer[:500],
-                "timestamp": datetime.now().isoformat()
-            })
+            results.append(
+                {
+                    "question": p["question"],
+                    "answer": answer[:500],
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
 
             print(f"✅ 完成\n{answer[:200]}...")
 
@@ -172,16 +170,21 @@ class ArchitectEducation:
             json.dump(results, f, indent=2, ensure_ascii=False)
 
         return results
-    
+
     def _call_llm(self, prompt: str) -> str:
         try:
             resp = requests.post(
                 f"{self.ollama_url}/api/generate",
-                json={"model": self.model, "prompt": prompt, "stream": False, "options": {"num_predict": 1000}},
-                timeout=get_timeout("llm")
+                json={
+                    "model": self.model,
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {"num_predict": 1000},
+                },
+                timeout=get_timeout("llm"),
             )
             if resp.status_code == 200:
-                return resp.json().get('response', '')
+                return resp.json().get("response", "")
         except Exception as e:
             print(f"调用失败: {e}")
         return ""
@@ -191,12 +194,12 @@ if __name__ == "__main__":
     print("=" * 60)
     print("架构师教育体系 - 把我的思维教给 LLM")
     print("=" * 60)
-    
+
     educator = ArchitectEducation()
-    
+
     # 开始训练
     results = educator.train_on_real_problems()
-    
+
     print("\n" + "=" * 60)
     print(f"训练完成！共 {len(results)} 个案例")
     print("结果保存在 data/architect_training.json")

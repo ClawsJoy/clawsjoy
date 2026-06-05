@@ -3,31 +3,32 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
+
+import re
+from datetime import datetime
+from typing import Dict
 
 from core.v5.agent.base import BaseAgent
 from core.v5.llm.client import llm
 from core.v5.memory.manager import MemoryManager
-from typing import Dict
-from datetime import datetime
-import re
 
 
 class ChatAgent(BaseAgent):
     """聊天助手 - 完整功能"""
-    
+
     def __init__(self, user_id: str = "default"):
         super().__init__("chat", user_id)
         self.mem_mgr = MemoryManager(user_id, "chat")
-    
+
     def process(self, user_input: str) -> Dict:
         """处理聊天"""
         self.update_stats()
 
         # 1. 偏好记忆
         if "喜欢" in user_input:
-            match = re.search(r'喜欢(.+?)(?:[，。！？]|$)', user_input)
+            match = re.search(r"喜欢(.+?)(?:[，。！？]|$)", user_input)
             if match:
                 value = match.group(1).strip()
                 if value and len(value) < 30 and "什么" not in value:
@@ -37,7 +38,7 @@ class ChatAgent(BaseAgent):
                         "success": True,
                         "type": "chat",
                         "response": f"好的，已记住您喜欢{value}",
-                        "user_id": self.user_id
+                        "user_id": self.user_id,
                     }
 
         # 2. 偏好查询
@@ -53,7 +54,7 @@ class ChatAgent(BaseAgent):
                 "success": True,
                 "type": "chat",
                 "response": response,
-                "user_id": self.user_id
+                "user_id": self.user_id,
             }
 
         # 3. 问候
@@ -90,5 +91,5 @@ class ChatAgent(BaseAgent):
             "success": True,
             "type": "chat",
             "response": response,
-            "user_id": self.user_id
+            "user_id": self.user_id,
         }

@@ -3,9 +3,9 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 from .brainstorm import BrainstormEngine, brainstorm_engine
 
-__all__ = ['BrainstormEngine', 'brainstorm_engine']
+__all__ = ["BrainstormEngine", "brainstorm_engine"]

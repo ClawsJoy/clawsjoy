@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 # Copyright 2024-2025 The Alibaba Wan Team Authors. All rights reserved.
 import warnings
 from typing import List
@@ -7,6 +6,8 @@ import cv2
 import numpy as np
 from PIL import Image
 
+from lib.smart_config import smart_config
+
 
 def box_convert_simple(box, convert_type="xyxy2xywh"):
     if convert_type == "xyxy2xywh":
@@ -14,9 +15,19 @@ def box_convert_simple(box, convert_type="xyxy2xywh"):
     elif convert_type == "xywh2xyxy":
         return [box[0], box[1], box[2] + box[0], box[3] + box[1]]
     elif convert_type == "xyxy2ctwh":
-        return [(box[0] + box[2]) / 2, (box[1] + box[3]) / 2, box[2] - box[0], box[3] - box[1]]
+        return [
+            (box[0] + box[2]) / 2,
+            (box[1] + box[3]) / 2,
+            box[2] - box[0],
+            box[3] - box[1],
+        ]
     elif convert_type == "ctwh2xyxy":
-        return [box[0] - box[2] // 2, box[1] - box[3] // 2, box[0] + (box[2] - box[2] // 2), box[1] + (box[3] - box[3] // 2)]
+        return [
+            box[0] - box[2] // 2,
+            box[1] - box[3] // 2,
+            box[0] + (box[2] - box[2] // 2),
+            box[1] + (box[3] - box[3] // 2),
+        ]
 
 
 def read_img(image, convert="RGB", check_exist=False):
@@ -27,7 +38,7 @@ def read_img(image, convert="RGB", check_exist=False):
             img = Image.open(image)
             if convert:
                 img = img.convert(convert)
-        except:  # noqa
+        except Exception as e:  # noqa
             raise IOError("File error: ", image)
         return np.asarray(img)
     else:
@@ -181,7 +192,12 @@ class AAPoseMeta:
         pose_meta = AAPoseMeta()
         pose_meta.width = width
         pose_meta.height = height
-        kps_body = (kp2ds[[0, 6, 6, 8, 10, 5, 7, 9, 12, 14, 16, 11, 13, 15, 2, 1, 4, 3, 17, 20]] + kp2ds[[0, 5, 6, 8, 10, 5, 7, 9, 12, 14, 16, 11, 13, 15, 2, 1, 4, 3, 18, 21]]) / 2
+        kps_body = (
+            kp2ds[[0, 6, 6, 8, 10, 5, 7, 9, 12, 14, 16, 11, 13, 15, 2, 1, 4, 3, 17, 20]]
+            + kp2ds[
+                [0, 5, 6, 8, 10, 5, 7, 9, 12, 14, 16, 11, 13, 15, 2, 1, 4, 3, 18, 21]
+            ]
+        ) / 2
         kps_lhand = kp2ds[91:112]
         kps_rhand = kp2ds[112:133]
         kps_face = np.concatenate([kp2ds[23 : 23 + 68], kp2ds[1:3]], axis=0)
@@ -219,10 +235,14 @@ class AAPoseMeta:
     def save_json(self):
         pass
 
-    def draw_aapose(self, img, threshold=0.5, stick_width_norm=200, draw_hand=True, draw_head=True):
+    def draw_aapose(
+        self, img, threshold=0.5, stick_width_norm=200, draw_hand=True, draw_head=True
+    ):
         from .human_visualization import draw_aapose_by_meta
 
-        return draw_aapose_by_meta(img, self, threshold, stick_width_norm, draw_hand, draw_head)
+        return draw_aapose_by_meta(
+            img, self, threshold, stick_width_norm, draw_hand, draw_head
+        )
 
     def translate(self, x0, y0):
         all_kps = [self.kps_body, self.kps_lhand, self.kps_rhand, self.kps_face]
@@ -347,7 +367,9 @@ def _calc_distances(preds, targets, mask, normalize):
     distances = np.full((N, K), -1, dtype=np.float32)
     # handle invalid values
     normalize[np.where(normalize <= 0)] = 1e6
-    distances[_mask] = np.linalg.norm(((preds - targets) / normalize[:, None, :])[_mask], axis=-1)
+    distances[_mask] = np.linalg.norm(
+        ((preds - targets) / normalize[:, None, :])[_mask], axis=-1
+    )
     return distances.T
 
 
@@ -598,7 +620,9 @@ def keypoint_epe(pred, gt, mask):
         float: Average end-point error.
     """
 
-    distances = _calc_distances(pred, gt, mask, np.ones((pred.shape[0], pred.shape[2]), dtype=np.float32))
+    distances = _calc_distances(
+        pred, gt, mask, np.ones((pred.shape[0], pred.shape[2]), dtype=np.float32)
+    )
     distance_valid = distances[distances != -1]
     return distance_valid.sum() / max(1, len(distance_valid))
 
@@ -623,8 +647,15 @@ def _taylor(heatmap, coord):
         dx = 0.5 * (heatmap[py][px + 1] - heatmap[py][px - 1])
         dy = 0.5 * (heatmap[py + 1][px] - heatmap[py - 1][px])
         dxx = 0.25 * (heatmap[py][px + 2] - 2 * heatmap[py][px] + heatmap[py][px - 2])
-        dxy = 0.25 * (heatmap[py + 1][px + 1] - heatmap[py - 1][px + 1] - heatmap[py + 1][px - 1] + heatmap[py - 1][px - 1])
-        dyy = 0.25 * (heatmap[py + 2 * 1][px] - 2 * heatmap[py][px] + heatmap[py - 2 * 1][px])
+        dxy = 0.25 * (
+            heatmap[py + 1][px + 1]
+            - heatmap[py - 1][px + 1]
+            - heatmap[py + 1][px - 1]
+            + heatmap[py - 1][px - 1]
+        )
+        dyy = 0.25 * (
+            heatmap[py + 2 * 1][px] - 2 * heatmap[py][px] + heatmap[py - 2 * 1][px]
+        )
         derivative = np.array([[dx], [dy]])
         hessian = np.array([[dxx, dxy], [dxy, dyy]])
         if dxx * dyy - dxy**2 != 0:
@@ -670,7 +701,9 @@ def post_dark_udp(coords, batch_heatmaps, kernel=3):
     np.clip(batch_heatmaps, 0.001, 50, batch_heatmaps)
     np.log(batch_heatmaps, batch_heatmaps)
 
-    batch_heatmaps_pad = np.pad(batch_heatmaps, ((0, 0), (0, 0), (1, 1), (1, 1)), mode="edge").flatten()
+    batch_heatmaps_pad = np.pad(
+        batch_heatmaps, ((0, 0), (0, 0), (1, 1), (1, 1)), mode="edge"
+    ).flatten()
 
     index = coords[..., 0] + 1 + (coords[..., 1] + 1) * (W + 2)
     index += (W + 2) * (H + 2) * np.arange(0, B * K).reshape(-1, K)
@@ -771,7 +804,17 @@ def keypoints_from_regression(regression_preds, center, scale, img_size):
     return preds, maxvals
 
 
-def keypoints_from_heatmaps(heatmaps, center, scale, unbiased=False, post_process="default", kernel=11, valid_radius_factor=0.0546875, use_udp=False, target_type="GaussianHeatmap"):
+def keypoints_from_heatmaps(
+    heatmaps,
+    center,
+    scale,
+    unbiased=False,
+    post_process="default",
+    kernel=11,
+    valid_radius_factor=0.0546875,
+    use_udp=False,
+    target_type="GaussianHeatmap",
+):
     """Get final keypoint predictions from heatmaps and transform them back to
     the image.
 
@@ -827,18 +870,30 @@ def keypoints_from_heatmaps(heatmaps, center, scale, unbiased=False, post_proces
 
     # normalize configs
     if post_process is False:
-        warnings.warn("post_process=False is deprecated, please use post_process=None instead", DeprecationWarning)
+        warnings.warn(
+            "post_process=False is deprecated, please use post_process=None instead",
+            DeprecationWarning,
+        )
         post_process = None
     elif post_process is True:
         if unbiased is True:
-            warnings.warn("post_process=True, unbiased=True is deprecated, please use post_process='unbiased' instead", DeprecationWarning)
+            warnings.warn(
+                "post_process=True, unbiased=True is deprecated, please use post_process='unbiased' instead",
+                DeprecationWarning,
+            )
             post_process = "unbiased"
         else:
-            warnings.warn("post_process=True, unbiased=False is deprecated, please use post_process='default' instead", DeprecationWarning)
+            warnings.warn(
+                "post_process=True, unbiased=False is deprecated, please use post_process='default' instead",
+                DeprecationWarning,
+            )
             post_process = "default"
     elif post_process == "default":
         if unbiased is True:
-            warnings.warn("unbiased=True is deprecated, please use post_process='unbiased' instead", DeprecationWarning)
+            warnings.warn(
+                "unbiased=True is deprecated, please use post_process='unbiased' instead",
+                DeprecationWarning,
+            )
             post_process = "unbiased"
 
     # start processing
@@ -866,7 +921,9 @@ def keypoints_from_heatmaps(heatmaps, center, scale, unbiased=False, post_proces
             index = index.astype(int).reshape(N, K // 3, 1)
             preds += np.concatenate((offset_x[index], offset_y[index]), axis=2)
         else:
-            raise ValueError("target_type should be either 'GaussianHeatmap' or 'CombinedTarget'")
+            raise ValueError(
+                "target_type should be either 'GaussianHeatmap' or 'CombinedTarget'"
+            )
     else:
         preds, maxvals = _get_max_preds(heatmaps)
         if post_process == "unbiased":  # alleviate biased coordinate
@@ -883,14 +940,21 @@ def keypoints_from_heatmaps(heatmaps, center, scale, unbiased=False, post_proces
                     px = int(preds[n][k][0])
                     py = int(preds[n][k][1])
                     if 1 < px < W - 1 and 1 < py < H - 1:
-                        diff = np.array([heatmap[py][px + 1] - heatmap[py][px - 1], heatmap[py + 1][px] - heatmap[py - 1][px]])
+                        diff = np.array(
+                            [
+                                heatmap[py][px + 1] - heatmap[py][px - 1],
+                                heatmap[py + 1][px] - heatmap[py - 1][px],
+                            ]
+                        )
                         preds[n][k] += np.sign(diff) * 0.25
                         if post_process == "megvii":
                             preds[n][k] += 0.5
 
     # Transform back to the image
     for i in range(N):
-        preds[i] = transform_preds(preds[i], center[i], scale[i], [W, H], use_udp=use_udp)
+        preds[i] = transform_preds(
+            preds[i], center[i], scale[i], [W, H], use_udp=use_udp
+        )
 
     if post_process == "megvii":
         maxvals = maxvals / 255.0 + 0.5
@@ -1032,7 +1096,10 @@ def crop(img, center, scale, res):
     # Upper left point
     ul = np.array(transform([1, 1], center, max(scale), res, invert=1)) - 1
     # Bottom right point
-    br = np.array(transform([res[1] + 1, res[0] + 1], center, max(scale), res, invert=1)) - 1
+    br = (
+        np.array(transform([res[1] + 1, res[0] + 1], center, max(scale), res, invert=1))
+        - 1
+    )
 
     # Padding so that when rotated proper amount of context is included
     pad = int(np.linalg.norm(br - ul) / 2 - float(br[1] - ul[1]) / 2)
@@ -1049,7 +1116,9 @@ def crop(img, center, scale, res):
     old_x = max(0, ul[0]), min(len(img[0]), br[0])
     old_y = max(0, ul[1]), min(len(img), br[1])
     try:
-        new_img[new_y[0] : new_y[1], new_x[0] : new_x[1]] = img[old_y[0] : old_y[1], old_x[0] : old_x[1]]
+        new_img[new_y[0] : new_y[1], new_x[0] : new_x[1]] = img[
+            old_y[0] : old_y[1], old_x[0] : old_x[1]
+        ]
     except Exception as e:
         print(e)
 
@@ -1058,12 +1127,20 @@ def crop(img, center, scale, res):
 
 
 def split_kp2ds_for_aa(kp2ds, ret_face=False):
-    kp2ds_body = (kp2ds[[0, 6, 6, 8, 10, 5, 7, 9, 12, 14, 16, 11, 13, 15, 2, 1, 4, 3, 17, 20]] + kp2ds[[0, 5, 6, 8, 10, 5, 7, 9, 12, 14, 16, 11, 13, 15, 2, 1, 4, 3, 18, 21]]) / 2
+    kp2ds_body = (
+        kp2ds[[0, 6, 6, 8, 10, 5, 7, 9, 12, 14, 16, 11, 13, 15, 2, 1, 4, 3, 17, 20]]
+        + kp2ds[[0, 5, 6, 8, 10, 5, 7, 9, 12, 14, 16, 11, 13, 15, 2, 1, 4, 3, 18, 21]]
+    ) / 2
     kp2ds_lhand = kp2ds[91:112]
     kp2ds_rhand = kp2ds[112:133]
     kp2ds_face = kp2ds[22:91]
     if ret_face:
-        return kp2ds_body.copy(), kp2ds_lhand.copy(), kp2ds_rhand.copy(), kp2ds_face.copy()
+        return (
+            kp2ds_body.copy(),
+            kp2ds_lhand.copy(),
+            kp2ds_rhand.copy(),
+            kp2ds_face.copy(),
+        )
     return kp2ds_body.copy(), kp2ds_lhand.copy(), kp2ds_rhand.copy()
 
 
@@ -1075,7 +1152,9 @@ def load_pose_metas_from_kp2ds_seq_list(kp2ds_seq, width, height):
         kps = kps[0].copy()
         kps[:, 0] /= width
         kps[:, 1] /= height
-        kp2ds_body, kp2ds_lhand, kp2ds_rhand, kp2ds_face = split_kp2ds_for_aa(kps, ret_face=True)
+        kp2ds_body, kp2ds_lhand, kp2ds_rhand, kp2ds_face = split_kp2ds_for_aa(
+            kps, ret_face=True
+        )
 
         if kp2ds_body[:, :2].min(axis=1).max() < 0:
             kp2ds_body = last_kp2ds_body
@@ -1099,7 +1178,9 @@ def load_pose_metas_from_kp2ds_seq(kp2ds_seq, width, height):
         kps = kps.copy()
         kps[:, 0] /= width
         kps[:, 1] /= height
-        kp2ds_body, kp2ds_lhand, kp2ds_rhand, kp2ds_face = split_kp2ds_for_aa(kps, ret_face=True)
+        kp2ds_body, kp2ds_lhand, kp2ds_rhand, kp2ds_face = split_kp2ds_for_aa(
+            kps, ret_face=True
+        )
 
         # 排除全部小于0的情况
         if kp2ds_body[:, :2].min(axis=1).max() < 0:

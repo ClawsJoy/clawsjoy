@@ -1,10 +1,10 @@
-from lib.smart_config import smart_config
 import torch
-from loguru import logger
-
 from lightx2v_platform.base.global_var import AI_DEVICE
 from lightx2v_platform.ops.attn.template import AttnWeightTemplate
 from lightx2v_platform.registry_factory import PLATFORM_ATTN_WEIGHT_REGISTER
+from loguru import logger
+
+from lib.smart_config import smart_config
 
 # Try to import Flash Attention 2 and Flash Attention 3 (enflame supports both)
 FLASH_ATTN_3_AVAILABLE = False
@@ -54,9 +54,13 @@ class FlashAttnEnflameGcu(AttnWeightTemplate):
 
         if self.use_flash_attn:
             version_str = "3" if self.use_flash_attn_3 else "2"
-            logger.info(f"Flash Attention {version_str} is available and will be used for Enflame GCU.")
+            logger.info(
+                f"Flash Attention {version_str} is available and will be used for Enflame GCU."
+            )
         else:
-            logger.warning("Flash Attention not available. Using PyTorch SDPA fallback.")
+            logger.warning(
+                "Flash Attention not available. Using PyTorch SDPA fallback."
+            )
 
     def apply(
         self,
@@ -99,7 +103,9 @@ class FlashAttnEnflameGcu(AttnWeightTemplate):
         """
         if not self.use_flash_attn:
             # Fallback to PyTorch SDPA
-            return self._sdpa_fallback(q, k, v, cu_seqlens_q, max_seqlen_q, causal, dropout_p)
+            return self._sdpa_fallback(
+                q, k, v, cu_seqlens_q, max_seqlen_q, causal, dropout_p
+            )
 
         # Ensure all tensors are on GCU device
         # Get GCU device (AI_DEVICE should be "gcu" for enflame platform)
@@ -137,8 +143,12 @@ class FlashAttnEnflameGcu(AttnWeightTemplate):
         if cu_seqlens_q is None:
             # If not provided, assume uniform sequence lengths
             bs = q_flat.shape[0] // max_seqlen_q if max_seqlen_q else 1
-            q_lens = torch.tensor([max_seqlen_q] * bs, dtype=torch.int32, device=gcu_device)
-            cu_seqlens_q = torch.cat([q_lens.new_zeros([1], device=gcu_device), q_lens]).cumsum(0, dtype=torch.int32)
+            q_lens = torch.tensor(
+                [max_seqlen_q] * bs, dtype=torch.int32, device=gcu_device
+            )
+            cu_seqlens_q = torch.cat(
+                [q_lens.new_zeros([1], device=gcu_device), q_lens]
+            ).cumsum(0, dtype=torch.int32)
         else:
             if cu_seqlens_q.dtype != torch.int32:
                 cu_seqlens_q = cu_seqlens_q.to(torch.int32)
@@ -147,8 +157,12 @@ class FlashAttnEnflameGcu(AttnWeightTemplate):
 
         if cu_seqlens_kv is None:
             bs = k_flat.shape[0] // max_seqlen_kv if max_seqlen_kv else 1
-            k_lens = torch.tensor([max_seqlen_kv] * bs, dtype=torch.int32, device=gcu_device)
-            cu_seqlens_kv = torch.cat([k_lens.new_zeros([1], device=gcu_device), k_lens]).cumsum(0, dtype=torch.int32)
+            k_lens = torch.tensor(
+                [max_seqlen_kv] * bs, dtype=torch.int32, device=gcu_device
+            )
+            cu_seqlens_kv = torch.cat(
+                [k_lens.new_zeros([1], device=gcu_device), k_lens]
+            ).cumsum(0, dtype=torch.int32)
         else:
             if cu_seqlens_kv.dtype != torch.int32:
                 cu_seqlens_kv = cu_seqlens_kv.to(torch.int32)
@@ -182,7 +196,9 @@ class FlashAttnEnflameGcu(AttnWeightTemplate):
                 softmax_scale=softmax_scale,
                 causal=causal,
                 deterministic=deterministic,
-            )[0]  # FA3 returns tuple, take first element
+            )[
+                0
+            ]  # FA3 returns tuple, take first element
         elif flash_attn_varlen_func is not None:
             # Flash Attention 2
             output = flash_attn_varlen_func(
@@ -201,7 +217,9 @@ class FlashAttnEnflameGcu(AttnWeightTemplate):
             )
         else:
             # Should not reach here if use_flash_attn is True
-            raise RuntimeError("Flash Attention is marked as available but function is None")
+            raise RuntimeError(
+                "Flash Attention is marked as available but function is None"
+            )
 
         # Reshape to [B*max_seqlen_q, num_heads * head_dim]
         bs = cu_seqlens_q.shape[0] - 1
@@ -209,7 +227,9 @@ class FlashAttnEnflameGcu(AttnWeightTemplate):
             output = output.reshape(bs * max_seqlen_q, -1)
         return output.to(out_dtype)
 
-    def _sdpa_fallback(self, q, k, v, cu_seqlens_q, max_seqlen_q, causal=False, dropout_p=0.0):
+    def _sdpa_fallback(
+        self, q, k, v, cu_seqlens_q, max_seqlen_q, causal=False, dropout_p=0.0
+    ):
         """
         Fallback to PyTorch Scaled Dot Product Attention when Flash Attention is not available.
 
@@ -239,7 +259,9 @@ class FlashAttnEnflameGcu(AttnWeightTemplate):
 
         # GCU compatibility: ensure all tensors are float32 (not float64)
         # scaled_dot_product_attention may use int64 internally, but we ensure inputs are correct
-        out = torch.nn.functional.scaled_dot_product_attention(q, k, v, attn_mask=None, is_causal=causal, dropout_p=dropout_p)
+        out = torch.nn.functional.scaled_dot_product_attention(
+            q, k, v, attn_mask=None, is_causal=causal, dropout_p=dropout_p
+        )
 
         # Transpose back to [B, L, Nq, C] and flatten
         out = out.transpose(1, 2).contiguous()

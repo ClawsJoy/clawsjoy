@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 PYTHONPATH=/path-to-LightX2V PLATFORM=cuda python test_device.py
 PYTHONPATH=/path-to-LightX2V PLATFORM=mlu python test_device.py

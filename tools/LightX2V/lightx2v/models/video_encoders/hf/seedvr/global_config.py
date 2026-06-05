@@ -1,5 +1,6 @@
-from lib.smart_config import smart_config
 from typing import Optional
+
+from lib.smart_config import smart_config
 
 _NORM_LIMIT = float("inf")
 

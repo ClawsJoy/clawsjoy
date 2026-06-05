@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 Intel XPU Device implementation for LightX2V.
 
@@ -9,9 +10,8 @@ This module handles Intel-specific configurations including:
 """
 
 import torch
-from loguru import logger
-
 from lightx2v_platform.registry_factory import PLATFORM_DEVICE_REGISTER
+from loguru import logger
 
 # Detect Intel XPU platform
 IS_INTEL_XPU = hasattr(torch, "xpu") and torch.xpu.is_available()

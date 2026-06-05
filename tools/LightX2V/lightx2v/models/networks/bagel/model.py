@@ -1,13 +1,9 @@
-from lib.smart_config import smart_config
 import gc
 import math
 import os
 from copy import deepcopy
 
 import torch
-from PIL import Image
-from torch.nn import functional as F
-
 from lightx2v.models.networks.bagel.data_utils import add_special_tokens
 from lightx2v.models.networks.bagel.infer.post_infer import BagelPostInfer
 from lightx2v.models.networks.bagel.infer.pre_infer import BagelPreInfer
@@ -17,9 +13,15 @@ from lightx2v.models.networks.bagel.modeling_utils import PositionEmbedding
 from lightx2v.models.networks.bagel.tokenization_qwen2 import Qwen2Tokenizer
 from lightx2v.models.networks.bagel.weights.post_weights import Qwen2PostWeights
 from lightx2v.models.networks.bagel.weights.pre_weights import Qwen2PreWeights
-from lightx2v.models.networks.bagel.weights.transformer_weights import Qwen2TransformerWeights
+from lightx2v.models.networks.bagel.weights.transformer_weights import (
+    Qwen2TransformerWeights,
+)
 from lightx2v.utils.envs import *
 from lightx2v.utils.utils import *
+from PIL import Image
+from torch.nn import functional as F
+
+from lib.smart_config import smart_config
 
 VLM_THINK_SYSTEM_PROMPT = """You should first think about the reasoning process in the mind and then provide the user with the answer.
 The reasoning process is enclosed within <think> </think> tags, i.e. <think> reasoning process here </think> answer here"""
@@ -54,7 +56,9 @@ class BagelModel:
 
         self.cpu_offload = config.get("cpu_offload", False)
         self.offload_granularity = self.config.get("offload_granularity", "block")
-        self.device = torch.device("cpu") if self.cpu_offload else torch.device(AI_DEVICE)
+        self.device = (
+            torch.device("cpu") if self.cpu_offload else torch.device(AI_DEVICE)
+        )
         self._init_infer_class()
         self._init_weights()
         self._init_infer()
@@ -87,13 +91,19 @@ class BagelModel:
 
     def _init_weights(self):
         self.pre_weight = self.pre_weight_class(self.config)
-        self.transformer_weights = self.transformer_weight_class(self.config, self.llm_config)
+        self.transformer_weights = self.transformer_weight_class(
+            self.config, self.llm_config
+        )
         self.post_weight = self.post_weight_class(self.config)
-        weight_dict = safetensors.torch.load_file(os.path.join(self.config["model_path"], "ema.safetensors"), device=AI_DEVICE)
+        weight_dict = safetensors.torch.load_file(
+            os.path.join(self.config["model_path"], "ema.safetensors"), device=AI_DEVICE
+        )
         self._apply_weights(weight_dict)
 
     def _init_infer(self):
-        self.transformer_infer = self.transformer_infer_class(self.config, self.llm_config)
+        self.transformer_infer = self.transformer_infer_class(
+            self.config, self.llm_config
+        )
         self.pre_infer = self.pre_infer_class(self.config, self.llm_config)
         self.post_infer = self.post_infer_class(self.config, self.llm_config)
 
@@ -106,12 +116,16 @@ class BagelModel:
         if self.config.visual_gen:
             self.latent_patch_size = self.config.latent_patch_size
             self.timestep_shift = self.config.timestep_shift
-            self.latent_downsample = self.config.vae_config["downsample"] * self.config.latent_patch_size
+            self.latent_downsample = (
+                self.config.vae_config["downsample"] * self.config.latent_patch_size
+            )
 
             self.latent_channel = self.config.vae_config["z_channels"]
             self.patch_latent_dim = self.latent_patch_size**2 * self.latent_channel
             self.max_latent_size = self.config["max_latent_size_update"]
-            self.latent_pos_embed = PositionEmbedding(self.max_latent_size, self.hidden_size)
+            self.latent_pos_embed = PositionEmbedding(
+                self.max_latent_size, self.hidden_size
+            )
             self.frequency_embedding_size = 256
 
     def init_gen_context(self):
@@ -122,7 +136,9 @@ class BagelModel:
         }
         return gen_context
 
-    def prepare_prompts(self, curr_kvlens, curr_rope, prompts, tokenizer, new_token_ids):
+    def prepare_prompts(
+        self, curr_kvlens, curr_rope, prompts, tokenizer, new_token_ids
+    ):
         packed_text_ids = list()
         packed_text_position_ids = list()
         text_token_lens = list()
@@ -131,15 +147,23 @@ class BagelModel:
 
         curr = 0
         newlens, new_rope = list(), list()
-        for prompt, curr_kvlen, curr_position_id in zip(prompts, curr_kvlens, curr_rope):
+        for prompt, curr_kvlen, curr_position_id in zip(
+            prompts, curr_kvlens, curr_rope
+        ):
             packed_key_value_indexes.extend(range(curr, curr + curr_kvlen))
             curr += curr_kvlen
 
             text_ids = tokenizer.encode(prompt)
-            text_ids = [new_token_ids["bos_token_id"]] + text_ids + [new_token_ids["eos_token_id"]]
+            text_ids = (
+                [new_token_ids["bos_token_id"]]
+                + text_ids
+                + [new_token_ids["eos_token_id"]]
+            )
             text_token_lens.append(len(text_ids))
             packed_text_ids.extend(text_ids)
-            packed_text_position_ids.extend(range(curr_position_id, curr_position_id + len(text_ids)))
+            packed_text_position_ids.extend(
+                range(curr_position_id, curr_position_id + len(text_ids))
+            )
             packed_text_indexes.extend(range(curr, curr + len(text_ids)))
             newlens.append(curr_kvlen + len(text_ids))
             new_rope.append(curr_position_id + len(text_ids))
@@ -148,9 +172,13 @@ class BagelModel:
         generation_input = {
             "text_token_lens": torch.tensor(text_token_lens, dtype=torch.int),
             "packed_text_ids": torch.tensor(packed_text_ids, dtype=torch.long),
-            "packed_text_position_ids": torch.tensor(packed_text_position_ids, dtype=torch.long),
+            "packed_text_position_ids": torch.tensor(
+                packed_text_position_ids, dtype=torch.long
+            ),
             "packed_text_indexes": torch.tensor(packed_text_indexes, dtype=torch.long),
-            "packed_key_value_indexes": torch.tensor(packed_key_value_indexes, dtype=torch.long),
+            "packed_key_value_indexes": torch.tensor(
+                packed_key_value_indexes, dtype=torch.long
+            ),
             "key_values_lens": torch.tensor(curr_kvlens, dtype=torch.int),
         }
 
@@ -171,7 +199,9 @@ class BagelModel:
         packed_vae_token_indexes=None,
         packed_text_indexes=None,
     ):
-        packed_query_position_embeddings = self.pre_infer.infer(self.pre_weight, packed_query_sequence, packed_query_position_ids)
+        packed_query_position_embeddings = self.pre_infer.infer(
+            self.pre_weight, packed_query_sequence, packed_query_position_ids
+        )
 
         extra_inputs = {}
         if self.use_moe:
@@ -219,7 +249,9 @@ class BagelModel:
         packed_key_value_indexes: torch.LongTensor,
         key_values_lens: torch.IntTensor,
     ):
-        packed_text_embedding = self.pre_infer.embed_tokens(self.pre_weight, packed_text_ids)
+        packed_text_embedding = self.pre_infer.embed_tokens(
+            self.pre_weight, packed_text_ids
+        )
 
         extra_inputs = {}
         if self.use_moe:
@@ -253,7 +285,9 @@ class BagelModel:
             tokenizer=self.tokenizer,
             new_token_ids=self.new_token_ids,
         )
-        past_key_values = self.forward_cache_update_text(past_key_values, **generation_input)
+        past_key_values = self.forward_cache_update_text(
+            past_key_values, **generation_input
+        )
         gen_context["kv_lens"] = kv_lens
         gen_context["ropes"] = ropes
         gen_context["past_key_values"] = past_key_values
@@ -278,12 +312,16 @@ class BagelModel:
                 else:
                     system_prompt = GEN_THINK_SYSTEM_PROMPT
                 gen_context = self.update_context_text(system_prompt, gen_context)
-                cfg_img_context = self.update_context_text(system_prompt, cfg_img_context)
+                cfg_img_context = self.update_context_text(
+                    system_prompt, cfg_img_context
+                )
             for input_term in input_lists:
                 if isinstance(input_term, str):  # True
                     cfg_text_context = deepcopy(gen_context)
                     gen_context = self.update_context_text(input_term, gen_context)
-                    cfg_img_context = self.update_context_text(input_term, cfg_img_context)
+                    cfg_img_context = self.update_context_text(
+                        input_term, cfg_img_context
+                    )
                 elif isinstance(input_term, Image.Image):
                     assert NotImplementedError
                 else:
@@ -292,11 +330,21 @@ class BagelModel:
             max_think_token_n = 1000
             if self.understanding_output:
                 assert NotImplementedError
-                gen_text = self.gen_text(gen_context, do_sample=self.do_sample, temperature=self.text_temperature, max_length=max_think_token_n)
+                gen_text = self.gen_text(
+                    gen_context,
+                    do_sample=self.do_sample,
+                    temperature=self.text_temperature,
+                    max_length=max_think_token_n,
+                )
                 output_list.append(gen_text)
             else:
                 if self.think:
-                    gen_text = self.gen_text(gen_context, do_sample=self.do_sample, temperature=self.text_temperature, max_length=max_think_token_n)
+                    gen_text = self.gen_text(
+                        gen_context,
+                        do_sample=self.do_sample,
+                        temperature=self.text_temperature,
+                        max_length=max_think_token_n,
+                    )
                     gen_context = self.update_context_text(gen_text, gen_context)
                     output_list.append(gen_text)
                 else:
@@ -340,8 +388,12 @@ class BagelModel:
         num_timesteps = scheduler.infer_steps
         if self.enable_taylorseer:
             model_pred_cache_dic, model_pred_current = cache_init(self, num_timesteps)
-            model_pred_text_cache_dic, model_pred_text_current = cache_init(self, num_timesteps)
-            model_pred_img_cache_dic, model_pred_img_current = cache_init(self, num_timesteps)
+            model_pred_text_cache_dic, model_pred_text_current = cache_init(
+                self, num_timesteps
+            )
+            model_pred_img_cache_dic, model_pred_img_current = cache_init(
+                self, num_timesteps
+            )
         else:
             model_pred_cache_dic, model_pred_current = None, None
             model_pred_text_cache_dic, model_pred_text_current = None, None
@@ -377,11 +429,17 @@ class BagelModel:
         :return: an (N, D) Tensor of positional embeddings.
         """
         half = dim // 2
-        freqs = torch.exp(-math.log(max_period) * torch.arange(start=0, end=half, dtype=torch.float32) / half).to(device=t.device)
+        freqs = torch.exp(
+            -math.log(max_period)
+            * torch.arange(start=0, end=half, dtype=torch.float32)
+            / half
+        ).to(device=t.device)
         args = t[:, None].float() * freqs[None]
         embedding = torch.cat([torch.cos(args), torch.sin(args)], dim=-1)
         if dim % 2:
-            embedding = torch.cat([embedding, torch.zeros_like(embedding[:, :1])], dim=-1)
+            embedding = torch.cat(
+                [embedding, torch.zeros_like(embedding[:, :1])], dim=-1
+            )
         return embedding
 
     @torch.no_grad()
@@ -410,7 +468,10 @@ class BagelModel:
         x_t = self.scheduler.latents.to(torch.bfloat16).to(AI_DEVICE)
         timestep = torch.tensor([t] * x_t.shape[0])
 
-        if t > self.inference_hyper["cfg_interval"][0] and t <= self.inference_hyper["cfg_interval"][1]:
+        if (
+            t > self.inference_hyper["cfg_interval"][0]
+            and t <= self.inference_hyper["cfg_interval"][1]
+        ):
             cfg_text_scale = self.inference_hyper["cfg_text_scale"]
             cfg_img_scale = self.inference_hyper["cfg_img_scale"]
         else:
@@ -420,12 +481,20 @@ class BagelModel:
         packed_text_ids = inputs.generation_input["packed_text_ids"]
         packed_seqlens = inputs.generation_input["packed_seqlens"]
         packed_text_indexes = inputs.generation_input["packed_text_indexes"]
-        packed_text_embedding = self.pre_infer.embed_tokens(self.pre_weight, packed_text_ids)
-        packed_sequence = packed_text_embedding.new_zeros((sum(packed_seqlens), self.hidden_size))
+        packed_text_embedding = self.pre_infer.embed_tokens(
+            self.pre_weight, packed_text_ids
+        )
+        packed_sequence = packed_text_embedding.new_zeros(
+            (sum(packed_seqlens), self.hidden_size)
+        )
         packed_sequence[packed_text_indexes] = packed_text_embedding
 
         assert timestep.unique().shape[0] == 1
-        packed_pos_embed = self.latent_pos_embed(inputs.generation_input["packed_vae_position_ids"]).to(AI_DEVICE).to(torch.bfloat16)
+        packed_pos_embed = (
+            self.latent_pos_embed(inputs.generation_input["packed_vae_position_ids"])
+            .to(AI_DEVICE)
+            .to(torch.bfloat16)
+        )
         packed_timestep_embeds = self.time_embedder(self.pre_weight, timestep)
 
         packed_pos_embed = packed_pos_embed.to(AI_DEVICE)
@@ -437,7 +506,13 @@ class BagelModel:
 
         extra_inputs = {}
         if self.use_moe:
-            extra_inputs = {"mode": "gen", "packed_vae_token_indexes": inputs.generation_input["packed_vae_token_indexes"], "packed_text_indexes": packed_text_indexes}
+            extra_inputs = {
+                "mode": "gen",
+                "packed_vae_token_indexes": inputs.generation_input[
+                    "packed_vae_token_indexes"
+                ],
+                "packed_text_indexes": packed_text_indexes,
+            }
 
         if self.enable_taylorseer:
             self.scheduler.cache_dic = inputs.model_pred_cache_dic
@@ -450,7 +525,9 @@ class BagelModel:
             packed_query_indexes=inputs.generation_input["packed_indexes"],
             past_key_values=inputs.gen_context["past_key_values"],
             key_values_lens=inputs.generation_input["key_values_lens"],
-            packed_key_value_indexes=inputs.generation_input["packed_key_value_indexes"],
+            packed_key_value_indexes=inputs.generation_input[
+                "packed_key_value_indexes"
+            ],
             update_past_key_values=False,
             is_causal=False,
             **extra_inputs,
@@ -467,17 +544,25 @@ class BagelModel:
             cfg_text_output = self.forward_inference(
                 packed_query_sequence=packed_sequence,
                 query_lens=packed_seqlens,
-                packed_query_position_ids=inputs.generation_input_cfg_text["cfg_packed_position_ids"],
-                packed_query_indexes=inputs.generation_input_cfg_text["cfg_packed_query_indexes"],
+                packed_query_position_ids=inputs.generation_input_cfg_text[
+                    "cfg_packed_position_ids"
+                ],
+                packed_query_indexes=inputs.generation_input_cfg_text[
+                    "cfg_packed_query_indexes"
+                ],
                 past_key_values=inputs.cfg_text_past_key_values,
                 key_values_lens=inputs.generation_input_cfg_text["cfg_key_values_lens"],
-                packed_key_value_indexes=inputs.generation_input_cfg_text["cfg_packed_key_value_indexes"],
+                packed_key_value_indexes=inputs.generation_input_cfg_text[
+                    "cfg_packed_key_value_indexes"
+                ],
                 update_past_key_values=False,
                 is_causal=False,
                 **extra_inputs,
             )
             cfg_text_v_t = self.llm2vae(cfg_text_output[0])
-            cfg_text_v_t = cfg_text_v_t[inputs.generation_input["packed_vae_token_indexes"]]
+            cfg_text_v_t = cfg_text_v_t[
+                inputs.generation_input["packed_vae_token_indexes"]
+            ]
 
         if cfg_img_scale > 1.0:
             if self.enable_taylorseer:
@@ -487,24 +572,34 @@ class BagelModel:
             cfg_img_output = self.forward_inference(
                 packed_query_sequence=packed_sequence,
                 query_lens=packed_seqlens,
-                packed_query_position_ids=inputs.generation_input_cfg_img["cfg_packed_position_ids"],
-                packed_query_indexes=inputs.generation_input_cfg_img["cfg_packed_query_indexes"],
+                packed_query_position_ids=inputs.generation_input_cfg_img[
+                    "cfg_packed_position_ids"
+                ],
+                packed_query_indexes=inputs.generation_input_cfg_img[
+                    "cfg_packed_query_indexes"
+                ],
                 past_key_values=inputs.cfg_img_past_key_values,
                 key_values_lens=inputs.generation_input_cfg_img["cfg_key_values_lens"],
-                packed_key_value_indexes=inputs.generation_input_cfg_img["cfg_packed_key_value_indexes"],
+                packed_key_value_indexes=inputs.generation_input_cfg_img[
+                    "cfg_packed_key_value_indexes"
+                ],
                 update_past_key_values=False,
                 is_causal=False,
                 **extra_inputs,
             )
             cfg_img_v_t = self.llm2vae(cfg_img_output[0])
-            cfg_img_v_t = cfg_img_v_t[inputs.generation_input["packed_vae_token_indexes"]]
+            cfg_img_v_t = cfg_img_v_t[
+                inputs.generation_input["packed_vae_token_indexes"]
+            ]
 
         if cfg_text_scale > 1.0:
             if self.inference_hyper["cfg_renorm_type"] == "text_channel":
                 v_t_text_ = cfg_text_v_t + cfg_text_scale * (v_t - cfg_text_v_t)
                 norm_v_t = torch.norm(v_t, dim=-1, keepdim=True)
                 norm_v_t_text_ = torch.norm(v_t_text_, dim=-1, keepdim=True)
-                scale = (norm_v_t / (norm_v_t_text_ + 1e-8)).clamp(min=self.inference_hyper["cfg_renorm_min"], max=1.0)
+                scale = (norm_v_t / (norm_v_t_text_ + 1e-8)).clamp(
+                    min=self.inference_hyper["cfg_renorm_min"], max=1.0
+                )
                 v_t_text = v_t_text_ * scale
                 if cfg_img_scale > 1.0:
                     v_t = cfg_img_v_t + cfg_img_scale * (v_t_text - cfg_img_v_t)
@@ -526,8 +621,12 @@ class BagelModel:
                     norm_v_t = torch.norm(v_t, dim=-1, keepdim=True)
                     norm_v_t_ = torch.norm(v_t_, dim=-1, keepdim=True)
                 else:
-                    raise NotImplementedError(f"{self.inference_hyper['cfg_renorm_min']} is not suppoprted")
-                scale = (norm_v_t / (norm_v_t_ + 1e-8)).clamp(min=self.inference_hyper["cfg_renorm_min"], max=1.0)
+                    raise NotImplementedError(
+                        f"{self.inference_hyper['cfg_renorm_min']} is not suppoprted"
+                    )
+                scale = (norm_v_t / (norm_v_t_ + 1e-8)).clamp(
+                    min=self.inference_hyper["cfg_renorm_min"], max=1.0
+                )
                 v_t = v_t_ * scale
         else:
             # No CFG

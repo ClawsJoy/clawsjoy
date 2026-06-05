@@ -3,15 +3,15 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
 import json
 import time
-from pathlib import Path
 from datetime import datetime
-from typing import Dict, Optional, List
+from pathlib import Path
+from typing import Dict, List, Optional
 
 
 class FileQueue:
@@ -34,10 +34,10 @@ class FileQueue:
             "to": to,
             "message": message,
             "timestamp": datetime.now().isoformat(),
-            "status": "pending"
+            "status": "pending",
         }
 
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             json.dump(record, f, indent=2)
 
         return filename
@@ -55,7 +55,7 @@ class FileQueue:
 
         filepath = files[0]
 
-        with open(filepath, 'r') as f:
+        with open(filepath, "r") as f:
             record = json.load(f)
 
         if mark_processing:
@@ -73,7 +73,7 @@ class FileQueue:
         processing_dir = self.queue_dir / "processing"
         filepath = processing_dir / filename
         if filepath.exists():
-            with open(filepath, 'r') as f:
+            with open(filepath, "r") as f:
                 record = json.load(f)
             record["status"] = "completed"
             record["result"] = result
@@ -81,7 +81,7 @@ class FileQueue:
 
             # 移动到完成目录（保留在 exchange 根目录）
             new_path = self.queue_dir / filename
-            with open(new_path, 'w') as f:
+            with open(new_path, "w") as f:
                 json.dump(record, f, indent=2)
             filepath.unlink()
 

@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import argparse
 import time
 
@@ -13,13 +12,23 @@ from lightx2v.disagg.workload import (
     start_workload_clock,
 )
 
+from lib.smart_config import smart_config
+
 
 def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Run dynamic disagg workload user and push configs to Controller")
+    parser = argparse.ArgumentParser(
+        description="Run dynamic disagg workload user and push configs to Controller"
+    )
     parser.add_argument("--controller_host", type=str, default="127.0.0.1")
-    parser.add_argument("--controller_request_port", type=int, default=REQUEST_POLLING_PORT - 2)
-    parser.add_argument("--max_requests", type=int, default=0, help="0 means no hard cap")
-    parser.add_argument("--sleep_min_ms", type=float, default=5.0, help="minimum loop sleep in ms")
+    parser.add_argument(
+        "--controller_request_port", type=int, default=REQUEST_POLLING_PORT - 2
+    )
+    parser.add_argument(
+        "--max_requests", type=int, default=0, help="0 means no hard cap"
+    )
+    parser.add_argument(
+        "--sleep_min_ms", type=float, default=5.0, help="minimum loop sleep in ms"
+    )
     return parser
 
 

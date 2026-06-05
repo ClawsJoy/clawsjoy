@@ -1,12 +1,12 @@
-from lib.smart_config import smart_config
 from typing import Optional, Union
 
 import torch
 import triton
 import triton.language as tl
-
 from lightx2v_platform.ops.rope.rope_template import RopeTemplate
 from lightx2v_platform.registry_factory import PLATFORM_ROPE_REGISTER
+
+from lib.smart_config import smart_config
 
 
 @PLATFORM_ROPE_REGISTER("iluvatar_wan_rope")
@@ -106,9 +106,21 @@ def rotary_kernel(
 
     if not INTERLEAVED:
         # Load the 1st and 2nd halves of X, do calculation, then store to 1st and 2nd halves of OUT
-        X = X + (rh[:, None, None] * stride_x_nheads + rm[None, :, None] * stride_x_seqlen + rk_half[None, None, :] * stride_x_headdim)
-        OUT = OUT + (rh[:, None, None] * stride_out_nheads + rm[None, :, None] * stride_out_seqlen + rk_half[None, None, :] * stride_out_headdim)
-        mask = (rh[:, None, None] < nheads) & (rm[None, :, None] < seqlen) & (rk_half[None, None, :] < ROTARY_DIM_HALF)
+        X = X + (
+            rh[:, None, None] * stride_x_nheads
+            + rm[None, :, None] * stride_x_seqlen
+            + rk_half[None, None, :] * stride_x_headdim
+        )
+        OUT = OUT + (
+            rh[:, None, None] * stride_out_nheads
+            + rm[None, :, None] * stride_out_seqlen
+            + rk_half[None, None, :] * stride_out_headdim
+        )
+        mask = (
+            (rh[:, None, None] < nheads)
+            & (rm[None, :, None] < seqlen)
+            & (rk_half[None, None, :] < ROTARY_DIM_HALF)
+        )
         x0 = tl.load(X, mask=mask, other=0.0).to(tl.float32)
         x1 = tl.load(
             X + ROTARY_DIM_HALF * stride_x_headdim,
@@ -121,9 +133,21 @@ def rotary_kernel(
         tl.store(OUT + ROTARY_DIM_HALF * stride_out_headdim, o1, mask=mask)
     else:
         rk = tl.arange(0, BLOCK_K)
-        X = X + (rh[:, None, None] * stride_x_nheads + rm[None, :, None] * stride_x_seqlen + rk[None, None, :] * stride_x_headdim)
-        OUT = OUT + (rh[:, None, None] * stride_out_nheads + rm[None, :, None] * stride_out_seqlen + rk[None, None, :] * stride_out_headdim)
-        mask = (rh[:, None, None] < nheads) & (rm[None, :, None] < seqlen) & (rk[None, None, :] < ROTARY_DIM)
+        X = X + (
+            rh[:, None, None] * stride_x_nheads
+            + rm[None, :, None] * stride_x_seqlen
+            + rk[None, None, :] * stride_x_headdim
+        )
+        OUT = OUT + (
+            rh[:, None, None] * stride_out_nheads
+            + rm[None, :, None] * stride_out_seqlen
+            + rk[None, None, :] * stride_out_headdim
+        )
+        mask = (
+            (rh[:, None, None] < nheads)
+            & (rm[None, :, None] < seqlen)
+            & (rk[None, None, :] < ROTARY_DIM)
+        )
         x = tl.load(X, mask=mask, other=0.0).to(tl.float32)
         x0, x1 = tl.split(tl.reshape(x, [BLOCK_H, BLOCK_M, BLOCK_K // 2, 2]))
         o0 = x0 * cos - x1 * sin
@@ -159,7 +183,9 @@ def apply_rotary(
     if not is_varlen:
         batch, seqlen, nheads, headdim = x.shape
     else:
-        assert max_seqlen is not None, "If cu_seqlens is passed in, then max_seqlen must be passed"
+        assert (
+            max_seqlen is not None
+        ), "If cu_seqlens is passed in, then max_seqlen must be passed"
         total_seqlen, nheads, headdim = x.shape
         batch_p_1 = cu_seqlens.shape[0]
         batch = batch_p_1 - 1
@@ -183,7 +209,11 @@ def apply_rotary(
     if rotary_dim < headdim and not inplace:
         output[..., rotary_dim:].copy_(x[..., rotary_dim:])
 
-    grid = lambda META: (triton.cdiv(nheads, META["BLOCK_H"]), triton.cdiv(seqlen, META["BLOCK_M"]), batch)  # noqa
+    grid = lambda META: (
+        triton.cdiv(nheads, META["BLOCK_H"]),
+        triton.cdiv(seqlen, META["BLOCK_M"]),
+        batch,
+    )  # noqa
     BLOCK_M = 8 if rotary_dim <= 128 else 4
 
     # Need this, otherwise Triton tries to launch from cuda:0 and we get

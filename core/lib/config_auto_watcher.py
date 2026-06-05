@@ -3,11 +3,12 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
 from pathlib import Path
+
 from core.lib.config_watcher import config_watcher
 
 
@@ -64,26 +65,32 @@ class ConfigAutoWatcher:
 
         if "keywords.yaml" in path_str:
             from core.lib.unified_config import unified_config
+
             return unified_config._load
 
         if "system_unified.yaml" in path_str:
             from core.lib.unified_config import unified_config
+
             return unified_config._load
 
         if "routes.yaml" in path_str:
             from core.lib.route_registry import route_registry
+
             return route_registry.reload
 
         if "scriptbook.yaml" in path_str or "butler.yaml" in path_str:
             from agents.chat_agent.agent import ChatAgent
+
             return None
 
         if any(x in path_str for x in ["agents.yaml", "registry.yaml"]):
             from core.agents.builtin.agent_manager import agent_manager
+
             return agent_manager.reload
 
         if "skill" in path_str or "auto_generated" in path_str:
             from core.lib.skill_loader_v3 import skill_loader
+
             return skill_loader._load_all
 
         return None
@@ -93,12 +100,16 @@ class ConfigAutoWatcher:
         """手动触发重载"""
         print("🔄 手动触发配置重载...")
         from core.lib.unified_config import unified_config
+
         unified_config._load()
         from core.lib.route_registry import route_registry
+
         route_registry.reload()
         from core.agents.builtin.agent_manager import agent_manager
+
         agent_manager.reload()
         from core.lib.skill_loader_v3 import skill_loader
+
         skill_loader._load_all()
         print("✅ 配置重载完成")
 
@@ -112,20 +123,21 @@ class ConfigAutoWatcher:
 
 config_auto_watcher = ConfigAutoWatcher()
 
+
 def start_file_watcher():
     """启动文件监听器"""
     try:
-        from watchdog.observers import Observer
         from watchdog.events import FileSystemEventHandler
-        
+        from watchdog.observers import Observer
+
         class ConfigFileHandler(FileSystemEventHandler):
             def on_modified(self, event):
-                if event.src_path.endswith(('.yaml', '.yml', '.json')):
+                if event.src_path.endswith((".yaml", ".yml", ".json")):
                     print(f"📁 配置文件变更: {event.src_path}")
                     ConfigAutoWatcher.trigger_reload()
-        
+
         observer = Observer()
-        observer.schedule(ConfigFileHandler(), 'config/', recursive=True)
+        observer.schedule(ConfigFileHandler(), "config/", recursive=True)
         observer.start()
         print("✅ 配置文件监听器已启动")
         return observer

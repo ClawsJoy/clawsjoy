@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
-"""Init - Init 模块
+"""API v5 模块"""
 
-@version: 5.0.0
-@author: ClawsJoy
-@date: 2026-05-31
-"""
+from api.v5 import agents, butler, health
 
+__all__ = ["agents", "health", "butler"]

@@ -1,5 +1,6 @@
-from lib.smart_config import smart_config
 from typing import Optional
+
+from lib.smart_config import smart_config
 
 # Please reinstall flashinfer by referring to https://github.com/svg-project/Sparse-VideoGen
 try:
@@ -10,7 +11,6 @@ except ImportError:
 import torch
 import triton
 import triton.language as tl
-
 from lightx2v.utils.registry_factory import ATTN_WEIGHT_REGISTER
 
 from .svg2_attn_utils import (
@@ -71,7 +71,9 @@ def permute_tensor_by_labels_triton(
     """
 
     # Assertions – we only support the optimized CUDA path.
-    assert dim == 2, "permute_tensor_by_labels currently only supports dim==2 (sequence dimension)"
+    assert (
+        dim == 2
+    ), "permute_tensor_by_labels currently only supports dim==2 (sequence dimension)"
     assert tensor.dim() == 4, "Expected tensor shape [B,H,S,D]"
     assert tensor.is_cuda, "permute_tensor_by_labels requires CUDA tensors"
 
@@ -82,7 +84,9 @@ def permute_tensor_by_labels_triton(
     if sorted_indices is not None:
         sorted_indices = sorted_indices.to(torch.int32).contiguous()
     else:
-        assert labels is not None, "Either `labels` or `sorted_indices` must be provided."
+        assert (
+            labels is not None
+        ), "Either `labels` or `sorted_indices` must be provided."
         labels = labels.to(tensor.device)
         sorted_indices = torch.argsort(labels, dim=-1).to(torch.int32).contiguous()
 
@@ -96,7 +100,9 @@ def permute_tensor_by_labels_triton(
     n_s_tiles = triton.cdiv(S, BLOCK_S)
     grid = (BH, n_s_tiles)
 
-    _permute_kernel[grid](inp_flat, sorted_indices, out_flat, S, D, BLOCK_S, num_warps=4)
+    _permute_kernel[grid](
+        inp_flat, sorted_indices, out_flat, S, D, BLOCK_S, num_warps=4
+    )
 
     permuted_tensor = out_flat.reshape(B, H, S, D)
     return permuted_tensor, sorted_indices
@@ -169,7 +175,9 @@ def apply_inverse_permutation_triton(
     n_s_tiles = triton.cdiv(S, BLOCK_S)
     grid = (BH, n_s_tiles)
 
-    _inverse_permute_kernel[grid](inp_flat, sorted_indices, out_flat, S, D, BLOCK_S, num_warps=4)
+    _inverse_permute_kernel[grid](
+        inp_flat, sorted_indices, out_flat, S, D, BLOCK_S, num_warps=4
+    )
 
     original_tensor = out_flat.reshape(B, H, S, D)
     return original_tensor
@@ -203,13 +211,23 @@ class Svg2AttnWeight(AttnWeightTemplate):
         k = k.unsqueeze(0).transpose(1, 2).contiguous()
         v = v.unsqueeze(0).transpose(1, 2).contiguous()
         bs, num_heads, seq_len, dim = q.size()
-        q_perm, k_perm, v_perm, dyn_map, qc_sz_s, kc_sz_s, q_sorted_indices = self.semantic_aware_permutation(q, k, v)
+        q_perm, k_perm, v_perm, dyn_map, qc_sz_s, kc_sz_s, q_sorted_indices = (
+            self.semantic_aware_permutation(q, k, v)
+        )
 
-        output_permuted = self.dynamic_block_sparse_fwd_flashinfer(q_perm, k_perm, v_perm, dyn_map, qc_sz_s, kc_sz_s, is_cpu=False)
+        output_permuted = self.dynamic_block_sparse_fwd_flashinfer(
+            q_perm, k_perm, v_perm, dyn_map, qc_sz_s, kc_sz_s, is_cpu=False
+        )
 
-        attn_output = apply_inverse_permutation_triton(output_permuted, q_sorted_indices, dim=2)
+        attn_output = apply_inverse_permutation_triton(
+            output_permuted, q_sorted_indices, dim=2
+        )
 
-        return attn_output.reshape(bs, num_heads, seq_len, dim).transpose(1, 2).reshape(bs * seq_len, -1)
+        return (
+            attn_output.reshape(bs, num_heads, seq_len, dim)
+            .transpose(1, 2)
+            .reshape(bs * seq_len, -1)
+        )
 
     def dynamic_block_sparse_fwd_flashinfer(
         self,
@@ -239,7 +257,14 @@ class Svg2AttnWeight(AttnWeightTemplate):
         kc_num = block_col_sz.shape[-1]
         assert block_mask_map.shape == (B, H, qc_num, kc_num)
 
-        assert all(t.device == torch.device("cpu") for t in [block_mask_map, block_row_sz, block_col_sz]) if is_cpu else True
+        assert (
+            all(
+                t.device == torch.device("cpu")
+                for t in [block_mask_map, block_row_sz, block_col_sz]
+            )
+            if is_cpu
+            else True
+        )
 
         # Check if block_col_sz and block_row_sz are the same for each head
         assert torch.all(block_col_sz.sum(dim=2) == block_col_sz.sum(dim=2)[0, 0])
@@ -248,7 +273,9 @@ class Svg2AttnWeight(AttnWeightTemplate):
         # Prepare flashinfer wrapper
         float_workspace_buffer = torch.empty(128 * 1024 * 1024, device=q.device)
         vector_sparse_indices_buffer = torch.empty(1024 * 1024 * 1024, device=q.device)
-        wrapper = flashinfer.sparse.VariableBlockSparseAttentionWrapper(float_workspace_buffer, backend="auto")
+        wrapper = flashinfer.sparse.VariableBlockSparseAttentionWrapper(
+            float_workspace_buffer, backend="auto"
+        )
         wrapper.reset_workspace_buffer(
             float_workspace_buffer=wrapper._float_workspace_buffer,
             int_workspace_buffer=wrapper._int_workspace_buffer,
@@ -284,7 +311,16 @@ class Svg2AttnWeight(AttnWeightTemplate):
         cfg, num_heads, seq_len, dim = query.size()
 
         # 1. Kmeans clustering
-        qlabels, qcentroids, qcluster_sizes, qiter, klabels, kcentroids, kcluster_sizes, kiter = self.kmeans_clustering(query, key)
+        (
+            qlabels,
+            qcentroids,
+            qcluster_sizes,
+            qiter,
+            klabels,
+            kcentroids,
+            kcluster_sizes,
+            kiter,
+        ) = self.kmeans_clustering(query, key)
 
         # 2. Identify dynamic map
         q_cluster_sizes = qcluster_sizes.view(cfg, num_heads, self.num_q_centroids)
@@ -300,30 +336,88 @@ class Svg2AttnWeight(AttnWeightTemplate):
         )
 
         # 3. Permute the query, key, value
-        q_permuted, q_sorted_indices = permute_tensor_by_labels_triton(query, qlabels, dim=2)
-        k_permuted, k_sorted_indices = permute_tensor_by_labels_triton(key, klabels, dim=2)
-        v_permuted, v_sorted_indices = permute_tensor_by_labels_triton(value, klabels, dim=2, sorted_indices=k_sorted_indices)
+        q_permuted, q_sorted_indices = permute_tensor_by_labels_triton(
+            query, qlabels, dim=2
+        )
+        k_permuted, k_sorted_indices = permute_tensor_by_labels_triton(
+            key, klabels, dim=2
+        )
+        v_permuted, v_sorted_indices = permute_tensor_by_labels_triton(
+            value, klabels, dim=2, sorted_indices=k_sorted_indices
+        )
 
-        return q_permuted, k_permuted, v_permuted, dynamic_map, q_cluster_sizes, k_cluster_sizes, q_sorted_indices
+        return (
+            q_permuted,
+            k_permuted,
+            v_permuted,
+            dynamic_map,
+            q_cluster_sizes,
+            k_cluster_sizes,
+            q_sorted_indices,
+        )
 
     def kmeans_clustering(self, query, key):
         if not self.centroids_init:
-            qlabels, qcentroids, qcluster_sizes, qiter, klabels, kcentroids, kcluster_sizes, kiter = self.kmeans_init(query, key)
+            (
+                qlabels,
+                qcentroids,
+                qcluster_sizes,
+                qiter,
+                klabels,
+                kcentroids,
+                kcluster_sizes,
+                kiter,
+            ) = self.kmeans_init(query, key)
             self.centroids_init = True
         else:
-            qlabels, qcentroids, qcluster_sizes, qiter, klabels, kcentroids, kcluster_sizes, kiter = self.kmeans_step(query, key)
+            (
+                qlabels,
+                qcentroids,
+                qcluster_sizes,
+                qiter,
+                klabels,
+                kcentroids,
+                kcluster_sizes,
+                kiter,
+            ) = self.kmeans_step(query, key)
 
-        return qlabels, qcentroids, qcluster_sizes, qiter, klabels, kcentroids, kcluster_sizes, kiter
+        return (
+            qlabels,
+            qcentroids,
+            qcluster_sizes,
+            qiter,
+            klabels,
+            kcentroids,
+            kcluster_sizes,
+            kiter,
+        )
 
     def kmeans_init(self, query, key):
         cfg, num_heads, seq_len, dim = query.size()
-        qlabels, qcentroids, qcluster_sizes, qiter = batch_kmeans_Euclid(query.view(cfg * num_heads, seq_len, dim), n_clusters=self.num_q_centroids, max_iters=self.kmeans_iter_init)
-        klabels, kcentroids, kcluster_sizes, kiter = batch_kmeans_Euclid(key.view(cfg * num_heads, seq_len, dim), n_clusters=self.num_k_centroids, max_iters=self.kmeans_iter_init)
+        qlabels, qcentroids, qcluster_sizes, qiter = batch_kmeans_Euclid(
+            query.view(cfg * num_heads, seq_len, dim),
+            n_clusters=self.num_q_centroids,
+            max_iters=self.kmeans_iter_init,
+        )
+        klabels, kcentroids, kcluster_sizes, kiter = batch_kmeans_Euclid(
+            key.view(cfg * num_heads, seq_len, dim),
+            n_clusters=self.num_k_centroids,
+            max_iters=self.kmeans_iter_init,
+        )
 
         self.q_centroids = qcentroids
         self.k_centroids = kcentroids
 
-        return qlabels, qcentroids, qcluster_sizes, qiter, klabels, kcentroids, kcluster_sizes, kiter
+        return (
+            qlabels,
+            qcentroids,
+            qcluster_sizes,
+            qiter,
+            klabels,
+            kcentroids,
+            kcluster_sizes,
+            kiter,
+        )
 
     def kmeans_step(self, query, key):
         cfg, num_heads, seq_len, dim = query.size()
@@ -343,11 +437,24 @@ class Svg2AttnWeight(AttnWeightTemplate):
         self.q_centroids = qcentroids
         self.k_centroids = kcentroids
 
-        return qlabels, qcentroids, qcluster_sizes, qiter, klabels, kcentroids, kcluster_sizes, kiter
+        return (
+            qlabels,
+            qcentroids,
+            qcluster_sizes,
+            qiter,
+            klabels,
+            kcentroids,
+            kcluster_sizes,
+            kiter,
+        )
 
 
 if __name__ == "__main__":
-    q, k, v = torch.randn(32130, 40, 128, dtype=torch.bfloat16).cuda(), torch.randn(32130, 40, 128, dtype=torch.bfloat16).cuda(), torch.randn(32130, 40, 128, dtype=torch.bfloat16).cuda()
+    q, k, v = (
+        torch.randn(32130, 40, 128, dtype=torch.bfloat16).cuda(),
+        torch.randn(32130, 40, 128, dtype=torch.bfloat16).cuda(),
+        torch.randn(32130, 40, 128, dtype=torch.bfloat16).cuda(),
+    )
 
     svg2_attn = Svg2AttnWeight()
     print("Svg2AttnWeight initialized.")

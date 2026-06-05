@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 DisaggMixin: Mooncake-based disaggregation communication mixin for Runners.
 
@@ -27,7 +28,6 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 import torch
-
 from lightx2v.disagg.conn import (
     DataArgs,
     DataManager,
@@ -68,7 +68,11 @@ def _estimate_encoder_buffer_sizes(config) -> List[int]:
     z_dim = int(config.get("vae_z_dim", 16))
 
     vae_stride = config.get("vae_stride", (4, 8, 8))
-    stride_t, stride_h, stride_w = int(vae_stride[0]), int(vae_stride[1]), int(vae_stride[2])
+    stride_t, stride_h, stride_w = (
+        int(vae_stride[0]),
+        int(vae_stride[1]),
+        int(vae_stride[2]),
+    )
 
     target_video_length = int(config.get("target_video_length", 81))
     target_height = int(config.get("target_height", 480))
@@ -139,7 +143,9 @@ class DisaggMixin:
         the controller process (see ControllerService).
         """
         disagg_cfg = config.get("disagg_config", {})
-        self._disagg_mode = config.get("disagg_mode")  # "encoder" | "transformer" | "decode" | None
+        self._disagg_mode = config.get(
+            "disagg_mode"
+        )  # "encoder" | "transformer" | "decode" | None
         self._disagg_bootstrap_addr = disagg_cfg.get("bootstrap_addr", "127.0.0.1")
         self._disagg_bootstrap_room = int(disagg_cfg.get("bootstrap_room", 0))
         self._disagg_sender_rank = int(disagg_cfg.get("sender_engine_rank", 0))
@@ -170,9 +176,13 @@ class DisaggMixin:
 
         if self._disagg_mode == "encoder":
             if self._disagg_decentralized:
-                self._disagg_data_mgr = DataManager(DisaggregationPhase.PHASE1, DisaggregationMode.ENCODE)
+                self._disagg_data_mgr = DataManager(
+                    DisaggregationPhase.PHASE1, DisaggregationMode.ENCODE
+                )
                 self._ensure_disagg_phase1_queue_producer(disagg_cfg)
-                logger.info("[Disagg] Encoder decentralized queue mode: per-request Mooncake session.")
+                logger.info(
+                    "[Disagg] Encoder decentralized queue mode: per-request Mooncake session."
+                )
             else:
                 buffer_sizes = _estimate_encoder_buffer_sizes(config)
                 self._disagg_alloc_buffers(buffer_sizes)
@@ -186,7 +196,9 @@ class DisaggMixin:
                     data_item_lens=data_lens,
                     ib_device=None,
                 )
-                self._disagg_data_mgr = DataManager(DisaggregationPhase.PHASE1, DisaggregationMode.ENCODE)
+                self._disagg_data_mgr = DataManager(
+                    DisaggregationPhase.PHASE1, DisaggregationMode.ENCODE
+                )
                 self._disagg_data_mgr.init(data_args, self._disagg_bootstrap_room)
                 self._disagg_sender = DataSender(
                     self._disagg_data_mgr,
@@ -196,12 +208,18 @@ class DisaggMixin:
 
         elif self._disagg_mode == "transformer":
             if self._disagg_decentralized:
-                self._disagg_data_mgr = DataManager(DisaggregationPhase.PHASE1, DisaggregationMode.TRANSFORMER)
-                self._disagg_p2_data_mgr = DataManager(DisaggregationPhase.PHASE2, DisaggregationMode.TRANSFORMER)
+                self._disagg_data_mgr = DataManager(
+                    DisaggregationPhase.PHASE1, DisaggregationMode.TRANSFORMER
+                )
+                self._disagg_p2_data_mgr = DataManager(
+                    DisaggregationPhase.PHASE2, DisaggregationMode.TRANSFORMER
+                )
                 self._ensure_disagg_phase1_queue_consumer(disagg_cfg)
                 if disagg_cfg.get("decoder_engine_rank") is not None:
                     self._ensure_disagg_phase2_queue_producer(disagg_cfg)
-                logger.info("[Disagg] Transformer decentralized queue mode: dispatch via phase1/phase2 rings.")
+                logger.info(
+                    "[Disagg] Transformer decentralized queue mode: dispatch via phase1/phase2 rings."
+                )
             else:
                 # Phase 1: receive encoder outputs
                 buffer_sizes = _estimate_encoder_buffer_sizes(config)
@@ -216,7 +234,9 @@ class DisaggMixin:
                     data_item_lens=data_lens,
                     ib_device=None,
                 )
-                self._disagg_data_mgr = DataManager(DisaggregationPhase.PHASE1, DisaggregationMode.TRANSFORMER)
+                self._disagg_data_mgr = DataManager(
+                    DisaggregationPhase.PHASE1, DisaggregationMode.TRANSFORMER
+                )
                 self._disagg_data_mgr.init(data_args, self._disagg_bootstrap_room)
                 self._disagg_receiver = DataReceiver(
                     self._disagg_data_mgr,
@@ -231,9 +251,13 @@ class DisaggMixin:
 
         elif self._disagg_mode == "decode":
             if self._disagg_decentralized:
-                self._disagg_p2_data_mgr = DataManager(DisaggregationPhase.PHASE2, DisaggregationMode.DECODE)
+                self._disagg_p2_data_mgr = DataManager(
+                    DisaggregationPhase.PHASE2, DisaggregationMode.DECODE
+                )
                 self._ensure_disagg_phase2_queue_consumer(disagg_cfg)
-                logger.info("[Disagg] Decoder decentralized queue mode: phase2 dispatch ring.")
+                logger.info(
+                    "[Disagg] Decoder decentralized queue mode: phase2 dispatch ring."
+                )
             else:
                 # Phase 2: receive latents from transformer
                 self._init_phase2_decoder_receiver(config, disagg_cfg)
@@ -275,10 +299,16 @@ class DisaggMixin:
             data_item_lens=data_lens,
             ib_device=None,
         )
-        self._disagg_p2_data_mgr = DataManager(DisaggregationPhase.PHASE2, DisaggregationMode.TRANSFORMER)
+        self._disagg_p2_data_mgr = DataManager(
+            DisaggregationPhase.PHASE2, DisaggregationMode.TRANSFORMER
+        )
         self._disagg_p2_data_mgr.init(data_args, p2_bootstrap_room)
-        self._disagg_p2_sender = DataSender(self._disagg_p2_data_mgr, p2_bootstrap_addr, p2_bootstrap_room)
-        logger.info(f"[Disagg] Phase2 sender initialized (rank {p2_transformer_rank} → {p2_decoder_rank}, room={p2_bootstrap_room})")
+        self._disagg_p2_sender = DataSender(
+            self._disagg_p2_data_mgr, p2_bootstrap_addr, p2_bootstrap_room
+        )
+        logger.info(
+            f"[Disagg] Phase2 sender initialized (rank {p2_transformer_rank} → {p2_decoder_rank}, room={p2_bootstrap_room})"
+        )
 
     def _init_phase2_decoder_receiver(self, config, disagg_cfg):
         """Setup Phase 2 receiver for Decoder role (receive latents from Transformer)."""
@@ -301,11 +331,17 @@ class DisaggMixin:
             data_item_lens=data_lens,
             ib_device=None,
         )
-        self._disagg_p2_data_mgr = DataManager(DisaggregationPhase.PHASE2, DisaggregationMode.DECODE)
+        self._disagg_p2_data_mgr = DataManager(
+            DisaggregationPhase.PHASE2, DisaggregationMode.DECODE
+        )
         self._disagg_p2_data_mgr.init(data_args, p2_bootstrap_room)
-        self._disagg_p2_receiver = DataReceiver(self._disagg_p2_data_mgr, p2_bootstrap_addr, p2_bootstrap_room)
+        self._disagg_p2_receiver = DataReceiver(
+            self._disagg_p2_data_mgr, p2_bootstrap_addr, p2_bootstrap_room
+        )
         self._disagg_p2_receiver.init()
-        logger.info(f"[Disagg] Phase2 receiver initialized (rank {p2_transformer_rank} → {p2_decoder_rank}, room={p2_bootstrap_room})")
+        logger.info(
+            f"[Disagg] Phase2 receiver initialized (rank {p2_transformer_rank} → {p2_decoder_rank}, room={p2_bootstrap_room})"
+        )
 
     # ------------------------------------------------------------------ #
     #  Decentralized RDMA meta queues (PR #964 style)
@@ -325,7 +361,12 @@ class DisaggMixin:
     def _disagg_build_request_config_snapshot(self) -> Dict[str, Any]:
         """Payload for phase1/phase2 ring: per-request fields for workers."""
         disagg_cfg = dict(self.config.get("disagg_config", {}) or {})
-        room = int(self.config.get("data_bootstrap_room", disagg_cfg.get("bootstrap_room", self._disagg_bootstrap_room)))
+        room = int(
+            self.config.get(
+                "data_bootstrap_room",
+                disagg_cfg.get("bootstrap_room", self._disagg_bootstrap_room),
+            )
+        )
         payload: Dict[str, Any] = {
             "data_bootstrap_room": room,
             "task": self.config.get("task"),
@@ -378,14 +419,22 @@ class DisaggMixin:
         phase: str,
     ) -> None:
         host_key = "rdma_phase1_host" if phase == "phase1" else "rdma_phase2_host"
-        port_key = "rdma_phase1_handshake_port" if phase == "phase1" else "rdma_phase2_handshake_port"
+        port_key = (
+            "rdma_phase1_handshake_port"
+            if phase == "phase1"
+            else "rdma_phase2_handshake_port"
+        )
         host = str(disagg_cfg.get(host_key, "127.0.0.1"))
         port = int(disagg_cfg.get(port_key, 5567 if phase == "phase1" else 5568))
         slots = int(disagg_cfg.get("rdma_buffer_slots", 128))
         slot_size = int(disagg_cfg.get("rdma_buffer_slot_size", 4096))
 
-        client_attr = "_disagg_phase1_client" if phase == "phase1" else "_disagg_phase2_client"
-        buf_attr = "_disagg_phase1_queue" if phase == "phase1" else "_disagg_phase2_queue"
+        client_attr = (
+            "_disagg_phase1_client" if phase == "phase1" else "_disagg_phase2_client"
+        )
+        buf_attr = (
+            "_disagg_phase1_queue" if phase == "phase1" else "_disagg_phase2_queue"
+        )
         if getattr(self, buf_attr, None) is not None:
             return
         client: Optional[RDMAClient] = getattr(self, client_attr)
@@ -441,13 +490,18 @@ class DisaggMixin:
             return None
         if not self._disagg_phase1_queue:
             now = time.monotonic()
-            if now - self._disagg_phase1_last_retry_ts < self._disagg_reconnect_cooldown_s:
+            if (
+                now - self._disagg_phase1_last_retry_ts
+                < self._disagg_reconnect_cooldown_s
+            ):
                 return None
             self._disagg_phase1_last_retry_ts = now
             self._ensure_disagg_phase1_queue_consumer(self._disagg_cfg)
             if not self._disagg_phase1_queue:
                 return None
-            logger.info("[Disagg] phase1 queue consumer connected (lazy retry succeeded)")
+            logger.info(
+                "[Disagg] phase1 queue consumer connected (lazy retry succeeded)"
+            )
         try:
             return self._disagg_phase1_queue.consume()
         except Exception:
@@ -460,13 +514,18 @@ class DisaggMixin:
             return None
         if not self._disagg_phase2_queue:
             now = time.monotonic()
-            if now - self._disagg_phase2_last_retry_ts < self._disagg_reconnect_cooldown_s:
+            if (
+                now - self._disagg_phase2_last_retry_ts
+                < self._disagg_reconnect_cooldown_s
+            ):
                 return None
             self._disagg_phase2_last_retry_ts = now
             self._ensure_disagg_phase2_queue_consumer(self._disagg_cfg)
             if not self._disagg_phase2_queue:
                 return None
-            logger.info("[Disagg] phase2 queue consumer connected (lazy retry succeeded)")
+            logger.info(
+                "[Disagg] phase2 queue consumer connected (lazy retry succeeded)"
+            )
         try:
             return self._disagg_phase2_queue.consume()
         except Exception:
@@ -476,7 +535,9 @@ class DisaggMixin:
     def disagg_transformer_prepare_dispatch(self, packet: Dict[str, Any]) -> None:
         """After phase1 consume: init Mooncake P1/P2 and publish phase2 meta for decoder."""
         if not self._disagg_decentralized:
-            raise RuntimeError("disagg_transformer_prepare_dispatch requires decentralized_queue mode")
+            raise RuntimeError(
+                "disagg_transformer_prepare_dispatch requires decentralized_queue mode"
+            )
 
         req = dict(packet.get("request_config") or {})
         enc_addr = str(packet.get("encoder_node_address", "127.0.0.1"))
@@ -485,16 +546,22 @@ class DisaggMixin:
             self.config.update(req)
 
         disagg_cfg = self.config.get("disagg_config", {})
-        room = int(self.config.get("data_bootstrap_room", disagg_cfg.get("bootstrap_room", 0)))
+        room = int(
+            self.config.get("data_bootstrap_room", disagg_cfg.get("bootstrap_room", 0))
+        )
 
         self.disagg_transformer_teardown_session()
 
-        self._disagg_sender_rank = int(disagg_cfg.get("sender_engine_rank", self._disagg_sender_rank))
+        self._disagg_sender_rank = int(
+            disagg_cfg.get("sender_engine_rank", self._disagg_sender_rank)
+        )
         pkt_recv_rank = req.get("disagg_phase1_receiver_engine_rank")
         if pkt_recv_rank is not None:
             self._disagg_receiver_rank = int(pkt_recv_rank)
         else:
-            self._disagg_receiver_rank = int(disagg_cfg.get("receiver_engine_rank", self._disagg_receiver_rank))
+            self._disagg_receiver_rank = int(
+                disagg_cfg.get("receiver_engine_rank", self._disagg_receiver_rank)
+            )
 
         buffer_sizes = _estimate_encoder_buffer_sizes(self.config)
         self._disagg_alloc_buffers(buffer_sizes)
@@ -515,7 +582,9 @@ class DisaggMixin:
         from lightx2v.disagg.utils import estimate_transformer_buffer_sizes
 
         if disagg_cfg.get("decoder_engine_rank") is None:
-            raise RuntimeError("decentralized transformer requires decoder_engine_rank in disagg_config")
+            raise RuntimeError(
+                "decentralized transformer requires decoder_engine_rank in disagg_config"
+            )
 
         p2_transformer_rank = int(self._disagg_receiver_rank)
         p2_decoder_rank = int(disagg_cfg.get("decoder_engine_rank", 2))
@@ -534,12 +603,16 @@ class DisaggMixin:
             ib_device=None,
         )
         self._disagg_p2_data_mgr.init(p2_args, room)
-        self._disagg_p2_sender = DataSender(self._disagg_p2_data_mgr, p2_bootstrap_addr, room)
+        self._disagg_p2_sender = DataSender(
+            self._disagg_p2_data_mgr, p2_bootstrap_addr, room
+        )
 
         if self._disagg_phase2_queue is None:
             self._ensure_disagg_phase2_queue_producer(self._disagg_cfg)
         if self._disagg_phase2_queue is None:
-            raise RuntimeError("phase2 meta queue not connected; check Controller and rdma_phase2_* config")
+            raise RuntimeError(
+                "phase2 meta queue not connected; check Controller and rdma_phase2_* config"
+            )
 
         merged_req = {**self._disagg_build_request_config_snapshot(), **req}
         dc_out = {**dict(disagg_cfg)}
@@ -565,12 +638,18 @@ class DisaggMixin:
             self._disagg_p2_sender = None
             return
         try:
-            if self._disagg_data_mgr is not None and room in self._disagg_data_mgr.data_args:
+            if (
+                self._disagg_data_mgr is not None
+                and room in self._disagg_data_mgr.data_args
+            ):
                 self._disagg_data_mgr.remove(room)
         except Exception:
             logger.exception("[Disagg] transformer phase1 remove failed room=%s", room)
         try:
-            if self._disagg_p2_data_mgr is not None and room in self._disagg_p2_data_mgr.data_args:
+            if (
+                self._disagg_p2_data_mgr is not None
+                and room in self._disagg_p2_data_mgr.data_args
+            ):
                 self._disagg_p2_data_mgr.remove(room)
         except Exception:
             logger.exception("[Disagg] transformer phase2 remove failed room=%s", room)
@@ -583,7 +662,9 @@ class DisaggMixin:
     def disagg_decoder_prepare_dispatch(self, packet: Dict[str, Any]) -> None:
         """After phase2 consume: init Mooncake P2 receiver from transformer address."""
         if not self._disagg_decentralized:
-            raise RuntimeError("disagg_decoder_prepare_dispatch requires decentralized_queue mode")
+            raise RuntimeError(
+                "disagg_decoder_prepare_dispatch requires decentralized_queue mode"
+            )
 
         req = dict(packet.get("request_config") or {})
         trans_addr = str(packet.get("transformer_node_address", "127.0.0.1"))
@@ -592,7 +673,9 @@ class DisaggMixin:
             self.config.update(req)
 
         disagg_cfg = self.config.get("disagg_config", {})
-        room = int(self.config.get("data_bootstrap_room", disagg_cfg.get("bootstrap_room", 0)))
+        room = int(
+            self.config.get("data_bootstrap_room", disagg_cfg.get("bootstrap_room", 0))
+        )
 
         self.disagg_decoder_teardown_session()
 
@@ -614,7 +697,9 @@ class DisaggMixin:
             ib_device=None,
         )
         self._disagg_p2_data_mgr.init(data_args, room)
-        self._disagg_p2_receiver = DataReceiver(self._disagg_p2_data_mgr, trans_addr, room)
+        self._disagg_p2_receiver = DataReceiver(
+            self._disagg_p2_data_mgr, trans_addr, room
+        )
         self._disagg_p2_receiver.init()
         self._disagg_active_decoder_room = room
         logger.info("[Disagg] Decoder dispatch prepared for room=%s", room)
@@ -626,7 +711,10 @@ class DisaggMixin:
             self._disagg_p2_receiver = None
             return
         try:
-            if self._disagg_p2_data_mgr is not None and room in self._disagg_p2_data_mgr.data_args:
+            if (
+                self._disagg_p2_data_mgr is not None
+                and room in self._disagg_p2_data_mgr.data_args
+            ):
                 self._disagg_p2_data_mgr.remove(room)
         except Exception:
             logger.exception("[Disagg] decoder phase2 remove failed room=%s", room)
@@ -636,7 +724,10 @@ class DisaggMixin:
 
     def _disagg_encoder_teardown_room(self, room: int) -> None:
         try:
-            if self._disagg_data_mgr is not None and room in self._disagg_data_mgr.data_args:
+            if (
+                self._disagg_data_mgr is not None
+                and room in self._disagg_data_mgr.data_args
+            ):
                 self._disagg_data_mgr.remove(room)
         except Exception:
             logger.exception("[Disagg] encoder teardown failed room=%s", room)
@@ -648,13 +739,18 @@ class DisaggMixin:
     def _disagg_encoder_setup_room(self, room: int) -> None:
         if self._disagg_active_encoder_room == room and self._disagg_sender is not None:
             return
-        if self._disagg_active_encoder_room is not None and self._disagg_active_encoder_room != room:
+        if (
+            self._disagg_active_encoder_room is not None
+            and self._disagg_active_encoder_room != room
+        ):
             self._disagg_encoder_teardown_room(self._disagg_active_encoder_room)
 
         recv_rank = int(
             self.config.get(
                 "disagg_phase1_receiver_engine_rank",
-                self.config.get("disagg_config", {}).get("receiver_engine_rank", self._disagg_receiver_rank),
+                self.config.get("disagg_config", {}).get(
+                    "receiver_engine_rank", self._disagg_receiver_rank
+                ),
             )
         )
 
@@ -671,7 +767,9 @@ class DisaggMixin:
             ib_device=None,
         )
         self._disagg_data_mgr.init(data_args, room)
-        self._disagg_sender = DataSender(self._disagg_data_mgr, self._disagg_bootstrap_addr, room)
+        self._disagg_sender = DataSender(
+            self._disagg_data_mgr, self._disagg_bootstrap_addr, room
+        )
         self._disagg_active_encoder_room = room
 
     def _disagg_produce_phase1_for_encoder(self) -> None:
@@ -698,10 +796,14 @@ class DisaggMixin:
         disagg_cfg = config.get("disagg_config", {})
 
         if getattr(self, "_disagg_decentralized", False):
-            room = int(config.get("data_bootstrap_room", disagg_cfg.get("bootstrap_room", 0)))
+            room = int(
+                config.get("data_bootstrap_room", disagg_cfg.get("bootstrap_room", 0))
+            )
             self._ensure_disagg_phase1_queue_producer(disagg_cfg)
             if self._disagg_phase1_queue is None:
-                raise RuntimeError("[Disagg] decentralized encoder could not connect phase1 queue")
+                raise RuntimeError(
+                    "[Disagg] decentralized encoder could not connect phase1 queue"
+                )
             _t0 = time.perf_counter()
             self._disagg_encoder_setup_room(room)
             self._disagg_produce_phase1_for_encoder()
@@ -710,8 +812,12 @@ class DisaggMixin:
         image_encoder_output = inputs.get("image_encoder_output")
 
         # Support both Wan2.1 and QwenImage keys
-        context = text_encoder_output.get("context", text_encoder_output.get("prompt_embeds"))
-        context_null = text_encoder_output.get("context_null", text_encoder_output.get("negative_prompt_embeds"))
+        context = text_encoder_output.get(
+            "context", text_encoder_output.get("prompt_embeds")
+        )
+        context_null = text_encoder_output.get(
+            "context_null", text_encoder_output.get("negative_prompt_embeds")
+        )
 
         # In QwenImage I2I, image_info is part of text_encoder_output, we serialize it to meta
         image_info = text_encoder_output.get("image_info", None)
@@ -722,7 +828,11 @@ class DisaggMixin:
                     continue
                 if isinstance(v, torch.Tensor):
                     clean_info[k] = v.tolist()
-                elif isinstance(v, list) and len(v) > 0 and isinstance(v[0], torch.Tensor):
+                elif (
+                    isinstance(v, list)
+                    and len(v) > 0
+                    and isinstance(v[0], torch.Tensor)
+                ):
                     clean_info[k] = [t.tolist() for t in v]
                 else:
                     clean_info[k] = v
@@ -734,10 +844,14 @@ class DisaggMixin:
             if isinstance(image_encoder_output, dict):
                 clip_encoder_out = image_encoder_output.get("clip_encoder_out")
                 vae_encoder_out = image_encoder_output.get("vae_encoder_out")
-            elif isinstance(image_encoder_output, list) and len(image_encoder_output) > 0:
+            elif (
+                isinstance(image_encoder_output, list) and len(image_encoder_output) > 0
+            ):
                 # For QwenImage I2I, it's a list of dicts/tensors
                 item = image_encoder_output[0]
-                vae_encoder_out = item.get("image_latents", item) if isinstance(item, dict) else item
+                vae_encoder_out = (
+                    item.get("image_latents", item) if isinstance(item, dict) else item
+                )
 
         text_len = int(config.get("text_len", 512))
         text_dim = int(config.get("text_encoder_dim", 4096))
@@ -745,7 +859,11 @@ class DisaggMixin:
         z_dim = int(config.get("vae_z_dim", 16))
 
         vae_stride = config.get("vae_stride", (4, 8, 8))
-        stride_t, stride_h, stride_w = int(vae_stride[0]), int(vae_stride[1]), int(vae_stride[2])
+        stride_t, stride_h, stride_w = (
+            int(vae_stride[0]),
+            int(vae_stride[1]),
+            int(vae_stride[2]),
+        )
         target_video_length = int(config.get("target_video_length", 81))
         target_height = int(config.get("target_height", 480))
         target_width = int(config.get("target_width", 832))
@@ -762,7 +880,14 @@ class DisaggMixin:
 
         # context
         context_flat = context.reshape(-1)
-        context_buf = _buffer_view(self._disagg_rdma_buffers[buffer_index], GET_DTYPE(), (self._disagg_rdma_buffers[buffer_index].numel() // torch.tensor([], dtype=GET_DTYPE()).element_size(),))
+        context_buf = _buffer_view(
+            self._disagg_rdma_buffers[buffer_index],
+            GET_DTYPE(),
+            (
+                self._disagg_rdma_buffers[buffer_index].numel()
+                // torch.tensor([], dtype=GET_DTYPE()).element_size(),
+            ),
+        )
         context_buf[: context_flat.numel()].copy_(context_flat)
         buffer_index += 1
 
@@ -770,20 +895,31 @@ class DisaggMixin:
         if enable_cfg and context_null is not None:
             context_null_flat = context_null.reshape(-1)
             context_null_buf = _buffer_view(
-                self._disagg_rdma_buffers[buffer_index], GET_DTYPE(), (self._disagg_rdma_buffers[buffer_index].numel() // torch.tensor([], dtype=GET_DTYPE()).element_size(),)
+                self._disagg_rdma_buffers[buffer_index],
+                GET_DTYPE(),
+                (
+                    self._disagg_rdma_buffers[buffer_index].numel()
+                    // torch.tensor([], dtype=GET_DTYPE()).element_size(),
+                ),
             )
             context_null_buf[: context_null_flat.numel()].copy_(context_null_flat)
             buffer_index += 1
-        elif enable_cfg:  # if enable_cfg is True but context_null is None (e.g. QwenImage empty neg_prompt)
+        elif (
+            enable_cfg
+        ):  # if enable_cfg is True but context_null is None (e.g. QwenImage empty neg_prompt)
             buffer_index += 1
 
         # clip + vae (for i2v-like tasks)
         if task in ("i2v", "flf2v", "animate", "s2v", "rs2v", "i2i"):
             if use_image_encoder:
-                clip_buf = _buffer_view(self._disagg_rdma_buffers[buffer_index], GET_DTYPE(), (clip_dim,))
+                clip_buf = _buffer_view(
+                    self._disagg_rdma_buffers[buffer_index], GET_DTYPE(), (clip_dim,)
+                )
                 if clip_encoder_out is not None:
                     clip_encoder_out_flat = clip_encoder_out.reshape(-1)
-                    clip_buf[: clip_encoder_out_flat.numel()].copy_(clip_encoder_out_flat)
+                    clip_buf[: clip_encoder_out_flat.numel()].copy_(
+                        clip_encoder_out_flat
+                    )
                 else:
                     clip_buf.zero_()
                 buffer_index += 1
@@ -801,7 +937,9 @@ class DisaggMixin:
 
         # latent_shape
         latent_tensor = torch.tensor(latent_shape, device=AI_DEVICE, dtype=torch.int64)
-        latent_buf = _buffer_view(self._disagg_rdma_buffers[buffer_index], torch.int64, (10,))
+        latent_buf = _buffer_view(
+            self._disagg_rdma_buffers[buffer_index], torch.int64, (10,)
+        )
         latent_buf.zero_()
         if latent_tensor.numel() > 0:
             latent_buf[: latent_tensor.numel()].copy_(latent_tensor)
@@ -813,11 +951,17 @@ class DisaggMixin:
             "task": task,
             "context_shape": list(context.shape),
             "context_hash": _sha256_tensor(context),
-            "context_null_shape": list(context_null.shape) if context_null is not None else None,
+            "context_null_shape": (
+                list(context_null.shape) if context_null is not None else None
+            ),
             "context_null_hash": _sha256_tensor(context_null),
-            "clip_shape": list(clip_encoder_out.shape) if clip_encoder_out is not None else None,
+            "clip_shape": (
+                list(clip_encoder_out.shape) if clip_encoder_out is not None else None
+            ),
             "clip_hash": _sha256_tensor(clip_encoder_out),
-            "vae_shape": list(vae_encoder_out.shape) if vae_encoder_out is not None else None,
+            "vae_shape": (
+                list(vae_encoder_out.shape) if vae_encoder_out is not None else None
+            ),
             "vae_hash": _sha256_tensor(vae_encoder_out),
             "latent_shape": list(latent_shape),
             "latent_hash": _sha256_tensor(latent_tensor),
@@ -833,12 +977,20 @@ class DisaggMixin:
                     return float(obj)
                 return super().default(obj)
 
-        meta_bytes = json.dumps(meta, cls=_NativeEncoder, ensure_ascii=True).encode("utf-8")
-        meta_buf = _buffer_view(self._disagg_rdma_buffers[buffer_index], torch.uint8, (self._disagg_rdma_buffers[buffer_index].numel(),))
+        meta_bytes = json.dumps(meta, cls=_NativeEncoder, ensure_ascii=True).encode(
+            "utf-8"
+        )
+        meta_buf = _buffer_view(
+            self._disagg_rdma_buffers[buffer_index],
+            torch.uint8,
+            (self._disagg_rdma_buffers[buffer_index].numel(),),
+        )
         if len(meta_bytes) > meta_buf.numel():
             raise ValueError("metadata buffer too small for hash/shape payload")
         meta_buf.zero_()
-        meta_buf[: len(meta_bytes)].copy_(torch.from_numpy(np.frombuffer(meta_bytes, dtype=np.uint8).copy()))
+        meta_buf[: len(meta_bytes)].copy_(
+            torch.from_numpy(np.frombuffer(meta_bytes, dtype=np.uint8).copy())
+        )
 
         # Send
         _t_serialize = time.perf_counter()
@@ -853,13 +1005,22 @@ class DisaggMixin:
         while True:
             status = self._disagg_sender.poll()
             if status == DataPoll.Success:
-                _prof_log("send_enc/mooncake_transfer", time.perf_counter() - _t_mooncake_start)
+                _prof_log(
+                    "send_enc/mooncake_transfer",
+                    time.perf_counter() - _t_mooncake_start,
+                )
                 logger.info("Disagg: encoder outputs sent successfully.")
                 break
             time.sleep(0.01)
 
         if getattr(self, "_disagg_decentralized", False):
-            self._disagg_encoder_teardown_room(int(config.get("data_bootstrap_room", disagg_cfg.get("bootstrap_room", 0))))
+            self._disagg_encoder_teardown_room(
+                int(
+                    config.get(
+                        "data_bootstrap_room", disagg_cfg.get("bootstrap_room", 0)
+                    )
+                )
+            )
         _prof_log("send_enc/total", time.perf_counter() - _t_send_start)
 
     # ------------------------------------------------------------------ #
@@ -875,7 +1036,9 @@ class DisaggMixin:
         while True:
             status = self._disagg_receiver.poll()
             if status == DataPoll.Success:
-                _prof_log("recv_enc/mooncake_poll_wait", time.perf_counter() - _t_recv_start)
+                _prof_log(
+                    "recv_enc/mooncake_poll_wait", time.perf_counter() - _t_recv_start
+                )
                 logger.info("Disagg: encoder outputs received successfully.")
                 break
             time.sleep(0.01)
@@ -916,7 +1079,14 @@ class DisaggMixin:
 
         # Parse metadata first (last buffer)
         meta_buf = received_buffers[-1]
-        meta_raw = _buffer_view(meta_buf, torch.uint8, (meta_buf.numel(),)).detach().contiguous().cpu().numpy().tobytes()
+        meta_raw = (
+            _buffer_view(meta_buf, torch.uint8, (meta_buf.numel(),))
+            .detach()
+            .contiguous()
+            .cpu()
+            .numpy()
+            .tobytes()
+        )
         meta_str = meta_raw.split(b"\x00", 1)[0].decode("utf-8") if meta_raw else ""
         meta = json.loads(meta_str) if meta_str else {}
 
@@ -924,8 +1094,20 @@ class DisaggMixin:
 
         # context
         context_shape = tuple(meta.get("context_shape") or (1, text_len, text_dim))
-        context_buf_flat = _buffer_view(received_buffers[buffer_index], GET_DTYPE(), (received_buffers[buffer_index].numel() // torch.tensor([], dtype=GET_DTYPE()).element_size(),))
-        context = context_buf_flat[: math.prod(context_shape)].view(context_shape).to(AI_DEVICE).clone()
+        context_buf_flat = _buffer_view(
+            received_buffers[buffer_index],
+            GET_DTYPE(),
+            (
+                received_buffers[buffer_index].numel()
+                // torch.tensor([], dtype=GET_DTYPE()).element_size(),
+            ),
+        )
+        context = (
+            context_buf_flat[: math.prod(context_shape)]
+            .view(context_shape)
+            .to(AI_DEVICE)
+            .clone()
+        )
         buffer_index += 1
 
         # context_null
@@ -934,8 +1116,20 @@ class DisaggMixin:
             context_null_shape = meta.get("context_null_shape")
             if context_null_shape is not None:
                 context_null_shape = tuple(context_null_shape)
-                context_null_buf_flat = _buffer_view(received_buffers[buffer_index], GET_DTYPE(), (received_buffers[buffer_index].numel() // torch.tensor([], dtype=GET_DTYPE()).element_size(),))
-                context_null = context_null_buf_flat[: math.prod(context_null_shape)].view(context_null_shape).to(AI_DEVICE).clone()
+                context_null_buf_flat = _buffer_view(
+                    received_buffers[buffer_index],
+                    GET_DTYPE(),
+                    (
+                        received_buffers[buffer_index].numel()
+                        // torch.tensor([], dtype=GET_DTYPE()).element_size(),
+                    ),
+                )
+                context_null = (
+                    context_null_buf_flat[: math.prod(context_null_shape)]
+                    .view(context_null_shape)
+                    .to(AI_DEVICE)
+                    .clone()
+                )
             buffer_index += 1
 
         # Restore appropriately depending on model
@@ -958,12 +1152,24 @@ class DisaggMixin:
         if task in ("i2v", "flf2v", "animate", "s2v", "rs2v", "i2i"):
             if use_image_encoder:
                 clip_shape = tuple(meta.get("clip_shape") or (clip_dim,))
-                clip_encoder_out = _buffer_view(received_buffers[buffer_index], GET_DTYPE(), clip_shape).to(AI_DEVICE).clone()
+                clip_encoder_out = (
+                    _buffer_view(
+                        received_buffers[buffer_index], GET_DTYPE(), clip_shape
+                    )
+                    .to(AI_DEVICE)
+                    .clone()
+                )
                 buffer_index += 1
 
             # vae_encoder_out
-            vae_shape = tuple(meta.get("vae_shape") or (z_dim + 4, t_prime, h_prime, w_prime))
-            vae_encoder_out_padded = _buffer_view(received_buffers[buffer_index], GET_DTYPE(), vae_shape).to(AI_DEVICE).clone()
+            vae_shape = tuple(
+                meta.get("vae_shape") or (z_dim + 4, t_prime, h_prime, w_prime)
+            )
+            vae_encoder_out_padded = (
+                _buffer_view(received_buffers[buffer_index], GET_DTYPE(), vae_shape)
+                .to(AI_DEVICE)
+                .clone()
+            )
             buffer_index += 1
 
             # latent_shape
@@ -972,25 +1178,42 @@ class DisaggMixin:
             if meta and meta.get("latent_shape") is not None:
                 latent_shape = meta.get("latent_shape")
             else:
-                latent_shape = _buffer_view(latent_shape_buf, torch.int64, (10,)).tolist()
+                latent_shape = _buffer_view(
+                    latent_shape_buf, torch.int64, (10,)
+                ).tolist()
 
             # Trim vae to actual latent dimensions if not i2i
             if task == "i2i":
                 vae_encoder_out = vae_encoder_out_padded
             else:
                 if vae_encoder_out_padded.ndim == 3:
-                    valid_c, valid_h, valid_w = latent_shape[2], latent_shape[3], latent_shape[4]
-                    vae_encoder_out = vae_encoder_out_padded[:valid_c, :valid_h, :valid_w].clone()
+                    valid_c, valid_h, valid_w = (
+                        latent_shape[2],
+                        latent_shape[3],
+                        latent_shape[4],
+                    )
+                    vae_encoder_out = vae_encoder_out_padded[
+                        :valid_c, :valid_h, :valid_w
+                    ].clone()
                 elif vae_encoder_out_padded.ndim == 4:
-                    valid_t, valid_h, valid_w = latent_shape[1], latent_shape[2], latent_shape[3]
-                    vae_encoder_out = vae_encoder_out_padded[:, :valid_t, :valid_h, :valid_w].clone()
+                    valid_t, valid_h, valid_w = (
+                        latent_shape[1],
+                        latent_shape[2],
+                        latent_shape[3],
+                    )
+                    vae_encoder_out = vae_encoder_out_padded[
+                        :, :valid_t, :valid_h, :valid_w
+                    ].clone()
                 else:
                     vae_encoder_out = vae_encoder_out_padded
 
             if task == "i2i":
                 image_encoder_output = [{"image_latents": vae_encoder_out}]
             else:
-                image_encoder_output = {"clip_encoder_out": clip_encoder_out, "vae_encoder_out": vae_encoder_out}
+                image_encoder_output = {
+                    "clip_encoder_out": clip_encoder_out,
+                    "vae_encoder_out": vae_encoder_out,
+                }
         else:
             # T2V — only latent_shape
             latent_shape_buf = received_buffers[buffer_index]
@@ -998,11 +1221,22 @@ class DisaggMixin:
             if meta and meta.get("latent_shape") is not None:
                 latent_shape = meta.get("latent_shape")
             else:
-                latent_shape = _buffer_view(latent_shape_buf, torch.int64, (10,)).tolist()
+                latent_shape = _buffer_view(
+                    latent_shape_buf, torch.int64, (10,)
+                ).tolist()
 
         # Integrity checks
         if meta:
-            self._disagg_verify_integrity(meta, context, context_null, clip_encoder_out, vae_encoder_out, latent_shape, enable_cfg, task)
+            self._disagg_verify_integrity(
+                meta,
+                context,
+                context_null,
+                clip_encoder_out,
+                vae_encoder_out,
+                latent_shape,
+                enable_cfg,
+                task,
+            )
 
         _prof_log("recv_enc/deserialize_total", time.perf_counter() - _t_recv_start)
 
@@ -1016,7 +1250,17 @@ class DisaggMixin:
     #  Integrity verification
     # ------------------------------------------------------------------ #
 
-    def _disagg_verify_integrity(self, meta, context, context_null, clip_encoder_out, vae_encoder_out, latent_shape, enable_cfg, task):
+    def _disagg_verify_integrity(
+        self,
+        meta,
+        context,
+        context_null,
+        clip_encoder_out,
+        vae_encoder_out,
+        latent_shape,
+        enable_cfg,
+        task,
+    ):
         """Verify SHA256 hashes of transferred tensors."""
         if meta.get("context_hash") is not None:
             if _sha256_tensor(context) != meta["context_hash"]:
@@ -1032,13 +1276,21 @@ class DisaggMixin:
                     raise ValueError("Disagg: clip hash mismatch")
             if meta.get("vae_hash") is not None and vae_encoder_out is not None:
                 if _sha256_tensor(vae_encoder_out) != meta["vae_hash"]:
-                    logger.error(f"[Disagg] VAE actual shape: {vae_encoder_out.shape if vae_encoder_out is not None else None}")
-                    logger.error(f"[Disagg] VAE expected shape: {meta.get('vae_shape')}")
-                    logger.error(f"[Disagg] VAE expected hash: {meta.get('vae_hash')} vs actual res: {_sha256_tensor(vae_encoder_out)}")
+                    logger.error(
+                        f"[Disagg] VAE actual shape: {vae_encoder_out.shape if vae_encoder_out is not None else None}"
+                    )
+                    logger.error(
+                        f"[Disagg] VAE expected shape: {meta.get('vae_shape')}"
+                    )
+                    logger.error(
+                        f"[Disagg] VAE expected hash: {meta.get('vae_hash')} vs actual res: {_sha256_tensor(vae_encoder_out)}"
+                    )
                     raise ValueError("Disagg: vae hash mismatch")
 
         if meta.get("latent_hash") is not None:
-            latent_tensor = torch.tensor(latent_shape, device=AI_DEVICE, dtype=torch.int64)
+            latent_tensor = torch.tensor(
+                latent_shape, device=AI_DEVICE, dtype=torch.int64
+            )
             if _sha256_tensor(latent_tensor) != meta["latent_hash"]:
                 raise ValueError("Disagg: latent_shape hash mismatch")
 
@@ -1052,18 +1304,26 @@ class DisaggMixin:
         """Serialize DiT latents into Phase 2 RDMA buffer and send via Mooncake."""
         _t_p2_send_start = time.perf_counter()
         if self._disagg_p2_sender is None:
-            raise RuntimeError("[Disagg] Phase2 sender is not initialized. Check decoder_engine_rank in disagg_config.")
+            raise RuntimeError(
+                "[Disagg] Phase2 sender is not initialized. Check decoder_engine_rank in disagg_config."
+            )
         if len(self._disagg_p2_rdma_buffers) < 2:
-            raise RuntimeError("[Disagg] Phase2 RDMA buffers require [latents, meta] entries.")
+            raise RuntimeError(
+                "[Disagg] Phase2 RDMA buffers require [latents, meta] entries."
+            )
 
         latents_to_send = latents.detach().to(GET_DTYPE()).contiguous()
         latents_nbytes = latents_to_send.numel() * latents_to_send.element_size()
         latents_buf = self._disagg_p2_rdma_buffers[0]
         if latents_nbytes > latents_buf.numel():
-            raise ValueError(f"[Disagg] Latents buffer too small: need={latents_nbytes}, capacity={latents_buf.numel()}")
+            raise ValueError(
+                f"[Disagg] Latents buffer too small: need={latents_nbytes}, capacity={latents_buf.numel()}"
+            )
 
         latents_buf.zero_()
-        latents_view = _buffer_view(latents_buf, latents_to_send.dtype, tuple(latents_to_send.shape))
+        latents_view = _buffer_view(
+            latents_buf, latents_to_send.dtype, tuple(latents_to_send.shape)
+        )
         latents_view.copy_(latents_to_send)
 
         import numpy as _np
@@ -1083,21 +1343,31 @@ class DisaggMixin:
         meta_buf = self._disagg_p2_rdma_buffers[1]
         meta_view = _buffer_view(meta_buf, torch.uint8, (meta_buf.numel(),))
         if len(meta_bytes) > meta_view.numel():
-            raise ValueError("[Disagg] Phase2 metadata buffer too small for latents meta payload")
+            raise ValueError(
+                "[Disagg] Phase2 metadata buffer too small for latents meta payload"
+            )
         meta_view.zero_()
-        meta_view[: len(meta_bytes)].copy_(torch.from_numpy(_np.frombuffer(meta_bytes, dtype=_np.uint8).copy()))
+        meta_view[: len(meta_bytes)].copy_(
+            torch.from_numpy(_np.frombuffer(meta_bytes, dtype=_np.uint8).copy())
+        )
 
         torch.cuda.synchronize()
-        _prof_log("send_trans/serialize_buffers", time.perf_counter() - _t_p2_send_start)
+        _prof_log(
+            "send_trans/serialize_buffers", time.perf_counter() - _t_p2_send_start
+        )
         buffer_ptrs = [buf.data_ptr() for buf in self._disagg_p2_rdma_buffers]
         _t_p2_mooncake = time.perf_counter()
         self._disagg_p2_sender.send(buffer_ptrs)
         while True:
             status = self._disagg_p2_sender.poll()
             if status == DataPoll.Success:
-                _prof_log("send_trans/mooncake_transfer", time.perf_counter() - _t_p2_mooncake)
+                _prof_log(
+                    "send_trans/mooncake_transfer", time.perf_counter() - _t_p2_mooncake
+                )
                 _prof_log("send_trans/total", time.perf_counter() - _t_p2_send_start)
-                logger.info("[Disagg] Transformer latents sent to Decoder successfully.")
+                logger.info(
+                    "[Disagg] Transformer latents sent to Decoder successfully."
+                )
                 break
             time.sleep(0.01)
 
@@ -1111,20 +1381,29 @@ class DisaggMixin:
         if self._disagg_p2_receiver is None:
             raise RuntimeError("[Disagg] Phase2 receiver is not initialized.")
         if len(self._disagg_p2_rdma_buffers) < 2:
-            raise RuntimeError("[Disagg] Phase2 RDMA buffers require [latents, meta] entries.")
+            raise RuntimeError(
+                "[Disagg] Phase2 RDMA buffers require [latents, meta] entries."
+            )
 
         while True:
             status = self._disagg_p2_receiver.poll()
             if status == DataPoll.Success:
-                _prof_log("recv_trans/mooncake_poll_wait", time.perf_counter() - _t_p2_recv_start)
-                logger.info("[Disagg] Decoder received latents from Transformer successfully.")
+                _prof_log(
+                    "recv_trans/mooncake_poll_wait",
+                    time.perf_counter() - _t_p2_recv_start,
+                )
+                logger.info(
+                    "[Disagg] Decoder received latents from Transformer successfully."
+                )
                 break
             time.sleep(0.01)
 
         # Immediately snapshot all Phase2 RDMA destination buffers after poll() returns.
         # Without this, a concurrent Transformer send for the next request can overwrite
         # these shared buffers before we finish reading, causing hash mismatches.
-        received_p2_buffers = [buf.detach().clone() for buf in self._disagg_p2_rdma_buffers]
+        received_p2_buffers = [
+            buf.detach().clone() for buf in self._disagg_p2_rdma_buffers
+        ]
 
         # Re-register for the next request: resets request_status[room] = WaitingForInput
         # and notifies the Transformer sender to accept the next Phase 2 transfer.
@@ -1134,15 +1413,26 @@ class DisaggMixin:
             self._disagg_p2_receiver.init()
 
         meta_buf = received_p2_buffers[1]
-        meta_raw = _buffer_view(meta_buf, torch.uint8, (meta_buf.numel(),)).detach().contiguous().cpu().numpy().tobytes()
+        meta_raw = (
+            _buffer_view(meta_buf, torch.uint8, (meta_buf.numel(),))
+            .detach()
+            .contiguous()
+            .cpu()
+            .numpy()
+            .tobytes()
+        )
         meta_str = meta_raw.split(b"\x00", 1)[0].decode("utf-8") if meta_raw else ""
         if not meta_str:
-            raise ValueError("[Disagg] Missing latents metadata from transformer (Phase 2)")
+            raise ValueError(
+                "[Disagg] Missing latents metadata from transformer (Phase 2)"
+            )
         meta = json.loads(meta_str)
 
         latents_shape_val = meta.get("latents_shape")
         if not isinstance(latents_shape_val, list) or len(latents_shape_val) < 1:
-            raise ValueError(f"[Disagg] Invalid latents_shape in Phase 2 metadata: {latents_shape_val}")
+            raise ValueError(
+                f"[Disagg] Invalid latents_shape in Phase 2 metadata: {latents_shape_val}"
+            )
         latent_shape = tuple(int(v) for v in latents_shape_val)
 
         dtype_map = {
@@ -1153,15 +1443,23 @@ class DisaggMixin:
         latents_dtype = dtype_map.get(meta.get("latents_dtype"), GET_DTYPE())
 
         latents = _buffer_view(received_p2_buffers[0], latents_dtype, latent_shape)
-        if meta.get("latents_hash") is not None and _sha256_tensor(latents) != meta.get("latents_hash"):
-            raise ValueError("[Disagg] Latents hash mismatch between transformer and decoder")
+        if meta.get("latents_hash") is not None and _sha256_tensor(latents) != meta.get(
+            "latents_hash"
+        ):
+            raise ValueError(
+                "[Disagg] Latents hash mismatch between transformer and decoder"
+            )
         latents = latents.to(AI_DEVICE).contiguous()
-        logger.info(f"[Disagg] Phase2 latents restored: shape={latent_shape}, dtype={latents_dtype}")
+        logger.info(
+            f"[Disagg] Phase2 latents restored: shape={latent_shape}, dtype={latents_dtype}"
+        )
         # Store the Phase 2 metadata so the caller (e.g. QwenImageRunner decode mode) can
         # access pixel-space dimensions (auto_height/auto_width) that are not recoverable
         # from the packed latent tensor shape alone.
         self._p2_receive_meta = meta
-        _prof_log("recv_trans/deserialize_total", time.perf_counter() - _t_p2_recv_start)
+        _prof_log(
+            "recv_trans/deserialize_total", time.perf_counter() - _t_p2_recv_start
+        )
         return latents
 
     # ------------------------------------------------------------------ #

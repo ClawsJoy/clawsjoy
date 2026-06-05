@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import inspect
 import json
 import math
@@ -7,12 +6,15 @@ from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import torch
-from diffusers.schedulers.scheduling_flow_match_euler_discrete import FlowMatchEulerDiscreteScheduler
-from torch import nn
-
+from diffusers.schedulers.scheduling_flow_match_euler_discrete import (
+    FlowMatchEulerDiscreteScheduler,
+)
 from lightx2v.models.schedulers.scheduler import BaseScheduler
 from lightx2v.utils.envs import GET_DTYPE
 from lightx2v_platform.base.global_var import AI_DEVICE
+from torch import nn
+
+from lib.smart_config import smart_config
 
 
 def calculate_shift(
@@ -41,16 +43,24 @@ def retrieve_timesteps(
     if timesteps is not None and sigmas is not None:
         raise ValueError("Only one of `timesteps` or `sigmas` can be passed.")
     if timesteps is not None:
-        accepts_timesteps = "timesteps" in set(inspect.signature(scheduler.set_timesteps).parameters.keys())
+        accepts_timesteps = "timesteps" in set(
+            inspect.signature(scheduler.set_timesteps).parameters.keys()
+        )
         if not accepts_timesteps:
-            raise ValueError(f"Scheduler {scheduler.__class__} does not support custom timesteps.")
+            raise ValueError(
+                f"Scheduler {scheduler.__class__} does not support custom timesteps."
+            )
         scheduler.set_timesteps(timesteps=timesteps, device=device, **kwargs)
         timesteps = scheduler.timesteps
         num_inference_steps = len(timesteps)
     elif sigmas is not None:
-        accept_sigmas = "sigmas" in set(inspect.signature(scheduler.set_timesteps).parameters.keys())
+        accept_sigmas = "sigmas" in set(
+            inspect.signature(scheduler.set_timesteps).parameters.keys()
+        )
         if not accept_sigmas:
-            raise ValueError(f"Scheduler {scheduler.__class__} does not support custom sigmas.")
+            raise ValueError(
+                f"Scheduler {scheduler.__class__} does not support custom sigmas."
+            )
         scheduler.set_timesteps(sigmas=sigmas, device=device, **kwargs)
         timesteps = scheduler.timesteps
         num_inference_steps = len(timesteps)
@@ -77,21 +87,38 @@ def randn_tensor(
     device = device or torch.device("cpu")
 
     if generator is not None:
-        gen_device_type = generator.device.type if not isinstance(generator, list) else generator[0].device.type
+        gen_device_type = (
+            generator.device.type
+            if not isinstance(generator, list)
+            else generator[0].device.type
+        )
         if gen_device_type != device.type and gen_device_type == "cpu":
             rand_device = "cpu"
         elif gen_device_type != device.type and gen_device_type == "cuda":
-            raise ValueError(f"Cannot generate a {device} tensor from a generator of type {gen_device_type}.")
+            raise ValueError(
+                f"Cannot generate a {device} tensor from a generator of type {gen_device_type}."
+            )
 
     if isinstance(generator, list) and len(generator) == 1:
         generator = generator[0]
 
     if isinstance(generator, list):
         shape = (1,) + shape[1:]
-        latents = [torch.randn(shape, generator=generator[i], device=rand_device, dtype=dtype, layout=layout) for i in range(batch_size)]
+        latents = [
+            torch.randn(
+                shape,
+                generator=generator[i],
+                device=rand_device,
+                dtype=dtype,
+                layout=layout,
+            )
+            for i in range(batch_size)
+        ]
         latents = torch.cat(latents, dim=0).to(device)
     else:
-        latents = torch.randn(shape, generator=generator, device=rand_device, dtype=dtype, layout=layout).to(device)
+        latents = torch.randn(
+            shape, generator=generator, device=rand_device, dtype=dtype, layout=layout
+        ).to(device)
 
     return latents
 
@@ -108,7 +135,9 @@ def get_timestep_embedding(
     assert len(timesteps.shape) == 1, "Timesteps should be a 1d-array"
 
     half_dim = embedding_dim // 2
-    exponent = -math.log(max_period) * torch.arange(start=0, end=half_dim, dtype=torch.float32, device=timesteps.device)
+    exponent = -math.log(max_period) * torch.arange(
+        start=0, end=half_dim, dtype=torch.float32, device=timesteps.device
+    )
     exponent = exponent / (half_dim - downscale_freq_shift)
 
     emb = torch.exp(exponent)
@@ -124,7 +153,9 @@ def get_timestep_embedding(
     return emb
 
 
-def prepare_pos_ids(modality_id=0, type="text", start=(0, 0), num_token=None, height=None, width=None):
+def prepare_pos_ids(
+    modality_id=0, type="text", start=(0, 0), num_token=None, height=None, width=None
+):
     """Prepare position IDs for LongCat.
 
     Args:
@@ -155,7 +186,14 @@ def prepare_pos_ids(modality_id=0, type="text", start=(0, 0), num_token=None, he
     return pos_ids
 
 
-def get_1d_rotary_pos_embed(dim, pos, theta=10000, repeat_interleave_real=True, use_real=True, freqs_dtype=torch.float64):
+def get_1d_rotary_pos_embed(
+    dim,
+    pos,
+    theta=10000,
+    repeat_interleave_real=True,
+    use_real=True,
+    freqs_dtype=torch.float64,
+):
     """Get 1D rotary position embeddings.
 
     Args:
@@ -169,13 +207,23 @@ def get_1d_rotary_pos_embed(dim, pos, theta=10000, repeat_interleave_real=True, 
     Returns:
         (cos, sin) tuple if use_real else complex freqs
     """
-    freqs = 1.0 / (theta ** (torch.arange(0, dim, 2, dtype=freqs_dtype, device=pos.device) / dim))
+    freqs = 1.0 / (
+        theta ** (torch.arange(0, dim, 2, dtype=freqs_dtype, device=pos.device) / dim)
+    )
     freqs = torch.outer(pos, freqs)  # Don't cast pos to freqs_dtype - match diffusers
 
     if use_real:
         # Match diffusers: always return float32
-        cos = freqs.cos().repeat_interleave(2, dim=-1).float() if repeat_interleave_real else torch.cat([freqs.cos(), freqs.cos()], dim=-1).float()
-        sin = freqs.sin().repeat_interleave(2, dim=-1).float() if repeat_interleave_real else torch.cat([freqs.sin(), freqs.sin()], dim=-1).float()
+        cos = (
+            freqs.cos().repeat_interleave(2, dim=-1).float()
+            if repeat_interleave_real
+            else torch.cat([freqs.cos(), freqs.cos()], dim=-1).float()
+        )
+        sin = (
+            freqs.sin().repeat_interleave(2, dim=-1).float()
+            if repeat_interleave_real
+            else torch.cat([freqs.sin(), freqs.sin()], dim=-1).float()
+        )
         return cos, sin
     else:
         freqs = torch.polar(torch.ones_like(freqs), freqs)
@@ -241,10 +289,15 @@ class LongCatImageScheduler(BaseScheduler):
     def __init__(self, config):
         super().__init__(config)
         self.config = config
-        scheduler_path = config.get("scheduler_path", os.path.join(config["model_path"], "scheduler"))
+        scheduler_path = config.get(
+            "scheduler_path", os.path.join(config["model_path"], "scheduler")
+        )
         self.scheduler = FlowMatchEulerDiscreteScheduler.from_pretrained(scheduler_path)
 
-        with open(os.path.join(config["model_path"], "scheduler", "scheduler_config.json"), "r") as f:
+        with open(
+            os.path.join(config["model_path"], "scheduler", "scheduler_config.json"),
+            "r",
+        ) as f:
             self.scheduler_config = json.load(f)
 
         self.dtype = GET_DTYPE()
@@ -260,11 +313,15 @@ class LongCatImageScheduler(BaseScheduler):
         self.vae_scale_factor = config.get("vae_scale_factor", 8)
         self.patch_size = config.get("patch_size", 1)
         # Use transformer_in_channels to avoid conflict with VAE's in_channels
-        self.in_channels = config.get("transformer_in_channels", config.get("in_channels", 64))
+        self.in_channels = config.get(
+            "transformer_in_channels", config.get("in_channels", 64)
+        )
 
         # Sequence parallel
         if self.config.get("seq_parallel", False):
-            self.seq_p_group = self.config.get("device_mesh").get_group(mesh_dim="seq_p")
+            self.seq_p_group = self.config.get("device_mesh").get_group(
+                mesh_dim="seq_p"
+            )
         else:
             self.seq_p_group = None
 
@@ -280,7 +337,9 @@ class LongCatImageScheduler(BaseScheduler):
         # -> [B, H//2, W//2, C, 2, 2]
         latents = latents.permute(0, 2, 4, 1, 3, 5)
         # -> [B, (H//2)*(W//2), C*4]
-        latents = latents.reshape(batch_size, (height // 2) * (width // 2), num_channels * 4)
+        latents = latents.reshape(
+            batch_size, (height // 2) * (width // 2), num_channels * 4
+        )
         return latents
 
     def prepare_latents(self, input_info):
@@ -295,10 +354,14 @@ class LongCatImageScheduler(BaseScheduler):
 
         # Generate random latents with VAE channel count (16)
         latent_shape = (1, vae_latent_channels, latent_height, latent_width)
-        latents = randn_tensor(latent_shape, generator=self.generator, device=AI_DEVICE, dtype=self.dtype)
+        latents = randn_tensor(
+            latent_shape, generator=self.generator, device=AI_DEVICE, dtype=self.dtype
+        )
 
         # Pack latents for transformer: [B, 16, H, W] -> [B, (H//2)*(W//2), 64]
-        latents = self._pack_latents(latents, 1, vae_latent_channels, latent_height, latent_width)
+        latents = self._pack_latents(
+            latents, 1, vae_latent_channels, latent_height, latent_width
+        )
 
         self.latents = latents
         # Store packed spatial dimensions (half of latent dims due to 2x2 packing)
@@ -308,7 +371,9 @@ class LongCatImageScheduler(BaseScheduler):
 
     def set_timesteps(self):
         """Set timesteps for the scheduler."""
-        sigmas = np.linspace(1.0, 1 / self.config["infer_steps"], self.config["infer_steps"])
+        sigmas = np.linspace(
+            1.0, 1 / self.config["infer_steps"], self.config["infer_steps"]
+        )
         image_seq_len = self.latents.shape[1]
 
         mu = calculate_shift(
@@ -331,7 +396,9 @@ class LongCatImageScheduler(BaseScheduler):
         self.timesteps = timesteps
         self.infer_steps = num_inference_steps
 
-        num_warmup_steps = max(len(timesteps) - num_inference_steps * self.scheduler.order, 0)
+        num_warmup_steps = max(
+            len(timesteps) - num_inference_steps * self.scheduler.order, 0
+        )
         self._num_timesteps = len(timesteps)
         self.num_warmup_steps = num_warmup_steps
 
@@ -348,8 +415,16 @@ class LongCatImageScheduler(BaseScheduler):
         txt_seq_len = input_info.txt_seq_lens[0]
         tokenizer_max_length = txt_seq_len  # 512
 
-        txt_ids = prepare_pos_ids(modality_id=0, type="text", start=(0, 0), num_token=txt_seq_len)
-        img_ids = prepare_pos_ids(modality_id=1, type="image", start=(tokenizer_max_length, tokenizer_max_length), height=self.latent_height, width=self.latent_width)
+        txt_ids = prepare_pos_ids(
+            modality_id=0, type="text", start=(0, 0), num_token=txt_seq_len
+        )
+        img_ids = prepare_pos_ids(
+            modality_id=1,
+            type="image",
+            start=(tokenizer_max_length, tokenizer_max_length),
+            height=self.latent_height,
+            width=self.latent_width,
+        )
 
         # Concatenate [txt, img] position IDs
         # Note: pos_embed expects float32 ids for accurate rope computation
@@ -368,15 +443,25 @@ class LongCatImageScheduler(BaseScheduler):
 
         # Handle CFG: prepare negative embeddings rotary
         if self.config.get("enable_cfg", True):
-            neg_txt_seq_len = input_info.txt_seq_lens[1] if len(input_info.txt_seq_lens) > 1 else txt_seq_len
-            neg_txt_ids = prepare_pos_ids(modality_id=0, type="text", start=(0, 0), num_token=neg_txt_seq_len)
-            neg_ids = torch.cat([neg_txt_ids, img_ids], dim=0).to(AI_DEVICE, dtype=torch.float32)
+            neg_txt_seq_len = (
+                input_info.txt_seq_lens[1]
+                if len(input_info.txt_seq_lens) > 1
+                else txt_seq_len
+            )
+            neg_txt_ids = prepare_pos_ids(
+                modality_id=0, type="text", start=(0, 0), num_token=neg_txt_seq_len
+            )
+            neg_ids = torch.cat([neg_txt_ids, img_ids], dim=0).to(
+                AI_DEVICE, dtype=torch.float32
+            )
             neg_freqs_cos, neg_freqs_sin = self.pos_embed(neg_ids)
 
             if self.config.get("rope_type", "flashinfer") == "flashinfer":
                 neg_cos_half = neg_freqs_cos[:, ::2].contiguous()
                 neg_sin_half = neg_freqs_sin[:, ::2].contiguous()
-                self.negative_image_rotary_emb = torch.cat([neg_cos_half, neg_sin_half], dim=-1)
+                self.negative_image_rotary_emb = torch.cat(
+                    [neg_cos_half, neg_sin_half], dim=-1
+                )
             else:
                 self.negative_image_rotary_emb = (neg_freqs_cos, neg_freqs_sin)
 
@@ -387,13 +472,17 @@ class LongCatImageScheduler(BaseScheduler):
         # Compute timestep embedding input
         # Note: scheduler.timesteps are already in 0-1000 range
         # (diffusers pipeline divides by 1000, then transformer multiplies by 1000)
-        timestep_input = torch.tensor([self.timesteps[self.step_index]], device=AI_DEVICE, dtype=self.dtype)
+        timestep_input = torch.tensor(
+            [self.timesteps[self.step_index]], device=AI_DEVICE, dtype=self.dtype
+        )
         self.timesteps_proj = get_timestep_embedding(timestep_input).to(self.dtype)
 
     def step_post(self):
         """Process after model forward to update latents."""
         t = self.timesteps[self.step_index]
-        latents = self.scheduler.step(self.noise_pred, t, self.latents, return_dict=False)[0]
+        latents = self.scheduler.step(
+            self.noise_pred, t, self.latents, return_dict=False
+        )[0]
         self.latents = latents
 
     def prepare_i2i(self, input_info, input_image, vae):
@@ -417,19 +506,35 @@ class LongCatImageScheduler(BaseScheduler):
         tokenizer_max_length = txt_seq_len  # 512
 
         # Text: modality_id=0
-        txt_ids = prepare_pos_ids(modality_id=0, type="text", start=(0, 0), num_token=txt_seq_len)
+        txt_ids = prepare_pos_ids(
+            modality_id=0, type="text", start=(0, 0), num_token=txt_seq_len
+        )
 
         # Output image: modality_id=1
-        output_img_ids = prepare_pos_ids(modality_id=1, type="image", start=(tokenizer_max_length, tokenizer_max_length), height=self.latent_height, width=self.latent_width)
+        output_img_ids = prepare_pos_ids(
+            modality_id=1,
+            type="image",
+            start=(tokenizer_max_length, tokenizer_max_length),
+            height=self.latent_height,
+            width=self.latent_width,
+        )
 
         # Input image: modality_id=2
-        input_img_ids = prepare_pos_ids(modality_id=2, type="image", start=(tokenizer_max_length, tokenizer_max_length), height=self.latent_height, width=self.latent_width)
+        input_img_ids = prepare_pos_ids(
+            modality_id=2,
+            type="image",
+            start=(tokenizer_max_length, tokenizer_max_length),
+            height=self.latent_height,
+            width=self.latent_width,
+        )
 
         # Combined image IDs: [output_img, input_img]
         combined_img_ids = torch.cat([output_img_ids, input_img_ids], dim=0)
 
         # Concatenate [txt, output_img, input_img] position IDs
-        ids = torch.cat([txt_ids, combined_img_ids], dim=0).to(AI_DEVICE, dtype=torch.float32)
+        ids = torch.cat([txt_ids, combined_img_ids], dim=0).to(
+            AI_DEVICE, dtype=torch.float32
+        )
         freqs_cos, freqs_sin = self.pos_embed(ids)
 
         # Convert to flashinfer format if needed
@@ -445,15 +550,25 @@ class LongCatImageScheduler(BaseScheduler):
 
         # Handle CFG: prepare negative embeddings rotary
         if self.config.get("enable_cfg", True):
-            neg_txt_seq_len = input_info.txt_seq_lens[1] if len(input_info.txt_seq_lens) > 1 else txt_seq_len
-            neg_txt_ids = prepare_pos_ids(modality_id=0, type="text", start=(0, 0), num_token=neg_txt_seq_len)
-            neg_ids = torch.cat([neg_txt_ids, combined_img_ids], dim=0).to(AI_DEVICE, dtype=torch.float32)
+            neg_txt_seq_len = (
+                input_info.txt_seq_lens[1]
+                if len(input_info.txt_seq_lens) > 1
+                else txt_seq_len
+            )
+            neg_txt_ids = prepare_pos_ids(
+                modality_id=0, type="text", start=(0, 0), num_token=neg_txt_seq_len
+            )
+            neg_ids = torch.cat([neg_txt_ids, combined_img_ids], dim=0).to(
+                AI_DEVICE, dtype=torch.float32
+            )
             neg_freqs_cos, neg_freqs_sin = self.pos_embed(neg_ids)
 
             if self.config.get("rope_type", "flashinfer") == "flashinfer":
                 neg_cos_half = neg_freqs_cos[:, ::2].contiguous()
                 neg_sin_half = neg_freqs_sin[:, ::2].contiguous()
-                self.negative_image_rotary_emb = torch.cat([neg_cos_half, neg_sin_half], dim=-1)
+                self.negative_image_rotary_emb = torch.cat(
+                    [neg_cos_half, neg_sin_half], dim=-1
+                )
             else:
                 self.negative_image_rotary_emb = (neg_freqs_cos, neg_freqs_sin)
 
@@ -468,7 +583,9 @@ class LongCatImageScheduler(BaseScheduler):
         """
         with torch.no_grad():
             # Encode image
-            latents = self.vae.model.encode(image.to(self.vae.model.dtype)).latent_dist.mode()
+            latents = self.vae.model.encode(
+                image.to(self.vae.model.dtype)
+            ).latent_dist.mode()
 
             # Apply scaling: (latents - shift_factor) * scaling_factor
             latents = (latents - self.vae.shift_factor) * self.vae.scaling_factor
@@ -478,7 +595,9 @@ class LongCatImageScheduler(BaseScheduler):
             num_channels = latents.shape[1]
             height = latents.shape[2]
             width = latents.shape[3]
-            latents = self._pack_latents(latents, batch_size, num_channels, height, width)
+            latents = self._pack_latents(
+                latents, batch_size, num_channels, height, width
+            )
 
         return latents.to(self.dtype)
 
@@ -492,11 +611,15 @@ class LongCatImageScheduler(BaseScheduler):
         Returns:
             Combined noise prediction
         """
-        noise_pred = noise_pred_uncond + self.sample_guide_scale * (noise_pred_cond - noise_pred_uncond)
+        noise_pred = noise_pred_uncond + self.sample_guide_scale * (
+            noise_pred_cond - noise_pred_uncond
+        )
 
         if self.enable_cfg_renorm:
             # CFG renormalization: rescale to match conditional prediction norm
-            noise_pred_cond_norm = torch.linalg.vector_norm(noise_pred_cond, dim=-1, keepdim=True)
+            noise_pred_cond_norm = torch.linalg.vector_norm(
+                noise_pred_cond, dim=-1, keepdim=True
+            )
             noise_pred_norm = torch.linalg.vector_norm(noise_pred, dim=-1, keepdim=True)
             renorm_factor = noise_pred_cond_norm / noise_pred_norm.clamp(min=1e-8)
             renorm_factor = renorm_factor.clamp(min=self.cfg_renorm_min, max=1.0)

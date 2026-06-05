@@ -3,22 +3,25 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 from lib.smart_config import smart_config
+
 """角色设计器 - 描述和设计角色形象"""
+
+
 class CharacterDesignerSkill:
     name = "character_designer"
     description = "设计角色形象和特征"
     version = "1.0.0"
     category = "image"
-    
+
     def execute(self, params):
         name = params.get("name", "角色")
         style = params.get("style", "xianxia")
         gender = params.get("gender", "male")
-        
+
         # 根据风格生成角色描述
         if style == "xianxia":
             if gender == "male":
@@ -33,7 +36,7 @@ class CharacterDesignerSkill:
         else:
             description = f"{name}：角色形象待定"
             appearance = "标准形象"
-        
+
         return {
             "success": True,
             "name": name,
@@ -41,7 +44,8 @@ class CharacterDesignerSkill:
             "gender": gender,
             "description": description,
             "appearance": appearance,
-            "tags": [style, gender, "character"]
+            "tags": [style, gender, "character"],
         }
+
 
 skill = CharacterDesignerSkill()

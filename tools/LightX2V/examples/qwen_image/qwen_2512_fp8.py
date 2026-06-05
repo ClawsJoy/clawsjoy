@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 Qwen-image-edit Text-to-image generation example.
 This example demonstrates how to use LightX2V with Qwen-Image model for T2I generation.

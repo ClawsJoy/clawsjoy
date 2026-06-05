@@ -4,35 +4,36 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
-import sys
 import argparse
-sys.path.insert(0, '.')
+import sys
+
+sys.path.insert(0, ".")
 
 from core.agents.builtin.life_cycle_enhanced import LifeCycleEnhanced
 
 
 class ClawsJoy:
     VERSION = "5.4.0"
-    
+
     def __init__(self, user_id: str = "default"):
         self.agent = LifeCycleEnhanced(user_id)
         print(f"🦞 ClawsJoy v{self.VERSION} 启动")
-    
+
     def chat(self, user_input: str) -> str:
-        return self.agent.process(user_input)['response']
-    
+        return self.agent.process(user_input)["response"]
+
     def interactive_mode(self):
         print("\n" + "=" * 50)
         print("ClawsJoy 交互模式 (输入 'exit' 退出)")
         print("=" * 50)
-        
+
         while True:
             try:
                 user_input = input("\n👤 你: ").strip()
-                if user_input.lower() in ['exit', 'quit']:
+                if user_input.lower() in ["exit", "quit"]:
                     print("👋 再见！")
                     break
                 if not user_input:
@@ -48,10 +49,12 @@ def start_services():
     """启动所有主动服务"""
     try:
         from core.lib.smart_active_service import smart_service
+
         smart_service.start()
         print("✅ 主动服务已启动")
     except Exception as e:
         print(f"⚠️ 主动服务启动失败: {e}")
+
 
 if __name__ == "__main__":
     start_services()
@@ -59,11 +62,11 @@ if __name__ == "__main__":
     parser.add_argument("-u", "--user", default="default", help="用户ID")
     parser.add_argument("-m", "--message", help="直接发送消息")
     parser.add_argument("-i", "--interactive", action="store_true", help="交互模式")
-    
+
     args = parser.parse_args()
-    
+
     claws = ClawsJoy(args.user)
-    
+
     if args.message:
         print(f"🤖 {claws.chat(args.message)}")
     elif args.interactive:

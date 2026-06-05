@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import base64
 import io
 import signal
@@ -9,9 +8,11 @@ from typing import Optional
 
 import psutil
 import torch
-from PIL import Image
 from loguru import logger
+from PIL import Image
 from pydantic import BaseModel
+
+from lib.smart_config import smart_config
 
 
 class ProcessManager:
@@ -64,14 +65,24 @@ class BaseServiceStatus:
     @classmethod
     def complete_task(cls, message):
         with cls._lock:
-            cls._result_store[message.task_id] = {"success": True, "message": message, "start_time": cls._current_task["start_time"], "completion_time": datetime.now()}
+            cls._result_store[message.task_id] = {
+                "success": True,
+                "message": message,
+                "start_time": cls._current_task["start_time"],
+                "completion_time": datetime.now(),
+            }
             cls._current_task = None
 
     @classmethod
     def record_failed_task(cls, message, error: Optional[str] = None):
         """Record a failed task with an error message."""
         with cls._lock:
-            cls._result_store[message.task_id] = {"success": False, "message": message, "start_time": cls._current_task["start_time"], "error": error}
+            cls._result_store[message.task_id] = {
+                "success": False,
+                "message": message,
+                "start_time": cls._current_task["start_time"],
+                "error": error,
+            }
             cls._current_task = None
 
     @classmethod
@@ -80,7 +91,12 @@ class BaseServiceStatus:
             if cls._current_task:
                 message = cls._current_task["message"]
                 error = "Task stopped by user"
-                cls._result_store[message.task_id] = {"success": False, "message": message, "start_time": cls._current_task["start_time"], "error": error}
+                cls._result_store[message.task_id] = {
+                    "success": False,
+                    "message": message,
+                    "start_time": cls._current_task["start_time"],
+                    "error": error,
+                }
                 cls._current_task = None
 
     @classmethod
@@ -96,7 +112,10 @@ class BaseServiceStatus:
     def get_status_service(cls):
         with cls._lock:
             if cls._current_task:
-                return {"service_status": "busy", "task_id": cls._current_task["message"].task_id}
+                return {
+                    "service_status": "busy",
+                    "task_id": cls._current_task["message"].task_id,
+                }
             return {"service_status": "idle"}
 
     @classmethod

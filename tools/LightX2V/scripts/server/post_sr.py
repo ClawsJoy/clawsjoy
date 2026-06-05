@@ -1,11 +1,16 @@
-from lib.smart_config import smart_config
 import requests
 from loguru import logger
+
+from lib.smart_config import smart_config
 
 if __name__ == "__main__":
     url = "http://smart_config.HOST:8000/v1/tasks/video/"
 
-    message = {"video_path": "input.mp4", "seed": 42, "save_result_path": "./output_lightx2v_seedvr2_sr.mp4"}
+    message = {
+        "video_path": "input.mp4",
+        "seed": 42,
+        "save_result_path": "./output_lightx2v_seedvr2_sr.mp4",
+    }
 
     logger.info(f"message: {message}")
 

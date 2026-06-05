@@ -1,0 +1,17 @@
+# 语义意图到 Agent 的映射配置
+# 语义引擎返回 intent，系统映射到对应 Agent
+
+intent_to_agent:
+  calculate: calculator_agent
+  weather: weather_skill
+  translate: translate_agent
+  code: code_agent
+  analysis: analysis_agent
+  dialect: dialect_agent
+  video: video_agent
+  chat: chat_agent
+  greeting: chat_agent
+  farewell: chat_agent
+
+# 也可以让语义引擎直接返回 agent 名称
+# 在 semantic_engine.understand() 返回对象中添加 agent 字段

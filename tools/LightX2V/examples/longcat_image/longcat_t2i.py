@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 LongCat Image text-to-image generation example.
 This example demonstrates how to use LightX2V with LongCat-Image model for T2I generation.
@@ -22,7 +23,9 @@ pipe.enable_offload(
 )
 
 # Create generator from config JSON file
-pipe.create_generator(config_json="/workspace/configs/longcat_image/longcat_image_t2i.json")
+pipe.create_generator(
+    config_json="/workspace/configs/longcat_image/longcat_image_t2i.json"
+)
 
 # Generation parameters
 seed = 42

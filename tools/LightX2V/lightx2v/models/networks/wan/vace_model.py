@@ -1,9 +1,9 @@
-from lib.smart_config import smart_config
 import torch
-
 from lightx2v.models.networks.wan.infer.post_infer import WanPostInfer
 from lightx2v.models.networks.wan.infer.pre_infer import WanPreInfer
-from lightx2v.models.networks.wan.infer.vace.transformer_infer import WanVaceTransformerInfer
+from lightx2v.models.networks.wan.infer.vace.transformer_infer import (
+    WanVaceTransformerInfer,
+)
 from lightx2v.models.networks.wan.model import WanModel
 from lightx2v.models.networks.wan.weights.pre_weights import WanPreWeights
 from lightx2v.models.networks.wan.weights.vace.transformer_weights import (
@@ -11,6 +11,8 @@ from lightx2v.models.networks.wan.weights.vace.transformer_weights import (
 )
 from lightx2v.utils.envs import *
 from lightx2v.utils.utils import *
+
+from lib.smart_config import smart_config
 
 
 class WanVaceModel(WanModel):
@@ -26,15 +28,31 @@ class WanVaceModel(WanModel):
             self._init_offload_manager()
 
     def _init_offload_manager(self):
-        self.transformer_infer.offload_block_cuda_buffers = self.transformer_weights.offload_block_cuda_buffers
-        self.transformer_infer.offload_phase_cuda_buffers = self.transformer_weights.offload_phase_cuda_buffers
-        self.transformer_infer.vace_offload_block_cuda_buffers = self.transformer_weights.vace_offload_block_cuda_buffers
-        self.transformer_infer.vace_offload_phase_cuda_buffers = self.transformer_weights.vace_offload_phase_cuda_buffers
+        self.transformer_infer.offload_block_cuda_buffers = (
+            self.transformer_weights.offload_block_cuda_buffers
+        )
+        self.transformer_infer.offload_phase_cuda_buffers = (
+            self.transformer_weights.offload_phase_cuda_buffers
+        )
+        self.transformer_infer.vace_offload_block_cuda_buffers = (
+            self.transformer_weights.vace_offload_block_cuda_buffers
+        )
+        self.transformer_infer.vace_offload_phase_cuda_buffers = (
+            self.transformer_weights.vace_offload_phase_cuda_buffers
+        )
         if self.lazy_load:
-            self.transformer_infer.offload_block_cpu_buffers = self.transformer_weights.offload_block_cpu_buffers
-            self.transformer_infer.offload_phase_cpu_buffers = self.transformer_weights.offload_phase_cpu_buffers
-            self.transformer_infer.vace_offload_block_cpu_buffers = self.transformer_weights.vace_offload_block_cpu_buffers
-            self.transformer_infer.vace_offload_phase_cpu_buffers = self.transformer_weights.vace_offload_phase_cpu_buffers
+            self.transformer_infer.offload_block_cpu_buffers = (
+                self.transformer_weights.offload_block_cpu_buffers
+            )
+            self.transformer_infer.offload_phase_cpu_buffers = (
+                self.transformer_weights.offload_phase_cpu_buffers
+            )
+            self.transformer_infer.vace_offload_block_cpu_buffers = (
+                self.transformer_weights.vace_offload_block_cpu_buffers
+            )
+            self.transformer_infer.vace_offload_phase_cpu_buffers = (
+                self.transformer_weights.vace_offload_phase_cpu_buffers
+            )
 
     def _init_infer_class(self):
         self.pre_infer_class = WanPreInfer
@@ -46,7 +64,9 @@ class WanVaceModel(WanModel):
         self.scheduler.infer_condition = infer_condition
 
         pre_infer_out = self.pre_infer.infer(self.pre_weight, inputs)
-        pre_infer_out.vace_context = inputs["image_encoder_output"]["vae_encoder_out"][0]
+        pre_infer_out.vace_context = inputs["image_encoder_output"]["vae_encoder_out"][
+            0
+        ]
 
         if self.config["seq_parallel"]:
             pre_infer_out = self._seq_parallel_pre_process(pre_infer_out)

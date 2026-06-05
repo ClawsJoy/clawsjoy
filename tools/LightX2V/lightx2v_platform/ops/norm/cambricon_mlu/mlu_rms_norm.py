@@ -1,6 +1,7 @@
-from lib.smart_config import smart_config
 from lightx2v_platform.ops.norm.norm_template import RMSWeightTemplate
 from lightx2v_platform.registry_factory import PLATFORM_RMS_WEIGHT_REGISTER
+
+from lib.smart_config import smart_config
 
 try:
     import torch_mlu_ops as tmo
@@ -10,8 +11,29 @@ except ImportError:
 
 @PLATFORM_RMS_WEIGHT_REGISTER("mlu_rms_norm")
 class MluRmsNormWeight(RMSWeightTemplate):
-    def __init__(self, weight_name, create_cuda_buffer=False, create_cpu_buffer=False, lazy_load=False, lazy_load_file=None, is_post_adapter=False, eps=0.000001, lora_prefix="", lora_path=""):
-        super().__init__(weight_name, create_cuda_buffer, create_cpu_buffer, lazy_load, lazy_load_file, is_post_adapter, eps, lora_prefix, lora_path)
+    def __init__(
+        self,
+        weight_name,
+        create_cuda_buffer=False,
+        create_cpu_buffer=False,
+        lazy_load=False,
+        lazy_load_file=None,
+        is_post_adapter=False,
+        eps=0.000001,
+        lora_prefix="",
+        lora_path="",
+    ):
+        super().__init__(
+            weight_name,
+            create_cuda_buffer,
+            create_cpu_buffer,
+            lazy_load,
+            lazy_load_file,
+            is_post_adapter,
+            eps,
+            lora_prefix,
+            lora_path,
+        )
         assert tmo is not None, "torch_mlu_ops is not installed."
 
     def apply(self, input_tensor):

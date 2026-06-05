@@ -3,13 +3,14 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
-from datetime import datetime
 import time
-from typing import Dict, Any
+from datetime import datetime
+from typing import Any, Dict
+
 from core.lib.unified_config import unified_config
 
 
@@ -23,7 +24,7 @@ class ClosedLoop:
     5. 反馈 (Feedback) - 收集结果
     6. 学习 (Learn) - 优化改进
     """
-    
+
     VERSION = "5.0.0"
 
     def __init__(self):
@@ -43,29 +44,33 @@ class ClosedLoop:
             "total_loops": 0,
             "successful": 0,
             "failed": 0,
-            "avg_response_time": 0
+            "avg_response_time": 0,
         }
 
     def sense(self) -> Dict:
         """1. 感知 - 收集系统状态"""
         try:
             import requests
-            gateway_health = requests.get(f"http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/health", timeout=5).json()
+
+            gateway_health = requests.get(
+                f"http://{unified_config.get("services.gateway.host", "localhost")}:{unified_config.get("services.gateway.port", 5002)}/api/health",
+                timeout=5,
+            ).json()
             gateway_status = gateway_health.get("status") == "ok"
 
             return {
                 "timestamp": datetime.now().isoformat(),
                 "gateway": {
                     "status": "healthy" if gateway_status else "unhealthy",
-                    "version": gateway_health.get("version", "unknown")
+                    "version": gateway_health.get("version", "unknown"),
                 },
-                "loop_count": self.loop_count
+                "loop_count": self.loop_count,
             }
         except Exception as e:
             return {
                 "timestamp": datetime.now().isoformat(),
                 "gateway": {"status": "unknown", "error": str(e)},
-                "loop_count": self.loop_count
+                "loop_count": self.loop_count,
             }
 
     def analyze(self, state: Dict) -> Dict:
@@ -79,11 +84,13 @@ class ClosedLoop:
         # 网关健康分析
         if state.get("gateway", {}).get("status") != "healthy":
             health_score -= 30
-            issues.append({
-                "type": "gateway_unhealthy",
-                "severity": "critical",
-                "message": "网关服务不健康"
-            })
+            issues.append(
+                {
+                    "type": "gateway_unhealthy",
+                    "severity": "critical",
+                    "message": "网关服务不健康",
+                }
+            )
 
         # 等级判定
         warning_threshold = thresholds.get("health_warning", 70)
@@ -101,7 +108,7 @@ class ClosedLoop:
             "health_score": health_score,
             "level": level,
             "issues": issues,
-            "thresholds": thresholds
+            "thresholds": thresholds,
         }
 
     def decide(self, analysis: Dict) -> Dict:
@@ -110,30 +117,32 @@ class ClosedLoop:
         priority = "normal"
 
         if analysis["level"] == "critical":
-            actions.append({
-                "type": "restart_gateway",
-                "priority": "high",
-                "message": "网关服务异常，建议重启"
-            })
+            actions.append(
+                {
+                    "type": "restart_gateway",
+                    "priority": "high",
+                    "message": "网关服务异常，建议重启",
+                }
+            )
             priority = "high"
         elif analysis["level"] == "warning":
-            actions.append({
-                "type": "send_alert",
-                "priority": "medium", 
-                "message": f"健康度下降至 {analysis['health_score']}"
-            })
+            actions.append(
+                {
+                    "type": "send_alert",
+                    "priority": "medium",
+                    "message": f"健康度下降至 {analysis['health_score']}",
+                }
+            )
             priority = "medium"
         else:
-            actions.append({
-                "type": "continue",
-                "priority": "low",
-                "message": "系统运行正常"
-            })
+            actions.append(
+                {"type": "continue", "priority": "low", "message": "系统运行正常"}
+            )
 
         return {
             "timestamp": datetime.now().isoformat(),
             "actions": actions,
-            "priority": priority
+            "priority": priority,
         }
 
     def act(self, decision: Dict) -> Dict:
@@ -142,28 +151,30 @@ class ClosedLoop:
         for action in decision.get("actions", []):
             action_type = action.get("type")
             if action_type == "restart_gateway":
-                results.append({
-                    "action": action_type,
-                    "success": True,
-                    "message": "重启命令已记录（需手动确认）"
-                })
+                results.append(
+                    {
+                        "action": action_type,
+                        "success": True,
+                        "message": "重启命令已记录（需手动确认）",
+                    }
+                )
             elif action_type == "send_alert":
-                results.append({
-                    "action": action_type,
-                    "success": True,
-                    "message": f"告警已发送: {action.get('message')}"
-                })
+                results.append(
+                    {
+                        "action": action_type,
+                        "success": True,
+                        "message": f"告警已发送: {action.get('message')}",
+                    }
+                )
             else:
-                results.append({
-                    "action": action_type,
-                    "success": True,
-                    "message": "继续监控"
-                })
+                results.append(
+                    {"action": action_type, "success": True, "message": "继续监控"}
+                )
 
         return {
             "timestamp": datetime.now().isoformat(),
             "results": results,
-            "success": all(r.get("success") for r in results)
+            "success": all(r.get("success") for r in results),
         }
 
     def feedback(self, execution: Dict, analysis: Dict) -> Dict:
@@ -172,7 +183,7 @@ class ClosedLoop:
             "timestamp": datetime.now().isoformat(),
             "execution_success": execution.get("success", False),
             "health_score": analysis.get("health_score", 0),
-            "lessons": []
+            "lessons": [],
         }
 
     def learn(self, feedback: Dict) -> Dict:
@@ -180,21 +191,19 @@ class ClosedLoop:
         insights = []
 
         if not feedback.get("execution_success"):
-            insights.append({
-                "type": "action_failure",
-                "message": "执行失败，需要检查行动条件"
-            })
+            insights.append(
+                {"type": "action_failure", "message": "执行失败，需要检查行动条件"}
+            )
 
         if feedback.get("health_score", 100) < 50:
-            insights.append({
-                "type": "critical_pattern",
-                "message": "系统频繁进入严重状态"
-            })
+            insights.append(
+                {"type": "critical_pattern", "message": "系统频繁进入严重状态"}
+            )
 
         return {
             "timestamp": datetime.now().isoformat(),
             "insights": insights,
-            "optimizations": []
+            "optimizations": [],
         }
 
     def run(self, context: dict = None) -> dict:
@@ -222,17 +231,25 @@ class ClosedLoop:
             self.stats["failed"] += 1
 
         self.stats["avg_response_time"] = (
-            self.stats["avg_response_time"] * (self.stats["total_loops"] - 1) + elapsed
-        ) / self.stats["total_loops"] if self.stats["total_loops"] > 1 else elapsed
+            (
+                self.stats["avg_response_time"] * (self.stats["total_loops"] - 1)
+                + elapsed
+            )
+            / self.stats["total_loops"]
+            if self.stats["total_loops"] > 1
+            else elapsed
+        )
 
         # 记录历史
-        self.history.append({
-            "loop_id": self.loop_count,
-            "time": datetime.now().isoformat(),
-            "health_score": analysis.get("health_score"),
-            "actions": len(decision.get("actions", [])),
-            "success": execution.get("success")
-        })
+        self.history.append(
+            {
+                "loop_id": self.loop_count,
+                "time": datetime.now().isoformat(),
+                "health_score": analysis.get("health_score"),
+                "actions": len(decision.get("actions", [])),
+                "success": execution.get("success"),
+            }
+        )
 
         if len(self.history) > 100:
             self.history = self.history[-100:]
@@ -247,7 +264,7 @@ class ClosedLoop:
             "execution": execution,
             "learning": learning,
             "stats": self.stats,
-            "elapsed_ms": elapsed * 1000
+            "elapsed_ms": elapsed * 1000,
         }
 
     def get_status(self) -> dict:
@@ -258,7 +275,7 @@ class ClosedLoop:
             "loop_count": self.loop_count,
             "stats": self.stats,
             "history_length": len(self.history),
-            "recent": self.history[-5:] if self.history else []
+            "recent": self.history[-5:] if self.history else [],
         }
 
 
@@ -271,7 +288,7 @@ def start_auto_loop():
     """启动自动闭环（独立函数）"""
     import threading
     import time
-    
+
     def _loop():
         while True:
             time.sleep(3600)
@@ -280,7 +297,7 @@ def start_auto_loop():
                 print(f"[自动闭环] 运行完成")
             except Exception as e:
                 print(f"[自动闭环] 错误: {e}")
-    
+
     thread = threading.Thread(target=_loop, daemon=True)
     thread.start()
     print("✅ 自动闭环已启动（每小时运行）")

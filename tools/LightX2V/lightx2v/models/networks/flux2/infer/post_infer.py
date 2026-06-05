@@ -1,6 +1,7 @@
-from lib.smart_config import smart_config
 import torch
 import torch.nn.functional as F
+
+from lib.smart_config import smart_config
 
 
 class Flux2PostInfer:

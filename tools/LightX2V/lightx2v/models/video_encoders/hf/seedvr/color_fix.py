@@ -1,9 +1,10 @@
-from lib.smart_config import smart_config
 import torch
 from PIL import Image
 from torch import Tensor
 from torch.nn import functional as F
 from torchvision.transforms import ToPILImage, ToTensor
+
+from lib.smart_config import smart_config
 
 
 def adain_color_fix(target: Image, source: Image):
@@ -65,7 +66,9 @@ def adaptive_instance_normalization(content_feat: Tensor, style_feat: Tensor):
     size = content_feat.size()
     style_mean, style_std = calc_mean_std(style_feat)
     content_mean, content_std = calc_mean_std(content_feat)
-    normalized_feat = (content_feat - content_mean.expand(size)) / content_std.expand(size)
+    normalized_feat = (content_feat - content_mean.expand(size)) / content_std.expand(
+        size
+    )
     return normalized_feat * style_std.expand(size) + style_mean.expand(size)
 
 

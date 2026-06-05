@@ -1,6 +1,13 @@
-from lib.smart_config import smart_config
 from lightx2v.common.modules.weight_module import WeightModule
-from lightx2v.utils.registry_factory import CONV3D_WEIGHT_REGISTER, EMBEDDING_WEIGHT_REGISTER, LN_WEIGHT_REGISTER, MM_WEIGHT_REGISTER, TENSOR_REGISTER
+from lightx2v.utils.registry_factory import (
+    CONV3D_WEIGHT_REGISTER,
+    EMBEDDING_WEIGHT_REGISTER,
+    LN_WEIGHT_REGISTER,
+    MM_WEIGHT_REGISTER,
+    TENSOR_REGISTER,
+)
+
+from lib.smart_config import smart_config
 
 
 class WanPreWeights(WeightModule):
@@ -97,7 +104,9 @@ class WanPreWeights(WeightModule):
             ),
         )
 
-        if config["task"] in ["i2v", "flf2v", "animate", "s2v", "rs2v"] and config.get("use_image_encoder", True):
+        if config["task"] in ["i2v", "flf2v", "animate", "s2v", "rs2v"] and config.get(
+            "use_image_encoder", True
+        ):
             self.add_module(
                 "proj_0",
                 LN_WEIGHT_REGISTER["torch"](
@@ -131,7 +140,9 @@ class WanPreWeights(WeightModule):
                 ),
             )
 
-        if config["model_cls"] == "wan2.1_distill" and config.get("enable_dynamic_cfg", False):
+        if config["model_cls"] == "wan2.1_distill" and config.get(
+            "enable_dynamic_cfg", False
+        ):
             self.add_module(
                 "cfg_cond_proj_1",
                 MM_WEIGHT_REGISTER["Default"](
@@ -150,11 +161,15 @@ class WanPreWeights(WeightModule):
         if config["model_cls"] == "wan2.1_mean_flow_distill":
             self.add_module(
                 "time_embedding_r_0",
-                MM_WEIGHT_REGISTER["Default"]("time_embedding_r.0.weight", "time_embedding_r.0.bias"),
+                MM_WEIGHT_REGISTER["Default"](
+                    "time_embedding_r.0.weight", "time_embedding_r.0.bias"
+                ),
             )
             self.add_module(
                 "time_embedding_r_2",
-                MM_WEIGHT_REGISTER["Default"]("time_embedding_r.2.weight", "time_embedding_r.2.bias"),
+                MM_WEIGHT_REGISTER["Default"](
+                    "time_embedding_r.2.weight", "time_embedding_r.2.bias"
+                ),
             )
 
         if config["task"] == "flf2v" and config.get("use_image_encoder", True):

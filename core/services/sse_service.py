@@ -3,14 +3,15 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
-import threading
-import json
 import asyncio
+import json
+import threading
 from typing import Dict, Set
+
 from flask import Response, stream_with_context
 
 
@@ -62,7 +63,7 @@ class SSEService:
             finally:
                 self.unsubscribe(user_id, q)
 
-        return Response(stream_with_context(generate()), mimetype='text/event-stream')
+        return Response(stream_with_context(generate()), mimetype="text/event-stream")
 
 
 sse_service = SSEService()

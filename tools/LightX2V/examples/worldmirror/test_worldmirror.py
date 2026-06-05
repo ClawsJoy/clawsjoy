@@ -17,7 +17,9 @@ import sys
 
 # Make ``lightx2v`` importable when this script is executed directly from
 # any directory (e.g. ``python examples/worldmirror/test_worldmirror.py``).
-_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_REPO_ROOT = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)
 if _REPO_ROOT not in sys.path:
     from lib.smart_config import smart_config
 sys.path.insert(0, _REPO_ROOT)
@@ -34,15 +36,24 @@ def main():
     parser.add_argument("--model_path", default=DEFAULT_MODEL_PATH)
     parser.add_argument("--input_path", default=DEFAULT_INPUT_PATH)
     parser.add_argument("--output_path", default=DEFAULT_OUTPUT_PATH)
-    parser.add_argument("--strict_output_path", default=None, help="If set, write outputs directly here (no subdir/timestamp)")
+    parser.add_argument(
+        "--strict_output_path",
+        default=None,
+        help="If set, write outputs directly here (no subdir/timestamp)",
+    )
     parser.add_argument("--enable_bf16", action="store_true")
     args = parser.parse_args()
 
     # Importing lightx2v no longer eagerly pulls in every runner — see
     # lightx2v/__init__.py's PEP 562 __getattr__ — so we can just import
     # the runner we need directly.
-    from lightx2v.models.runners.worldmirror.worldmirror_runner import WorldMirrorRunner  # noqa: F401
-    from lightx2v.utils.input_info import init_empty_input_info, update_input_info_from_dict
+    from lightx2v.models.runners.worldmirror.worldmirror_runner import (  # noqa: F401
+        WorldMirrorRunner,
+    )
+    from lightx2v.utils.input_info import (
+        init_empty_input_info,
+        update_input_info_from_dict,
+    )
     from lightx2v.utils.lockable_dict import LockableDict
     from lightx2v.utils.registry_factory import RUNNER_REGISTER
 

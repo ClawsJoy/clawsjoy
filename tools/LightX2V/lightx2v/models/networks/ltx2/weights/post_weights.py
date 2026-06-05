@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 Post-weights module for LTX2 transformer model.
 

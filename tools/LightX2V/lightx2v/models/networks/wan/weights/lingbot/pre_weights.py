@@ -1,6 +1,7 @@
-from lib.smart_config import smart_config
 from lightx2v.models.networks.wan.weights.pre_weights import WanPreWeights
 from lightx2v.utils.registry_factory import MM_WEIGHT_REGISTER
+
+from lib.smart_config import smart_config
 
 
 class WanLingbotPreWeights(WanPreWeights):

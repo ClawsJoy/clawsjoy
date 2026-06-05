@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
@@ -62,9 +63,16 @@ KEY_REPLACEMENTS = [
 
 def parse_args():
     """Parse command line arguments"""
-    parser = argparse.ArgumentParser(description="Convert ViGen-DiT Model Format (Diffusers) to Lightx2v (Standard Wan)", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("--input-model", type=str, required=True, help="Path to input model")
-    parser.add_argument("--output-model", type=str, required=True, help="Path to output model")
+    parser = argparse.ArgumentParser(
+        description="Convert ViGen-DiT Model Format (Diffusers) to Lightx2v (Standard Wan)",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument(
+        "--input-model", type=str, required=True, help="Path to input model"
+    )
+    parser.add_argument(
+        "--output-model", type=str, required=True, help="Path to output model"
+    )
     parser.add_argument("--to-bf16", action="store_true", help="Convert to bf16 format")
     return parser.parse_args()
 

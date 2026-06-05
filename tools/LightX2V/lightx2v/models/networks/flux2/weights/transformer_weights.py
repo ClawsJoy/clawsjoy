@@ -1,12 +1,19 @@
-from lib.smart_config import smart_config
 from lightx2v.common.modules.weight_module import WeightModule, WeightModuleList
-from lightx2v.utils.registry_factory import ATTN_WEIGHT_REGISTER, MM_WEIGHT_REGISTER, RMS_WEIGHT_REGISTER
+from lightx2v.utils.registry_factory import (
+    ATTN_WEIGHT_REGISTER,
+    MM_WEIGHT_REGISTER,
+    RMS_WEIGHT_REGISTER,
+)
+
+from lib.smart_config import smart_config
 
 
 class Flux2DoubleBlockWeights(WeightModule):
     """Weights for a single double-stream transformer block."""
 
-    def __init__(self, config, block_idx, create_cuda_buffer=False, create_cpu_buffer=False):
+    def __init__(
+        self, config, block_idx, create_cuda_buffer=False, create_cpu_buffer=False
+    ):
         super().__init__()
         self.config = config
         self.block_idx = block_idx
@@ -129,7 +136,9 @@ class Flux2DoubleBlockWeights(WeightModule):
         if self.config.get("seq_parallel", False):
             self.add_module(
                 "calculate_parallel",
-                ATTN_WEIGHT_REGISTER[self.config["parallel"].get("seq_p_attn_type", "ulysses")](),
+                ATTN_WEIGHT_REGISTER[
+                    self.config["parallel"].get("seq_p_attn_type", "ulysses")
+                ](),
             )
 
         self.add_module(
@@ -184,7 +193,9 @@ class Flux2DoubleBlockWeights(WeightModule):
 class Flux2SingleBlockWeights(WeightModule):
     """Weights for a single single-stream transformer block."""
 
-    def __init__(self, config, block_idx, create_cuda_buffer=False, create_cpu_buffer=False):
+    def __init__(
+        self, config, block_idx, create_cuda_buffer=False, create_cpu_buffer=False
+    ):
         super().__init__()
         self.config = config
         self.block_idx = block_idx
@@ -237,7 +248,9 @@ class Flux2SingleBlockWeights(WeightModule):
         if self.config.get("seq_parallel", False):
             self.add_module(
                 "calculate_parallel",
-                ATTN_WEIGHT_REGISTER[self.config["parallel"].get("seq_p_attn_type", "ulysses")](),
+                ATTN_WEIGHT_REGISTER[
+                    self.config["parallel"].get("seq_p_attn_type", "ulysses")
+                ](),
             )
 
     def to_cuda(self, non_blocking=True):
@@ -261,10 +274,16 @@ class Flux2TransformerWeights(WeightModule):
         self.num_single_layers = config.get("num_single_layers", 20)
         self.mm_type = config.get("dit_quant_scheme", "Default")
 
-        inner_dim = config.get("num_attention_heads", 24) * config.get("attention_head_dim", 64)
+        inner_dim = config.get("num_attention_heads", 24) * config.get(
+            "attention_head_dim", 64
+        )
 
-        self.double_blocks = WeightModuleList([Flux2DoubleBlockWeights(config, i) for i in range(self.num_layers)])
-        self.single_blocks = WeightModuleList([Flux2SingleBlockWeights(config, i) for i in range(self.num_single_layers)])
+        self.double_blocks = WeightModuleList(
+            [Flux2DoubleBlockWeights(config, i) for i in range(self.num_layers)]
+        )
+        self.single_blocks = WeightModuleList(
+            [Flux2SingleBlockWeights(config, i) for i in range(self.num_single_layers)]
+        )
         self.register_offload_buffers(config)
 
         self.add_module("double_blocks", self.double_blocks)
@@ -290,12 +309,31 @@ class Flux2TransformerWeights(WeightModule):
         )
 
     def register_offload_buffers(self, config):
-        if config.get("cpu_offload", False) and config.get("offload_granularity", "block") == "block":
-            self.offload_double_block_cuda_buffers = WeightModuleList([Flux2DoubleBlockWeights(config, i, create_cuda_buffer=True) for i in range(2)])
-            self.add_module("offload_double_block_cuda_buffers", self.offload_double_block_cuda_buffers)
+        if (
+            config.get("cpu_offload", False)
+            and config.get("offload_granularity", "block") == "block"
+        ):
+            self.offload_double_block_cuda_buffers = WeightModuleList(
+                [
+                    Flux2DoubleBlockWeights(config, i, create_cuda_buffer=True)
+                    for i in range(2)
+                ]
+            )
+            self.add_module(
+                "offload_double_block_cuda_buffers",
+                self.offload_double_block_cuda_buffers,
+            )
 
-            self.offload_single_block_cuda_buffers = WeightModuleList([Flux2SingleBlockWeights(config, i, create_cuda_buffer=True) for i in range(2)])
-            self.add_module("offload_single_block_cuda_buffers", self.offload_single_block_cuda_buffers)
+            self.offload_single_block_cuda_buffers = WeightModuleList(
+                [
+                    Flux2SingleBlockWeights(config, i, create_cuda_buffer=True)
+                    for i in range(2)
+                ]
+            )
+            self.add_module(
+                "offload_single_block_cuda_buffers",
+                self.offload_single_block_cuda_buffers,
+            )
 
     def non_block_weights_to_cuda(self, non_blocking=True):
         self.double_stream_modulation_img_linear.to_cuda(non_blocking=non_blocking)

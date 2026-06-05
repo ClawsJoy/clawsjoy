@@ -1,12 +1,9 @@
-from lib.smart_config import smart_config
 import math
 from typing import Optional
 
 import torch
 import torch.distributed as dist
 import torch.nn.functional as F
-from loguru import logger
-
 from lightx2v.models.networks.base_model import BaseTransformerModel
 from lightx2v.models.networks.ltx2.infer.offload.transformer_infer import (
     LTX2OffloadTransformerInfer,
@@ -24,6 +21,9 @@ from lightx2v.models.networks.ltx2.weights.transformer_weights import (
 from lightx2v.utils.custom_compiler import compiled_method
 from lightx2v.utils.envs import *
 from lightx2v.utils.utils import *
+from loguru import logger
+
+from lib.smart_config import smart_config
 
 
 def _multimodal_guider_calculate(
@@ -39,12 +39,19 @@ def _multimodal_guider_calculate(
 ) -> torch.Tensor:
     """与 ltx_core MultiModalGuider.calculate 一致（避免从 scheduler 大模块导入导致循环依赖/旧缓存问题）。"""
     if not math.isclose(cfg_scale, 1.0) and uncond_text is None:
-        raise ValueError("mm_guider: cfg_scale != 1 时需要 uncond 前向，但 uncond_text 为 None")
+        raise ValueError(
+            "mm_guider: cfg_scale != 1 时需要 uncond 前向，但 uncond_text 为 None"
+        )
     ut = uncond_text if not math.isclose(cfg_scale, 1.0) else cond
     up = uncond_perturbed if not math.isclose(stg_scale, 0.0) else cond
     um = uncond_modality if not math.isclose(modality_scale, 1.0) else cond
 
-    pred = cond + (cfg_scale - 1.0) * (cond - ut) + stg_scale * (cond - up) + (modality_scale - 1.0) * (cond - um)
+    pred = (
+        cond
+        + (cfg_scale - 1.0) * (cond - ut)
+        + stg_scale * (cond - up)
+        + (modality_scale - 1.0) * (cond - um)
+    )
 
     if not math.isclose(rescale_scale, 0.0):
         factor = cond.std() / pred.std()
@@ -70,7 +77,9 @@ class LTX2Model(BaseTransformerModel):
         super().__init__(model_path, config, device, None, lora_path, lora_strength)
         if self.config.get("tensor_parallel", False):
             self.use_tp = True
-            self.tp_group = self.config.get("device_mesh").get_group(mesh_dim="tensor_p")
+            self.tp_group = self.config.get("device_mesh").get_group(
+                mesh_dim="tensor_p"
+            )
             self.tp_rank = dist.get_rank(self.tp_group)
             self.tp_size = dist.get_world_size(self.tp_group)
         else:
@@ -85,7 +94,14 @@ class LTX2Model(BaseTransformerModel):
         self.original_video_seq_len = None
 
         # self.model_type = model_type
-        self.remove_keys = ["text_embedding_projection", "audio_vae", "vae", "vocoder", "model.diffusion_model.audio_embeddings_connector", "model.diffusion_model.video_embeddings_connector"]
+        self.remove_keys = [
+            "text_embedding_projection",
+            "audio_vae",
+            "vae",
+            "vocoder",
+            "model.diffusion_model.audio_embeddings_connector",
+            "model.diffusion_model.video_embeddings_connector",
+        ]
         if self.lazy_load:
             self.remove_keys.extend(["diffusion_model.transformer_blocks."])
         self._init_infer_class()
@@ -95,7 +111,11 @@ class LTX2Model(BaseTransformerModel):
     def _init_infer_class(self):
         self.pre_infer_class = LTX2PreInfer
         self.post_infer_class = LTX2PostInfer
-        self.transformer_infer_class = LTX2TransformerInfer if not self.cpu_offload else LTX2OffloadTransformerInfer
+        self.transformer_infer_class = (
+            LTX2TransformerInfer
+            if not self.cpu_offload
+            else LTX2OffloadTransformerInfer
+        )
 
     def _should_load_weights(self):
         """Determine if current rank should load weights from disk."""
@@ -148,7 +168,9 @@ class LTX2Model(BaseTransformerModel):
         """
         # CPU offload is not supported
         if self.cpu_offload:
-            raise NotImplementedError("_load_weights_from_rank0 does not support CPU offload. Please set cpu_offload=False.")
+            raise NotImplementedError(
+                "_load_weights_from_rank0 does not support CPU offload. Please set cpu_offload=False."
+            )
 
         logger.info("Loading distributed weights with tensor parallel (CUDA only)")
         global_src_rank = 0
@@ -167,30 +189,51 @@ class LTX2Model(BaseTransformerModel):
                     for rank_idx in range(self.tp_size):
                         rank_key = f"{key}__tp_rank_{rank_idx}"
                         processed_weight_dict[rank_key] = split_weights[rank_idx]
-                        if rank_idx == 0:  # Use rank 0's shape for meta (all ranks have same shape after split)
-                            meta_dict[key] = {"shape": split_weights[rank_idx].shape, "dtype": split_weights[rank_idx].dtype, "is_tp": True}
+                        if (
+                            rank_idx == 0
+                        ):  # Use rank 0's shape for meta (all ranks have same shape after split)
+                            meta_dict[key] = {
+                                "shape": split_weights[rank_idx].shape,
+                                "dtype": split_weights[rank_idx].dtype,
+                                "is_tp": True,
+                            }
 
                     # Also handle bias if it exists (for column split weights)
                     bias_key = key.replace(".weight", ".bias")
                     if bias_key in weight_dict and self._get_split_type(key) == "col":
                         # Column split: bias also needs to be split
                         bias_tensor = weight_dict[bias_key]
-                        assert bias_tensor.shape[0] % self.tp_size == 0, f"bias dimension ({bias_tensor.shape[0]}) must be divisible by tp_size ({self.tp_size}) for {bias_key}"
+                        assert (
+                            bias_tensor.shape[0] % self.tp_size == 0
+                        ), f"bias dimension ({bias_tensor.shape[0]}) must be divisible by tp_size ({self.tp_size}) for {bias_key}"
                         chunk_size = bias_tensor.shape[0] // self.tp_size
                         for rank_idx in range(self.tp_size):
                             rank_bias_key = f"{bias_key}__tp_rank_{rank_idx}"
                             start_idx = rank_idx * chunk_size
                             end_idx = start_idx + chunk_size
-                            processed_weight_dict[rank_bias_key] = bias_tensor[start_idx:end_idx]
+                            processed_weight_dict[rank_bias_key] = bias_tensor[
+                                start_idx:end_idx
+                            ]
                             if rank_idx == 0:
-                                meta_dict[bias_key] = {"shape": bias_tensor[start_idx:end_idx].shape, "dtype": bias_tensor.dtype, "is_tp": True}
+                                meta_dict[bias_key] = {
+                                    "shape": bias_tensor[start_idx:end_idx].shape,
+                                    "dtype": bias_tensor.dtype,
+                                    "is_tp": True,
+                                }
                         # For row split weights, bias is not split (added after all-reduce)
                 else:
                     # Non-TP weights or bias (bias is handled above if it's a TP weight's bias)
                     # Skip bias keys that are already processed above
-                    if not (key.endswith(".bias") and key.replace(".bias", ".weight") in processed_weight_dict):
+                    if not (
+                        key.endswith(".bias")
+                        and key.replace(".bias", ".weight") in processed_weight_dict
+                    ):
                         processed_weight_dict[key] = tensor
-                        meta_dict[key] = {"shape": tensor.shape, "dtype": tensor.dtype, "is_tp": False}
+                        meta_dict[key] = {
+                            "shape": tensor.shape,
+                            "dtype": tensor.dtype,
+                            "is_tp": False,
+                        }
 
             obj_list = [meta_dict]
             dist.broadcast_object_list(obj_list, src=global_src_rank)
@@ -208,10 +251,14 @@ class LTX2Model(BaseTransformerModel):
             device = torch.device(f"cuda:{torch.cuda.current_device()}")
             if is_tp:
                 # TP weight: each rank gets its own slice
-                distributed_weight_dict[key] = torch.empty(meta["shape"], dtype=meta["dtype"], device=device)
+                distributed_weight_dict[key] = torch.empty(
+                    meta["shape"], dtype=meta["dtype"], device=device
+                )
             else:
                 # Non-TP weight: all ranks get full weight
-                distributed_weight_dict[key] = torch.empty(meta["shape"], dtype=meta["dtype"], device=device)
+                distributed_weight_dict[key] = torch.empty(
+                    meta["shape"], dtype=meta["dtype"], device=device
+                )
 
         dist.barrier()
 
@@ -232,23 +279,37 @@ class LTX2Model(BaseTransformerModel):
                         if rank_key in weight_dict:
                             if rank_idx == self.tp_rank:
                                 # Copy to my own buffer
-                                distributed_weight_dict[key].copy_(weight_dict[rank_key], non_blocking=True)
+                                distributed_weight_dict[key].copy_(
+                                    weight_dict[rank_key], non_blocking=True
+                                )
                             else:
                                 # Send to other ranks
-                                dist.send(weight_dict[rank_key].contiguous(), dst=rank_idx, group=self.tp_group)
+                                dist.send(
+                                    weight_dict[rank_key].contiguous(),
+                                    dst=rank_idx,
+                                    group=self.tp_group,
+                                )
                 else:
                     # Other ranks: receive from rank 0
-                    dist.recv(distributed_weight_dict[key], src=global_src_rank, group=self.tp_group)
+                    dist.recv(
+                        distributed_weight_dict[key],
+                        src=global_src_rank,
+                        group=self.tp_group,
+                    )
             else:
                 # Non-TP weight: broadcast to all ranks
                 if is_weight_loader:
-                    distributed_weight_dict[key].copy_(weight_dict[key], non_blocking=True)
+                    distributed_weight_dict[key].copy_(
+                        weight_dict[key], non_blocking=True
+                    )
 
                 dist.broadcast(distributed_weight_dict[key], src=global_src_rank)
 
         torch.cuda.synchronize()
 
-        logger.info(f"Weights distributed across {dist.get_world_size()} devices on CUDA")
+        logger.info(
+            f"Weights distributed across {dist.get_world_size()} devices on CUDA"
+        )
 
         return distributed_weight_dict
 
@@ -283,7 +344,12 @@ class LTX2Model(BaseTransformerModel):
         """
         if ".q_norm." in key or ".k_norm." in key:
             return "norm"
-        elif ".to_q." in key or ".to_k." in key or ".to_v." in key or ".net.0.proj." in key:
+        elif (
+            ".to_q." in key
+            or ".to_k." in key
+            or ".to_v." in key
+            or ".net.0.proj." in key
+        ):
             return "col"
         elif ".to_out.0." in key or ".net.2." in key:
             return "row"
@@ -301,13 +367,22 @@ class LTX2Model(BaseTransformerModel):
 
         if split_type == "norm":
             # 1D weights (norm weights): [hidden_dim] -> [hidden_dim/tp_size] per rank
-            assert weight.dim() == 1, f"Norm weight should be 1D, got {weight.dim()}D for {key}"
-            assert weight.shape[0] % tp_size == 0, f"hidden_dim ({weight.shape[0]}) must be divisible by tp_size ({tp_size}) for {key}"
+            assert (
+                weight.dim() == 1
+            ), f"Norm weight should be 1D, got {weight.dim()}D for {key}"
+            assert (
+                weight.shape[0] % tp_size == 0
+            ), f"hidden_dim ({weight.shape[0]}) must be divisible by tp_size ({tp_size}) for {key}"
             chunk_size = weight.shape[0] // tp_size
-            return [weight[rank_idx * chunk_size : (rank_idx + 1) * chunk_size] for rank_idx in range(tp_size)]
+            return [
+                weight[rank_idx * chunk_size : (rank_idx + 1) * chunk_size]
+                for rank_idx in range(tp_size)
+            ]
 
         # 2D weights (linear layer weights)
-        assert weight.dim() == 2, f"Linear weight should be 2D, got {weight.dim()}D for {key}"
+        assert (
+            weight.dim() == 2
+        ), f"Linear weight should be 2D, got {weight.dim()}D for {key}"
 
         # Transpose to [in_dim, out_dim] format for easier splitting
         weight_t = weight.t()  # [in_dim, out_dim]
@@ -315,20 +390,28 @@ class LTX2Model(BaseTransformerModel):
         if split_type == "col":
             # Column split: [out_dim, in_dim] -> [out_dim/tp_size, in_dim] per rank
             # Split along out_dim dimension
-            assert weight_t.shape[1] % tp_size == 0, f"out_dim ({weight_t.shape[1]}) must be divisible by tp_size ({tp_size}) for {key}"
+            assert (
+                weight_t.shape[1] % tp_size == 0
+            ), f"out_dim ({weight_t.shape[1]}) must be divisible by tp_size ({tp_size}) for {key}"
             chunk_size = weight_t.shape[1] // tp_size
             split_weights = []
             for rank_idx in range(tp_size):
-                split_weight = weight_t[:, rank_idx * chunk_size : (rank_idx + 1) * chunk_size].t()  # Back to [out_dim/tp_size, in_dim]
+                split_weight = weight_t[
+                    :, rank_idx * chunk_size : (rank_idx + 1) * chunk_size
+                ].t()  # Back to [out_dim/tp_size, in_dim]
                 split_weights.append(split_weight)
         else:  # split_type == "row"
             # Row split: [out_dim, in_dim] -> [out_dim, in_dim/tp_size] per rank
             # Split along in_dim dimension
-            assert weight_t.shape[0] % tp_size == 0, f"in_dim ({weight_t.shape[0]}) must be divisible by tp_size ({tp_size}) for {key}"
+            assert (
+                weight_t.shape[0] % tp_size == 0
+            ), f"in_dim ({weight_t.shape[0]}) must be divisible by tp_size ({tp_size}) for {key}"
             chunk_size = weight_t.shape[0] // tp_size
             split_weights = []
             for rank_idx in range(tp_size):
-                split_weight = weight_t[rank_idx * chunk_size : (rank_idx + 1) * chunk_size, :].t()  # Back to [out_dim, in_dim/tp_size]
+                split_weight = weight_t[
+                    rank_idx * chunk_size : (rank_idx + 1) * chunk_size, :
+                ].t()  # Back to [out_dim, in_dim/tp_size]
                 split_weights.append(split_weight)
 
         return split_weights
@@ -358,15 +441,25 @@ class LTX2Model(BaseTransformerModel):
             if self.config.get("tensor_parallel", False):
                 pre_infer_out = self._tensor_parallel_pre_process(pre_infer_out)
 
-            vx, ax, video_embedded_timestep, audio_embedded_timestep = self.transformer_infer.infer(self.transformer_weights, pre_infer_out)
+            vx, ax, video_embedded_timestep, audio_embedded_timestep = (
+                self.transformer_infer.infer(self.transformer_weights, pre_infer_out)
+            )
 
             # Apply sequence parallel post-processing (only for video)
             if self.config.get("seq_parallel", False):
                 vx = self._seq_parallel_post_process(vx, self.original_video_seq_len)
-                video_embedded_timestep = self._seq_parallel_post_process(video_embedded_timestep, self.original_video_seq_len)
+                video_embedded_timestep = self._seq_parallel_post_process(
+                    video_embedded_timestep, self.original_video_seq_len
+                )
                 # Audio remains global, no gather needed
 
-            vx, ax = self.post_infer.infer(self.post_weight, vx, ax, video_embedded_timestep, audio_embedded_timestep)
+            vx, ax = self.post_infer.infer(
+                self.post_weight,
+                vx,
+                ax,
+                video_embedded_timestep,
+                audio_embedded_timestep,
+            )
             return vx, ax
         finally:
             self.transformer_infer.reset_guidance_perturbation()
@@ -383,25 +476,48 @@ class LTX2Model(BaseTransformerModel):
         v_skip = _mm_guider_should_skip_step(v_p["skip_step"], step_i)
         a_skip = _mm_guider_should_skip_step(a_p["skip_step"], step_i)
 
-        need_neg = (not math.isclose(v_p["cfg_scale"], 1.0)) or (not math.isclose(a_p["cfg_scale"], 1.0))
-        need_ptb = (not math.isclose(v_p["stg_scale"], 0.0)) or (not math.isclose(a_p["stg_scale"], 0.0))
-        need_mod = (not math.isclose(v_p["modality_scale"], 1.0)) or (not math.isclose(a_p["modality_scale"], 1.0))
+        need_neg = (not math.isclose(v_p["cfg_scale"], 1.0)) or (
+            not math.isclose(a_p["cfg_scale"], 1.0)
+        )
+        need_ptb = (not math.isclose(v_p["stg_scale"], 0.0)) or (
+            not math.isclose(a_p["stg_scale"], 0.0)
+        )
+        need_mod = (not math.isclose(v_p["modality_scale"], 1.0)) or (
+            not math.isclose(a_p["modality_scale"], 1.0)
+        )
 
-        if v_skip and a_skip and sch.mm_last_v_pred is not None and sch.mm_last_a_pred is not None:
+        if (
+            v_skip
+            and a_skip
+            and sch.mm_last_v_pred is not None
+            and sch.mm_last_a_pred is not None
+        ):
             sch.v_noise_pred = sch.mm_last_v_pred
             sch.a_noise_pred = sch.mm_last_a_pred
             return
 
-        v_noise_pred_cond, a_noise_pred_cond = self._infer_cond_uncond(inputs, infer_condition=True)
+        v_noise_pred_cond, a_noise_pred_cond = self._infer_cond_uncond(
+            inputs, infer_condition=True
+        )
 
         if need_neg:
-            v_noise_pred_uncond, a_noise_pred_uncond = self._infer_cond_uncond(inputs, infer_condition=False)
+            v_noise_pred_uncond, a_noise_pred_uncond = self._infer_cond_uncond(
+                inputs, infer_condition=False
+            )
         else:
             v_noise_pred_uncond, a_noise_pred_uncond = None, None
 
         if need_ptb:
-            v_sb = frozenset(v_p["stg_blocks"]) if not math.isclose(v_p["stg_scale"], 0.0) else frozenset()
-            a_sb = frozenset(a_p["stg_blocks"]) if not math.isclose(a_p["stg_scale"], 0.0) else frozenset()
+            v_sb = (
+                frozenset(v_p["stg_blocks"])
+                if not math.isclose(v_p["stg_scale"], 0.0)
+                else frozenset()
+            )
+            a_sb = (
+                frozenset(a_p["stg_blocks"])
+                if not math.isclose(a_p["stg_scale"], 0.0)
+                else frozenset()
+            )
             v_noise_pred_ptb, a_noise_pred_ptb = self._infer_cond_uncond(
                 inputs,
                 infer_condition=True,
@@ -476,7 +592,9 @@ class LTX2Model(BaseTransformerModel):
         if pre_infer_out.video_args is not None:
             # Split x (latent)
             vx = pre_infer_out.video_args.x
-            self.original_video_seq_len = vx.shape[0]  # Record original length before padding
+            self.original_video_seq_len = vx.shape[
+                0
+            ]  # Record original length before padding
             multiple = world_size * self.padding_multiple
             padding_size = (multiple - (vx.shape[0] % multiple)) % multiple
             if padding_size > 0:
@@ -497,15 +615,24 @@ class LTX2Model(BaseTransformerModel):
                 seq_len = v_cos.shape[seq_dim]
                 padding_size = (multiple - (seq_len % multiple)) % multiple
                 if padding_size > 0:
-                    pad_spec = [0, 0] * (v_cos.dim() - seq_dim - 1) + [0, padding_size] + [0, 0] * seq_dim
+                    pad_spec = (
+                        [0, 0] * (v_cos.dim() - seq_dim - 1)
+                        + [0, padding_size]
+                        + [0, 0] * seq_dim
+                    )
                     v_cos = F.pad(v_cos, pad_spec)
                     v_sin = F.pad(v_sin, pad_spec)
 
-                pre_infer_out.video_args.positional_embeddings = (torch.chunk(v_cos, world_size, dim=seq_dim)[cur_rank], torch.chunk(v_sin, world_size, dim=seq_dim)[cur_rank])
+                pre_infer_out.video_args.positional_embeddings = (
+                    torch.chunk(v_cos, world_size, dim=seq_dim)[cur_rank],
+                    torch.chunk(v_sin, world_size, dim=seq_dim)[cur_rank],
+                )
 
             # Split cross-attention positional embeddings for cross-modal attention
             if pre_infer_out.video_args.cross_positional_embeddings is not None:
-                v_cross_cos, v_cross_sin = pre_infer_out.video_args.cross_positional_embeddings
+                v_cross_cos, v_cross_sin = (
+                    pre_infer_out.video_args.cross_positional_embeddings
+                )
                 if v_cross_cos.dim() == 4:
                     seq_dim = 2
                 elif v_cross_cos.dim() == 2:
@@ -516,11 +643,18 @@ class LTX2Model(BaseTransformerModel):
                 seq_len = v_cross_cos.shape[seq_dim]
                 padding_size = (multiple - (seq_len % multiple)) % multiple
                 if padding_size > 0:
-                    pad_spec = [0, 0] * (v_cross_cos.dim() - seq_dim - 1) + [0, padding_size] + [0, 0] * seq_dim
+                    pad_spec = (
+                        [0, 0] * (v_cross_cos.dim() - seq_dim - 1)
+                        + [0, padding_size]
+                        + [0, 0] * seq_dim
+                    )
                     v_cross_cos = F.pad(v_cross_cos, pad_spec)
                     v_cross_sin = F.pad(v_cross_sin, pad_spec)
 
-                pre_infer_out.video_args.cross_positional_embeddings = (torch.chunk(v_cross_cos, world_size, dim=seq_dim)[cur_rank], torch.chunk(v_cross_sin, world_size, dim=seq_dim)[cur_rank])
+                pre_infer_out.video_args.cross_positional_embeddings = (
+                    torch.chunk(v_cross_cos, world_size, dim=seq_dim)[cur_rank],
+                    torch.chunk(v_cross_sin, world_size, dim=seq_dim)[cur_rank],
+                )
 
             # Split timestep embeddings (sequence-length dependent)
             if pre_infer_out.video_args.timesteps is not None:
@@ -528,28 +662,42 @@ class LTX2Model(BaseTransformerModel):
                 padding_size = (multiple - (v_timesteps.shape[0] % multiple)) % multiple
                 if padding_size > 0:
                     v_timesteps = F.pad(v_timesteps, (0, 0, 0, padding_size))
-                pre_infer_out.video_args.timesteps = torch.chunk(v_timesteps, world_size, dim=0)[cur_rank]
+                pre_infer_out.video_args.timesteps = torch.chunk(
+                    v_timesteps, world_size, dim=0
+                )[cur_rank]
 
             if pre_infer_out.video_args.embedded_timestep is not None:
                 v_embedded_timestep = pre_infer_out.video_args.embedded_timestep
-                padding_size = (multiple - (v_embedded_timestep.shape[0] % multiple)) % multiple
+                padding_size = (
+                    multiple - (v_embedded_timestep.shape[0] % multiple)
+                ) % multiple
                 if padding_size > 0:
-                    v_embedded_timestep = F.pad(v_embedded_timestep, (0, 0, 0, padding_size))
-                pre_infer_out.video_args.embedded_timestep = torch.chunk(v_embedded_timestep, world_size, dim=0)[cur_rank]
+                    v_embedded_timestep = F.pad(
+                        v_embedded_timestep, (0, 0, 0, padding_size)
+                    )
+                pre_infer_out.video_args.embedded_timestep = torch.chunk(
+                    v_embedded_timestep, world_size, dim=0
+                )[cur_rank]
 
             if pre_infer_out.video_args.cross_scale_shift_timestep is not None:
                 v_cross_ss = pre_infer_out.video_args.cross_scale_shift_timestep
                 padding_size = (multiple - (v_cross_ss.shape[0] % multiple)) % multiple
                 if padding_size > 0:
                     v_cross_ss = F.pad(v_cross_ss, (0, 0, 0, padding_size))
-                pre_infer_out.video_args.cross_scale_shift_timestep = torch.chunk(v_cross_ss, world_size, dim=0)[cur_rank]
+                pre_infer_out.video_args.cross_scale_shift_timestep = torch.chunk(
+                    v_cross_ss, world_size, dim=0
+                )[cur_rank]
 
             if pre_infer_out.video_args.cross_gate_timestep is not None:
                 v_cross_gate = pre_infer_out.video_args.cross_gate_timestep
-                padding_size = (multiple - (v_cross_gate.shape[0] % multiple)) % multiple
+                padding_size = (
+                    multiple - (v_cross_gate.shape[0] % multiple)
+                ) % multiple
                 if padding_size > 0:
                     v_cross_gate = F.pad(v_cross_gate, (0, 0, 0, padding_size))
-                pre_infer_out.video_args.cross_gate_timestep = torch.chunk(v_cross_gate, world_size, dim=0)[cur_rank]
+                pre_infer_out.video_args.cross_gate_timestep = torch.chunk(
+                    v_cross_gate, world_size, dim=0
+                )[cur_rank]
 
         # Audio remains global - no splitting needed
         # Audio has fewer tokens, so we keep it on all ranks
@@ -590,8 +738,18 @@ class LTX2Model(BaseTransformerModel):
 
                 if cos_freqs.dim() == 2 and cos_freqs.shape[0] == num_heads:
                     # Shape: [num_heads, head_dim] - split along num_heads dimension
-                    cos_freqs_split = cos_freqs[tp_rank * num_heads_per_rank : (tp_rank + 1) * num_heads_per_rank, :]
-                    sin_freqs_split = sin_freqs[tp_rank * num_heads_per_rank : (tp_rank + 1) * num_heads_per_rank, :]
+                    cos_freqs_split = cos_freqs[
+                        tp_rank
+                        * num_heads_per_rank : (tp_rank + 1)
+                        * num_heads_per_rank,
+                        :,
+                    ]
+                    sin_freqs_split = sin_freqs[
+                        tp_rank
+                        * num_heads_per_rank : (tp_rank + 1)
+                        * num_heads_per_rank,
+                        :,
+                    ]
                     return (cos_freqs_split, sin_freqs_split)
                 elif cos_freqs.dim() == 4:
                     # Shape: [B, H, T, D] where H=num_heads, D=head_dim//2 (for SPLIT rope type)
@@ -599,13 +757,33 @@ class LTX2Model(BaseTransformerModel):
                     # and PE is 4D [B, H, T, D], it will reshape input to [B, T, H, head_dim] then swapaxes to [B, H, T, head_dim]
                     # So H in PE should match num_heads_per_rank in the input
                     # Therefore, we need to split along H dimension: [B, H, T, D] -> [B, H/tp_size, T, D]
-                    assert cos_freqs.shape[1] == num_heads, f"PE head dimension mismatch: cos_freqs.shape[1]={cos_freqs.shape[1]}, num_heads={num_heads}"
-                    cos_freqs_split = cos_freqs[:, tp_rank * num_heads_per_rank : (tp_rank + 1) * num_heads_per_rank, :, :]
-                    sin_freqs_split = sin_freqs[:, tp_rank * num_heads_per_rank : (tp_rank + 1) * num_heads_per_rank, :, :]
+                    assert (
+                        cos_freqs.shape[1] == num_heads
+                    ), f"PE head dimension mismatch: cos_freqs.shape[1]={cos_freqs.shape[1]}, num_heads={num_heads}"
+                    cos_freqs_split = cos_freqs[
+                        :,
+                        tp_rank
+                        * num_heads_per_rank : (tp_rank + 1)
+                        * num_heads_per_rank,
+                        :,
+                        :,
+                    ]
+                    sin_freqs_split = sin_freqs[
+                        :,
+                        tp_rank
+                        * num_heads_per_rank : (tp_rank + 1)
+                        * num_heads_per_rank,
+                        :,
+                        :,
+                    ]
                     return (cos_freqs_split, sin_freqs_split)
                 else:
                     # For other shapes, split along last dimension (hidden_dim)
-                    head_dim = cos_freqs.shape[-1] // num_heads if cos_freqs.dim() > 1 and cos_freqs.shape[-1] % num_heads == 0 else cos_freqs.shape[-1]
+                    head_dim = (
+                        cos_freqs.shape[-1] // num_heads
+                        if cos_freqs.dim() > 1 and cos_freqs.shape[-1] % num_heads == 0
+                        else cos_freqs.shape[-1]
+                    )
                     hidden_dim_per_rank = num_heads_per_rank * head_dim
                     start_idx = tp_rank * hidden_dim_per_rank
                     end_idx = start_idx + hidden_dim_per_rank
@@ -614,7 +792,11 @@ class LTX2Model(BaseTransformerModel):
                     return (cos_freqs_split, sin_freqs_split)
             else:
                 # pe is a single tensor, split along last dimension
-                head_dim = pe.shape[-1] // num_heads if pe.dim() > 1 and pe.shape[-1] % num_heads == 0 else pe.shape[-1]
+                head_dim = (
+                    pe.shape[-1] // num_heads
+                    if pe.dim() > 1 and pe.shape[-1] % num_heads == 0
+                    else pe.shape[-1]
+                )
                 hidden_dim_per_rank = num_heads_per_rank * head_dim
                 start_idx = tp_rank * hidden_dim_per_rank
                 end_idx = start_idx + hidden_dim_per_rank
@@ -624,21 +806,45 @@ class LTX2Model(BaseTransformerModel):
         if pre_infer_out.video_args is not None:
             # Split positional embeddings for video self-attention
             if pre_infer_out.video_args.positional_embeddings is not None:
-                pre_infer_out.video_args.positional_embeddings = split_pe(pre_infer_out.video_args.positional_embeddings, v_num_heads, v_num_heads_per_rank, tp_rank, tp_size)
+                pre_infer_out.video_args.positional_embeddings = split_pe(
+                    pre_infer_out.video_args.positional_embeddings,
+                    v_num_heads,
+                    v_num_heads_per_rank,
+                    tp_rank,
+                    tp_size,
+                )
 
             # Split cross-attention positional embeddings
             if pre_infer_out.video_args.cross_positional_embeddings is not None:
-                pre_infer_out.video_args.cross_positional_embeddings = split_pe(pre_infer_out.video_args.cross_positional_embeddings, v_num_heads, v_num_heads_per_rank, tp_rank, tp_size)
+                pre_infer_out.video_args.cross_positional_embeddings = split_pe(
+                    pre_infer_out.video_args.cross_positional_embeddings,
+                    v_num_heads,
+                    v_num_heads_per_rank,
+                    tp_rank,
+                    tp_size,
+                )
 
         # Process audio args
         if pre_infer_out.audio_args is not None:
             # Split positional embeddings for audio self-attention
             if pre_infer_out.audio_args.positional_embeddings is not None:
-                pre_infer_out.audio_args.positional_embeddings = split_pe(pre_infer_out.audio_args.positional_embeddings, a_num_heads, a_num_heads_per_rank, tp_rank, tp_size)
+                pre_infer_out.audio_args.positional_embeddings = split_pe(
+                    pre_infer_out.audio_args.positional_embeddings,
+                    a_num_heads,
+                    a_num_heads_per_rank,
+                    tp_rank,
+                    tp_size,
+                )
 
             # Split cross-attention positional embeddings
             if pre_infer_out.audio_args.cross_positional_embeddings is not None:
-                pre_infer_out.audio_args.cross_positional_embeddings = split_pe(pre_infer_out.audio_args.cross_positional_embeddings, a_num_heads, a_num_heads_per_rank, tp_rank, tp_size)
+                pre_infer_out.audio_args.cross_positional_embeddings = split_pe(
+                    pre_infer_out.audio_args.cross_positional_embeddings,
+                    a_num_heads,
+                    a_num_heads_per_rank,
+                    tp_rank,
+                    tp_size,
+                )
 
         return pre_infer_out
 
@@ -665,7 +871,11 @@ class LTX2Model(BaseTransformerModel):
     @torch.no_grad()
     def infer(self, inputs):
         if self.cpu_offload:
-            if self.offload_granularity == "model" and self.scheduler.step_index == 0 and "wan2.2_moe" not in self.config["model_cls"]:
+            if (
+                self.offload_granularity == "model"
+                and self.scheduler.step_index == 0
+                and "wan2.2_moe" not in self.config["model_cls"]
+            ):
                 self.to_cuda()
             elif self.offload_granularity != "model":
                 self.pre_weight.to_cuda()
@@ -674,17 +884,25 @@ class LTX2Model(BaseTransformerModel):
         if self.config["enable_cfg"]:
             if getattr(self.scheduler, "mm_guider_enabled", False):
                 if self.config["cfg_parallel"]:
-                    raise NotImplementedError("LTX2 mm_guider 与 cfg_parallel 同时使用尚未实现，请关闭其一。")
+                    raise NotImplementedError(
+                        "LTX2 mm_guider 与 cfg_parallel 同时使用尚未实现，请关闭其一。"
+                    )
                 self._infer_mm_guider_cfg(inputs)
             elif self.config["cfg_parallel"]:
                 # ==================== CFG Parallel Processing ====================
                 cfg_p_group = self.config["device_mesh"].get_group(mesh_dim="cfg_p")
-                assert dist.get_world_size(cfg_p_group) == 2, "cfg_p_world_size must be equal to 2"
+                assert (
+                    dist.get_world_size(cfg_p_group) == 2
+                ), "cfg_p_world_size must be equal to 2"
                 cfg_p_rank = dist.get_rank(cfg_p_group)
                 if cfg_p_rank == 0:
-                    v_noise_pred, a_noise_pred = self._infer_cond_uncond(inputs, infer_condition=True)
+                    v_noise_pred, a_noise_pred = self._infer_cond_uncond(
+                        inputs, infer_condition=True
+                    )
                 else:
-                    v_noise_pred, a_noise_pred = self._infer_cond_uncond(inputs, infer_condition=False)
+                    v_noise_pred, a_noise_pred = self._infer_cond_uncond(
+                        inputs, infer_condition=False
+                    )
 
                 v_noise_pred_list = [torch.zeros_like(v_noise_pred) for _ in range(2)]
                 a_noise_pred_list = [torch.zeros_like(a_noise_pred) for _ in range(2)]
@@ -695,23 +913,49 @@ class LTX2Model(BaseTransformerModel):
                 a_noise_pred_cond = a_noise_pred_list[0]  # cfg_p_rank == 0
                 a_noise_pred_uncond = a_noise_pred_list[1]  # cfg_p_rank == 1
 
-                self.scheduler.v_noise_pred = v_noise_pred_uncond + self.scheduler.sample_guide_scale * (v_noise_pred_cond - v_noise_pred_uncond)
-                self.scheduler.a_noise_pred = a_noise_pred_uncond + self.scheduler.sample_guide_scale * (a_noise_pred_cond - a_noise_pred_uncond)
+                self.scheduler.v_noise_pred = (
+                    v_noise_pred_uncond
+                    + self.scheduler.sample_guide_scale
+                    * (v_noise_pred_cond - v_noise_pred_uncond)
+                )
+                self.scheduler.a_noise_pred = (
+                    a_noise_pred_uncond
+                    + self.scheduler.sample_guide_scale
+                    * (a_noise_pred_cond - a_noise_pred_uncond)
+                )
             else:
                 # ==================== CFG Processing ====================
-                v_noise_pred_cond, a_noise_pred_cond = self._infer_cond_uncond(inputs, infer_condition=True)
-                v_noise_pred_uncond, a_noise_pred_uncond = self._infer_cond_uncond(inputs, infer_condition=False)
+                v_noise_pred_cond, a_noise_pred_cond = self._infer_cond_uncond(
+                    inputs, infer_condition=True
+                )
+                v_noise_pred_uncond, a_noise_pred_uncond = self._infer_cond_uncond(
+                    inputs, infer_condition=False
+                )
 
-                self.scheduler.v_noise_pred = v_noise_pred_uncond + self.scheduler.sample_guide_scale * (v_noise_pred_cond - v_noise_pred_uncond)
-                self.scheduler.a_noise_pred = a_noise_pred_uncond + self.scheduler.sample_guide_scale * (a_noise_pred_cond - a_noise_pred_uncond)
+                self.scheduler.v_noise_pred = (
+                    v_noise_pred_uncond
+                    + self.scheduler.sample_guide_scale
+                    * (v_noise_pred_cond - v_noise_pred_uncond)
+                )
+                self.scheduler.a_noise_pred = (
+                    a_noise_pred_uncond
+                    + self.scheduler.sample_guide_scale
+                    * (a_noise_pred_cond - a_noise_pred_uncond)
+                )
         else:
             # ==================== No CFG ====================
-            v_noise_pred, a_noise_pred = self._infer_cond_uncond(inputs, infer_condition=True)
+            v_noise_pred, a_noise_pred = self._infer_cond_uncond(
+                inputs, infer_condition=True
+            )
             self.scheduler.v_noise_pred = v_noise_pred
             self.scheduler.a_noise_pred = a_noise_pred
 
         if self.cpu_offload:
-            if self.offload_granularity == "model" and self.scheduler.step_index == self.scheduler.infer_steps - 1 and "wan2.2_moe" not in self.config["model_cls"]:
+            if (
+                self.offload_granularity == "model"
+                and self.scheduler.step_index == self.scheduler.infer_steps - 1
+                and "wan2.2_moe" not in self.config["model_cls"]
+            ):
                 self.to_cpu()
             elif self.offload_granularity != "model":
                 self.pre_weight.to_cpu()

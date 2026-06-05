@@ -1,8 +1,9 @@
-from lib.smart_config import smart_config
 import torch
 import torch.nn.functional as F
 import triton
 import triton.language as tl
+
+from lib.smart_config import smart_config
 
 try:
     from cuvs.cluster.kmeans import KMeansParams, fit
@@ -25,11 +26,15 @@ def density_calculation(dynamic_map, q_cluster_sizes, k_cluster_sizes):
     cfg, num_heads, qc_num, kc_num = dynamic_map.shape
 
     # Calculate the block size of each block
-    clustered_block_size = q_cluster_sizes[:, :, :, None] * k_cluster_sizes[:, :, None, :]
+    clustered_block_size = (
+        q_cluster_sizes[:, :, :, None] * k_cluster_sizes[:, :, None, :]
+    )
     masked_block_size = clustered_block_size * dynamic_map
 
     # Calculate the density of each block
-    density = torch.sum(masked_block_size, dim=(2, 3)) / torch.sum(clustered_block_size, dim=(2, 3))
+    density = torch.sum(masked_block_size, dim=(2, 3)) / torch.sum(
+        clustered_block_size, dim=(2, 3)
+    )
     return density
 
 
@@ -42,7 +47,9 @@ def pairwise_distance(x, y):
     """
     x_norm = (x**2).sum(1).view(-1, 1)
     y_norm = (y**2).sum(1).view(1, -1)
-    dist = torch.clamp(x_norm + y_norm - 2.0 * torch.mm(x, torch.transpose(y, 0, 1)), min=0.0)
+    dist = torch.clamp(
+        x_norm + y_norm - 2.0 * torch.mm(x, torch.transpose(y, 0, 1)), min=0.0
+    )
     return dist
 
 
@@ -56,7 +63,9 @@ def kmeans_predict(centroids, input_tensor):  # Removed unused params argument
     return labels
 
 
-def kmeans_rapidai(tensor, k, max_iter=5, tol=1e-4, init_method="Array", centroids_init=None):  # Renamed centroids to centroids_init
+def kmeans_rapidai(
+    tensor, k, max_iter=5, tol=1e-4, init_method="Array", centroids_init=None
+):  # Renamed centroids to centroids_init
     """
     Performs K-means clustering using cuVS.
     """
@@ -72,9 +81,13 @@ def kmeans_rapidai(tensor, k, max_iter=5, tol=1e-4, init_method="Array", centroi
     if current_centroids is None:
         # Default init: cuVS handles KMeansPlusPlus if centroids_init is None and init_method is KMeansPlusPlus
         # If you need to pass an empty tensor for cuVS to initialize:
-        current_centroids = torch.empty(k, D, device=tensor.device, dtype=torch.float32)  # Or pass None
+        current_centroids = torch.empty(
+            k, D, device=tensor.device, dtype=torch.float32
+        )  # Or pass None
     else:
-        assert current_centroids.dtype == torch.float32, "Initial centroids must be float32"
+        assert (
+            current_centroids.dtype == torch.float32
+        ), "Initial centroids must be float32"
         assert current_centroids.shape == (
             k,
             D,
@@ -83,10 +96,14 @@ def kmeans_rapidai(tensor, k, max_iter=5, tol=1e-4, init_method="Array", centroi
 
     # import IPython; IPython.embed()
 
-    params = KMeansParams(n_clusters=k, max_iter=max_iter, tol=tol, init_method=init_method)  # Changed init_method to init
+    params = KMeansParams(
+        n_clusters=k, max_iter=max_iter, tol=tol, init_method=init_method
+    )  # Changed init_method to init
 
     # Call fit with centroids_init (can be None)
-    new_centroids, inertia, n_iter_ = fit(params, tensor, current_centroids)  # Added handle=None
+    new_centroids, inertia, n_iter_ = fit(
+        params, tensor, current_centroids
+    )  # Added handle=None
 
     labels = kmeans_predict(new_centroids, tensor)
     return labels, new_centroids, n_iter_
@@ -138,7 +155,9 @@ def _centroid_update_kernel(
     tl.atomic_add(count_ptr + b * K + cluster_idx, 1)
 
 
-def triton_centroid_update_cosine(x_norm: torch.Tensor, cluster_ids: torch.Tensor, old_centroids: torch.Tensor):
+def triton_centroid_update_cosine(
+    x_norm: torch.Tensor, cluster_ids: torch.Tensor, old_centroids: torch.Tensor
+):
     """Compute centroids using custom Triton kernel.
 
     Args:
@@ -149,7 +168,9 @@ def triton_centroid_update_cosine(x_norm: torch.Tensor, cluster_ids: torch.Tenso
     Returns:
         Tensor: (B, K, D) updated and L2-normalized centroids (dtype == x_norm.dtype)
     """
-    assert x_norm.is_cuda and cluster_ids.is_cuda, "Input tensors must be on CUDA device"
+    assert (
+        x_norm.is_cuda and cluster_ids.is_cuda
+    ), "Input tensors must be on CUDA device"
     B, N, D = x_norm.shape
     K = old_centroids.shape[1]
     assert cluster_ids.shape == (B, N)
@@ -188,7 +209,9 @@ def triton_centroid_update_cosine(x_norm: torch.Tensor, cluster_ids: torch.Tenso
     return centroids
 
 
-def torch_loop_centroid_update_cosine(x_norm: torch.Tensor, cluster_ids: torch.Tensor, old_centroids: torch.Tensor):
+def torch_loop_centroid_update_cosine(
+    x_norm: torch.Tensor, cluster_ids: torch.Tensor, old_centroids: torch.Tensor
+):
     """Reference Python implementation (double for-loop)"""
     B, N, D = x_norm.shape
     K = old_centroids.shape[1]
@@ -197,13 +220,17 @@ def torch_loop_centroid_update_cosine(x_norm: torch.Tensor, cluster_ids: torch.T
         for k in range(K):
             mask = cluster_ids[b] == k
             if mask.any():
-                new_centroids[b, k] = F.normalize(x_norm[b][mask].mean(dim=0, dtype=x_norm.dtype), p=2, dim=0)
+                new_centroids[b, k] = F.normalize(
+                    x_norm[b][mask].mean(dim=0, dtype=x_norm.dtype), p=2, dim=0
+                )
             else:
                 new_centroids[b, k] = old_centroids[b, k]
     return new_centroids
 
 
-def triton_centroid_update_euclid(x: torch.Tensor, cluster_ids: torch.Tensor, old_centroids: torch.Tensor):
+def triton_centroid_update_euclid(
+    x: torch.Tensor, cluster_ids: torch.Tensor, old_centroids: torch.Tensor
+):
     """Compute centroids for Euclidean KMeans using Triton.
 
     Args:
@@ -278,7 +305,9 @@ def _centroid_update_chunk_kernel(
     pid_b = tl.program_id(axis=1)
 
     b = pid_b
-    chunk_start = pid_chunk * BLOCK_N  # position of the first token handled by this program
+    chunk_start = (
+        pid_chunk * BLOCK_N
+    )  # position of the first token handled by this program
 
     # Nothing to do – out of range
     if chunk_start >= N:
@@ -304,7 +333,9 @@ def _centroid_update_chunk_kernel(
     last_id = tl.load(cid_batch_base + last_token_idx)
     all_ids = tl.load(cid_batch_base + token_idx, mask=valid_tok, other=-1)
 
-    all_tokens_idxs = tl.load(idx_batch_base + token_idx, mask=valid_tok, other=-1)  # [BLOCK_N]
+    all_tokens_idxs = tl.load(
+        idx_batch_base + token_idx, mask=valid_tok, other=-1
+    )  # [BLOCK_N]
 
     load_mask = all_tokens_idxs[:, None] * D + offs_dim[None, :]
 
@@ -312,7 +343,9 @@ def _centroid_update_chunk_kernel(
         cluster_mask = all_ids == cid
         cluster_size = tl.sum(cluster_mask.to(tl.int32))
         if cluster_size != 0:
-            cluster_feats = tl.load(x_batch_base + load_mask, mask=cluster_mask[:, None], other=0.0)  # [BLOCK_N, D]
+            cluster_feats = tl.load(
+                x_batch_base + load_mask, mask=cluster_mask[:, None], other=0.0
+            )  # [BLOCK_N, D]
             cluster_feats = cluster_feats.to(tl.float32)
             sum_feats = tl.sum(cluster_feats, axis=0)
             dest_ptr = sum_ptr + (b * K + cid) * D + offs_dim
@@ -323,7 +356,13 @@ def _centroid_update_chunk_kernel(
 # ---------------------------------------------------------------------------------------------
 
 
-def triton_centroid_update_sorted_cosine(x_norm: torch.Tensor, cluster_ids: torch.Tensor, old_centroids: torch.Tensor, *, BLOCK_N: int = 256):
+def triton_centroid_update_sorted_cosine(
+    x_norm: torch.Tensor,
+    cluster_ids: torch.Tensor,
+    old_centroids: torch.Tensor,
+    *,
+    BLOCK_N: int = 256,
+):
     """Fast centroid update assuming **cluster_ids are sorted along N**.
 
     This helper will sort the assignments (together with `x_norm`) and launch the
@@ -368,7 +407,13 @@ def triton_centroid_update_sorted_cosine(x_norm: torch.Tensor, cluster_ids: torc
     return centroids
 
 
-def triton_centroid_update_sorted_euclid(x: torch.Tensor, cluster_ids: torch.Tensor, old_centroids: torch.Tensor, *, BLOCK_N: int = 256):
+def triton_centroid_update_sorted_euclid(
+    x: torch.Tensor,
+    cluster_ids: torch.Tensor,
+    old_centroids: torch.Tensor,
+    *,
+    BLOCK_N: int = 256,
+):
     """Fast centroid update for *Euclidean* KMeans assuming cluster IDs are pre-sorted.
 
     Parameters
@@ -434,7 +479,12 @@ def _ceil_div(a: int, b: int) -> int:
 # Auto-tuning setup – explore various tile sizes / warp counts
 # -----------------------------------------------------------------------------
 
-_TUNE_CONFIGS = [triton.Config({"BLOCK_N": BN, "BLOCK_K": BK}, num_stages=4, num_warps=wp) for BN in [32, 64, 128] for BK in [32, 64, 128] for wp in [4, 8]]
+_TUNE_CONFIGS = [
+    triton.Config({"BLOCK_N": BN, "BLOCK_K": BK}, num_stages=4, num_warps=wp)
+    for BN in [32, 64, 128]
+    for BK in [32, 64, 128]
+    for wp in [4, 8]
+]
 
 
 def _cfg_keep(conf):
@@ -492,7 +542,12 @@ def _euclid_assign_kernel(
     # ------------------------------------------------------------------
     offs_d = tl.arange(0, D)
     # Compute pointer for x block: base + b*stride_x_b + n*stride_x_n + d*stride_x_d
-    x_ptrs = x_ptr + pid_b * stride_x_b + n_offsets[:, None] * stride_x_n + offs_d[None, :] * stride_x_d
+    x_ptrs = (
+        x_ptr
+        + pid_b * stride_x_b
+        + n_offsets[:, None] * stride_x_n
+        + offs_d[None, :] * stride_x_d
+    )
     x_tile = tl.load(x_ptrs, mask=n_mask[:, None], other=0.0)
     x_tile = x_tile  # compute in f32
 
@@ -512,7 +567,12 @@ def _euclid_assign_kernel(
         k_mask = k_offsets < K
 
         # Load centroid tile  (D, BLOCK_K)
-        c_ptrs = c_ptr + pid_b * stride_c_b + k_offsets[None, :] * stride_c_k + offs_d[:, None] * stride_c_d
+        c_ptrs = (
+            c_ptr
+            + pid_b * stride_c_b
+            + k_offsets[None, :] * stride_c_k
+            + offs_d[:, None] * stride_c_d
+        )
         c_tile = tl.load(c_ptrs, mask=k_mask[None, :], other=0.0)
         c_tile = c_tile
 
@@ -567,7 +627,9 @@ def euclid_assign_triton(
     Returns:
         cluster_ids (B, N) int32 (callers can cast to int64 if desired)
     """
-    assert x.is_cuda and centroids.is_cuda and x_sq.is_cuda, "All tensors must be on CUDA"
+    assert (
+        x.is_cuda and centroids.is_cuda and x_sq.is_cuda
+    ), "All tensors must be on CUDA"
     # assert x.dtype in (torch.float16, torch.float32), "x must be fp16/fp32"
     assert centroids.dtype == x.dtype, "centroids dtype mismatch"
 
@@ -622,7 +684,9 @@ def _euclid_iter(x, x_sq, centroids):
 
     # cluster_ids = dist_sq.argmin(dim=-1)
     cluster_ids = euclid_assign_triton(x, centroids, x_sq)
-    centroids_new, cluster_sizes = triton_centroid_update_sorted_euclid(x, cluster_ids, centroids)
+    centroids_new, cluster_sizes = triton_centroid_update_sorted_euclid(
+        x, cluster_ids, centroids
+    )
     # centroids_new = triton_centroid_update_euclid(x, cluster_ids, centroids)
 
     # centroids_new = centroids_new.clone()  # avoid CUDA graphs aliasing
@@ -656,9 +720,15 @@ COMPILE_FLAG = False
 # Try to compile; if PyTorch < 2.0 or compile is not available, fallback to original function
 try:
     if COMPILE_FLAG:
-        _euclid_iter_compiled = torch.compile(_euclid_iter, dynamic=True, mode="reduce-overhead")
-        _cosine_iter_compiled = torch.compile(_cosine_iter, dynamic=True, mode="reduce-overhead")
-        _dot_iter_compiled = torch.compile(_dot_iter, dynamic=True, mode="reduce-overhead")
+        _euclid_iter_compiled = torch.compile(
+            _euclid_iter, dynamic=True, mode="reduce-overhead"
+        )
+        _cosine_iter_compiled = torch.compile(
+            _cosine_iter, dynamic=True, mode="reduce-overhead"
+        )
+        _dot_iter_compiled = torch.compile(
+            _dot_iter, dynamic=True, mode="reduce-overhead"
+        )
     else:
         _euclid_iter_compiled = _euclid_iter
         _cosine_iter_compiled = _cosine_iter
@@ -669,7 +739,9 @@ except Exception:  # pragma: no cover
     _dot_iter_compiled = _dot_iter
 
 
-def batch_kmeans_Euclid(x, n_clusters, max_iters=100, tol=1e-4, init_centroids=None, verbose=False):
+def batch_kmeans_Euclid(
+    x, n_clusters, max_iters=100, tol=1e-4, init_centroids=None, verbose=False
+):
     """
     Batched KMeans clustering in PyTorch using Euclidean distance.
 
@@ -693,7 +765,9 @@ def batch_kmeans_Euclid(x, n_clusters, max_iters=100, tol=1e-4, init_centroids=N
     if init_centroids is None:
         # Randomly select initial centers from x
         indices = torch.randint(0, N, (B, n_clusters), device=x.device)
-        centroids = torch.gather(x, dim=1, index=indices[..., None].expand(-1, -1, D))  # (B, n_clusters, D)
+        centroids = torch.gather(
+            x, dim=1, index=indices[..., None].expand(-1, -1, D)
+        )  # (B, n_clusters, D)
     else:
         # centroids = init_centroids.clone()
         centroids = init_centroids
@@ -702,7 +776,9 @@ def batch_kmeans_Euclid(x, n_clusters, max_iters=100, tol=1e-4, init_centroids=N
 
     for it in range(max_iters):
         # ---- compiled single iteration ----
-        centroids_new, center_shift, cluster_ids, cluster_sizes = _euclid_iter_compiled(x, x_sq, centroids)
+        centroids_new, center_shift, cluster_ids, cluster_sizes = _euclid_iter_compiled(
+            x, x_sq, centroids
+        )
 
         # 4. Check for convergence
         if verbose:
@@ -724,7 +800,9 @@ def batch_kmeans_Euclid(x, n_clusters, max_iters=100, tol=1e-4, init_centroids=N
 # batch_kmeans_Euclid = torch.compile(batch_kmeans_Euclid, dynamic=True, mode="reduce-overhead")
 
 
-def batch_kmeans_Cosine(x, n_clusters, max_iters=100, tol=1e-4, init_centroids=None, verbose=False):
+def batch_kmeans_Cosine(
+    x, n_clusters, max_iters=100, tol=1e-4, init_centroids=None, verbose=False
+):
     """
     Batched KMeans clustering in PyTorch using Cosine similarity.
 
@@ -748,7 +826,9 @@ def batch_kmeans_Cosine(x, n_clusters, max_iters=100, tol=1e-4, init_centroids=N
     if init_centroids is None:
         # Randomly select initial centers from x_norm
         indices = torch.randint(0, N, (B, n_clusters), device=x.device)
-        centroids = torch.gather(x_norm, dim=1, index=indices[..., None].expand(-1, -1, D))  # (B, n_clusters, D)
+        centroids = torch.gather(
+            x_norm, dim=1, index=indices[..., None].expand(-1, -1, D)
+        )  # (B, n_clusters, D)
     else:
         centroids = init_centroids
 
@@ -757,7 +837,9 @@ def batch_kmeans_Cosine(x, n_clusters, max_iters=100, tol=1e-4, init_centroids=N
 
     for it in range(max_iters):
         # ---- compiled single iteration ----
-        centroids_new, center_shift, cluster_ids = _cosine_iter_compiled(x_norm, centroids)
+        centroids_new, center_shift, cluster_ids = _cosine_iter_compiled(
+            x_norm, centroids
+        )
 
         # 4. Check for convergence
         if verbose:
@@ -774,7 +856,9 @@ def batch_kmeans_Cosine(x, n_clusters, max_iters=100, tol=1e-4, init_centroids=N
     return cluster_ids, centroids, cluster_sizes, it + 1
 
 
-def batch_kmeans_Dot(x, n_clusters, max_iters=100, tol=1e-4, init_centroids=None, verbose=False):
+def batch_kmeans_Dot(
+    x, n_clusters, max_iters=100, tol=1e-4, init_centroids=None, verbose=False
+):
     """
     Batched KMeans clustering in PyTorch using raw dot-product as similarity.
 
@@ -841,7 +925,9 @@ def weighted_softmax(scores, weights):
     max_score = torch.max(scores, dim=-1, keepdim=True)[0]
     exp_scores = torch.exp(scores - max_score)
     weighted_exp = weights * exp_scores
-    softmax_out = weighted_exp / torch.sum(weighted_exp, dim=-1, keepdim=True).clamp(min=1e-12)
+    softmax_out = weighted_exp / torch.sum(weighted_exp, dim=-1, keepdim=True).clamp(
+        min=1e-12
+    )
     return softmax_out.to(input_dtype)
 
 
@@ -857,11 +943,15 @@ def identify_dynamic_map(
     kc_num = key_centroids.shape[2]
     device = query_centroids.device
 
-    attn_scores = torch.matmul(query_centroids, key_centroids.transpose(-2, -1)) / (D**0.5)
+    attn_scores = torch.matmul(query_centroids, key_centroids.transpose(-2, -1)) / (
+        D**0.5
+    )
     k_weights = k_cluster_sizes.unsqueeze(-2).float()
 
     weighted_attn_probs = weighted_softmax(attn_scores, k_weights)
-    sorted_probs, sorted_indices = torch.sort(weighted_attn_probs, dim=-1, descending=True)
+    sorted_probs, sorted_indices = torch.sort(
+        weighted_attn_probs, dim=-1, descending=True
+    )
 
     cumsum_probs = torch.cumsum(sorted_probs, dim=-1)
     remove_indices = cumsum_probs > p
@@ -909,8 +999,12 @@ def dynamic_block_sparse_fwd_torch(q, k, v, dynamic_map, qc_size, kc_size):
 
     # Precompute cumulative sizes for block indexing
     # Add a 0 at the beginning for easier slicing
-    qc_cum_size = torch.cumsum(torch.cat([torch.zeros_like(qc_size[..., :1]), qc_size], dim=-1), dim=-1)
-    kc_cum_size = torch.cumsum(torch.cat([torch.zeros_like(kc_size[..., :1]), kc_size], dim=-1), dim=-1)
+    qc_cum_size = torch.cumsum(
+        torch.cat([torch.zeros_like(qc_size[..., :1]), qc_size], dim=-1), dim=-1
+    )
+    kc_cum_size = torch.cumsum(
+        torch.cat([torch.zeros_like(kc_size[..., :1]), kc_size], dim=-1), dim=-1
+    )
 
     out = torch.zeros_like(q)
     scale = D**-0.5
@@ -932,7 +1026,9 @@ def dynamic_block_sparse_fwd_torch(q, k, v, dynamic_map, qc_size, kc_size):
                 if q_block.shape[0] == 0:
                     continue  # Skip empty blocks
 
-                m_i = torch.full((q_block.shape[0], 1), -float("inf"), device=device, dtype=dtype)
+                m_i = torch.full(
+                    (q_block.shape[0], 1), -float("inf"), device=device, dtype=dtype
+                )
                 l_i = torch.zeros((q_block.shape[0], 1), device=device, dtype=dtype)
                 acc_o_i = torch.zeros_like(q_block)  # Shape: [qc_i, D]
 
@@ -953,7 +1049,9 @@ def dynamic_block_sparse_fwd_torch(q, k, v, dynamic_map, qc_size, kc_size):
 
                         # --- Online Softmax ---
                         # Find max score per query token in this block
-                        m_ij = torch.max(s_ij, dim=-1, keepdim=True)[0]  # Shape: [qc_i, 1]
+                        m_ij = torch.max(s_ij, dim=-1, keepdim=True)[
+                            0
+                        ]  # Shape: [qc_i, 1]
 
                         # Update overall max score (m_i)
                         m_new = torch.maximum(m_i, m_ij)  # Shape: [qc_i, 1]
@@ -963,17 +1061,23 @@ def dynamic_block_sparse_fwd_torch(q, k, v, dynamic_map, qc_size, kc_size):
                         exp_m_diff = torch.exp(m_i - m_new)  # Shape: [qc_i, 1]
 
                         # Update softmax denominator (l_i)
-                        l_i = (l_i * exp_m_diff) + torch.sum(p_ij, dim=-1, keepdim=True)  # Shape: [qc_i, 1]
+                        l_i = (l_i * exp_m_diff) + torch.sum(
+                            p_ij, dim=-1, keepdim=True
+                        )  # Shape: [qc_i, 1]
 
                         # Update output accumulator (acc_o_i)
                         # P_ij @ V_j: [qc_i, kc_j] @ [kc_j, D] -> [qc_i, D]
-                        acc_o_i = (acc_o_i * exp_m_diff) + (p_ij @ v_block)  # Shape: [qc_i, D]
+                        acc_o_i = (acc_o_i * exp_m_diff) + (
+                            p_ij @ v_block
+                        )  # Shape: [qc_i, D]
 
                         # Update max score for next iteration
                         m_i = m_new
 
                 # Normalize the accumulated output
-                out[b, h, q_start:q_end, :] = acc_o_i / l_i.clamp(min=1e-12)  # Avoid division by zero
+                out[b, h, q_start:q_end, :] = acc_o_i / l_i.clamp(
+                    min=1e-12
+                )  # Avoid division by zero
 
     return out
 
@@ -1067,7 +1171,12 @@ def _dynamic_block_sparse_fwd_kernel(
     k_ptr_base = K + b * stride_kb + h * stride_kh
     v_ptr_base = V + b * stride_vb + h * stride_vh
     out_ptr_base = Out + b * stride_ob + h * stride_oh + q_start_offset * stride_os
-    dmap_ptr = dynamic_map + b * stride_dmap_b + h * stride_dmap_h + q_block_idx * stride_dmap_qc
+    dmap_ptr = (
+        dynamic_map
+        + b * stride_dmap_b
+        + h * stride_dmap_h
+        + q_block_idx * stride_dmap_qc
+    )
     kcs_ptr = kc_cum_size + b * stride_kcs_b + h * stride_kcs_h
 
     # --- Iterate over the query block rows in chunks of BLOCK_M ---
@@ -1076,7 +1185,9 @@ def _dynamic_block_sparse_fwd_kernel(
 
     for q_chunk_start in range(0, q_block_size, BLOCK_M):
         q_chunk_rows = offs_qm + q_chunk_start
-        q_rows_mask = q_chunk_rows < q_block_size  # Mask for valid rows in this Q chunk [BLOCK_M]
+        q_rows_mask = (
+            q_chunk_rows < q_block_size
+        )  # Mask for valid rows in this Q chunk [BLOCK_M]
 
         # --- Initialize accumulators for this Q chunk ---
         m_i = tl.zeros([BLOCK_M], dtype=tl.float32) - float("inf")  # Max score
@@ -1105,19 +1216,35 @@ def _dynamic_block_sparse_fwd_kernel(
                     v_block_ptr_base = v_ptr_base + k_start_offset * stride_vs
 
                     # --- Loop over K block chunks (size BLOCK_N) ---
-                    offs_kn = tl.arange(0, BLOCK_N)  # Key block row offsets [0, ..., BLOCK_N-1]
+                    offs_kn = tl.arange(
+                        0, BLOCK_N
+                    )  # Key block row offsets [0, ..., BLOCK_N-1]
                     for k_chunk_start in range(0, k_block_size, BLOCK_N):
                         k_chunk_rows = offs_kn + k_chunk_start
-                        k_rows_mask = k_chunk_rows < k_block_size  # Mask for valid rows in this K/V chunk [BLOCK_N]
+                        k_rows_mask = (
+                            k_chunk_rows < k_block_size
+                        )  # Mask for valid rows in this K/V chunk [BLOCK_N]
 
                         # --- Load K, V chunks ---
-                        k_ptr = k_block_ptr_base + k_chunk_rows[:, None] * stride_ks + offs_d[None, :]
-                        v_ptr = v_block_ptr_base + k_chunk_rows[:, None] * stride_vs + offs_d[None, :]
+                        k_ptr = (
+                            k_block_ptr_base
+                            + k_chunk_rows[:, None] * stride_ks
+                            + offs_d[None, :]
+                        )
+                        v_ptr = (
+                            v_block_ptr_base
+                            + k_chunk_rows[:, None] * stride_vs
+                            + offs_d[None, :]
+                        )
 
                         # Mask ensures we don't read out of bounds for the key block or dimension D
                         mask_kv = k_rows_mask[:, None] & (offs_d[None, :] < D)
-                        k_chunk = tl.load(k_ptr, mask=mask_kv, other=0.0)  # Shape: [BLOCK_N, BLOCK_D]
-                        v_chunk = tl.load(v_ptr, mask=mask_kv, other=0.0)  # Shape: [BLOCK_N, BLOCK_D]
+                        k_chunk = tl.load(
+                            k_ptr, mask=mask_kv, other=0.0
+                        )  # Shape: [BLOCK_N, BLOCK_D]
+                        v_chunk = tl.load(
+                            v_ptr, mask=mask_kv, other=0.0
+                        )  # Shape: [BLOCK_N, BLOCK_D]
 
                         # --- Compute Scores (Attention) ---
                         # QK^T: [BLOCK_M, BLOCK_D] @ [BLOCK_D, BLOCK_N] -> [BLOCK_M, BLOCK_N]
@@ -1125,9 +1252,13 @@ def _dynamic_block_sparse_fwd_kernel(
 
                         # IMPORTANT: Mask out scores corresponding to padding in K before max/softmax
                         # Set scores for invalid K elements to -inf
-                        s_ij_chunk = tl.where(k_rows_mask[None, :], s_ij_chunk, -float("inf"))
+                        s_ij_chunk = tl.where(
+                            k_rows_mask[None, :], s_ij_chunk, -float("inf")
+                        )
                         # Mask out scores for invalid Q elements as well (although q_chunk elements are 0, avoid potential issues)
-                        s_ij_chunk = tl.where(q_rows_mask[:, None], s_ij_chunk, -float("inf"))
+                        s_ij_chunk = tl.where(
+                            q_rows_mask[:, None], s_ij_chunk, -float("inf")
+                        )
 
                         # --- Online Softmax Update ---
                         # Current max for this Q-K chunk interaction
@@ -1137,7 +1268,9 @@ def _dynamic_block_sparse_fwd_kernel(
                         m_new = tl.maximum(m_i, m_ij_chunk)  # Shape: [BLOCK_M]
 
                         # Calculate scaled probabilities P_ij = exp(S_ij - m_new)
-                        p_ij_chunk = tl.exp(s_ij_chunk - m_new[:, None])  # Shape: [BLOCK_M, BLOCK_N]
+                        p_ij_chunk = tl.exp(
+                            s_ij_chunk - m_new[:, None]
+                        )  # Shape: [BLOCK_M, BLOCK_N]
                         # Zero out probabilities for masked K elements before summing
                         p_ij_chunk = tl.where(k_rows_mask[None, :], p_ij_chunk, 0.0)
 
@@ -1145,16 +1278,22 @@ def _dynamic_block_sparse_fwd_kernel(
                         exp_m_diff = tl.exp(m_i - m_new)  # Shape: [BLOCK_M]
 
                         # Update sum accumulator (denominator L)
-                        l_i_chunk = tl.sum(p_ij_chunk, axis=1)  # Sum probabilities for this chunk, shape [BLOCK_M]
+                        l_i_chunk = tl.sum(
+                            p_ij_chunk, axis=1
+                        )  # Sum probabilities for this chunk, shape [BLOCK_M]
                         l_i = (l_i * exp_m_diff) + l_i_chunk  # Shape: [BLOCK_M]
 
                         # Update output accumulator O
                         # P_ij @ V_j: [BLOCK_M, BLOCK_N] @ [BLOCK_N, BLOCK_D] -> [BLOCK_M, BLOCK_D]
                         # Ensure p_ij_chunk is the correct dtype for dot product
                         p_ij_chunk_casted = p_ij_chunk.to(V.dtype.element_ty)
-                        o_chunk = tl.dot(p_ij_chunk_casted, v_chunk)  # Shape: [BLOCK_M, BLOCK_D]
+                        o_chunk = tl.dot(
+                            p_ij_chunk_casted, v_chunk
+                        )  # Shape: [BLOCK_M, BLOCK_D]
 
-                        acc_o = (acc_o * exp_m_diff[:, None]) + o_chunk  # Shape: [BLOCK_M, BLOCK_D]
+                        acc_o = (
+                            acc_o * exp_m_diff[:, None]
+                        ) + o_chunk  # Shape: [BLOCK_M, BLOCK_D]
 
                         # Update max for the next K chunk/block
                         m_i = m_new
@@ -1166,7 +1305,9 @@ def _dynamic_block_sparse_fwd_kernel(
         # Add epsilon to l_i to avoid division by zero
         l_i_safe = tl.where(l_i == 0, 1.0, l_i)  # Avoid 0/0 -> NaN
         o_final_chunk = acc_o / (l_i_safe[:, None])
-        o_final_chunk = tl.where(l_i[:, None] == 0, 0.0, o_final_chunk)  # Ensure output is 0 if l_i was 0
+        o_final_chunk = tl.where(
+            l_i[:, None] == 0, 0.0, o_final_chunk
+        )  # Ensure output is 0 if l_i was 0
 
         # --- Write output chunk to global memory ---
         out_ptr = out_ptr_base + q_chunk_rows[:, None] * stride_os + offs_d[None, :]
@@ -1209,7 +1350,12 @@ def dynamic_block_sparse_fwd_triton(q, k, v, dynamic_map, qc_size, kc_size):
     assert dynamic_map.is_cuda and qc_size.is_cuda and kc_size.is_cuda
     assert q.dtype == k.dtype == v.dtype, "Input dtypes must match"
     assert dtype in [torch.float16, torch.bfloat16, torch.float32], "Unsupported dtype"
-    assert D in [16, 32, 64, 128], "Head dimension D must be 16, 32, 64, or 128 for efficient Triton dot"
+    assert D in [
+        16,
+        32,
+        64,
+        128,
+    ], "Head dimension D must be 16, 32, 64, or 128 for efficient Triton dot"
     # Ensure sequence lengths match sum of block sizes (check on one batch/head for simplicity)
     assert S == torch.sum(qc_size[0, 0, :]), "Sum of qc_size must equal S"
     assert S == torch.sum(kc_size[0, 0, :]), "Sum of kc_size must equal S"
@@ -1220,8 +1366,12 @@ def dynamic_block_sparse_fwd_triton(q, k, v, dynamic_map, qc_size, kc_size):
     scale = D**-0.5
 
     # Precompute cumulative sizes (on CPU/GPU, keep on device)
-    qc_cum_size = torch.cumsum(torch.cat([torch.zeros_like(qc_size[..., :1]), qc_size], dim=-1), dim=-1).int()
-    kc_cum_size = torch.cumsum(torch.cat([torch.zeros_like(kc_size[..., :1]), kc_size], dim=-1), dim=-1).int()
+    qc_cum_size = torch.cumsum(
+        torch.cat([torch.zeros_like(qc_size[..., :1]), qc_size], dim=-1), dim=-1
+    ).int()
+    kc_cum_size = torch.cumsum(
+        torch.cat([torch.zeros_like(kc_size[..., :1]), kc_size], dim=-1), dim=-1
+    ).int()
 
     # Output tensor
     out = torch.empty_like(q)
@@ -1301,7 +1451,9 @@ def dynamic_block_sparse_fwd_triton(q, k, v, dynamic_map, qc_size, kc_size):
 # ---------------- Batch wrapper for cuVS KMeans -----------------
 
 
-def batch_kmeans_rapidai(x, n_clusters, max_iters=100, tol=1e-4, init_centroids=None, verbose=False):
+def batch_kmeans_rapidai(
+    x, n_clusters, max_iters=100, tol=1e-4, init_centroids=None, verbose=False
+):
     """Batched K-Means using RAPIDS cuVS implementation.
 
     Args:
@@ -1339,7 +1491,14 @@ def batch_kmeans_rapidai(x, n_clusters, max_iters=100, tol=1e-4, init_centroids=
         else:
             centroids_init_b = init_centroids_float[b]
             init_method = "Array"
-        labels_b, centroids_b, n_iter_b = kmeans_rapidai(xb, n_clusters, max_iter=max_iters, tol=tol, init_method=init_method, centroids_init=centroids_init_b)
+        labels_b, centroids_b, n_iter_b = kmeans_rapidai(
+            xb,
+            n_clusters,
+            max_iter=max_iters,
+            tol=tol,
+            init_method=init_method,
+            centroids_init=centroids_init_b,
+        )
 
         cluster_ids_list.append(labels_b.to(torch.int64))  # (N,)
         centroids_list.append(centroids_b)

@@ -1,14 +1,14 @@
-from lib.smart_config import smart_config
 import os
 
 import torch
 from diffusers.utils import convert_state_dict_to_diffusers
 from diffusers.utils.peft_utils import get_adapter_name
+from lightx2v_train.utils.utils import get_running_dtype
 from peft import LoraConfig
 from peft.utils import get_peft_model_state_dict
 from safetensors.torch import save_file
 
-from lightx2v_train.utils.utils import get_running_dtype
+from lib.smart_config import smart_config
 
 
 class BaseModel:
@@ -94,9 +94,13 @@ class BaseModel:
             self._infer_lora_adapter_name = None
 
     def save_lora_weights(self, save_dir):
-        lora_state_dict = convert_state_dict_to_diffusers(get_peft_model_state_dict(self.transformer))
+        lora_state_dict = convert_state_dict_to_diffusers(
+            get_peft_model_state_dict(self.transformer)
+        )
         if hasattr(self.pipeline_cls, "save_lora_weights"):
-            self.pipeline_cls.save_lora_weights(save_dir, lora_state_dict, safe_serialization=True)
+            self.pipeline_cls.save_lora_weights(
+                save_dir, lora_state_dict, safe_serialization=True
+            )
         else:
             save_file(lora_state_dict, f"{save_dir}/pytorch_lora_weights.safetensors")
 
@@ -114,7 +118,11 @@ class BaseModel:
 
         incompatible = set_peft_model_state_dict(self.transformer, peft_state_dict)
         if incompatible and incompatible.unexpected_keys:
-            print(f"Warning: unexpected keys when resuming LoRA: {incompatible.unexpected_keys}")
+            print(
+                f"Warning: unexpected keys when resuming LoRA: {incompatible.unexpected_keys}"
+            )
 
     def save_full_model(self, save_dir):
-        self.transformer.save_pretrained(f"{save_dir}/transformer", safe_serialization=True)
+        self.transformer.save_pretrained(
+            f"{save_dir}/transformer", safe_serialization=True
+        )

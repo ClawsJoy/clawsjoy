@@ -1,6 +1,7 @@
-from lib.smart_config import smart_config
 from contextlib import contextmanager
 from typing import Any, Iterable, Mapping
+
+from lib.smart_config import smart_config
 
 
 class LockableDict(dict):

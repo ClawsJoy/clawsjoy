@@ -1,11 +1,11 @@
-#!/usr/bin/env python3
-"""Init - Init 模块
-
-@version: 5.0.0
-@author: ClawsJoy
-@date: 2026-05-31
+"""
+audio 技能模块
 """
 
-from .audio_processor import skill
+from .audio_skill import TTSSkill
 
-__all__ = ['skill']
+
+def execute(params=None):
+    """统一执行入口"""
+    skill = TTSSkill()
+    return skill.execute(params)

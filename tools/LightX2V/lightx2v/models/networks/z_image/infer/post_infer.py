@@ -1,5 +1,6 @@
-from lib.smart_config import smart_config
 import torch.nn.functional as F
+
+from lib.smart_config import smart_config
 
 
 class ZImagePostInfer:
@@ -51,10 +52,14 @@ class ZImagePostInfer:
         patch_size = self.config.get("patch_size", 2)
         f_patch_size = self.config.get("f_patch_size", 1)
         transformer_out_channels = out_dim // (patch_size * patch_size * f_patch_size)
-        expected_out_dim = patch_size * patch_size * f_patch_size * transformer_out_channels
+        expected_out_dim = (
+            patch_size * patch_size * f_patch_size * transformer_out_channels
+        )
 
         if out_dim != expected_out_dim:
-            raise ValueError(f"out_dim mismatch: {out_dim} != {expected_out_dim} (transformer_out_channels={transformer_out_channels})")
+            raise ValueError(
+                f"out_dim mismatch: {out_dim} != {expected_out_dim} (transformer_out_channels={transformer_out_channels})"
+            )
 
         out_channels = transformer_out_channels
         target_shape = self.scheduler.input_info.target_shape
@@ -69,11 +74,15 @@ class ZImagePostInfer:
 
         expected_T = F_tokens * H_tokens * W_tokens
         if T != expected_T:
-            raise ValueError(f"Token count mismatch: T={T} != expected_T={expected_T} (from target_shape={target_shape})")
+            raise ValueError(
+                f"Token count mismatch: T={T} != expected_T={expected_T} (from target_shape={target_shape})"
+            )
 
         # Unpatchify: [T, out_dim] -> [C, H, W]
         # Reshape: [T, out_dim] -> [F_tokens, H_tokens, W_tokens, pF, pH, pW, out_channels]
-        output_reshaped = output.view(F_tokens, H_tokens, W_tokens, pF, pH, pW, out_channels)
+        output_reshaped = output.view(
+            F_tokens, H_tokens, W_tokens, pF, pH, pW, out_channels
+        )
         # Permute: [F_tokens, H_tokens, W_tokens, pF, pH, pW, out_channels]
         #       -> [out_channels, F_tokens, pF, H_tokens, pH, W_tokens, pW]
         output_permuted = output_reshaped.permute(6, 0, 3, 1, 4, 2, 5)

@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 import asyncio
 import threading
 import time
@@ -6,10 +5,11 @@ from functools import wraps
 
 import torch
 import torch.distributed as dist
-from loguru import logger
-
 from lightx2v.utils.envs import *
 from lightx2v_platform.base.global_var import AI_DEVICE
+from loguru import logger
+
+from lib.smart_config import smart_config
 
 torch_device_module = getattr(torch, AI_DEVICE)
 _excluded_time_local = threading.local()
@@ -55,7 +55,9 @@ class _ProfilingContext:
             else:
                 self.metrics_func.observe(elapsed)
         if self.enable_logger:
-            logger.info(f"[Profile] {self.rank_info} - {self.name} cost {elapsed:.6f} seconds")
+            logger.info(
+                f"[Profile] {self.rank_info} - {self.name} cost {elapsed:.6f} seconds"
+            )
         return False
 
     async def __aenter__(self):
@@ -75,7 +77,9 @@ class _ProfilingContext:
             else:
                 self.metrics_func.observe(elapsed)
         if self.enable_logger:
-            logger.info(f"[Profile] {self.rank_info} - {self.name} cost {elapsed:.6f} seconds")
+            logger.info(
+                f"[Profile] {self.rank_info} - {self.name} cost {elapsed:.6f} seconds"
+            )
         return False
 
     def __call__(self, func):
@@ -140,7 +144,9 @@ class _ExcludedProfilingContext:
         for i in range(len(stack)):
             stack[i] += elapsed
         if self.name and CHECK_PROFILING_DEBUG_LEVEL(1):
-            logger.info(f"[Profile-Excluded] {self.rank_info} - {self.name} cost {elapsed:.6f} seconds (excluded from outer profiling)")
+            logger.info(
+                f"[Profile-Excluded] {self.rank_info} - {self.name} cost {elapsed:.6f} seconds (excluded from outer profiling)"
+            )
         return False
 
     async def __aenter__(self):
@@ -155,7 +161,9 @@ class _ExcludedProfilingContext:
         for i in range(len(stack)):
             stack[i] += elapsed
         if self.name and CHECK_PROFILING_DEBUG_LEVEL(1):
-            logger.info(f"[Profile-Excluded] {self.rank_info} - {self.name} cost {elapsed:.6f} seconds (excluded from outer profiling)")
+            logger.info(
+                f"[Profile-Excluded] {self.rank_info} - {self.name} cost {elapsed:.6f} seconds (excluded from outer profiling)"
+            )
         return False
 
     def __call__(self, func):
@@ -181,14 +189,18 @@ class _ProfilingContextL1(_ProfilingContext):
     """Level 1 profiling context with Level1_Log prefix."""
 
     def __init__(self, name, recorder_mode=0, metrics_func=None, metrics_labels=None):
-        super().__init__(f"Level1_Log {name}", recorder_mode, metrics_func, metrics_labels)
+        super().__init__(
+            f"Level1_Log {name}", recorder_mode, metrics_func, metrics_labels
+        )
 
 
 class _ProfilingContextL2(_ProfilingContext):
     """Level 2 profiling context with Level2_Log prefix."""
 
     def __init__(self, name, recorder_mode=0, metrics_func=None, metrics_labels=None):
-        super().__init__(f"Level2_Log {name}", recorder_mode, metrics_func, metrics_labels)
+        super().__init__(
+            f"Level2_Log {name}", recorder_mode, metrics_func, metrics_labels
+        )
 
 
 """
@@ -196,6 +208,12 @@ PROFILING_DEBUG_LEVEL=0: [Default] disable all profiling
 PROFILING_DEBUG_LEVEL=1: enable ProfilingContext4DebugL1
 PROFILING_DEBUG_LEVEL=2: enable ProfilingContext4DebugL1 and ProfilingContext4DebugL2
 """
-ProfilingContext4DebugL1 = _ProfilingContextL1 if CHECK_PROFILING_DEBUG_LEVEL(1) else _NullContext  # if user >= 1, enable profiling
-ProfilingContext4DebugL2 = _ProfilingContextL2 if CHECK_PROFILING_DEBUG_LEVEL(2) else _NullContext  # if user >= 2, enable profiling
-ExcludedProfilingContext = _ExcludedProfilingContext if CHECK_PROFILING_DEBUG_LEVEL(1) else _NullContext
+ProfilingContext4DebugL1 = (
+    _ProfilingContextL1 if CHECK_PROFILING_DEBUG_LEVEL(1) else _NullContext
+)  # if user >= 1, enable profiling
+ProfilingContext4DebugL2 = (
+    _ProfilingContextL2 if CHECK_PROFILING_DEBUG_LEVEL(2) else _NullContext
+)  # if user >= 2, enable profiling
+ExcludedProfilingContext = (
+    _ExcludedProfilingContext if CHECK_PROFILING_DEBUG_LEVEL(1) else _NullContext
+)

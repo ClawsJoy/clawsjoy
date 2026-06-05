@@ -1,5 +1,6 @@
-from lib.smart_config import smart_config
 import torch.nn.functional as F
+
+from lib.smart_config import smart_config
 
 
 def slice_inputs(x, dim=0):

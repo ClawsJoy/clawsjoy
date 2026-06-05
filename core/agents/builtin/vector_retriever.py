@@ -3,11 +3,12 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
 from typing import Dict, List, Optional
+
 from core.agents.base.smart_agent import SmartAgent
 
 
@@ -28,11 +29,7 @@ class VectorRetriever(SmartAgent):
         return [{"key": k, "score": 0.5} for k in list(self.vectors.keys())[:top_k]]
 
     def process(self, user_input: str, context: Optional[Dict] = None) -> Dict:
-        return {
-            "success": True,
-            "response": "向量检索完成",
-            "agent": self.name
-        }
+        return {"success": True, "response": "向量检索完成", "agent": self.name}
 
 
 vector_retriever = VectorRetriever()

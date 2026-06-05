@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 LightLLM-optimized Text Encoder implementation
 Extracts core inference optimizations from LightLLM for LightX2V integration

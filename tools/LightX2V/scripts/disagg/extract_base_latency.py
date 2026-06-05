@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 #!/usr/bin/env python3
 from __future__ import annotations
 
@@ -6,6 +5,8 @@ import argparse
 import csv
 import json
 from pathlib import Path
+
+from lib.smart_config import smart_config
 
 
 def _fmt_float3(value):
@@ -16,7 +17,9 @@ def _fmt_float3(value):
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Extract baseline latency rows from baseline_controller_metrics.json")
+    parser = argparse.ArgumentParser(
+        description="Extract baseline latency rows from baseline_controller_metrics.json"
+    )
     parser.add_argument(
         "--metrics",
         default="/root/zht/LightX2V/save_results/baseline_controller_metrics.json",
@@ -43,13 +46,17 @@ def main() -> int:
 
     requests = payload.get("requests", [])
     if not isinstance(requests, list):
-        raise ValueError(f"invalid metrics format: requests must be a list, got {type(requests)}")
+        raise ValueError(
+            f"invalid metrics format: requests must be a list, got {type(requests)}"
+        )
 
     global_start_ts = None
     for item in requests:
         if isinstance(item, dict) and item.get("client_send_ts") is not None:
             ts = float(item["client_send_ts"])
-            global_start_ts = ts if global_start_ts is None else min(global_start_ts, ts)
+            global_start_ts = (
+                ts if global_start_ts is None else min(global_start_ts, ts)
+            )
 
     rows = []
     for item in requests:
@@ -70,7 +77,9 @@ def main() -> int:
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with out_path.open("w", encoding="utf-8", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=["finish_time_from_global_start_s", "e2e_latency_s"])
+        writer = csv.DictWriter(
+            f, fieldnames=["finish_time_from_global_start_s", "e2e_latency_s"]
+        )
         writer.writeheader()
         for row in rows:
             writer.writerow(row)

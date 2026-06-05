@@ -3,16 +3,18 @@
 
 @version: 5.0.0
 @author: ClawsJoy
-@date: 2026-05-31
+@date: 2026-5-31
 """
 
 
-import time
-import requests
 import subprocess
+import time
 from datetime import datetime
-from core.lib.unified_config import unified_config
+
+import requests
+
 from core.lib.smart_config import smart_config
+from core.lib.unified_config import unified_config
 
 
 class RealFaultLoop:
@@ -24,19 +26,20 @@ class RealFaultLoop:
 
         # 真实服务配置
         self.services = {
-            'gateway': {'port': 5002, 'cmd': 'python3 agent_gateway_web.py'},
-            'agent': {'port': 5005, 'cmd': 'python3 multi_agent_service_v2.py'},
-            'doc': {'port': 5008, 'cmd': 'python3 doc_generator.py'}
+            "gateway": {"port": 5002, "cmd": "python3 agent_gateway_web.py"},
+            "agent": {"port": 5005, "cmd": "python3 multi_agent_service_v2.py"},
+            "doc": {"port": 5008, "cmd": "python3 doc_generator.py"},
         }
 
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("🔧 真实故障检测系统")
-        print("="*60)
+        print("=" * 60)
 
     def _get_fixer(self):
         """延迟加载修复器"""
         if self.fixer is None:
             from core.intelligence.real_fixer import RealFixer
+
             self.fixer = RealFixer()
         return self.fixer
 
@@ -54,14 +57,17 @@ class RealFaultLoop:
         # 1. 检查并修复服务
         for name, config in self.services.items():
             try:
-                resp = requests.get(unified_config.get_service_url(f"{config['port']}/health"), timeout=3)
+                resp = requests.get(
+                    unified_config.get_service_url(f"{config['port']}/health"),
+                    timeout=3,
+                )
                 if resp.status_code != 200:
                     print(f"\n❌ {name} 异常 (HTTP {resp.status_code})")
-                    if fixer.fix_service(name, config['port'], config['cmd']):
+                    if fixer.fix_service(name, config["port"], config["cmd"]):
                         fixed.append(name)
             except requests.exceptions.ConnectionError:
                 print(f"\n❌ {name} 连接失败")
-                if fixer.fix_service(name, config['port'], config['cmd']):
+                if fixer.fix_service(name, config["port"], config["cmd"]):
                     fixed.append(name)
             except Exception as e:
                 print(f"\n❌ {name} 故障: {str(e)[:50]}")

@@ -1,13 +1,19 @@
-from lib.smart_config import smart_config
 from dataclasses import dataclass
 
 import torch
-
 from lightx2v.common.modules.weight_module import WeightModule
 from lightx2v.models.networks.wan.weights.pre_weights import WanPreWeights
 from lightx2v.utils.registry_factory import TENSOR_REGISTER
 
-from ._shared import SequentialLinearWeights, apply_time_embedding, build_mm_weight, load_prefixed_submodules, projector_layer_prefixes
+from lib.smart_config import smart_config
+
+from ._shared import (
+    SequentialLinearWeights,
+    apply_time_embedding,
+    build_mm_weight,
+    load_prefixed_submodules,
+    projector_layer_prefixes,
+)
 
 
 @dataclass
@@ -45,7 +51,9 @@ class MotusExpertConfigs:
 
 
 def build_action_expert_config(config):
-    action_chunk_size = config["num_video_frames"] * config.get("video_action_freq_ratio", 2)
+    action_chunk_size = config["num_video_frames"] * config.get(
+        "video_action_freq_ratio", 2
+    )
     training_mode = config.get("training_mode", "finetune")
     if training_mode == "pretrain":
         chunk_size = action_chunk_size
@@ -55,7 +63,8 @@ def build_action_expert_config(config):
         num_registers = 4
     return ActionExpertConfig(
         dim=config.get("action_expert_dim", 1024),
-        ffn_dim=config.get("action_expert_dim", 1024) * config.get("action_expert_ffn_dim_multiplier", 4),
+        ffn_dim=config.get("action_expert_dim", 1024)
+        * config.get("action_expert_ffn_dim_multiplier", 4),
         num_layers=config.get("num_layers", 30),
         state_dim=config.get("action_state_dim", 14),
         action_dim=config.get("action_dim", 14),
@@ -71,7 +80,8 @@ def build_action_expert_config(config):
 def build_und_expert_config(config):
     return UndExpertConfig(
         dim=config.get("und_expert_hidden_size", 512),
-        ffn_dim=config.get("und_expert_hidden_size", 512) * config.get("und_expert_ffn_dim_multiplier", 4),
+        ffn_dim=config.get("und_expert_hidden_size", 512)
+        * config.get("und_expert_ffn_dim_multiplier", 4),
         num_layers=config.get("num_layers", 30),
         vlm_input_dim=config.get("vlm_adapter_input_dim", 2048),
         vlm_projector_type=config.get("vlm_adapter_projector_type", "mlp3x_silu"),
@@ -101,7 +111,9 @@ class MotusActionPreWeights(WeightModule):
             self.add_module(
                 "action_encoder",
                 SequentialLinearWeights(
-                    projector_layer_prefixes("mlp3x_silu", "input_encoder.action_encoder"),
+                    projector_layer_prefixes(
+                        "mlp3x_silu", "input_encoder.action_encoder"
+                    ),
                     "silu",
                     config,
                 ),
@@ -110,7 +122,9 @@ class MotusActionPreWeights(WeightModule):
             self.add_module(
                 "state_encoder",
                 SequentialLinearWeights(
-                    projector_layer_prefixes("mlp3x_silu", "input_encoder.state_encoder"),
+                    projector_layer_prefixes(
+                        "mlp3x_silu", "input_encoder.state_encoder"
+                    ),
                     "silu",
                     config,
                 ),
@@ -118,30 +132,57 @@ class MotusActionPreWeights(WeightModule):
             self.add_module(
                 "action_encoder",
                 SequentialLinearWeights(
-                    projector_layer_prefixes("mlp3x_silu", "input_encoder.action_encoder"),
+                    projector_layer_prefixes(
+                        "mlp3x_silu", "input_encoder.action_encoder"
+                    ),
                     "silu",
                     config,
                 ),
             )
-        self.register_parameter("pos_embedding", TENSOR_REGISTER["Default"]("input_encoder.pos_embedding"))
+        self.register_parameter(
+            "pos_embedding", TENSOR_REGISTER["Default"]("input_encoder.pos_embedding")
+        )
         if action_config.num_registers > 0:
-            self.register_parameter("registers", TENSOR_REGISTER["Default"]("registers"))
+            self.register_parameter(
+                "registers", TENSOR_REGISTER["Default"]("registers")
+            )
         else:
             self.registers = None
 
-        self.add_module("time_embedding_0", build_mm_weight("time_embedding.0.weight", "time_embedding.0.bias", config))
-        self.add_module("time_embedding_2", build_mm_weight("time_embedding.2.weight", "time_embedding.2.bias", config))
-        self.add_module("time_projection_1", build_mm_weight("time_projection.1.weight", "time_projection.1.bias", config))
+        self.add_module(
+            "time_embedding_0",
+            build_mm_weight("time_embedding.0.weight", "time_embedding.0.bias", config),
+        )
+        self.add_module(
+            "time_embedding_2",
+            build_mm_weight("time_embedding.2.weight", "time_embedding.2.bias", config),
+        )
+        self.add_module(
+            "time_projection_1",
+            build_mm_weight(
+                "time_projection.1.weight", "time_projection.1.bias", config
+            ),
+        )
 
     def apply_input_encoder(self, state_tokens, action_tokens):
         if self.action_config.training_mode == "pretrain":
             encoded = self.action_encoder.apply(action_tokens)
         else:
-            encoded = torch.cat([self.state_encoder.apply(state_tokens), self.action_encoder.apply(action_tokens)], dim=1)
+            encoded = torch.cat(
+                [
+                    self.state_encoder.apply(state_tokens),
+                    self.action_encoder.apply(action_tokens),
+                ],
+                dim=1,
+            )
         if self.registers is not None and hasattr(self.registers, "tensor"):
-            registers = self.registers.tensor.expand(encoded.shape[0], -1, -1).to(dtype=encoded.dtype, device=encoded.device)
+            registers = self.registers.tensor.expand(encoded.shape[0], -1, -1).to(
+                dtype=encoded.dtype, device=encoded.device
+            )
             encoded = torch.cat([encoded, registers], dim=1)
-        pos_embedding = self.pos_embedding.tensor[:, : encoded.shape[1], :].to(dtype=encoded.dtype, device=encoded.device)
+        pos_embedding = self.pos_embedding.tensor[:, : encoded.shape[1], :].to(
+            dtype=encoded.dtype, device=encoded.device
+        )
         return encoded + pos_embedding
 
     def get_time_embedding(self, timestep, seq_len):

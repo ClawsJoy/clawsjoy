@@ -1,7 +1,8 @@
-from lib.smart_config import smart_config
 import os
 
 from lightx2v_platform import *
+
+from lib.smart_config import smart_config
 
 
 def set_ai_device():

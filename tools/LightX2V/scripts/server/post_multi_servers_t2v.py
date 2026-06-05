@@ -1,9 +1,10 @@
-from lib.smart_config import smart_config
 import argparse
 from pathlib import Path
 
 from loguru import logger
 from post_multi_servers import get_available_urls, process_tasks_async
+
+from lib.smart_config import smart_config
 
 
 def load_prompts_from_folder(folder_path):
@@ -18,7 +19,9 @@ def load_prompts_from_folder(folder_path):
     folder = Path(folder_path)
 
     if not folder.exists() or not folder.is_dir():
-        logger.error(f"Prompt folder does not exist or is not a directory: {folder_path}")
+        logger.error(
+            f"Prompt folder does not exist or is not a directory: {folder_path}"
+        )
         return prompts, filenames
 
     # Get all files in the folder and sort them
@@ -66,14 +69,31 @@ def load_prompts_from_file(file_path):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Post prompts to multiple T2V servers")
-    parser.add_argument("--prompt-folder", type=str, default=None, help="Folder containing prompt files. If not specified, use default prompts.")
-    parser.add_argument("--prompt-file", type=str, default=None, help="File containing prompts, one prompt per line. Cannot be used together with --prompt-folder.")
-    parser.add_argument("--save-folder", type=str, default="./", help="Folder to save output videos. Default is current directory.")
+    parser.add_argument(
+        "--prompt-folder",
+        type=str,
+        default=None,
+        help="Folder containing prompt files. If not specified, use default prompts.",
+    )
+    parser.add_argument(
+        "--prompt-file",
+        type=str,
+        default=None,
+        help="File containing prompts, one prompt per line. Cannot be used together with --prompt-folder.",
+    )
+    parser.add_argument(
+        "--save-folder",
+        type=str,
+        default="./",
+        help="Folder to save output videos. Default is current directory.",
+    )
     args = parser.parse_args()
 
     # Check that --prompt-folder and --prompt-file are not used together
     if args.prompt_folder and args.prompt_file:
-        logger.error("Cannot use --prompt-folder and --prompt-file together. Please choose one.")
+        logger.error(
+            "Cannot use --prompt-folder and --prompt-file together. Please choose one."
+        )
         exit(1)
 
     # Generate URLs from IPs (each IP has 8 ports: 8000-8007)
@@ -142,7 +162,15 @@ if __name__ == "__main__":
             skipped_count += 1
             continue
 
-        messages.append({"seed": 42, "prompt": prompt, "negative_prompt": negative_prompt, "image_path": "", "save_result_path": str(save_path)})
+        messages.append(
+            {
+                "seed": 42,
+                "prompt": prompt,
+                "negative_prompt": negative_prompt,
+                "image_path": "",
+                "save_result_path": str(save_path),
+            }
+        )
 
     # Log statistics
     to_process_count = len(messages)

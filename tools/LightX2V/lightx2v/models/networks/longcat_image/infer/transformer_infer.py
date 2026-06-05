@@ -1,8 +1,8 @@
-from lib.smart_config import smart_config
 import torch
 import torch.nn.functional as F
-
 from lightx2v.common.transformer_infer.transformer_infer import BaseTransformerInfer
+
+from lib.smart_config import smart_config
 
 from .utils import apply_longcat_rope_with_flashinfer, apply_longcat_rope_with_torch
 
@@ -20,9 +20,13 @@ class LongCatImageTransformerInfer(BaseTransformerInfer):
         self.infer_func = self.infer_without_offload
         # Sequence parallel settings
         if self.config.get("seq_parallel", False):
-            self.seq_p_group = self.config.get("device_mesh").get_group(mesh_dim="seq_p")
+            self.seq_p_group = self.config.get("device_mesh").get_group(
+                mesh_dim="seq_p"
+            )
             self.seq_p_fp8_comm = self.config["parallel"].get("seq_p_fp8_comm", False)
-            self.enable_head_parallel = self.config["parallel"].get("seq_p_head_parallel", False)
+            self.enable_head_parallel = self.config["parallel"].get(
+                "seq_p_head_parallel", False
+            )
         else:
             self.seq_p_group = None
             self.seq_p_fp8_comm = False
@@ -47,7 +51,9 @@ class LongCatImageTransformerInfer(BaseTransformerInfer):
         # Linear projection of silu(temb)
         emb = norm_linear.apply(F.silu(temb))
         # Split into 6 components: shift_msa, scale_msa, gate_msa, shift_mlp, scale_mlp, gate_mlp
-        shift_msa, scale_msa, gate_msa, shift_mlp, scale_mlp, gate_mlp = emb.chunk(6, dim=-1)
+        shift_msa, scale_msa, gate_msa, shift_mlp, scale_mlp, gate_mlp = emb.chunk(
+            6, dim=-1
+        )
 
         # Apply layer norm and modulation
         norm_hidden_states = F.layer_norm(hidden_states, (hidden_states.shape[-1],))
@@ -99,10 +105,16 @@ class LongCatImageTransformerInfer(BaseTransformerInfer):
         head_dim = self.config["attention_head_dim"]
 
         # ===== Image stream: norm1 =====
-        norm_hidden_states, gate_msa, shift_mlp, scale_mlp, gate_mlp = self._ada_layer_norm_zero(hidden_states, temb, block_weights.norm1_linear)
+        norm_hidden_states, gate_msa, shift_mlp, scale_mlp, gate_mlp = (
+            self._ada_layer_norm_zero(hidden_states, temb, block_weights.norm1_linear)
+        )
 
         # ===== Text stream: norm1_context =====
-        norm_encoder_hidden_states, c_gate_msa, c_shift_mlp, c_scale_mlp, c_gate_mlp = self._ada_layer_norm_zero(encoder_hidden_states, temb, block_weights.norm1_context_linear)
+        norm_encoder_hidden_states, c_gate_msa, c_shift_mlp, c_scale_mlp, c_gate_mlp = (
+            self._ada_layer_norm_zero(
+                encoder_hidden_states, temb, block_weights.norm1_context_linear
+            )
+        )
 
         # ===== Attention projections =====
         # Image stream QKV
@@ -177,9 +189,15 @@ class LongCatImageTransformerInfer(BaseTransformerInfer):
 
         # ===== FFN for text stream =====
         # Layer norm without learnable parameters (LongCat/Flux architecture)
-        norm_encoder_hidden_states2 = F.layer_norm(encoder_hidden_states, (encoder_hidden_states.shape[-1],))
-        norm_encoder_hidden_states2 = norm_encoder_hidden_states2 * (1 + c_scale_mlp) + c_shift_mlp
-        context_ff_output = block_weights.ff_context_net_0_proj.apply(norm_encoder_hidden_states2)
+        norm_encoder_hidden_states2 = F.layer_norm(
+            encoder_hidden_states, (encoder_hidden_states.shape[-1],)
+        )
+        norm_encoder_hidden_states2 = (
+            norm_encoder_hidden_states2 * (1 + c_scale_mlp) + c_shift_mlp
+        )
+        context_ff_output = block_weights.ff_context_net_0_proj.apply(
+            norm_encoder_hidden_states2
+        )
         context_ff_output = F.gelu(context_ff_output, approximate="tanh")
         context_ff_output = block_weights.ff_context_net_2.apply(context_ff_output)
         encoder_hidden_states = encoder_hidden_states + c_gate_mlp * context_ff_output
@@ -224,7 +242,9 @@ class LongCatImageTransformerInfer(BaseTransformerInfer):
         residual = combined
 
         # AdaLayerNormZeroSingle
-        norm_combined, gate = self._ada_layer_norm_zero_single(combined, temb, block_weights.norm_linear)
+        norm_combined, gate = self._ada_layer_norm_zero_single(
+            combined, temb, block_weights.norm_linear
+        )
 
         # MLP branch
         mlp_hidden_states = block_weights.proj_mlp.apply(norm_combined)
@@ -299,7 +319,9 @@ class LongCatImageTransformerInfer(BaseTransformerInfer):
         output_seq_len = None
         if pre_infer_out.input_image_latents is not None:
             output_seq_len = pre_infer_out.output_seq_len
-            hidden_states = torch.cat([hidden_states, pre_infer_out.input_image_latents], dim=0)
+            hidden_states = torch.cat(
+                [hidden_states, pre_infer_out.input_image_latents], dim=0
+            )
 
         # Process double-stream blocks
         for block in block_weights.double_blocks:

@@ -1,9 +1,10 @@
-from lib.smart_config import smart_config
 import os
 from dataclasses import dataclass
 from pathlib import Path
 
 from loguru import logger
+
+from lib.smart_config import smart_config
 
 
 @dataclass

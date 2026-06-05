@@ -1,12 +1,12 @@
-from lib.smart_config import smart_config
 import torch
 from einops import rearrange
-
 from lightx2v.models.networks.wan.infer.module_io import GridOutput
 from lightx2v.models.networks.wan.infer.pre_infer import WanPreInfer
 from lightx2v.models.networks.wan.infer.utils import sinusoidal_embedding_1d
 from lightx2v.utils.envs import *
 from lightx2v_platform.base.global_var import AI_DEVICE
+
+from lib.smart_config import smart_config
 
 
 class WanMtxg3PreInferOutput:
@@ -106,7 +106,10 @@ class WanMtxg3PreInfer(WanPreInfer):
             mask = getattr(self.scheduler, "mask", None)
             if mask is not None:
                 timestep_scalar = t.reshape(1).to(device=x.device, dtype=x.dtype)
-                t = (mask[0][:, ::2, ::2].to(device=x.device, dtype=x.dtype) * timestep_scalar).flatten()
+                t = (
+                    mask[0][:, ::2, ::2].to(device=x.device, dtype=x.dtype)
+                    * timestep_scalar
+                ).flatten()
             else:
                 t = t.reshape(-1).to(device=x.device, dtype=x.dtype)
 
@@ -139,8 +142,14 @@ class WanMtxg3PreInfer(WanPreInfer):
             plucker_emb = dit_cond_dict.get("c2ws_plucker_emb", None)
             mouse_source = dit_cond_dict.get("mouse_cond", None)
             keyboard_source = dit_cond_dict.get("keyboard_cond", None)
-            mouse_cond = torch.ones_like(mouse_source) if mouse_source is not None else None
-            keyboard_cond = -torch.ones_like(keyboard_source) if keyboard_source is not None else None
+            mouse_cond = (
+                torch.ones_like(mouse_source) if mouse_source is not None else None
+            )
+            keyboard_cond = (
+                -torch.ones_like(keyboard_source)
+                if keyboard_source is not None
+                else None
+            )
             x_memory = None
             timestep_memory = None
             mouse_cond_memory = None
@@ -151,9 +160,17 @@ class WanMtxg3PreInfer(WanPreInfer):
         memory_length = 0
         if x_memory is not None:
             memory_length = int(x_memory.shape[2])
-            x = torch.cat([x_memory.squeeze(0).to(device=x.device, dtype=x.dtype), x], dim=1)
+            x = torch.cat(
+                [x_memory.squeeze(0).to(device=x.device, dtype=x.dtype), x], dim=1
+            )
             if timestep_memory is not None:
-                t = torch.cat([timestep_memory.squeeze(0).to(device=x.device, dtype=x.dtype), t.to(device=x.device, dtype=x.dtype)], dim=0)
+                t = torch.cat(
+                    [
+                        timestep_memory.squeeze(0).to(device=x.device, dtype=x.dtype),
+                        t.to(device=x.device, dtype=x.dtype),
+                    ],
+                    dim=0,
+                )
 
         # Patch embedding
         x = weights.patch_embedding.apply(x.unsqueeze(0)).to(self.infer_dtype)
@@ -170,13 +187,21 @@ class WanMtxg3PreInfer(WanPreInfer):
         embed = weights.time_embedding_2.apply(embed).float()
         # Official MG3 keeps both the time embedding and its 6-way modulation
         # projection in fp32 before each block consumes them.
-        modulation_dtype = self.sensitive_layer_dtype if self.sensitive_layer_dtype != self.infer_dtype else self.infer_dtype
+        modulation_dtype = (
+            self.sensitive_layer_dtype
+            if self.sensitive_layer_dtype != self.infer_dtype
+            else self.infer_dtype
+        )
         embed0 = torch.nn.functional.silu(embed).to(modulation_dtype)
-        embed0 = weights.time_projection_1.apply(embed0).unflatten(1, (6, self.dim)).float()
+        embed0 = (
+            weights.time_projection_1.apply(embed0).unflatten(1, (6, self.dim)).float()
+        )
 
         # Text embedding
         if self.sensitive_layer_dtype != self.infer_dtype:
-            out = weights.text_embedding_0.apply(context.squeeze(0).to(self.sensitive_layer_dtype))
+            out = weights.text_embedding_0.apply(
+                context.squeeze(0).to(self.sensitive_layer_dtype)
+            )
         else:
             out = weights.text_embedding_0.apply(context.squeeze(0))
         out = torch.nn.functional.gelu(out, approximate="tanh")
@@ -208,7 +233,9 @@ class WanMtxg3PreInfer(WanPreInfer):
             if torch.is_tensor(plucker_emb):
                 plucker_items = [u.unsqueeze(0) for u in plucker_emb]
             else:
-                plucker_items = [u.unsqueeze(0) if u.dim() == 4 else u for u in plucker_emb]
+                plucker_items = [
+                    u.unsqueeze(0) if u.dim() == 4 else u for u in plucker_emb
+                ]
 
             patch_t, patch_h, patch_w = self.config.get("patch_size", (1, 2, 2))
             plucker_emb = [
@@ -226,15 +253,27 @@ class WanMtxg3PreInfer(WanPreInfer):
                 plucker_emb = torch.cat(
                     [
                         plucker_emb,
-                        plucker_emb.new_zeros(plucker_emb.size(0), x.size(1) - plucker_emb.size(1), plucker_emb.size(2)),
+                        plucker_emb.new_zeros(
+                            plucker_emb.size(0),
+                            x.size(1) - plucker_emb.size(1),
+                            plucker_emb.size(2),
+                        ),
                     ],
                     dim=1,
                 )
 
-            plucker_weight_dtype = weights.patch_embedding_wancamctrl._get_actual_weight().dtype
-            plucker_emb = plucker_emb.squeeze(0).to(device=x.device, dtype=plucker_weight_dtype)
+            plucker_weight_dtype = (
+                weights.patch_embedding_wancamctrl._get_actual_weight().dtype
+            )
+            plucker_emb = plucker_emb.squeeze(0).to(
+                device=x.device, dtype=plucker_weight_dtype
+            )
             plucker_emb = weights.patch_embedding_wancamctrl.apply(plucker_emb)
-            plucker_hidden = weights.c2ws_hidden_states_layer2.apply(torch.nn.functional.silu(weights.c2ws_hidden_states_layer1.apply(plucker_emb)))
+            plucker_hidden = weights.c2ws_hidden_states_layer2.apply(
+                torch.nn.functional.silu(
+                    weights.c2ws_hidden_states_layer1.apply(plucker_emb)
+                )
+            )
             plucker_emb = (plucker_emb + plucker_hidden).to(self.infer_dtype)
 
         return WanMtxg3PreInferOutput(

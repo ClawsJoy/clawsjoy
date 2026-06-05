@@ -1,10 +1,13 @@
-from lib.smart_config import smart_config
 from enum import Enum
 from typing import Protocol
 
 import torch
+from lightx2v.models.input_encoders.hf.ltx2.gemma.rope import (
+    LTXRopeType,
+    apply_rotary_emb,
+)
 
-from lightx2v.models.input_encoders.hf.ltx2.gemma.rope import LTXRopeType, apply_rotary_emb
+from lib.smart_config import smart_config
 
 memory_efficient_attention = None
 flash_attn_interface = None
@@ -21,11 +24,25 @@ except ImportError:
 
 
 class AttentionCallable(Protocol):
-    def __call__(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, heads: int, mask: torch.Tensor | None = None) -> torch.Tensor: ...
+    def __call__(
+        self,
+        q: torch.Tensor,
+        k: torch.Tensor,
+        v: torch.Tensor,
+        heads: int,
+        mask: torch.Tensor | None = None,
+    ) -> torch.Tensor: ...
 
 
 class PytorchAttention(AttentionCallable):
-    def __call__(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, heads: int, mask: torch.Tensor | None = None) -> torch.Tensor:
+    def __call__(
+        self,
+        q: torch.Tensor,
+        k: torch.Tensor,
+        v: torch.Tensor,
+        heads: int,
+        mask: torch.Tensor | None = None,
+    ) -> torch.Tensor:
         b, _, dim_head = q.shape
         dim_head //= heads
         q, k, v = (t.view(b, -1, heads, dim_head).transpose(1, 2) for t in (q, k, v))
@@ -38,7 +55,9 @@ class PytorchAttention(AttentionCallable):
             if mask.ndim == 3:
                 mask = mask.unsqueeze(1)
 
-        out = torch.nn.functional.scaled_dot_product_attention(q, k, v, attn_mask=mask, dropout_p=0.0, is_causal=False)
+        out = torch.nn.functional.scaled_dot_product_attention(
+            q, k, v, attn_mask=mask, dropout_p=0.0, is_causal=False
+        )
         out = out.transpose(1, 2).reshape(b, -1, heads * dim_head)
         return out
 
@@ -53,7 +72,9 @@ class XFormersAttention(AttentionCallable):
         mask: torch.Tensor | None = None,
     ) -> torch.Tensor:
         if memory_efficient_attention is None:
-            raise RuntimeError("XFormersAttention was selected but `xformers` is not installed.")
+            raise RuntimeError(
+                "XFormersAttention was selected but `xformers` is not installed."
+            )
 
         b, _, dim_head = q.shape
         dim_head //= heads
@@ -74,14 +95,20 @@ class XFormersAttention(AttentionCallable):
             # but when using separated heads, the shape has to be (B, H, Nq, Nk)
             # in flux, this matrix ends up being over 1GB
             # here, we create a mask with the same batch/head size as the input mask (potentially singleton or full)
-            mask_out = torch.empty([mask.shape[0], mask.shape[1], q.shape[1], mask.shape[-1] + pad], dtype=q.dtype, device=q.device)
+            mask_out = torch.empty(
+                [mask.shape[0], mask.shape[1], q.shape[1], mask.shape[-1] + pad],
+                dtype=q.dtype,
+                device=q.device,
+            )
 
             mask_out[..., : mask.shape[-1]] = mask
             # doesn't this remove the padding again??
             mask = mask_out[..., : mask.shape[-1]]
             mask = mask.expand(b, heads, -1, -1)
 
-        out = memory_efficient_attention(q.to(v.dtype), k.to(v.dtype), v, attn_bias=mask, p=0.0)
+        out = memory_efficient_attention(
+            q.to(v.dtype), k.to(v.dtype), v, attn_bias=mask, p=0.0
+        )
         out = out.reshape(b, -1, heads * dim_head)
         return out
 
@@ -96,7 +123,9 @@ class FlashAttention3(AttentionCallable):
         mask: torch.Tensor | None = None,
     ) -> torch.Tensor:
         if flash_attn_interface is None:
-            raise RuntimeError("FlashAttention3 was selected but `FlashAttention3` is not installed.")
+            raise RuntimeError(
+                "FlashAttention3 was selected but `FlashAttention3` is not installed."
+            )
 
         b, _, dim_head = q.shape
         dim_head //= heads
@@ -117,7 +146,14 @@ class AttentionFunction(Enum):
     FLASH_ATTENTION_3 = "flash_attention_3"
     DEFAULT = "default"
 
-    def __call__(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, heads: int, mask: torch.Tensor | None = None) -> torch.Tensor:
+    def __call__(
+        self,
+        q: torch.Tensor,
+        k: torch.Tensor,
+        v: torch.Tensor,
+        heads: int,
+        mask: torch.Tensor | None = None,
+    ) -> torch.Tensor:
         if self is AttentionFunction.PYTORCH:
             return PytorchAttention()(q, k, v, heads, mask)
         elif self is AttentionFunction.XFORMERS:
@@ -126,7 +162,11 @@ class AttentionFunction(Enum):
             return FlashAttention3()(q, k, v, heads, mask)
         else:
             # Default behavior: XFormers if installed else - PyTorch
-            return XFormersAttention()(q, k, v, heads, mask) if memory_efficient_attention is not None else PytorchAttention()(q, k, v, heads, mask)
+            return (
+                XFormersAttention()(q, k, v, heads, mask)
+                if memory_efficient_attention is not None
+                else PytorchAttention()(q, k, v, heads, mask)
+            )
 
 
 class Attention(torch.nn.Module):
@@ -138,7 +178,9 @@ class Attention(torch.nn.Module):
         dim_head: int = 64,
         norm_eps: float = 1e-6,
         rope_type: LTXRopeType = LTXRopeType.INTERLEAVED,
-        attention_function: AttentionCallable | AttentionFunction = AttentionFunction.DEFAULT,
+        attention_function: (
+            AttentionCallable | AttentionFunction
+        ) = AttentionFunction.DEFAULT,
         apply_gated_attention: bool = False,
     ) -> None:
         super().__init__()
@@ -164,7 +206,9 @@ class Attention(torch.nn.Module):
         else:
             self.to_gate_logits = None
 
-        self.to_out = torch.nn.Sequential(torch.nn.Linear(inner_dim, query_dim, bias=True), torch.nn.Identity())
+        self.to_out = torch.nn.Sequential(
+            torch.nn.Linear(inner_dim, query_dim, bias=True), torch.nn.Identity()
+        )
 
     def forward(
         self,

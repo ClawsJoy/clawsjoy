@@ -1,5 +1,6 @@
-from lib.smart_config import smart_config
 import argparse
+
+from lib.smart_config import smart_config
 
 from .main import run_server
 
@@ -9,11 +10,21 @@ def main():
 
     parser.add_argument("--model_path", type=str, required=True, help="Path to model")
     parser.add_argument("--model_cls", type=str, required=True, help="Model class name")
-    parser.add_argument("--lora_dir", type=str, default=None, help="Directory containing LoRA files (.safetensors)")
+    parser.add_argument(
+        "--lora_dir",
+        type=str,
+        default=None,
+        help="Directory containing LoRA files (.safetensors)",
+    )
 
     parser.add_argument("--host", type=str, default="0.0.0.0", help="Server host")
     parser.add_argument("--port", type=int, default=8000, help="Server port")
-    parser.add_argument("--max_queue_size", type=int, default=10, help="Maximum active tasks (pending + processing)")
+    parser.add_argument(
+        "--max_queue_size",
+        type=int,
+        default=10,
+        help="Maximum active tasks (pending + processing)",
+    )
 
     args, unknown = parser.parse_known_args()
 

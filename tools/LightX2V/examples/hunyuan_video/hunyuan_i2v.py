@@ -1,4 +1,5 @@
 from lib.smart_config import smart_config
+
 """
 HunyuanVideo-1.5 image-to-video generation example with quantization.
 This example demonstrates how to use LightX2V with HunyuanVideo-1.5 model for I2V generation,

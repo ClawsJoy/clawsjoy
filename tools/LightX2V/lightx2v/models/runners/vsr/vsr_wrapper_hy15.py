@@ -1,4 +1,3 @@
-from lib.smart_config import smart_config
 from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum
@@ -9,15 +8,16 @@ import torch.nn.functional as F
 from diffusers.configuration_utils import ConfigMixin, register_to_config
 from diffusers.models import ModelMixin
 from einops import rearrange
-from torch import Tensor
-
 from lightx2v.models.video_encoders.hf.hunyuanvideo15.hunyuanvideo_15_vae import (
     CausalConv3d,
-    RMS_norm,
     ResnetBlock,
+    RMS_norm,
     forward_with_checkpointing,
     swish,
 )
+from torch import Tensor
+
+from lib.smart_config import smart_config
 
 
 class UpsamplerType(Enum):
@@ -66,7 +66,9 @@ class SRModel3DV2(ModelMixin, ConfigMixin):
         if hidden_channels is None:
             hidden_channels = 64
         self.in_conv = CausalConv3d(in_channels, hidden_channels, kernel_size=3)
-        self.blocks = nn.ModuleList([SRResidualCausalBlock3D(hidden_channels) for _ in range(num_blocks)])
+        self.blocks = nn.ModuleList(
+            [SRResidualCausalBlock3D(hidden_channels) for _ in range(num_blocks)]
+        )
         self.out_conv = CausalConv3d(hidden_channels, out_channels, kernel_size=3)
         self.global_residual = bool(global_residual)
 
@@ -128,7 +130,9 @@ class Upsampler(ModelMixin, ConfigMixin):
         if target_shape is not None and z.shape[-2:] != target_shape:
             bsz = z.shape[0]
             z = rearrange(z, "b c f h w -> (b f) c h w")
-            z = F.interpolate(z, size=target_shape, mode="bilinear", align_corners=False)
+            z = F.interpolate(
+                z, size=target_shape, mode="bilinear", align_corners=False
+            )
             z = rearrange(z, "(b f) c h w -> b c f h w", b=bsz)
 
         # z to block_in
@@ -144,7 +148,9 @@ class Upsampler(ModelMixin, ConfigMixin):
                     use_checkpointing=use_checkpointing,
                 )
             if hasattr(self.up[i_level], "upsample"):
-                h = forward_with_checkpointing(self.up[i_level].upsample, h, use_checkpointing=use_checkpointing)
+                h = forward_with_checkpointing(
+                    self.up[i_level].upsample, h, use_checkpointing=use_checkpointing
+                )
 
         # end
         h = self.norm_out(h)
