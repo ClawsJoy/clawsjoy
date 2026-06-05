@@ -86,4 +86,3 @@ class WriterAgent(BusinessAgentV2):
         }
 
 
-writer_agent = WriterAgent()
