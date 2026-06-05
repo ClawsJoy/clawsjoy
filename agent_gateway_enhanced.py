@@ -9,7 +9,7 @@
 - 热重载系统、监控系统
 - 俱乐部、管家、隐私保护
 """
-
+from core.lib.auth_middleware import require_auth
 import json
 import os
 import re
@@ -386,6 +386,8 @@ def get_patterns():
 @app.route("/api/v5/enhanced/chat", methods=["POST"])
 @monitor_performance
 @rate_limit(limit=30, window=60)
+@require_auth
+@require_auth
 def enhanced_chat():
     # 写入文件日志
     with open("/tmp/enhanced_chat.log", "a") as f:
@@ -841,7 +843,6 @@ def agent_broadcast():
 
 # ========== 用户认证 API（使用现有 JWT 管理）==========
 from core.lib.auth_api import AuthManager
-from core.lib.auth_middleware import require_auth
 
 auth_manager = AuthManager()
 

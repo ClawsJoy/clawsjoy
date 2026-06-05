@@ -1,15 +1,4 @@
 
-import os
-import sys
-
-    with open("/tmp/decision_debug.log", "a") as f:
-        f.write(f"{msg}\n")
-    sys.stdout.write(msg + "\n")
-    sys.stdout.flush()
-
-import sys
-sys.stdout = sys.stderr
-
 """DecisionAgent - 决策者 v5.3.0 (修复初始化顺序)"""
 
 import sys
@@ -107,6 +96,7 @@ class DecisionAgent(BusinessAgent):
         """清理资源"""
         if hasattr(self, "_executor") and self._executor:
             self._executor.shutdown(wait=False)
+    
 
     def _load_memory(self):
         """加载历史决策记忆"""
@@ -120,7 +110,10 @@ class DecisionAgent(BusinessAgent):
                     data = json.load(f)
                     for item in data[-100:]:
                         self._decision_memory.append(DecisionRecord(**item))
+                print(f"[决策者] 加载了 {len(self._decision_memory)} 条历史决策")
         except Exception as e:
+            print(f"[决策者] 加载记忆: {e}")
+    
 
     def _save_memory(self):
         """保存决策记忆"""
@@ -189,7 +182,9 @@ class DecisionAgent(BusinessAgent):
                 if result:
                     evidences[key] = result
             except concurrent.futures.TimeoutError:
+                print(f"[决策者] {key} 超时")
             except Exception as e:
+                print(f"[决策者] {key} 失败: {e}")
 
         return evidences
 
@@ -228,6 +223,7 @@ class DecisionAgent(BusinessAgent):
 
         return route_result
 
+
     # ========== 证据收集方法 ==========
     def _get_analyst_report(self, user_input: str, context: dict = None) -> dict:
         try:
@@ -240,58 +236,36 @@ class DecisionAgent(BusinessAgent):
                 return {
                     "suggested_route": report.get("suggested_route", "C"),
                     "confidence": report.get("confidence", 0.8),
-                }
+                } 
         except Exception as e:
-        return None
+            print(f"[决策者] 分析师失败: {e}")
+        return None   
 
     def _get_semantic_suggestion(self, user_input: str) -> Optional[dict]:
         if not self.semantic_engine:
             return None
         try:
             result = self.semantic_engine.understand(user_input)
-            # 基于原子引擎 intent 智能路由
-            if result.intent == "translate":
-                suggestion = "C"
-            elif "翻译" in user_input.lower() and len(user_input) < 50:
-                suggestion = "B"
+            
+            # 强制覆盖：包含"翻译"关键词时，按长度判断路由
+            if "翻译" in user_input:
+                if len(user_input) > 20:
+                    suggestion = "C"
+                else:
+                    suggestion = "B"
             elif result.intent in ["chat", "greeting", "farewell", "thanks"]:
                 suggestion = "A"
             elif result.intent in ["calculate", "weather"]:
                 suggestion = "B"
-            elif result.intent in ["code", "ai", "analysis"]:
+            elif result.intent in ["code", "ai", "analysis", "translate"]:
                 suggestion = "C"
             else:
                 suggestion = "A"
+            
             return {"suggestion": suggestion, "confidence": result.confidence}
-        except:
+        except Exception as e:
             return None
 
-    def _get_historical_suggestion(self, user_input: str) -> Optional[str]:
-        if not self._decision_memory:
-            return None
-        success_decisions = []
-        for record in self._decision_memory:
-            if record.result == "success":
-                if any(
-                    kw in record.task for kw in user_input.split()[:3] if len(kw) > 2
-                ):
-                    success_decisions.append(record.decision)
-        if success_decisions:
-            from collections import Counter
-
-            return Counter(success_decisions).most_common(1)[0][0]
-        return None
-
-    def _get_heuristic_score(self, user_input: str) -> float:
-        score = 0.0
-        lower_input = user_input.lower()
-        if "翻译" in lower_input:
-            score += 0.5
-        if len(user_input) > 100:
-            score += 0.3
-        if any(kw in lower_input for kw in ["分析", "总结", "报告", "写"]):
-            score += 0.4
-        return min(score, 1.0)
 
     def _make_decision(self, evidences: Dict) -> Tuple[str, float, str, Dict]:
         scores = {"A": 0.0, "B": 0.0, "C": 0.0}
@@ -322,25 +296,62 @@ class DecisionAgent(BusinessAgent):
         best_score = scores[best_decision]
         reasoning = " | ".join(reasoning_parts)
 
-        print(
-            f"[决策者] 评分: A={scores['A']:.2f}, B={scores['B']:.2f}, C={scores['C']:.2f}"
-        )
+        print(f"[决策者] 评分: A={scores['A']:.2f}, B={scores['B']:.2f}, C={scores['C']:.2f}")
 
         return best_decision, best_score, reasoning, scores
 
+
+    def _get_heuristic_score(self, user_input: str) -> float:
+        """启发规则分数"""
+        score = 0.0
+        lower_input = user_input.lower()
+
+        if "翻译" in lower_input:
+            score += 0.5
+        if len(user_input) > 100:
+            score += 0.3
+        if any(kw in lower_input for kw in ["分析", "总结", "报告", "写"]):
+            score += 0.4
+
+        return min(score, 1.0)
+
+    def _get_historical_suggestion(self, user_input: str) -> Optional[str]:
+        """历史经验建议"""
+        if not self._decision_memory:
+            return None
+    
+        # 提取关键词
+        keywords = user_input[:50]
+        success_decisions = []
+    
+        for record in self._decision_memory:
+            if record.result == "success":
+                if any(kw in record.task for kw in keywords.split()[:3] if len(kw) > 2):
+                    success_decisions.append(record.decision)
+    
+        if success_decisions:
+            from collections import Counter
+            return Counter(success_decisions).most_common(1)[0][0]
+    
+        return None
+
+
+
     def _record_decision(self, task: str, decision: str, confidence: float):
+        """记录决策"""
         record = DecisionRecord(
             task=task[:200],
             decision=decision,
             result="pending",
             confidence=confidence,
             timestamp=datetime.now().isoformat(),
-            context={},
+            context={}
         )
         self._decision_memory.append(record)
         self._save_memory()
 
     def _update_memory(self, task: str, decision: str, success: bool):
+        """更新决策结果"""
         for record in reversed(self._decision_memory):
             if record.task == task[:200] and record.decision == decision:
                 record.result = "success" if success else "failed"
@@ -348,78 +359,20 @@ class DecisionAgent(BusinessAgent):
         self._save_memory()
 
     def _route(self, decision: str, user_input: str) -> dict:
+        """执行路由"""
         if decision == "A":
             from agents.chat_agent.agent import chat_agent
-
+            print(f"[决策者] 🚀 路由 → ChatAgent")
             return chat_agent.process(user_input)
         elif decision == "B":
             from agents.executor_agent.agent import executor_agent
-
+            print(f"[决策者] 🚀 路由 → ExecutorAgent")
             return executor_agent.process(user_input)
         else:
             from agents.orchestrator.agent import orchestrator_agent
-
+            print(f"[决策者] 🚀 路由 → Orchestrator")
             return orchestrator_agent.process(user_input, {"caller": "decision_agent"})
 
-    # ========== 状态查询 ==========
-    def get_stats(self) -> dict:
-        total = sum(self._route_stats.values())
-        return {
-            "total_decisions": total,
-            "routes": self._route_stats,
-            "distribution": {
-                k: v / total if total > 0 else 0 for k, v in self._route_stats.items()
-            },
-            "cache_size": len(self._decision_cache),
-            "memory_count": len(self._decision_memory),
-        }
 
-
-    def _get_semantic_suggestion(self, user_input: str) -> Optional[dict]:
-        if not self.semantic_engine:
-            return None
-        try:
-            result = self.semantic_engine.understand(user_input)
-            # 基于原子引擎 intent 智能路由
-            if result.intent == "translate":
-                suggestion = "C"
-            elif "翻译" in user_input.lower() and len(user_input) < 50:
-                suggestion = "B"
-            elif result.intent in ["chat", "greeting", "farewell", "thanks"]:
-                suggestion = "A"
-            elif result.intent in ["calculate", "weather"]:
-                suggestion = "B"
-            elif result.intent in ["code", "ai", "analysis"]:
-                suggestion = "C"
-            else:
-                suggestion = "A"
-            return {"suggestion": suggestion, "confidence": result.confidence}
-        except Exception as e:
-            return None
-
-    def _get_semantic_suggestion(self, user_input: str) -> Optional[dict]:
-        if not self.semantic_engine:
-            return None
-        try:
-            result = self.semantic_engine.understand(user_input)
-            
-            # 强制覆盖：包含"翻译"关键词时，按长度判断路由
-            if "翻译" in user_input:
-                if len(user_input) > 20:
-                    suggestion = "C"
-                else:
-                    suggestion = "B"
-            elif result.intent in ["chat", "greeting", "farewell", "thanks"]:
-                suggestion = "A"
-            elif result.intent in ["calculate", "weather"]:
-                suggestion = "B"
-            elif result.intent in ["code", "ai", "analysis", "translate"]:
-                suggestion = "C"
-            else:
-                suggestion = "A"
-            
-            return {"suggestion": suggestion, "confidence": result.confidence}
-        except Exception as e:
-            return None
 
 decision_agent = DecisionAgent()
