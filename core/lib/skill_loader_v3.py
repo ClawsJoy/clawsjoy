@@ -286,13 +286,13 @@ _skill_loader = None
 def get_skill_loader():
     global _skill_loader
     if _skill_loader is None:
-        _skill_loader = SkillLoaderV3()
+        _skill_loader = LazySkillLoader()
     return _skill_loader
 
 
 skill_loader = None
 
-class LazySkillLoader:
+class LazySkillLoader(SkillLoaderV3):
     """懒加载技能加载器"""
     _instance = None
     _skills = None
