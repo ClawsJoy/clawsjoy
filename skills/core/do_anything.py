@@ -176,7 +176,59 @@ class DoAnythingSkill:
         key = hashlib.md5(goal.encode()).hexdigest()
         # 简单缓存逻辑
         return None
+    
+
+    def _smart_fallback(self, goal: str) -> dict:
+        """智能兜底：调用原子引擎"""
+        try:
+            from engine.semantic import semantic_engine
+            result = semantic_engine.understand(goal)
+            
+            # 根据意图路由
+            if result.intent == "calculate":
+                # 尝试解析计算
+                return self._handle_calculation(goal)
+            else:
+                # 使用 LLM 处理
+                from core.lib.smart_adapter import smart_adapter
+                response = smart_adapter.generate(goal, auto_select=True)
+                return {"success": True, "response": response, "source": "atomic"}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+    
+    def _handle_calculation(self, goal: str) -> dict:
+        """处理计算请求"""
+        import re
+        numbers = re.findall(r'\d+', goal)
+        if len(numbers) >= 2:
+            result = int(numbers[0]) + int(numbers[1])
+            return {"success": True, "result": result, "response": str(result)}
+        return {"success": False, "error": "无法计算"}
 
 
-# 全局实例
-skill = DoAnythingSkill()    
+    # 全局实例
+skill = DoAnythingSkill()
+
+    def _smart_fallback(self, goal: str) -> dict:
+        """智能兜底：调用原子引擎"""
+        try:
+            from engine.semantic import semantic_engine
+            from core.lib.smart_adapter import smart_adapter
+            
+            # 语义理解
+            result = semantic_engine.understand(goal)
+            
+            # 根据意图和置信度处理
+            if result.confidence > 0.6:
+                # 高置信度，使用 LLM 生成响应
+                response = smart_adapter.generate(goal, auto_select=True)
+                return {"success": True, "response": response, "source": "atomic_llm"}
+            else:
+                # 低置信度，返回通用提示
+                return {
+                    "success": True, 
+                    "response": f"收到您的请求：{goal}。如需帮助，请更具体地描述。",
+                    "source": "atomic_fallback"
+                }
+        except Exception as e:
+            return {"success": False, "error": str(e)}
