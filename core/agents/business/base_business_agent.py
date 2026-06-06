@@ -145,3 +145,7 @@ class BusinessAgent(SmartAgent):
             return self._comm.get_messages(self.name, limit)
         except:
             return []
+
+    def process(self, user_input: str, context: dict = None) -> dict:
+        """统一入口 - 调用 _execute_business"""
+        return self._execute_business(user_input, context)

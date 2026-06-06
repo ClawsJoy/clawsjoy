@@ -25,41 +25,6 @@ class CalculatorAgent(BusinessAgent):
         """业务逻辑实现 - BusinessAgent 要求"""
         return self.process(user_input, context)
 
-    def process(self, user_input: str, context: Optional[Dict] = None) -> Dict:
-        print(f"[数学大师] 收到: {user_input}")
-
-        # 1. 基础四则运算
-        result = self._basic_calc(user_input)
-        if result:
-            return result
-
-        # 2. 科学计算
-        result = self._scientific_calc(user_input)
-        if result:
-            return result
-
-        # 3. 变量赋值和使用
-        result = self._variable_calc(user_input)
-        if result:
-            return result
-
-        # 4. 单位转换
-        result = self._unit_conversion(user_input)
-        if result:
-            return result
-
-        # 5. 复杂表达式
-        result = self._complex_expr(user_input)
-        if result:
-            return result
-
-        return {
-            "success": False,
-            "response": "请提供数学表达式，如：2+3, sin(30), 10cm to m, 设 a=5, 计算 a+3",
-            "agent": self.name,
-            "user_id": self.user_id,
-        }
-
     def _basic_calc(self, expr: str) -> Optional[Dict]:
         """基础四则运算"""
         match = re.search(r"(\d+(?:\.\d+)?)\s*([+\-*/])\s*(\d+(?:\.\d+)?)", expr)

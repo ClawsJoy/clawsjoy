@@ -50,3 +50,13 @@ routing:
 memory:
   enabled: true
   path: memory/
+
+# 决策权重配置
+weights:
+  analyst: 0.45
+  semantic: 0.20
+  llm: 0.20
+  historical: 0.10
+  heuristic: 0.05
+
+

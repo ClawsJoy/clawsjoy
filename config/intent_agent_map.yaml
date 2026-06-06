@@ -16,9 +16,34 @@ intent_to_agent:
 
 # 关键词兜底（当语义引擎无法识别时使用）
 keyword_fallback:
+  video_index: ["索引视频", "视频索引", "视频搜索"]
+  memory: ["记住", "记忆", "回忆", "忘记"]
+  dialect: ["方言", "口音", "哪里的口音"]
+  file: ["文件", "读取", "写入", "保存"]
+  youtube: ["youtube", "YouTube", "视频上传"]
+  video_index: ["索引视频", "视频搜索"]
+  collaboration: ["协作", "合作", "协同", "配合"]
+  director: ["导演", "编排", "指挥", "协调"]
   write: ["写一篇", "写一个", "撰写", "创作", "文章", "写作"]
   vision: ["识别", "描述图片", "看图", "图像识别", "vision", "图片", "OCR"]
   video: ["裁剪", "转码", "截图", "合成", "视频", "剪辑"]
   code: ["代码", "函数", "编程", "实现", "algorithm"]
   translate: ["翻译", "译成", "translate"]
   calculate: ["计算", "加", "减", "乘", "除"]
+
+# 条件路由（根据输入特征动态决定路由）
+conditional_routing:
+  translate:
+    agent: translate_agent
+    default_route: B
+    conditions:
+      - condition: "len(input) > 50"
+        route: C
+  director: director_agent
+  collaboration: collaboration_agent
+  dialect: dialect_agent
+  file: file_agent
+  youtube: youtube_agent
+  video_index: video_indexer_agent
+  memory: memory_agent
+  video_index: video_indexer_agent

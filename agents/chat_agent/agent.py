@@ -23,10 +23,6 @@ class ChatAgent(BusinessAgent):
         print(f"💬 ChatAgent v3.0 已上线")
 
     # 实现抽象方法 process（SmartAgent 要求）
-    def process(self, user_input: str, context: Optional[Dict] = None) -> Dict:
-        """SmartAgent 要求的 process 方法"""
-        return self.handle(user_input, context)
-
     def _execute_business(self, user_input: str, context: Dict = None) -> Dict:
         """核心业务逻辑（BusinessAgent 要求）"""
 
