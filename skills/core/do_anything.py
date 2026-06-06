@@ -202,7 +202,7 @@ class DoAnythingSkill:
         """调用知识引擎检索"""
         try:
             from engine.knowledge import knowledge_engine
-            results = knowledge_engine.search(query)
+            results = knowledge_engine.query(query)
             if results:
                 return results[0].get("content", "")[:500]
         except:
@@ -214,7 +214,7 @@ class DoAnythingSkill:
         """获取记忆"""
         try:
             from engine.memory import memory_engine
-            return memory_engine.get(key)
+            return memory_engine.recall(key)
         except Exception as e:
             print(f"记忆引擎失败: {e}")
         return ""
@@ -223,7 +223,101 @@ class DoAnythingSkill:
         """逻辑推理"""
         try:
             from engine.reasoning import reasoning_engine
-            return reasoning_engine.analyze(query)
+            decision, confidence, reasoning = reasoning_engine.process(query); return {"decision": decision, "confidence": confidence, "reasoning": reasoning}
         except Exception as e:
             print(f"推理引擎失败: {e}")
         return {}
+
+    def _smart_route(self, goal: str) -> dict:
+        """智能路由 - 集成多引擎"""
+        try:
+            # 1. 情感分析
+            from engine.emotion import emotion_engine
+            emotion = emotion_engine.analyze(goal)
+            
+            # 2. 语义理解
+            from engine.semantic import semantic_engine
+            semantic = semantic_engine.understand(goal)
+            
+            # 3. 知识检索
+            knowledge = self._search_knowledge(goal)
+            
+            # 4. 记忆召回
+            memory = self._get_memory(goal[:50])
+            
+            # 5. 推理
+            from engine.reasoning import reasoning_engine
+            reasoning = reasoning_engine.process({"input": goal})
+            
+            # 综合响应
+            response = f"语义: {semantic.intent}\n"
+            if knowledge:
+                response += f"知识: {knowledge[:100]}\n"
+            if memory:
+                response += f"记忆: {memory}\n"
+            response += f"情感: {emotion.get('dominant_emotion', 'neutral')}"
+            
+            return {
+                "success": True,
+                "response": response,
+                "source": "multi_engine",
+                "metadata": {
+                    "intent": semantic.intent,
+                    "confidence": semantic.confidence,
+                    "emotion": emotion.get('dominant_emotion'),
+                    "reasoning": reasoning[0] if reasoning else 'unknown'
+                }
+            }
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    def execute(self, params):
+        """增强版 execute - 多引擎智能路由"""
+        goal = params.get("goal", "")
+        if not goal:
+            return {"success": False, "error": "需要提供目标"}
+
+        print(f"🧠 [大脑 v{self.version}] 收到任务: {goal[:100]}")
+        
+        # 快速数学计算
+        import re
+        math_match = re.search(r'(\d+)\s*([+\-*/xX])\s*(\d+)', goal)
+        if math_match:
+            try:
+                a, op, b = int(math_match.group(1)), math_match.group(2), int(math_match.group(3))
+                if op in ['x', 'X']:
+                    op = '*'
+                result = eval(f"{a}{op}{b}")
+                return self._format_response({"success": True, "result": result}, "math", goal)
+            except:
+                pass
+        
+        # 按优先级路由
+        priority = self.config.get("priority", [])
+        for rule in priority:
+            handler_name = rule.get("handler")
+            if not self._match_rule(goal, rule):
+                continue
+            
+            print(f"🎯 匹配到规则: {rule.get('name')} -> {handler_name}")
+            executor = self.executors.get(handler_name)
+            if not executor:
+                continue
+            
+            exec_params = {"goal": goal, "context": params.get("context", {})}
+            try:
+                if hasattr(executor, 'execute'):
+                    result = executor.execute(goal, exec_params)
+                elif callable(executor):
+                    result = executor(goal, exec_params)
+                else:
+                    result = {"success": False, "error": f"执行器 {handler_name} 不可调用"}
+                
+                if result.get("success"):
+                    return self._format_response(result, rule.get("name"), goal)
+            except Exception as e:
+                print(f"⚠️ 执行器 {handler_name} 异常: {e}")
+                continue
+        
+        # 智能兜底
+        return self._smart_route(goal)
