@@ -81,7 +81,7 @@ class SemanticEngine:
     def _record_failure(self, engine_name: str):
         cb = self._circuit_breakers.get(engine_name, {"failures": 0})
         cb["failures"] += 1
-        if cb["failures"] >= 5:
+        if cb["failures"] >= 10:
             cb["open"] = True
             engine_logger.get().warning(f"🔌 熔断器触发: {engine_name}")
         self._circuit_breakers[engine_name] = cb
@@ -89,7 +89,7 @@ class SemanticEngine:
     def _record_success(self, engine_name: str):
         cb = self._circuit_breakers.get(engine_name, {"failures": 0})
         cb["failures"] = max(0, cb["failures"] - 1)
-        if cb["failures"] < 3:
+        if cb["failures"] < 5:
             cb["open"] = False
         self._circuit_breakers[engine_name] = cb
 

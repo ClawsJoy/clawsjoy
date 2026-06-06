@@ -291,3 +291,22 @@ def get_skill_loader():
 
 
 skill_loader = None
+
+class LazySkillLoader:
+    """懒加载技能加载器"""
+    _instance = None
+    _skills = None
+    
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+    
+    def get_skill(self, name):
+        if self._skills is None:
+            self._load()
+        return self._skills.get(name)
+    
+    def _load(self):
+        # 延迟加载
+        pass
