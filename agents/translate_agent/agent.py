@@ -1,3 +1,4 @@
+from core.agents.business.business_agent_v2 import BusinessAgentV2
 #!/usr/bin/env python3
 """翻译智能体 - 增强版（多语言互译）"""
 
@@ -8,7 +9,7 @@ from core.agents.business.base_business_agent import BusinessAgent
 from core.lib.smart_adapter import smart_adapter
 
 
-class TranslateAgent(BusinessAgent):
+class TranslateAgent(BusinessAgentV2):
     name = "translate_agent"
     description = "多语言智能翻译"
     version = "3.0.0"

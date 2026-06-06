@@ -1,3 +1,4 @@
+from core.agents.business.business_agent_v2 import BusinessAgentV2
 #!/usr/bin/env python3
 """视频智能体 - 增强版（剪辑、转码、截图、合成）"""
 
@@ -7,7 +8,7 @@ from typing import Dict, Optional
 from core.agents.business.base_business_agent import BusinessAgent
 
 
-class VideoAgent(BusinessAgent):
+class VideoAgent(BusinessAgentV2):
     name = "video_agent"
     description = "智能视频处理"
     version = "3.0.0"
