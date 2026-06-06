@@ -47,3 +47,4 @@ conditional_routing:
   video_index: video_indexer_agent
   memory: memory_agent
   video_index: video_indexer_agent
+  video_index: video_indexer_agent

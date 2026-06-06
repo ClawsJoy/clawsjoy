@@ -1,3 +1,4 @@
+from core.agents.business.business_agent_v2 import BusinessAgentV2
 #!/usr/bin/env python3
 """记忆智能体 - 增强版"""
 
@@ -9,7 +10,7 @@ from typing import Any, Dict, List, Optional
 from core.agents.business.base_business_agent import BusinessAgent
 
 
-class MemoryAgent(BusinessAgent):
+class MemoryAgent(BusinessAgentV2):
     name = "memory_agent"
     description = "智能记忆管理"
     version = "3.0.0"

@@ -1,3 +1,4 @@
+from core.agents.business.business_agent_v2 import BusinessAgentV2
 #!/usr/bin/env python3
 """方言智能体 - 增强版"""
 
@@ -9,7 +10,7 @@ from core.agents.business.base_business_agent import BusinessAgent
 from core.lib.smart_adapter import smart_adapter
 
 
-class DialectAgent(BusinessAgent):
+class DialectAgent(BusinessAgentV2):
     name = "dialect_agent"
     description = "方言识别、翻译和转换"
     version = "3.0.0"

@@ -1,3 +1,4 @@
+from core.agents.business.business_agent_v2 import BusinessAgentV2
 #!/usr/bin/env python3
 """ChatAgent v3.0 - 通用对话智能体"""
 
@@ -10,7 +11,7 @@ from core.agents.business.base_business_agent import BusinessAgent
 from core.lib.smart_adapter import smart_adapter
 
 
-class ChatAgent(BusinessAgent):
+class ChatAgent(BusinessAgentV2):
     """通用对话智能体"""
 
     name = "chat_agent"

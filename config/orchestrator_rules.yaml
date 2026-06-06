@@ -167,3 +167,14 @@ rules:
       - target: video_indexer_agent
         description: "视频索引"
         input: "{task}"
+
+  # 视频索引
+  - patterns:
+      - "索引视频"
+      - "视频索引"
+      - "视频搜索"
+      - "视频分析"
+    steps:
+      - target: video_indexer_agent
+        description: "视频索引"
+        input: "{task}"

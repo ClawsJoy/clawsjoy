@@ -1,3 +1,4 @@
+from core.agents.business.business_agent_v2 import BusinessAgentV2
 #!/usr/bin/env python3
 """协作智能体 - 增强版（多Agent并行协作、结果融合）"""
 
@@ -8,7 +9,7 @@ from typing import Any, Dict, List, Optional
 from core.agents.business.base_business_agent import BusinessAgent
 
 
-class CollaborationAgent(BusinessAgent):
+class CollaborationAgent(BusinessAgentV2):
     name = "collaboration_agent"
     description = "多智能体协作"
     version = "3.0.0"

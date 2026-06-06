@@ -1,3 +1,4 @@
+from core.agents.business.business_agent_v2 import BusinessAgentV2
 #!/usr/bin/env python3
 """CodeAgent v3.0 - 代码生成智能体"""
 
@@ -7,7 +8,7 @@ from core.agents.business.base_business_agent import BusinessAgent
 from core.lib.smart_adapter import smart_adapter
 
 
-class CodeAgent(BusinessAgent):
+class CodeAgent(BusinessAgentV2):
     """代码生成智能体"""
 
     name = "code_agent"

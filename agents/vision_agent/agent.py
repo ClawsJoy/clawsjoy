@@ -1,3 +1,4 @@
+from core.agents.business.business_agent_v2 import BusinessAgentV2
 #!/usr/bin/env python3
 """视觉智能体 - 增强版（图片识别、OCR、物体检测）"""
 
@@ -7,7 +8,7 @@ from typing import Dict, Optional
 from core.agents.business.base_business_agent import BusinessAgent
 
 
-class VisionAgent(BusinessAgent):
+class VisionAgent(BusinessAgentV2):
     name = "vision_agent"
     description = "智能视觉识别"
     version = "3.0.0"
