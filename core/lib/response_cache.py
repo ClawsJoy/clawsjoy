@@ -31,12 +31,20 @@ class ResponseCache:
     def get(self, user_id: str, message: str):
         """获取缓存"""
         key = self._make_key(user_id, message)
+        # 优先使用 Redis
+        if redis_cache.enabled:
+            value = redis_cache.get(key)
+            if value is not None:
+                self._hit_count += 1
+                return value
+            self._miss_count += 1
+            return None
+        # 降级到内存缓存
         if key in self.cache:
             value, timestamp = self.cache[key]
             if time.time() - timestamp < self.ttl:
                 self.cache.move_to_end(key)
                 self._hit_count += 1
-                logger.debug(f"缓存命中: {message[:30]}...")
                 return value
             else:
                 del self.cache[key]
@@ -46,8 +54,12 @@ class ResponseCache:
     def set(self, user_id: str, message: str, value):
         """设置缓存"""
         key = self._make_key(user_id, message)
-        self.cache[key] = (value, time.time())
-        self.cache.move_to_end(key)
+        # 优先使用 Redis
+        if redis_cache.enabled:
+            redis_cache.set(key, value, ttl=self.ttl)
+        else:
+            self.cache[key] = (value, time.time())
+            self.cache.move_to_end(key)
 
         # 限制缓存大小
         while len(self.cache) > self.max_size:
@@ -77,3 +89,10 @@ class ResponseCache:
 
 # 全局缓存实例
 response_cache = ResponseCache()
+
+# 优先使用 Redis 缓存
+try:
+    from core.lib.redis_cache import redis_cache
+    _cache_backend = redis_cache
+except:
+    _cache_backend = None
