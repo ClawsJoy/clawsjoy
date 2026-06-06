@@ -170,12 +170,13 @@ class DoAnythingSkill:
         return response
 
 
-# 全局实例
-skill = DoAnythingSkill()
-
     def _get_cached_result(self, goal):
         """缓存执行结果"""
         import hashlib
         key = hashlib.md5(goal.encode()).hexdigest()
         # 简单缓存逻辑
         return None
+
+
+# 全局实例
+skill = DoAnythingSkill()    
