@@ -33,57 +33,6 @@ class TranslateAgent(BusinessAgent):
         """业务逻辑实现 - BusinessAgent 要求"""
         return self.process(user_input, context)
 
-    def process(self, user_input: str, context: Optional[Dict] = None) -> Dict:
-        print(f"[翻译] 收到: {user_input}")
-
-        # 1. 多语言互译
-        match = re.search(r"把(.+)翻译成(\w+)", user_input)
-        if match:
-            text = match.group(1).strip()
-            target = match.group(2)
-            return self._translate(text, target)
-
-        # 2. 翻译成指定语言
-        for lang, code in self.LANG_MAP.items():
-            if (
-                f"翻译成{lang}" in user_input
-                or f"译成{lang}" in user_input
-                or f"to {lang}" in user_input.lower()
-            ):
-                text = self._extract_text(user_input)
-                if text:
-                    result = self._translate(text, code)
-                    return self._build_response(result, text, lang)
-
-        # 3. 自动检测语言并翻译成中文
-        if "翻译" in user_input:
-            text = self._extract_text(user_input)
-            if text:
-                result = self._translate(text, "zh")
-                return self._build_response(result, text, "中文")
-
-        # 4. 批量翻译
-        if "批量翻译" in user_input:
-            texts = self._extract_batch_texts(user_input)
-            if texts:
-                results = self._batch_translate(texts)
-                return self._batch_response(results)
-
-        # 5. 语言检测
-        if "检测语言" in user_input:
-            text = self._extract_text(user_input)
-            if text:
-                detected = self._detect_language(text)
-                return {
-                    "success": True,
-                    "response": f"🔍 检测到语言：{detected}",
-                    "detected_language": detected,
-                    "agent": self.name,
-                    "user_id": self.user_id,
-                }
-
-        return self._help()
-
     def _extract_text(self, text: str) -> Optional[str]:
         """提取待翻译文本"""
         patterns = [
@@ -181,4 +130,3 @@ class TranslateAgent(BusinessAgent):
             "user_id": self.user_id,
         }
 
-translate_agent = TranslateAgent()

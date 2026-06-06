@@ -33,38 +33,6 @@ class VisionAgent(BusinessAgent):
         """业务逻辑实现 - BusinessAgent 要求"""
         return self.process(user_input, context)
 
-    def process(self, user_input: str, context: Optional[Dict] = None) -> Dict:
-        print(f"[视觉] 收到: {user_input}")
-
-        # 1. 图片描述
-        match = re.search(
-            r"描述(图片|图像|这张图)(.+)|分析(.+\.(jpg|png))", user_input, re.IGNORECASE
-        )
-        if match:
-            image_path = match.group(2) or match.group(3)
-            return self._describe_image(image_path)
-
-        # 2. OCR 文字识别
-        if (
-            "ocr" in user_input.lower()
-            or "文字识别" in user_input
-            or "提取文字" in user_input
-        ):
-            image_path = self._extract_image_path(user_input)
-            return self._ocr_image(image_path)
-
-        # 3. 物体检测
-        if "检测" in user_input and ("物体" in user_input or "对象" in user_input):
-            image_path = self._extract_image_path(user_input)
-            return self._detect_objects(image_path)
-
-        # 4. 人脸检测
-        if "人脸" in user_input or "face" in user_input.lower():
-            image_path = self._extract_image_path(user_input)
-            return self._detect_faces(image_path)
-
-        return self._help()
-
     def _describe_image(self, image_path: str) -> Dict:
         """描述图片"""
         if self.vision_available:

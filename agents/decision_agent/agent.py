@@ -71,6 +71,42 @@ class DecisionAgent(BusinessAgent):
             f"🎖️ 决策者 v{self.version} 已上岗 (经验记忆: {len(self._decision_memory)}条)"
         )
 
+
+    def _load_weights_from_config(self):
+        """从配置文件加载权重"""
+        import yaml
+        from pathlib import Path
+        
+        config_path = Path("agents/decision_agent/config.yaml")
+        if config_path.exists():
+            try:
+                with open(config_path) as f:
+                    config = yaml.safe_load(f)
+                    weights = config.get("weights", {})
+                    if weights:
+                        self.WEIGHTS = weights
+                        print(f"[决策者] 从配置文件加载权重: {self.WEIGHTS}")
+                    else:
+                        self.WEIGHTS = {
+                            "analyst": 0.45,
+                            "semantic": 0.20,
+                            "llm": 0.20,
+                            "historical": 0.10,
+                            "heuristic": 0.05,
+                        }
+                return
+            except Exception as e:
+                print(f"[决策者] 加载权重配置失败: {e}")
+        
+        # 默认权重
+        self.WEIGHTS = {
+            "analyst": 0.45,
+            "semantic": 0.20,
+            "llm": 0.20,
+            "historical": 0.10,
+            "heuristic": 0.05,
+        }
+
     def _init_components(self):
         """初始化组件（不依赖顺序）"""
         # 推理引擎
@@ -127,9 +163,6 @@ class DecisionAgent(BusinessAgent):
                 json.dump([vars(r) for r in self._decision_memory[-200:]], f, indent=2)
         except:
             pass
-
-    def process(self, user_input: str, context: dict = None) -> dict:
-        return self._decide_and_route(user_input, context)
 
     def _execute_business(self, user_input: str, context: dict = None) -> dict:
         return self._decide_and_route(user_input, context)
@@ -199,6 +232,9 @@ class DecisionAgent(BusinessAgent):
 
         # 异步收集证据
         evidences = self._gather_evidences_async(user_input, context)
+        with open("/tmp/ev_debug.log", "a") as f:
+            f.write(f"evidences: {evidences}\n")
+        print(f"[决策者] evidences: {evidences}")
 
         # 综合决策
         decision, confidence, reasoning, scores = self._make_decision(evidences)
@@ -227,9 +263,15 @@ class DecisionAgent(BusinessAgent):
     # ========== 证据收集方法 ==========
     def _get_analyst_report(self, user_input: str, context: dict = None) -> dict:
         try:
-            from agents.analysis_agent.agent import analysis_agent
-
-            report = analysis_agent.process(
+            # 动态加载 analysis_agent（不依赖全局实例）
+            module = __import__("agents.analysis_agent.agent", fromlist=["AnalysisAgent"])
+            for attr in dir(module):
+                if attr.endswith("Agent") and attr not in ["BusinessAgent", "BusinessAgentV2", "SmartAgent"]:
+                    agent_class = getattr(module, attr)
+                    analysis_agent = agent_class(self.user_id)
+                    break
+            
+            report = analysis_agent.handle(
                 user_input, {"mode": "understanding", "caller": "decision_agent"}
             )
             if isinstance(report, dict):
@@ -363,19 +405,20 @@ class DecisionAgent(BusinessAgent):
         if decision == "A":
             from agents.chat_agent.agent import chat_agent
             print(f"[决策者] 🚀 路由 → ChatAgent")
-            return chat_agent.process(user_input)
+            return chat_agent.handle(user_input)
         elif decision == "B":
             from agents.executor_agent.agent import executor_agent
             print(f"[决策者] 🚀 路由 → ExecutorAgent")
-            return executor_agent.process(user_input)
+            return executor_agent.handle(user_input)
         else:
-            from agents.orchestrator.agent import orchestrator_agent
+            # 动态加载 orchestrator（不使用全局实例）
+            from agents.orchestrator.agent import OrchestratorAgent
+            orchestrator_agent = OrchestratorAgent(self.user_id)
             print(f"[决策者] 🚀 路由 → Orchestrator")
-            return orchestrator_agent.process(user_input, {"caller": "decision_agent"})
+            return orchestrator_agent.handle(user_input, {"caller": "decision_agent"})
 
 
 
-decision_agent = DecisionAgent()
 
 def _get_agent_by_intent(self, intent: str) -> str:
     """根据意图获取 Agent"""
@@ -384,3 +427,4 @@ def _get_agent_by_intent(self, intent: str) -> str:
         return intent_router.get_agent(intent)
     except:
         return None
+decision_agent = DecisionAgent()

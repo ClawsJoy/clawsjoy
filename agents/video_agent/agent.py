@@ -32,36 +32,6 @@ class VideoAgent(BusinessAgent):
         """业务逻辑实现 - BusinessAgent 要求"""
         return self.process(user_input, context)
 
-    def process(self, user_input: str, context: Optional[Dict] = None) -> Dict:
-        print(f"[视频] 收到: {user_input}")
-        msg = user_input.lower()
-
-        # 1. 裁剪视频
-        if "裁剪" in msg or "截取" in msg or "trim" in msg:
-            return self._trim_video(user_input)
-
-        # 2. 转码
-        if "转码" in msg or "转换格式" in msg or "transcode" in msg:
-            return self._transcode_video(user_input)
-
-        # 3. 截图
-        if "截图" in msg or "帧" in msg or "screenshot" in msg:
-            return self._screenshot_video(user_input)
-
-        # 4. 合成视频
-        if "合成" in msg or "合并" in msg or "compose" in msg:
-            return self._compose_video(user_input)
-
-        # 5. 添加字幕
-        if "字幕" in msg or "subtitle" in msg:
-            return self._add_subtitle(user_input)
-
-        # 6. 视频信息
-        if "信息" in msg or "info" in msg:
-            return self._video_info(user_input)
-
-        return self._help()
-
     def _trim_video(self, user_input: str) -> Dict:
         """裁剪视频"""
         match = re.search(r"(\d+):(\d+)\s*到\s*(\d+):(\d+)", user_input)

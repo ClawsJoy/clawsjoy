@@ -22,11 +22,7 @@ class AnalysisAgent(BusinessAgentV2):
         print(f"📊 分析师 v{self.version} 已上岗 (双模式)")
 
     def _execute_business(self, user_input: str, context: Dict = None) -> Dict:
-        return self.process(user_input, context)
-
-    def process(self, user_input: str, context: Dict = None) -> Dict:
         mode = self._detect_mode(context)
-
         if mode == "understanding":
             return self.analyze_for_decision(user_input, context)
         else:
@@ -191,7 +187,6 @@ class AnalysisAgent(BusinessAgentV2):
         return response
 
 
-analysis_agent = AnalysisAgent()
 
 def _get_route_from_config(self, intent: str) -> str:
     """从配置获取路由"""
