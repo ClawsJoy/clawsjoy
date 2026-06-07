@@ -6,6 +6,55 @@ from typing import Any, Callable, Dict, List, Optional
 
 from core.agents.base.smart_agent import SmartAgent
 
+# core/agents/business/base_business_agent.py
+from core.lib.input_validator import ValidationResult, input_validator
+from core.lib.safety_guard import set_safe_recursion_limit
+
+
+class BusinessAgent:
+    """业务智能体基类"""
+
+    def __init__(self, user_id: str = "default"):
+        self.user_id = user_id
+        # 确保递归限制安全
+        set_safe_recursion_limit()
+        # ... 其他初始化
+
+    def validate_input(self, user_input: str, context: dict = None) -> ValidationResult:
+        """验证用户输入"""
+        return input_validator.validate_message(user_input)
+
+    def handle_with_validation(self, user_input: str, context: dict = None) -> dict:
+        """带输入验证的处理方法"""
+        # 输入验证
+        validation = self.validate_input(user_input, context)
+
+        if not validation.valid:
+            return {
+                "success": False,
+                "error": "输入验证失败",
+                "errors": validation.errors,
+                "response": f"❌ {', '.join(validation.errors)}",
+            }
+
+        # 使用清理后的输入
+        sanitized_input = validation.sanitized_value
+
+        try:
+            return self.handle(sanitized_input, context)
+        except RecursionError as e:
+            return {
+                "success": False,
+                "error": "递归深度超限",
+                "response": "❌ 请求处理出现递归错误，已自动终止",
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "response": f"❌ 处理失败: {str(e)}",
+            }
+
 
 class BusinessAgent(SmartAgent):
     """

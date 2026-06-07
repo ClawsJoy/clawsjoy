@@ -1,10 +1,11 @@
-"""技能实现"""
+\"\"\"network 技能实现\"\"\"
 
 
-class Network:
+class network:
     name = "network"
     description = "network 技能"
     version = "1.0.0"
 
     def execute(self, params):
-        return {"success": True, "result": f"network 执行成功"}
+        # TODO: 实现具体逻辑
+        return {"success": True, "result": "network 执行成功"}

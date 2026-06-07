@@ -1,0 +1,120 @@
+{
+  "timestamp": "2026-06-06T12:47:28.566396",
+  "total_upgrades": 12,
+  "agents": {
+    "chat_agent": {
+      "agent": "chat_agent",
+      "total": 80,
+      "success_rate": 0.6625,
+      "successes": 53,
+      "failures": 27,
+      "failure_types": {
+        "processing_timeout": 10,
+        "timeout": 17
+      },
+      "time_range_hours": 168,
+      "sample_logs": [
+        {
+          "timestamp": "2026-06-06T12:01:24.937222",
+          "success": true,
+          "input": "测试输入 2",
+          "output": "测试输出",
+          "error": null,
+          "source": "sample"
+        },
+        {
+          "timestamp": "2026-06-06T12:01:24.937218",
+          "success": true,
+          "input": "测试输入 1",
+          "output": "测试输出",
+          "error": null,
+          "source": "sample"
+        },
+        {
+          "timestamp": "2026-06-06T12:01:24.937206",
+          "success": false,
+          "input": "测试输入 0",
+          "output": "",
+          "error": "timeout",
+          "source": "sample"
+        }
+      ]
+    },
+    "code_agent": {
+      "agent": "code_agent",
+      "total": 60,
+      "success_rate": 0.6666666666666666,
+      "successes": 40,
+      "failures": 20,
+      "failure_types": {
+        "processing_timeout": 10,
+        "timeout": 10
+      },
+      "time_range_hours": 168,
+      "sample_logs": [
+        {
+          "timestamp": "2026-06-06T12:03:28.210898",
+          "success": true,
+          "input": "测试输入 2",
+          "output": "测试输出",
+          "error": null,
+          "source": "sample"
+        },
+        {
+          "timestamp": "2026-06-06T12:03:28.210895",
+          "success": true,
+          "input": "测试输入 1",
+          "output": "测试输出",
+          "error": null,
+          "source": "sample"
+        },
+        {
+          "timestamp": "2026-06-06T12:03:28.210886",
+          "success": false,
+          "input": "测试输入 0",
+          "output": "",
+          "error": "timeout",
+          "source": "sample"
+        }
+      ]
+    },
+    "vision_agent": {
+      "agent": "vision_agent",
+      "total": 80,
+      "success_rate": 0.6625,
+      "successes": 53,
+      "failures": 27,
+      "failure_types": {
+        "processing_timeout": 10,
+        "timeout": 17
+      },
+      "time_range_hours": 168,
+      "sample_logs": [
+        {
+          "timestamp": "2026-06-06T12:01:24.938839",
+          "success": true,
+          "input": "测试输入 2",
+          "output": "测试输出",
+          "error": null,
+          "source": "sample"
+        },
+        {
+          "timestamp": "2026-06-06T12:01:24.938835",
+          "success": true,
+          "input": "测试输入 1",
+          "output": "测试输出",
+          "error": null,
+          "source": "sample"
+        },
+        {
+          "timestamp": "2026-06-06T12:01:24.938826",
+          "success": false,
+          "input": "测试输入 0",
+          "output": "",
+          "error": "timeout",
+          "source": "sample"
+        }
+      ]
+    }
+  }
+}

@@ -1,11 +1,8 @@
-"""
-text 技能模块
-"""
+\"\"\"text 技能\"\"\"
 
-from .text_skill import ToUpperSkill
+from .text_skill import text
 
 
-def execute(params=None):
-    """统一执行入口"""
-    skill = ToUpperSkill()
+def execute(params):
+    skill = text()
     return skill.execute(params)

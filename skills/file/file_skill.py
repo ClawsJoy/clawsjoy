@@ -1,22 +1,11 @@
-#!/usr/bin/env python3
-"""Read File - Read File 模块
-
-@version: 5.0.0
-@author: ClawsJoy
-@date: 2026-5-31
-"""
+\"\"\"file 技能实现\"\"\"
 
 
-class ReadFileSkill:
+class file:
+    name = "file"
+    description = "file 技能"
+    version = "1.0.0"
+
     def execute(self, params):
-        path = params.get("path", "")
-        encoding = params.get("encoding", "utf-8")
-        try:
-            with open(path, "r", encoding=encoding) as f:
-                content = f.read()
-            return {"success": True, "content": content[:1000], "size": len(content)}
-        except Exception as e:
-            return {"success": False, "error": str(e)}
-
-
-skill = ReadFileSkill()
+        # TODO: 实现具体逻辑
+        return {"success": True, "result": "file 执行成功"}

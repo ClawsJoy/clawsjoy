@@ -46,6 +46,7 @@ class EnhancedSemanticEngine:
 
     def _base_intent(self, text: str) -> Dict:
         intents = {
+            "download": ["下载视频", "保存视频", "youtube下载", "下载YouTube", "下载"],
             "greeting": ["你好", "您好", "hi", "hello"],
             "query": ["什么", "如何", "为什么", "哪个"],
             "action": ["帮我", "请", "需要", "想要"],

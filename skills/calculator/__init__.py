@@ -1,11 +1,8 @@
-"""
-calculator 技能模块
-"""
+\"\"\"calculator 技能\"\"\"
 
-from .calculator_skill import CalculatorSkill
+from .calculator_skill import calculator
 
 
-def execute(params=None):
-    """统一执行入口"""
-    skill = CalculatorSkill()
+def execute(params):
+    skill = calculator()
     return skill.execute(params)

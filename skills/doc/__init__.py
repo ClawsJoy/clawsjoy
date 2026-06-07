@@ -1,11 +1,8 @@
-"""
-doc 技能模块
-"""
+\"\"\"doc 技能\"\"\"
 
-from .doc_skill import Doc
+from .doc_skill import doc
 
 
-def execute(params=None):
-    """统一执行入口"""
-    skill = Doc()
+def execute(params):
+    skill = doc()
     return skill.execute(params)

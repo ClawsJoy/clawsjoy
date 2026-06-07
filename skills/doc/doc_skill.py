@@ -1,10 +1,11 @@
-"""技能实现"""
+\"\"\"doc 技能实现\"\"\"
 
 
-class Doc:
+class doc:
     name = "doc"
     description = "doc 技能"
     version = "1.0.0"
 
     def execute(self, params):
-        return {"success": True, "result": f"doc 执行成功"}
+        # TODO: 实现具体逻辑
+        return {"success": True, "result": "doc 执行成功"}

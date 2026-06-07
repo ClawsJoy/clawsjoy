@@ -1,11 +1,8 @@
-"""
-storyteller 技能模块
-"""
+\"\"\"storyteller 技能\"\"\"
 
-from .storyteller_skill import Storyteller
+from .storyteller_skill import storyteller
 
 
-def execute(params=None):
-    """统一执行入口"""
-    skill = Storyteller()
+def execute(params):
+    skill = storyteller()
     return skill.execute(params)

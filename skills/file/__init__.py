@@ -1,11 +1,8 @@
-"""
-file 技能模块
-"""
+\"\"\"file 技能\"\"\"
 
-from .file_skill import ReadFileSkill
+from .file_skill import file
 
 
-def execute(params=None):
-    """统一执行入口"""
-    skill = ReadFileSkill()
+def execute(params):
+    skill = file()
     return skill.execute(params)

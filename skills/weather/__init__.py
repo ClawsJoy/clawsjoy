@@ -1,11 +1,8 @@
-"""
-weather 技能模块
-"""
+\"\"\"weather 技能\"\"\"
 
-from .weather_skill import WeatherSkill
+from .weather_skill import weather
 
 
-def execute(params=None):
-    """统一执行入口"""
-    skill = WeatherSkill()
+def execute(params):
+    skill = weather()
     return skill.execute(params)

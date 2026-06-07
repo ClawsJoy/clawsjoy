@@ -1,11 +1,8 @@
-"""
-math 技能模块
-"""
+\"\"\"math 技能\"\"\"
 
-from .math_skill import DivideSkill
+from .math_skill import math
 
 
-def execute(params=None):
-    """统一执行入口"""
-    skill = DivideSkill()
+def execute(params):
+    skill = math()
     return skill.execute(params)

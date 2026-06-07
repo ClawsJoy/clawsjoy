@@ -1,11 +1,8 @@
-"""
-svg 技能模块
-"""
+\"\"\"svg 技能\"\"\"
 
-from .svg_skill import SVGGenerator
+from .svg_skill import svg
 
 
-def execute(params=None):
-    """统一执行入口"""
-    skill = SVGGenerator()
+def execute(params):
+    skill = svg()
     return skill.execute(params)

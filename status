@@ -1,0 +1,49 @@
+#!/bin/bash
+cd /home/flybo/clawsjoy_v5
+
+echo "========================================"
+echo "🚀 ClawsJoy 快速状态 ($(date '+%Y-%m-%d %H:%M:%S'))"
+echo "========================================"
+
+# 各Agent成功率
+python3 -c "
+from tools.real_log_collector import RealLogCollector
+c = RealLogCollector()
+for agent in ['chat_agent', 'code_agent', 'vision_agent']:
+    s = c.get_performance_stats(agent, 24)
+    rate = s['success_rate']
+    icon = '🟢' if rate >= 0.8 else '🟡' if rate >= 0.6 else '🔴'
+    print(f'{icon} {agent:15} {rate:5.1%} ({s[\"total\"]:3}次)')
+"
+
+# 温度配置
+echo ""
+echo "⚙️ 当前温度配置:"
+python3 -c "
+import yaml
+from pathlib import Path
+for agent in ['chat_agent', 'code_agent', 'vision_agent']:
+    f = Path(f'agents/{agent}/config.yaml')
+    if f.exists():
+        c = yaml.safe_load(open(f))
+        t = c.get('agent', {}).get('llm', {}).get('temperature', 'N/A')
+        print(f'  {agent}: temperature={t}')
+"
+
+# 最后升级
+echo ""
+echo "📜 最近升级:"
+python3 -c "
+import json
+from pathlib import Path
+h = Path('data/upgrades/upgrade_history.json')
+if h.exists():
+    with open(h) as f:
+        history = json.load(f)
+        if history:
+            last = history[-1]
+            print(f'  {last[\"timestamp\"][:19]} - {last[\"agent\"]}')
+            print(f'  成功率: {last[\"success_rate_before\"]:.1%} → 升级')
+        else:
+            print('  暂无升级记录')
+"

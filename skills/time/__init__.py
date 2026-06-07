@@ -1,11 +1,8 @@
-"""
-time 技能模块
-"""
+\"\"\"time 技能\"\"\"
 
-from .time_skill import FormatDateSkill
+from .time_skill import time
 
 
-def execute(params=None):
-    """统一执行入口"""
-    skill = FormatDateSkill()
+def execute(params):
+    skill = time()
     return skill.execute(params)

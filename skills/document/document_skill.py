@@ -1,21 +1,11 @@
-#!/usr/bin/env python3
-"""Create Doc - Create Doc 模块
-
-@version: 5.0.0
-@author: ClawsJoy
-@date: 2026-5-31
-"""
+\"\"\"document 技能实现\"\"\"
 
 
-class CreateDocSkill:
+class document:
+    name = "document"
+    description = "document 技能"
+    version = "1.0.0"
+
     def execute(self, params):
-        title = params.get("title", "")
-        content = params.get("content", "")
-        return {
-            "success": True,
-            "doc_id": f"DOC_{hash(title)}",
-            "message": f"已创建文档: {title}",
-        }
-
-
-skill = CreateDocSkill()
+        # TODO: 实现具体逻辑
+        return {"success": True, "result": "document 执行成功"}

@@ -1,41 +1,35 @@
 agent:
-  name: code_agent
-  display_name: 代码助手
-  type: builtin
-  enabled: true
-  role:
-    title: "代码工程师"
-    alias: "程序员"
-    level: 2
-    responsibilities:
-      - "生成代码"
-      - "代码审查"
-      - "调试帮助"
-    permissions:
-      - "generate_code"
-      - "review_code"
-
-  # 新增 LLM 配置
-  llm:
-    provider: "ollama"
-    model: "deepseek-coder:6.7b"
-    temperature: 0.2
-    max_tokens: 2048
-    timeout: 120
-
-  # 新增能力声明
   capabilities:
-    - write_code
-    - debug_code
-    - explain_code
-    - refactor_code
-
+  - write_code
+  - debug_code
+  - explain_code
+  - refactor_code
+  display_name: 代码助手
+  enabled: true
+  llm:
+    max_tokens: 2048
+    model: deepseek-coder:6.7b
+    provider: ollama
+    temperature: 0.8
+    timeout: 120
+  name: code_agent
+  role:
+    alias: 程序员
+    level: 2
+    permissions:
+    - generate_code
+    - review_code
+    responsibilities:
+    - 生成代码
+    - 代码审查
+    - 调试帮助
+    title: 代码工程师
+  type: builtin
 memory:
   enabled: true
-  path: memory/
-
   llm:
-    provider: ollama
-    model: deepseek-coder:6.7b
-    temperature: 0.2
     max_tokens: 2048
+    model: deepseek-coder:6.7b
+    provider: ollama
+    temperature: 0.2
+  path: memory/

@@ -1,11 +1,8 @@
-"""
-document 技能模块
-"""
+\"\"\"document 技能\"\"\"
 
-from .document_skill import CreateDocSkill
+from .document_skill import document
 
 
-def execute(params=None):
-    """统一执行入口"""
-    skill = CreateDocSkill()
+def execute(params):
+    skill = document()
     return skill.execute(params)

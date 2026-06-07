@@ -11,6 +11,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict
 
+from core.lib import config_helper
+
 
 class BaseAgent:
     """Agent 基类"""

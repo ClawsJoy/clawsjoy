@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>360° Panorama Viewer</title>
+    <meta charset="utf-8">
+    <style>
+        body { margin: 0; overflow: hidden; font-family: Arial; }
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            background: rgba(0,0,0,0.7);
+            padding: 10px 20px;
+            border-radius: 8px;
+            z-index: 100;
+            font-size: 14px;
+            pointer-events: none;
+        }
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: white;
+            background: rgba(0,0,0,0.7);
+            padding: 8px 16px;
+            border-radius: 8px;
+            z-index: 100;
+            font-size: 12px;
+            font-family: monospace;
+            pointer-events: none;
+        }
+        #image-selector {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 8px 12px;
+            border-radius: 8px;
+            z-index: 100;
+            color: white;
+            font-size: 12px;
+        }
+        select {
+            background: #333;
+            color: white;
+            border: 1px solid #666;
+            border-radius: 4px;
+            padding: 4px 8px;
+            margin-left: 8px;
+        }
+        kbd {
+            background: #333;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin: 0 2px;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">
+        🌐 360° Panorama Viewer | 鼠标拖拽旋转 | WASD 移动 | 滚轮缩放
+    </div>
+    <div id="controls">
+        🖱️ 鼠标拖拽旋转 | <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 移动 | 滚轮缩放
+    </div>
+    <div id="image-selector">
+        📸 全景图:
+        <select id="panorama-select">
+            <option value="">加载中...</option>
+        </select>
+    </div>
+    
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js"
+            }
+        }
+    </script>
+    
+    <script type="module">
+        import * as THREE from 'three';
+        
+        // 获取全景图列表
+        async function loadPanoramaList() {
+            try {
+                const res = await fetch('/list-panoramas');
+                const data = await res.json();
+                const select = document.getElementById('panorama-select');
+                select.innerHTML = '';
+                if (data.files && data.files.length > 0) {
+                    data.files.forEach(file => {
+                        const option = document.createElement('option');
+                        option.value = file;
+                        option.textContent = file;
+                        select.appendChild(option);
+                    });
+                    // 加载最新的
+                    loadPanorama(data.files[0]);
+                } else {
+                    select.innerHTML = '<option value="">未找到全景图</option>';
+                }
+            } catch(e) {
+                console.error('加载列表失败:', e);
+                // 降级：使用默认图片
+                loadPanorama('downloads/panorama_20260607_085505.png');
+            }
+        }
+        
+        // 场景
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 0, 0.1);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+        
+        let currentSphere = null;
+        
+        function loadPanorama(imagePath) {
+            if (currentSphere) {
+                scene.remove(currentSphere);
+            }
+            
+            const texture = new THREE.TextureLoader().load(imagePath);
+            const material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.BackSide });
+            const sphere = new THREE.Mesh(new THREE.SphereGeometry(500, 64, 64), material);
+            scene.add(sphere);
+            currentSphere = sphere;
+            
+            document.getElementById('info').innerHTML = `🌐 360° Panorama<br>${imagePath.split('/').pop()}`;
+        }
+        
+        // 鼠标控制
+        let isDragging = false;
+        let lastX = 0, lastY = 0;
+        let rotY = 0, rotX = 0;
+        
+        renderer.domElement.addEventListener('mousedown', (e) => {
+            if (e.button === 0) {
+                isDragging = true;
+                lastX = e.clientX;
+                lastY = e.clientY;
+                renderer.domElement.style.cursor = 'grabbing';
+            }
+        });
+        
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+            renderer.domElement.style.cursor = 'default';
+        });
+        
+        window.addEventListener('mousemove', (e) => {
+            if (isDragging && currentSphere) {
+                const dx = e.clientX - lastX;
+                const dy = e.clientY - lastY;
+                rotY += dx * 0.005;
+                rotX += dy * 0.005;
+                rotX = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, rotX));
+                currentSphere.rotation.y = rotY;
+                currentSphere.rotation.x = rotX;
+                lastX = e.clientX;
+                lastY = e.clientY;
+            }
+        });
+        
+        // WASD 移动
+        const keyState = {};
+        let camX = 0, camZ = 0;
+        
+        document.addEventListener('keydown', (e) => { keyState[e.code] = true; });
+        document.addEventListener('keyup', (e) => { keyState[e.code] = false; });
+        
+        function updateCamera() {
+            let mx = 0, mz = 0;
+            const speed = 2;
+            if (keyState['KeyW']) mz -= speed;
+            if (keyState['KeyS']) mz += speed;
+            if (keyState['KeyA']) mx -= speed;
+            if (keyState['KeyD']) mx += speed;
+            if (mx !== 0 || mz !== 0) {
+                camX += mx;
+                camZ += mz;
+                camera.position.x = camX;
+                camera.position.z = camZ;
+            }
+        }
+        
+        // 滚轮缩放
+        let fov = 75;
+        window.addEventListener('wheel', (e) => {
+            fov -= e.deltaY * 0.05;
+            fov = Math.max(30, Math.min(120, fov));
+            camera.fov = fov;
+            camera.updateProjectionMatrix();
+            e.preventDefault();
+        });
+        
+        // 选择切换
+        document.getElementById('panorama-select').addEventListener('change', (e) => {
+            if (e.target.value) {
+                loadPanorama(e.target.value);
+            }
+        });
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            updateCamera();
+            if (currentSphere) {
+                renderer.render(scene, camera);
+            }
+        }
+        animate();
+        
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // 启动
+        loadPanoramaList();
+    </script>
+</body>
+</html>

@@ -1,11 +1,8 @@
-"""
-translate 技能模块
-"""
+\"\"\"translate 技能\"\"\"
 
-from .translate_skill import TranslateSkill
+from .translate_skill import translate
 
 
-def execute(params=None):
-    """统一执行入口"""
-    skill = TranslateSkill()
+def execute(params):
+    skill = translate()
     return skill.execute(params)

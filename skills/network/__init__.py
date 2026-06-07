@@ -1,11 +1,8 @@
-"""
-network 技能模块
-"""
+\"\"\"network 技能\"\"\"
 
-from .network_skill import Network
+from .network_skill import network
 
 
-def execute(params=None):
-    """统一执行入口"""
-    skill = Network()
+def execute(params):
+    skill = network()
     return skill.execute(params)

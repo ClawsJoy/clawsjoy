@@ -1,11 +1,8 @@
-"""
-atomic 技能模块
-"""
+\"\"\"atomic 技能\"\"\"
 
-from .atomic_skill import Atomic
+from .atomic_skill import atomic
 
 
-def execute(params=None):
-    """统一执行入口"""
-    skill = Atomic()
+def execute(params):
+    skill = atomic()
     return skill.execute(params)

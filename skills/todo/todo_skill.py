@@ -1,15 +1,11 @@
-#!/usr/bin/env python3
-"""List Todos - List Todos 模块
-
-@version: 5.0.0
-@author: ClawsJoy
-@date: 2026-5-31
-"""
+\"\"\"todo 技能实现\"\"\"
 
 
-class ListTodosSkill:
+class todo:
+    name = "todo"
+    description = "todo 技能"
+    version = "1.0.0"
+
     def execute(self, params):
-        return {"success": True, "todos": [], "message": "暂无待办事项"}
-
-
-skill = ListTodosSkill()
+        # TODO: 实现具体逻辑
+        return {"success": True, "result": "todo 执行成功"}

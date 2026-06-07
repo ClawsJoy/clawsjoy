@@ -24,7 +24,7 @@ class CodeAgent(BaseAgent):
         self.memory["stats"]["total_interactions"] += 1
 
         prompt = f"用户请求: {user_input}\n请生成代码或提供帮助:"
-        response = llm.generate(prompt, model_type="code")
+        response = llm.generate(prompt)
 
         self.memory["history"].append(
             {
