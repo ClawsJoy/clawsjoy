@@ -1,4 +1,4 @@
-# 大脑调度器规则配置 v5.1 - 修复执行器路径
+# 大脑调度器规则配置
 
 executors:
   math_executor:
@@ -25,9 +25,32 @@ executors:
     class: LLMExecutor
     description: LLM 通用执行器
 
+  video-download:
+    enabled: true
+    module: skills.video-download.scripts.main
+    class: VideoDownload
+    description: YouTube 视频下载
+
+  version:
+    enabled: true
+    module: skills.version.scripts.main
+    class: VersionSkill
+    description: 获取系统版本信息
+
 priority:
+  - name: video-download
+    keywords: ["下载视频", "保存视频", "youtube下载", "下载YouTube"]
+    pattern: "https?://(?:youtu\\.be/|youtube\\.com/watch\\?v=)"
+    handler: video-download
+    description: YouTube视频下载
+
+  - name: version
+    keywords: ["版本", "version", "系统版本"]
+    handler: version
+    description: 查看版本
+
   - name: math
-    keywords: ["计算", "加法", "减法", "乘法", "除法", "+", "-", "*", "/", "加", "减", "乘", "除"]
+    keywords: ["计算", "加法", "减法", "乘法", "除法", "加", "减", "乘", "除"]
     handler: math_executor
     description: 数学计算
 

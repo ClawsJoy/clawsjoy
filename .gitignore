@@ -99,3 +99,38 @@ __pycache__/
 backup/*.tar.gz
 backup/*.tar.gz
 *.gz
+downloads/
+*.log
+logs/
+__pycache__/
+*.pyc
+.agent_gateway_enhanced.py.swp
+
+# 备份文件
+backups/
+*.bak
+*.bak3
+*.backup
+
+# 临时文件
+*.swp
+*~
+*.log
+
+# Python 缓存
+__pycache__/
+*.pyc
+
+# 下载目录
+downloads/
+outbox/
+
+# 测试文件（如果需要排除）
+test_*.py
+*_test.py
+
+# 文档生成
+TECHNICAL_DEBT.md
+*.md.bak
+examples/
+evaluation_report.json

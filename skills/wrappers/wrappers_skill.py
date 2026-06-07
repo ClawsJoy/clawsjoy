@@ -1,10 +1,11 @@
-"""技能实现"""
+\"\"\"wrappers 技能实现\"\"\"
 
 
-class Wrappers:
+class wrappers:
     name = "wrappers"
     description = "wrappers 技能"
     version = "1.0.0"
 
     def execute(self, params):
-        return {"success": True, "result": f"wrappers 执行成功"}
+        # TODO: 实现具体逻辑
+        return {"success": True, "result": "wrappers 执行成功"}

@@ -1,11 +1,8 @@
-"""
-vision 技能模块
-"""
+\"\"\"vision 技能\"\"\"
 
-from .vision_skill import VisionSkill
+from .vision_skill import vision
 
 
-def execute(params=None):
-    """统一执行入口"""
-    skill = VisionSkill()
+def execute(params):
+    skill = vision()
     return skill.execute(params)

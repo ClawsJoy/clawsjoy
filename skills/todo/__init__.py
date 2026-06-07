@@ -1,11 +1,8 @@
-"""
-todo 技能模块
-"""
+\"\"\"todo 技能\"\"\"
 
-from .todo_skill import ListTodosSkill
+from .todo_skill import todo
 
 
-def execute(params=None):
-    """统一执行入口"""
-    skill = ListTodosSkill()
+def execute(params):
+    skill = todo()
     return skill.execute(params)

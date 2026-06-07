@@ -1,11 +1,8 @@
-"""
-threejs 技能模块
-"""
+\"\"\"threejs 技能\"\"\"
 
-from .threejs_skill import ThreeJSSkill
+from .threejs_skill import threejs
 
 
-def execute(params=None):
-    """统一执行入口"""
-    skill = ThreeJSSkill()
+def execute(params):
+    skill = threejs()
     return skill.execute(params)

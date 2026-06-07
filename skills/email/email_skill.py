@@ -1,19 +1,11 @@
-#!/usr/bin/env python3
-"""Send Email - Send Email 模块
-
-@version: 5.0.0
-@author: ClawsJoy
-@date: 2026-5-31
-"""
+\"\"\"email 技能实现\"\"\"
 
 
-class SendEmailSkill:
+class email:
+    name = "email"
+    description = "email 技能"
+    version = "1.0.0"
+
     def execute(self, params):
-        to = params.get("to", "")
-        subject = params.get("subject", "")
-        body = params.get("body", "")
-
-        return {"success": True, "message": f"邮件已发送至 {to}"}
-
-
-skill = SendEmailSkill()
+        # TODO: 实现具体逻辑
+        return {"success": True, "result": "email 执行成功"}

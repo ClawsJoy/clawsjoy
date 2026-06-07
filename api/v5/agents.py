@@ -8,9 +8,9 @@
 
 from flask import Blueprint, jsonify, request
 
-from core.v5.agent.chat import ChatAgent
-from core.v5.agent.code import CodeAgent
-from core.v5.agent.decision import DecisionAgent
+from agents.chat_agent.agent import ChatAgent
+from agents.code_agent.agent import CodeAgent
+from agents.decision_agent.agent import DecisionAgent
 
 api_bp = Blueprint("v5_agents", __name__, url_prefix="/api/v5")
 

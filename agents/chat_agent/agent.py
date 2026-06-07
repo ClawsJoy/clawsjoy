@@ -1,4 +1,5 @@
 from core.agents.business.business_agent_v2 import BusinessAgentV2
+
 #!/usr/bin/env python3
 """ChatAgent v3.0 - 通用对话智能体"""
 
@@ -178,6 +179,10 @@ class ChatAgent(BusinessAgentV2):
             return smart_adapter.generate(prompt, auto_select=True)
         except:
             return f"收到：{user_input[:50]}..."
+
+    def handle(self, user_input: str, context: dict = None) -> dict:
+        """统一入口 - 系统规范"""
+        return self._execute_business(user_input, context)
 
 
 # 全局实例

@@ -9,7 +9,6 @@
 - 热重载系统、监控系统
 - 俱乐部、管家、隐私保护
 """
-from core.lib.auth_middleware import require_auth
 import json
 import os
 import re
@@ -18,6 +17,14 @@ from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
 
+# ========== 安全保护模块（新增）==========
+from core.lib.safety_guard import set_safe_recursion_limit
+
+set_safe_recursion_limit()  # 设置递归深度限制为 5000
+# ========== 日志配置 ==========
+import logging
+
+# =======================================
 import psutil
 import requests
 from flask import Flask, Response, jsonify, request, send_from_directory
@@ -27,6 +34,8 @@ from urllib3.util.retry import Retry
 
 # 注册 v5 API 蓝图
 from api.v5 import agents, butler, health
+from core.lib.auth_middleware import require_auth
+from core.lib.chat_engine import chat_engine  # ✅ 直接使用单例
 from core.lib.config import config
 from core.lib.error_handler import register_error_handlers, safe_execute
 from core.lib.performance_middleware import get_perf_stats, monitor_performance
@@ -36,6 +45,22 @@ from core.lib.smart_active_service import smart_service
 from core.lib.unified_config import unified_config
 from core.lib.user_context import user_context
 from engine.security import desensitizer
+
+# 配置日志级别
+logging.basicConfig(
+    level=logging.INFO,  # 生产环境用 INFO，调试用 DEBUG
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.FileHandler("logs/gateway.log"), logging.StreamHandler()],
+)
+
+# 抑制第三方库的 DEBUG 日志
+logging.getLogger("chromadb").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("requests").setLevel(logging.WARNING)
+
+logger = logging.getLogger(__name__)
+logger.info("🚀 ClawsJoy Gateway 启动中...")
+# ==================================
 
 # ========== 连接池优化 ==========
 session = requests.Session()
@@ -267,22 +292,27 @@ def list_endpoints():
 
 
 # ========== 统一监控指标（支持 JSON 和 Prometheus 格式） ==========
-from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
+from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
 
 # 业务指标定义
-request_count = Counter('clawsjoy_requests_total', 'Total requests', ['method', 'endpoint', 'status'])
-request_duration = Histogram('clawsjoy_request_duration_seconds', 'Request duration', ['method', 'endpoint'])
-active_sessions = Counter('clawsjoy_active_sessions', 'Active sessions')
+request_count = Counter(
+    "clawsjoy_requests_total", "Total requests", ["method", "endpoint", "status"]
+)
+request_duration = Histogram(
+    "clawsjoy_request_duration_seconds", "Request duration", ["method", "endpoint"]
+)
+active_sessions = Counter("clawsjoy_active_sessions", "Active sessions")
+
 
 @app.route("/metrics", methods=["GET"])
 def metrics():
     """统一指标端点 - 根据 Accept 头返回 JSON 或 Prometheus 格式"""
-    accept = request.headers.get('Accept', '')
-    
+    accept = request.headers.get("Accept", "")
+
     # Prometheus 格式
-    if 'text/plain' in accept or 'prometheus' in accept:
+    if "text/plain" in accept or "prometheus" in accept:
         return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
-    
+
     # JSON 格式（默认）
     try:
         # 系统指标
@@ -290,32 +320,33 @@ def metrics():
         memory_percent = psutil.virtual_memory().percent
         disk_usage = psutil.disk_usage("/").percent
         connections = len(psutil.net_connections())
-        
+
         # 业务指标值
         requests_total = request_count._value.get()
         sessions_total = active_sessions._value.get()
-        
-        return jsonify({
-            "system": {
-                "cpu_percent": cpu_percent,
-                "memory_percent": memory_percent,
-                "disk_usage": disk_usage,
-                "connections": connections,
-            },
-            "business": {
-                "requests_total": requests_total,
-                "active_sessions": sessions_total,
-            },
-            "status": "ok"
-        })
+
+        return jsonify(
+            {
+                "system": {
+                    "cpu_percent": cpu_percent,
+                    "memory_percent": memory_percent,
+                    "disk_usage": disk_usage,
+                    "connections": connections,
+                },
+                "business": {
+                    "requests_total": requests_total,
+                    "active_sessions": sessions_total,
+                },
+                "status": "ok",
+            }
+        )
     except Exception as e:
-        return jsonify({
-            "status": "degraded",
-            "error": str(e),
-            "message": "部分指标不可用"
-        }), 200
-
-
+        return (
+            jsonify(
+                {"status": "degraded", "error": str(e), "message": "部分指标不可用"}
+            ),
+            200,
+        )
 
 
 @app.route("/health", methods=["GET"])
@@ -420,15 +451,15 @@ swagger_config = {
     "headers": [],
     "specs": [
         {
-            "endpoint": 'apispec',
-            "route": '/apispec.json',
+            "endpoint": "apispec",
+            "route": "/apispec.json",
             "rule_filter": lambda rule: True,
             "model_filter": lambda tag: True,
         }
     ],
     "static_url_path": "/flasgger_static",
     "swagger_ui": True,
-    "specs_route": "/apidocs/"
+    "specs_route": "/apidocs/",
 }
 
 swagger = Swagger(app, config=swagger_config)
@@ -442,253 +473,50 @@ swagger = Swagger(app, config=swagger_config)
 @monitor_performance
 @rate_limit(limit=30, window=60)
 @require_auth
-@swag_from({
-    'tags': ['Chat'],
-    'summary': '智能对话',
-    'description': '发送消息，自动路由到对应 Agent（A/B/C）',
-    'parameters': [
-        {
-            'name': 'body',
-            'in': 'body',
-            'required': True,
-            'schema': {
-                'type': 'object',
-                'properties': {
-                    'user_id': {'type': 'string', 'example': 'testuser'},
-                    'message': {'type': 'string', 'example': '你好'}
-                }
+@swag_from(
+    {
+        "tags": ["Chat"],
+        "summary": "智能对话",
+        "description": "发送消息，自动路由到对应 Agent（A/B/C）",
+        "parameters": [
+            {
+                "name": "body",
+                "in": "body",
+                "required": True,
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "user_id": {"type": "string", "example": "testuser"},
+                        "message": {"type": "string", "example": "你好"},
+                    },
+                },
             }
-        }
-    ],
-    'responses': {
-        200: {'description': '成功'},
-        401: {'description': '未授权'}
+        ],
+        "responses": {200: {"description": "成功"}, 401: {"description": "未授权"}},
     }
-})
-def enhanced_chat():
-    # 写入文件日志
-    with open("/tmp/enhanced_chat.log", "a") as f:
-        import time
+)
 
-        f.write(f"{time.time()} - enhanced_chat 被调用了\n")
+
+# ==========统一对话引擎 - 即插即拔 ==========
+
+
+def enhanced_chat():
     data = request.json or {}
     message = data.get("message", "")
-    message = desensitizer.desensitize(message)
     user_id = data.get("user_id", "guest")
-
-    # 设置用户上下文
-    from core.lib.user_context import user_context
-
-    with user_context(user_id):
-        # 情感识别
-        from core.agents.base.communicable_agent import CommunicableAgent
-
-        temp_agent = CommunicableAgent(user_id)
-        emotion, emotion_conf = temp_agent.recognize_emotion(message)
-        # ==========
-
-        extract_user_info(message, user_id)
-
-    # ========== 安全钩子检查 ==========
-    from core.lib.security_hooks import SecurityHooks
-
-    # 1. 输入清洗
-    ok, message = True, message
-    if not ok:
-        return jsonify(
-            {"success": False, "error": "输入包含非法字符", "enhanced": True}
-        )
-
-    # 2. 危险模式检测
-    ok, error_msg = SecurityHooks.check_dangerous_patterns(message)
-    if not ok:
+    if not chat_engine.enabled:
         return jsonify(
             {
                 "success": False,
-                "error": error_msg,
-                "response": f"⚠️ 检测到危险操作，已阻止: {error_msg}",
-                "enhanced": True,
-                "user_id": user_id,
+                "error": "服务暂时不可用",
+                "response": "对话服务正在维护中，请稍后再试",
             }
         )
+    # 否则正常处理
+    # 直接调用已有引擎
+    result = chat_engine.execute(message, user_id)
 
-    # 3. 频率限制
-    ok, error_msg = SecurityHooks.check_rate_limit(
-        user_id, {"max_requests_per_minute": 30}
-    )
-    if not ok:
-        return jsonify(
-            {
-                "success": False,
-                "error": error_msg,
-                "response": error_msg,
-                "enhanced": True,
-                "user_id": user_id,
-            }
-        )
-
-        # 尝试从缓存获取
-        cached = response_cache.get(user_id, message)
-        if cached:
-            return jsonify(
-                {
-                    "success": True,
-                    "response": cached,
-                    "cached": True,
-                    "agent": "cached",
-                    "enhanced": True,
-                    "user_id": user_id,
-                    "detected_emotion": (
-                        emotion.value if hasattr(emotion, "value") else str(emotion)
-                    ),
-                    "emotion_confidence": emotion_conf,
-                }
-            )
-
-    # ========== 原子引擎注入 ==========
-    try:
-        from engine.knowledge import knowledge_engine
-        from engine.profile import profile_engine
-        from engine.semantic import semantic_engine
-
-        semantic_result = semantic_engine.understand(message)
-        intent_name = semantic_result.intent
-        intent_confidence = semantic_result.confidence
-        print(
-            f"[原子引擎] user={user_id}, intent={intent_name}, conf={intent_confidence:.2f}"
-        )
-    except Exception as e:
-        print(f"[原子引擎] 初始化失败: {e}")
-        intent_name = "unknown"
-        intent_confidence = 0.0
-
-    # ===== 1. 统一决策入口（DecisionAgent 选择 A/B/C） =====
-    try:
-        from agents.decision_agent.agent import decision_agent
-
-        # DecisionAgent 会内部选择 A/B/C 并调用对应 Agent
-        result = decision_agent.process(message, {"user_id": user_id})
-
-        response = result.get("response", "处理完成")
-        agent_name = result.get("agent", "decision_agent")
-
-        save_memory(user_id, f"用户说: {message}")
-        save_memory(user_id, f"{agent_name}说: {response[:200]}")
-        record_learning(f"{user_id} -> {agent_name}", True)
-        response_cache.set(user_id, message, response)
-
-        return jsonify(
-            {
-                "success": True,
-                "response": response,
-                "agent": agent_name,
-                "routed": True,
-                "enhanced": True,
-                "user_id": user_id,
-                "detected_emotion": (
-                    emotion.value if hasattr(emotion, "value") else str(emotion)
-                ),
-                "emotion_confidence": emotion_conf,
-            }
-        )
-    except Exception as e:
-        print(f"Orchestrator 路由失败: {e}")
-
-    # ===== 2. 原子技能和话本匹配 =====
-    try:
-        from agents.chat_agent import ChatAgent
-
-        chat_agent = ChatAgent(user_id=user_id)
-        atomic_result = chat_agent._check_atomic_skill(message)
-        if atomic_result:
-            save_memory(user_id, f"用户说: {message}")
-            save_memory(user_id, f"ClawsJoy说: {atomic_result[:200]}")
-            response_cache.set(user_id, message, atomic_result)
-            return jsonify(
-                {
-                    "success": True,
-                    "response": atomic_result,
-                    "agent": "atomic_skill",
-                    "enhanced": True,
-                    "user_id": user_id,
-                    "detected_emotion": (
-                        emotion.value if hasattr(emotion, "value") else str(emotion)
-                    ),
-                    "emotion_confidence": emotion_conf,
-                }
-            )
-
-        intent = chat_agent._match_intent(message)
-        if intent:
-            template = chat_agent._get_template(intent)
-            if template:
-                save_memory(user_id, f"用户说: {message}")
-                save_memory(user_id, f"ClawsJoy说: {template[:200]}")
-                response_cache.set(user_id, message, template)
-                return jsonify(
-                    {
-                        "success": True,
-                        "response": template,
-                        "agent": "scriptbook",
-                        "enhanced": True,
-                        "user_id": user_id,
-                        "detected_emotion": (
-                            emotion.value if hasattr(emotion, "value") else str(emotion)
-                        ),
-                        "emotion_confidence": emotion_conf,
-                    }
-                )
-    except Exception as e:
-        print(f"原子技能/话本匹配失败: {e}")
-
-    # ===== 3. 从状态回答 =====
-    direct_answer = answer_from_state(message, user_id)
-    if direct_answer:
-        response_cache.set(user_id, message, direct_answer)
-        return jsonify(
-            {
-                "success": True,
-                "response": direct_answer,
-                "agent": "state_manager",
-                "enhanced": True,
-                "user_id": user_id,
-                "detected_emotion": (
-                    emotion.value if hasattr(emotion, "value") else str(emotion)
-                ),
-                "emotion_confidence": emotion_conf,
-            }
-        )
-
-    # ===== 4. 调用 LLM 服务（兜底） =====
-    try:
-        resp = requests.post(
-            f"{config.LLM_URL}/chat", json={"message": message}, timeout=60
-        )
-        if resp.status_code == 200:
-            response = resp.json().get("response", "")
-        else:
-            response = f"服务异常: {resp.status_code}"
-    except Exception as e:
-        response = f"服务繁忙: {e}"
-
-    save_memory(user_id, f"用户说: {message}")
-    save_memory(user_id, f"ClawsJoy说: {response[:200]}")
-    record_learning(f"对话: {user_id} -> {message[:30]}", True)
-    response_cache.set(user_id, message, response)
-
-    return jsonify(
-        {
-            "success": True,
-            "response": response,
-            "agent": "chat_agent",
-            "enhanced": True,
-            "user_id": user_id,
-            "detected_emotion": (
-                emotion.value if hasattr(emotion, "value") else str(emotion)
-            ),
-            "emotion_confidence": emotion_conf,
-        }
-    )
+    return jsonify(result)
 
 
 # ========== 记忆路由 ==========
@@ -763,6 +591,10 @@ def detailed_health():
 
 
 # ========== Agent 间通信 API ==========
+
+from core.lib.input_validator import input_validator
+
+
 @app.route("/api/agent/<agent_name>/message", methods=["POST"])
 def agent_message(agent_name):
     """Agent 间通信端点 - 供 Orchestrator 调用其他 Agent"""
@@ -770,12 +602,26 @@ def agent_message(agent_name):
     message = data.get("message", "")
     user_id = data.get("user_id", "guest")
 
+    # ========== 输入验证（新增） ==========
+    validation = input_validator.validate_message(message)
+    if not validation.valid:
+        return (
+            jsonify(
+                {"success": False, "error": "输入验证失败", "errors": validation.errors}
+            ),
+            400,
+        )
+
+    # 使用清理后的消息
+    clean_message = validation.sanitized_value
+    # ========== 输入验证结束 ==========
+
     # 设置用户上下文
     from core.lib.user_context import user_context
 
     with user_context(user_id):
-
-        if not message:
+        # ✅ 修复：使用 clean_message 而不是 message
+        if not clean_message:
             return jsonify({"success": False, "error": "message required"}), 400
 
     try:
@@ -786,7 +632,7 @@ def agent_message(agent_name):
 
         agent_class_map = unified_config.get("agent_class_map", {})
 
-        class_name = agent_class_map.get(agent_name)  # 改为 agent_name
+        class_name = agent_class_map.get(agent_name)
         if class_name is None:
             if agent_name.endswith("_agent"):
                 base_name = agent_name[:-6]
@@ -796,14 +642,21 @@ def agent_message(agent_name):
 
         agent_class = getattr(module, class_name)
         agent = agent_class(user_id)
-        result = agent.process(message)
+        # ✅ 修复：使用 clean_message 而不是 message
+        result = agent.process(clean_message)
         return jsonify(result)
+
     except ImportError as e:
         return (
             jsonify(
                 {"success": False, "error": f"Agent '{agent_name}' not found: {e}"}
             ),
             404,
+        )
+    except RecursionError as e:
+        return (
+            jsonify({"success": False, "error": "递归深度超限", "message": str(e)}),
+            500,
         )
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
@@ -1225,10 +1078,137 @@ def get_youtube_channel():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-import logging
+# ======== 自我升级API ==========
+import shutil
+from pathlib import Path
 
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+from tools.real_log_collector import RealLogCollector
+
+_collector = RealLogCollector()
+from core.agents.builtin.config_upgrader import ConfigUpgrader
+
+_upgrader = ConfigUpgrader(model_name="qwen2.5:7b")
+
+
+@app.route("/api/v5/agents/<agent_name>/analyze", methods=["GET"])
+def analyze_agent(agent_name):
+    """分析Agent性能"""
+    # TODO: 从你的日志系统获取真实日志
+    logs = []  # 替换为真实日志收集
+    result = _upgrader.analyze_performance(agent_name, logs)
+    return jsonify(result)
+
+
+@app.route("/api/v5/agents/<agent_name>/upgrade", methods=["POST"])
+def upgrade_agent(agent_name):
+    """手动触发Agent升级"""
+    data = request.json or {}
+    auto_apply = data.get("auto_apply", False)
+
+    # 收集真实日志（需要实现）
+    logs = []  # TODO: 从日志系统收集
+
+    result = _upgrader.upgrade_agent(agent_name, logs, auto_apply=auto_apply)
+    return jsonify(result)
+
+
+@app.route("/api/v5/admin/upgrade/status", methods=["GET"])
+def get_upgrade_status():
+    """获取升级系统状态"""
+    return jsonify(
+        {
+            "total_upgrades": len(_upgrader.history),
+            "last_upgrade": _upgrader.history[-1] if _upgrader.history else None,
+            "agents_monitored": ["chat_agent", "code_agent", "vision_agent"],
+        }
+    )
+
+
+@app.route("/api/v5/admin/upgrade/now/<agent_name>", methods=["POST"])
+def trigger_upgrade(agent_name):
+    """手动触发升级"""
+    logs = _collector.collect_agent_logs(agent_name, hours=24)
+    result = _upgrader.upgrade_agent(agent_name, logs, auto_apply=True)
+    return jsonify(result)
+
+
+@app.route("/api/v5/admin/upgrade/rollback/<agent_name>", methods=["POST"])
+def rollback_upgrade(agent_name):
+    """回滚到上一个配置"""
+    config_file = Path(f"agents/{agent_name}/config.yaml")
+    backup_file = config_file.with_suffix(".yaml.bak")
+
+    if backup_file.exists():
+        shutil.copy2(backup_file, config_file)
+        return jsonify({"success": True, "message": f"{agent_name} 已回滚"})
+    return jsonify({"success": False, "message": "没有找到备份文件"})
+
+
+@app.route("/api/v5/admin/upgrade/history", methods=["GET"])
+def get_upgrade_history_admin():
+    """获取升级历史"""
+    return jsonify(
+        {"history": _upgrader.history[-50:], "total": len(_upgrader.history)}
+    )
+
+
+# ========== 引擎管理 API ==========
+@app.route("/api/v5/admin/engine/chat/status", methods=["GET"])
+@require_auth
+def get_chat_engine_status():
+    """获取对话引擎状态"""
+    from core.lib.chat_engine import chat_engine
+
+    return jsonify(chat_engine.get_status())
+
+
+@app.route("/api/v5/admin/engine/chat/enable", methods=["POST"])
+@require_auth
+def enable_chat_engine():
+    """启用对话引擎"""
+    from core.lib.chat_engine import chat_engine
+
+    chat_engine.enabled = True
+    return jsonify(
+        {
+            "success": True,
+            "message": "对话引擎已启用",
+            "status": chat_engine.get_status(),
+        }
+    )
+
+
+@app.route("/api/v5/admin/engine/chat/disable", methods=["POST"])
+@require_auth
+def disable_chat_engine():
+    """禁用对话引擎"""
+    from core.lib.chat_engine import chat_engine
+
+    chat_engine.enabled = False
+    return jsonify(
+        {
+            "success": True,
+            "message": "对话引擎已禁用",
+            "status": chat_engine.get_status(),
+        }
+    )
+
+
+@app.route("/api/v5/admin/engine/chat/config", methods=["POST"])
+@require_auth
+def config_chat_engine():
+    """配置对话引擎"""
+    from core.lib.chat_engine import chat_engine
+
+    data = request.json or {}
+    chat_engine.update_config(data)
+    return jsonify(
+        {
+            "success": True,
+            "message": "引擎配置已更新",
+            "status": chat_engine.get_status(),
+        }
+    )
 
 
 # ========== 启动入口 ==========
@@ -1245,7 +1225,6 @@ if __name__ == "__main__":
     print("=" * 50)
     app.run(host="0.0.0.0", port=port, debug=False, threaded=True)
 
-
 # ========== 事件触发重试机制 ==========
 # 用户不满意时，可以通过以下方式触发重试：
 # POST /api/event/retry
@@ -1254,4 +1233,3 @@ if __name__ == "__main__":
 #   "user_id": "user1",
 #   "feedback": "需要更详细的趋势分析"
 # }
-

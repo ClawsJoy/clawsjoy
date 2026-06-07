@@ -1,11 +1,8 @@
-"""
-convert 技能模块
-"""
+\"\"\"convert 技能\"\"\"
 
-from .convert_skill import UnitConvertSkill
+from .convert_skill import convert
 
 
-def execute(params=None):
-    """统一执行入口"""
-    skill = UnitConvertSkill()
+def execute(params):
+    skill = convert()
     return skill.execute(params)

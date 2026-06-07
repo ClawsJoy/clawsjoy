@@ -1,24 +1,11 @@
-#!/usr/bin/env python3
-"""To Upper - To Upper 模块
-
-@version: 5.0.0
-@author: ClawsJoy
-@date: 2026-5-31
-"""
+\"\"\"text 技能实现\"\"\"
 
 
-class ToUpperSkill:
-    """文本转大写技能"""
+class text:
+    name = "text"
+    description = "text 技能"
+    version = "1.0.0"
 
-    def __init__(self):
-        self.name = "to_upper"
-        self.version = "1.0.0"
-
-    def execute(self, params: dict) -> dict:
-        """将字符串转为大写"""
-        text = params.get("text", "")
-        result = text.upper()
-        return {"success": True, "result": result, "message": f"'{text}' -> '{result}'"}
-
-
-skill = ToUpperSkill()
+    def execute(self, params):
+        # TODO: 实现具体逻辑
+        return {"success": True, "result": "text 执行成功"}

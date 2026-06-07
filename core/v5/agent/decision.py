@@ -49,7 +49,7 @@ class DecisionAgent(BaseAgent):
 
 决策分析:"""
 
-        response = llm.generate(prompt, model_type="decision")
+        response = llm.generate(prompt)
 
         # 记录决策历史
         self.mem_mgr.add_conversation(user_input, response)

@@ -3,11 +3,11 @@
 default:
   model: qwen2.5:3b
   provider: ollama
-  timeout: 60
+  timeout: 120
 
 performance:
-  timeout: 60
   max_retries: 3
+  timeout: 120
 
 task_types:
   code:
@@ -47,7 +47,7 @@ task_types:
     provider: ollama
     temperature: 0.4
     max_tokens: 2048
-    timeout: 60
+    timeout: 120
 
   qa:
     keywords: []

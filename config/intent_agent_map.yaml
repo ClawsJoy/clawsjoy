@@ -1,5 +1,6 @@
 # 语义意图到 Agent 的映射配置
 intent_to_agent:
+  video: video_agent
   write: writer_agent
   calculate: calculator_agent
   weather: weather_skill
@@ -16,6 +17,7 @@ intent_to_agent:
 
 # 关键词兜底（当语义引擎无法识别时使用）
 keyword_fallback:
+  download: ["下载视频", "保存视频", "youtube下载", "下载YouTube"]
   video_index: ["索引视频", "视频索引", "视频搜索"]
   memory: ["记住", "记忆", "回忆", "忘记"]
   dialect: ["方言", "口音", "哪里的口音"]
@@ -48,3 +50,13 @@ conditional_routing:
   memory: memory_agent
   video_index: video_indexer_agent
   video_index: video_indexer_agent
+  download: executor_agent
+  download: ["下载视频", "保存视频", "youtube下载", "下载YouTube", "下载.*youtu", "保存.*youtube"]
+  three_d: three_d_agent
+  3d: three_d_agent
+  三维: three_d_agent
+  虚拟空间: three_d_agent
+  元宇宙: three_d_agent
+  panorama: vision_agent
+  全景: vision_agent
+  360: vision_agent

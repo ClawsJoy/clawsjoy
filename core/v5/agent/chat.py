@@ -81,7 +81,7 @@ class ChatAgent(BaseAgent):
 
 请用温暖、贴心的方式回复:"""
 
-            response = llm.generate(prompt, model_type="chat")
+            response = llm.generate(prompt)
 
         # 记录到记忆
         self.mem_mgr.add_conversation(user_input, response)

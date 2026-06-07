@@ -1,11 +1,8 @@
-"""
-memory 技能模块
-"""
+\"\"\"memory 技能\"\"\"
 
-from .memory_skill import Memory
+from .memory_skill import memory
 
 
-def execute(params=None):
-    """统一执行入口"""
-    skill = Memory()
+def execute(params):
+    skill = memory()
     return skill.execute(params)

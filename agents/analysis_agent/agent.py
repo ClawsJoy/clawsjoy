@@ -61,12 +61,12 @@ class AnalysisAgent(BusinessAgentV2):
 
     def _quick_analysis(self, user_input: str) -> Dict:
         """快速规则分析 - 配置驱动"""
-        from core.lib.smart_intent_router import SmartIntentRouter
         from core.lib.intent_fallback import intent_fallback
+        from core.lib.smart_intent_router import SmartIntentRouter
         from engine.semantic import semantic_engine
-        
+
         input_lower = user_input.lower()
-        
+
         # 1. 关键词兜底（从配置文件加载）
         fallback_intent = intent_fallback.get_intent(user_input)
         if fallback_intent:
@@ -74,39 +74,82 @@ class AnalysisAgent(BusinessAgentV2):
             router = SmartIntentRouter()
             router.reload_config()
             agent = router.INTENT_TO_AGENT.get(fallback_intent)
+            if agent is None:
+                from core.lib.unified_config import unified_config
+
+                intents_config = unified_config.get("keywords.intents", {})
+                if fallback_intent in intents_config:
+                    route = "B"
+                    orchestration = False
+                    complexity = "low"
+                    print(f"[分析师][快速分析] 技能匹配: {fallback_intent} -> B")
+                    return {
+                        "complexity": complexity,
+                        "suggested_route": route,
+                        "requires_orchestration": orchestration,
+                        "intent": fallback_intent,
+                        "summary": f"{fallback_intent}技能，直接执行",
+                    }
             if agent:
-                route = "C" if agent in ["translate_agent", "code_agent", "analysis_agent", "video_agent", "dialect_agent", "writer_agent", "vision_agent"] else "B"
+                route = (
+                    "C"
+                    if agent
+                    in [
+                        "translate_agent",
+                        "code_agent",
+                        "analysis_agent",
+                        "video_agent",
+                        "dialect_agent",
+                        "writer_agent",
+                        "vision_agent",
+                    ]
+                    else "B"
+                )
                 orchestration = route == "C"
                 complexity = "medium" if orchestration else "low"
-                print(f"[分析师][快速分析] 关键词匹配: {fallback_intent} -> {agent} -> {route}")
+                print(
+                    f"[分析师][快速分析] 关键词匹配: {fallback_intent} -> {agent} -> {route}"
+                )
                 return {
                     "complexity": complexity,
                     "suggested_route": route,
                     "requires_orchestration": orchestration,
                     "intent": fallback_intent,
-                    "summary": f"{fallback_intent}任务，需要编排" if orchestration else f"{fallback_intent}任务，直接执行",
+                    "summary": (
+                        f"{fallback_intent}任务，需要编排"
+                        if orchestration
+                        else f"{fallback_intent}任务，直接执行"
+                    ),
                 }
-        
+
         # 2. 语义理解
         router = SmartIntentRouter()
         router.reload_config()
-        
+
         try:
             result = semantic_engine.understand(user_input)
             intent = result.intent
         except:
             intent = "chat"
-        
+
         # 根据意图获取 Agent
         agent = router.INTENT_TO_AGENT.get(intent, "chat_agent")
-        
+
         # 确定路由
         if agent in ["calculator_agent", "weather_skill"]:
             route = "B"
             orchestration = False
             complexity = "low"
             summary = f"单步任务：{intent}，直接执行"
-        elif agent in ["translate_agent", "code_agent", "analysis_agent", "video_agent", "dialect_agent", "writer_agent", "vision_agent"]:
+        elif agent in [
+            "translate_agent",
+            "code_agent",
+            "analysis_agent",
+            "video_agent",
+            "dialect_agent",
+            "writer_agent",
+            "vision_agent",
+        ]:
             route = "C"
             orchestration = True
             complexity = "medium"
@@ -116,9 +159,9 @@ class AnalysisAgent(BusinessAgentV2):
             orchestration = False
             complexity = "low"
             summary = "简单对话，直接回复"
-        
+
         print(f"[分析师][快速分析] 语义: intent={intent}, agent={agent}, route={route}")
-        
+
         return {
             "complexity": complexity,
             "suggested_route": route,
@@ -187,43 +230,63 @@ class AnalysisAgent(BusinessAgentV2):
         return response
 
 
-
 def _get_route_from_config(self, intent: str) -> str:
     """从配置获取路由"""
     try:
         from core.lib.intent_router import intent_router
+
         agent = intent_router.get_agent(intent)
         return intent_router.get_route(agent) if agent else "A"
     except:
         return "A"
 
+
 from core.lib.smart_intent_router import SmartIntentRouter
+
 
 def _get_route_from_intent(self, user_input: str) -> Dict:
     """使用智能路由器获取路由"""
     router = SmartIntentRouter()
     # 重新加载配置确保最新
     router.reload_config()
-    
+
     # 获取意图
     from engine.semantic import semantic_engine
+
     result = semantic_engine.understand(user_input)
     intent = result.intent
-    
+
     # 根据意图获取 Agent
     agent = router.INTENT_TO_AGENT.get(intent)
-    
+
     # 确定路由
     if agent in ["calculator_agent", "weather_skill"]:
         route = "B"
-    elif agent in ["translate_agent", "code_agent", "analysis_agent", "video_agent", "dialect_agent"]:
+    elif agent in [
+        "translate_agent",
+        "code_agent",
+        "analysis_agent",
+        "video_agent",
+        "dialect_agent",
+    ]:
         route = "C"
     else:
         route = "A"
-    
+
     return {
         "agent": agent or "chat_agent",
         "route": route,
         "intent": intent,
-        "requires_orchestration": route == "C"
+        "requires_orchestration": route == "C",
     }
+
+    def handle(self, user_input: str, context: dict = None) -> dict:
+        """统一入口"""
+        return self._execute_business(user_input, context)
+
+    def rollback(self, task_id: str, context: dict = None) -> dict:
+        """回滚分析操作"""
+        # 清除分析缓存
+        if hasattr(self, "_analysis_cache"):
+            self._analysis_cache.pop(task_id, None)
+        return {"success": True, "message": "分析缓存已清除"}

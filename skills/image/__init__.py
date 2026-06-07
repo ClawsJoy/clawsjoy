@@ -1,11 +1,8 @@
-"""
-image 技能模块
-"""
+\"\"\"image 技能\"\"\"
 
-from .image_skill import VisionSkill
+from .image_skill import image
 
 
-def execute(params=None):
-    """统一执行入口"""
-    skill = VisionSkill()
+def execute(params):
+    skill = image()
     return skill.execute(params)

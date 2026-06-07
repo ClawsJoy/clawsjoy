@@ -1,11 +1,8 @@
-"""
-social 技能模块
-"""
+\"\"\"social 技能\"\"\"
 
-from .social_skill import GroupNotifySkill
+from .social_skill import social
 
 
-def execute(params=None):
-    """统一执行入口"""
-    skill = GroupNotifySkill()
+def execute(params):
+    skill = social()
     return skill.execute(params)

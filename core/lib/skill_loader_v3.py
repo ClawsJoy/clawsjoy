@@ -21,26 +21,28 @@ class SkillLoaderV3:
         self._load_from_skill_md()
 
         # 2. 扫描 manifest.json
-        self._load_from_manifest()
 
         # 3. 扫描 *_skill.py 文件
-        self._load_from_skill_files()
+        # self._load_from_skill_files()  # 已在 SKILL.md 中处理
 
         # 4. 扫描 core/skills/ 目录
-        self._load_from_core_skills()
 
         # 5. 扫描 agents 作为技能
-        self._load_from_agents()
 
         print(f"✅ 技能加载完成，共 {len(self.skills)} 个技能")
 
     def _load_from_skill_md(self):
         """从 SKILL.md 文件加载技能"""
-        for skill_md in Path(".").rglob("SKILL.md"):
+        for skill_md in Path("skills").rglob("SKILL.md"):
             if "site-packages" in str(skill_md) or "__pycache__" in str(skill_md):
                 continue
 
             name = skill_md.parent.name
+            # 检查必需文件是否存在
+            init_file = skill_md.parent / "__init__.py"
+            skill_file = skill_md.parent / f"{name}_skill.py"
+            if not init_file.exists() or not skill_file.exists():
+                continue
             if name in self.skills:
                 continue
 
@@ -73,7 +75,7 @@ class SkillLoaderV3:
 
     def _load_from_manifest(self):
         """从 manifest.json 文件加载技能"""
-        for manifest_file in Path(".").rglob("manifest.json"):
+        for manifest_file in Path("skills").rglob("manifest.json"):
             if "site-packages" in str(manifest_file) or "__pycache__" in str(
                 manifest_file
             ):
@@ -292,21 +294,23 @@ def get_skill_loader():
 
 skill_loader = None
 
+
 class LazySkillLoader(SkillLoaderV3):
     """懒加载技能加载器"""
+
     _instance = None
     _skills = None
-    
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
-    
+
     def get_skill(self, name):
         if self._skills is None:
             self._load()
         return self._skills.get(name)
-    
+
     def _load(self):
         # 延迟加载
         pass

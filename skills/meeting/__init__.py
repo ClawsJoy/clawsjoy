@@ -1,11 +1,8 @@
-"""
-meeting 技能模块
-"""
+\"\"\"meeting 技能\"\"\"
 
-from .meeting_skill import BookRoomSkill
+from .meeting_skill import meeting
 
 
-def execute(params=None):
-    """统一执行入口"""
-    skill = BookRoomSkill()
+def execute(params):
+    skill = meeting()
     return skill.execute(params)

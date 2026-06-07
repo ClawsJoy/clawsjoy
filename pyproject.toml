@@ -1,12 +1,28 @@
-[tool.mypy]
-python_version = "3.11"
-strict = true
-ignore_missing_imports = true
+[tool.black]
+line-length = 88
+target-version = ['py313']
+extend-exclude = '''
+/(
+    skills
+  | downloads
+  | backups
+  | tools/LightX2V
+  | tools/lingji-cut
+  | tools/KubeezCut
+  | tools/iris.c
+  | intelligence
+  | core/intelligence
+  | lib
+  | core/lib/data_source_manager.py
+  | \.git
+  | __pycache__
+  | \.pyc$
+)/
+'''
 
-[tool.ruff]
-line-length = 100
-select = ["E", "F", "W", "C", "N", "D"]
+[tool.isort]
+profile = "black"
+skip = ["skills", "downloads", "backups", "intelligence", "tools"]
 
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = ["test_*.py"]
+[tool.pylint]
+ignore = ["skills", "downloads", "backups", "intelligence", "tools"]

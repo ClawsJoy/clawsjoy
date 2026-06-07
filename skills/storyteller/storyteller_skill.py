@@ -1,14 +1,11 @@
-"""
-讲故事
-"""
+\"\"\"storyteller 技能实现\"\"\"
 
 
-class Storyteller:
+class storyteller:
     name = "storyteller"
-    description = "讲故事"
-    version = "2.0.0"
+    description = "storyteller 技能"
+    version = "1.0.0"
 
-    def execute(self, params=None):
-        """执行技能"""
-        # TODO: 实现具体功能
-        return {"success": True, "result": f"讲故事 执行成功", "data": params or {}}
+    def execute(self, params):
+        # TODO: 实现具体逻辑
+        return {"success": True, "result": "storyteller 执行成功"}
