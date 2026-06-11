@@ -201,3 +201,32 @@ class SmartMemoryManager:
             "preferences_count": len(self.preferences),
             "knowledge_count": len(self.knowledge),
         }
+
+
+    def store_data(self, key: str, value: Any) -> bool:
+        """存储任意数据（使用 preference 存储）"""
+        return self.remember_preference(key, value)
+    
+    def load_data(self, key: str, default=None) -> Any:
+        """加载数据"""
+        value = self.recall_preference(key)
+        return value if value is not None else default
+    
+    def delete_data(self, key: str) -> bool:
+        """删除数据"""
+        try:
+            # 获取当前偏好
+            prefs = getattr(self, '_preferences', {})
+            if key in prefs:
+                del prefs[key]
+                setattr(self, '_preferences', prefs)
+                self._save()
+                return True
+        except Exception as e:
+            pass
+        return False
+    
+    def list_data(self) -> list:
+        """列出所有数据键"""
+        prefs = getattr(self, '_preferences', {})
+        return list(prefs.keys())

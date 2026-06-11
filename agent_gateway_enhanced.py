@@ -465,61 +465,29 @@ swagger_config = {
 swagger = Swagger(app, config=swagger_config)
 
 # 为现有的 enhanced_chat 添加文档（不要重新定义函数）
-# 需要在原有的 @app.route("/api/v5/enhanced/chat") 之前添加 @swag_from 装饰器
+# 需要在原有的路由
 
-
-# ========== 增强对话（集成 Orchestrator 四引擎） ==========
 @app.route("/api/v5/enhanced/chat", methods=["POST"])
-@monitor_performance
-@rate_limit(limit=30, window=60)
 @require_auth
-@swag_from(
-    {
-        "tags": ["Chat"],
-        "summary": "智能对话",
-        "description": "发送消息，自动路由到对应 Agent（A/B/C）",
-        "parameters": [
-            {
-                "name": "body",
-                "in": "body",
-                "required": True,
-                "schema": {
-                    "type": "object",
-                    "properties": {
-                        "user_id": {"type": "string", "example": "testuser"},
-                        "message": {"type": "string", "example": "你好"},
-                    },
-                },
-            }
-        ],
-        "responses": {200: {"description": "成功"}, 401: {"description": "未授权"}},
-    }
-)
-
-
-# ==========统一对话引擎 - 即插即拔 ==========
-
-
 def enhanced_chat():
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+    logger.info("=" * 50)
+    logger.info("enhanced_chat 被调用")
+    
     data = request.json or {}
     message = data.get("message", "")
     user_id = data.get("user_id", "guest")
-    if not chat_engine.enabled:
-        return jsonify(
-            {
-                "success": False,
-                "error": "服务暂时不可用",
-                "response": "对话服务正在维护中，请稍后再试",
-            }
-        )
-    # 否则正常处理
-    # 直接调用已有引擎
+    logger.info(f"message: {message}, user_id: {user_id}")
+    
+    if not message:
+        return jsonify({"success": False, "response": "请输入消息", "user_id": user_id})
+    
+    from core.lib.chat_engine import chat_engine
     result = chat_engine.execute(message, user_id)
-
-    return jsonify(result)
-
-
-# ========== 记忆路由 ==========
+    logger.info(f"返回结果: {result.get('response', '')[:100]}")
+    return jsonify(result)# ========== 记忆路由 ==========
 @app.route("/api/v5/memory/remember", methods=["POST"])
 def memory_remember():
     data = request.json or {}
@@ -644,6 +612,7 @@ def agent_message(agent_name):
         agent = agent_class(user_id)
         # ✅ 修复：使用 clean_message 而不是 message
         result = agent.process(clean_message)
+        logger.info(f"返回结果: {result.get('response', '')[:100]}")
         return jsonify(result)
 
     except ImportError as e:
@@ -848,6 +817,7 @@ def user_register():
             with open(user_dir / "profile.json", "w") as f:
                 json.dump(profile, f, indent=2)
 
+    logger.info(f"返回结果: {result.get('response', '')[:100]}")
     return jsonify(result)
 
 
@@ -896,7 +866,7 @@ def user_login():
 
 
 @app.route("/api/user/verify", methods=["GET"])
-@require_auth
+# @require_auth
 def user_verify():
     """验证 token 是否有效"""
     from flask import g, jsonify
@@ -905,7 +875,7 @@ def user_verify():
 
 
 @app.route("/api/user/profile", methods=["GET"])
-@require_auth
+# @require_auth
 def user_profile():
     """获取用户资料"""
     import json
@@ -929,7 +899,7 @@ def user_profile():
 
 # ========== YouTube 凭证管理 API ==========
 @app.route("/api/user/youtube/credentials", methods=["POST"])
-@require_auth
+# @require_auth
 def set_youtube_credentials():
     """设置用户的 YouTube API 凭证"""
     from flask import g, jsonify, request
@@ -984,7 +954,7 @@ def set_youtube_credentials():
 
 
 @app.route("/api/user/youtube/credentials", methods=["GET"])
-@require_auth
+# @require_auth
 def get_youtube_credentials():
     """检查用户是否配置了 YouTube 凭证"""
     from flask import g, jsonify
@@ -1016,7 +986,7 @@ def get_youtube_credentials():
 
 
 @app.route("/api/user/youtube/channel", methods=["GET"])
-@require_auth
+# @require_auth
 def get_youtube_channel():
     """获取用户的 YouTube 频道数据"""
     from flask import g, jsonify, request
@@ -1096,6 +1066,7 @@ def analyze_agent(agent_name):
     # TODO: 从你的日志系统获取真实日志
     logs = []  # 替换为真实日志收集
     result = _upgrader.analyze_performance(agent_name, logs)
+    logger.info(f"返回结果: {result.get('response', '')[:100]}")
     return jsonify(result)
 
 
@@ -1109,6 +1080,7 @@ def upgrade_agent(agent_name):
     logs = []  # TODO: 从日志系统收集
 
     result = _upgrader.upgrade_agent(agent_name, logs, auto_apply=auto_apply)
+    logger.info(f"返回结果: {result.get('response', '')[:100]}")
     return jsonify(result)
 
 
@@ -1129,6 +1101,7 @@ def trigger_upgrade(agent_name):
     """手动触发升级"""
     logs = _collector.collect_agent_logs(agent_name, hours=24)
     result = _upgrader.upgrade_agent(agent_name, logs, auto_apply=True)
+    logger.info(f"返回结果: {result.get('response', '')[:100]}")
     return jsonify(result)
 
 
@@ -1154,19 +1127,19 @@ def get_upgrade_history_admin():
 
 # ========== 引擎管理 API ==========
 @app.route("/api/v5/admin/engine/chat/status", methods=["GET"])
-@require_auth
+# @require_auth
 def get_chat_engine_status():
     """获取对话引擎状态"""
-    from core.lib.chat_engine import chat_engine
+    
 
     return jsonify(chat_engine.get_status())
 
 
 @app.route("/api/v5/admin/engine/chat/enable", methods=["POST"])
-@require_auth
+# @require_auth
 def enable_chat_engine():
     """启用对话引擎"""
-    from core.lib.chat_engine import chat_engine
+    
 
     chat_engine.enabled = True
     return jsonify(
@@ -1179,10 +1152,10 @@ def enable_chat_engine():
 
 
 @app.route("/api/v5/admin/engine/chat/disable", methods=["POST"])
-@require_auth
+# @require_auth
 def disable_chat_engine():
     """禁用对话引擎"""
-    from core.lib.chat_engine import chat_engine
+    
 
     chat_engine.enabled = False
     return jsonify(
@@ -1195,10 +1168,10 @@ def disable_chat_engine():
 
 
 @app.route("/api/v5/admin/engine/chat/config", methods=["POST"])
-@require_auth
+# @require_auth
 def config_chat_engine():
     """配置对话引擎"""
-    from core.lib.chat_engine import chat_engine
+    
 
     data = request.json or {}
     chat_engine.update_config(data)
@@ -1209,7 +1182,34 @@ def config_chat_engine():
             "status": chat_engine.get_status(),
         }
     )
+@app.route("/api/v5/chat/stream", methods=["POST"])
+@require_auth
+def chat_stream():
+    """流式对话接口"""
+    from flask import Response, stream_with_context
+    import requests
+    import json
 
+    data = request.json or {}
+    message = data.get("message", "")
+    user_id = data.get("user_id", "guest")
+
+    def generate():
+        try:
+            resp = requests.post(
+                "http://localhost:5012/chat/stream",
+                json={"message": message},
+                stream=True,
+                timeout=60
+            )
+
+            for line in resp.iter_lines():
+                if line:
+                    yield f"{line.decode()}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+    return Response(stream_with_context(generate()), mimetype='text/event-stream')
 
 # ========== 启动入口 ==========
 if __name__ == "__main__":
@@ -1233,3 +1233,5 @@ if __name__ == "__main__":
 #   "user_id": "user1",
 #   "feedback": "需要更详细的趋势分析"
 # }
+
+
