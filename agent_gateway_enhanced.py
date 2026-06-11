@@ -1223,28 +1223,36 @@ def submit_feedback():
     feedback = data.get("feedback", "")
     rating = data.get("rating", 0)
     user_id = data.get("user_id", "anonymous")
-
-    # 保存反馈
+    
     from pathlib import Path
+    import json
+    from datetime import datetime
+    
     feedback_file = Path("data/feedback.json")
-
+    
+    # 读取现有数据
     if feedback_file.exists():
-        import json
         with open(feedback_file, 'r') as f:
             all_feedback = json.load(f)
     else:
-        all_feedback = []
-
-    all_feedback.append({
+        all_feedback = {"success": [], "failure": []}
+    
+    # 添加反馈到对应类别
+    if rating >= 4:
+        category = "success"
+    else:
+        category = "failure"
+    
+    all_feedback[category].append({
         "user_id": user_id,
         "feedback": feedback,
         "rating": rating,
         "timestamp": datetime.now().isoformat()
     })
-
+    
     with open(feedback_file, 'w') as f:
         json.dump(all_feedback, f, indent=2)
-
+    
     return jsonify({"success": True, "message": "感谢您的反馈！"})
 
 
