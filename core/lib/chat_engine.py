@@ -8,6 +8,7 @@ import logging
 import re
 import json
 import os
+from pathlib import Path
 from typing import Dict, List
 from datetime import datetime
 from collections import defaultdict
@@ -264,7 +265,13 @@ class UnifiedChatEngine:
                         # 保存到会话历史
                         self.conversations[user_id].append({"role": "user", "content": message})
                         self.conversations[user_id].append({"role": "assistant", "content": response})
-                        
+                        # ========== 添加推理链增强 ==========
+                        reasoning = None
+                        if any(word in message for word in ['为什么', '怎么', '如何', '推理', '如果', '那么']):
+                            reasoning = self._add_reasoning_chain(message, response)
+                        if reasoning:
+                            response = reasoning
+                        # =================================
                         if len(self.conversations[user_id]) > 20:
                             self.conversations[user_id] = self.conversations[user_id][-20:]
                         
@@ -308,5 +315,31 @@ class UnifiedChatEngine:
 
         return {"success": False, "response": "服务不可用", "agent": "error", "user_id": user_id}
 
+
+
+
+    def _add_reasoning_chain(self, question: str, answer: str) -> str:
+        """添加推理链"""
+        # 检测数学问题
+        if any(op in question for op in ['+', '-', '*', '/', '计算', '等于']):
+            return f"""【解题步骤】
+1. 分析问题：{question}
+2. 逐步计算
+3. 得出结果
+
+{answer}"""
+
+        # 检测逻辑问题
+        if any(word in question for word in ['如果', '那么', '因为', '所以', '推理']):
+            return f"""【逻辑推理】
+前提条件分析
+    ↓
+逻辑推导
+    ↓
+得出结论
+
+{answer}"""
+
+        return answer
 
 chat_engine = UnifiedChatEngine()
