@@ -23,7 +23,7 @@ class MathExecutor:
                     "response": f"计算结果: {result}",
                     "success": True,
                 }
-            except:
+            except Exception as e:
                 pass
         return {
             "result": "无法计算",

@@ -20,7 +20,7 @@ for py_file in Path(".").rglob("*.py"):
         # 简单检查常见的未使用模式
         if "import " in content and "unused" in content.lower():
             unused_count += 1
-    except:
+    except Exception as e:
         pass
 print(f"   可能包含未使用导入的文件: {unused_count}")
 
@@ -37,7 +37,7 @@ for py_file in Path(".").rglob("*.py"):
             todo_count += len(todos)
             if todo_count <= 10:
                 print(f"   {py_file.name}: {todos}")
-    except:
+    except Exception as e:
         pass
 print(f"   总计 TODO/FIXME: {todo_count}")
 
@@ -54,7 +54,7 @@ for py_file in Path("core").rglob("*.py"):
         ports = re.findall(r"port\s*=\s*(\d{4,5})", content, re.IGNORECASE)
         if urls or ports:
             hardcoded.append((py_file.name, len(urls), len(ports)))
-    except:
+    except Exception as e:
         pass
 print(f"   可能包含硬编码的文件: {len(hardcoded)}")
 for name, urls, ports in hardcoded[:5]:

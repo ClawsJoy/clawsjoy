@@ -16,7 +16,7 @@ def test_health():
     try:
         resp = requests.get(f"{BASE_URL}/health", timeout=5)
         return resp.status_code == 200, time.time() - start
-    except:
+    except Exception as e:
         return False, 0
 
 
@@ -30,7 +30,7 @@ def test_chat():
             timeout=10,
         )
         return resp.status_code == 200, time.time() - start
-    except:
+    except Exception as e:
         return False, 0
 
 

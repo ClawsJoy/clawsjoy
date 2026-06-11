@@ -192,7 +192,7 @@ class BusinessAgent(SmartAgent):
         """获取收到的消息"""
         try:
             return self._comm.get_messages(self.name, limit)
-        except:
+        except Exception as e:
             return []
 
     def process(self, user_input: str, context: dict = None) -> dict:

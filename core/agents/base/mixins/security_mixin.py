@@ -65,7 +65,7 @@ class SecurityMixin:
             try:
                 with open(rate_file, 'r') as f:
                     records = json.load(f)
-            except:
+            except Exception as e:
                 pass
         
         # 检查频率（每分钟最多10次）

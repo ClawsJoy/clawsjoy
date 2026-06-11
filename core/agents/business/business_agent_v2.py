@@ -22,21 +22,21 @@ class BusinessAgentV2(BusinessAgent):
         try:
             from engine.semantic import semantic_engine
             self.engines["semantic"] = semantic_engine
-        except:
+        except Exception as e:
             pass
     
     def _init_knowledge(self):
         try:
             from engine.knowledge import knowledge_engine
             self.engines["knowledge"] = knowledge_engine
-        except:
+        except Exception as e:
             pass
     
     def _init_reasoning(self):
         try:
             from engine.reasoning import reasoning_engine
             self.engines["reasoning"] = reasoning_engine
-        except:
+        except Exception as e:
             pass
     
     def get_engine(self, name: str):

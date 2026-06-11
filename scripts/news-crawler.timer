@@ -1,0 +1,11 @@
+[Unit]
+Description=News Crawler Timer
+Requires=news-crawler.service
+
+[Timer]
+OnCalendar=daily
+OnCalendar=06:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

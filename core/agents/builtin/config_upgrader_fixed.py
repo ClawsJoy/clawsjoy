@@ -104,7 +104,7 @@ class ConfigUpgraderFixed:
 
         try:
             return json.loads(text)
-        except:
+        except Exception as e:
             pass
 
         json_pattern = r"```json\s*([\s\S]*?)\s*```"
@@ -112,7 +112,7 @@ class ConfigUpgraderFixed:
         if match:
             try:
                 return json.loads(match.group(1))
-            except:
+            except Exception as e:
                 pass
 
         brace_pattern = r"\{[\s\S]*\}"
@@ -120,7 +120,7 @@ class ConfigUpgraderFixed:
         if match:
             try:
                 return json.loads(match.group(0))
-            except:
+            except Exception as e:
                 pass
 
         return None

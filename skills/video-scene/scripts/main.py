@@ -76,7 +76,7 @@ class VideoSceneSkill:
             if response.status_code == 200:
                 result = response.json()
                 return result.get("response", "other").strip().lower()
-        except:
+        except Exception as e:
             pass
         return "other"
 

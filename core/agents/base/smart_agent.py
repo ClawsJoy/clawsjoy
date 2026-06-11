@@ -175,7 +175,7 @@ class SmartAgent(CommunicableAgent, LifecycleMixin, ConfigMixin, MemoryMixin):
             if result.intent in self._capabilities:
                 return result.confidence
             return 0.3
-        except:
+        except Exception as e:
             return 0.3  # LLM 不可用时，保守评分
 
     # ==================== 智能决策 ====================
@@ -475,7 +475,7 @@ class SmartAgent(CommunicableAgent, LifecycleMixin, ConfigMixin, MemoryMixin):
             from core.lib.agent_registry import agent_registry
 
             return agent_registry.list_agents()
-        except:
+        except Exception as e:
             return ["chat_agent", "code_agent"]
 
     def _get_decision_reason(self, can: bool, confidence: float) -> str:

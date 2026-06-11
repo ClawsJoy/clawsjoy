@@ -58,7 +58,7 @@ with st.sidebar:
                     st.session_state.training_data.append(
                         {"input": user_input, "output": expected_response}
                     )
-            except:
+            except Exception as e:
                 st.error("保存失败")
 
     st.markdown("---")

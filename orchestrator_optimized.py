@@ -48,7 +48,7 @@ class OptimizedOrchestrator:
         try:
             intent, conf, _ = OptimizedOrchestrator._llm_engine.understand(message)
             return intent, conf
-        except:
+        except Exception as e:
             return None, 0.0
 
     def smart_route_parallel(self, message: str) -> str:

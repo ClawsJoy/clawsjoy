@@ -63,7 +63,7 @@ class VideoAnalyze:
                 try:
                     num, den = frame_rate.split("/")
                     frame_rate = round(float(num) / float(den), 2)
-                except:
+                except Exception as e:
                     pass
 
             return {

@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 
-from core.agents.business.base_business_agent import BusinessAgent
+from core.agents.business.business_agent_v2 import BusinessAgentV2
 
 
 @dataclass
@@ -24,7 +24,7 @@ class DecisionRecord:
     context: Dict = field(default_factory=dict)
 
 
-class DecisionAgent(BusinessAgent):
+class DecisionAgent(BusinessAgentV2):
     """决策者 - 多源综合决策 (v5.3.0)"""
 
     name = "decision_agent"
@@ -113,7 +113,8 @@ class DecisionAgent(BusinessAgent):
             from engine.reasoning import reasoning_engine
 
             self.reasoning_engine = reasoning_engine
-        except:
+        except Exception as e:
+            print(f"错误: {e}")
             self.reasoning_engine = None
 
         # 语义引擎
@@ -121,7 +122,8 @@ class DecisionAgent(BusinessAgent):
             from engine.semantic import semantic_engine
 
             self.semantic_engine = semantic_engine
-        except:
+            print(f"错误: {e}")
+        except Exception as e:
             self.semantic_engine = None
 
         # 决策记忆（先初始化为空列表）
@@ -158,8 +160,8 @@ class DecisionAgent(BusinessAgent):
             memory_file.parent.mkdir(parents=True, exist_ok=True)
             with open(memory_file, "w") as f:
                 json.dump([vars(r) for r in self._decision_memory[-200:]], f, indent=2)
-        except:
-            pass
+        except Exception as e:
+            print(f"保存记忆失败: {e}")
 
     def _execute_business(self, user_input: str, context: dict = None) -> dict:
         return self._decide_and_route(user_input, context)
@@ -220,42 +222,37 @@ class DecisionAgent(BusinessAgent):
 
     # ========== 核心决策 ==========
     def _decide_and_route(self, user_input: str, context: dict = None) -> dict:
-
-        # 检查缓存
-        cache_key = self._get_cache_key(user_input)
-        cached = self._get_cached_decision(cache_key)
-        if cached:
-            return cached
-
-        # 异步收集证据
-        evidences = self._gather_evidences_async(user_input, context)
-        with open("/tmp/ev_debug.log", "a") as f:
-            f.write(f"evidences: {evidences}\n")
-        print(f"[决策者] evidences: {evidences}")
-
-        # 综合决策
-        decision, confidence, reasoning, scores = self._make_decision(evidences)
-
-        # 记录和路由
-        self._record_decision(user_input, decision, confidence)
-        self._route_stats[decision] = self._route_stats.get(decision, 0) + 1
-        route_result = self._route(decision, user_input)
-
-        if isinstance(route_result, dict):
-            route_result["decision_metadata"] = {
-                "decision": decision,
-                "confidence": confidence,
-                "reasoning": reasoning,
-                "scores": scores,
-                "route_stats": self._route_stats,
-            }
-
-        # 缓存结果
-        self._cache_decision(cache_key, route_result)
-
-        return route_result
-
-    # ========== 证据收集方法 ==========
+        """决策路由 - 分发到对应 Agent"""
+        
+        # 1. 翻译 → translate_agent
+        if "翻译" in user_input or "Translate" in user_input:
+            from agents.translate_agent.agent import translate_agent
+            return translate_agent.process(user_input, context)
+        
+        # 2. 代码 → code_agent
+        if any(kw in user_input for kw in ["写代码", "代码", "编程", "函数", "Python"]):
+            from agents.code_agent.agent import code_agent
+            return code_agent.process(user_input, context)
+        
+        # 3. 数学 → calculator_agent
+        import re
+        if re.search(r'\d+', user_input) and any(op in user_input for op in ['+', '-', '*', '/']):
+            from agents.calculator_agent.agent import calculator_agent
+            return calculator_agent.process(user_input, context)
+        
+        # 4. 记忆 → memory_agent
+        if any(kw in user_input for kw in ["记住", "回忆", "忘记", "记忆"]):
+            from agents.memory_agent.agent import memory_agent
+            return memory_agent.process(user_input, context)
+        
+        # 5. 长任务 → orchestrator
+        if len(user_input) > 30 and any(kw in user_input for kw in ["然后", "接着", "最后", "并且"]):
+            from agents.orchestrator.agent import orchestrator
+            return orchestrator.process(user_input, context)
+        
+        # 6. 默认 → chat_agent
+        from agents.chat_agent.agent import chat_agent
+        return chat_agent.process(user_input, context)
     def _get_analyst_report(self, user_input: str, context: dict = None) -> dict:
         try:
             # 动态加载 analysis_agent（不依赖全局实例）
@@ -421,14 +418,15 @@ class DecisionAgent(BusinessAgent):
             return orchestrator_agent.handle(user_input, {"caller": "decision_agent"})
 
 
-def _get_agent_by_intent(self, intent: str) -> str:
-    """根据意图获取 Agent"""
-    try:
-        from core.lib.intent_router import intent_router
+    def _get_agent_by_intent(self, intent: str) -> str:
+        """根据意图获取 Agent"""
+        try:
+            from core.lib.intent_router import intent_router
+            print(f"错误: {e}")
 
-        return intent_router.get_agent(intent)
-    except:
-        return None
+            return intent_router.get_agent(intent)
+        except Exception as e:
+            return None
 
 
 decision_agent = DecisionAgent()
