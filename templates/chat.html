@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClawsJoy AI 助手</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .chat-container {
+            width: 90%;
+            max-width: 1200px;
+            height: 85vh;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .chat-header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        
+        .chat-header p {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .message.user {
+            justify-content: flex-end;
+        }
+        
+        .message.assistant {
+            justify-content: flex-start;
+        }
+        
+        .message-content {
+            max-width: 70%;
+            padding: 10px 15px;
+            border-radius: 18px;
+            word-wrap: break-word;
+        }
+        
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .message.assistant .message-content {
+            background: white;
+            color: #333;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .message-content pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        
+        .message-content code {
+            background: #f4f4f4;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        
+        .typing {
+            display: inline-block;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .typing span {
+            animation: blink 1.4s infinite;
+            animation-fill-mode: both;
+        }
+        
+        .typing span:nth-child(2) { animation-delay: 0.2s; }
+        .typing span:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes blink {
+            0%, 60%, 100% { opacity: 0; }
+            30% { opacity: 1; }
+        }
+        
+        .chat-input {
+            display: flex;
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .chat-input input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 25px;
+            outline: none;
+            font-size: 14px;
+        }
+        
+        .chat-input input:focus {
+            border-color: #667eea;
+        }
+        
+        .chat-input button {
+            margin-left: 10px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: transform 0.2s;
+        }
+        
+        .chat-input button:hover {
+            transform: scale(1.02);
+        }
+        
+        .chat-input button:active {
+            transform: scale(0.98);
+        }
+        
+        @media (max-width: 768px) {
+            .message-content {
+                max-width: 85%;
+            }
+            
+            .chat-input button {
+                padding: 12px 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1>🤖 ClawsJoy AI 助手</h1>
+            <p>智能对话 | 代码生成 | 数学计算 | 多轮记忆</p>
+        </div>
+        
+        <div class="chat-messages" id="messages">
+            <div class="message assistant">
+                <div class="message-content">
+                    你好！我是 ClawsJoy AI 助手，很高兴为你服务！<br>
+                    我可以：<br>
+                    • 💬 智能对话（记住你的偏好）<br>
+                    • 💻 生成代码<br>
+                    • 🧮 数学计算<br>
+                    • 📝 翻译文本<br>
+                    • 🎨 创意写作<br>
+                    请问有什么可以帮助你的？
+                </div>
+            </div>
+        </div>
+        
+        <div class="chat-input">
+            <input type="text" id="messageInput" placeholder="输入你的问题..." onkeypress="if(event.keyCode===13) sendMessage()">
+            <button onclick="sendMessage()">发送</button>
+        </div>
+    </div>
+    
+    <script>
+        const messagesDiv = document.getElementById('messages');
+        const input = document.getElementById('messageInput');
+        let isWaiting = false;
+        
+        function addMessage(role, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            messageDiv.innerHTML = `<div class="message-content">${formatMessage(content)}</div>`;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+        
+        function formatMessage(content) {
+            // 代码块处理
+            content = content.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code class="language-$1">$2</code></pre>');
+            // 行内代码
+            content = content.replace(/`([^`]+)`/g, '<code>$1</code>');
+            // 换行
+            content = content.replace(/\n/g, '<br>');
+            return content;
+        }
+        
+        function showTyping() {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message assistant';
+            typingDiv.id = 'typing';
+            typingDiv.innerHTML = '<div class="message-content"><span class="typing"><span>●</span><span>●</span><span>●</span></span></div>';
+            messagesDiv.appendChild(typingDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+        
+        function hideTyping() {
+            const typing = document.getElementById('typing');
+            if (typing) typing.remove();
+        }
+        
+        async function sendMessage() {
+            if (isWaiting) return;
+            
+            const message = input.value.trim();
+            if (!message) return;
+            
+            input.value = '';
+            addMessage('user', message);
+            isWaiting = true;
+            showTyping();
+            
+            const token = localStorage.getItem('auth_token');
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            
+            try {
+                const response = await fetch('/api/v5/enhanced/chat', {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({ message: message, user_id: 'web_user' })
+                });
+                
+                const data = await response.json();
+                hideTyping();
+                
+                if (data.success) {
+                    addMessage('assistant', data.response);
+                } else {
+                    addMessage('assistant', '抱歉，出现了一些问题，请稍后再试。');
+                }
+            } catch (error) {
+                hideTyping();
+                addMessage('assistant', '网络错误，请检查连接。');
+            }
+            
+            isWaiting = false;
+        }
+    </script>
+</body>
+</html>

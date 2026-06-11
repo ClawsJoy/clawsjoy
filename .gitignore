@@ -1,136 +1,114 @@
-# 模型文件
-*.safetensors
-*.ckpt
-*.bin
-*.pth
-*.pt
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
 
-# 大文件
-*.mp4
-*.avi
-*.mov
-*.wav
-*.mp3
+# 备份文件
+*.bak
+*.old
+*.backup
+*_backup.py
+*.py.bak
+*.py.old
+*~
 
-# 日志
+# 日志文件
 logs/
 *.log
+*.log.*
 
-# 临时文件
-*.tmp
-*.bak
-*.swp
-*.pyc
-__pycache__/
-
-# 数据文件
-data/*.db
-data/*.sqlite3
-data/vector_kb/
-data/vectors/
-
-# 输出文件
-output/
-outbox/
-*.mp4
-
-# 环境
+# 配置文件（包含敏感信息）
 .env
-venv/
-.venv/
+*.local
+config/local*.yaml
 
-# 文档和报告 (临时生成)
-docs/reports/
-docs/analysis/
-*.docx
-*.pptx
-
-# 图片和媒体
-web/images/*.jpg
-web/images/*.png
-output/
-outbox/
-
-# IDE 配置
+# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 
+# 测试和临时文件
+/tmp/
+/test_*.py
+/temp/
+*.tmp
+
+# 归档目录
+scripts/archive_old/
+
+# 模型文件
+*.bin
+*.gguf
+models/
+
 # 系统文件
 .DS_Store
 Thumbs.db
 
-# 用户数据 (必须排除)
-data/
-tenants/
-logs/
+# 数据文件
 *.db
-*.sqlite3
 *.sqlite
+*.sqlite3
+*.pkl
 
-# 训练数据 (可选，太大)
-data/synthetic_training.json
-data/training_dataset*.json
-data/training_report.json
-data/rl_learning.json
-data/active_learning_requests.json
-data/transfer_knowledge.json
-data/meta_learning.json
+# 归档和备份目录
+archive/
+backup/
+*.tar.gz
+*.zip
+
+# 管理脚本（可选保留，根据需求）
+# start_clawsjoy.sh
+# stop_clawsjoy.sh
+# status_clawsjoy.sh
+# test_clawsjoy.sh
+
+# 用户记忆数据（不提交）
+data/memories/*.json
+
+# 向量数据库（大文件）
+data/vector_kb/
+*.chroma
+
+# 用户数据脱敏
+data/
+data/*
+!data/.gitkeep
+
+# Web 图片资源（可能包含敏感内容）
+web/images/
+web/images/*
+
+# 但管家数据（用户隐私）
+data/butler/
+data/butler/*
+
+# 日志文件（可能包含敏感信息）
+logs/*.log
+logs/*.log.*
 
 # 临时文件
 *.tmp
-*.swp
-*.swo
-.DS_Store
-Thumbs.db
-Modelfile.intent
-scripts/finetune_intent.py
-__pycache__/
-*.log
-nohup.out
-__pycache__/
-*.pyc
-*.pyo
+*.temp
+temp/
+tmp/
+
+# 环境变量文件
 .env
-*.db
-*.log
-.env
-backup/*.tar.gz
-backup/*.tar.gz
-*.gz
-downloads/
-*.log
-logs/
-__pycache__/
-*.pyc
-.agent_gateway_enhanced.py.swp
+.env.local
+.env.*.local
 
-# 备份文件
-backups/
-*.bak
-*.bak3
-*.backup
-
-# 临时文件
-*.swp
-*~
-*.log
-
-# Python 缓存
-__pycache__/
-*.pyc
-
-# 下载目录
-downloads/
-outbox/
-
-# 测试文件（如果需要排除）
-test_*.py
-*_test.py
-
-# 文档生成
-TECHNICAL_DEBT.md
-*.md.bak
-examples/
-evaluation_report.json
+# 密钥文件
+*.key
+*.pem
+*.crt
+secrets/

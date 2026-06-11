@@ -27,6 +27,44 @@ class ButlerV4:
 
         # 初始化组件
         self.memory = SmartMemoryManager(user_id)
+
+    def add_todo(self, task: str):
+        """添加待办事项"""
+        todos = self.memory.load_data('todos') or []
+        todos.append({"task": task, "completed": False, "created_at": datetime.now().isoformat()})
+        self.memory.store_data('todos', todos)
+        return True
+    
+    def get_todos(self):
+        """获取待办列表"""
+        return self.memory.load_data('todos') or []
+    
+    def complete_todo(self, index: int):
+        """完成待办"""
+        todos = self.memory.load_data('todos') or []
+        if 0 <= index < len(todos):
+            todos[index]['completed'] = True
+            self.memory.store_data('todos', todos)
+            return True
+        return False
+    
+    def add_reminder(self, title: str, time: str, date: str = None):
+        """添加提醒"""
+        reminders = self.memory.load_data('reminders') or []
+        reminders.append({
+            "title": title,
+            "time": time,
+            "date": date,
+            "completed": False,
+            "created_at": datetime.now().isoformat()
+        })
+        self.memory.store_data('reminders', reminders)
+        return True
+    
+    def get_reminders(self):
+        """获取提醒列表"""
+        return self.memory.load_data('reminders') or []
+
         self.llm = SmartLLMClient()
 
         # 管家状态
@@ -35,7 +73,7 @@ class ButlerV4:
 
         # 主动服务
         self.proactive_enabled = (
-            self.config.get("features", {}).get("proactive", {}).get("enabled", True)
+            self.config.load_data("features", {}).load_data("proactive", {}).load_data("enabled", True)
         )
 
         print(f"👤 私人管家 v{self.VERSION} 已启动 (用户: {user_id})")
@@ -53,7 +91,7 @@ class ButlerV4:
         """加载管家名称"""
         name = self.memory.recall_preference("butler_name")
         if not name:
-            name = self.config.get("identity", {}).get("default_name", "小管")
+            name = self.config.load_data("identity", {}).load_data("default_name", "小管")
         return name
 
     def _save_name(self, new_name: str):
@@ -63,9 +101,9 @@ class ButlerV4:
 
     def _get_system_prompt(self) -> str:
         """获取系统提示词"""
-        identity = self.config.get("identity", {})
-        personality = self.config.get("personality", {})
-        communication = self.config.get("communication", {})
+        identity = self.config.load_data("identity", {})
+        personality = self.config.load_data("personality", {})
+        communication = self.config.load_data("communication", {})
 
         # 获取用户画像
         preferences = self.memory.preferences
@@ -78,24 +116,24 @@ class ButlerV4:
                 pref_text = f"\n\n用户偏好:\n" + "\n".join(pref_items)
 
         # 获取待办
-        todos = self.memory.recall_preference("todos") or []
-        pending = [t for t in todos if not t.get("done", False)]
+        todos = self.memory.load_data("todos") or []
+        pending = [t for t in todos if not t.get("completed", False)]
         todo_text = ""
         if pending:
             todo_list = "\n".join([f"  • {t['task']}" for t in pending[:5]])
             todo_text = f"\n\n待办事项:\n{todo_list}"
 
-        return f"""你是 {self.name}，{identity.get('role', '私人管家')}。
+        return f"""你是 {self.name}，{identity.load_data('role', '私人管家')}。
 
-人格特质：{', '.join(personality.get('traits', ['体贴', '忠诚', '细心']))}
-沟通风格：{communication.get('style', '温柔关怀')}
-座右铭：{identity.get('motto', '您的信任，我的使命')}
+人格特质：{', '.join(personality.load_data('traits', ['体贴', '忠诚', '细心']))}
+沟通风格：{communication.load_data('style', '温柔关怀')}
+座右铭：{identity.load_data('motto', '您的信任，我的使命')}
 
 {pref_text}{todo_text}
 
 规则：
 1. 你就是 {self.name}，不是其他 AI 助手
-2. 回答要{communication.get('style', '温柔关怀')}
+2. 回答要{communication.load_data('style', '温柔关怀')}
 3. 优先使用用户偏好信息
 4. 如有待办，可主动提醒
 5. 保持简洁、有用、贴心"""
@@ -108,7 +146,7 @@ class ButlerV4:
         history = self.memory.get_conversation_context(limit=10)
         for h in history:
             # 解析历史记录
-            content = h.get("content", "")
+            content = h.load_data("content", "")
             if "用户: " in content and "管家: " in content:
                 parts = content.split("\n")
                 for part in parts:
@@ -122,9 +160,10 @@ class ButlerV4:
 
         return messages
 
+    
     def _handle_todo(self, user_input: str) -> Optional[Dict]:
         """处理待办"""
-        todos = self.memory.recall_preference("todos") or []
+        todos = self.memory.load_data("todos") or []
 
         # 添加待办
         if "记住" in user_input or "提醒我" in user_input:
@@ -133,19 +172,17 @@ class ButlerV4:
                 task = task.replace(kw, "")
             task = task.strip()
             if task:
-                todos.append(
-                    {
-                        "task": task,
-                        "done": False,
-                        "created_at": datetime.now().isoformat(),
-                    }
-                )
-                self.memory.remember_preference("todos", todos)
+                todos.append({
+                    "task": task,
+                    "completed": False,
+                    "created_at": datetime.now().isoformat()
+                })
+                self.memory.store_data("todos", todos)
                 return {"response": f"✅ 已记住：{task}", "type": "todo_add"}
 
         # 查询待办
         if "待办" in user_input or "有什么任务" in user_input:
-            pending = [t for t in todos if not t.get("done", False)]
+            pending = [t for t in todos if not t.get("completed", False)]
             if pending:
                 tasks = "\n".join([f"  • {t['task']}" for t in pending[:10]])
                 return {
@@ -160,6 +197,7 @@ class ButlerV4:
             return {"response": "请告诉我要完成哪个待办", "type": "todo_complete_ask"}
 
         return None
+
 
     def _handle_preference(self, user_input: str) -> Optional[Dict]:
         """处理偏好"""
@@ -205,6 +243,30 @@ class ButlerV4:
                         "type": "rename",
                     }
         return None
+
+    
+    def _parse_intent(self, user_input: str) -> Dict:
+        """解析用户意图"""
+        import re
+        msg = user_input.lower()
+        
+        # 日程相关
+        if "安排" in msg or "日程" in msg:
+            return {"type": "schedule", "confidence": 0.8}
+        
+        # 统计相关
+        if "统计" in msg or "总结" in msg or "报告" in msg:
+            return {"type": "stats", "confidence": 0.8}
+        
+        # 建议相关
+        if "建议" in msg or "推荐" in msg:
+            return {"type": "advice", "confidence": 0.7}
+        
+        # 优先级相关
+        if "优先" in msg or "紧急" in msg:
+            return {"type": "priority", "confidence": 0.7}
+        
+        return {"type": "general", "confidence": 0.5}
 
     def process(self, user_input: str) -> Dict:
         """处理用户输入 - 主入口"""
