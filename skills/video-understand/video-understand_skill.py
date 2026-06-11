@@ -56,5 +56,5 @@ class VideoUnderstandSkill:
             )
             answer = r.json().get("response", "") if r.status_code == 200 else ""
             return {"success": True, "result": answer, "answer": answer}
-        except:
+        except Exception as e:
             return {"success": True, "result": "分析完成", "answer": ""}

@@ -38,7 +38,7 @@ def list_skills():
                     "downloads": skill.get('downloads', 0),
                     "price": skill.get('price', 'free')
                 })
-        except:
+        except Exception as e:
             pass
     
     return jsonify({"success": True, "skills": skills})
@@ -156,7 +156,7 @@ class SkillVectorRecommender:
 
         try:
             self.collection = self.client.get_collection(collection_name)
-        except:
+        except Exception as e:
             self.collection = self.client.create_collection(
                 name=collection_name,
                 embedding_function=self.embedding_fn
@@ -184,7 +184,7 @@ class SkillVectorRecommender:
             doc_id = hashlib.md5(skill_id.encode()).hexdigest()
             result = self.collection.get(ids=[doc_id])
             return len(result.get('ids', [])) > 0
-        except:
+        except Exception as e:
             return False
 
     def index_skill(self, skill: dict):
@@ -270,7 +270,7 @@ class SkillVectorRecommender:
                                 'category': meta.get('category'),
                                 'similarity': 0.95
                             }]
-                    except:
+                    except Exception as e:
                         pass
                 break
         

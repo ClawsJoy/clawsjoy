@@ -467,27 +467,32 @@ swagger = Swagger(app, config=swagger_config)
 # 为现有的 enhanced_chat 添加文档（不要重新定义函数）
 # 需要在原有的路由
 
+
 @app.route("/api/v5/enhanced/chat", methods=["POST"])
 @require_auth
 def enhanced_chat():
     import logging
+
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
     logger.info("=" * 50)
     logger.info("enhanced_chat 被调用")
-    
+
     data = request.json or {}
     message = data.get("message", "")
     user_id = data.get("user_id", "guest")
     logger.info(f"message: {message}, user_id: {user_id}")
-    
+
     if not message:
         return jsonify({"success": False, "response": "请输入消息", "user_id": user_id})
-    
+
     from core.lib.chat_engine import chat_engine
+
     result = chat_engine.execute(message, user_id)
     logger.info(f"返回结果: {result.get('response', '')[:100]}")
-    return jsonify(result)# ========== 记忆路由 ==========
+    return jsonify(result)  # ========== 记忆路由 ==========
+
+
 @app.route("/api/v5/memory/remember", methods=["POST"])
 def memory_remember():
     data = request.json or {}
@@ -1130,7 +1135,6 @@ def get_upgrade_history_admin():
 # @require_auth
 def get_chat_engine_status():
     """获取对话引擎状态"""
-    
 
     return jsonify(chat_engine.get_status())
 
@@ -1139,7 +1143,6 @@ def get_chat_engine_status():
 # @require_auth
 def enable_chat_engine():
     """启用对话引擎"""
-    
 
     chat_engine.enabled = True
     return jsonify(
@@ -1155,7 +1158,6 @@ def enable_chat_engine():
 # @require_auth
 def disable_chat_engine():
     """禁用对话引擎"""
-    
 
     chat_engine.enabled = False
     return jsonify(
@@ -1171,7 +1173,6 @@ def disable_chat_engine():
 # @require_auth
 def config_chat_engine():
     """配置对话引擎"""
-    
 
     data = request.json or {}
     chat_engine.update_config(data)
@@ -1182,13 +1183,16 @@ def config_chat_engine():
             "status": chat_engine.get_status(),
         }
     )
+
+
 @app.route("/api/v5/chat/stream", methods=["POST"])
 @require_auth
 def chat_stream():
     """流式对话接口"""
-    from flask import Response, stream_with_context
-    import requests
     import json
+
+    import requests
+    from flask import Response, stream_with_context
 
     data = request.json or {}
     message = data.get("message", "")
@@ -1200,7 +1204,7 @@ def chat_stream():
                 "http://localhost:5012/chat/stream",
                 json={"message": message},
                 stream=True,
-                timeout=60
+                timeout=60,
             )
 
             for line in resp.iter_lines():
@@ -1209,7 +1213,54 @@ def chat_stream():
         except Exception as e:
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
 
-    return Response(stream_with_context(generate()), mimetype='text/event-stream')
+    return Response(stream_with_context(generate()), mimetype="text/event-stream")
+
+
+@app.route("/api/v5/feedback", methods=["POST"])
+def submit_feedback():
+    """收集用户反馈"""
+    data = request.json or {}
+    feedback = data.get("feedback", "")
+    rating = data.get("rating", 0)
+    user_id = data.get("user_id", "anonymous")
+
+    # 保存反馈
+    from pathlib import Path
+    feedback_file = Path("data/feedback.json")
+
+    if feedback_file.exists():
+        import json
+        with open(feedback_file, 'r') as f:
+            all_feedback = json.load(f)
+    else:
+        all_feedback = []
+
+    all_feedback.append({
+        "user_id": user_id,
+        "feedback": feedback,
+        "rating": rating,
+        "timestamp": datetime.now().isoformat()
+    })
+
+    with open(feedback_file, 'w') as f:
+        json.dump(all_feedback, f, indent=2)
+
+    return jsonify({"success": True, "message": "感谢您的反馈！"})
+
+
+
+@app.route('/web/<path:filename>')
+def serve_web(filename):
+    from flask import send_from_directory
+    return send_from_directory('web', filename)
+
+@app.route('/web')
+def web_index():
+    from flask import send_from_directory
+    return send_from_directory('web', 'index.html')
+
+
+
 
 # ========== 启动入口 ==========
 if __name__ == "__main__":
@@ -1233,5 +1284,6 @@ if __name__ == "__main__":
 #   "user_id": "user1",
 #   "feedback": "需要更详细的趋势分析"
 # }
+
 
 

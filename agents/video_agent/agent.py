@@ -119,7 +119,7 @@ def get_video_agent(user_id: str = "default"):
             try:
                 os.remove(f)
                 print(f"回滚: 删除 {f}")
-            except:
+            except Exception as e:
                 pass
 
         return {
@@ -145,7 +145,7 @@ def get_video_agent(user_id: str = "default"):
                 try:
                     os.remove(f)
                     deleted.append(f)
-                except:
+                except Exception as e:
                     pass
 
         return {

@@ -8,7 +8,7 @@ import streamlit as st
 try:
     resp = requests.get("http://localhost:5000/api/v5/health", timeout=2)
     BACKEND_AVAILABLE = resp.status_code == 200
-except:
+except Exception as e:
     BACKEND_AVAILABLE = False
 
 st.set_page_config(page_title="ClawsJoy AI Studio", page_icon="🤖", layout="wide")

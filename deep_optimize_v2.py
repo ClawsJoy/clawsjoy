@@ -68,7 +68,7 @@ for py_file in Path(".").rglob("*.py"):
                 todo_list.append(
                     {"file": str(py_file), "line": i + 1, "content": line.strip()}
                 )
-    except:
+    except Exception as e:
         pass
 
 print(f"   📝 发现 {len(todo_list)} 个 TODO/FIXME")

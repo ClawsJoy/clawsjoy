@@ -58,5 +58,5 @@ class VideoSceneSkill:
                 else "unknown"
             )
             return {"success": True, "result": scene, "scene_type": scene}
-        except:
+        except Exception as e:
             return {"success": True, "result": "unknown", "scene_type": "unknown"}

@@ -1,0 +1,5 @@
+{
+    "tenant_id": 1,
+    "task_type": "spider",
+    "params": {"keyword": "香港"}
+}

@@ -28,7 +28,7 @@ try:
     print(f"   CPU 使用率: {psutil.cpu_percent(interval=1)}%")
     print(f"   内存使用: {psutil.virtual_memory().percent}%")
     print(f"   可用内存: {psutil.virtual_memory().available / 1024**3:.1f} GB")
-except:
+except Exception as e:
     print("   ⚠️ psutil 不可用")
 
 # 进程信息
@@ -69,7 +69,7 @@ for db_file in db_files[:3]:
         indexes = cursor.fetchall()
         print(f"   {db_file.name}: {len(indexes)} 个索引")
         conn.close()
-    except:
+    except Exception as e:
         pass
 
 # ============================================================
@@ -95,7 +95,7 @@ for f in py_files[:500]:  # 限制数量
         total_lines += lines
         if lines > 1000:
             large_files.append((f.name, lines))
-    except:
+    except Exception as e:
         pass
 print(f"   代码行数 (抽样): ~{total_lines}")
 
@@ -120,7 +120,7 @@ try:
     print(f"   过时包数量: {len(outdated) - 1}")
     for pkg in outdated[1:6]:  # 显示前5个
         print(f"      {pkg[:60]}")
-except:
+except Exception as e:
     print("   ⚠️ 无法检查过时包")
 
 # ============================================================

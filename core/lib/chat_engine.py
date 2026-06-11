@@ -22,73 +22,72 @@ class PersistentMemory:
     def __init__(self, storage_dir="data/memories"):
         self.storage_dir = Path(storage_dir)
         self.storage_dir.mkdir(parents=True, exist_ok=True)
-        self._cache = {}
     
-    def _get_user_file(self, user_id: str) -> Path:
-        return self.storage_dir / f"{user_id}.json"
-    
-    def save(self, user_id: str, data: Dict):
-        file_path = self._get_user_file(user_id)
-        with open(file_path, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-    
-    def load(self, user_id: str) -> Dict:
-        file_path = self._get_user_file(user_id)
-        if file_path.exists():
+    def get_user_info(self, user_id: str) -> Dict:
+        """获取用户信息"""
+        user_file = self.storage_dir / f"{user_id}.json"
+        if user_file.exists():
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    return json.load(f)
-            except Exception:
+                with open(user_file, 'r') as f:
+                    data = json.load(f)
+                    return {
+                        'name': data.get('name', ''),
+                        'preferences': data.get('preferences', [])
+                    }
+            except:
                 pass
-        return {}
+        return {'name': '', 'preferences': []}
+           
+    def load_context(self, user_id: str, last_n: int = 5) -> str:
+        """加载最近的对话上下文"""
+        user_file = self.storage_dir / f"{user_id}.json"
+        if not user_file.exists():
+            return ""
+        
+        try:
+            with open(user_file, 'r') as f:
+                data = json.load(f)
+            
+            conversations = data.get('conversations', [])
+            if not conversations:
+                return ""
+            
+            context = "【历史对话】\n"
+            for conv in conversations[-last_n:]:
+                context += f"用户: {conv.get('user', '')}\n"
+                context += f"助手: {conv.get('assistant', '')}\n"
+            
+            return context
+        except:
+            return ""      
     
+
     def save_conversation(self, user_id: str, user_msg: str, assistant_msg: str):
-        data = self.load(user_id)
+        """保存对话记录"""
+        user_file = self.storage_dir / f"{user_id}.json"
+        data = {}
+        if user_file.exists():
+            try:
+                with open(user_file, 'r') as f:
+                    data = json.load(f)
+            except:
+                pass
+        
         if 'conversations' not in data:
             data['conversations'] = []
         
         data['conversations'].append({
-            'user': user_msg[:300],
-            'assistant': assistant_msg[:300],
-            'time': datetime.now().isoformat()
+            'user': user_msg[:200],
+            'assistant': assistant_msg[:200],
+            'timestamp': datetime.now().isoformat()
         })
         
+        # 只保留最近50条
         if len(data['conversations']) > 50:
             data['conversations'] = data['conversations'][-50:]
         
-        # 提取用户信息
-        name_match = re.search(r'我叫([^，,。]+)', user_msg)
-        if name_match:
-            data['name'] = name_match.group(1).strip()
-        
-        pref_match = re.search(r'我喜欢([^，,。]+)', user_msg)
-        if pref_match:
-            if 'preferences' not in data:
-                data['preferences'] = []
-            data['preferences'].append(pref_match.group(1).strip())
-        
-        self.save(user_id, data)
-        logger.info(f"💾 持久化保存: {user_id}")
-    
-    def load_context(self, user_id: str, last_n: int = 5) -> str:
-        data = self.load(user_id)
-        conversations = data.get('conversations', [])
-        if not conversations:
-            return ""
-        
-        context = "【历史对话】\n"
-        for conv in conversations[-last_n:]:
-            context += f"用户: {conv['user']}\n"
-            context += f"助手: {conv['assistant']}\n"
-        return context
-    
-    def get_user_info(self, user_id: str) -> Dict:
-        data = self.load(user_id)
-        return {
-            'name': data.get('name', ''),
-            'preferences': data.get('preferences', [])
-        }
-
+        with open(user_file, 'w') as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
 
 class UnifiedChatEngine:
 
@@ -136,6 +135,26 @@ class UnifiedChatEngine:
                 del self._cache[key]
         return None
 
+    
+    def _extract_user_info(self, user_id: str, message: str):
+        """从消息中提取用户信息"""
+        profile = self.user_profiles.get(user_id, {})
+        
+        # 提取名字
+        import re
+        name_match = re.search(r'我叫([^，,。]+)', message)
+        if name_match:
+            profile['name'] = name_match.group(1).strip()
+        
+        # 提取偏好
+        pref_match = re.search(r'我喜欢([^，,。]+)', message)
+        if pref_match:
+            if 'preferences' not in profile:
+                profile['preferences'] = []
+            profile['preferences'].append(pref_match.group(1).strip())
+        
+        self.user_profiles[user_id] = profile
+
     def _cache_set(self, key: str, value: str):
         import time
         self._cache[key] = (value, time.time())
@@ -180,12 +199,12 @@ class UnifiedChatEngine:
         try:
             search_result = vector_knowledge_center.search(message, top_k=3)
             if search_result:
-                context_parts.append("\n📚 相关知识：")
+                parts.append("\n📚 相关知识：")
                 for item in search_result[:3]:
                     if isinstance(item, dict):
-                        content = item.get("content", item.get("text", ""))[:200]
-                        if content:
-                            context_parts.append(f"  • {content}")
+                        content_text = item.get("content", item.get("text", ""))[:200]
+                        if content_text:
+                            parts.append(f"  • {content_text}")
         except Exception as e:
             logger.debug(f"向量检索失败: {e}")
 
@@ -200,8 +219,6 @@ class UnifiedChatEngine:
         
         
         # 使用现有意图路由器（延迟导入避免循环）
-        from core.lib.service_locator import service_locator
-        from core.lib.exceptions import LLMError, MemoryError
         intent_result = config_router.route(message)
         intent = intent_result.get('intent', 'chat')
         logger.info(f"意图识别: {intent} (置信度: {intent_result.get('confidence', 0)})")
@@ -220,6 +237,7 @@ class UnifiedChatEngine:
             cached = self._cache_get(message)
             if cached:
                 logger.info(f"⚡ 缓存命中: {message[:30]}")
+                # response = reasoning_chain.think_step_by_step(message, response)  # 暂时禁用
                 return {
                     "success": True,
                     "response": cached,
@@ -267,27 +285,27 @@ class UnifiedChatEngine:
                         if attempt < self.max_retries - 1:
                             continue
                         return {"success": False, "response": "空响应", "agent": "error", "user_id": user_id}
-                else:
-                    if attempt < self.max_retries - 1:
-                        continue
-                    return {"success": False, "response": f"HTTP {resp.status_code}", "agent": "error", "user_id": user_id}
-                    
+                   
             except requests.Timeout as e:
                 logger.error(f"LLM 超时: {e}")
                 if attempt < self.max_retries - 1:
                     continue
+         
                 return {"success": False, "response": "服务响应超时", "agent": "error", "user_id": user_id}
             except requests.ConnectionError as e:
                 logger.error(f"LLM 连接失败: {e}")
                 if attempt < self.max_retries - 1:
                     continue
+   
                 return {"success": False, "response": "无法连接LLM服务", "agent": "error", "user_id": user_id}
             except Exception as e:
                 logger.error(f"异常: {e}")
                 if attempt < self.max_retries - 1:
                     continue
+  
                 return {"success": False, "response": str(e), "agent": "error", "user_id": user_id}
         
+
         return {"success": False, "response": "服务不可用", "agent": "error", "user_id": user_id}
 
 

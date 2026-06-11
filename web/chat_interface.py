@@ -14,7 +14,7 @@ try:
     import speech_recognition as sr
 
     SPEECH_AVAILABLE = True
-except:
+except Exception as e:
     SPEECH_AVAILABLE = False
 
 st.set_page_config(page_title="ClawsJoy Chat - 智能对话", page_icon="💬", layout="wide")
@@ -78,7 +78,7 @@ with col2:
                 text = r.recognize_google(audio, language="zh-CN")
                 st.session_state.voice_input = text
                 st.success(f"识别: {text}")
-            except:
+            except Exception as e:
                 st.error("无法识别语音")
 
 with col3:

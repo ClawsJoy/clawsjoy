@@ -129,7 +129,7 @@ class AnalysisAgent(BusinessAgentV2):
         try:
             result = semantic_engine.understand(user_input)
             intent = result.intent
-        except:
+        except Exception as e:
             intent = "chat"
 
         # 根据意图获取 Agent
@@ -230,55 +230,55 @@ class AnalysisAgent(BusinessAgentV2):
         return response
 
 
-def _get_route_from_config(self, intent: str) -> str:
-    """从配置获取路由"""
-    try:
-        from core.lib.intent_router import intent_router
+    def _get_route_from_config(self, intent: str) -> str:
+        """从配置获取路由"""
+        try:
+            from core.lib.intent_router import intent_router
 
-        agent = intent_router.get_agent(intent)
-        return intent_router.get_route(agent) if agent else "A"
-    except:
-        return "A"
-
-
-from core.lib.smart_intent_router import SmartIntentRouter
+            agent = intent_router.get_agent(intent)
+            return intent_router.get_route(agent) if agent else "A"
+        except Exception as e:
+            return "A"
 
 
-def _get_route_from_intent(self, user_input: str) -> Dict:
-    """使用智能路由器获取路由"""
-    router = SmartIntentRouter()
-    # 重新加载配置确保最新
-    router.reload_config()
+    from core.lib.smart_intent_router import SmartIntentRouter
 
-    # 获取意图
-    from engine.semantic import semantic_engine
 
-    result = semantic_engine.understand(user_input)
-    intent = result.intent
+    def _get_route_from_intent(self, user_input: str) -> Dict:
+        """使用智能路由器获取路由"""
+        router = SmartIntentRouter()
+        # 重新加载配置确保最新
+        router.reload_config()
 
-    # 根据意图获取 Agent
-    agent = router.INTENT_TO_AGENT.get(intent)
+        # 获取意图
+        from engine.semantic import semantic_engine
 
-    # 确定路由
-    if agent in ["calculator_agent", "weather_skill"]:
-        route = "B"
-    elif agent in [
-        "translate_agent",
-        "code_agent",
-        "analysis_agent",
-        "video_agent",
-        "dialect_agent",
-    ]:
-        route = "C"
-    else:
-        route = "A"
+        result = semantic_engine.understand(user_input)
+        intent = result.intent
 
-    return {
-        "agent": agent or "chat_agent",
-        "route": route,
-        "intent": intent,
-        "requires_orchestration": route == "C",
-    }
+        # 根据意图获取 Agent
+        agent = router.INTENT_TO_AGENT.get(intent)
+
+        # 确定路由
+        if agent in ["calculator_agent", "weather_skill"]:
+            route = "B"
+        elif agent in [
+            "translate_agent",
+            "code_agent",
+            "analysis_agent",
+            "video_agent",
+            "dialect_agent",
+        ]:
+            route = "C"
+        else:
+            route = "A"
+
+        return {
+            "agent": agent or "chat_agent",
+            "route": route,
+            "intent": intent,
+            "requires_orchestration": route == "C",
+        }
 
     def handle(self, user_input: str, context: dict = None) -> dict:
         """统一入口"""
@@ -290,3 +290,20 @@ def _get_route_from_intent(self, user_input: str) -> Dict:
         if hasattr(self, "_analysis_cache"):
             self._analysis_cache.pop(task_id, None)
         return {"success": True, "message": "分析缓存已清除"}
+
+    def _get_route_by_intent(self, intent: str) -> tuple:
+        """根据意图获取路由"""
+        # 翻译直接路由到 ChatAgent（让 LLM 处理）
+        if intent == "translate":
+            return ("A", False, 0.3)  # A = ChatAgent
+    
+        # 代码任务
+        if intent == "code":
+            return ("C", True, 0.7)   # C = Orchestrator
+    
+        # 数学计算
+        if intent == "calculate":
+            return ("A", False, 0.2)
+    
+        # 默认
+        return ("A", False, 0.5)

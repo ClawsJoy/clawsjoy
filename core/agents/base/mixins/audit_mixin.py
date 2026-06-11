@@ -34,7 +34,7 @@ class AuditMixin:
             try:
                 with open(audit_file, 'r') as f:
                     existing = json.load(f)
-            except:
+            except Exception as e:
                 pass
         
         existing.append(entry)

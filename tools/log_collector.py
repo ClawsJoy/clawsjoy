@@ -40,7 +40,7 @@ class LogCollector:
                             )
                             if log_time >= cutoff_time:
                                 logs.append(log)
-                        except:
+                        except Exception as e:
                             pass
 
         # 方法2：从你的reflections.json读取

@@ -17,7 +17,7 @@ for py_file in Path("core/lib").glob("*.py"):
         content = py_file.read_text()
         if "_instance" in content or "singleton" in content.lower():
             singletons.append(py_file.name)
-    except:
+    except Exception as e:
         pass
 print(f"   发现: {', '.join(singletons[:10])}...")
 
@@ -31,7 +31,7 @@ for py_file in Path(".").rglob("*.py"):
         content = py_file.read_text()
         if "create_" in content and "def create_" in content:
             factories.append(py_file.name)
-    except:
+    except Exception as e:
         pass
 print(f"   发现: {', '.join(factories[:8])}...")
 
@@ -43,7 +43,7 @@ for py_file in Path("core/agents/builtin").glob("*.py"):
         content = py_file.read_text()
         if "strategy" in content.lower():
             strategies.append(py_file.name)
-    except:
+    except Exception as e:
         pass
 print(f"   发现: {', '.join(strategies[:5])}")
 
@@ -65,7 +65,7 @@ for py_file in Path(".").rglob("*.py"):
         content = py_file.read_text()
         if "@" in content and "def " in content:
             decorators.append(py_file.name)
-    except:
+    except Exception as e:
         pass
 print(f"   发现: 大量使用 (Flask 路由装饰器、性能监控装饰器等)")
 

@@ -44,7 +44,7 @@ for py_file in Path(".").rglob("*.py"):
         lines = len(py_file.read_text().splitlines())
         if lines > 500:
             print(f"   {py_file}: {lines} 行")
-    except:
+    except Exception as e:
         pass
 
 # 3. 查找可能未使用的导入

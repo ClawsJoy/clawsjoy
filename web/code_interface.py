@@ -87,7 +87,7 @@ if st.session_state.get("review_code"):
             if resp.status_code == 200:
                 review = resp.json().get("review", "无审查结果")
                 st.markdown(review)
-        except:
+        except Exception as e:
             st.error("审查服务不可用")
     st.session_state.review_code = False
 
@@ -106,7 +106,7 @@ if st.session_state.get("optimize_code"):
                 if st.button("应用优化"):
                     st.session_state.current_code = optimized
                     st.rerun()
-        except:
+        except Exception as e:
             st.error("优化服务不可用")
     st.session_state.optimize_code = False
 

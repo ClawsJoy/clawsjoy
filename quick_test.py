@@ -16,7 +16,7 @@ def test_one():
             timeout=30,
         )
         return time.time() - start, r.status_code == 200
-    except:
+    except Exception as e:
         return time.time() - start, False
 
 

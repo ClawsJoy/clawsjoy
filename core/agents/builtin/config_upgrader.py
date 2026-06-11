@@ -64,7 +64,7 @@ class ConfigUpgrader:
         # 尝试直接解析
         try:
             return json.loads(text)
-        except:
+        except Exception as e:
             pass
 
         # 查找JSON代码块
@@ -73,7 +73,7 @@ class ConfigUpgrader:
         if match:
             try:
                 return json.loads(match.group(1))
-            except:
+            except Exception as e:
                 pass
 
         # 查找花括号包裹的内容
@@ -82,7 +82,7 @@ class ConfigUpgrader:
         if match:
             try:
                 return json.loads(match.group(0))
-            except:
+            except Exception as e:
                 pass
 
         return None

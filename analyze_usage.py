@@ -29,7 +29,7 @@ for py_file in Path(".").rglob("*.py"):
             module_name = imp.split(".")[0]
             used_modules.add(module_name)
             module_locations[module_name].append(str(py_file))
-    except:
+    except Exception as e:
         pass
 
 # 检查 core/lib 下的模块使用情况

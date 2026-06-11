@@ -38,7 +38,7 @@ class TenantVectorIndex:
         self.client = chromadb.PersistentClient(path=str(self.persist_dir))
         try:
             self.skill_collection = self.client.get_collection("tenant_skills")
-        except:
+        except Exception as e:
             self.skill_collection = self.client.create_collection(
                 name="tenant_skills",
                 embedding_function=self.embedding_fn,
