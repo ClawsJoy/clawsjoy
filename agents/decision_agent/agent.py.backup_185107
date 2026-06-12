@@ -12,7 +12,6 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 
 from core.agents.business.business_agent_v2 import BusinessAgentV2
-from core.lib.unified_intent_parser import unified_parser
 
 
 @dataclass
@@ -26,15 +25,6 @@ class DecisionRecord:
 
 
 class DecisionAgent(BusinessAgentV2):
-
-    def can_handle(self, action: str, target: str) -> bool:
-        """声明能力：chat/text"""
-        return action == 'chat' and target == 'text'
-    
-    def _handle_standard(self, action: str, target: str, keywords: list, raw_input: str) -> dict:
-        """处理标准化指令"""
-        return self.process(raw_input)
-
     """决策者 - 多源综合决策 (v5.3.0)"""
 
     name = "decision_agent"
@@ -173,45 +163,8 @@ class DecisionAgent(BusinessAgentV2):
         except Exception as e:
             print(f"保存记忆失败: {e}")
 
-    def _execute_business(self, user_input, context: dict = None) -> dict:
-        # 支持标准化 JSON 输入
-        if isinstance(user_input, dict):
-            # 标准化 JSON 输入
-            if "action" in user_input:
-                return self._handle_standard_json(user_input, context)
-            # 兼容 dict 格式
-            raw_input = user_input.get("raw_input", user_input.get("message", ""))
-            if raw_input:
-                return self._decide_and_route(raw_input, context)
-        # 字符串输入（原有逻辑）
+    def _execute_business(self, user_input: str, context: dict = None) -> dict:
         return self._decide_and_route(user_input, context)
-    
-    def _handle_standard_json(self, standard_json: dict, context: dict = None) -> dict:
-        """处理标准化 JSON 输入"""
-        action = standard_json.get("action", "chat")
-        target = standard_json.get("target", "text")
-        keywords = standard_json.get("keywords", [])
-        raw_input = standard_json.get("raw_input", " ".join(keywords))
-        
-        # 根据 action 路由
-        if action == "play" and target == "media":
-            from agents.media_agent.agent import media_agent
-            return media_agent.process(raw_input, context)
-        elif action == "generate" and target == "code":
-            from agents.code_agent.agent import code_agent
-            return code_agent.process(raw_input, context)
-        elif action == "schedule" and target == "task":
-            from agents.memory_agent.agent import memory_agent
-            return memory_agent.process(f"记住 {raw_input}", context)
-        elif action == "calculate" and target == "number":
-            from agents.calculator_agent.agent import calculator_agent
-            return calculator_agent.process(raw_input, context)
-        elif action == "translate" and target == "text":
-            from agents.translate_agent.agent import translate_agent
-            return translate_agent.process(raw_input, context)
-        
-        # 默认使用原有决策路由
-        return self._decide_and_route(raw_input, context)
 
     # ========== 缓存方法 ==========
     def _get_cache_key(self, user_input: str) -> str:

@@ -11,6 +11,15 @@ from core.agents.business.business_agent_v2 import BusinessAgentV2
 
 
 class VideoAgent(BusinessAgentV2):
+
+    def can_handle(self, action: str, target: str) -> bool:
+        """声明能力：generate/video"""
+        return action == 'generate' and target == 'video'
+    
+    def _handle_standard(self, action: str, target: str, keywords: list, raw_input: str) -> dict:
+        """处理标准化指令"""
+        return self.process(raw_input)
+
     name = "video_agent"
     description = "智能视频处理"
     version = "3.2.0"
