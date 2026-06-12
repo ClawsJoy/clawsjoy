@@ -46,6 +46,8 @@ from core.lib.unified_config import unified_config
 from core.lib.user_context import user_context
 from engine.security import desensitizer
 
+
+
 # 配置日志级别
 logging.basicConfig(
     level=logging.INFO,  # 生产环境用 INFO，调试用 DEBUG
@@ -72,6 +74,13 @@ session.mount("https://", adapter)
 
 # ========== Flask 应用 ==========
 app = Flask(__name__)
+
+
+@app.route('/codex')
+def codex():
+    """Codex 风格代码助手界面"""
+    from flask import render_template
+    return render_template('codex.html')
 
 # 注册全局错误处理器
 register_error_handlers(app)
@@ -468,31 +477,73 @@ swagger = Swagger(app, config=swagger_config)
 # 需要在原有的路由
 
 
+# ========== 扩展原有 enhanced_chat 路由 ==========
+# 注意：这是修改原有的路由，不是新增
+
 @app.route("/api/v5/enhanced/chat", methods=["POST"])
 @require_auth
 def enhanced_chat():
+    """增强对话接口 - 兼容旧格式 + 支持新格式"""
     import logging
-
+    
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
     logger.info("=" * 50)
     logger.info("enhanced_chat 被调用")
 
     data = request.json or {}
-    message = data.get("message", "")
-    user_id = data.get("user_id", "guest")
-    logger.info(f"message: {message}, user_id: {user_id}")
+    
+    # 检测是否是标准化 JSON（包含 action 或 raw_input 字段）
+    if "action" in data or "raw_input" in data:
+        # 标准化 JSON：使用新的智慧处理
+        user_id = data.get("user_id", "guest")
+        agent_name = data.get("agent", "chat_agent")
+        
+        logger.info(f"标准化 JSON 输入: action={data.get('action')}, target={data.get('target')}")
+        
+        # 尝试使用智慧 Agent
+        try:
+            wisdom_agent = wisdom_factory.get_wisdom_agent(agent_name, user_id)
+            if wisdom_agent:
+                result = wisdom_agent.handle_json(data)
+                return jsonify(result)
+        except Exception as e:
+            logger.error(f"智慧 Agent 处理失败: {e}")
+        
+        # 降级：使用原有 chat_engine
+        from core.lib.chat_engine import chat_engine
+        result = chat_engine.execute(data, user_id)
+        return jsonify(result)
+    
+    else:
+        # 普通文本输入
+        message = data.get("message", "")
+        user_id = data.get("user_id", "guest")
+        
+        logger.info(f"普通文本输入: {message[:50]}...")
+        
+        if not message:
+            return jsonify({"success": False, "response": "请输入消息", "user_id": user_id})
+        
+        # 尝试使用智慧 Agent
+        try:
+            wisdom_agent = wisdom_factory.get_wisdom_agent("chat_agent", user_id)
+            if wisdom_agent:
+                result = wisdom_agent.process(message)
+                return jsonify(result)
+        except Exception as e:
+            logger.error(f"智慧 Agent 处理失败: {e}")
+        
+        # 降级：使用原有 chat_engine
+        from core.lib.chat_engine import chat_engine
+        result = chat_engine.execute(message, user_id)
+        return jsonify(result)
 
-    if not message:
-        return jsonify({"success": False, "response": "请输入消息", "user_id": user_id})
-
-    from core.lib.chat_engine import chat_engine
-
-    result = chat_engine.execute(message, user_id)
-    logger.info(f"返回结果: {result.get('response', '')[:100]}")
-    return jsonify(result)  # ========== 记忆路由 ==========
 
 
+
+
+# ========== 记忆路由 ==========
 @app.route("/api/v5/memory/remember", methods=["POST"])
 def memory_remember():
     data = request.json or {}
@@ -711,38 +762,36 @@ def agent_broadcast():
 
                 agent_class_map = unified_config.get("agent_class_map", {})
                 class_name = agent_class_map.get(agent_name)
+
                 if class_name is None:
                     if agent_name.endswith("_agent"):
                         base_name = agent_name[:-6]
                     else:
                         base_name = agent_name
-                    class_name = (
-                        "".join(w.capitalize() for w in base_name.split("_")) + "Agent"
-                    )
+                    class_name = "".join(w.capitalize() for w in base_name.split("_")) + "Agent"
+                
                 agent_class = getattr(module, class_name)
                 agent = agent_class(user_id)
-
+                
                 # 如果 Agent 有 broadcast 方法就调用
                 if hasattr(agent, "broadcast"):
                     result = agent.broadcast(message, sender)
-                    results.append(
-                        {"agent": agent_name, "success": True, "result": result}
-                    )
+                    results.append({"agent": agent_name, "success": True, "result": result})
                 else:
-                    results.append(
-                        {"agent": agent_name, "success": True, "message": "已接收广播"}
-                    )
+                    results.append({"agent": agent_name, "success": True, "message": "已接收广播"})
+                    
             except Exception as e:
                 results.append({"agent": agent_name, "success": False, "error": str(e)})
+        
+        # ✅ 注意：return 要放在 for 循环外面
+        return jsonify({
+            "success": True,
+            "message": f"广播已发送给 {len(results)} 个 Agent",
+            "sender": sender,
+            "results": results,
+        })
 
-                return jsonify(
-                    {
-                        "success": True,
-                        "message": f"广播已发送给 {len(results)} 个 Agent",
-                        "sender": sender,
-                        "results": results,
-                    }
-                )
+
 
 
 # ========== 用户认证 API（使用现有 JWT 管理）==========
@@ -1268,6 +1317,130 @@ def web_index():
     return send_from_directory('web', 'index.html')
 
 
+@app.route('/api/v5/image/generate', methods=['POST'])
+def generate_image():
+    """文生图接口"""
+    from flask import request, jsonify
+    from core.lib.free_image_api import free_api
+
+    data = request.json or {}
+    prompt = data.get('prompt', '')
+
+    if not prompt:
+        return jsonify({'error': '请提供提示词'}), 400
+
+    result = free_api.get_image_url(prompt)
+    return jsonify(result)
+
+
+
+
+# agent_gateway_enhanced.py - 在现有代码基础上添加以下内容
+
+# ========== 在文件开头添加导入 ==========
+from core.agents.wisdom.wisdom_factory import wisdom_factory
+from core.agents.business.business_agent import BusinessAgent
+from core.lib.json_standard import StandardJSON
+
+# ========== 新增智慧对话路由（不影响现有接口）==========
+
+@app.route("/api/v5/wisdom/chat", methods=["POST"])
+def wisdom_chat():
+    """
+    智慧对话接口 - 新接口，独立于原有 enhanced_chat
+
+    特点:
+    1. 支持标准化 JSON 输入
+    2. 支持自然语言输入
+    3. 自动路由到合适的 Agent
+    4. 带缓存和智慧能力
+    """
+    data = request.json or {}
+    user_id = data.get("user_id", "guest")
+    message = data.get("message", "")
+
+    # 检测输入类型
+    if "action" in data or "raw_input" in data:
+        # 标准化 JSON 输入
+        agent_name = data.get("agent", "chat_agent")
+        wisdom_agent = wisdom_factory.get_wisdom_agent(agent_name, user_id)
+
+        if not wisdom_agent:
+            return jsonify({
+                "version": "1.1",
+                "success": False,
+                "error": f"Agent {agent_name} 不可用",
+                "output_content": f"❌ Agent {agent_name} 不可用"
+            })
+
+        result = wisdom_agent.handle_json(data)
+        return jsonify(result)
+    else:
+        # 自然语言输入 - 使用请求中指定的 agent，默认为 chat_agent
+        agent_name = data.get("agent", "chat_agent")
+        wisdom_agent = wisdom_factory.get_wisdom_agent(agent_name, user_id)
+
+        if not wisdom_agent:
+            return jsonify({"success": False, "response": f"Agent {agent_name} 不可用"})
+
+        result = wisdom_agent.process(message)
+        return jsonify(result)
+
+# ========== 新增智慧统计接口 ==========
+
+@app.route("/api/v5/wisdom/stats", methods=["GET"])
+def wisdom_stats():
+    """获取智慧 Agent 统计信息"""
+    user_id = request.args.get("user_id", "guest")
+    agent_name = request.args.get("agent", None)
+    
+    if agent_name:
+        wisdom_agent = wisdom_factory.get_wisdom_agent(agent_name, user_id)
+        if wisdom_agent:
+            return jsonify(wisdom_agent.get_self_awareness())
+        return jsonify({"error": f"Agent {agent_name} 不存在或未激活"}), 404
+    
+    return jsonify(wisdom_factory.get_all_wisdom_stats())
+
+
+# ========== 新增决策解释接口 ==========
+
+@app.route("/api/v5/wisdom/explain", methods=["POST"])
+def wisdom_explain():
+    """解释 Agent 的决策过程"""
+    data = request.json or {}
+    message = data.get("message", "")
+    user_id = data.get("user_id", "guest")
+    agent_name = data.get("agent", "chat_agent")
+    
+    wisdom_agent = wisdom_factory.get_wisdom_agent(agent_name, user_id)
+    
+    if not wisdom_agent:
+        return jsonify({"error": f"Agent {agent_name} 不存在"}), 404
+    
+    explanation = wisdom_agent.explain_decision(message)
+    return jsonify(explanation)
+
+
+# ========== 新增热重载接口 ==========
+
+@app.route("/api/v5/wisdom/reload", methods=["POST"])
+def wisdom_reload():
+    """热重载指定 Agent"""
+    data = request.json or {}
+    agent_name = data.get("agent")
+    
+    if not agent_name:
+        return jsonify({"error": "请指定 agent 名称"}), 400
+    
+    # 清除缓存，下次访问时会重新加载
+    if agent_name in wisdom_factory._wrapped_agents:
+        del wisdom_factory._wrapped_agents[agent_name]
+        return jsonify({"success": True, "message": f"Agent {agent_name} 已热重载"})
+    
+    return jsonify({"success": False, "message": f"Agent {agent_name} 未加载"}), 404
+
+
 
 
 # ========== 启动入口 ==========
@@ -1294,4 +1467,4 @@ if __name__ == "__main__":
 # }
 
 
-
+   

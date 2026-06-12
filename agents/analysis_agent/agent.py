@@ -11,6 +11,15 @@ from core.agents.business.business_agent_v2 import BusinessAgentV2
 
 
 class AnalysisAgent(BusinessAgentV2):
+
+    def can_handle(self, action: str, target: str) -> bool:
+        """声明能力：search/info"""
+        return action == 'search' and target == 'info'
+    
+    def _handle_standard(self, action: str, target: str, keywords: list, raw_input: str) -> dict:
+        """处理标准化指令"""
+        return self.process(raw_input)
+
     """分析师 - 双模式智能分析"""
 
     name = "analysis_agent"

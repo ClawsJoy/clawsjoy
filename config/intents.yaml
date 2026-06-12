@@ -1,4 +1,15 @@
 intents:
+  analysis:
+    keywords:
+    - 核实
+    - 证实
+    - 验证
+    - 分析
+    - 确认
+    - 判断
+    - 评估
+    priority: 15
+    use_llm: true
   calculate:
     keywords:
     - 计算
@@ -76,7 +87,9 @@ intents:
     - 童话
     - 寓言
     - 讲个
-    priority: 1
+    min_length: 100
+    priority: 3
+    require_keyword: true
     use_llm: true
   thanks:
     keywords:

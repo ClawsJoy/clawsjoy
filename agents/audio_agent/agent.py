@@ -5,6 +5,15 @@ from typing import Dict, Optional
 from core.agents.business.business_agent_v2 import BusinessAgentV2
 
 class AudioAgent(BusinessAgentV2):
+
+    def can_handle(self, action: str, target: str) -> bool:
+        """声明能力：play/audio"""
+        return action == 'play' and target == 'audio'
+    
+    def _handle_standard(self, action: str, target: str, keywords: list, raw_input: str) -> dict:
+        """处理标准化指令"""
+        return self.process(raw_input)
+
     name = "audio_agent"
     description = "音频处理智能体"
     version = "1.0.0"
