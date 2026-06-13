@@ -1386,6 +1386,74 @@ def wisdom_chat():
         result = wisdom_agent.process(message)
         return jsonify(result)
 
+
+# ========== 新增决策统计接口 ==========
+
+@app.route("/api/v5/wisdom/decision/stats", methods=["GET"])
+def wisdom_decision_stats():
+    """获取决策者学习统计"""
+    user_id = request.args.get("user_id", "guest")
+    
+    decision_agent = wisdom_factory.get_wisdom_agent("decision_agent", user_id)
+    
+    if not decision_agent:
+        return jsonify({"error": "DecisionAgent 未加载"}), 404
+    
+    if hasattr(decision_agent, 'get_learning_stats'):
+        stats = decision_agent.get_learning_stats()
+        return jsonify({
+            "success": True,
+            "stats": stats,
+            "user_id": user_id
+        })
+    
+    return jsonify({"error": "DecisionAgent 不支持学习统计"}), 400
+
+
+@app.route("/api/v5/wisdom/decision/feedback", methods=["POST"])
+def wisdom_decision_feedback():
+    """提供决策反馈（用于学习）"""
+    data = request.json or {}
+    user_id = data.get("user_id", "guest")
+    task_id = data.get("task_id")
+    was_correct = data.get("was_correct", False)
+    correct_agent = data.get("correct_agent", None)
+    
+    decision_agent = wisdom_factory.get_wisdom_agent("decision_agent", user_id)
+    
+    if not decision_agent:
+        return jsonify({"error": "DecisionAgent 未加载"}), 404
+    
+    if hasattr(decision_agent, 'provide_feedback'):
+        result = decision_agent.provide_feedback(task_id, was_correct, correct_agent)
+        return jsonify(result)
+    
+    return jsonify({"error": "DecisionAgent 不支持反馈"}), 400
+
+
+@app.route("/api/v5/wisdom/decision/history", methods=["GET"])
+def wisdom_decision_history():
+    """获取决策历史"""
+    user_id = request.args.get("user_id", "guest")
+    limit = int(request.args.get("limit", 50))
+    
+    decision_agent = wisdom_factory.get_wisdom_agent("decision_agent", user_id)
+    
+    if not decision_agent:
+        return jsonify({"error": "DecisionAgent 未加载"}), 404
+    
+    if hasattr(decision_agent, '_decision_history'):
+        history = decision_agent._decision_history[-limit:]
+        return jsonify({
+            "success": True,
+            "history": history,
+            "total": len(decision_agent._decision_history),
+            "user_id": user_id
+        })
+    
+    return jsonify({"error": "无法获取决策历史"}), 400
+
+
 # ========== 新增智慧统计接口 ==========
 
 @app.route("/api/v5/wisdom/stats", methods=["GET"])

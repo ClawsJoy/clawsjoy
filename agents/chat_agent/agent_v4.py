@@ -4,12 +4,12 @@
 import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-
+import random
 import re
 from datetime import datetime  # 添加这行
 from typing import Dict, Optional, Tuple
 from core.agents.business.business_agent import BusinessAgent
-
+from core.lib.proactive.proactive_service import proactive_service
 
 class ChatAgentV4(BusinessAgent):
     """聊天 Agent - 智慧化试点版本"""
@@ -24,7 +24,8 @@ class ChatAgentV4(BusinessAgent):
         # 多轮对话历史
         self._conversation_history = []
         self._max_history = 10  # 保留最近10轮对话
-    
+        # 启动主动建议服务
+        self.add_proactive_hook()
         print(f"💬 ChatAgent v{self.version} 智慧化试点启动")
         print(f"   💾 对话历史已启用 (保留最近 {self._max_history} 轮)")
 
@@ -102,20 +103,75 @@ class ChatAgentV4(BusinessAgent):
         return capabilities.get((action, target), (False, 0.0))
     
     def _execute_business(self, user_input: str, context: Optional[Dict] = None) -> Dict:
-        """核心对话逻辑 - 支持多轮对话"""
+        """核心对话逻辑 - 支持多轮对话和任务分解"""
+        
+        # 更新用户画像
+        proactive_service.update_user_profile(self.user_id, {
+            "preference": user_input[:50],
+            "timestamp": datetime.now().isoformat()
+        })
     
-        # 1. 清空对话命令
+        # 获取主动建议（仅在闲聊时）
+        if self._is_chat_task(user_input):
+            suggestions = proactive_service.get_suggestions(self.user_id)
+            if suggestions:
+                return self._response(suggestions[0], metadata={"proactive": True})
+
+
+        # 检测是否来自 Orchestrator（通过 context）
+        from_orchestrator = context and context.get("caller") == "orchestrator"
+    
+        # 如果是被 Orchestrator 调用，直接响应，不进行任务分解
+        if from_orchestrator:
+            print(f"[ChatAgent] 被 Orchestrator 调用，直接响应")
+            # 直接生成图表（如果需要）或返回简单响应
+            if "图表" in user_input or "生成" in user_input:
+                return self._generate_simple_chart_response(user_input)
+            return self._simple_response(user_input)
+        
+            # 测试 decompose_task 是否存在
+            if hasattr(self, 'decompose_task'):
+                print(f"[DEBUG] decompose_task 方法存在")
+            else:
+                print(f"[DEBUG] decompose_task 方法不存在！")
+               
+        # ========== 1. 任务分解（最高优先级）==========
+        complex_keywords = ["并且", "同时", "然后", "之后", "接着", "先", "再", "最后"]
+        has_complex = any(kw in user_input for kw in complex_keywords)
+        action_words = ["分析", "生成", "发送", "创建", "写", "计算", "翻译"]
+        action_count = sum(1 for aw in action_words if aw in user_input)
+
+        if has_complex or action_count >= 2:
+            print(f"[DEBUG] 检测到复杂任务: {user_input[:50]}...")
+            decomposition = self._rule_based_decompose(user_input)
+            sub_tasks = decomposition.get("sub_tasks", [])
+        
+            task_list = [f"  {task['id']}. {task['action']} {task['target']}: {task['description']}" 
+                         for task in sub_tasks]
+            result_text = f"📋 **任务分解计划**\n\n" + "\n".join(task_list)
+            result_text += f"\n\n⚙️ 执行模式: {decomposition.get('mode')}"
+        
+            return self._response(result_text, metadata={"decomposed": True})
+
+        # ========== 2. 主动建议（仅限闲聊场景）==========
+        if self._should_show_suggestion(user_input):
+            suggestions = self._get_proactive_suggestions(user_input)
+            if suggestions:
+                return self._response(suggestions[0], metadata={"proactive": True})
+
+        # ========== 3. 清空对话 ==========
         if user_input.strip() in ["清空对话", "清空历史", "重置对话", "clear"]:
             result = self._clear_conversation()
             return self._response(result, metadata={"action": "clear_history"})
     
-        # 2. 情感回应
+              
+        # ========== 4. 情感回应 ==========
         emotion_response = self._get_emotion_response(user_input)
         if emotion_response:
             self._update_conversation(user_input, emotion_response)
             return self._response(emotion_response, metadata={"emotion": True})
     
-        # 3. 名字记忆
+        # ========== 5. 名字记忆==========
         if "我叫" in user_input and not any(q in user_input for q in ["什么", "吗", "？"]):
             name = self._extract_name(user_input)
             if name:
@@ -124,7 +180,7 @@ class ChatAgentV4(BusinessAgent):
                 self._update_conversation(user_input, response)
                 return self._response(response, metadata={"action": "remember_name"})
     
-        # 4. 查询名字
+        # ========== 6.查询名字==========
         if any(q in user_input for q in ["我叫什么", "我的名字", "我叫啥", "名字是什么"]):
             name = self.recall_forever("user_name")
             if name:
@@ -134,7 +190,7 @@ class ChatAgentV4(BusinessAgent):
             self._update_conversation(user_input, response)
             return self._response(response)
     
-        # 5. 记忆偏好
+        # ========== 7.记忆偏好==========
         if "记住" in user_input or "我喜欢" in user_input:
             match = re.search(r'(?:记住|我喜欢)(.+?)(?:是|：)(.+)', user_input)
             if match:
@@ -144,7 +200,7 @@ class ChatAgentV4(BusinessAgent):
                 self._update_conversation(user_input, response)
                 return self._response(response)
     
-        # 6. 查询偏好
+        # ========== 8. 查询偏好==========
         if "我喜欢什么" in user_input or "我的偏好" in user_input:
             prefs = []
             for key in ["颜色", "食物", "电影", "音乐", "书"]:
@@ -158,7 +214,7 @@ class ChatAgentV4(BusinessAgent):
             self._update_conversation(user_input, response)
             return self._response(response)
     
-        # 7. 查询对话历史（新增）
+        # ========== 9.查询对话历史（新增）==========
         if any(q in user_input for q in ["刚才说了什么", "上一轮", "之前我说", "我们聊了什么"]):
             if self._conversation_history:
                 last = self._conversation_history[-1]
@@ -168,7 +224,7 @@ class ChatAgentV4(BusinessAgent):
             self._update_conversation(user_input, response)
             return self._response(response)
     
-        # 8. 多轮对话（使用 LLM + 上下文）
+        # ========== 10.多轮对话（使用 LLM + 上下文）===========
         context_prompt = self._get_conversation_context(user_input)
         response = self._call_llm(context_prompt)
     
@@ -177,7 +233,10 @@ class ChatAgentV4(BusinessAgent):
     
         self._update_conversation(user_input, response)
         return self._response(response, metadata={"source": "llm", "context_used": len(self._conversation_history) > 0})
-
+    def _is_complex_task(self, user_input: str) -> bool:
+        """判断是否为复杂任务"""
+        complex_indicators = ["并且", "同时", "然后", "之后", "接着", "先", "再", "最后", "分析", "生成", "发送"]
+        return len(user_input) > 30 and any(ind in user_input for ind in complex_indicators)
 
 
     def _response(self, content: str, **kwargs) -> dict:
@@ -199,6 +258,56 @@ class ChatAgentV4(BusinessAgent):
             if name not in ["什么", "哪个", "谁", "啥"]:
                 return name
         return None
+
+    def _should_show_suggestion(self, user_input: str) -> bool:
+        """判断是否应该显示主动建议"""
+    
+        # 条件1: 不是复杂任务
+        complex_keywords = ["并且", "同时", "然后", "之后", "接着", "先", "再", "最后"]
+        action_words = ["分析", "生成", "发送", "创建", "写", "计算", "翻译"]
+    
+        is_complex = any(kw in user_input for kw in complex_keywords) or \
+                     sum(1 for aw in action_words if aw in user_input) >= 2
+    
+        if is_complex:
+            return False
+    
+        # 条件2: 不是命令类语句
+        command_keywords = ["清空", "删除", "设置", "记住", "回忆", "我叫", "我的名字"]
+        if any(kw in user_input for kw in command_keywords):
+            return False
+    
+        # 条件3: 不是情感表达
+        emotion_keywords = ["开心", "高兴", "难过", "伤心", "谢谢", "感谢"]
+        if any(kw in user_input for kw in emotion_keywords):
+            return False
+    
+        # 条件4: 用户没有明确指定任务（输入较短，类似闲聊）
+        if len(user_input) > 20:
+            return False
+    
+        return True
+
+    def _generate_simple_chart_response(self, user_input: str) -> Dict:
+        """生成简单的图表响应（当被 Orchestrator 调用时）"""
+        return self._response(
+            f"📊 根据上一步的分析结果，我来生成图表。\n\n"
+            f"图表类型建议：柱状图或折线图\n"
+            f"数据可视化已准备就绪。",
+            metadata={"role": "chart_generator", "from_orchestrator": True}
+        )
+
+    def _simple_response(self, user_input: str) -> Dict:
+        """简单响应（当被 Orchestrator 调用时）"""
+        return self._response(
+            f"收到请求：{user_input[:100]}",
+            metadata={"from_orchestrator": True}
+        )
+
+    def _is_chat_task(self, user_input: str) -> bool:
+        """判断是否为闲聊任务"""
+        task_keywords = ["代码", "计算", "翻译", "分析", "待办"]
+        return not any(kw in user_input for kw in task_keywords) and len(user_input) < 30
 
 
 if __name__ == "__main__":
