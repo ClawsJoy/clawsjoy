@@ -1,0 +1,65 @@
+tags:
+  - name: Wisdom
+    description: 智慧对话接口
+parameters:
+  - name: body
+    in: body
+    required: true
+    schema:
+      type: object
+      properties:
+        user_id:
+          type: string
+          description: 用户ID
+          example: test
+        agent:
+          type: string
+          description: Agent名称
+          enum:
+            - chat_agent
+            - code_agent
+            - translate_agent
+            - calculator_agent
+          default: chat_agent
+        message:
+          type: string
+          description: 自然语言消息
+          example: 你好
+        action:
+          type: string
+          description: 动作类型
+          enum:
+            - chat
+            - code
+            - translate
+            - calculate
+        target:
+          type: string
+          description: 目标类型
+          enum:
+            - text
+            - code
+            - number
+        raw_input:
+          type: string
+          description: 原始输入
+responses:
+  200:
+    description: 成功
+    schema:
+      type: object
+      properties:
+        success:
+          type: boolean
+        response:
+          type: string
+        agent:
+          type: string
+        meta_cognition:
+          type: object
+  400:
+    description: 请求错误
+  404:
+    description: Agent不存在
+  500:
+    description: 服务器错误

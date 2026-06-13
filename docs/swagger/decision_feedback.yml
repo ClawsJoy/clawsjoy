@@ -1,0 +1,24 @@
+tags:
+  - name: Decision
+    description: 决策管理接口
+parameters:
+  - name: body
+    in: body
+    required: true
+    schema:
+      type: object
+      properties:
+        user_id:
+          type: string
+          required: true
+        task_id:
+          type: integer
+          required: true
+        was_correct:
+          type: boolean
+          required: true
+        correct_agent:
+          type: string
+responses:
+  200:
+    description: 成功

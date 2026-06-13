@@ -1,0 +1,23 @@
+tags:
+  - name: Decision
+    description: 决策管理接口
+parameters:
+  - name: user_id
+    in: query
+    type: string
+    required: true
+    description: 用户ID
+responses:
+  200:
+    description: 成功
+    schema:
+      type: object
+      properties:
+        total_decisions:
+          type: integer
+        recent_accuracy:
+          type: number
+        agents_calibrated:
+          type: integer
+        agent_accuracies:
+          type: object
