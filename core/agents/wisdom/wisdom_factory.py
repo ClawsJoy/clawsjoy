@@ -57,6 +57,31 @@ class WisdomFactory:
                 from agents.code_agent.agent_v4 import CodeAgentV4
                 print(f"✅ 加载 {agent_name} V4 智慧版本")
                 return CodeAgentV4(user_id)            
+            if agent_name == "butler_agent":
+                from agents.butler_agent.agent_v4 import ButlerAgentV4
+                print(f"✅ 加载 {agent_name} V4 智慧版本")
+                return ButlerAgentV4(user_id)
+            if agent_name == "analysis_agent":
+                from agents.analysis_agent.agent_v4 import AnalysisAgentV4
+                print(f"✅ 加载 {agent_name} V4 智慧版本")
+                return AnalysisAgentV4(user_id)
+            if agent_name == "orchestrator":
+                from agents.orchestrator.agent_v4 import OrchestratorV4
+                print(f"✅ 加载 {agent_name} V4 智慧版本")
+                return OrchestratorV4(user_id)
+            if agent_name == "decision_agent":
+                from agents.decision_agent.agent_v4 import DecisionAgentV4
+                print(f"✅ 加载 {agent_name} V4 智慧版本")
+                return DecisionAgentV4(user_id)
+            if agent_name == "translate_agent":
+                from agents.translate_agent.agent_v4 import TranslateAgentV4
+                print(f"✅ 加载 {agent_name} V4 智慧版本")
+                return TranslateAgentV4(user_id)
+
+            if agent_name == "calculator_agent":
+                from agents.calculator_agent.agent_v4 import CalculatorAgentV4
+                print(f"✅ 加载 {agent_name} V4 智慧版本")
+                return CalculatorAgentV4(user_id)
             # 其他 Agent 使用原有加载逻辑
             module = __import__(f"agents.{agent_name}.agent", fromlist=[agent_name])
             for attr in dir(module):

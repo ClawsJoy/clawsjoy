@@ -114,7 +114,12 @@ class WisdomWrapper:
             "max_experiences": 1000,
             "uncertainty_threshold": 0.6
         }
-    
+    def __getattr__(self, name):
+        """透传未定义的方法到原始 Agent"""
+        if hasattr(self._agent, name):
+            return getattr(self._agent, name)
+        raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
+
     # ==================== 核心入口 ====================
     
     def process(self, user_input: str, context: Dict = None) -> Dict:

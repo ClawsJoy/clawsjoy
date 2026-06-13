@@ -18,14 +18,17 @@ BusinessAgent v4.0 - 合并后的统一业务基类
 - process(): 底层业务逻辑 (子类实现)
 """
 
-from typing import Dict, Optional, Any, Tuple
+from typing import Dict, Optional, Any, Tuple, List  # 添加 List
 from abc import abstractmethod
 import hashlib
 import time
-
+import re
+import random
+from datetime import datetime
 from core.agents.base.smart_agent import SmartAgent
 from core.agents.base.mixins.json_capable_mixin import JSONCapableMixin
-
+from core.lib.federated.federated_learning import federated_learning
+from core.lib.performance.optimizer import cache_manager, batch_processor, model_selector
 
 class BusinessAgent(SmartAgent, JSONCapableMixin):
     """
@@ -78,15 +81,19 @@ class BusinessAgent(SmartAgent, JSONCapableMixin):
             "cache_hits": 0,
             "cache_misses": 0,
             "batch_processed": 0,
-            "model_used": {}
+            "model_used": {},
+            "total_interactions": 0,  # 添加这行
         }
-        
+        #==========主动建议后台服务 ==========
+        self._start_proactive_service()
         # 修复：正确的 getattr 语法
         agent_name = getattr(self, 'name', 'unknown')
+        #==========联邦学习 ==========
+        self._federated_enabled = True
         print(f"🧠 BusinessAgent v4.0 初始化: {agent_name}")
         print(f"   💾 缓存大小: {self._CACHE_SIZE}")
         print(f"   📦 批处理大小: {self._BATCH_SIZE}")
-    
+
     # ========== 引擎初始化 ==========
     
     def _init_engines(self):
@@ -187,34 +194,68 @@ class BusinessAgent(SmartAgent, JSONCapableMixin):
     
     def _select_model(self, user_input: str) -> str:
         """根据任务复杂度选择模型"""
-        # 简单任务用小模型
-        if len(user_input) < 50:
-            return "qwen2.5:3b"  # 改为存在的模型
-        # 代码或复杂任务用大模型
-        elif any(kw in user_input for kw in ["代码", "分析", "总结", "复杂"]):
-            return "qwen2:7b-instruct"  # 改为存在的模型
-        
+        user_lower = user_input.lower()
+    
+        # 科学计算任务 - 用最强模型
+        science_keywords = ["sqrt", "sin", "cos", "tan", "log", "ln", "pi", 
+                            "函数", "公式", "科学计算", "factorial", "导数", "积分",
+                            "解方程", "求导", "微分"]
+    
+        if any(kw in user_lower for kw in science_keywords):
+            # 优先使用 qwen2.5:7b（4.7GB）
+            return "qwen2.5:7b"
+    
+        # 复杂计算任务
+        complex_keywords = ["计算", "公式", "表达式", "括号", "幂", "平方"]
+        if any(kw in user_lower for kw in complex_keywords) and len(user_input) > 30:
+            return "qwen2.5:7b"
+    
+        # 代码相关任务 - 用 codellama
+        code_keywords = ["代码", "编程", "函数", "算法", "写一个"]
+        if any(kw in user_lower for kw in code_keywords):
+            return "codellama:7b"
+    
+        # 一般任务 - 用 phi3 或 qwen2.5:3b
+        if len(user_input) > 50:
+            return "phi3:mini"
+    
         return "qwen2.5:3b"
-        
-            
+
+
     def _call_llm(self, prompt: str, model: str = None) -> str:
-        """调用 LLM（带模型选择）"""
+        """调用 LLM - 带模型选择"""
         if not model:
-            model = self._select_model(prompt)
-        
+            model = model_selector.select(prompt, len(prompt))  
         try:
             import requests
+        
+            # 使用 Ollama API
             resp = requests.post(
-                "http://localhost:11434/api/generate",
-                json={"model": model, "prompt": prompt, "stream": False},
-                timeout=120  # 从 60 改为 120
+                "http://localhost:11434/api/generate",  # 确保端口正确
+                json={
+                    "model": model,
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {
+                        "temperature": 0.3,  # 降低温度以获得更确定性的输出
+                        "num_predict": 512
+                    }
+                },
+                timeout=60
             )
+        
             if resp.status_code == 200:
-                return resp.json().get("response", "")
+                data = resp.json()
+                return data.get("response", "")
+            else:
+                print(f"[DEBUG] LLM 返回错误: {resp.status_code}")
         except Exception as e:
-            print(f"LLM 调用失败: {e}")
-        return ""
+            print(f"[DEBUG] LLM 调用异常: {e}")
     
+        return ""        
+      
+
+
     # ========== 核心方法 ==========
     
     def can_handle_json(self, action: str, target: str) -> Tuple[bool, float]:
@@ -235,20 +276,25 @@ class BusinessAgent(SmartAgent, JSONCapableMixin):
         """
         处理入口（自动使用缓存、批处理）
         """
-        # 检查缓存
-        cache_key = self._get_cache_key(user_input, context)
-        cached = self._get_from_cache(cache_key)
+        # 增加交互计数
+        self._stats["total_interactions"] = self._stats.get("total_interactions", 0) + 1
+        # 生成缓存键
+        cache_key = hashlib.md5(f"{user_input}:{self.name}".encode()).hexdigest()
+    
+        # 尝试从缓存获取
+        cached = cache_manager.get(cache_key)
         if cached:
             return cached
-        
+    
         # 执行
         result = self._execute_business(user_input, context)
-        
-        # 保存缓存
-        self._save_to_cache(cache_key, result)
-        
-        return result
     
+        # 存入缓存
+        cache_manager.set(cache_key, result)
+    
+        return result
+
+
     def handle(self, user_input: str, context: Optional[Dict] = None) -> Dict:
         """
         自然语言入口（兼容）
@@ -275,3 +321,447 @@ class BusinessAgent(SmartAgent, JSONCapableMixin):
             "cache_misses": cache_misses
         })
         return stats
+
+
+
+    # ========== 主动建议能力 ==========
+
+    def _get_proactive_suggestions(self, user_input: str = None) -> list:
+        """获取主动建议列表"""
+        suggestions = []
+    
+        # 1. 基于时间建议
+        current_hour = datetime.now().hour
+        if 6 <= current_hour < 9:
+            suggestions.append("☀️ 早上好！需要我帮您规划今天的工作吗？")
+        elif 11 <= current_hour < 14:
+            suggestions.append("🍜 午饭时间到了，需要帮您推荐附近餐厅吗？")
+        elif 21 <= current_hour < 23:
+            suggestions.append("🌙 晚安！需要设置明早的提醒吗？")
+    
+        # 2. 基于未完成事项
+        if hasattr(self, '_todos') and self._todos:
+            pending = [t for t in self._todos if not t.get("completed", False)]
+            if pending:
+                suggestions.append(f"📋 您有 {len(pending)} 个待办未完成，需要处理吗？")
+    
+        # 3. 基于用户偏好
+        user_name = self.recall_forever("user_name")
+        if user_name and "建议" not in str(user_input):
+            suggestions.append(f"💡 {user_name}，有什么我可以帮您的吗？")
+    
+        # 4. 基于对话历史（如果很久没聊）
+        if hasattr(self, '_conversation_history') and len(self._conversation_history) > 10:
+            suggestions.append("💬 您最近聊了很多，需要我帮您总结一下吗？")
+    
+        return suggestions[:3]  # 最多3条
+
+    def add_proactive_hook(self):
+        """添加主动服务钩子（在后台运行）"""
+        import threading
+    
+        def _proactive_loop():
+            while getattr(self, '_proactive_running', True):
+                time.sleep(300)  # 每5分钟检查一次
+                suggestions = self._get_proactive_suggestions()
+                if suggestions:
+                    # 触发主动推送（可以通过事件系统）
+                    self._trigger_proactive_event(suggestions)
+    
+        self._proactive_running = True
+        thread = threading.Thread(target=_proactive_loop, daemon=True)
+        thread.start()
+        print(f"✅ {self.name} 主动建议服务已启动")
+
+    def _trigger_proactive_event(self, suggestions: list):
+        """触发主动事件"""
+        try:
+            # 尝试导入 agent_communication
+            import importlib
+            spec = importlib.util.find_spec("core.lib.agent_communication")
+            if spec:
+                from core.lib.agent_communication import agent_communication
+                agent_communication.publish("proactive.suggestion", {
+                    "agent": self.name,
+                    "user_id": self.user_id,
+                    "suggestions": suggestions,
+                    "timestamp": datetime.now().isoformat()
+                })
+            else:
+                # 降级：只打印日志
+                print(f"[Proactive] {self.name} 建议: {suggestions[0][:50]}...")
+        except Exception as e:
+            print(f"主动事件触发失败: {e}")   
+
+    # ========== 任务分解能力 ==========
+    def decompose_task(self, task: str) -> Dict:
+        """将复杂任务分解为子任务"""
+        import json
+    
+        if self._is_simple_task(task):
+            return {
+                "sub_tasks": [{"id": 1, "action": "chat", "target": "text", "description": task, "depends_on": []}],
+                "mode": "simple"
+            }
+    
+        # 使用更严格的 system prompt 和 user prompt
+        system_prompt = "你是一个任务分解专家。你必须只输出 JSON，不输出任何其他文字。"
+    
+        user_prompt = f"""将以下任务分解为子任务，只输出 JSON。
+
+任务：{task}
+
+输出格式（只输出这个 JSON，不要有其他文字）：
+{{"sub_tasks": [{{"id": 1, "action": "analyze", "target": "data", "description": "描述", "depends_on": []}}], "mode": "sequential"}}
+
+可用的 action: analyze, generate, send, search, calculate, translate, chat
+可用的 target: data, chart, email, info, number, text, code
+
+直接输出 JSON："""
+
+        # 组合 prompt
+        full_prompt = f"{system_prompt}\n\n{user_prompt}"
+    
+        response = self._call_llm(full_prompt)
+    
+        if response:
+            response = response.strip()
+        
+            # 尝试多种方式提取 JSON
+            json_str = None
+        
+            # 方法1: 直接解析
+            try:
+                json_str = json.loads(response)
+            except:
+                pass
+        
+            # 方法2: 提取 {...}
+            if not json_str:
+                match = re.search(r'\{.*\}', response, re.DOTALL)
+                if match:
+                    try:
+                        json_str = json.loads(match.group())
+                    except:
+                        pass
+        
+            # 方法3: 使用规则分解
+            if not json_str:
+                print(f"[DEBUG] LLM 未返回有效 JSON，使用规则分解")
+                return self._rule_based_decompose(task)
+        
+            if json_str.get("sub_tasks"):
+                print(f"[DEBUG] 任务分解成功: {len(json_str['sub_tasks'])} 个子任务")
+                return json_str
+    
+        return self._rule_based_decompose(task)
+
+
+
+    def _rule_based_decompose(self, task: str) -> Dict:
+        """基于规则的任务分解（降级方案）"""
+        sub_tasks = []
+    
+        # 关键词到 action/target 的映射
+        action_map = {
+            "分析": ("analyze", "data"),
+            "生成": ("generate", "chart"),
+            "发送": ("send", "email"),
+            "搜索": ("search", "info"),
+            "计算": ("calculate", "number"),
+            "翻译": ("translate", "text"),
+            "写": ("generate", "code"),
+        }
+    
+        # 按顺序拆分
+        parts = re.split(r'然后|接着|之后|再', task)
+    
+        for i, part in enumerate(parts):
+            part = part.strip()
+            if not part:
+                continue
+        
+            # 匹配动作
+            action, target = "chat", "text"
+            for kw, (act, tgt) in action_map.items():
+                if kw in part:
+                    action, target = act, tgt
+                    break
+        
+            sub_tasks.append({
+                "id": i + 1,
+                "action": action,
+                "target": target,
+                "description": part,
+                "depends_on": [i] if i > 0 else []
+            })
+    
+        if not sub_tasks:
+            sub_tasks = [{"id": 1, "action": "chat", "target": "text", "description": task, "depends_on": []}]
+    
+        return {
+            "sub_tasks": sub_tasks,
+            "mode": "sequential" if len(sub_tasks) > 1 else "simple"
+        }
+
+    def execute_decomposed_task(self, decomposition: Dict, context: Dict = None) -> Dict:
+        """执行分解后的任务，调用不同 Agent"""
+        results = []
+        sub_tasks = decomposition.get("sub_tasks", [])
+        mode = decomposition.get("mode", "sequential")
+    
+        # 构建依赖图
+        task_map = {t["id"]: t for t in sub_tasks}
+    
+        if mode == "sequential":
+            # 顺序执行
+            for task in sub_tasks:
+                result = self._execute_sub_task_with_agent(task, context)
+                results.append(result)
+                if context is not None:
+                    context[f"task_{task['id']}_result"] = result
+    
+        elif mode == "parallel":
+            # 并行执行
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor(max_workers=len(sub_tasks)) as executor:
+                futures = {
+                    executor.submit(self._execute_sub_task_with_agent, task, context): task
+                    for task in sub_tasks
+                }
+                for future in concurrent.futures.as_completed(futures):
+                    result = future.result()
+                    results.append(result)
+    
+        elif mode == "dag":
+            # DAG 执行（按依赖顺序）
+            results = self._execute_dag_tasks(sub_tasks, task_map, context)
+    
+        # 合并结果
+        return self._merge_results(results)
+
+    def _execute_sub_task_with_agent(self, task: Dict, context: Dict = None) -> Dict:
+        """使用专门的 Agent 执行子任务"""
+        action = task.get("action", "chat")
+        target = task.get("target", "text")
+        description = task.get("description", "")
+    
+        # 根据 action 选择对应的 Agent
+        agent_mapping = {
+            ("analyze", "data"): "analysis_agent",
+            ("generate", "code"): "code_agent",
+            ("generate", "chart"): "code_agent",
+            ("send", "email"): "chat_agent",
+            ("search", "info"): "chat_agent",
+            ("calculate", "number"): "calculator_agent",
+            ("translate", "text"): "translate_agent",
+        }
+    
+        agent_name = agent_mapping.get((action, target), "chat_agent")
+    
+        # 构建输入
+        sub_input = description if description else f"{action} {target}"
+    
+        print(f"[DEBUG] 调用 {agent_name} 执行: {sub_input[:50]}...")
+    
+        # 获取 Agent 实例
+        from core.agents.wisdom.wisdom_factory import wisdom_factory
+        sub_agent = wisdom_factory.get_wisdom_agent(agent_name, self.user_id)
+    
+        if sub_agent:
+            result = sub_agent.process(sub_input)
+            return {
+                "task_id": task.get("id"),
+                "action": action,
+                "target": target,
+                "agent": agent_name,
+                "success": result.get("success", False),
+                "output": result.get("response", result.get("output_content", "")),
+                "raw_result": result
+            }
+    
+        return {
+            "task_id": task.get("id"),
+            "action": action,
+            "target": target,
+            "agent": agent_name,
+            "success": False,
+            "output": f"无法执行：Agent {agent_name} 不可用",
+            "error": "agent_not_available"
+        }
+
+    def _execute_dag_tasks(self, sub_tasks: List[Dict], task_map: Dict, context: Dict = None) -> List[Dict]:
+        """执行 DAG 任务（按依赖顺序）"""
+        from collections import deque
+    
+        # 计算入度
+        in_degree = {}
+        for task in sub_tasks:
+            task_id = task["id"]
+            in_degree[task_id] = len(task.get("depends_on", []))
+    
+        # 拓扑排序
+        queue = deque([task_id for task_id, deg in in_degree.items() if deg == 0])
+        results = []
+        completed = set()
+    
+        while queue:
+            task_id = queue.popleft()
+            task = task_map[task_id]
+        
+            # 执行任务
+            result = self._execute_sub_task_with_agent(task, context)
+            results.append(result)
+            completed.add(task_id)
+        
+            # 更新依赖
+            for other in sub_tasks:
+                if task_id in other.get("depends_on", []):
+                    in_degree[other["id"]] -= 1
+                    if in_degree[other["id"]] == 0:
+                        queue.append(other["id"])
+    
+        return results
+
+    def _merge_results(self, results: List[Dict]) -> Dict:
+        """合并子任务结果"""
+        success_count = sum(1 for r in results if r.get("success", False))
+        total_count = len(results)
+    
+        # 收集输出
+        outputs = []
+        for r in results:
+            output = r.get("output", "")
+            if output:
+                outputs.append(f"【{r.get('agent', 'unknown')}】{output[:200]}")
+    
+        return {
+            "success": success_count == total_count,
+            "total_sub_tasks": total_count,
+            "successful_sub_tasks": success_count,
+            "results": results,
+            "merged_output": "\n\n".join(outputs) if outputs else "所有子任务执行完成"
+        }
+
+
+    def _is_simple_task(self, task: str) -> bool:
+        """判断是否为简单任务"""
+        complex_indicators = ["并且", "同时", "然后", "之后", "接着", "先", "再", "最后"]
+        return len(task) < 30 or not any(ind in task for ind in complex_indicators)
+
+    def _simple_decompose(self, task: str) -> Dict:
+        """简单任务分解（降级方案）"""
+        return {
+            "sub_tasks": [{"id": 1, "action": "process", "description": task}],
+            "mode": "simple"
+        }
+
+    def execute_decomposed_task(self, decomposition: Dict, context: Dict = None) -> Dict:
+        """执行分解后的任务"""
+        results = []
+        sub_tasks = decomposition.get("sub_tasks", [])
+        mode = decomposition.get("mode", "sequential")
+    
+        if mode == "sequential":
+            # 顺序执行
+            for task in sub_tasks:
+                result = self._execute_sub_task(task, context)
+                results.append(result)
+                # 更新上下文
+                if context is not None:
+                    context[f"task_{task['id']}_result"] = result
+    
+        elif mode == "parallel":
+            # 并行执行
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                futures = {
+                    executor.submit(self._execute_sub_task, task, context): task
+                    for task in sub_tasks
+                }
+                for future in concurrent.futures.as_completed(futures):
+                    result = future.result()
+                    results.append(result)
+    
+        # 合并结果
+        return self._merge_results(results)
+
+    def _execute_sub_task(self, task: Dict, context: Dict = None) -> Dict:
+        """执行单个子任务"""
+        action = task.get("action", "chat")
+        target = task.get("target", "text")
+        description = task.get("description", "")
+    
+        # 构建子任务输入
+        sub_input = f"{action} {target}: {description}" if description else f"{action} {target}"
+    
+        # 调用相应 Agent
+        if hasattr(self, '_execute_business'):
+            return self._execute_business(sub_input, context)
+    
+        return {"success": False, "error": "无法执行子任务"}
+
+    def _merge_results(self, results: List[Dict]) -> Dict:
+        """合并子任务结果"""
+        success_count = sum(1 for r in results if r.get("success", False))
+        total_count = len(results)
+    
+        # 收集输出内容
+        outputs = []
+        for r in results:
+            content = r.get("response", r.get("output_content", ""))
+            if content:
+                outputs.append(content)
+    
+        return {
+            "success": success_count == total_count,
+            "total_sub_tasks": total_count,
+            "successful_sub_tasks": success_count,
+            "results": results,
+            "merged_output": "\n\n".join(outputs) if outputs else ""
+        }
+
+
+    def _start_proactive_service(self):
+        """启动主动建议后台服务"""
+        import threading
+        import time
+
+        def _proactive_loop():
+            print(f"🚀 [{self.name}] 主动建议服务已启动")
+            while getattr(self, '_proactive_running', True):
+                time.sleep(60)  # 每分钟检查一次
+
+                # 只在空闲时建议（没有正在进行的对话）
+                if hasattr(self, '_conversation_history') and len(self._conversation_history) > 0:
+                    last_time = self._conversation_history[-1].get("timestamp")
+                    if last_time:
+                        from datetime import datetime
+                        try:
+                            last_dt = datetime.fromisoformat(last_time)
+                            minutes_since = (datetime.now() - last_dt).total_seconds() / 60
+                            if minutes_since > 2:  # 2分钟无对话
+                                suggestions = self._get_proactive_suggestions()
+                                if suggestions:
+                                    self._trigger_proactive_event(suggestions)
+                        except:
+                            pass
+
+        self._proactive_running = True
+        thread = threading.Thread(target=_proactive_loop, daemon=True)
+        thread.start()
+    def share_experience(self, experience: Dict):
+        """分享经验到联邦学习"""
+        if not self._federated_enabled:
+            return
+    
+        knowledge = {
+            f"{experience.get('type', 'general')}": experience.get('result', '')
+        }
+        federated_learning.share_knowledge(self.name, knowledge, experience.get('confidence', 0.5))
+
+    def query_peers(self, query: str) -> List[Dict]:
+        """查询其他 Agent 的知识"""
+        if not self._federated_enabled:
+            return []
+        return federated_learning.query_knowledge(self.name, query)
