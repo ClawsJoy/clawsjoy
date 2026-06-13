@@ -45,7 +45,9 @@ from core.lib.smart_active_service import smart_service
 from core.lib.unified_config import unified_config
 from core.lib.user_context import user_context
 from engine.security import desensitizer
-
+from core.agents.wisdom.wisdom_factory import wisdom_factory
+from core.agents.business.business_agent import BusinessAgent
+from core.lib.json_standard import StandardJSON
 
 
 # 配置日志级别
@@ -1335,16 +1337,33 @@ def generate_image():
 
 
 
-# agent_gateway_enhanced.py - 在现有代码基础上添加以下内容
-
-# ========== 在文件开头添加导入 ==========
-from core.agents.wisdom.wisdom_factory import wisdom_factory
-from core.agents.business.business_agent import BusinessAgent
-from core.lib.json_standard import StandardJSON
-
 # ========== 新增智慧对话路由（不影响现有接口）==========
 
 @app.route("/api/v5/wisdom/chat", methods=["POST"])
+@swag_from({
+    'tags': ['智慧对话'],
+    'summary': '智慧对话接口',
+    'parameters': [
+        {
+            'name': 'body',
+            'in': 'body',
+            'required': True,
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'user_id': {'type': 'string', 'description': '用户ID'},
+                    'agent': {'type': 'string', 'description': 'Agent名称', 'default': 'chat_agent'},
+                    'message': {'type': 'string', 'description': '消息内容'},
+                }
+            }
+        }
+    ],
+    'responses': {
+        '200': {'description': '成功'},
+        '404': {'description': 'Agent不存在'},
+        '500': {'description': '服务器错误'}
+    }
+})
 def wisdom_chat():
     """
     智慧对话接口 - 新接口，独立于原有 enhanced_chat
@@ -1390,6 +1409,7 @@ def wisdom_chat():
 # ========== 新增决策统计接口 ==========
 
 @app.route("/api/v5/wisdom/decision/stats", methods=["GET"])
+@swag_from('docs/swagger/decision_stats.yml')  # 添加这行
 def wisdom_decision_stats():
     """获取决策者学习统计"""
     user_id = request.args.get("user_id", "guest")
@@ -1411,6 +1431,7 @@ def wisdom_decision_stats():
 
 
 @app.route("/api/v5/wisdom/decision/feedback", methods=["POST"])
+@swag_from('docs/swagger/decision_feedback.yml')
 def wisdom_decision_feedback():
     """提供决策反馈（用于学习）"""
     data = request.json or {}
@@ -1432,6 +1453,7 @@ def wisdom_decision_feedback():
 
 
 @app.route("/api/v5/wisdom/decision/history", methods=["GET"])
+@swag_from('docs/swagger/decision_history.yml')
 def wisdom_decision_history():
     """获取决策历史"""
     user_id = request.args.get("user_id", "guest")
@@ -1457,6 +1479,7 @@ def wisdom_decision_history():
 # ========== 新增智慧统计接口 ==========
 
 @app.route("/api/v5/wisdom/stats", methods=["GET"])
+@swag_from('docs/swagger/wisdom_stats.yml')
 def wisdom_stats():
     """获取智慧 Agent 统计信息"""
     user_id = request.args.get("user_id", "guest")
@@ -1474,6 +1497,7 @@ def wisdom_stats():
 # ========== 新增决策解释接口 ==========
 
 @app.route("/api/v5/wisdom/explain", methods=["POST"])
+@swag_from('docs/swagger/wisdom_explain.yml')
 def wisdom_explain():
     """解释 Agent 的决策过程"""
     data = request.json or {}
@@ -1493,6 +1517,7 @@ def wisdom_explain():
 # ========== 新增热重载接口 ==========
 
 @app.route("/api/v5/wisdom/reload", methods=["POST"])
+@swag_from('docs/swagger/wisdom_reload.yml')
 def wisdom_reload():
     """热重载指定 Agent"""
     data = request.json or {}
@@ -1507,6 +1532,20 @@ def wisdom_reload():
         return jsonify({"success": True, "message": f"Agent {agent_name} 已热重载"})
     
     return jsonify({"success": False, "message": f"Agent {agent_name} 未加载"}), 404
+
+
+# ========== Agent 列表 API ==========
+@app.route("/api/v5/agent/list", methods=["GET"])
+@swag_from('docs/swagger/agent_list.yml')
+def agent_list():
+    """列出所有已注册的 Agent"""
+    from core.lib.agent_registry import agent_registry
+    return jsonify({
+        "success": True,
+        "agents": agent_registry.list_all(),
+        "stats": agent_registry.get_stats()
+    })
+
 
 
 
@@ -1535,4 +1574,3 @@ if __name__ == "__main__":
 # }
 
 
-   

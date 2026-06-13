@@ -1,0 +1,14 @@
+tags:
+  - name: Wisdom
+    description: 智慧统计接口
+parameters:
+  - name: user_id
+    in: query
+    type: string
+    required: true
+  - name: agent
+    in: query
+    type: string
+responses:
+  200:
+    description: 成功

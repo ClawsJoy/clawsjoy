@@ -305,9 +305,20 @@ class ChatAgentV4(BusinessAgent):
         )
 
     def _is_chat_task(self, user_input: str) -> bool:
-        """判断是否为闲聊任务"""
-        task_keywords = ["代码", "计算", "翻译", "分析", "待办"]
-        return not any(kw in user_input for kw in task_keywords) and len(user_input) < 30
+        """判断是否为闲聊任务（主动建议只对纯闲聊生效）"""
+        # 排除命令类语句
+        command_keywords = ["我叫", "我的名字", "记住", "回忆", "清空", "待办"]
+        if any(kw in user_input for kw in command_keywords):
+            return False
+    
+        # 排除复杂任务
+        task_keywords = ["代码", "计算", "翻译", "分析"]
+        if any(kw in user_input for kw in task_keywords):
+            return False
+    
+        # 纯闲聊：短文本且无疑问词
+        return len(user_input) < 20 and not any(q in user_input for q in ["什么", "怎么", "为什么"])
+
 
 
 if __name__ == "__main__":

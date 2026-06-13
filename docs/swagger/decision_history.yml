@@ -1,0 +1,15 @@
+tags:
+  - name: Decision
+    description: 决策管理接口
+parameters:
+  - name: user_id
+    in: query
+    type: string
+    required: true
+  - name: limit
+    in: query
+    type: integer
+    default: 50
+responses:
+  200:
+    description: 成功

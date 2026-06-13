@@ -1,0 +1,19 @@
+tags:
+  - name: Wisdom
+    description: 智慧解释接口
+parameters:
+  - name: body
+    in: body
+    required: true
+    schema:
+      type: object
+      properties:
+        user_id:
+          type: string
+        message:
+          type: string
+        agent:
+          type: string
+responses:
+  200:
+    description: 成功
