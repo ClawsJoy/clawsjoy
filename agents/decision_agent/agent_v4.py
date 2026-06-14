@@ -10,7 +10,7 @@ from typing import Dict, List, Optional, Tuple
 from datetime import datetime
 
 from core.agents.business.business_agent import BusinessAgent
-
+from core.lib.scriptbook_learner import scriptbook_learner
 
 class DecisionAgentV4(BusinessAgent):
     """
@@ -546,6 +546,40 @@ class DecisionAgentV4(BusinessAgent):
             "output_content": f"建议使用 {result['agent']}",
             "decision": result
         }
+
+    def optimize_scriptbook(self, agent_name: str = "chat_agent") -> Dict:
+        """分析并优化话本"""
+        stats = scriptbook_learner.get_stats()
+        
+        if stats["hit_rate"] < 0.6:
+            # 话本命中率低，需要优化
+            suggestions = stats.get("suggestions", [])
+            return {
+                "need_optimization": True,
+                "hit_rate": stats["hit_rate"],
+                "suggestions": suggestions,
+                "action": "review_scriptbook"
+            }
+        
+        return {
+            "need_optimization": False,
+            "hit_rate": stats["hit_rate"],
+            "status": "healthy"
+        }
+
+    def _auto_optimize_scriptbooks(self):
+        """自动决策优化话本"""
+        from core.lib.scriptbook_learner import scriptbook_learner
+    
+        for agent_name in ["chat_agent", "butler_agent"]:
+            scriptbook_learner.agent_name = agent_name
+            scriptbook_learner._load_stats()
+            stats = scriptbook_learner.get_stats()
+        
+            if stats["hit_rate"] < 0.5:
+                # 命中率过低，触发优化
+                self._trigger_scriptbook_optimization(agent_name)
+
 
 
 if __name__ == "__main__":

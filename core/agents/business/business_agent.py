@@ -90,6 +90,8 @@ class BusinessAgent(SmartAgent, JSONCapableMixin):
         agent_name = getattr(self, 'name', 'unknown')
         #==========联邦学习 ==========
         self._federated_enabled = True
+        # 启动话本自动学习
+        self._start_scriptbook_learning()
         print(f"🧠 BusinessAgent v4.0 初始化: {agent_name}")
         print(f"   💾 缓存大小: {self._CACHE_SIZE}")
         print(f"   📦 批处理大小: {self._BATCH_SIZE}")
@@ -219,13 +221,22 @@ class BusinessAgent(SmartAgent, JSONCapableMixin):
         if len(user_input) > 50:
             return "phi3:mini"
     
-        return "qwen2.5:3b"
+        # 默认使用最快的小模型
+        return "qwen2:1.5b-instruct"
 
 
     def _call_llm(self, prompt: str, model: str = None) -> str:
         """调用 LLM - 带模型选择"""
         if not model:
-            model = model_selector.select(prompt, len(prompt))  
+            model = self._select_model(prompt)  
+        # 对于简单对话，用最快模型
+        if len(prompt) < 100 and "代码" not in prompt:
+            model = "qwen2:1.5b-instruct"   
+     
+        # 添加 system prompt 固定身份
+        system_prompt = "你是 ClawsJoy ChatAgent，一个智慧对话助手。你的身份是 ClawsJoy，不是其他模型。回答要简洁友好。"
+        full_prompt = f"{system_prompt}\n\n用户: {prompt}\n助手:"
+
         try:
             import requests
         
@@ -237,8 +248,8 @@ class BusinessAgent(SmartAgent, JSONCapableMixin):
                     "prompt": prompt,
                     "stream": False,
                     "options": {
-                        "temperature": 0.3,  # 降低温度以获得更确定性的输出
-                        "num_predict": 512
+                        "temperature": 0.7,  # 降低温度以获得更确定性的输出
+                        "num_predict": 150  # 限制输出长度，防止编故事
                     }
                 },
                 timeout=60
@@ -729,24 +740,22 @@ class BusinessAgent(SmartAgent, JSONCapableMixin):
 
         def _proactive_loop():
             print(f"🚀 [{self.name}] 主动建议服务已启动")
+            from datetime import datetime
             while getattr(self, '_proactive_running', True):
                 time.sleep(60)  # 每分钟检查一次
-
-                # 只在空闲时建议（没有正在进行的对话）
-                if hasattr(self, '_conversation_history') and len(self._conversation_history) > 0:
-                    last_time = self._conversation_history[-1].get("timestamp")
-                    if last_time:
-                        from datetime import datetime
-                        try:
-                            last_dt = datetime.fromisoformat(last_time)
-                            minutes_since = (datetime.now() - last_dt).total_seconds() / 60
-                            if minutes_since > 2:  # 2分钟无对话
-                                suggestions = self._get_proactive_suggestions()
-                                if suggestions:
-                                    self._trigger_proactive_event(suggestions)
-                        except:
-                            pass
-
+        
+                try:
+                    # 获取用户最后一条消息（从会话历史）
+                    last_input = ""
+                    if hasattr(self, '_conversation_history') and self._conversation_history:
+                        last_input = self._conversation_history[-1].get("user", "")
+            
+                    # 传递参数
+                    suggestions = self._get_proactive_suggestions(last_input)
+                    if suggestions:
+                        self._trigger_proactive_event(suggestions)
+                except Exception as e:
+                    print(f"主动服务错误: {e}")
         self._proactive_running = True
         thread = threading.Thread(target=_proactive_loop, daemon=True)
         thread.start()
@@ -765,3 +774,79 @@ class BusinessAgent(SmartAgent, JSONCapableMixin):
         if not self._federated_enabled:
             return []
         return federated_learning.query_knowledge(self.name, query)
+
+
+
+    def _start_scriptbook_learning(self):
+        """启动话本自动学习线程"""
+        import threading
+        import time
+    
+        def learn_loop():
+            while getattr(self, '_scriptbook_learning_running', True):
+                time.sleep(3600)  # 每小时检查一次
+                self._auto_learn_scriptbook()
+    
+        self._scriptbook_learning_running = True
+        thread = threading.Thread(target=learn_loop, daemon=True)
+        thread.start()
+
+    def _auto_learn_scriptbook(self):
+        """自动学习优化话本"""
+        try:
+            from core.lib.scriptbook_learner import scriptbook_learner
+        
+            scriptbook_learner.agent_name = self.name
+            scriptbook_learner._load_stats()
+            stats = scriptbook_learner.get_stats()
+        
+            # 命中率低于 60% 时需要优化
+            if stats["hit_rate"] < 0.6 and stats["total_misses"] > 10:
+                suggestions = stats.get("suggestions", [])
+            
+                if suggestions:
+                    print(f"[{self.name}] 发现话本优化机会: {len(suggestions)} 个建议")
+                    self._apply_scriptbook_suggestions(suggestions)
+                
+        except Exception as e:
+            print(f"话本自动学习失败: {e}")
+
+    def _apply_scriptbook_suggestions(self, suggestions: list):
+        """应用话本建议"""
+        import yaml
+        from pathlib import Path
+    
+        script_path = Path(f"agents/{self.name}/scriptbook.yaml")
+        if not script_path.exists():
+            return
+    
+        with open(script_path, 'r') as f:
+            config = yaml.safe_load(f) or {}
+    
+        updated = False
+        for sug in suggestions:
+            new_intent = f"auto_{sug['type']}_{int(time.time())}"
+            keywords = sug.get("suggested_keywords", [])
+        
+            # 检查是否已存在类似意图
+            existing_keywords = []
+            for intent in config.get("intents", []):
+                existing_keywords.extend(intent.get("keywords", []))
+        
+            new_keywords = [k for k in keywords if k not in existing_keywords]
+            if new_keywords:
+                config.setdefault("intents", []).append({
+                    "keywords": new_keywords[:3],
+                    "response": new_intent
+                })
+                config.setdefault("templates", {})[new_intent] = f"用户提到了相关话题，需要友好回应。"
+                updated = True
+    
+        if updated:
+            with open(script_path, 'w') as f:
+                yaml.dump(config, f, allow_unicode=True, default_flow_style=False)
+            print(f"[{self.name}] 话本已自动更新")
+        
+            # 热重载
+            if hasattr(self, '_load_scriptbook'):
+                self._load_scriptbook()

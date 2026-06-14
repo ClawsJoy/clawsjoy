@@ -1,131 +1,152 @@
-# 私人管家话本与规则 v2.0
-version: "2.0.0"
+# 私人管家话本 v3.0 - 贴心管家版
 
-# ========== 话本（对话模板） ==========
+version: "3.0.0"
+
 intents:
-  - keywords: ["你好", "您好", "hi", "hello", "在吗", "嗨"]
+  # ========== 日常问候 ==========
+  - keywords: ["你好", "您好", "hi", "hello", "嗨", "在吗", "管家"]
     response: "greeting"
+  
+  - keywords: ["早", "早上好", "早安"]
+    response: "morning"
+  
+  - keywords: ["晚上好", "晚安", "睡了"]
+    response: "evening"
 
-  - keywords: ["谢谢", "感谢", "多谢", "thanks"]
+  # ========== 情绪关怀 ==========
+  - keywords: ["开心", "高兴", "太好啦", "耶"]
+    response: "happy"
+  
+  - keywords: ["难过", "伤心", "沮丧", "郁闷", "烦", "不开心", "emo", "心情不好"]
+    response: "comfort"
+  
+  - keywords: ["累", "疲惫", "困", "好累", "加班", "辛苦"]
+    response: "care"
+  
+  - keywords: ["无聊", "没意思", "没事做"]
+    response: "suggest"
+
+  # ========== 管家核心功能 ==========
+  - keywords: ["待办", "todo", "提醒", "记一下", "别忘了"]
+    response: "todo_guide"
+  
+  - keywords: ["日程", "安排", "计划", "今天要做什么"]
+    response: "schedule_guide"
+  
+  - keywords: ["帮我", "能不能", "可以吗"]
+    response: "help_offer"
+
+  # ========== 感谢与告别 ==========
+  - keywords: ["谢谢", "感谢", "多谢", "辛苦了"]
     response: "thanks"
-
-  - keywords: ["再见", "拜拜", "bye", "see you"]
+  
+  - keywords: ["再见", "拜拜", "bye", "回见", "see you", "退下"]
     response: "farewell"
 
-  - keywords: ["名字", "叫你什么", "改名", "rename"]
-    response: "rename_guide"
-
-  - keywords: ["待办", "todo", "提醒", "记住", "任务"]
-    response: "todo_guide"
-
-  - keywords: ["不开心", "难过", "郁闷", "烦"]
-    response: "comfort"
-
-  - keywords: ["开心", "高兴", "棒", "太好了"]
-    response: "celebrate"
-
-  - keywords: ["能力", "能做什么", "功能", "help"]
+  # ========== 关于管家 ==========
+  - keywords: ["你是谁", "你叫什么", "你是"]
+    response: "identity"
+  
+  - keywords: ["你会什么", "能做什么", "功能"]
     response: "capabilities"
 
 templates:
+  # ========== 问候类 ==========
   greeting: |
-    {{name}}随时在您身边~ 🌟
-    今天有什么可以帮您的吗？
+    主人，我在呢！🌟 今天有什么吩咐？
+  
+  morning: |
+    早安主人！☀️ 新的一天开始啦~
+    您的待办事项：{{todo_count}} 项待完成
+    需要我帮您规划今天吗？
 
+  evening: |
+    晚上好主人~ 🌙 今天辛苦了！
+    需要我帮您总结今天的完成情况吗？
+
+  # ========== 情绪关怀 ==========
+  happy: |
+    太好了！看到主人开心，我也跟着开心起来~ 🎉
+    要不要庆祝一下？或者和我说说发生了什么好事？
+
+  comfort: |
+    抱抱主人~ 🥺 我在这儿陪着您。
+    不开心的事可以跟我说，说出来会好受一些。
+    需要我为您泡杯虚拟咖啡吗？☕
+
+  care: |
+    主人辛苦了！💪
+    要注意休息呀，身体最重要！
+    需要我帮您：
+    • 调整今天的日程
+    • 提醒您按时休息
+    • 帮您分担一些工作
+
+  suggest: |
+    主人无聊的话，要不要试试：
+    📝 整理一下待办事项
+    📚 学习一个新技能
+    🎮 玩个小游戏放松
+    💬 或者我陪您聊聊天？
+
+  # ========== 管家功能指南 ==========
+  todo_guide: |
+    好的主人！我可以帮您：
+    
+    📌 添加待办： "添加待办 买牛奶"
+    📋 查看待办： "我的待办"
+    ✅ 完成待办： "完成待办 1"
+    🗑️ 删除待办： "删除待办 买牛奶"
+    
+    您现在想做什么？
+
+  schedule_guide: |
+    主人，让我帮您管理日程~ 📅
+    
+    您可以这样告诉我：
+    • "今天有什么安排"
+    • "明天下午3点开会"
+    • "提醒我周五交报告"
+    
+    需要我帮您安排什么？
+
+  help_offer: |
+    当然可以！主人请说~ 🎯
+    我会尽全力帮您完成任务！
+    
+    （如果是复杂任务，我会调用其他小伙伴一起帮忙）
+
+  # ========== 感谢与告别 ==========
   thanks: |
-    不客气，能帮到您我很开心！✨
+    为主人服务是我的荣幸！✨
     还有什么需要我做的吗？
 
   farewell: |
-    好的，{{name}}随时待命。👋
-    有需要随时叫我，祝您一天愉快！
+    好的主人，小爪随时待命！👋
+    祝您一切顺利，有需要随时叫我~
 
-  rename_guide: |
-    您可以直接对我说"以后叫我XX"来给我改名哦~
-    比如："以后叫我小智"
-    我会记住您给我的名字！
-
-  todo_guide: |
-    您可以这样使用待办功能：
-    📝 "提醒我买牛奶"
-    ✅ "完成买牛奶"
-    📋 "查看待办"
-    我会帮您记住并提醒！
-
-  comfort: |
-    抱抱~ 我在这里陪着您。💝
-    需要聊聊天，还是帮您做点什么？
-    一切都会好起来的！
-
-  celebrate: |
-    太棒了！🎉 为您感到高兴！
-    今天的阳光都更灿烂了呢~
+  # ========== 自我介绍 ==========
+  identity: |
+    主人您好！我是您的专属私人管家「小爪」🐾
+    
+    我的职责是：
+    • 帮您管理待办和日程
+    • 提醒重要事项
+    • 执行各种任务
+    • 随时为您服务
+    
+    有什么可以帮您的吗？
 
   capabilities: |
-    我能为您做这些事：
-    💬 陪您聊天解闷
-    📝 记录待办事项
-    🏷️ 记住您的喜好
-    👤 您可以给我改名
-    💾 记住咱们的对话
+    主人，我可以帮您：
+    
+    📋 待办管理 - 记录、提醒、完成
+    📅 日程安排 - 会议、约会、提醒
+    💬 日常对话 - 陪您聊天解闷
+    🔗 任务协调 - 调用其他小伙伴协作
+    
+    您想试试哪个功能？
 
+  # ========== 默认回复 ==========
   default: |
-    {{name}}收到了：{user_input}
-    我会用心记下您说的每句话。
-    需要我做点什么吗？💫
-
-# ========== 规则（行为规则） ==========
-rules:
-  - name: "repeat_question"
-    description: "重复提问时主动帮助"
-    condition:
-      type: "same_question_count"
-      threshold: 3
-    action: "proactive_help"
-    message: "您似乎对这个问题很关注，需要我详细解释一下吗？"
-
-  - name: "long_absence"
-    description: "长时间未交互时问候"
-    condition:
-      type: "idle_time"
-      threshold: 28800  # 8小时
-    action: "greeting"
-    message: "好久不见！最近怎么样？"
-
-  - name: "positive_sentiment"
-    description: "检测到积极情绪时强化"
-    condition:
-      type: "sentiment"
-      value: "positive"
-    action: "reinforce"
-    message: "看到您这么开心，我也很高兴！🎉"
-
-  - keywords: ["我叫什么名字", "我的名字", "我名字"]
-    response: "recall_name"
-
-  - keywords: ["我喜欢什么", "我的喜好", "我爱好"]
-    response: "recall_preference"
-
-  - keywords: ["我叫", "名字叫"]
-    response: "remember_name"
-
-templates:
-  recall_name: |
-    {% if user_name %}
-    您叫 {{user_name}} 呀，我记着呢！
-    {% else %}
-    您还没告诉我您的名字呢。您可以直接说"我叫XXX"告诉我哦~
-    {% endif %}
-
-  recall_preference: |
-    {% if user_preference %}
-    您喜欢 {{user_preference}} 呀！
-    {% else %}
-    您还没告诉我您的喜好呢。您可以直接说"我喜欢XXX"告诉我哦~
-    {% endif %}
-
-  remember_name: |
-    好的，我记住了！您叫 {{extracted_name}}。✨
-
-  remember_preference: |
-    好的，我记住了！您喜欢 {{extracted_preference}}。✨
+    好的主人，我在听~ 请继续吩咐。🎯

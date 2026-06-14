@@ -3,199 +3,696 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ClawsJoy Codex - AI 代码助手</title>
+    <title>ClawsJoy Codex - 智能体测试中心</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'SF Mono', monospace; background: #0a0a0a; color: #e0e0e0; height: 100vh; overflow: hidden; }
-        .app { display: flex; height: 100vh; }
-        .sidebar { width: 280px; background: #111; border-right: 1px solid #2a2a2a; display: flex; flex-direction: column; }
-        .sidebar-header { padding: 16px; border-bottom: 1px solid #2a2a2a; }
-        .sidebar-header h1 { font-size: 18px; color: #6366f1; }
-        .new-chat { margin: 16px; padding: 10px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; text-align: center; cursor: pointer; }
-        .new-chat:hover { background: #2a2a2a; border-color: #6366f1; }
-        .chat-list { flex: 1; overflow-y: auto; padding: 8px; }
-        .chat-item { padding: 10px; border-radius: 6px; margin-bottom: 4px; cursor: pointer; color: #999; }
-        .chat-item:hover, .chat-item.active { background: #1a1a1a; color: #e0e0e0; }
-        .main { flex: 1; display: flex; flex-direction: column; background: #0a0a0a; }
-        .header { padding: 16px 24px; border-bottom: 1px solid #2a2a2a; display: flex; justify-content: space-between; }
-        .messages { flex: 1; overflow-y: auto; padding: 24px; }
-        .message { margin-bottom: 24px; }
-        .message-header { display: flex; align-items: center; margin-bottom: 8px; font-size: 12px; color: #888; }
-        .message-avatar { width: 24px; height: 24px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; margin-right: 8px; }
-        .message.user .message-avatar { background: #2a2a2a; }
-        .message.assistant .message-avatar { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
-        .message-content { margin-left: 32px; line-height: 1.6; }
-        .message-content pre { background: #1e1e1e; padding: 16px; border-radius: 8px; overflow-x: auto; margin: 12px 0; }
-        .message-content code { font-family: 'SF Mono', monospace; font-size: 13px; color: #ce9178; }
-        .input-area { padding: 20px 24px; border-top: 1px solid #2a2a2a; }
-        .input-wrapper { display: flex; gap: 12px; }
-        .input-wrapper textarea { flex: 1; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; padding: 12px 16px; color: #e0e0e0; font-family: monospace; font-size: 13px; resize: none; outline: none; }
-        .input-wrapper textarea:focus { border-color: #6366f1; }
-        .input-wrapper button { padding: 12px 20px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border: none; border-radius: 8px; color: white; cursor: pointer; }
-        .shortcuts { margin-top: 12px; display: flex; gap: 12px; font-size: 11px; color: #555; }
-        .shortcut { cursor: pointer; }
-        .shortcut:hover { color: #6366f1; }
-        .typing { display: inline-block; width: 30px; text-align: center; }
-        .typing span { animation: blink 1.4s infinite; }
-        .typing span:nth-child(2) { animation-delay: 0.2s; }
-        .typing span:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes blink { 0%,60%,100% { opacity: 0; } 30% { opacity: 1; } }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            color: #f1f5f9;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 主布局 */
+        .app {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* 侧边栏 */
+        .sidebar {
+            width: 320px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(51, 65, 85, 0.5);
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        .sidebar-header {
+            padding: 24px 20px;
+            border-bottom: 1px solid #334155;
+        }
+
+        .sidebar-header h1 {
+            font-size: 24px;
+            background: linear-gradient(135deg, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .sidebar-header p {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 8px;
+        }
+
+        /* 新建对话按钮 */
+        .new-chat {
+            margin: 16px;
+            padding: 12px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border: none;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .new-chat:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+        }
+
+        /* 对话列表 */
+        .chat-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .chat-item {
+            padding: 12px;
+            margin: 4px 0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .chat-item:hover {
+            background: #334155;
+        }
+
+        .chat-item.active {
+            background: #4f46e5;
+        }
+
+        /* 主内容区 */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: rgba(10, 10, 20, 0.3);
+        }
+
+        /* 顶部栏 */
+        .header {
+            padding: 16px 24px;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(15, 23, 42, 0.5);
+        }
+
+        .agent-selector {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .agent-badge {
+            padding: 6px 14px;
+            background: #1e293b;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid #334155;
+        }
+
+        .agent-badge:hover {
+            background: #334155;
+        }
+
+        .agent-badge.active {
+            background: #4f46e5;
+            border-color: #818cf8;
+        }
+
+        /* 消息区域 */
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        .message {
+            margin-bottom: 24px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message.user {
+            align-items: flex-end;
+        }
+
+        .message.assistant {
+            align-items: flex-start;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .message.user .message-avatar {
+            background: #4f46e5;
+        }
+
+        .message.assistant .message-avatar {
+            background: #334155;
+        }
+
+        .message-content {
+            max-width: 85%;
+            padding: 12px 18px;
+            border-radius: 20px;
+            font-size: 14px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .message.user .message-content {
+            background: #4f46e5;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.assistant .message-content {
+            background: #1e293b;
+            border-bottom-left-radius: 4px;
+        }
+
+        /* 代码块样式 */
+        .message-content pre {
+            background: #0f172a;
+            padding: 12px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 8px 0;
+            font-size: 12px;
+        }
+
+        .message-content code {
+            font-family: 'Fira Code', monospace;
+        }
+
+        /* 输入区域 */
+        .input-area {
+            padding: 20px 24px;
+            border-top: 1px solid #334155;
+            background: rgba(15, 23, 42, 0.8);
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .input-wrapper textarea {
+            flex: 1;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 12px 16px;
+            color: #f1f5f9;
+            font-family: inherit;
+            font-size: 14px;
+            resize: none;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .input-wrapper textarea:focus {
+            border-color: #818cf8;
+            box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.2);
+        }
+
+        .input-wrapper button {
+            padding: 12px 28px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border: none;
+            border-radius: 16px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .input-wrapper button:hover {
+            transform: translateY(-1px);
+        }
+
+        /* 快捷命令区域 */
+        .quick-commands {
+            margin-top: 12px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .quick-cmd {
+            padding: 4px 12px;
+            background: #1e293b;
+            border-radius: 16px;
+            font-size: 11px;
+            font-family: monospace;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-cmd:hover {
+            background: #4f46e5;
+        }
+
+        /* 能力面板 */
+        .capabilities-panel {
+            margin-top: 16px;
+            padding: 16px;
+            background: #1e293b;
+            border-radius: 12px;
+        }
+
+        .capability {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #334155;
+            border-radius: 16px;
+            font-size: 11px;
+            margin: 4px;
+        }
+
+        /* 滚动条 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 3px;
+        }
+
+        /* 打字动画 */
+        .typing-dots span {
+            animation: blink 1.4s infinite;
+        }
+
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes blink {
+            0%, 60%, 100% { opacity: 0; }
+            30% { opacity: 1; }
+        }
     </style>
 </head>
 <body>
 <div class="app">
-    <aside class="sidebar">
-        <div class="sidebar-header"><h1>ClawsJoy Codex</h1></div>
-        <div class="new-chat" onclick="newConversation()">+ New Chat</div>
-        <div class="chat-list" id="conversationList"></div>
-    </aside>
-    <main class="main">
-        <div class="header"><div>~/codex/assistant</div><div>● Ready</div></div>
-        <div class="messages" id="messages"><div class="message assistant"><div class="message-header"><div class="message-avatar">⚡</div><span>ClawsJoy Codex</span></div><div class="message-content">欢迎！我能帮你做什么？<br><br>• /code 生成代码<br>• /image 生成图片<br>• 直接发送图片/视频链接会自动预览</div></div></div>
-        <div class="input-area">
-            <div class="input-wrapper">
-                <textarea id="messageInput" placeholder="输入消息... (Ctrl+Enter 发送)" rows="3" onkeydown="if(event.ctrlKey&&event.keyCode===13) sendMessage()"></textarea>
-                <button onclick="sendMessage()">发送</button>
-            </div>
-            <div class="shortcuts">
-                <span class="shortcut" onclick="insert('/code ')">/code</span>
-                <span class="shortcut" onclick="insert('/image ')">/image</span>
-                <span class="shortcut" onclick="insert('/explain ')">/explain</span>
-                <span class="shortcut" onclick="insert('/播放 ')">/播放</span>
-                <span class="shortcut" onclick="insert('/热门')">/热门</span>
-                <span class="shortcut" onclick="insert('/播放 ')">/播放</span>
-                <span class="shortcut" onclick="insert('/热门')">/热门</span>
+    <!-- 侧边栏 -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h1>⚡ ClawsJoy Codex</h1>
+            <p>智能体测试中心 · 多 Agent 协作平台</p>
+        </div>
+        <div class="new-chat" id="newChatBtn">➕ 新建对话</div>
+        <div class="chat-list" id="chatList"></div>
+        
+        <!-- 能力展示 -->
+        <div class="capabilities-panel">
+            <div style="font-size: 12px; margin-bottom: 8px;">🧠 已接入 Agent</div>
+            <div>
+                <span class="capability">💬 Chat</span>
+                <span class="capability">💻 Code</span>
+                <span class="capability">📊 Analysis</span>
+                <span class="capability">🌐 Translate</span>
+                <span class="capability">🔢 Calculator</span>
+                <span class="capability">👤 Butler</span>
+                <span class="capability">🎯 Orchestrator</span>
+                <span class="capability">🧠 Memory</span>
+                <span class="capability">🗣️ Dialect</span>
             </div>
         </div>
-    </main>
+    </div>
+
+    <!-- 主区域 -->
+    <div class="main">
+        <div class="header">
+            <div class="agent-selector" id="agentSelector">
+                <div class="agent-badge" data-agent="chat_agent">💬 Chat</div>
+                <div class="agent-badge" data-agent="code_agent">💻 Code</div>
+                <div class="agent-badge" data-agent="analysis_agent">📊 Analysis</div>
+                <div class="agent-badge" data-agent="translate_agent">🌐 Translate</div>
+                <div class="agent-badge" data-agent="calculator_agent">🔢 Calculator</div>
+                <div class="agent-badge" data-agent="butler_agent">👤 Butler</div>
+                <div class="agent-badge" data-agent="orchestrator">🎯 Orchestrator</div>
+                <div class="agent-badge" data-agent="memory_agent">🧠 Memory</div>
+                <div class="agent-badge" data-agent="dialect_agent">🗣️ Dialect</div>
+            </div>
+            <div style="font-size: 12px; color: #4ade80;">● 在线</div>
+        </div>
+
+        <div class="messages" id="messages"></div>
+
+        <div class="input-area">
+            <div class="input-wrapper">
+                <textarea id="messageInput" rows="2" placeholder="输入消息... (Ctrl+Enter 发送)"></textarea>
+                <button id="sendBtn">发送</button>
+            </div>
+            <div class="quick-commands" id="quickCommands"></div>
+        </div>
+    </div>
 </div>
+
 <script>
-const TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZDE2YjIwYjJjZWRjZjNjZiIsInVzZXJuYW1lIjoidGVzdHVzZXIiLCJyb2xlIjoidXNlciIsImV4cCI6MTc4MTE4MzMyMn0.2cbQMYnwasdm1cxjxtUuhJyODjaF4GyXoHdma-TZnzQ";
-let conversations = JSON.parse(localStorage.getItem("codex_conversations") || '[{"id":0,"title":"Current Chat","messages":[]}]');
-let currentId = 0;
-function save() { localStorage.setItem("codex_conversations", JSON.stringify(conversations)); }
-function loadConv(id) { currentId = id; render(); }
-function newConversation() { let id = Date.now(); conversations.unshift({id:id,title:"New Chat",messages:[]}); currentId=id; save(); render(); }
-function render() {
-    let conv = conversations.find(c=>c.id===currentId);
-    if(!conv) return;
-    let html = '';
-    for(let msg of conv.messages) {
-        let content = msg.content;
-        if(msg.role==='user') content = msg.content;
-        else content = formatMessage(msg.content);
-        html += `<div class="message ${msg.role}"><div class="message-header"><div class="message-avatar">${msg.role==='user'?'>':'⚡'}</div><span>${msg.role==='user'?'You':'ClawsJoy'}</span></div><div class="message-content">${content}</div></div>`;
+(function() {
+    // Token
+    const TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZDE2YjIwYjJjZWRjZjNjZiIsInVzZXJuYW1lIjoidGVzdHVzZXIiLCJyb2xlIjoidXNlciIsImV4cCI6MTc4MTE4MzMyMn0.2cbQMYnwasdm1cxjxtUuhJyODjaF4GyXoHdma-TZnzQ";
+
+    // 状态
+    let conversations = [];
+    let currentId = null;
+    let currentAgent = 'chat_agent';
+
+    // DOM 元素
+    const messagesDiv = document.getElementById('messages');
+    const chatListDiv = document.getElementById('chatList');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const newChatBtn = document.getElementById('newChatBtn');
+
+    // Agent 配置
+    const agents = {
+        chat_agent: { name: 'Chat', icon: '💬', description: '对话、记忆、情感', demo: '你好，我叫小明' },
+        code_agent: { name: 'Code', icon: '💻', description: '代码生成、解释、调试', demo: '写一个快速排序函数' },
+        analysis_agent: { name: 'Analysis', icon: '📊', description: '数据分析、框架提供', demo: '分析销售数据' },
+        translate_agent: { name: 'Translate', icon: '🌐', description: '多语言翻译', demo: '中译英：你好世界' },
+        calculator_agent: { name: 'Calculator', icon: '🔢', description: '科学计算', demo: '计算 sqrt(16) + 3^2' },
+        butler_agent: { name: 'Butler', icon: '👤', description: '私人管家、待办', demo: '添加待办 买牛奶' },
+        orchestrator: { name: 'Orchestrator', icon: '🎯', description: '任务编排', demo: '分析数据然后生成报告' },
+        memory_agent: { name: 'Memory', icon: '🧠', description: '记忆管理', demo: '记住 生日=5月1日' },
+        dialect_agent: { name: 'Dialect', icon: '🗣️', description: '方言大师', demo: '学习方言 阿拉 = 我们' }
+    };
+
+    // 快捷命令
+    const quickCommands = {
+        chat_agent: ['你好', '我叫小明', '我喜欢蓝色', '今天天气怎么样'],
+        code_agent: ['写一个快速排序函数', '解释代码：def fib(n): return n if n<2 else fib(n-1)+fib(n-2)', '优化代码：```python\ndef fib(n):\n    if n<2:return n\n    return fib(n-1)+fib(n-2)\n```'],
+        analysis_agent: ['分析销售数据', '分析用户增长趋势', '总结季度报告'],
+        translate_agent: ['中译英：你好世界', '英译中：Hello World', '翻译成日语：谢谢'],
+        calculator_agent: ['计算 123 + 456', '计算 sqrt(16) + 3^2', '(15+25)*2 等于多少'],
+        butler_agent: ['添加待办 买牛奶', '查看待办', '完成待办 1'],
+        orchestrator: ['分析数据然后生成报告', '写代码然后解释', '计算利润然后分析趋势'],
+        memory_agent: ['记住 生日=5月1日', '回忆 生日', '列出所有记忆'],
+        dialect_agent: ['学习方言 阿拉 = 我们', '转换成宁波话 我们回家', '我的方言']
+    };
+
+    // 保存数据
+    function save() {
+        localStorage.setItem('codex_conversations', JSON.stringify(conversations));
     }
-    if(conv.messages.length===0) html = '<div class="message assistant"><div class="message-header"><div class="message-avatar">⚡</div><span>ClawsJoy Codex</span></div><div class="message-content">欢迎！我能帮你做什么？</div></div>';
-    document.getElementById('messages').innerHTML = html;
-    document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
-    let listHtml = '';
-    for(let c of conversations) listHtml += `<div class="chat-item ${c.id===currentId?'active':''}" onclick="loadConv(${c.id})">${c.title}</div>`;
-    document.getElementById('conversationList').innerHTML = listHtml;
-}
-function formatMessage(content) {
-    content = content.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" style="max-width:100%;max-height:300px;border-radius:8px;margin:8px 0">');
-    content = content.replace(/(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp))/gi, '<img src="$1" style="max-width:100%;max-height:300px;border-radius:8px;margin:8px 0">');
-    content = content.replace(/(https?:\/\/[^\s]+\.(mp4|webm|ogg))/gi, '<video controls style="max-width:100%;border-radius:8px;margin:8px 0"><source src="$1"></video>');
-    content = content.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code class="language-$1">$2</code></pre>');
-    content = content.replace(/\n/g, '<br>');
-    return content;
-}
-function addMessage(role, content) {
-    let conv = conversations.find(c=>c.id===currentId);
-    if(conv) { conv.messages.push({role,content}); if(conv.messages.length===2&&conv.title==='New Chat') conv.title=content.slice(0,30); save(); render(); }
-}
-function showTyping() { document.getElementById('typing')?.remove(); let div = document.createElement('div'); div.id='typing'; div.className='message assistant'; div.innerHTML='<div class="message-header"><div class="message-avatar">⚡</div><span>ClawsJoy</span></div><div class="message-content"><span class="typing">●●●</span></div>'; document.getElementById('messages').appendChild(div); document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight; }
-function hideTyping() { document.getElementById('typing')?.remove(); }
-async function sendMessage() {
 
-            // 处理快捷命令
-            if (message.startsWith('/播放')) {
-                const query = message.replace('/播放', '').trim();
-                if (query) {
-                    const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
-                    const embedHtml = `<div style="margin:16px 0">
-                        <p>🔍 在 YouTube 搜索: <strong>${query}</strong></p>
-                        <a href="${searchUrl}" target="_blank" style="color:#6366f1">点击打开搜索结果</a>
-                    </div>`;
-                    addMessage("user", message);
-                    addMessage("assistant", embedHtml);
-                    input.value = "";
-                    return;
-                } else {
-                    addMessage("user", message);
-                    addMessage("assistant", "请指定要搜索的内容，例如：/播放 周杰伦");
-                    input.value = "";
-                    return;
-                }
-            }
-            
-            if (message.startsWith('/热门')) {
-                const hotUrl = "https://www.youtube.com/feed/trending";
-                const embedHtml = `<div style="margin:16px 0">
-                    <p>🔥 YouTube 热门视频</p>
-                    <a href="${hotUrl}" target="_blank" style="color:#6366f1">点击查看热门视频</a>
-                </div>`;
-                addMessage("user", message);
-                addMessage("assistant", embedHtml);
-                input.value = "";
-                return;
-            }
+    // 加载数据
+    function loadData() {
+        const saved = localStorage.getItem('codex_conversations');
+        if (saved) {
+            conversations = JSON.parse(saved);
+        } else {
+            conversations = [{ id: Date.now(), title: '新对话', messages: [], agent: 'chat_agent' }];
+        }
+        currentId = conversations[0].id;
+        if (conversations[0].agent) currentAgent = conversations[0].agent;
+        updateAgentUI();
+    }
 
-
-            // 处理快捷命令
-            if (message.startsWith('/播放')) {
-                const query = message.replace('/播放', '').trim();
-                if (query) {
-                    const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
-                    const embedHtml = `<div style="margin:16px 0">
-                        <p>🔍 在 YouTube 搜索: <strong>${query}</strong></p>
-                        <a href="${searchUrl}" target="_blank" style="color:#6366f1">点击打开搜索结果</a>
-                    </div>`;
-                    addMessage("user", message);
-                    addMessage("assistant", embedHtml);
-                    input.value = "";
-                    return;
-                } else {
-                    addMessage("user", message);
-                    addMessage("assistant", "请指定要搜索的内容，例如：/播放 周杰伦");
-                    input.value = "";
-                    return;
-                }
+    // 更新 Agent UI
+    function updateAgentUI() {
+        document.querySelectorAll('.agent-badge').forEach(el => {
+            if (el.dataset.agent === currentAgent) {
+                el.classList.add('active');
+            } else {
+                el.classList.remove('active');
             }
-            
-            if (message.startsWith('/热门')) {
-                const hotUrl = "https://www.youtube.com/feed/trending";
-                const embedHtml = `<div style="margin:16px 0">
-                    <p>🔥 YouTube 热门视频</p>
-                    <a href="${hotUrl}" target="_blank" style="color:#6366f1">点击查看热门视频</a>
-                </div>`;
-                addMessage("user", message);
-                addMessage("assistant", embedHtml);
-                input.value = "";
-                return;
-            }
-
-    let input = document.getElementById('messageInput');
-    let message = input.value.trim();
-    if(!message) return;
-    input.value = '';
-    addMessage('user', message);
-    showTyping();
-    try {
-        let response = await fetch("/api/v5/enhanced/chat", {
-            method: "POST",
-            headers: {"Content-Type":"application/json","Authorization":`Bearer ${TOKEN}`},
-            body: JSON.stringify({message, user_id:"codex_user"})
         });
-        let data = await response.json();
-        hideTyping();
-        if(data.success) addMessage('assistant', data.response);
-        else addMessage('assistant', '❌ 请求失败');
-    } catch(e) { hideTyping(); addMessage('assistant', '❌ 网络错误'); }
-}
-function insert(cmd) { document.getElementById('messageInput').value = cmd; document.getElementById('messageInput').focus(); }
-render();
+        renderQuickCommands();
+    }
+
+    // 渲染快捷命令
+    function renderQuickCommands() {
+        const container = document.getElementById('quickCommands');
+        if (!container) return;
+        const cmds = quickCommands[currentAgent] || quickCommands.chat_agent;
+        container.innerHTML = cmds.map(cmd => `<span class="quick-cmd" onclick="insertCommand('${cmd.replace(/'/g, "\\'")}')">${cmd.slice(0, 30)}</span>`).join('');
+    }
+
+    // 插入命令
+    window.insertCommand = function(cmd) {
+        messageInput.value = cmd;
+        messageInput.focus();
+    };
+
+    // 渲染对话列表
+    function renderChatList() {
+        let html = '';
+        for (const conv of conversations) {
+            const activeClass = conv.id === currentId ? 'active' : '';
+            html += `<div class="chat-item ${activeClass}" data-id="${conv.id}">${escapeHtml(conv.title)}</div>`;
+        }
+        chatListDiv.innerHTML = html;
+        document.querySelectorAll('.chat-item').forEach(el => {
+            el.addEventListener('click', () => switchChat(parseInt(el.dataset.id)));
+        });
+    }
+
+    // 格式化消息
+    function formatMessage(content) {
+        if (!content) return '';
+        let result = String(content);
+        result = result.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+        result = result.replace(/\n/g, '<br>');
+        return result;
+    }
+
+    // HTML 转义
+    function escapeHtml(text) {
+        if (!text) return '';
+        return String(text).replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    // 添加消息
+    function addMessage(role, content, agent = null) {
+        const conv = conversations.find(c => c.id === currentId);
+        if (!conv) return;
+        
+        const displayContent = role === 'assistant' ? formatMessage(content) : escapeHtml(content);
+        conv.messages.push({
+            role: role,
+            content: displayContent,
+            rawContent: content,
+            agent: agent,
+            timestamp: Date.now()
+        });
+        
+        if (conv.messages.length === 1 && conv.title === '新对话') {
+            conv.title = (content || '对话').slice(0, 30);
+        }
+        
+        save();
+        renderChatList();
+        renderMessages();
+    }
+
+    // 渲染消息
+    function renderMessages() {
+        const conv = conversations.find(c => c.id === currentId);
+        if (!conv) return;
+        
+        if (conv.messages.length === 0) {
+            messagesDiv.innerHTML = `<div class="message assistant">
+                <div class="message-header"><div class="message-avatar">⚡</div><span>ClawsJoy Codex</span></div>
+                <div class="message-content">
+                    🤖 欢迎使用 ClawsJoy Codex<br><br>
+                    当前 Agent: <strong>${agents[currentAgent]?.name || currentAgent}</strong><br>
+                    能力: ${agents[currentAgent]?.description || '通用对话'}<br><br>
+                    💡 点击快捷命令测试，或输入自定义消息
+                </div>
+            </div>`;
+            return;
+        }
+        
+        let html = '';
+        for (const msg of conv.messages) {
+            const agentInfo = msg.agent ? agents[msg.agent] : null;
+            const displayName = msg.role === 'user' ? 'You' : (agentInfo?.name || 'ClawsJoy');
+            const avatar = msg.role === 'user' ? '👤' : (agentInfo?.icon || '⚡');
+            
+            html += `<div class="message ${msg.role}">
+                <div class="message-header">
+                    <div class="message-avatar">${avatar}</div>
+                    <span>${displayName}</span>
+                </div>
+                <div class="message-content">${msg.content}</div>
+            </div>`;
+        }
+        messagesDiv.innerHTML = html;
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    // 切换对话
+    function switchChat(id) {
+        currentId = id;
+        const conv = conversations.find(c => c.id === currentId);
+        if (conv && conv.agent) {
+            currentAgent = conv.agent;
+        }
+        updateAgentUI();
+        renderChatList();
+        renderMessages();
+    }
+
+    // 新建对话
+    function newChat() {
+        const newId = Date.now();
+        conversations.unshift({
+            id: newId,
+            title: '新对话',
+            messages: [],
+            agent: currentAgent,
+            createdAt: new Date().toISOString()
+        });
+        currentId = newId;
+        save();
+        renderChatList();
+        renderMessages();
+        updateAgentUI();
+    }
+
+    // 切换 Agent
+    function switchAgent(agentName) {
+        currentAgent = agentName;
+        const conv = conversations.find(c => c.id === currentId);
+        if (conv) {
+            conv.agent = agentName;
+            save();
+        }
+        updateAgentUI();
+        renderMessages();
+    }
+
+    // 显示打字动画
+    function showTyping() {
+        const typingDiv = document.getElementById('typingIndicator');
+        if (typingDiv) typingDiv.remove();
+        const div = document.createElement('div');
+        div.id = 'typingIndicator';
+        div.className = 'message assistant';
+        div.innerHTML = `<div class="message-header"><div class="message-avatar">⚡</div><span>${agents[currentAgent]?.name || 'ClawsJoy'}</span></div>
+            <div class="message-content"><span class="typing-dots"><span>●</span><span>●</span><span>●</span></span></div>`;
+        messagesDiv.appendChild(div);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function hideTyping() {
+        const typingDiv = document.getElementById('typingIndicator');
+        if (typingDiv) typingDiv.remove();
+    }
+
+    // 发送消息
+    async function sendMessage() {
+        const message = messageInput.value.trim();
+        if (!message) return;
+        
+        addMessage('user', message);
+        messageInput.value = '';
+        showTyping();
+        
+        try {
+            const response = await fetch('/api/v5/wisdom/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${TOKEN}`
+                },
+                body: JSON.stringify({
+                    user_id: 'codex_user',
+                    agent: currentAgent,
+                    message: message
+                })
+            });
+            
+            const data = await response.json();
+            hideTyping();
+            
+            if (data.success) {
+                let reply = data.response || data.output_content || '处理完成';
+                if (Array.isArray(reply)) reply = reply[0] || '完成';
+                addMessage('assistant', String(reply), currentAgent);
+            } else {
+                addMessage('assistant', '❌ ' + (data.error || data.response || '未知错误'), currentAgent);
+            }
+        } catch (error) {
+            hideTyping();
+            addMessage('assistant', '❌ 请求失败: ' + error.message, currentAgent);
+        }
+    }
+
+    // 事件绑定
+    sendBtn.addEventListener('click', sendMessage);
+    newChatBtn.addEventListener('click', newChat);
+    messageInput.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+
+    // Agent 选择
+    document.querySelectorAll('.agent-badge').forEach(el => {
+        el.addEventListener('click', () => {
+            switchAgent(el.dataset.agent);
+        });
+    });
+
+    // 初始化
+    loadData();
+    renderChatList();
+    renderMessages();
+    renderQuickCommands();
+})();
 </script>
 </body>
 </html>
