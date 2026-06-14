@@ -41,6 +41,18 @@ class WisdomFactory:
             "calculator_agent": ("agents.calculator_agent.agent_v4", "CalculatorAgentV4"),
             "orchestrator": ("agents.orchestrator.agent_v4", "OrchestratorV4"),
             "decision_agent": ("agents.decision_agent.agent_v4", "DecisionAgentV4"),
+            "vision_agent": ("agents.vision_agent.agent_v4", "VisionAgentV4"),
+            "memory_agent": ("agents.memory_agent.agent_v4", "MemoryAgentV4"),
+            "file_agent": ("agents.file_agent.agent_v4", "FileAgentV4"),
+            "video_agent": ("agents.video_agent.agent_v4", "VideoAgentV4"),
+            "youtube_agent": ("agents.youtube_agent.agent_v4", "YoutubeAgentV4"),
+            "audio_agent": ("agents.audio_agent.agent_v4", "AudioAgentV4"),
+            "dialect_agent": ("agents.dialect_agent.agent_v4", "DialectAgentV4"),
+            "collaboration_agent": ("agents.collaboration_agent.agent_v4", "CollaborationAgentV4"),
+            "writer_agent": ("agents.writer_agent.agent_v4", "WriterAgentV4"),
+            "three_d_agent": ("agents.three_d_agent.agent_v4", "ThreeDAgentV4"),
+            "video_indexer_agent": ("agents.video_indexer_agent.agent_v4", "VideoIndexerAgentV4"),
+            "proactive_agent": ("agents.proactive_agent.agent_v4", "ProactiveAgentV4"),
         }
 
         for agent_name, (module_path, class_name) in v4_agents.items():
@@ -62,7 +74,10 @@ class WisdomFactory:
         """同步 V4 Agent 到 agent_registry"""
         v4_agent_names = [
             "chat_agent", "code_agent", "analysis_agent", "butler_agent",
-            "translate_agent", "calculator_agent", "orchestrator", "decision_agent"
+            "translate_agent", "calculator_agent", "orchestrator", "decision_agent",
+            "vision_agent" ,"memory_agent", "file_agent", "video_agent", "youtube_agent",
+            "audio_agent", "dialect_agent", "collaboration_agent", "writer_agent",
+            "three_d_agent", "video_indexer_agent", "proactive_agent"
         ]
         
         for agent_name in v4_agent_names:
@@ -88,6 +103,18 @@ class WisdomFactory:
             "calculator_agent": ["calculate", "计算", "科学计算"],
             "orchestrator": ["orchestrate", "编排", "调度", "分解"],
             "decision_agent": ["decision", "决策", "路由", "评估"],
+            "vision_agent": ["vision", "视觉", "处理"],
+            "memory_agent": ["memory", "视觉", "处理"],
+            "file_agent": ["file", "视觉", "处理"],
+            "video_agent": ["video", "视觉", "处理"],
+            "youtube_agent": ["youtube", "视觉", "处理"],
+            "audio_agent": ["audio", "视觉", "处理"],
+            "dialect_agent": ["dialect", "视觉", "处理"],
+            "collaboration_agent": ["collaboration", "视觉", "处理"],
+            "writer_agent": ["writer", "视觉", "处理"],
+            "three_d_agent": ["three_d", "视觉", "处理"],
+            "video_indexer_agent": ["video_indexer", "视觉", "处理"],
+            "proactive_agent": ["proactive", "视觉", "处理"],
         }
         return capabilities.get(agent_name, [])
 
@@ -134,6 +161,18 @@ class WisdomFactory:
                 "calculator_agent": ("agents.calculator_agent.agent_v4", "CalculatorAgentV4"),
                 "orchestrator": ("agents.orchestrator.agent_v4", "OrchestratorV4"),
                 "decision_agent": ("agents.decision_agent.agent_v4", "DecisionAgentV4"),
+                "vision_agent": ("agents.vision_agent.agent_v4", "VisionAgentV4"),
+                "memory_agent": ("agents.memory_agent.agent_v4", "MemoryAgentV4"),
+                "file_agent": ("agents.file_agent.agent_v4", "FileAgentV4"),
+                "video_agent": ("agents.video_agent.agent_v4", "VideoAgentV4"),
+                "youtube_agent": ("agents.youtube_agent.agent_v4", "YoutubeAgentV4"),
+                "audio_agent": ("agents.audio_agent.agent_v4", "AudioAgentV4"),
+                "dialect_agent": ("agents.dialect_agent.agent_v4", "DialectAgentV4"),
+                "collaboration_agent": ("agents.collaboration_agent.agent_v4", "CollaborationAgentV4"),
+                "writer_agent": ("agents.writer_agent.agent_v4", "WriterAgentV4"),
+                "three_d_agent": ("agents.three_d_agent.agent_v4", "ThreeDAgentV4"),
+                "video_indexer_agent": ("agents.video_indexer_agent.agent_v4", "VideoIndexerAgentV4"),
+                "proactive_agent": ("agents.proactive_agent.agent_v4", "ProactiveAgentV4"),
             }
             
             if agent_name in v4_imports:
@@ -198,6 +237,5 @@ class WisdomFactory:
         stats["lazy_loaded"] = [k for k in lazy_loader._loaded.keys() if "agent" in k]
         
         return stats
-
 
 wisdom_factory = WisdomFactory()

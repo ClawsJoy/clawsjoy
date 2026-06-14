@@ -23,7 +23,8 @@ class UnifiedIntentParser:
     
     def __init__(self, spec_path="config/prompt/unified_spec.yaml"):
         self.spec = self._load_spec(spec_path)
-        self.llm_url = "http://localhost:5012/chat"
+        self.llm_url = "http://localhost:11434/api/generate"
+        self.llm_model = "qwen2:1.5b-instruct"  # 添加这行
         self.prompt_template = self._load_prompt_template()
     
     def _load_spec(self, path: str) -> Dict:
@@ -57,9 +58,15 @@ class UnifiedIntentParser:
         confidence = 0.5
         
         try:
+            # 调用 Ollama
             resp = requests.post(
                 self.llm_url,
-                json={"message": prompt},
+                json={
+                    "model": self.llm_model,
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {"temperature": 0.3, "num_predict": 512}
+                },
                 timeout=30
             )
             if resp.status_code == 200:

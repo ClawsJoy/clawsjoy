@@ -1366,7 +1366,7 @@ def generate_image():
 })
 def wisdom_chat():
     """
-    智慧对话接口 - 新接口，独立于原有 enhanced_chat
+    智慧对话接口 - 新接口，独立于原有 enhanced_chat - 带请求验证
 
     特点:
     1. 支持标准化 JSON 输入
@@ -1374,9 +1374,30 @@ def wisdom_chat():
     3. 自动路由到合适的 Agent
     4. 带缓存和智慧能力
     """
-    data = request.json or {}
+    try:
+        data = request.get_json()
+        if data is None:
+            return jsonify({"success": False, "response": "无效的JSON格式"}), 400
+    except Exception as e:
+        return jsonify({"success": False, "response": f"JSON解析错误: {str(e)}"}), 400
+    
     user_id = data.get("user_id", "guest")
     message = data.get("message", "")
+    agent_name = data.get("agent", "chat_agent")
+    
+    # 验证必要字段
+    if not message:
+        return jsonify({"success": False, "response": "消息不能为空"}), 400
+    
+    # 限制消息长度
+    if len(message) > 1000:
+        return jsonify({"success": False, "response": "消息过长，请控制在1000字符以内"}), 400
+    
+    # 过滤特殊字符（防止注入）
+    import re
+    if re.search(r'[<>]', message):
+        message = re.sub(r'[<>]', '', message)
+    # ... 原有逻辑 ...
 
     # 检测输入类型
     if "action" in data or "raw_input" in data:
@@ -1546,7 +1567,185 @@ def agent_list():
         "stats": agent_registry.get_stats()
     })
 
+# ========== 话本管理 API ==========
 
+@app.route("/api/v5/scriptbook/stats", methods=["GET"])
+def scriptbook_stats():
+    """获取话本统计"""
+    agent_name = request.args.get("agent", "chat_agent")
+    
+    from core.lib.scriptbook_learner import scriptbook_learner
+    # 重新初始化指定 agent 的学习器
+    scriptbook_learner.agent_name = agent_name
+    scriptbook_learner._load_stats()
+    
+    stats = scriptbook_learner.get_stats()
+    return jsonify({
+        "success": True,
+        "agent": agent_name,
+        "stats": stats
+    })
+
+
+@app.route("/api/v5/scriptbook/optimize", methods=["POST"])
+def scriptbook_optimize():
+    """触发话本优化"""
+    data = request.json or {}
+    agent_name = data.get("agent", "chat_agent")
+    auto_apply = data.get("auto_apply", False)
+    
+    from core.lib.scriptbook_learner import scriptbook_learner
+    scriptbook_learner.agent_name = agent_name
+    scriptbook_learner._load_stats()
+    
+    stats = scriptbook_learner.get_stats()
+    suggestions = stats.get("suggestions", [])
+    
+    result = {
+        "success": True,
+        "agent": agent_name,
+        "hit_rate": stats["hit_rate"],
+        "suggestions": suggestions
+    }
+    
+    if auto_apply and suggestions:
+        # 自动应用建议
+        result["auto_applied"] = _apply_scriptbook_suggestions(agent_name, suggestions)
+    
+    return jsonify(result)
+
+
+@app.route("/api/v5/scriptbook/update", methods=["POST"])
+def scriptbook_update():
+    """手动更新话本"""
+    data = request.json or {}
+    agent_name = data.get("agent", "chat_agent")
+    intent = data.get("intent")
+    keywords = data.get("keywords", [])
+    template = data.get("template")
+    
+    if not intent or not template:
+        return jsonify({"success": False, "error": "intent and template required"}), 400
+    
+    # 更新话本文件
+    import yaml
+    from pathlib import Path
+    
+    script_path = Path(f"agents/{agent_name}/scriptbook.yaml")
+    if not script_path.exists():
+        script_path = Path(f"config/butler/scriptbook.yaml")
+    
+    if script_path.exists():
+        with open(script_path, 'r') as f:
+            config = yaml.safe_load(f) or {}
+        
+        # 添加新意图
+        if "intents" not in config:
+            config["intents"] = []
+        
+        config["intents"].append({
+            "keywords": keywords,
+            "response": intent
+        })
+        
+        if "templates" not in config:
+            config["templates"] = {}
+        config["templates"][intent] = template
+        
+        with open(script_path, 'w') as f:
+            yaml.dump(config, f, allow_unicode=True, default_flow_style=False)
+        
+        return jsonify({"success": True, "message": f"话本已更新: {intent}"})
+    
+    return jsonify({"success": False, "error": "话本文件不存在"}), 404
+
+
+def _apply_scriptbook_suggestions(agent_name: str, suggestions: list) -> list:
+    """自动应用话本建议"""
+    applied = []
+    for sug in suggestions:
+        # 生成新话本
+        new_intent = f"auto_{sug['type']}"
+        keywords = sug.get("suggested_keywords", [])
+        template = f"用户说了「{'」、「'.join(keywords)}」之类的话，需要友好回应。"
+        
+        # 更新话本
+        import yaml
+        from pathlib import Path
+        
+        script_path = Path(f"agents/{agent_name}/scriptbook.yaml")
+        if script_path.exists():
+            with open(script_path, 'r') as f:
+                config = yaml.safe_load(f) or {}
+            
+            if "intents" not in config:
+                config["intents"] = []
+            
+            # 避免重复
+            existing = [i.get("response") for i in config["intents"]]
+            if new_intent not in existing:
+                config["intents"].append({
+                    "keywords": keywords,
+                    "response": new_intent
+                })
+                config["templates"][new_intent] = template
+                
+                with open(script_path, 'w') as f:
+                    yaml.dump(config, f, allow_unicode=True, default_flow_style=False)
+                
+                applied.append(new_intent)
+    
+    return applied
+
+
+@app.route("/api/v5/scriptbook/hot-reload", methods=["POST"])
+def scriptbook_hot_reload():
+    """热重载话本"""
+    agent_name = request.json.get("agent", "chat_agent")
+    
+    # 清除缓存，重新加载
+    from core.agents.wisdom.wisdom_factory import wisdom_factory
+    wisdom_agent = wisdom_factory.get_wisdom_agent(agent_name, "system")
+    
+    if wisdom_agent and hasattr(wisdom_agent, '_load_scriptbook'):
+        wisdom_agent._load_scriptbook()
+        return jsonify({"success": True, "message": f"话本已热重载: {agent_name}"})
+    
+    return jsonify({"success": False, "error": "Agent 不支持话本热重载"}), 400
+
+
+# ========== Prompt 升级 API ==========
+
+@app.route("/api/v5/prompt/stats", methods=["GET"])
+def prompt_stats():
+    """获取 Prompt 升级统计"""
+    agent_name = request.args.get("agent", "chat_agent")
+    
+    from core.lib.prompt_upgrader import get_prompt_upgrader
+    upgrader = get_prompt_upgrader(agent_name)
+    
+    return jsonify({
+        "success": True,
+        "agent": agent_name,
+        "stats": upgrader.get_stats()
+    })
+
+
+@app.route("/api/v5/prompt/upgrade", methods=["POST"])
+def prompt_upgrade():
+    """手动触发 Prompt 升级"""
+    agent_name = request.json.get("agent", "chat_agent")
+    
+    from core.lib.prompt_upgrader import get_prompt_upgrader
+    upgrader = get_prompt_upgrader(agent_name)
+    upgrader._generate_new_version()
+    
+    return jsonify({
+        "success": True,
+        "message": f"已触发 {agent_name} Prompt 升级",
+        "current_version": upgrader.current_version,
+        "test_version": upgrader.test_version
+    })
 
 
 

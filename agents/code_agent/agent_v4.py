@@ -499,7 +499,16 @@ def solution():
             return review
         return "代码审查暂时不可用，请稍后重试。"
 
+    def _analyze_request(self, user_input: str) -> str:
+        """分析代码请求"""
+        return """我是代码助手，可以帮您：
 
+- 生成代码："写一个排序函数"
+- 解释代码："解释代码：```python\n代码\n```"
+- 调试代码："调试代码并提供错误信息"
+- 优化代码："优化这段代码"
+
+请提供具体的代码需求！"""
 
 
 if __name__ == "__main__":

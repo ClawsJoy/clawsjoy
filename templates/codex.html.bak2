@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClawsJoy Codex - AI 代码助手</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'SF Mono', monospace; background: #0a0a0a; color: #e0e0e0; height: 100vh; overflow: hidden; }
+        .app { display: flex; height: 100vh; }
+        .sidebar { width: 280px; background: #111; border-right: 1px solid #2a2a2a; display: flex; flex-direction: column; }
+        .sidebar-header { padding: 16px; border-bottom: 1px solid #2a2a2a; }
+        .sidebar-header h1 { font-size: 18px; color: #6366f1; }
+        .new-chat { margin: 16px; padding: 10px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; text-align: center; cursor: pointer; }
+        .new-chat:hover { background: #2a2a2a; border-color: #6366f1; }
+        .chat-list { flex: 1; overflow-y: auto; padding: 8px; }
+        .chat-item { padding: 10px; border-radius: 6px; margin-bottom: 4px; cursor: pointer; color: #999; }
+        .chat-item:hover, .chat-item.active { background: #1a1a1a; color: #e0e0e0; }
+        .main { flex: 1; display: flex; flex-direction: column; background: #0a0a0a; }
+        .header { padding: 16px 24px; border-bottom: 1px solid #2a2a2a; display: flex; justify-content: space-between; }
+        .messages { flex: 1; overflow-y: auto; padding: 24px; }
+        .message { margin-bottom: 24px; }
+        .message-header { display: flex; align-items: center; margin-bottom: 8px; font-size: 12px; color: #888; }
+        .message-avatar { width: 24px; height: 24px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; margin-right: 8px; }
+        .message.user .message-avatar { background: #2a2a2a; }
+        .message.assistant .message-avatar { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+        .message-content { margin-left: 32px; line-height: 1.6; }
+        .message-content pre { background: #1e1e1e; padding: 16px; border-radius: 8px; overflow-x: auto; margin: 12px 0; }
+        .message-content code { font-family: 'SF Mono', monospace; font-size: 13px; color: #ce9178; }
+        .input-area { padding: 20px 24px; border-top: 1px solid #2a2a2a; }
+        .input-wrapper { display: flex; gap: 12px; }
+        .input-wrapper textarea { flex: 1; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; padding: 12px 16px; color: #e0e0e0; font-family: monospace; font-size: 13px; resize: none; outline: none; }
+        .input-wrapper textarea:focus { border-color: #6366f1; }
+        .input-wrapper button { padding: 12px 20px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border: none; border-radius: 8px; color: white; cursor: pointer; }
+        .shortcuts { margin-top: 12px; display: flex; gap: 12px; font-size: 11px; color: #555; }
+        .shortcut { cursor: pointer; }
+        .shortcut:hover { color: #6366f1; }
+        .typing { display: inline-block; width: 30px; text-align: center; }
+        .typing span { animation: blink 1.4s infinite; }
+        .typing span:nth-child(2) { animation-delay: 0.2s; }
+        .typing span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes blink { 0%,60%,100% { opacity: 0; } 30% { opacity: 1; } }
+    </style>
+</head>
+<body>
+<div class="app">
+    <aside class="sidebar">
+        <div class="sidebar-header"><h1>ClawsJoy Codex</h1></div>
+        <div class="new-chat" onclick="newConversation()">+ New Chat</div>
+        <div class="chat-list" id="conversationList"></div>
+    </aside>
+    <main class="main">
+        <div class="header"><div>~/codex/assistant</div><div>● Ready</div></div>
+        <div class="messages" id="messages"><div class="message assistant"><div class="message-header"><div class="message-avatar">⚡</div><span>ClawsJoy Codex</span></div><div class="message-content">欢迎！我能帮你做什么？<br><br>• /code 生成代码<br>• /image 生成图片<br>• 直接发送图片/视频链接会自动预览</div></div></div>
+        <div class="input-area">
+            <div class="input-wrapper">
+                <textarea id="messageInput" placeholder="输入消息... (Ctrl+Enter 发送)" rows="3" onkeydown="if(event.ctrlKey&&event.keyCode===13) sendMessage()"></textarea>
+                <button onclick="sendMessage()">发送</button>
+            </div>
+            <div class="shortcuts">
+                <span class="shortcut" onclick="insert('/code ')">/code</span>
+                <span class="shortcut" onclick="insert('/image ')">/image</span>
+                <span class="shortcut" onclick="insert('/explain ')">/explain</span>
+                <span class="shortcut" onclick="insert('/播放 ')">/播放</span>
+                <span class="shortcut" onclick="insert('/热门')">/热门</span>
+                <span class="shortcut" onclick="insert('/播放 ')">/播放</span>
+                <span class="shortcut" onclick="insert('/热门')">/热门</span>
+            </div>
+        </div>
+    </main>
+</div>
+<script>
+const TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZDE2YjIwYjJjZWRjZjNjZiIsInVzZXJuYW1lIjoidGVzdHVzZXIiLCJyb2xlIjoidXNlciIsImV4cCI6MTc4MTE4MzMyMn0.2cbQMYnwasdm1cxjxtUuhJyODjaF4GyXoHdma-TZnzQ";
+let conversations = JSON.parse(localStorage.getItem("codex_conversations") || '[{"id":0,"title":"Current Chat","messages":[]}]');
+let currentId = 0;
+function save() { localStorage.setItem("codex_conversations", JSON.stringify(conversations)); }
+function loadConv(id) { currentId = id; render(); }
+function newConversation() { let id = Date.now(); conversations.unshift({id:id,title:"New Chat",messages:[]}); currentId=id; save(); render(); }
+function render() {
+    let conv = conversations.find(c=>c.id===currentId);
+    if(!conv) return;
+    let html = '';
+    for(let msg of conv.messages) {
+        let content = msg.content;
+        if(msg.role==='user') content = msg.content;
+        else content = formatMessage(msg.content);
+        html += `<div class="message ${msg.role}"><div class="message-header"><div class="message-avatar">${msg.role==='user'?'>':'⚡'}</div><span>${msg.role==='user'?'You':'ClawsJoy'}</span></div><div class="message-content">${content}</div></div>`;
+    }
+    if(conv.messages.length===0) html = '<div class="message assistant"><div class="message-header"><div class="message-avatar">⚡</div><span>ClawsJoy Codex</span></div><div class="message-content">欢迎！我能帮你做什么？</div></div>';
+    document.getElementById('messages').innerHTML = html;
+    document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+    let listHtml = '';
+    for(let c of conversations) listHtml += `<div class="chat-item ${c.id===currentId?'active':''}" onclick="loadConv(${c.id})">${c.title}</div>`;
+    document.getElementById('conversationList').innerHTML = listHtml;
+}
+function formatMessage(content) {
+    content = content.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" style="max-width:100%;max-height:300px;border-radius:8px;margin:8px 0">');
+    content = content.replace(/(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp))/gi, '<img src="$1" style="max-width:100%;max-height:300px;border-radius:8px;margin:8px 0">');
+    content = content.replace(/(https?:\/\/[^\s]+\.(mp4|webm|ogg))/gi, '<video controls style="max-width:100%;border-radius:8px;margin:8px 0"><source src="$1"></video>');
+    content = content.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code class="language-$1">$2</code></pre>');
+    content = content.replace(/\n/g, '<br>');
+    return content;
+}
+function addMessage(role, content) {
+    let conv = conversations.find(c=>c.id===currentId);
+    if(conv) { conv.messages.push({role,content}); if(conv.messages.length===2&&conv.title==='New Chat') conv.title=content.slice(0,30); save(); render(); }
+}
+function showTyping() { document.getElementById('typing')?.remove(); let div = document.createElement('div'); div.id='typing'; div.className='message assistant'; div.innerHTML='<div class="message-header"><div class="message-avatar">⚡</div><span>ClawsJoy</span></div><div class="message-content"><span class="typing">●●●</span></div>'; document.getElementById('messages').appendChild(div); document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight; }
+function hideTyping() { document.getElementById('typing')?.remove(); }
+async function sendMessage() {
+    const input = document.getElementById("messageInput");
+    const message = input.value.trim();
+    if (!message) return;
+
+            // 处理快捷命令
+            if (message.startsWith('/播放')) {
+                const query = message.replace('/播放', '').trim();
+                if (query) {
+                    const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+                    const embedHtml = `<div style="margin:16px 0">
+                        <p>🔍 在 YouTube 搜索: <strong>${query}</strong></p>
+                        <a href="${searchUrl}" target="_blank" style="color:#6366f1">点击打开搜索结果</a>
+                    </div>`;
+                    addMessage("user", message);
+                    addMessage("assistant", embedHtml);
+                    input.value = "";
+                    return;
+                } else {
+                    addMessage("user", message);
+                    addMessage("assistant", "请指定要搜索的内容，例如：/播放 周杰伦");
+                    input.value = "";
+                    return;
+                }
+            }
+            
+            if (message.startsWith('/热门')) {
+                const hotUrl = "https://www.youtube.com/feed/trending";
+                const embedHtml = `<div style="margin:16px 0">
+                    <p>🔥 YouTube 热门视频</p>
+                    <a href="${hotUrl}" target="_blank" style="color:#6366f1">点击查看热门视频</a>
+                </div>`;
+                addMessage("user", message);
+                addMessage("assistant", embedHtml);
+                input.value = "";
+                return;
+            }
+
+
+            // 处理快捷命令
+            if (message.startsWith('/播放')) {
+                const query = message.replace('/播放', '').trim();
+                if (query) {
+                    const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+                    const embedHtml = `<div style="margin:16px 0">
+                        <p>🔍 在 YouTube 搜索: <strong>${query}</strong></p>
+                        <a href="${searchUrl}" target="_blank" style="color:#6366f1">点击打开搜索结果</a>
+                    </div>`;
+                    addMessage("user", message);
+                    addMessage("assistant", embedHtml);
+                    input.value = "";
+                    return;
+                } else {
+                    addMessage("user", message);
+                    addMessage("assistant", "请指定要搜索的内容，例如：/播放 周杰伦");
+                    input.value = "";
+                    return;
+                }
+            }
+            
+            if (message.startsWith('/热门')) {
+                const hotUrl = "https://www.youtube.com/feed/trending";
+                const embedHtml = `<div style="margin:16px 0">
+                    <p>🔥 YouTube 热门视频</p>
+                    <a href="${hotUrl}" target="_blank" style="color:#6366f1">点击查看热门视频</a>
+                </div>`;
+                addMessage("user", message);
+                addMessage("assistant", embedHtml);
+                input.value = "";
+                return;
+            }
+
+    let input = document.getElementById('messageInput');
+    let message = input.value.trim();
+    if(!message) return;
+    input.value = '';
+    addMessage('user', message);
+    showTyping();
+    try {
+        let response = await fetch("/api/v5/enhanced/chat", {
+            method: "POST",
+            headers: {"Content-Type":"application/json","Authorization":`Bearer ${TOKEN}`},
+            body: JSON.stringify({message, user_id:"codex_user"})
+        });
+        let data = await response.json();
+        hideTyping();
+        if(data.success) addMessage('assistant', data.response);
+        else addMessage('assistant', '❌ 请求失败');
+    } catch(e) { hideTyping(); addMessage('assistant', '❌ 网络错误'); }
+}
+function insert(cmd) { document.getElementById('messageInput').value = cmd; document.getElementById('messageInput').focus(); }
+render();
+</script>
+</body>
+</html>

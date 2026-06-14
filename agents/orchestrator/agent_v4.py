@@ -4,14 +4,14 @@
 import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-
+import re
 import inspect
 import json
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime
 
 from core.agents.business.business_agent import BusinessAgent
-
+from core.lib.dialect.dialect_helper import get_dialect_helper  # 方言支持
 
 class OrchestratorV4(BusinessAgent):
     """
@@ -48,6 +48,7 @@ class OrchestratorV4(BusinessAgent):
         super().__init__(user_id=user_id)
         self._agent_cache = {}
         self._orchestration_history = []
+        self._user_profile = {}
         print(f"🎯 Orchestrator v{self.version} 智慧编排器已启动")
         print(f"   📋 可用专业 Agent: {list(self.SPECIALIST_AGENTS.keys())}")
     
@@ -68,7 +69,16 @@ class OrchestratorV4(BusinessAgent):
         """核心编排逻辑"""
     
         print(f"[Orchestrator] 📋 开始编排: {user_input[:50]}...")
-    
+        
+        # ========== 方言理解 ==========
+        dialect_helper = get_dialect_helper(self.user_id)
+        original_input = user_input
+        has_dialect = dialect_helper.has_dialect(user_input)
+
+        if has_dialect:
+            user_input, _ = dialect_helper.to_standard(user_input)
+            print(f"[Orchestrator] 方言理解: {original_input} → {user_input}")
+
         # 1. 任务识别
         task_type = self._identify_task_type(user_input)
         print(f"[Orchestrator] 任务类型: {task_type}")
@@ -234,23 +244,23 @@ class OrchestratorV4(BusinessAgent):
     def _decompose_task(self, task: str) -> List[Dict]:
         """分解复杂任务"""
         
-        # 规则分解
-        parts = self._split_by_keywords(task)
-        
+        parts = re.split(r'然后|接着|之后|再', task)
         subtasks = []
         for i, part in enumerate(parts, 1):
+            part = part.strip()
+            if not part:
+                continue
             task_type = self._identify_task_type(part)
             agent_name = self.SPECIALIST_AGENTS.get(task_type, "chat_agent")
-            
             subtasks.append({
                 "id": i,
-                "description": part.strip(),
+                "description": part,
                 "agent": agent_name,
                 "depends_on": [i-1] if i > 1 else []
             })
-        
-        return subtasks
+        return subtasks   
     
+
     def _split_by_keywords(self, text: str) -> List[str]:
         """按关键词拆分"""
         keywords = ["然后", "接着", "之后", "再", "并且", "同时"]
@@ -413,3 +423,5 @@ class OrchestratorV4(BusinessAgent):
 if __name__ == "__main__":
     agent = OrchestratorV4("test")
     print("\n✅ OrchestratorV4 测试通过")
+
+

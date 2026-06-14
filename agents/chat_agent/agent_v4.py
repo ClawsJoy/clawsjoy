@@ -6,11 +6,15 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 import random
 import re
+import yaml
+from pathlib import Path
 from datetime import datetime  # 添加这行
 from typing import Dict, Optional, Tuple
 from core.agents.business.business_agent import BusinessAgent
 from core.lib.proactive.proactive_service import proactive_service
 from core.lib.dialect.dialect_helper import get_dialect_helper
+from core.lib.prompt_upgrader import get_prompt_upgrader
+from core.lib.soul.soul_injector import get_soul_injector
 
 
 class ChatAgentV4(BusinessAgent):
@@ -22,15 +26,90 @@ class ChatAgentV4(BusinessAgent):
     
     def __init__(self, user_id: str = "default"):
         super().__init__(user_id=user_id)
-    
+        # 加载话本
+        self._load_scriptbook()
         # 多轮对话历史
         self._conversation_history = []
         self._max_history = 10  # 保留最近10轮对话
         # 启动主动建议服务
         self.add_proactive_hook()
         self._user_profile = {}
+        # 初始化 Prompt 升级器
+        self.prompt_upgrader = get_prompt_upgrader("chat_agent")
+        # 初始化灵魂注入器
+        self.soul = get_soul_injector(user_id, "chat_agent")
         print(f"💬 ChatAgent v{self.version} 智慧化试点启动")
         print(f"   💾 对话历史已启用 (保留最近 {self._max_history} 轮)")
+
+    def _load_scriptbook(self):
+        """加载话本配置"""
+    
+        # 优先使用 chat_agent 专用话本
+        script_path = Path("agents/chat_agent/scriptbook.yaml")
+        if not script_path.exists():
+            # 降级使用通用话本
+            script_path = Path("config/butler/scriptbook.yaml")
+    
+        if script_path.exists():
+            try:
+                with open(script_path, 'r') as f:
+                    data = yaml.safe_load(f)
+                    self._intents = data.get('intents', [])
+                    self._templates = data.get('templates', {})
+                    print(f"📖 已加载话本: {len(self._intents)} 个意图")
+            except Exception as e:
+                print(f"话本加载失败: {e}")
+
+    def _match_intent(self, user_input: str) -> str:
+        """匹配话本意图"""
+        user_lower = user_input.lower()
+        for intent in self._intents:
+            for keyword in intent.get('keywords', []):
+                if keyword in user_lower:
+                    return intent.get('response', 'default')
+        return 'default'
+
+    def _get_template_response(self, template_name: str, **kwargs) -> str:
+        """获取话本回复模板（支持简单的条件替换）"""
+        template = self._templates.get(template_name, "")
+        if not template:
+            return None
+    
+        # 获取用户信息
+        user_name = self.recall_forever("user_name")
+    
+        # 简单替换，不做复杂的 Jinja2 解析
+        result = template
+    
+        # 替换变量
+        if user_name:
+            result = result.replace("{{user_name}}", user_name)
+        else:
+            result = result.replace("{{user_name}}", "")
+    
+        # 处理简单的 if-else（只支持基础的 {% if user_name %}...{% else %}...{% endif %}）
+        if "{% if user_name %}" in result:
+            if user_name:
+                # 取 if 分支
+                match = re.search(r'\{% if user_name %\}(.*?)(?:\{% else %\}|\{% endif %\})', result, re.DOTALL)
+                if match:
+                    result = match.group(1)
+            else:
+                # 取 else 分支
+                match = re.search(r'\{% else %\}(.*?)\{% endif %\}', result, re.DOTALL)
+                if match:
+                    result = match.group(1)
+                else:
+                    # 没有 else，取 if 之前的内容
+                    match = re.search(r'(.*?)\{% if user_name %\}', result, re.DOTALL)
+                    if match:
+                        result = match.group(1)
+    
+        # 清理多余的空格和换行
+        result = result.strip()
+        result = re.sub(r'\n{3,}', '\n\n', result)
+    
+        return result
 
 
     def _get_conversation_context(self, user_input: str) -> str:
@@ -38,27 +117,75 @@ class ChatAgentV4(BusinessAgent):
         if not self._conversation_history:
             return user_input
     
-        # 构建上下文
         context_parts = ["【对话历史】"]
         for i, msg in enumerate(self._conversation_history[-self._max_history:], 1):
-            context_parts.append(f"{i}. 用户: {msg['user']}")
-            context_parts.append(f"   助手: {msg['assistant']}")
+            # 兼容两种格式
+            user_content = msg.get("user") or msg.get("content") or msg.get("text", "")
+            assistant_content = msg.get("assistant") or msg.get("response") or msg.get("content", "")
+        
+            context_parts.append(f"{i}. 用户: {user_content}")
+            context_parts.append(f"   助手: {assistant_content}")
     
-        context_parts.append(f"\n【当前问题】{user_input}")
-        context_parts.append("\n请根据对话历史回答当前问题。")
+        context_parts.append(f"\n【当前】{user_input}")
         return "\n".join(context_parts)
+
 
     def _update_conversation(self, user_input: str, response: str):
         """更新对话历史"""
         self._conversation_history.append({
-            "user": user_input[:200],
-            "assistant": response[:200],
+            "user": user_input[:200],  # 用户消息
+            "assistant": response[:200],  # 助手回复
             "timestamp": datetime.now().isoformat()
         })
-    
-        # 保留最近 N 条
         if len(self._conversation_history) > self._max_history:
-            self._conversation_history = self._conversation_history[-self._max_history:]
+            self._conversation_history = self._conversation_history[-self._max_history:]   
+
+    def _call_llm(self, prompt: str, model: str = None) -> str:
+        """调用 LLM - 使用动态 Prompt"""
+        if not model:
+            model = self._select_model(prompt)
+    
+        # 灵魂注入
+        soul_prompt = self.soul.inject(prompt)
+        # 获取升级版 Prompt
+        context = {
+            "name": "小爪",
+            "description": "智慧聊天助手",
+            "personality": "活泼开朗，喜欢交朋友，有点皮",
+            "memory": f"用户叫{self.recall_forever('user_name') or '未知'}" if self.recall_forever('user_name') else "",
+            "user_input": prompt
+        }
+    
+        system_prompt, version, is_test = self.prompt_upgrader.get_prompt(context)
+        full_prompt = f"{system_prompt}\n\n用户: {prompt}\n小爪:"
+    
+        try:
+            import requests
+            resp = requests.post(
+                "http://localhost:11434/api/generate",
+                json={
+                "model": model,
+                "prompt": soul_prompt,  # 使用灵魂注入后的 prompt
+                "stream": False,
+                "options": {"temperature": 0.7, "num_predict": 150}
+            },
+                timeout=60
+            )
+            if resp.status_code == 200:
+                response = resp.json().get("response", "")
+            
+                # 身份强制过滤
+                if hasattr(self, 'soul'):
+                    response = self.soul.enforce_identity(response)
+                # 添加这行：更新关系计数
+                if hasattr(self, 'soul'):
+                    self.soul.update_relationship(prompt, response)
+                return response       
+                
+        except Exception as e:
+            print(f"LLM 调用失败: {e}")
+    
+        return ""
 
     def _clear_conversation(self) -> str:
         """清空对话历史"""
@@ -102,135 +229,263 @@ class ChatAgentV4(BusinessAgent):
 
 
     def _execute_business(self, user_input: str, context: Optional[Dict] = None) -> Dict:
-        """核心对话逻辑 - 支持方言、任务分解、主动建议"""
-
-        # ========== 1. 方言理解（最先执行）==========
-        dialect_helper = get_dialect_helper(self.user_id)
+        """
+        核心对话逻辑 - 正确架构
+    
+        流程:
+        1. 理解层（方言转换、实体提取）- 不可跳过
+        2. 记忆层（回忆用户信息、更新历史）- 不可跳过
+        3. 增强层（构建完整上下文）
+        4. 表达层（话本模板 或 LLM 生成）
+        """
+    
+        # ============================================================
+        # 第1层：理解层（必须执行，不可跳过）
+        # ============================================================
+        import re as regex
         original_input = user_input
+        understood_input = user_input
+    
+        # 无意义输入检测
+        if self._is_meaningless(user_input):
+            return self._response(self._get_meaningless_response())
+        # 1.1 方言理解
+        dialect_helper = get_dialect_helper(self.user_id)
         has_dialect = dialect_helper.has_dialect(user_input)
-
+    
         if has_dialect:
-            user_input, _ = dialect_helper.to_standard(user_input)
-            print(f"[ChatAgent] 方言理解: {original_input} → {user_input}")
+            understood_input, _ = dialect_helper.to_standard(user_input)
+            print(f"[理解] 方言: {original_input} → {understood_input}")
+    
+        # 1.2 实体提取（名字、偏好等）
+        extracted_name = None
+        extracted_preference = None
+                
+        # 第1层：理解层 - 提取名字后立即返回
+        name_patterns = [r'我叫\s*(\S+)', r'叫我\s*(\S+)', r'可以叫我\s*(\S+)', r'英文名叫\s*(\S+)', r'英文名字\s*(\S+)']
+        for pattern in name_patterns:
+            match = regex.search(pattern, original_input)
+            if match:
+                extracted_name = match.group(1)
+                if extracted_name and extracted_name not in ["什么", "啥", "谁", "吗"]:
+                    self.remember_forever("user_name", extracted_name)
+                    # 先构建响应
+                    response = f"好的，我记住啦！以后就叫你{extracted_name}~ 😊"
+                    # 同步到灵魂
+                    if hasattr(self, 'soul'):
+                        print(f"[DEBUG] soul 存在，准备保存名字: {extracted_name}")
+                        self.soul.set_user_name(extracted_name)
+                        self.soul.update_relationship(original_input, response)  # 添加这行
+                        print(f"[理解] 提取名字: {extracted_name}")
+                        print(f"[DEBUG] soul 保存完成")
+                    else:
+                        print(f"[DEBUG] soul 不存在！")
+                    # 立即返回，不继续执行
+                    self._update_last_response(original_input, response)
+                    return self._response(response)
 
-        # ========== 2. 任务分解（复杂任务优先）==========
-        complex_keywords = ["并且", "同时", "然后", "之后", "接着", "先", "再", "最后"]
-        has_complex = any(kw in user_input for kw in complex_keywords)
-        action_words = ["分析", "生成", "发送", "创建", "写", "计算", "翻译"]
-        action_count = sum(1 for aw in action_words if aw in user_input)
-
-        if has_complex or action_count >= 2:
-            print(f"[DEBUG] 检测到复杂任务: {user_input[:50]}...")
-            decomposition = self._rule_based_decompose(user_input)
-            sub_tasks = decomposition.get("sub_tasks", [])
-            task_list = [f"  {task['id']}. {task['action']} {task['target']}: {task['description']}" 
-                     for task in sub_tasks]
-            result_text = f"📋 **任务分解计划**\n\n" + "\n".join(task_list)
-            result_text += f"\n\n⚙️ 执行模式: {decomposition.get('mode')}"
-            return self._response(result_text, metadata={"decomposed": True})
-
-        # ========== 3. 清空对话 ==========
-        if user_input.strip() in ["清空对话", "清空历史", "重置对话", "clear"]:
+        # ============================================================
+        # 第2层：记忆层（必须执行，不可跳过）
+        # ============================================================
+    
+        # 2.1 回忆用户信息
+        user_name = self.recall_forever("user_name")
+        user_preferences = self._recall_preferences()
+    
+        # 2.2 更新对话历史
+        self._update_conversation(original_input, "[处理中]")
+    
+        # ============================================================
+        # 第3层：增强层（构建理解后的上下文）
+        # ============================================================
+    
+        enhanced_context = {
+            "原始输入": original_input,
+            "理解后输入": understood_input,
+            "用户姓名": user_name or "未知",
+            "用户偏好": user_preferences,
+            "有方言": has_dialect,
+            "对话轮次": len(self._conversation_history)
+        }
+    
+        # ============================================================
+        # 第4层：决策与表达
+        # ============================================================
+    
+        # 4.1 特殊命令处理（不变）
+        if understood_input.strip() in ["清空对话", "清空历史", "重置对话", "clear"]:
             count = len(self._conversation_history)
             self._conversation_history = []
-            return self._response(f"✅ 已清空 {count} 轮对话历史")
-
-        # ========== 4. 名字记忆 ==========
-        if "我叫" in user_input and not any(q in user_input for q in ["什么", "吗", "？"]):
-            name = self._extract_name(user_input)
-            if name:
-                self.remember_forever("user_name", name)
-                response = f"你好，{name}！我记住你了。"
-                self._update_conversation(original_input, response)
-                return self._response(response, metadata={"action": "remember_name"})
-
-        # ========== 5. 查询名字 ==========
-        if any(q in user_input for q in ["我叫什么", "我的名字", "我叫啥", "名字是什么"]):
-            name = self.recall_forever("user_name")
-            if name:
-                response = f"你的名字是{name}。"
-            else:
-                response = "我还不知道你的名字，请告诉我（比如：我叫张三）。"
-            self._update_conversation(original_input, response)
+            response = f"✅ 已清空 {count} 轮对话历史"
+            self._update_last_response(original_input, response)
             return self._response(response)
+    
+        # 4.2 名字查询 - 直接返回，不让 LLM 处理
+        if any(q in understood_input for q in ["我叫什么", "我的名字", "你还记得我吗", "你记得我吗", "我是谁"]):
+            if user_name:
+                response = f"当然记得呀！你叫{user_name}嘛~ 😊"
+            else:
+                response = "我还不认识你呢，可以告诉我你的名字吗？"
+            self._update_last_response(original_input, response)
+            return self._response(response)  # 直接返回，不经过 LLM    
 
-        # ========== 6. 记忆偏好 ==========
-        if "记住" in user_input or "我喜欢" in user_input:
-            match = re.search(r'(?:记住|我喜欢)(.+?)(?:是|：)(.+)', user_input)
+        # 4.3 方言学习（用户教方言）
+        if "就是" in understood_input or "意思是" in understood_input:
+            match = regex.search(r'(\S+)\s+就是\s+(.+)', original_input)
+            if not match:
+                match = regex.search(r'(\S+)\s+意思是\s+(.+)', original_input)
             if match:
-                key, value = match.group(1).strip(), match.group(2).strip()
-                self.remember_forever(f"pref_{key}", value)
-                response = f"✅ 已记住：{key} = {value}"
-                self._update_conversation(original_input, response)
+                dialect_word, meaning = match.group(1), match.group(2)
+                dialect_helper.learn_direct(dialect_word, meaning)  # 改为 learn_direct
+                response = f"学到啦！原来「{dialect_word}」是「{meaning}」的意思，谢谢教我~ 😊"
+                self._update_last_response(original_input, response)
                 return self._response(response)
-
-        # ========== 7. 查询偏好 ==========
-        if "我喜欢什么" in user_input or "我的偏好" in user_input:
-            prefs = []
-            for key in ["颜色", "食物", "电影", "音乐", "书"]:
-                value = self.recall_forever(f"pref_{key}")
-                if value:
-                    prefs.append(f"{key}: {value}")
-            if prefs:
-                response = "你喜欢的：\n" + "\n".join(f"  • {p}" for p in prefs)
-            else:
-                response = "我还不知道你的偏好，可以告诉我，比如：我喜欢颜色是蓝色"
-            self._update_conversation(original_input, response)
+    
+        # 4.4 天气查询（友好引导）
+        if any(q in understood_input for q in ["天气", "温度", "下雨", "晴天", "多云"]):
+            response = "我暂时查不了实时天气呢~ 不过你可以告诉我你那里的天气，我可以陪你聊聊！☀️🌧️"
+            self._update_last_response(original_input, response)
             return self._response(response)
+    
+        # 4.5 话本匹配（作为表达模板，使用理解后的输入）
+        if hasattr(self, '_intents') and self._intents:
+            intent_name = self._match_intent(understood_input)
+            if intent_name and intent_name in self._templates:
+                template = self._templates[intent_name]
+                
+                # 第一步：处理条件语法
+                import regex
+                result = template
+                
+                # 处理 {% if user_name %}...{% else %}...{% endif %}
+                if "{% if user_name %}" in result:
+                    if user_name:
+                        # 取 if 分支
+                        match = regex.search(r'\{% if user_name %\}(.*?)(?:\{% else %\}|\{% endif %\})', result, regex.DOTALL)
+                        if match:
+                            result = match.group(1)
+                    else:
+                        # 取 else 分支
+                        match = regex.search(r'\{% else %\}(.*?)\{% endif %\}', result, regex.DOTALL)
+                        if match:
+                            result = match.group(1)
+                        else:
+                            # 没有 else，取 if 之前的内容
+                            match = regex.search(r'(.*?)\{% if user_name %\}', result, regex.DOTALL)
+                            if match:
+                                result = match.group(1)
+                
+                # 第二步：变量替换
+                if user_name:
+                    result = result.replace("{{user_name}}", user_name)
+                else:
+                    result = result.replace("{{user_name}}", "")
+                
+                result = result.replace("{{user_pref}}", user_preferences or "")
+                
+                # 清理多余空格和换行
+                result = result.strip()
+                result = regex.sub(r'\n{3,}', '\n\n', result)
+                
+                response = result
+                if response and len(response) < 500:
+                    # 在这里插入：更新关系计数
+                    if hasattr(self, 'soul'):
+                        response = self.soul.enforce_identity(response)
+                        self.soul.update_relationship(original_input, response)
+                    
+                    self._update_last_response(original_input, response)
+                    return self._response(response, metadata={"script": True})
 
-        # ========== 8. 查询对话历史 ==========
-        if any(q in user_input for q in ["刚才说了什么", "上一轮", "之前我说"]):
-            if self._conversation_history:
-                last = self._conversation_history[-1]
-                response = f"上一轮你说：{last['user']}\n我回答：{last['assistant']}"
-            else:
-                response = "还没有对话记录，请先和我聊天吧。"
-            self._update_conversation(original_input, response)
-            return self._response(response)
 
-        # ========== 9. 情感回应 ==========
-        # 在情感回应部分添加方言转换
-        emotion_response = self._get_emotion_response(user_input)
-        if emotion_response:
-            if has_dialect:
-                dialect_response, _ = dialect_helper.to_dialect(emotion_response)
-                if dialect_response != emotion_response:
-                    emotion_response = dialect_response
-            self._update_conversation(original_input, emotion_response)
-            return self._response(emotion_response, metadata={"emotion": True})
-        # ========== 10. 被 Orchestrator 调用时的处理 ==========
-        from_orchestrator = context and context.get("caller") == "orchestrator"
-        if from_orchestrator:
-            print(f"[ChatAgent] 被 Orchestrator 调用，直接响应")
-            if "图表" in user_input or "生成" in user_input:
-                return self._generate_simple_chart_response(user_input)
-            return self._simple_response(user_input)
-
-        # ========== 11. 多轮对话（使用 LLM）==========
-        context_prompt = self._get_conversation_context(user_input)
+        # 4.6 LLM 生成（带上完整上下文）
+        context_prompt = self._build_enhanced_prompt(understood_input, enhanced_context)
         response = self._call_llm(context_prompt)
-
+    
         if not response:
-            response = f"你说：{user_input[:100]}。有什么我可以帮助你的吗？"
-
-        # ========== 12. 方言回应（普通话 → 方言）==========
+            response = f"你说：{understood_input[:100]}。有什么我可以帮助你的吗？"
+    
+        # 4.7 方言回应（如果用户说了方言）
         if has_dialect:
             dialect_response, converted = dialect_helper.to_dialect(response)
             if converted:
                 response = dialect_response
-                print(f"[ChatAgent] 方言回应: {dialect_response}")
-
-        self._update_conversation(original_input, response)
+                print(f"[表达] 方言回应: {dialect_response}")
     
-        # ========== 13. 主动建议（放在最后，仅闲聊且没有其他回复时）==========
-        # 主动建议只在纯闲聊场景且没有其他处理时触发
-        if self._is_chat_task(original_input) and not has_dialect:
-            suggestion = self._get_proactive_suggestion()
-            return self._response(suggestion, metadata={"proactive": True})
+        self._update_last_response(original_input, response)
+        return self._response(response, metadata={"source": "llm"})
 
-        return self._response(response, metadata={"source": "llm"})   
-       
+
+    def _recall_preferences(self) -> str:
+        """回忆用户偏好"""
+        prefs = []
+        color = self.recall_forever("pref_color")
+        food = self.recall_forever("pref_food")
+        if color:
+            prefs.append(f"颜色:{color}")
+        if food:
+            prefs.append(f"食物:{food}")
+        return ", ".join(prefs) if prefs else ""
+
+    def _build_enhanced_prompt(self, user_input: str, context: Dict) -> str:
+        """构建增强后的 LLM Prompt - 严格约束"""
+    
+        # 获取最近3轮对话历史（不要太多）
+        history_text = ""
+        if self._conversation_history:
+            recent = self._conversation_history[-6:]  # 最近3轮
+            history_parts = []
+            for msg in recent:
+                role = msg.get("role")
+                content = msg.get("content", "")[:200]
+                if role == "user":
+                    history_parts.append(f"用户: {content}")
+                elif role == "assistant":
+                    history_parts.append(f"小爪: {content}")
+            if history_parts:
+                history_text = "【最近对话】\n" + "\n".join(history_parts) + "\n"
+    
+        user_name = context.get('用户姓名', '')
+        user_pref = context.get('用户偏好', '')
+    
+        # 严格的 system prompt
+        prompt = f"""你是小爪，ClawsJoy 的聊天助手。
+
+【严格要求 - 必须遵守】
+1. 只回复用户当前问题，不要编造故事
+2. 不要自称AI、模型或助手
+3. 回复长度控制在50字以内
+4. 不知道就说不知道
+5. 不要提及用户没有说过的事情
+6. 不要创建虚构角色或情节
+
+【用户信息】
+- 姓名: {user_name if user_name else '未知'}
+- 偏好: {user_pref if user_pref else '无'}
+
+{history_text}
+【当前用户】
+{user_input}
+
+【小爪的简短回复】"""
+
+        return prompt
+    
+
+    def _update_last_response(self, user_input: str, response: str):
+        """更新对话历史中的最后一条回复"""
+        if self._conversation_history:
+            # 找到最后一条用户消息，更新对应的助手回复
+            for i in range(len(self._conversation_history) - 1, -1, -1):
+                if self._conversation_history[i].get("role") == "assistant":
+                    self._conversation_history[i]["content"] = response[:200]
+                    return
+            # 如果没有找到，添加
+            self._conversation_history.append({"role": "assistant", "content": response[:200]})
+        else:
+            self._conversation_history.append({"role": "assistant", "content": response[:200]})     
         
+    
     def _rule_based_decompose(self, task: str) -> Dict:
         """基于规则的任务分解"""
         parts = re.split(r'然后|接着|之后|再', task)
@@ -335,6 +590,59 @@ class ChatAgentV4(BusinessAgent):
         # 纯闲聊：短文本且无疑问词
         return len(user_input) < 20 and not any(q in user_input for q in ["什么", "怎么", "为什么"])
 
+    def _get_proactive_suggestions(self, user_input: str = "") -> list:
+        """获取主动建议"""
+        if not user_input:
+            return ["💡 有什么我可以帮您的吗？"]
+    
+        # 如果是自我介绍请求
+        if any(kw in user_input for kw in ["自我介绍", "介绍自己", "你是谁", "你能做什么"]):
+            return ["我是小爪，ClawsJoy 的聊天助手~ 😊"]
+    
+        # 只对非空输入调用 LLM
+        if user_input.strip():
+            response = self._call_llm(user_input)
+            if response:
+                return [response]
+    
+        return ["💡 有什么我可以帮您的吗？"]
+    
+
+    def _auto_evaluate_response(self, response: str) -> float:
+        """自动评估响应质量"""
+        score = 0.5
+        if any('\u4e00' <= c <= '\u9fff' for c in response):
+            score += 0.2
+        if 20 < len(response) < 300:
+            score += 0.1
+        if "小爪" in response or "我是" in response:
+            score += 0.1
+        return min(score, 1.0)
+
+    def _is_meaningless(self, text: str) -> bool:
+        """检测是否为无意义输入"""
+        import re
+        # 纯乱码
+        if re.match(r'^[a-z]{10,}$', text.lower()):
+            return True
+        # 纯符号
+        if re.match(r'^[~!@#$%^&*()_+]+$', text):
+            return True
+        # 超短无意义
+        if len(text) < 2:
+            return True
+        return False
+
+    def _get_meaningless_response(self) -> str:
+        """返回无意义输入的回应"""
+        responses = [
+            "嗯？我没太明白你的意思~ 能说得清楚一点吗？😊",
+            "不好意思，我没理解你的问题，可以换个说法吗？",
+            "我没听懂呢，要不要重新说一遍？",
+            "这个...我有点困惑，你能解释一下吗？"
+        ]
+        import random
+        return random.choice(responses)
 
 
 if __name__ == "__main__":
@@ -358,4 +666,5 @@ if __name__ == "__main__":
     print(result.get('response'))
     
     print("\n✅ ChatAgentV4 快速测试通过")
+
 
