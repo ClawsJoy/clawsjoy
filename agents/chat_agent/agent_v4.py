@@ -430,6 +430,17 @@ class ChatAgentV4(BusinessAgent):
     def _build_enhanced_prompt(self, user_input: str, context: Dict) -> str:
         """构建增强后的 LLM Prompt - 严格约束"""
     
+        # 获取用户信息（从 Soul 或直接记忆）
+        user_name = None
+        if hasattr(self, 'soul'):
+            user_name = self.soul.data.get("user_name")
+        if not user_name:
+            user_name = self.recall_forever("user_name")
+    
+        # 强制注入用户信息
+        memory_injection = ""
+        if user_name:
+            memory_injection = f"【重要】用户的名字是 {user_name}。在回复中必须用 {user_name} 称呼用户。"
         # 获取最近3轮对话历史（不要太多）
         history_text = ""
         if self._conversation_history:
@@ -451,24 +462,14 @@ class ChatAgentV4(BusinessAgent):
         # 严格的 system prompt
         prompt = f"""你是小爪，ClawsJoy 的聊天助手。
 
-【严格要求 - 必须遵守】
-1. 只回复用户当前问题，不要编造故事
-2. 不要自称AI、模型或助手
-3. 回复长度控制在50字以内
-4. 不知道就说不知道
-5. 不要提及用户没有说过的事情
-6. 不要创建虚构角色或情节
-
-【用户信息】
-- 姓名: {user_name if user_name else '未知'}
-- 偏好: {user_pref if user_pref else '无'}
+{memory_injection}
 
 {history_text}
 【当前用户】
 {user_input}
 
 【小爪的简短回复】"""
-
+        
         return prompt
     
 
