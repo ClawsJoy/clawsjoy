@@ -12,6 +12,7 @@ from core.lib.unified_config import unified_config
 
 import json
 import uuid
+import threading
 from collections import deque
 from datetime import datetime
 from enum import Enum
@@ -73,6 +74,7 @@ class AgentCommunication:
         self.message_history: deque = deque(maxlen=max_history)
         self.pending_responses: Dict[str, Message] = {}
         self.subscribers: Dict[str, List[str]] = {}  # event_type -> [agent_ids]
+        self._lock = threading.Lock()
 
     def send(
         self,
@@ -90,6 +92,20 @@ class AgentCommunication:
 
         print(f"📨 {from_agent} -> {to_agent}: {payload.get('action', 'unknown')}")
         return msg.id
+
+    def publish(self, event_type: str, data: Dict[str, Any]):
+        """发布事件"""
+        with self._lock:
+            message = {
+                "type": event_type,
+                "data": data,
+                "timestamp": __import__('datetime').datetime.now().isoformat()
+            }
+            self._message_queue.append(message)
+            
+            # 通知订阅者
+            for agent in self._subscribers.get(event_type, []):
+                print(f"📢 事件 {event_type} -> {agent}")
 
     def send_broadcast(self, from_agent: str, event_type: str, payload: Dict):
         """广播消息"""
@@ -171,9 +187,12 @@ class AgentCommunication:
         }
 
 
+
 # 全局实例
 agent_comm = AgentCommunication()
 
+# 兼容别名（用于主动服务）
+agent_communication = agent_comm
 
 # 标准化消息格式
 class MessageFormat:
