@@ -9,17 +9,17 @@ class MultimodalEnhancement:
     
     def _load_agents(self):
         try:
-            from agents.vision_agent.agent import VisionAgent
+            from agents.vision_agent.agent_v4 import VisionAgent
             self.agents['vision'] = VisionAgent()
         except: pass
         
         try:
-            from agents.audio_agent.agent import AudioAgent
+            from agents.audio_agent.agent_v4 import AudioAgent
             self.agents['audio'] = AudioAgent()
         except: pass
         
         try:
-            from agents.video_agent.agent import VideoAgent
+            from agents.video_agent.agent_v4 import VideoAgent
             self.agents['video'] = VideoAgent()
         except: pass
     

@@ -13,13 +13,13 @@ class TestDecisionAgent(unittest.TestCase):
     @patch('agents.decision_agent.agent.reasoning_engine')
     @patch('agents.decision_agent.agent.semantic_engine')
     def setUp(self, mock_semantic, mock_reasoning):
-        from agents.decision_agent.agent import decision_agent
+        from agents.decision_agent.agent_v4 import decision_agent
         self.agent = decision_agent
         self.agent.user_id = "test"
     
     def test_route_selection_chat(self):
         """测试简单对话走 A 路由"""
-        from agents.decision_agent.agent import decision_agent
+        from agents.decision_agent.agent_v4 import decision_agent
         # 需要 mock 避免真实调用
         pass
     

@@ -39,13 +39,13 @@ new_route = '''    def _route(self, decision: str, user_input: str, context: dic
         
         # 翻译直接处理
         if "翻译" in user_input:
-            from agents.chat_agent.agent import chat_agent
+            from agents.chat_agent.agent_v4 import chat_agent
             return chat_agent.process(user_input, context)
         
         # 数学直接处理  
         import re
         if re.search(r'\\d+', user_input) and any(op in user_input for op in ['+', '-', '*', '/']):
-            from agents.chat_agent.agent import chat_agent
+            from agents.chat_agent.agent_v4 import chat_agent
             return chat_agent.process(user_input, context)
         
         if decision == "A":

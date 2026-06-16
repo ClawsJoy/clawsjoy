@@ -3,778 +3,674 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ClawsJoy Codex - 智能体测试中心</title>
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23818cf8'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z'/%3E%3C/svg%3E">
+    <title>ClawsJoy Codex - 智能协作平台</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: #0f172a; color: #e2e8f0; height: 100vh; overflow: hidden; }
         
-        :root {
-            --bg-primary: #0f172a;
-            --bg-secondary: #1e293b;
-            --bg-tertiary: #334155;
-            --text-primary: #f1f5f9;
-            --text-secondary: #94a3b8;
-            --accent: #4f46e5;
-            --accent-hover: #6366f1;
-            --success: #10b981;
-            --error: #ef4444;
-            --border: #334155;
-        }
+        .app { display: flex; height: 100vh; position: relative; }
         
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            height: 100vh;
-            overflow: hidden;
-        }
-        
-        /* 主布局 */
-        .app {
+        /* 项目栏 */
+        .project-sidebar {
+            width: 260px;
+            background: #1e293b;
+            border-right: 1px solid #334155;
             display: flex;
-            height: 100vh;
+            flex-direction: column;
+            transition: width 0.3s ease;
+            flex-shrink: 0;
         }
+        .project-sidebar.collapsed { width: 0; overflow: hidden; }
+        .sidebar-header { padding: 16px 20px; border-bottom: 1px solid #334155; }
+        .sidebar-header h1 { font-size: 18px; color: #818cf8; }
+        .add-project { margin: 12px 16px; padding: 10px; background: #4f46e5; border-radius: 10px; text-align: center; cursor: pointer; }
+        .add-project:hover { background: #6366f1; }
+        .project-list { flex: 1; overflow-y: auto; padding: 8px; }
+        .project-item { padding: 12px; margin: 4px 0; border-radius: 10px; cursor: pointer; background: #334155; }
+        .project-item.active { background: #4f46e5; }
+        .project-name { font-size: 13px; font-weight: 500; }
+        .project-stats { font-size: 10px; color: #94a3b8; }
         
-        /* 侧边栏 */
-        .sidebar {
+        /* 文件栏 */
+        .files-sidebar {
             width: 280px;
-            background: var(--bg-secondary);
-            border-right: 1px solid var(--border);
+            background: #1e293b;
+            border-right: 1px solid #334155;
             display: flex;
             flex-direction: column;
-            transition: width 0.2s;
+            transition: width 0.3s ease;
+            flex-shrink: 0;
         }
+        .files-sidebar.collapsed { width: 0; overflow: hidden; }
+        .files-header { padding: 16px; border-bottom: 1px solid #334155; font-size: 12px; }
+        .search-file { width: 100%; padding: 6px 10px; background: #334155; border: none; border-radius: 6px; color: white; margin-top: 8px; }
+        .file-tree { flex: 1; overflow-y: auto; padding: 8px; font-size: 12px; }
+        .folder-item { padding: 6px 12px; margin: 2px 0; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+        .folder-item:hover { background: #334155; }
+        .folder-children { margin-left: 20px; border-left: 1px dashed #334155; display: none; }
+        .file-item { padding: 4px 12px; margin: 2px 0; border-radius: 6px; cursor: pointer; font-family: monospace; font-size: 12px; display: flex; align-items: center; gap: 8px; }
+        .file-item:hover { background: #334155; }
+        .file-item.active { background: #4f46e5; }
         
-        .sidebar-header {
-            padding: 20px;
-            border-bottom: 1px solid var(--border);
+        /* 折叠按钮 */
+        .toggle-project, .toggle-files {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            width: 20px; height: 60px; background: #1e293b; border: 1px solid #334155;
+            border-left: none; border-radius: 0 8px 8px 0;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; z-index: 10; color: #94a3b8;
         }
+        .toggle-project { left: 260px; }
+        .project-sidebar.collapsed + .toggle-project { left: 0; }
+        .toggle-files { left: 540px; }
+        .project-sidebar.collapsed ~ .toggle-files { left: 280px; }
+        .files-sidebar.collapsed + .toggle-files { left: 280px; }
         
-        .sidebar-header h1 {
-            font-size: 20px;
-            background: linear-gradient(135deg, #818cf8, #c084fc);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        /* 主区域 */
+        .main-area { flex: 1; display: flex; flex-direction: column; min-width: 0; height: 100vh; }
+        .toolbar { padding: 12px 20px; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; flex-shrink: 0; }
+        .agent-selector { display: flex; gap: 8px; flex-wrap: wrap; }
+        .agent-badge { padding: 6px 12px; background: #1e293b; border: 1px solid #334155; border-radius: 20px; font-size: 12px; cursor: pointer; }
+        .agent-badge.active { background: #4f46e5; }
+        .action-buttons { display: flex; gap: 8px; }
+        .action-btn { padding: 6px 12px; background: #1e293b; border: 1px solid #334155; border-radius: 8px; color: white; cursor: pointer; font-size: 12px; }
+        .action-btn.primary { background: #4f46e5; }
+        .action-btn#openCodeAgentBtn { background: #cba6f7; }
+        
+        .file-info { padding: 8px 16px; background: #1e293b; border-bottom: 1px solid #334155; font-size: 12px; display: flex; justify-content: space-between; flex-shrink: 0; }
+        .code-preview { flex: 1; background: #0a0a0a; overflow: auto; min-height: 100px; }
+        .code-editor { width: 100%; height: 100%; background: #0a0a0a; color: #e2e8f0; border: none; font-family: 'Fira Code', monospace; font-size: 13px; padding: 20px; resize: none; outline: none; line-height: 1.5; }
+        
+        /* 聊天区 */
+        .chat-area {
+            height: 280px; border-top: 1px solid #334155;
+            display: flex; flex-direction: column; flex-shrink: 0; position: relative;
         }
-        
-        .sidebar-header p {
-            font-size: 11px;
-            color: var(--text-secondary);
-            margin-top: 8px;
+        .chat-resize-handle {
+            position: absolute; top: -6px; left: 0; right: 0; height: 8px;
+            background: transparent; cursor: ns-resize; z-index: 30;
         }
-        
-        /* 新建对话按钮 */
-        .new-chat {
-            margin: 16px;
-            padding: 12px;
-            background: var(--accent);
-            border: none;
-            border-radius: 12px;
-            text-align: center;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        
-        .new-chat:hover {
-            background: var(--accent-hover);
-            transform: translateY(-1px);
-        }
-        
-        /* 对话列表 */
-        .chat-list {
-            flex: 1;
-            overflow-y: auto;
-            padding: 8px;
-        }
-        
-        .chat-item {
-            padding: 12px;
-            margin: 4px 0;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-        }
-        
-        .chat-item:hover {
-            background: var(--bg-tertiary);
-        }
-        
-        .chat-item.active {
-            background: var(--accent);
-        }
-        
-        .chat-item-title {
-            flex: 1;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            font-size: 13px;
-        }
-        
-        .chat-item-delete {
-            opacity: 0;
-            cursor: pointer;
-            font-size: 16px;
-            transition: opacity 0.2s;
-        }
-        
-        .chat-item:hover .chat-item-delete {
-            opacity: 0.7;
-        }
-        
-        .chat-item-delete:hover {
-            opacity: 1 !important;
-            color: var(--error);
-        }
-        
-        /* 主内容区 */
-        .main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: var(--bg-primary);
-        }
-        
-        /* 顶部栏 */
-        .header {
-            padding: 16px 24px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: var(--bg-primary);
-        }
-        
-        /* Agent 选择器 */
-        .agent-selector {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-        
-        .agent-badge {
-            padding: 8px 16px;
-            background: var(--bg-secondary);
-            border-radius: 20px;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        
-        .agent-badge:hover {
-            background: var(--bg-tertiary);
-            transform: translateY(-1px);
-        }
-        
-        .agent-badge.active {
-            background: var(--accent);
-            border-color: var(--accent-hover);
-        }
-        
-        /* 状态指示器 */
-        .status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 12px;
-        }
-        
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--success);
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        
-        /* 消息区域 */
-        .messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 24px;
-        }
-        
-        .message {
-            margin-bottom: 24px;
-            display: flex;
-            flex-direction: column;
-            animation: fadeIn 0.3s ease;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .message.user {
-            align-items: flex-end;
-        }
-        
-        .message.assistant {
-            align-items: flex-start;
-        }
-        
-        .message-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 8px;
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-        
-        .message-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-        }
-        
-        .message.user .message-avatar {
-            background: var(--accent);
-        }
-        
-        .message.assistant .message-avatar {
-            background: var(--bg-tertiary);
-        }
-        
-        .message-content {
-            max-width: 85%;
-            padding: 12px 18px;
-            border-radius: 20px;
-            font-size: 14px;
-            line-height: 1.6;
-            white-space: pre-wrap;
-            word-break: break-word;
-        }
-        
-        .message.user .message-content {
-            background: var(--accent);
-            border-bottom-right-radius: 4px;
-        }
-        
-        .message.assistant .message-content {
-            background: var(--bg-secondary);
-            border-bottom-left-radius: 4px;
-        }
-        
-        /* 代码块样式 */
-        .message-content pre {
-            background: var(--bg-primary);
-            padding: 12px;
-            border-radius: 8px;
-            overflow-x: auto;
-            margin: 8px 0;
-            font-size: 13px;
-            font-family: 'Fira Code', 'Monaco', monospace;
-        }
-        
-        .message-content code {
-            font-family: 'Fira Code', monospace;
-            font-size: 13px;
-        }
-        
-        /* 输入区域 */
-        .input-area {
-            padding: 20px 24px;
-            border-top: 1px solid var(--border);
-            background: var(--bg-primary);
-        }
-        
-        .input-wrapper {
-            display: flex;
-            gap: 12px;
-            align-items: flex-end;
-        }
-        
-        .input-wrapper textarea {
-            flex: 1;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 12px 16px;
-            color: var(--text-primary);
-            font-family: inherit;
-            font-size: 14px;
-            resize: none;
-            outline: none;
-            transition: all 0.2s;
-        }
-        
-        .input-wrapper textarea:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
-        }
-        
-        .input-wrapper button {
-            padding: 12px 28px;
-            background: var(--accent);
-            border: none;
-            border-radius: 16px;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .input-wrapper button:hover {
-            background: var(--accent-hover);
-            transform: translateY(-1px);
-        }
-        
-        /* 快捷命令 */
-        .quick-commands {
-            margin-top: 12px;
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        
-        .quick-cmd {
-            padding: 6px 14px;
-            background: var(--bg-secondary);
-            border-radius: 20px;
-            font-size: 12px;
-            font-family: monospace;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: 1px solid var(--border);
-        }
-        
-        .quick-cmd:hover {
-            background: var(--accent);
-            transform: translateY(-1px);
-        }
-        
-        /* 打字动画 */
-        .typing-dots span {
-            animation: blink 1.4s infinite;
-        }
-        
-        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
-        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
-        
-        @keyframes blink {
-            0%, 60%, 100% { opacity: 0; }
-            30% { opacity: 1; }
-        }
-        
-        /* 滚动条 */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: var(--bg-secondary);
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: var(--bg-tertiary);
-            border-radius: 3px;
-        }
-        
-        /* 响应式 */
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 240px;
-            }
-            .agent-badge {
-                padding: 6px 12px;
-                font-size: 11px;
-            }
-        }
+        .chat-resize-handle:hover { background: #4f46e5; opacity: 0.5; }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 16px; }
+        .chat-message { margin-bottom: 16px; display: flex; flex-direction: column; }
+        .chat-message.user { align-items: flex-end; }
+        .chat-message.assistant { align-items: flex-start; }
+        .chat-bubble { max-width: 85%; padding: 10px 14px; border-radius: 16px; font-size: 13px; white-space: pre-wrap; word-break: break-word; }
+        .chat-message.user .chat-bubble { background: #4f46e5; }
+        .chat-message.assistant .chat-bubble { background: #1e293b; }
+        .chat-input-area { padding: 12px 16px; border-top: 1px solid #334155; display: flex; gap: 12px; flex-shrink: 0; }
+        .chat-input-area textarea { flex: 1; background: #1e293b; border: 1px solid #334155; border-radius: 20px; padding: 10px 16px; color: white; resize: none; outline: none; }
+        .chat-input-area button { padding: 10px 20px; background: #4f46e5; border: none; border-radius: 20px; color: white; cursor: pointer; }
+        .loading { text-align: center; padding: 20px; color: #64748b; }
     </style>
 </head>
 <body>
 <div class="app">
-    <div class="sidebar">
-        <div class="sidebar-header">
-            <h1>⚡ ClawsJoy Codex</h1>
-            <p>智能体测试中心 · 多 Agent 协作</p>
-        </div>
-        <div class="new-chat" id="newChatBtn">
-            <span>+</span> 新建对话
-        </div>
-        <div class="chat-list" id="chatList"></div>
+    <div class="project-sidebar" id="projectSidebar">
+        <div class="sidebar-header"><h1>📁 项目</h1></div>
+        <div class="add-project" id="addProjectBtn">+ 添加项目</div>
+        <div class="project-list" id="projectList"><div class="loading">暂无项目</div></div>
     </div>
-
-    <div class="main">
-        <div class="header">
+    <div class="toggle-project" id="toggleProjectBtn">◀</div>
+    
+    <div class="files-sidebar" id="filesSidebar">
+        <div class="files-header">📄 文件
+            <input type="text" class="search-file" id="searchFile" placeholder="🔍 搜索...">
+        </div>
+        <div class="file-tree" id="fileTree"><div class="loading">选择项目后显示</div></div>
+    </div>
+    <div class="toggle-files" id="toggleFilesBtn">◀</div>
+    
+    <div class="main-area">
+        <div class="toolbar">
             <div class="agent-selector" id="agentSelector"></div>
-            <div class="status">
-                <span class="status-dot"></span>
-                <span>在线</span>
+            <div class="action-buttons">
+                <button class="action-btn" id="openCodeAgentBtn">🤖 Code Agent</button>
+                <button class="action-btn" id="reviewBtn">🔍 审核</button>
+                <button class="action-btn" id="fixBtn">🔧 修复</button>
+                <button class="action-btn" id="testBtn">🧪 测试</button>
+                <button class="action-btn primary" id="saveBtn">💾 保存</button>
             </div>
         </div>
-
-        <div class="messages" id="messages"></div>
-
-        <div class="input-area">
-            <div class="input-wrapper">
-                <textarea id="messageInput" rows="2" placeholder="输入消息... (Ctrl+Enter 发送)"></textarea>
+        <div class="file-info" id="fileInfo"><span>未选择文件</span><span></span></div>
+        <div class="code-preview">
+            <textarea class="code-editor" id="codeEditor" readonly placeholder="选择文件后编辑"></textarea>
+        </div>
+        <div class="chat-area" id="chatArea">
+            <div class="chat-resize-handle" id="chatResizeHandle"></div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="chat-message assistant"><div class="chat-bubble">👋 ClawsJoy Codex 已启动</div></div>
+            </div>
+            <div class="chat-input-area">
+                <textarea id="chatInput" rows="1" placeholder="输入消息... Ctrl+Enter 发送"></textarea>
                 <button id="sendBtn">发送</button>
             </div>
-            <div class="quick-commands" id="quickCommands"></div>
         </div>
     </div>
 </div>
 
 <script>
-(function() {
-    const TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZDE2YjIwYjJjZWRjZjNjZiIsInVzZXJuYW1lIjoidGVzdHVzZXIiLCJyb2xlIjoidXNlciIsImV4cCI6MTc4MTE4MzMyMn0.2cbQMYnwasdm1cxjxtUuhJyODjaF4GyXoHdma-TZnzQ";
-    
-    // Agent 配置
-    const AGENTS = {
-        chat_agent: { name: 'Chat', icon: '💬', description: '对话、记忆、情感' },
-        code_agent: { name: 'Code', icon: '💻', description: '代码生成、调试' },
-        analysis_agent: { name: 'Analysis', icon: '📊', description: '数据分析' },
-        translate_agent: { name: 'Translate', icon: '🌐', description: '多语言翻译' },
-        calculator_agent: { name: 'Calculator', icon: '🔢', description: '科学计算' },
-        butler_agent: { name: 'Butler', icon: '👤', description: '私人管家' },
-        orchestrator: { name: 'Orchestrator', icon: '🎯', description: '任务编排' },
-        memory_agent: { name: 'Memory', icon: '🧠', description: '记忆管理' },
-        dialect_agent: { name: 'Dialect', icon: '🗣️', description: '方言大师' }
-    };
-    
-    // 快捷命令
-    const QUICK_COMMANDS = {
-        chat_agent: ['你好', '我叫小明', '我喜欢蓝色'],
-        code_agent: ['写一个快速排序函数', '解释代码：def fib(n): return n if n<2 else fib(n-1)+fib(n-2)'],
-        translate_agent: ['中译英：你好世界', '翻译成日语：谢谢'],
-        calculator_agent: ['计算 123 + 456', 'sqrt(16) + 3^2'],
-        butler_agent: ['添加待办 买牛奶', '查看待办'],
-        orchestrator: ['分析数据然后生成报告'],
-        memory_agent: ['记住 生日=5月1日', '回忆 生日'],
-        dialect_agent: ['学习方言 阿拉 = 我们', '转换成宁波话 我们回家'],
-        analysis_agent: ['分析销售数据']
-    };
-    
-    let conversations = [];
-    let currentId = null;
-    let currentAgent = 'chat_agent';
-    
-    // DOM 元素
-    const messagesDiv = document.getElementById('messages');
-    const chatListDiv = document.getElementById('chatList');
-    const agentSelectorDiv = document.getElementById('agentSelector');
-    const messageInput = document.getElementById('messageInput');
-    const sendBtn = document.getElementById('sendBtn');
-    const newChatBtn = document.getElementById('newChatBtn');
-    
-    // 渲染 Agent 选择器
-    function renderAgentSelector() {
-        let html = '';
-        for (const [key, agent] of Object.entries(AGENTS)) {
-            const activeClass = key === currentAgent ? 'active' : '';
-            html += `<div class="agent-badge ${activeClass}" data-agent="${key}">
-                ${agent.icon} ${agent.name}
-            </div>`;
-        }
-        agentSelectorDiv.innerHTML = html;
-        
-        document.querySelectorAll('.agent-badge').forEach(el => {
-            el.addEventListener('click', () => switchAgent(el.dataset.agent));
-        });
+// ==================== 配置 ====================
+const TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZDE2YjIwYjJjZWRjZjNjZiIsInVzZXJuYW1lIjoidGVzdHVzZXIiLCJyb2xlIjoidXNlciIsImV4cCI6MTc4MTE4MzMyMn0.2cbQMYnwasdm1cxjxtUuhJyODjaF4GyXoHdma-TZnzQ";
+
+// ==================== 全局变量 ====================
+let projects = [];
+let currentProjectId = null;
+let currentFiles = [];
+let currentFile = null;
+let currentFileContent = "";
+let originalContent = "";
+let currentAgent = "chat_agent";
+
+const AGENTS = {
+    code_agent: { name: "Code", icon: "💻" }, chat_agent: { name: "Chat", icon: "💬" },
+    analysis_agent: { name: "Analysis", icon: "📊" }, translate_agent: { name: "Translate", icon: "🌐" },
+    calculator_agent: { name: "Calc", icon: "🔢" }, butler_agent: { name: "Butler", icon: "👤" },
+    orchestrator: { name: "Orch", icon: "🎯" }, memory_agent: { name: "Memory", icon: "🧠" },
+    dialect_agent: { name: "Dialect", icon: "🗣️" }
+};
+
+// ==================== API ====================
+async function api(endpoint, method, body) {
+    const opts = { method, headers: { "Content-Type": "application/json", "Authorization": `Bearer ${TOKEN}` } };
+    if (body) opts.body = JSON.stringify(body);
+    const res = await fetch(endpoint, opts);
+    return res.json();
+}
+
+// ==================== UI 消息 ====================
+function escapeHtml(text) {
+    if (!text) return "";
+    return text.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])).replace(/\n/g, '<br>');
+}
+
+function addMessage(text, isUser = false) {
+    const container = document.getElementById("chatMessages");
+    const div = document.createElement("div");
+    div.className = `chat-message ${isUser ? 'user' : 'assistant'}`;
+    div.innerHTML = `<div class="chat-bubble">${escapeHtml(text)}</div>`;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+}
+
+function addUserMessage(text) { addMessage(text, true); }
+
+// ==================== 项目 ====================
+async function loadProjects() {
+    const data = await api("/api/v5/project/list?user_id=codex_user", "GET");
+    projects = data.success ? (data.projects || []) : [];
+    renderProjects();
+}
+
+async function addProject() {
+    const path = prompt("请输入项目路径:", "/home/flybo/clawsjoy_v5");
+    if (!path) return;
+    const data = await api("/api/v5/project/add", "POST", { user_id: "codex_user", path: path });
+    if (data.success) {
+        addMessage(`✅ 项目已添加: ${data.name}`);
+        await loadProjects();
+        const np = projects.find(p => p.id === data.project_id);
+        if (np) selectProject(np.id);
+    } else addMessage(`❌ 添加失败: ${data.error}`);
+}
+
+async function selectProject(pid) {
+    currentProjectId = pid;
+    currentFile = null;
+    renderProjects();
+    const data = await api(`/api/v5/project/${pid}/files?user_id=codex_user`, "GET");
+    if (data.success && data.files) {
+        currentFiles = data.files;
+        renderFileTree(currentFiles);
+        addMessage(`📁 已选择项目，共 ${currentFiles.length} 个文件`);
+    } else {
+        currentFiles = [];
+        renderFileTree([]);
     }
-    
-    // 渲染快捷命令
-    function renderQuickCommands() {
-        const container = document.getElementById('quickCommands');
-        const cmds = QUICK_COMMANDS[currentAgent] || QUICK_COMMANDS.chat_agent;
-        container.innerHTML = cmds.map(cmd => 
-            `<span class="quick-cmd" onclick="window.insertCmd('${cmd.replace(/'/g, "\\'")}')">${cmd.slice(0, 30)}${cmd.length > 30 ? '...' : ''}</span>`
-        ).join('');
+}
+
+function renderProjects() {
+    const c = document.getElementById("projectList");
+    if (!projects.length) { c.innerHTML = '<div class="loading">暂无项目</div>'; return; }
+    c.innerHTML = projects.map(p => `
+        <div class="project-item ${currentProjectId === p.id ? 'active' : ''}" data-id="${p.id}">
+            <div class="project-name">📁 ${p.name}</div>
+            <div class="project-stats">${p.file_count || 0} 个文件</div>
+        </div>
+    `).join('');
+    document.querySelectorAll(".project-item").forEach(el => {
+        el.addEventListener("click", () => selectProject(el.dataset.id));
+    });
+}
+
+// ==================== 文件 ====================
+async function loadFile(fp) {
+    if (!currentProjectId) return;
+    currentFile = fp;
+    const editor = document.getElementById("codeEditor");
+    document.getElementById("fileInfo").innerHTML = `<span>📄 ${fp}</span><span>加载中...</span>`;
+    editor.value = "加载中...";
+    editor.readOnly = true;
+    const data = await api(`/api/v5/project/${currentProjectId}/file?user_id=codex_user&path=${encodeURIComponent(fp)}`, "GET");
+    if (data.success) {
+        currentFileContent = data.content;
+        originalContent = data.content;
+        editor.value = currentFileContent;
+        editor.readOnly = false;
+        document.getElementById("fileInfo").innerHTML = `<span>📄 ${fp}</span><span>${currentFileContent.length} 字符</span>`;
+        renderFileTree(currentFiles);
+    } else {
+        editor.value = `读取失败: ${data.error}`;
+        editor.readOnly = true;
     }
-    
-    // 切换 Agent
-    function switchAgent(agentName) {
-        currentAgent = agentName;
-        const conv = conversations.find(c => c.id === currentId);
-        if (conv) conv.agent = agentName;
-        renderAgentSelector();
-        renderQuickCommands();
-        save();
-        renderMessages();
-    }
-    
-    // 插入命令
-    window.insertCmd = function(cmd) {
-        messageInput.value = cmd;
-        messageInput.focus();
-    };
-    
-    // 保存数据
-    function save() {
-        localStorage.setItem('codex_conversations_v2', JSON.stringify(conversations));
-    }
-    
-    // 加载数据
-    function loadData() {
-        const saved = localStorage.getItem('codex_conversations_v2');
-        if (saved) {
-            conversations = JSON.parse(saved);
-        } else {
-            const now = Date.now();
-            conversations = [{ id: now, title: '新对话', messages: [], agent: 'chat_agent', createdAt: new Date().toISOString() }];
-        }
-        currentId = conversations[0].id;
-        currentAgent = conversations[0].agent || 'chat_agent';
-    }
-    
-    // 渲染对话列表
-    function renderChatList() {
-        let html = '';
-        for (const conv of conversations) {
-            const activeClass = conv.id === currentId ? 'active' : '';
-            const title = conv.title || '新对话';
-            html += `<div class="chat-item ${activeClass}" data-id="${conv.id}">
-                <span class="chat-item-title">${escapeHtml(title)}</span>
-                <span class="chat-item-delete" data-id="${conv.id}">🗑️</span>
-            </div>`;
-        }
-        chatListDiv.innerHTML = html;
-        
-        document.querySelectorAll('.chat-item').forEach(el => {
-            el.addEventListener('click', (e) => {
-                if (e.target.classList.contains('chat-item-delete')) {
-                    e.stopPropagation();
-                    deleteChat(parseInt(el.dataset.id));
-                } else {
-                    switchChat(parseInt(el.dataset.id));
-                }
-            });
-        });
-    }
-    
-    // 删除对话
-    function deleteChat(id) {
-        if (conversations.length === 1) {
-            newChat();
-            return;
-        }
-        const index = conversations.findIndex(c => c.id === id);
-        if (index !== -1) {
-            conversations.splice(index, 1);
-            if (currentId === id) {
-                currentId = conversations[0].id;
-                currentAgent = conversations[0].agent || 'chat_agent';
-                renderAgentSelector();
-                renderQuickCommands();
+}
+
+async function saveFile() {
+    if (!currentFile || !currentProjectId) { addMessage("请先选择文件"); return; }
+    const editor = document.getElementById("codeEditor");
+    currentFileContent = editor.value;
+    if (currentFileContent === originalContent) { addMessage("文件没有修改"); return; }
+    addMessage(`💾 保存中...`);
+    const data = await api(`/api/v5/project/${currentProjectId}/file`, "POST", {
+        user_id: "codex_user", path: currentFile, content: currentFileContent
+    });
+    if (data.success) { originalContent = currentFileContent; addMessage(`✅ 已保存`); }
+    else addMessage(`❌ 保存失败`);
+}
+
+function renderFileTree(files) {
+    const c = document.getElementById("fileTree");
+    if (!files || !files.length) { c.innerHTML = '<div class="loading">暂无文件</div>'; return; }
+    const tree = {};
+    for (const f of files) {
+        const parts = f.split('/');
+        let cur = tree;
+        for (let i = 0; i < parts.length; i++) {
+            if (i === parts.length - 1) {
+                if (!cur._files) cur._files = [];
+                cur._files.push(parts[i]);
+            } else {
+                if (!cur[parts[i]]) cur[parts[i]] = {};
+                cur = cur[parts[i]];
             }
-            save();
-            renderChatList();
-            renderMessages();
         }
     }
-    
-    // 格式化消息内容
-    function formatMessage(content) {
-        if (!content) return '';
-        let result = String(content);
-        result = result.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code class="language-$1">$2</code></pre>');
-        result = result.replace(/\n/g, '<br>');
-        return result;
+    function render(node, path = "") {
+        let html = "";
+        const keys = Object.keys(node).filter(k => !k.startsWith('_')).sort();
+        for (const k of keys) {
+            const full = path ? `${path}/${k}` : k;
+            const ch = node[k];
+            const fc = ch._files ? ch._files.length : 0;
+            html += `<div class="folder-item" data-path="${full}">📁 ${k} ${fc ? `(${fc})` : ''}</div>`;
+            html += `<div class="folder-children" data-parent="${full}">${render(ch, full)}`;
+            if (ch._files) {
+                for (const f of ch._files.sort()) {
+                    const ff = `${full}/${f}`;
+                    html += `<div class="file-item ${currentFile === ff ? 'active' : ''}" data-file="${ff}">📄 ${f}</div>`;
+                }
+            }
+            html += `</div>`;
+        }
+        return html;
     }
-    
-    function escapeHtml(text) {
-        if (!text) return '';
-        return String(text).replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
+    c.innerHTML = render(tree);
+    document.querySelectorAll(".folder-item").forEach(el => {
+        el.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const child = document.querySelector(`.folder-children[data-parent="${el.dataset.path}"]`);
+            if (child) child.style.display = child.style.display === "block" ? "none" : "block";
         });
+    });
+    document.querySelectorAll(".file-item").forEach(el => {
+        el.addEventListener("click", () => loadFile(el.dataset.file));
+    });
+}
+
+document.getElementById("searchFile").addEventListener("input", (e) => {
+    const kw = e.target.value.toLowerCase();
+    if (!currentFiles) return;
+    const filtered = currentFiles.filter(f => f.toLowerCase().includes(kw));
+    renderFileTree(filtered);
+});
+
+// ==================== Agent ====================
+function renderAgentSelector() {
+    let html = "";
+    for (const [k, v] of Object.entries(AGENTS)) {
+        html += `<div class="agent-badge ${k === currentAgent ? 'active' : ''}" data-agent="${k}">${v.icon} ${v.name}</div>`;
     }
-    
-    // 添加消息
-    function addMessage(role, content, agent = null) {
-        const conv = conversations.find(c => c.id === currentId);
-        if (!conv) return;
-        
-        const displayContent = role === 'assistant' ? formatMessage(content) : escapeHtml(content);
-        conv.messages.push({
-            role: role,
-            content: displayContent,
-            rawContent: content,
-            agent: agent,
-            timestamp: Date.now()
-        });
-        
-        if (conv.messages.length === 1 && conv.title === '新对话') {
-            conv.title = content.slice(0, 30);
-        }
-        
-        save();
-        renderChatList();
-        renderMessages();
-    }
-    
-    // 渲染消息
-    function renderMessages() {
-        const conv = conversations.find(c => c.id === currentId);
-        if (!conv) return;
-        
-        if (conv.messages.length === 0) {
-            const agentInfo = AGENTS[currentAgent] || AGENTS.chat_agent;
-            messagesDiv.innerHTML = `<div class="message assistant">
-                <div class="message-header"><div class="message-avatar">⚡</div><span>ClawsJoy Codex</span></div>
-                <div class="message-content">
-                    🤖 欢迎使用 ClawsJoy Codex<br><br>
-                    当前 Agent: <strong>${agentInfo.icon} ${agentInfo.name}</strong><br>
-                    能力: ${agentInfo.description}<br><br>
-                    💡 点击快捷命令测试，或输入自定义消息
-                </div>
-            </div>`;
-            return;
-        }
-        
-        let html = '';
-        for (const msg of conv.messages) {
-            const agentInfo = AGENTS[msg.agent];
-            const displayName = msg.role === 'user' ? 'You' : (agentInfo?.name || 'ClawsJoy');
-            const avatar = msg.role === 'user' ? '👤' : (agentInfo?.icon || '⚡');
-            
-            html += `<div class="message ${msg.role}">
-                <div class="message-header">
-                    <div class="message-avatar">${avatar}</div>
-                    <span>${displayName}</span>
-                </div>
-                <div class="message-content">${msg.content}</div>
-            </div>`;
-        }
-        messagesDiv.innerHTML = html;
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    }
-    
-    // 切换对话
-    function switchChat(id) {
-        currentId = id;
-        const conv = conversations.find(c => c.id === currentId);
-        if (conv && conv.agent) {
-            currentAgent = conv.agent;
+    document.getElementById("agentSelector").innerHTML = html;
+    document.querySelectorAll(".agent-badge").forEach(el => {
+        el.addEventListener("click", () => {
+            currentAgent = el.dataset.agent;
             renderAgentSelector();
-            renderQuickCommands();
-        }
-        renderChatList();
-        renderMessages();
-    }
-    
-    // 新建对话
-    function newChat() {
-        const newId = Date.now();
-        conversations.unshift({
-            id: newId,
-            title: '新对话',
-            messages: [],
-            agent: currentAgent,
-            createdAt: new Date().toISOString()
+            addMessage(`切换到 ${AGENTS[currentAgent].name} Agent`);
         });
-        currentId = newId;
-        save();
-        renderChatList();
-        renderMessages();
+    });
+}
+
+// ==================== 审核按钮 ====================
+document.getElementById("reviewBtn").onclick = async function() {
+    if (!currentProjectId || !currentFile) {
+        addMessage("⚠️ 请先选择项目和文件");
+        return;
     }
     
-    // 显示打字动画
-    function showTyping() {
-        const typingDiv = document.getElementById('typingIndicator');
-        if (typingDiv) typingDiv.remove();
-        const div = document.createElement('div');
-        div.id = 'typingIndicator';
-        div.className = 'message assistant';
-        div.innerHTML = `<div class="message-header"><div class="message-avatar">⚡</div><span>${AGENTS[currentAgent]?.name || 'ClawsJoy'}</span></div>
-            <div class="message-content"><span class="typing-dots"><span>●</span><span>●</span><span>●</span></span></div>`;
-        messagesDiv.appendChild(div);
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    let codeToSend = currentFileContent;
+    const maxLen = 2500;
+    let wasTruncated = false;
+    
+    if (codeToSend.length > maxLen) {
+        codeToSend = codeToSend.slice(0, maxLen) + "\n... (代码已截断，完整文件请查看编辑器)";
+        wasTruncated = true;
     }
     
-    function hideTyping() {
-        const typingDiv = document.getElementById('typingIndicator');
-        if (typingDiv) typingDiv.remove();
-    }
+    addMessage(`🔍 正在审核: ${currentFile}${wasTruncated ? ` (已截断至 ${maxLen} 字符)` : ''}`);
     
-    // 发送消息
-    async function sendMessage() {
-        const message = messageInput.value.trim();
-        if (!message) return;
+    try {
+        const response = await fetch("/api/v5/wisdom/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + TOKEN },
+            body: JSON.stringify({
+                user_id: "codex_user",
+                agent: "code_agent",
+                message: `审查代码：\n\`\`\`python\n${codeToSend}\n\`\`\``,
+                project_id: currentProjectId,
+                file_path: currentFile
+            })
+        });
         
-        addMessage('user', message);
-        messageInput.value = '';
-        showTyping();
+        const data = await response.json();
         
-        try {
-            const response = await fetch('/api/v5/wisdom/chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${TOKEN}`
-                },
+        if (data.success === false && data.response?.includes("消息过长")) {
+            addMessage("⚠️ 代码仍然过长，进一步截断...");
+            const shorterCode = currentFileContent.slice(0, 1500) + "\n... (已截断)";
+            const retryResponse = await fetch("/api/v5/wisdom/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + TOKEN },
                 body: JSON.stringify({
-                    user_id: 'codex_user',
-                    agent: currentAgent,
-                    message: message
+                    user_id: "codex_user",
+                    agent: "code_agent",
+                    message: `审查代码：\n\`\`\`python\n${shorterCode}\n\`\`\``,
+                    project_id: currentProjectId,
+                    file_path: currentFile
                 })
             });
-            
-            const data = await response.json();
-            hideTyping();
-            
-            if (data.success) {
-                let reply = data.response || data.output_content || '处理完成';
-                if (Array.isArray(reply)) reply = reply[0] || '完成';
-                addMessage('assistant', String(reply), currentAgent);
-            } else {
-                addMessage('assistant', '❌ ' + (data.error || data.response || '未知错误'), currentAgent);
-            }
-        } catch (error) {
-            hideTyping();
-            addMessage('assistant', '❌ 请求失败: ' + error.message, currentAgent);
+            const retryData = await retryResponse.json();
+            addMessage(retryData.response || retryData.output_content || "分析完成");
+            return;
         }
+        
+        const reply = data.response || data.output_content || "分析完成";
+        addMessage(reply);
+        
+        const match = reply.match(/<!-- HIGHLIGHT_LINES:([\d,]+) -->/);
+        if (match) {
+            const lineNumbers = match[1].split(',').map(Number);
+            const editor = document.getElementById("codeEditor");
+            if (editor) {
+                const lines = editor.value.split('\n');
+                let modified = false;
+                for (const lineNum of lineNumbers) {
+                    if (lineNum <= lines.length && lineNum > 0) {
+                        if (!lines[lineNum-1].includes('⚠️')) {
+                            lines[lineNum-1] = `⚠️ ${lines[lineNum-1]} ⚠️`;
+                            modified = true;
+                        }
+                    }
+                }
+                if (modified) {
+                    editor.value = lines.join('\n');
+                    editor.style.borderLeft = "4px solid #ef4444";
+                    addMessage(`📌 已高亮 ${lineNumbers.length} 个问题行`);
+                }
+            }
+        }
+        
+    } catch (err) {
+        addMessage(`❌ 审核失败: ${err.message}`);
+    }
+};
+
+// ==================== 修复按钮 ====================
+document.getElementById("fixBtn").onclick = async function() {
+    if (!currentProjectId || !currentFile) {
+        addMessage("⚠️ 请先选择项目和文件");
+        return;
     }
     
-    // 事件绑定
-    sendBtn.addEventListener('click', sendMessage);
-    newChatBtn.addEventListener('click', newChat);
-    messageInput.addEventListener('keydown', (e) => {
-        if (e.ctrlKey && e.key === 'Enter') {
-            sendMessage();
-        }
-    });
+    const currentCode = document.getElementById("codeEditor").value;
+    const totalLen = currentCode.length;
     
-    // 初始化
-    loadData();
-    renderAgentSelector();
-    renderQuickCommands();
-    renderChatList();
-    renderMessages();
-})();
+    addMessage(`🔧 正在分析并生成修复方案 (基于完整代码，共 ${totalLen} 字符)...`);
+    
+    let codeToFix = currentCode;
+    let wasTruncated = false;
+    
+    if (totalLen > 4000) {
+        addMessage(`⚠️ 代码较长 (${totalLen} 字符)，建议手动修改问题行，或分文件处理`);
+        codeToFix = currentCode.slice(0, 3000) + "\n# ... (代码过长，建议手动修复)";
+        wasTruncated = true;
+    }
+    
+    const fixPrompt = `请修复以下代码中的问题（安全问题、性能问题、逻辑错误、代码风格），只输出修复后的完整代码：
+
+${codeToFix}`;
+    
+    try {
+        const response = await fetch("/api/v5/wisdom/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + TOKEN },
+            body: JSON.stringify({
+                user_id: "codex_user",
+                agent: "code_agent",
+                message: fixPrompt.slice(0, 3500),
+                project_id: currentProjectId,
+                file_path: currentFile
+            })
+        });
+        
+        const data = await response.json();
+        let fixedCode = data.response || data.output_content || "";
+        
+        const codeMatch = fixedCode.match(/```(?:python)?\n([\s\S]*?)```/);
+        if (codeMatch) {
+            fixedCode = codeMatch[1];
+        }
+        fixedCode = fixedCode.replace(/^```python\n?/, '').replace(/\n?```$/, '');
+        
+        if (fixedCode && fixedCode.length > 100 && Math.abs(fixedCode.length - totalLen) < totalLen * 0.5) {
+            const originalPreview = currentCode.split('\n').slice(0, 5).join('\n');
+            const fixedPreview = fixedCode.split('\n').slice(0, 5).join('\n');
+            
+            addMessage(`📊 修复建议已生成 (${fixedCode.length} 字符)`);
+            addMessage(`📝 **变化预览**:`);
+            addMessage(`原代码开头:\`\`\`\n${originalPreview}\n\`\`\``);
+            addMessage(`修复后开头:\`\`\`\n${fixedPreview}\n\`\`\``);
+            
+            if (wasTruncated) {
+                addMessage(`⚠️ 注意：由于代码过长，修复可能不完整，建议手动修改`);
+            }
+            
+            addMessage(`\n是否应用修复？回复「应用修复」`);
+            
+            window.pendingFixCode = fixedCode;
+            window.pendingFixOriginal = currentCode;
+            
+        } else if (fixedCode && fixedCode.length > 0) {
+            addMessage(`📝 修复建议：\n\n${fixedCode.slice(0, 500)}`);
+            addMessage(`\n是否应用？回复「应用修复」`);
+            window.pendingFixCode = fixedCode;
+        } else {
+            addMessage(`⚠️ 未能生成修复代码`);
+        }
+        
+    } catch (err) {
+        addMessage(`❌ 修复失败: ${err.message}`);
+    }
+};
+
+// ==================== 测试按钮 ====================
+document.getElementById("testBtn").onclick = async function() {
+    if (!currentProjectId || !currentFile) {
+        addMessage("⚠️ 请先选择项目和文件");
+        return;
+    }
+    
+    addMessage(`🧪 正在生成测试用例...`);
+    
+    const codePreview = currentFileContent.slice(0, 1500);
+    const testPrompt = `请为以下代码生成单元测试用例：
+
+\`\`\`python
+${codePreview}
+\`\`\`
+
+要求：
+1. 使用 pytest 框架
+2. 覆盖主要功能
+3. 包含边界条件测试
+4. 只输出测试代码`;
+
+    try {
+        const response = await fetch("/api/v5/wisdom/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + TOKEN },
+            body: JSON.stringify({
+                user_id: "codex_user",
+                agent: "code_agent",
+                message: testPrompt,
+                project_id: currentProjectId,
+                file_path: currentFile
+            })
+        });
+        
+        const data = await response.json();
+        const reply = data.response || data.output_content || "测试用例生成完成";
+        addMessage(reply);
+        
+    } catch (err) {
+        addMessage(`❌ 生成失败: ${err.message}`);
+    }
+};
+
+// ==================== 发送聊天 ====================
+async function sendChat() {
+    const input = document.getElementById("chatInput");
+    const msg = input.value.trim();
+    if (!msg) return;
+    
+    // 处理修复确认
+    if (msg === "应用修复" && window.pendingFixCode) {
+        addUserMessage(msg);
+        input.value = "";
+        
+        const editor = document.getElementById("codeEditor");
+        const newCode = window.pendingFixCode;
+        
+        editor.value = newCode;
+        currentFileContent = newCode;
+        
+        addMessage(`✅ 修复已应用到编辑器！`);
+        addMessage(`💾 请按 Ctrl+S 保存文件`);
+        
+        window.pendingFixCode = null;
+        window.pendingFixOriginal = null;
+        return;
+    }
+    
+    if (msg === "忽略" && window.pendingFixCode) {
+        addUserMessage(msg);
+        input.value = "";
+        addMessage("已忽略修复建议");
+        window.pendingFixCode = null;
+        return;
+    }
+    
+    // 普通消息
+    addUserMessage(msg);
+    input.value = "";
+    
+    try {
+        const response = await fetch("/api/v5/wisdom/chat", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + TOKEN
+            },
+            body: JSON.stringify({
+                user_id: "codex_user",
+                agent: currentAgent,
+                message: msg
+            })
+        });
+        const data = await response.json();
+        addMessage(data.response || data.output_content || "处理完成");
+    } catch (err) {
+        addMessage(`请求失败: ${err.message}`);
+    }
+}
+
+// ==================== 折叠 ====================
+let projectCollapsed = false, filesCollapsed = false;
+document.getElementById("toggleProjectBtn").onclick = () => {
+    projectCollapsed = !projectCollapsed;
+    document.getElementById("projectSidebar").classList.toggle("collapsed", projectCollapsed);
+    document.getElementById("toggleProjectBtn").innerHTML = projectCollapsed ? "▶" : "◀";
+};
+document.getElementById("toggleFilesBtn").onclick = () => {
+    filesCollapsed = !filesCollapsed;
+    document.getElementById("filesSidebar").classList.toggle("collapsed", filesCollapsed);
+    document.getElementById("toggleFilesBtn").innerHTML = filesCollapsed ? "▶" : "◀";
+};
+
+// ==================== 拖拽 ====================
+const chatArea = document.getElementById("chatArea");
+const handle = document.getElementById("chatResizeHandle");
+let startY = 0, startH = 0;
+handle.addEventListener("mousedown", (e) => {
+    startY = e.clientY;
+    startH = chatArea.offsetHeight;
+    document.body.style.userSelect = "none";
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+});
+function onMouseMove(e) {
+    let h = Math.min(600, Math.max(150, startH + (startY - e.clientY)));
+    chatArea.style.height = h + "px";
+}
+function onMouseUp() {
+    document.body.style.userSelect = "";
+    document.removeEventListener("mousemove", onMouseMove);
+    document.removeEventListener("mouseup", onMouseUp);
+}
+
+// ==================== 快捷键 ====================
+document.addEventListener("keydown", (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        e.preventDefault();
+        if (currentFile) saveFile();
+    }
+});
+document.getElementById("chatInput").addEventListener("keydown", (e) => {
+    if (e.ctrlKey && e.key === "Enter") sendChat();
+});
+
+// ==================== 打开 Code Agent 弹板 ====================
+document.getElementById("openCodeAgentBtn").onclick = () => {
+    window.open('/code_agent_panel.html', 'CodeAgent', 'width=1200,height=800,resizable=yes');
+};
+
+// ==================== 按钮绑定 ====================
+document.getElementById("addProjectBtn").onclick = addProject;
+document.getElementById("sendBtn").onclick = sendChat;
+document.getElementById("saveBtn").onclick = saveFile;
+
+// ==================== 初始化 ====================
+renderAgentSelector();
+loadProjects();
+addMessage("✅ 系统就绪 | 选择一个文件，点击审核按钮");
 </script>
 </body>
 </html>

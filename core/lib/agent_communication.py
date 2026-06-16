@@ -75,6 +75,10 @@ class AgentCommunication:
         self.pending_responses: Dict[str, Message] = {}
         self.subscribers: Dict[str, List[str]] = {}  # event_type -> [agent_ids]
         self._lock = threading.Lock()
+        self._message_queue = []
+        self._subscribers = {}
+        self._active_agents = {}      # 添加这一行
+        self._pending_tasks = {}      # 添加这一行
 
     def send(
         self,

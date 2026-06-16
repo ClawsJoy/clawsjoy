@@ -66,23 +66,23 @@ class OrchestrationExecutor:
         """获取 Agent 实例"""
         try:
             if agent_name == "video_agent":
-                from agents.video_agent.agent import VideoAgent
+                from agents.video_agent.agent_v4 import VideoAgent
 
                 return VideoAgent(user_id)
             elif agent_name == "vision_agent":
-                from agents.vision_agent.agent import VisionAgent
+                from agents.vision_agent.agent_v4 import VisionAgent
 
                 return VisionAgent(user_id)
             elif agent_name == "writer_agent":
-                from agents.writer_agent.agent import WriterAgent
+                from agents.writer_agent.agent_v4 import WriterAgent
 
                 return WriterAgent(user_id)
             elif agent_name == "analysis_agent":
-                from agents.analysis_agent.agent import AnalysisAgent
+                from agents.analysis_agent.agent_v4 import AnalysisAgentV4 as AnalysisAgent
 
                 return AnalysisAgent(user_id)
             else:
-                from agents.executor_agent.agent import ExecutorAgent
+                from agents.executor_agent.agent_v4 import ExecutorAgent
 
                 return ExecutorAgent(user_id)
         except Exception as e:

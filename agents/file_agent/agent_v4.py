@@ -30,6 +30,9 @@ class FileAgentV4(BusinessAgent):
     
     def can_handle_json(self, action: str, target: str) -> Tuple[bool, float]:
         capabilities = {
+            ("read_project", "file"): (True, 0.90),
+            ("write_project", "file"): (True, 0.90),
+            ("batch", "file"): (True, 0.85),
             ("read", "file"): (True, 0.95),
             ("write", "file"): (True, 0.95),
             ("list", "file"): (True, 0.90),
@@ -227,3 +230,57 @@ class FileAgentV4(BusinessAgent):
 if __name__ == "__main__":
     agent = FileAgentV4("test")
     print("✅ file_agent_v4 测试通过")
+
+    # ========== 增强：项目文件操作 ==========
+    
+    def _read_project_file(self, project_id: str, file_path: str) -> Dict:
+        """读取项目文件（通过 code_repo）"""
+        try:
+            from core.lib.code_repo import get_code_repo
+            repo = get_code_repo(self.user_id)
+            content = repo.get_file_content(project_id, file_path)
+            if content:
+                preview = content[:500] + "..." if len(content) > 500 else content
+                return self._response(
+                    f"📄 **{file_path}**\n\n```\n{preview}\n```",
+                    metadata={"project_id": project_id, "path": file_path}
+                )
+            return self._response(f"❌ 无法读取: {file_path}")
+        except Exception as e:
+            return self._response(f"❌ 读取失败: {e}")
+    
+    def _write_project_file(self, project_id: str, file_path: str, content: str) -> Dict:
+        """写入项目文件（通过 code_repo）"""
+        try:
+            from core.lib.code_repo import get_code_repo
+            repo = get_code_repo(self.user_id)
+            # 写入文件
+            project = repo.get_project(project_id)
+            if project:
+                full_path = Path(project["path"]) / file_path
+                full_path.write_text(content, encoding='utf-8')
+                return self._response(f"✅ 已保存: {file_path}")
+            return self._response(f"❌ 项目不存在: {project_id}")
+        except Exception as e:
+            return self._response(f"❌ 保存失败: {e}")
+    
+    def _batch_operation(self, files: List[str], operation: str, content: str = None) -> Dict:
+        """批量文件操作"""
+        results = []
+        for file_path in files:
+            if operation == "read":
+                # 读取多个文件
+                try:
+                    with open(file_path, 'r') as f:
+                        preview = f.read(200)
+                    results.append(f"✅ {file_path}: {preview[:50]}...")
+                except Exception as e:
+                    results.append(f"❌ {file_path}: {e}")
+            elif operation == "delete":
+                try:
+                    Path(file_path).unlink()
+                    results.append(f"✅ 已删除: {file_path}")
+                except Exception as e:
+                    results.append(f"❌ 删除失败: {file_path} - {e}")
+        
+        return self._response("\n".join(results), metadata={"batch_results": results})

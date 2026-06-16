@@ -30,6 +30,8 @@ class WriterAgentV4(BusinessAgent):
             ("polish", "text"): (True, 0.90),
             ("summarize", "text"): (True, 0.90),
             ("rewrite", "text"): (True, 0.85),
+            ("change_style", "text"): (True, 0.85),
+            ("continue", "text"): (True, 0.85),
             ("translate", "text"): (True, 0.85),
         }
         return capabilities.get((action, target), (False, 0.0))
@@ -49,6 +51,14 @@ class WriterAgentV4(BusinessAgent):
             return self._summarize(user_input)
         
         # 重写/改写
+
+        # 风格转换
+        if any(kw in user_input for kw in ["转换风格", "风格转换", "改写为"]):
+            return self.change_style(user_input)
+
+        # 续写
+        if any(kw in user_input for kw in ["续写", "继续写"]):
+            return self.continue_writing(user_input)
         if any(kw in user_input for kw in ["重写", "改写", "换种说法"]):
             return self._rewrite(user_input)
         
@@ -242,6 +252,81 @@ class WriterAgentV4(BusinessAgent):
             "output_content": content,
             **kwargs
         }
+
+    # ========== 增强：风格转换和续写 ==========
+
+    def change_style(self, user_input: str) -> Dict:
+        """转换写作风格"""
+        # 解析风格和目标文本
+        # 格式：转换风格 幽默 这段文字内容
+        parts = user_input.split()
+        if len(parts) < 2:
+            return self._response("请指定风格。示例：转换风格 幽默 今天天气很好")
+        
+        style = parts[1] if len(parts) > 1 else "幽默"
+        content = ' '.join(parts[2:]) if len(parts) > 2 else user_input
+        
+        styles = {
+            "幽默": "幽默风趣、轻松诙谐，带点调侃",
+            "正式": "正式专业、严谨规范，用词考究",
+            "文艺": "文艺诗意、优美抒情，富有感染力",
+            "简洁": "简洁明了、直击重点，去除冗余",
+            "热情": "热情积极、充满活力，有感染力",
+            "商务": "商务正式、专业得体，礼貌周到"
+        }
+        
+        style_desc = styles.get(style, f"{style}风格")
+        
+        prompt = f"""请将以下内容改写为{style_desc}风格：
+
+原文：{content}
+
+要求：
+1. 保持原意不变
+2. 语气符合{style}风格
+3. 只输出改写后的结果
+
+改写后："""
+        
+        response = self._call_llm(prompt)
+        
+        if response:
+            return self._response(
+                f"🎨 **{style}风格改写**\n\n**原文：**\n{content}\n\n**改写后：**\n{response}",
+                metadata={"style": style, "original": content, "rewritten": response}
+            )
+        
+        return self._response(f"风格转换失败，请确保 LLM 服务正常运行")
+    
+    def continue_writing(self, user_input: str) -> Dict:
+        """续写文章"""
+        # 提取续写的前文
+        content = re.sub(r'^续写[：:]?', '', user_input).strip()
+        
+        if not content:
+            return self._response("请提供要续写的文本。示例：续写 很久很久以前，有一个...")
+        
+        prompt = f"""请根据以下前文继续写作：
+
+前文：{content}
+
+要求：
+1. 保持风格一致
+2. 自然衔接前文
+3. 续写 100-200 字
+4. 只输出续写内容
+
+续写："""
+        
+        response = self._call_llm(prompt)
+        
+        if response:
+            return self._response(
+                f"📝 **续写结果**\n\n**前文：**\n{content}\n\n**续写：**\n{response}",
+                metadata={"previous": content, "continued": response}
+            )
+        
+        return self._response(f"续写失败，请确保 LLM 服务正常运行")
 
 
 if __name__ == "__main__":

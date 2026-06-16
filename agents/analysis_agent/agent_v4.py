@@ -48,29 +48,93 @@ class AnalysisAgentV4(BusinessAgent):
         return self._response(self._get_help())
     
     def _analyze(self, text: str) -> str:
-        """分析数据 - 智能处理有无数据的情况"""
-    
-        # 检测是否提供了具体数据
-        has_data = self._has_concrete_data(text)
-    
-        if has_data:
-            # 有具体数据，进行详细分析
-            prompt = f"""请分析以下数据：
+        """深度数据分析 - 增强版"""
+        
+        # 提取数据（如果有）
+        data = self._extract_data(text)
+        analysis_type = self._identify_analysis_type(text)
+        
+        # 构建结构化分析 Prompt
+        if data:
+            prompt = f"""请对以下数据进行深度分析：
 
-用户请求：{text}
+【数据内容】
+{data}
 
-要求：
-1. 提取关键指标
-2. 识别趋势和异常
-3. 给出 actionable 的建议
-4. 输出结构清晰的分析报告"""
+【分析类型】{analysis_type}
 
-            response = self._call_llm(prompt)
-            if response:
-                return f"📊 **数据分析报告**\n\n{response}"
-    
-        # 没有具体数据，提供分析框架
+请输出以下格式：
+
+## 📈 数据概览
+- 数据范围：
+- 关键发现：
+
+## 📊 详细分析
+### 1. 趋势分析
+### 2. 异常检测
+### 3. 相关性分析
+
+## 💡 洞察与建议
+1. 
+2. 
+3. 
+
+## 📋 数据质量评估
+- 完整性：
+- 一致性：
+- 建议补充：
+"""
+        else:
+            # 没有具体数据时，提供可操作的问题引导
+            prompt = f"""用户想分析：{text}
+
+请以提问的方式引导用户提供必要数据，输出格式：
+
+## 🔍 为了进行{analysis_type}分析，我需要以下信息：
+
+### 必需数据
+1. **xxx** - 说明为什么需要
+2. **xxx** - 说明为什么需要
+
+### 可选数据
+- xxx（有助于更精准分析）
+
+### 预期输出
+完成分析后，您将获得：
+- xxx
+- xxx
+
+请提供上述数据，我将为您生成详细分析报告。"""
+
+        response = self._call_llm(prompt)
+        if response:
+            return f"📊 **数据分析报告**\n\n{response}"
+        
         return self._provide_analysis_framework(text)
+    
+    def _extract_data(self, text: str) -> str:
+        """从用户输入中提取数据"""
+        # 提取数字、表格、列表等
+        import re
+        data_patterns = [
+            r'数据[：:]\s*([^\n]+)',
+            r'如下[：:]\s*\n(.+)',
+            r'```(?:json|csv|table)?\n(.*?)```',
+        ]
+        
+        for pattern in data_patterns:
+            match = re.search(pattern, text, re.DOTALL)
+            if match:
+                return match.group(1).strip()
+        
+        # 检查是否包含数字序列
+        numbers = re.findall(r'\d+(?:\.\d+)?', text)
+        if len(numbers) >= 3:
+            return f"数字序列: {', '.join(numbers)}"
+        
+        return ""
+
+
 
     def _has_concrete_data(self, text: str) -> bool:
         """检测是否包含具体数据"""

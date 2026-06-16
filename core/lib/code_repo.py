@@ -162,8 +162,7 @@ class CodeRepository:
                 "id": pid,
                 "name": p["name"],
                 "path": p["path"],
-                "file_count": p["file_count"],
-                "languages": p["languages"]
+                "file_count": p["file_count"]
             }
             for pid, p in self.index["projects"].items()
         ]
@@ -181,6 +180,17 @@ class CodeRepository:
             return True
         return False
 
+    def get_files(self, project_id: str) -> List[str]:
+        """获取项目文件列表"""
+        project = self.get_project(project_id)
+        if not project:
+            return []
+        
+        # 从索引中获取文件列表
+        if project_id in self.index.get("files", {}):
+            files_dict = self.index["files"][project_id]
+            return list(files_dict.keys())
+        return []
 
 def get_code_repo(user_id: str = "default") -> CodeRepository:
     return CodeRepository(user_id)

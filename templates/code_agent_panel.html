@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Agent - 智能代码助手</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #1e1e2e;
+            color: #cdd6f4;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* 标题栏 */
+        .title-bar {
+            background: #181825;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #313244;
+            cursor: move;
+            -webkit-app-region: drag;
+        }
+        .title-bar h1 {
+            font-size: 16px;
+            color: #89b4fa;
+        }
+        .title-bar-buttons button {
+            background: none;
+            border: none;
+            color: #cdd6f4;
+            cursor: pointer;
+            padding: 4px 8px;
+            -webkit-app-region: no-drag;
+        }
+        .title-bar-buttons button:hover { background: #313244; }
+        
+        /* 工具栏 */
+        .toolbar {
+            background: #181825;
+            padding: 12px 16px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            border-bottom: 1px solid #313244;
+            flex-wrap: wrap;
+        }
+        .toolbar select, .toolbar button {
+            background: #1e1e2e;
+            border: 1px solid #313244;
+            border-radius: 6px;
+            padding: 6px 12px;
+            color: #cdd6f4;
+            cursor: pointer;
+        }
+        .toolbar button:hover { background: #313244; }
+        .toolbar .primary-btn {
+            background: #89b4fa;
+            color: #1e1e2e;
+            border: none;
+        }
+        .toolbar .primary-btn:hover { background: #b4befe; }
+        
+        /* 主布局 */
+        .main-layout {
+            flex: 1;
+            display: flex;
+            gap: 16px;
+            padding: 16px;
+            overflow: hidden;
+        }
+        
+        /* 左侧面板 */
+        .left-panel {
+            width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            overflow: hidden;
+        }
+        
+        /* 问题清单区域 */
+        .issues-section {
+            background: #181825;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex: 2;
+        }
+        .section-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid #313244;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .issues-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+        .issue-item {
+            background: #1e1e2e;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-left: 3px solid;
+            cursor: pointer;
+        }
+        .issue-item:hover { background: #313244; }
+        .issue-item.high { border-left-color: #f38ba8; }
+        .issue-item.medium { border-left-color: #fab387; }
+        .issue-item.low { border-left-color: #f9e2af; }
+        .issue-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .issue-line { font-family: monospace; font-size: 12px; color: #89b4fa; }
+        .issue-type { font-size: 11px; padding: 2px 6px; border-radius: 4px; background: #313244; }
+        .issue-severity { font-size: 11px; }
+        .issue-description { font-size: 12px; margin-bottom: 8px; color: #a6adc8; }
+        .fix-btn {
+            background: #89b4fa;
+            color: #1e1e2e;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+        .fix-btn:hover { background: #b4befe; }
+        .batch-fix-btn {
+            background: #a6e3a1;
+            color: #1e1e2e;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        /* 聊天历史区域 */
+        .chat-section {
+            background: #181825;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex: 1;
+        }
+        .chat-history {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            font-size: 12px;
+        }
+        .chat-message {
+            padding: 8px 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            word-break: break-word;
+        }
+        .chat-message.user {
+            background: #313244;
+            border-left: 3px solid #89b4fa;
+        }
+        .chat-message.assistant {
+            background: #1e1e2e;
+            border-left: 3px solid #a6e3a1;
+        }
+        .chat-message .role {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        
+        /* 右侧编辑器 */
+        .editor-panel {
+            flex: 1;
+            background: #181825;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .editor-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid #313244;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #codeEditor {
+            flex: 1;
+            background: #1e1e2e;
+            border: none;
+            font-family: 'Fira Code', monospace;
+            font-size: 13px;
+            padding: 16px;
+            resize: none;
+            outline: none;
+            color: #cdd6f4;
+            line-height: 1.5;
+        }
+        
+        /* 输入区域 */
+        .input-area {
+            background: #181825;
+            border-top: 1px solid #313244;
+            padding: 12px 16px;
+            display: flex;
+            gap: 12px;
+        }
+        .input-area input {
+            flex: 1;
+            background: #1e1e2e;
+            border: 1px solid #313244;
+            border-radius: 20px;
+            padding: 10px 16px;
+            color: #cdd6f4;
+            outline: none;
+        }
+        .input-area button {
+            background: #89b4fa;
+            border: none;
+            border-radius: 20px;
+            padding: 10px 20px;
+            color: #1e1e2e;
+            cursor: pointer;
+        }
+        .input-area button:hover { background: #b4befe; }
+        
+        /* 高亮覆盖层 */
+        #editor-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            pointer-events: none;
+            z-index: 10;
+            font-family: monospace;
+            font-size: 13px;
+            line-height: 20px;
+            overflow: hidden;
+        }
+        .editor-wrapper {
+            position: relative;
+            flex: 1;
+            overflow: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="title-bar">
+        <h1>🤖 Code Agent - 智能代码助手</h1>
+        <div class="title-bar-buttons">
+            <button id="minimizeBtn">─</button>
+            <button id="closeBtn">✕</button>
+        </div>
+    </div>
+    
+    <div class="toolbar">
+        <span>📁 项目:</span>
+        <select id="projectSelect"></select>
+        <span>📄 文件:</span>
+        <select id="fileSelect"></select>
+        <button id="refreshBtn">🔄 刷新</button>
+        <button id="analyzeBtn" class="primary-btn">🔍 分析当前文件</button>
+    </div>
+    
+    <div class="main-layout">
+        <div class="left-panel">
+            <div class="issues-section">
+                <div class="section-header">
+                    <span>⚠️ 问题清单</span>
+                    <button id="batchFixBtn" class="batch-fix-btn" style="display:none;">🔧 修复全部</button>
+                </div>
+                <div class="issues-list" id="issuesList">
+                    <div style="text-align: center; padding: 20px; color: #6c7086;">
+                        点击「分析当前文件」开始
+                    </div>
+                </div>
+            </div>
+            <div class="chat-section">
+                <div class="section-header">💬 对话记录</div>
+                <div class="chat-history" id="chatHistory"></div>
+            </div>
+        </div>
+        
+        <div class="editor-panel">
+            <div class="editor-header">
+                <span id="currentFileLabel">未选择文件</span>
+                <button id="saveBtn" style="background: #a6e3a1; border: none; padding: 4px 12px; border-radius: 6px;">💾 保存</button>
+            </div>
+            <div class="editor-wrapper" id="editorWrapper">
+                <textarea id="codeEditor" placeholder="选择文件后显示代码"></textarea>
+                <div id="editor-overlay"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="input-area">
+        <input type="text" id="chatInput" placeholder="与 Code Agent 对话... Ctrl+Enter 发送">
+        <button id="sendBtn">发送</button>
+    </div>
+
+    <script>
+        const TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZDE2YjIwYjJjZWRjZjNjZiIsInVzZXJuYW1lIjoidGVzdHVzZXIiLCJyb2xlIjoidXNlciIsImV4cCI6MTc4MTE4MzMyMn0.2cbQMYnwasdm1cxjxtUuhJyODjaF4GyXoHdma-TZnzQ";
+        
+        // 全局变量
+        let currentProjectId = null;
+        let currentFile = null;
+        let currentFileContent = "";
+        let projects = [];
+        let files = [];
+        let currentIssues = [];
+        
+        // DOM 元素
+        const projectSelect = document.getElementById("projectSelect");
+        const fileSelect = document.getElementById("fileSelect");
+        const editor = document.getElementById("codeEditor");
+        const issuesList = document.getElementById("issuesList");
+        const chatHistory = document.getElementById("chatHistory");
+        const chatInput = document.getElementById("chatInput");
+        const currentFileLabel = document.getElementById("currentFileLabel");
+        
+        // ==================== 辅助函数 ====================
+        function escapeHtml(text) {
+            if (!text) return "";
+            return text.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
+        }
+        
+        function addChatMessage(text, role) {
+            const msgDiv = document.createElement("div");
+            msgDiv.className = `chat-message ${role}`;
+            msgDiv.innerHTML = `<div class="role">${role === 'user' ? '👤 用户' : '🤖 Agent'}</div><div>${escapeHtml(text)}</div>`;
+            chatHistory.appendChild(msgDiv);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+        
+        async function api(endpoint, method, body) {
+            const opts = { method, headers: { "Content-Type": "application/json", "Authorization": `Bearer ${TOKEN}` } };
+            if (body) opts.body = JSON.stringify(body);
+            const res = await fetch(endpoint, opts);
+            return res.json();
+        }
+        
+        // ==================== 高亮功能 ====================
+        function highlightEditorLines(issues) {
+            const overlay = document.getElementById("editor-overlay");
+            const lines = editor.value.split('\n');
+            
+            let html = '';
+            for (let i = 0; i < lines.length; i++) {
+                let highlightStyle = '';
+                for (const issue of issues) {
+                    if (issue.line === i + 1) {
+                        const color = issue.severity === 'high' ? '#f38ba8' : 
+                                      issue.severity === 'medium' ? '#fab387' : '#f9e2af';
+                        highlightStyle = `style="background-color: ${color}30; border-left: 3px solid ${color};"`;
+                        break;
+                    }
+                }
+                html += `<div style="height: 20px; ${highlightStyle}"></div>`;
+            }
+            overlay.innerHTML = html;
+            
+            editor.addEventListener('scroll', () => { overlay.scrollTop = editor.scrollTop; });
+            overlay.scrollTop = editor.scrollTop;
+        }
+        
+        function clearHighlight(lineNum) {
+            if (currentIssues) {
+                const remaining = currentIssues.filter(i => i.line !== lineNum);
+                highlightEditorLines(remaining);
+            }
+        }
+        
+        // ==================== 文件操作 ====================
+        async function loadProjects() {
+            const data = await api("/api/v5/project/list?user_id=codex_user", "GET");
+            projects = data.success ? (data.projects || []) : [];
+            projectSelect.innerHTML = '<option value="">选择项目</option>' + 
+                projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+        }
+        
+        async function loadFiles() {
+            if (!currentProjectId) return;
+            const data = await api(`/api/v5/project/${currentProjectId}/files?user_id=codex_user`, "GET");
+            files = data.success ? (data.files || []) : [];
+            fileSelect.innerHTML = '<option value="">选择文件</option>' +
+                files.map(f => `<option value="${f}">${f.split('/').pop()}</option>`).join('');
+        }
+        
+        async function loadFile(filePath) {
+            if (!currentProjectId) return;
+            currentFile = filePath;
+            currentFileLabel.innerText = filePath;
+            const data = await api(`/api/v5/project/${currentProjectId}/file?user_id=codex_user&path=${encodeURIComponent(filePath)}`, "GET");
+            if (data.success) {
+                currentFileContent = data.content;
+                editor.value = currentFileContent;
+                addChatMessage(`已加载文件: ${filePath}`, "assistant");
+            }
+        }
+        
+        async function saveFile() {
+            if (!currentProjectId || !currentFile) {
+                addChatMessage("请先选择文件", "assistant");
+                return;
+            }
+            const content = editor.value;
+            const data = await api(`/api/v5/project/${currentProjectId}/file`, "POST", {
+                user_id: "codex_user", path: currentFile, content: content
+            });
+            if (data.success) {
+                currentFileContent = content;
+                addChatMessage("✅ 文件保存成功", "assistant");
+            } else {
+                addChatMessage("❌ 保存失败", "assistant");
+            }
+        }
+        
+        // ==================== 分析功能 ====================
+        function parseIssuesFromResponse(text) {
+            const issues = [];
+            const tableMatches = text.match(/\|\s*(\d+)\s*\|\s*(\w+)\s*\|\s*(\w+)\s*\|/g);
+            if (tableMatches) {
+                for (const match of tableMatches) {
+                    const parts = match.split('|');
+                    if (parts.length >= 4) {
+                        issues.push({
+                            line: parseInt(parts[1].trim()),
+                            type: parts[2].trim(),
+                            severity: parts[3].trim(),
+                            description: parts[4]?.trim() || ""
+                        });
+                    }
+                }
+            }
+            return issues;
+        }
+        
+        function renderIssues(issues) {
+            currentIssues = issues;
+            const batchBtn = document.getElementById("batchFixBtn");
+            
+            if (!issues.length) {
+                issuesList.innerHTML = '<div style="text-align: center; padding: 20px;">✅ 未发现明显问题</div>';
+                batchBtn.style.display = 'none';
+                return;
+            }
+            
+            batchBtn.style.display = 'block';
+            batchBtn.onclick = () => fixAllIssues();
+            
+            issuesList.innerHTML = issues.map(issue => `
+                <div class="issue-item ${issue.severity}" onclick="gotoLine(${issue.line})">
+                    <div class="issue-header">
+                        <span class="issue-line">L${issue.line}</span>
+                        <span class="issue-type">${issue.type}</span>
+                        <span class="issue-severity">${issue.severity}</span>
+                    </div>
+                    <div class="issue-description">${escapeHtml(issue.description || issue.type)}</div>
+                    <button class="fix-btn" data-line="${issue.line}" onclick="event.stopPropagation(); fixSingleIssue(${issue.line})">🔧 自动修复</button>
+                </div>
+            `).join('');
+            
+            highlightEditorLines(issues);
+        }
+        
+        async function analyzeCode() {
+            if (!currentProjectId || !currentFile) {
+                addChatMessage("请先选择项目和文件", "assistant");
+                return;
+            }
+            
+            addChatMessage(`🔍 正在分析: ${currentFile}`, "assistant");
+            
+            const analysisPrompt = `请分析以下代码文件 ${currentFile}，列出所有问题。
+
+要求：
+1. 每个问题必须包含行号
+2. 说明问题类型（安全/性能/逻辑/风格）
+3. 给出修复建议
+4. 如果没有问题，回答"代码质量良好"
+
+代码：
+\`\`\`python
+${currentFileContent.slice(0, 2000)}
+\`\`\`
+
+请输出分析结果：`;
+            
+            try {
+                const res = await fetch("/api/v5/wisdom/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${TOKEN}` },
+                    body: JSON.stringify({
+                        user_id: "codex_user",
+                        agent: "code_agent",
+                        message: analysisPrompt.slice(0, 3500),
+                        project_id: currentProjectId,
+                        file_path: currentFile
+                    })
+                });
+                const data = await res.json();
+                let reply = data.response || data.output_content || "分析完成";
+                reply = reply.replace(/```json[\s\S]*?```/g, '').trim();
+                
+                addChatMessage(reply, "assistant");
+                
+                const issues = parseIssuesFromResponse(reply);
+                if (issues.length > 0) {
+                    renderIssues(issues);
+                    addChatMessage(`💡 发现 ${issues.length} 个问题，点击「自动修复」按钮修复`, "assistant");
+                } else {
+                    renderIssues([]);
+                }
+            } catch (err) {
+                addChatMessage(`分析失败: ${err.message}`, "assistant");
+            }
+        }
+        
+        // ==================== 修复功能 ====================
+        async function fixSingleIssue(line) {
+            const lines = editor.value.split('\n');
+            if (line > lines.length || line < 1) {
+                addChatMessage(`❌ 第 ${line} 行不存在`, "assistant");
+                return;
+            }
+            
+            const targetLine = lines[line - 1].replace(/⚠️ /g, '');
+            addChatMessage(`🔧 正在修复第 ${line} 行...`, "assistant");
+            
+            const fixPrompt = `请修复以下代码的第 ${line} 行，只输出修复后的那一行代码，不要输出任何解释：
+
+第 ${line} 行原代码：
+${targetLine}
+
+只输出修复后的那一行代码：`;
+            
+            try {
+                const res = await fetch("/api/v5/wisdom/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${TOKEN}` },
+                    body: JSON.stringify({
+                        user_id: "codex_user",
+                        agent: "code_agent",
+                        message: fixPrompt
+                    })
+                });
+                const data = await res.json();
+                let fixed = data.response || data.output_content || "";
+                fixed = fixed.replace(/```\w*\n?/g, '').replace(/```/g, '').trim().split('\n')[0];
+                
+                const isHelpText = fixed.includes("请提供") || fixed.includes("我是代码助手");
+                
+                if (isHelpText) {
+                    addChatMessage(`⚠️ 无法自动修复第 ${line} 行，请手动修改`, "assistant");
+                    return;
+                }
+                
+                if (fixed && fixed !== targetLine && fixed.length < 500 && fixed.length > 0) {
+                    lines[line - 1] = fixed;
+                    editor.value = lines.join('\n');
+                    currentFileContent = editor.value;
+                    clearHighlight(line);
+                    addChatMessage(`✅ 第 ${line} 行修复成功！`, "assistant");
+                    addChatMessage(`   修复前: ${targetLine.substring(0, 50)}...`, "assistant");
+                    addChatMessage(`   修复后: ${fixed.substring(0, 50)}...`, "assistant");
+                    
+                    setTimeout(() => analyzeCode(), 500);
+                } else {
+                    addChatMessage(`⚠️ 第 ${line} 行无需修复`, "assistant");
+                }
+            } catch (err) {
+                addChatMessage(`❌ 修复失败: ${err.message}`, "assistant");
+            }
+        }
+        
+        async function fixAllIssues() {
+            if (!currentIssues || currentIssues.length === 0) {
+                addChatMessage(`✅ 没有需要修复的问题`, "assistant");
+                return;
+            }
+            
+            addChatMessage(`🔧 开始批量修复 ${currentIssues.length} 个问题...`, "assistant");
+            
+            for (let i = 0; i < currentIssues.length; i++) {
+                const issue = currentIssues[i];
+                addChatMessage(`📌 正在修复第 ${i+1}/${currentIssues.length} 个问题 (L${issue.line})...`, "assistant");
+                await fixSingleIssue(issue.line);
+                await new Promise(r => setTimeout(r, 800));
+            }
+            
+            addChatMessage(`✅ 批量修复完成！请检查编辑器并按 Ctrl+S 保存。`, "assistant");
+        }
+        
+        function gotoLine(line) {
+            const lines = editor.value.split('\n');
+            let pos = 0;
+            for (let i = 0; i < line - 1; i++) pos += lines[i].length + 1;
+            editor.focus();
+            editor.setSelectionRange(pos, pos);
+            const lineHeight = 20;
+            editor.scrollTop = (line - 5) * lineHeight;
+        }
+        
+        // ==================== 聊天功能 ====================
+        async function sendChatMessage() {
+            const msg = chatInput.value.trim();
+            if (!msg) return;
+            
+            addChatMessage(msg, "user");
+            chatInput.value = "";
+            
+            // 分析请求
+            const isAnalysis = msg.includes("分析") || msg.includes("审核") || msg.includes("检查") || 
+                               msg.includes("这个文件") || msg.includes("当前文件");
+            
+            if (isAnalysis && currentFile && currentFileContent) {
+                await analyzeCode();
+                return;
+            }
+            
+            // 普通聊天
+            try {
+                const res = await fetch("/api/v5/wisdom/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${TOKEN}` },
+                    body: JSON.stringify({
+                        user_id: "codex_user",
+                        agent: "chat_agent",
+                        message: msg
+                    })
+                });
+                const data = await res.json();
+                const reply = data.response || data.output_content || "处理完成";
+                addChatMessage(reply, "assistant");
+            } catch (err) {
+                addChatMessage(`错误: ${err.message}`, "assistant");
+            }
+        }
+        
+        // ==================== 事件绑定 ====================
+        projectSelect.onchange = (e) => {
+            currentProjectId = e.target.value;
+            loadFiles();
+        };
+        fileSelect.onchange = (e) => {
+            if (e.target.value) loadFile(e.target.value);
+        };
+        document.getElementById("analyzeBtn").onclick = analyzeCode;
+        document.getElementById("saveBtn").onclick = saveFile;
+        document.getElementById("refreshBtn").onclick = () => { loadProjects(); loadFiles(); };
+        document.getElementById("sendBtn").onclick = sendChatMessage;
+        chatInput.addEventListener("keydown", (e) => {
+            if (e.ctrlKey && e.key === "Enter") sendChatMessage();
+        });
+        
+        // 窗口控制
+        document.getElementById("minimizeBtn").onclick = () => window.parent.postMessage({ type: "minimize" }, "*");
+        document.getElementById("closeBtn").onclick = () => window.parent.postMessage({ type: "close" }, "*");
+        
+        // 初始化
+        loadProjects();
+        addChatMessage("✨ Code Agent 已启动，请选择项目和分析文件", "assistant");
+    </script>
+</body>
+</html>

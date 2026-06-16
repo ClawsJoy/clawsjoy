@@ -16,7 +16,7 @@ new_execute = '''    def execute(self, message: str, user_id: str = "guest") -> 
         
         # 1. 先回忆相关记忆
         try:
-            from agents.memory_agent.agent import memory_agent
+            from agents.memory_agent.agent_v4 import memory_agent
             memory_result = memory_agent.process(f"回忆 {message[:30]}", {"user_id": user_id})
             if memory_result.get("response"):
                 print(f"[记忆] 相关记忆: {memory_result.get('response')}")
@@ -35,7 +35,7 @@ old_return = '''            return {
 
 new_return = '''            # 保存对话到记忆
             try:
-                from agents.memory_agent.agent import memory_agent
+                from agents.memory_agent.agent_v4 import memory_agent
                 memory_agent.process(f"记住 {message[:50]}", {"user_id": user_id})
                 memory_agent.process(f"记住 回复: {result.get('response', '')[:50]}", {"user_id": user_id})
             except Exception as e:

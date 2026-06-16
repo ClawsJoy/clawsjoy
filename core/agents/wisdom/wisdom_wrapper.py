@@ -237,8 +237,8 @@ class WisdomWrapper:
             success_rate = profile.success_rate
         else:
             # 试探性评估
-            capability_score = 0.5
-            success_rate = 0.5
+            capability_score = 0.8
+            success_rate = 0.8
         
         # 询问 Agent 自身
         agent_can = self._ask_agent_capability(action, target)
@@ -247,13 +247,13 @@ class WisdomWrapper:
         confidence = (
             capability_score * 0.4 +
             success_rate * 0.3 +
-            agent_can * 0.3
+            agent_can * 0.2
         )
         
         # 不确定性修正
         uncertainty = perception["uncertainty"]
         if uncertainty > 0.5:
-            confidence *= (1 - uncertainty)
+            confidence *= (1 - uncertainty * 0.5)
         
         # 自我认知
         self_awareness = {
@@ -291,7 +291,7 @@ class WisdomWrapper:
                 return 0.8 if result else 0.0
         
         # 默认试探
-        return 0.5
+        return 0.8
     
     def _find_delegation_candidates(self, action: str, target: str) -> List[str]:
         """找到可委托的候选 Agent"""

@@ -537,14 +537,127 @@ class DecisionAgentV4(BusinessAgent):
             return True, 0.95
         return False, 0.0
     
+    def _recommend_tech_stack(self, user_input: str) -> str:
+        """推荐技术栈"""
+        user_lower = user_input.lower()
+        
+        # 项目类型识别
+        if any(kw in user_lower for kw in ["web", "网站", "前端", "后端"]):
+            return """## 🔧 技术栈推荐
+
+根据您的需求，推荐以下技术栈：
+
+### 前端
+- **框架**: React / Vue 3
+- **构建工具**: Vite
+- **UI库**: Ant Design / Element Plus
+
+### 后端
+- **语言**: Python / Node.js
+- **框架**: FastAPI / Express
+- **数据库**: PostgreSQL / MongoDB
+
+### 建议
+- 如果是新项目，推荐 **React + FastAPI** 组合
+- 需要我详细说明某个技术吗？
+"""
+        elif any(kw in user_lower for kw in ["ai", "机器学习", "深度学习", "大模型"]):
+            return """## 🤖 AI/ML 技术栈推荐
+
+### 核心框架
+- **PyTorch** / **TensorFlow** - 深度学习框架
+- **Transformers** (Hugging Face) - 大模型工具
+
+### 开发环境
+- **Python 3.10+**
+- **CUDA** (如使用 GPU)
+- **Jupyter Lab** / **VS Code**
+
+### MLOps
+- **MLflow** - 实验跟踪
+- **Docker** - 容器化部署
+
+### 推荐
+- 新手入门: PyTorch + Transformers
+- 生产部署: FastAPI + Docker
+"""
+        elif any(kw in user_lower for kw in ["移动", "app", "android", "ios"]):
+            return """## 📱 移动开发技术栈推荐
+
+### 跨平台
+- **Flutter** (Dart) - UI 一致性好
+- **React Native** (JavaScript) - 生态丰富
+
+### 原生
+- **Android**: Kotlin + Jetpack Compose
+- **iOS**: Swift + SwiftUI
+
+### 推荐
+- 快速开发: Flutter
+- 已有 Web 团队: React Native
+"""
+        else:
+            return """## 🔧 通用技术栈推荐
+
+### 后端
+- **Python + FastAPI** - 快速开发
+- **Node.js + Express** - 全栈统一
+
+### 前端
+- **React + TypeScript** - 生态丰富
+- **Vue 3** - 上手简单
+
+### 数据库
+- **PostgreSQL** - 功能全面
+- **SQLite** - 轻量级
+
+请告诉我更多项目细节，我可以给出更精准的建议。
+"""
+
+
+
+    def _get_help(self) -> str:
+        """获取帮助信息"""
+        return """我是决策助手，可以帮你：
+
+1. **技术栈推荐** - "推荐 Web 技术栈" / "AI 项目用什么框架"
+2. **Agent 路由** - "哪个 agent 能处理代码" / "路由决策"
+3. **冲突仲裁** - 多 Agent 冲突时裁决
+
+请问你需要什么帮助？"""
+
     def _execute_business(self, user_input: str, context: Optional[Dict] = None) -> Dict:
-        """执行决策"""
-        result = self.decide(user_input)
+        """执行决策 - 增强版，区分不同场景"""
+    
+        # 场景1：技术栈选型问题
+        tech_keywords = ["技术栈", "框架", "用什么", "选型", "推荐", "选择什么", "哪个好"]
+        is_tech_question = any(kw in user_input for kw in tech_keywords)
+    
+        if is_tech_question:
+            response = self._recommend_tech_stack(user_input)
+            return {
+                "success": True,
+                "response": response,
+                "output_content": response,
+                "decision": {"type": "tech_stack", "recommendation": response}
+            }
+    
+        # 场景2：Agent 路由决策
+        if "agent" in user_input.lower() or "路由" in user_input or "哪个agent" in user_input:
+            result = self.decide(user_input)
+            response = f"决策结果: 建议使用 {result['agent']} (置信度 {result['confidence']:.0%})\n理由: {result['reasoning']}"
+            return {
+                "success": True,
+                "response": response,
+                "output_content": f"建议使用 {result['agent']}",
+                "decision": result
+            }
+    
+        # 场景3：默认 - 提供帮助信息
         return {
             "success": True,
-            "response": f"决策结果：建议使用 {result['agent']}（置信度 {result['confidence']:.0%}）\n理由：{result['reasoning']}",
-            "output_content": f"建议使用 {result['agent']}",
-            "decision": result
+            "response": self._get_help(),
+            "output_content": self._get_help()
         }
 
     def optimize_scriptbook(self, agent_name: str = "chat_agent") -> Dict:
