@@ -1224,7 +1224,7 @@ def chat_stream():
     data = request.json or {}
     message = data.get("message", "")
     user_id = data.get("user_id", "guest")
-    agent_name = data.get("agent", "chat_agent")
+    agent_name = data.get("agent")
 
     def generate():
         try:
@@ -1349,7 +1349,7 @@ def wisdom_chat():
     
     user_id = data.get("user_id", "guest")
     message = data.get("message", "")
-    agent_name = data.get("agent", "chat_agent")
+    agent_name = data.get("agent")
     
     # 验证必要字段
     if not message:
@@ -1436,7 +1436,51 @@ def wisdom_chat():
     if len(message) > 5000:
         return jsonify({"success": False, "response": "消息过长，请控制在5000字符以内"}), 400
 
-    # ========== 4. 获取 Agent ==========
+    # ========== 4. 智能 Agent 推荐 ==========
+    # 如果没有指定 agent，使用 LLM 推荐
+    if not agent_name:
+        try:
+            from core.lib.agent_capability_loader import agent_capability_loader
+            
+            # 生成推荐提示词
+            prompt = agent_capability_loader.get_recommendation_prompt(message)
+            print(f"[Wisdom] 请求 LLM 推荐 Agent: {message[:50]}...")
+            
+            # 调用 LLM 推荐
+            import requests
+            resp = requests.post(
+                "http://localhost:11434/api/generate",
+                json={
+                    "model": "qwen2.5:3b",
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {"temperature": 0.3, "num_predict": 20}
+                },
+                timeout=30
+            )
+            
+            if resp.status_code == 200:
+                recommended = resp.json().get("response", "").strip()
+                print(f"[Wisdom] LLM 原始响应: {recommended}")
+                # 清理推荐结果
+                recommended = recommended.replace('推荐:', '').replace('Agent:', '').strip()
+                print(f"[Wisdom] 清理后: {recommended}")
+                # 验证推荐的 Agent 是否存在
+                test_agent = wisdom_factory.get_wisdom_agent(recommended, user_id)
+                if test_agent:
+                    agent_name = recommended
+                    print(f"[Wisdom] LLM 推荐 Agent: {agent_name}")
+                else:
+                    print(f"[Wisdom] LLM 推荐了无效 Agent: {recommended}，使用 orchestrator")
+                    agent_name = "orchestrator"
+            else:
+                print(f"[Wisdom] LLM 推荐失败，使用 orchestrator")
+                agent_name = "orchestrator"
+        except Exception as e:
+            print(f"[Wisdom] Agent 推荐异常: {e}，使用 orchestrator")
+            agent_name = "orchestrator"
+    
+    # 获取 Agent
     if agent_name:
         wisdom_agent = wisdom_factory.get_wisdom_agent(agent_name, user_id)
     else:
@@ -1619,7 +1663,7 @@ def wisdom_explain():
     data = request.json or {}
     message = data.get("message", "")
     user_id = data.get("user_id", "guest")
-    agent_name = data.get("agent", "chat_agent")
+    agent_name = data.get("agent")
     
     wisdom_agent = wisdom_factory.get_wisdom_agent(agent_name, user_id)
     
@@ -1686,7 +1730,7 @@ def scriptbook_stats():
 def scriptbook_optimize():
     """触发话本优化"""
     data = request.json or {}
-    agent_name = data.get("agent", "chat_agent")
+    agent_name = data.get("agent")
     auto_apply = data.get("auto_apply", False)
     
     from core.lib.scriptbook_learner import scriptbook_learner
@@ -1714,7 +1758,7 @@ def scriptbook_optimize():
 def scriptbook_update():
     """手动更新话本"""
     data = request.json or {}
-    agent_name = data.get("agent", "chat_agent")
+    agent_name = data.get("agent")
     intent = data.get("intent")
     keywords = data.get("keywords", [])
     template = data.get("template")
