@@ -1,13 +1,12 @@
 tags:
-  - Agent 管理
-summary: 获取 Agent 列表
-description: 返回所有已注册的 V4 Agent
+  - 项目管理
+summary: 获取项目列表
 parameters:
   - name: user_id
     in: query
     type: string
     description: 用户ID
-    default: default
+    default: codex_user
 responses:
   200:
     description: 成功
@@ -16,16 +15,16 @@ responses:
       properties:
         success:
           type: boolean
-        agents:
+        projects:
           type: array
           items:
             type: object
             properties:
+              id:
+                type: string
               name:
                 type: string
-              status:
+              path:
                 type: string
-              version:
-                type: string
-        total:
-          type: integer
+              file_count:
+                type: integer

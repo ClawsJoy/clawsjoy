@@ -1,0 +1,33 @@
+tags:
+  - 项目管理
+summary: 读取文件内容
+parameters:
+  - name: project_id
+    in: path
+    type: string
+    required: true
+    description: 项目ID
+  - name: path
+    in: query
+    type: string
+    required: true
+    description: 文件路径
+  - name: user_id
+    in: query
+    type: string
+    description: 用户ID
+    default: codex_user
+responses:
+  200:
+    description: 成功
+    schema:
+      type: object
+      properties:
+        success:
+          type: boolean
+        content:
+          type: string
+        path:
+          type: string
+  404:
+    description: 文件不存在
