@@ -5,12 +5,8 @@ capabilities:
     description: 分析视频内容
   - name: summarize_video
     description: 生成视频摘要
-  - name: transcribe_video
-    description: 视频转文字
   - name: generate_script
     description: 生成视频脚本
 examples:
   - input: "分析视频 product_intro.mp4"
     output: "视频分析报告"
-  - input: "生成脚本 AI 介绍视频"
-    output: "视频脚本内容..."
