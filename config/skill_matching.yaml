@@ -21,6 +21,7 @@ matching:
     # 视频处理
     视频:
       - video_composer
+      - video_download
       - manju_maker
       - complete_video_maker
     剪辑:
@@ -247,3 +248,13 @@ matching:
       - get_time
     日期:
       - get_time
+
+    # 视频下载（新增）
+    下载视频:
+      - video_download
+    保存视频:
+      - video_download
+    youtube下载:
+      - video_download
+    YouTube下载:
+      - video_download
