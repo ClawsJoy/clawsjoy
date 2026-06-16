@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diff 查看器</title>
+    <style>
+        body { background: #1e1e2e; color: #cdd6f4; font-family: monospace; padding: 20px; }
+        .diff-container { display: flex; gap: 20px; }
+        .diff-panel { flex: 1; background: #181825; border-radius: 8px; padding: 16px; }
+        .diff-panel h3 { color: #89b4fa; margin-bottom: 12px; }
+        .diff-line { padding: 2px 8px; border-radius: 4px; }
+        .diff-line.removed { background: #f38ba830; border-left: 3px solid #f38ba8; }
+        .diff-line.added { background: #a6e3a130; border-left: 3px solid #a6e3a1; }
+        .diff-line.unchanged { color: #6c7086; }
+        .apply-btn {
+            background: #a6e3a1; color: #1e1e2e; border: none;
+            padding: 8px 16px; border-radius: 6px; cursor: pointer;
+        }
+        .apply-btn:hover { background: #b4befe; }
+    </style>
+</head>
+<body>
+    <div class="diff-container">
+        <div class="diff-panel">
+            <h3>📄 原代码</h3>
+            <div id="original-code"></div>
+        </div>
+        <div class="diff-panel">
+            <h3>📝 修复后</h3>
+            <div id="fixed-code"></div>
+        </div>
+    </div>
+    <div style="margin-top: 20px; text-align: center;">
+        <button class="apply-btn" onclick="applyFix()">✅ 应用修复</button>
+        <button class="apply-btn" style="background: #f38ba8;" onclick="closeDiff()">❌ 取消</button>
+    </div>
+    <script>
+        function renderDiff(original, fixed) {
+            const origLines = original.split('\n');
+            const fixLines = fixed.split('\n');
+            const origDiv = document.getElementById('original-code');
+            const fixDiv = document.getElementById('fixed-code');
+            
+            origDiv.innerHTML = origLines.map((l, i) => 
+                `<div class="diff-line removed">${escapeHtml(l)}</div>`
+            ).join('');
+            
+            fixDiv.innerHTML = fixLines.map((l, i) => 
+                `<div class="diff-line added">${escapeHtml(l)}</div>`
+            ).join('');
+        }
+        
+        function escapeHtml(text) {
+            return text.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]);
+        }
+        
+        function applyFix() {
+            window.parent.postMessage({ type: 'apply_fix' }, '*');
+        }
+        
+        function closeDiff() {
+            window.parent.postMessage({ type: 'close_diff' }, '*');
+        }
+    </script>
+</body>
+</html>
