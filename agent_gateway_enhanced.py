@@ -2125,6 +2125,18 @@ def debug_execute():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
 
+@app.route("/tab_editor.html")
+def tab_editor_page():
+    return send_from_directory("templates", "tab_editor.html")
+
+@app.route("/debug_console.html")
+def debug_console_page():
+    return send_from_directory("templates", "debug_console.html")
+
+@app.route("/diff_viewer.html")
+def diff_viewer_page():
+    return send_from_directory("templates", "diff_viewer.html")
+
 
 # ========== 启动入口 ==========
 
