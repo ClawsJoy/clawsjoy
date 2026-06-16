@@ -122,25 +122,30 @@ class CodeRepository:
         """在代码库中搜索"""
         results = []
         query_lower = query.lower()
+
+        # files 结构: {project_id: {file_path: info}}
+        files_dict = self.index.get("files", {})
         
-        files_to_search = self.index["files"]
-        if project_id and project_id in self.index["projects"]:
-            project_path = self.index["projects"][project_id]["path"]
-            files_to_search = {
-                k: v for k, v in self.index["files"].items() 
-                if v.get("path", "").startswith(project_path)
-            }
+        # 如果指定了项目，只搜索该项目
+        if project_id:
+            files_dict = {project_id: files_dict.get(project_id, {})}
         
-        for file_path, info in files_to_search.items():
-            if query_lower in file_path.lower():
-                results.append({
-                    "file": file_path,
-                    "type": "filename",
-                    "language": info.get("language")
-                })
-        
-        return results[:20]
-    
+        for pid, project_files in files_dict.items():
+            for file_path, info in project_files.items():
+                if query_lower in file_path.lower():
+                    results.append({
+                        "file": file_path,
+                        "type": "filename",
+                        "language": info.get("language"),
+                        "project_id": pid
+                    })
+                if len(results) >= 20:
+                    break
+            if len(results) >= 20:
+                break
+
+        return results[:20]   
+
     def get_file_content(self, project_id: str, file_path: str) -> Optional[str]:
         """获取文件内容"""
         project = self.index["projects"].get(project_id)
