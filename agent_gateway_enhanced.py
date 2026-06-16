@@ -2003,6 +2003,38 @@ def code_agent_panel():
     return send_from_directory("templates", "code_agent_panel.html")
 
 
+# ========== WebSocket 协作 API ==========
+@app.route("/api/v5/collaboration/join", methods=["POST"])
+def collaboration_join():
+    data = request.json or {}
+    project_id = data.get("project_id")
+    user_id = data.get("user_id", "guest")
+
+    from core.lib.collaboration_ws import collaboration_manager
+    result = collaboration_manager.join(project_id, user_id)
+    return jsonify(result)
+
+@app.route("/api/v5/collaboration/leave", methods=["POST"])
+def collaboration_leave():
+    data = request.json or {}
+    project_id = data.get("project_id")
+    user_id = data.get("user_id", "guest")
+
+    from core.lib.collaboration_ws import collaboration_manager
+    result = collaboration_manager.leave(project_id, user_id)
+    return jsonify(result)
+
+@app.route("/api/v5/collaboration/users", methods=["GET"])
+def collaboration_users():
+    project_id = request.args.get("project_id")
+
+    from core.lib.collaboration_ws import collaboration_manager
+    users = collaboration_manager.get_users(project_id)
+    return jsonify({"success": True, "users": users})
+
+
+
+
 # ========== 启动入口 ==========
 
 if __name__ == "__main__":
@@ -2030,3 +2062,4 @@ if __name__ == "__main__":
 
 
    
+ 

@@ -674,3 +674,46 @@ addMessage("✅ 系统就绪 | 选择一个文件，点击审核按钮");
 </script>
 </body>
 </html>
+<script>
+// ========== Diff 视图功能 ==========
+function showDiffView(original, fixed) {
+    // 打开 diff 视图弹窗
+    const diffWindow = window.open(
+        '/diff_viewer.html',
+        'DiffViewer',
+        'width=1200,height=800,resizable=yes'
+    );
+    
+    // 等待加载完成后发送数据
+    diffWindow.onload = function() {
+        diffWindow.postMessage({
+            type: 'show_diff',
+            original: original,
+            fixed: fixed
+        }, '*');
+    };
+}
+
+// 监听 Diff 视图的确认消息
+window.addEventListener('message', function(event) {
+    if (event.data.type === 'apply_fix') {
+        const editor = document.getElementById('codeEditor');
+        // 应用修复（从 Diff 视图获取修复代码）
+        if (window.pendingFixedCode) {
+            editor.value = window.pendingFixedCode;
+            currentFileContent = window.pendingFixedCode;
+            addMessage('✅ 修复已应用到编辑器');
+        }
+    }
+    if (event.data.type === 'close_diff') {
+        // 关闭 diff 视图
+    }
+});
+
+// 修改修复功能，显示 Diff 视图
+const originalFixBtn = document.getElementById("fixBtn").onclick;
+document.getElementById("fixBtn").onclick = async function() {
+    // 原有修复逻辑... 生成 fixedCode
+    // 然后调用 showDiffView(originalCode, fixedCode)
+};
+</script>
