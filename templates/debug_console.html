@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交互式调试</title>
+    <style>
+        body { margin: 0; background: #1e1e2e; color: #cdd6f4; font-family: monospace; display: flex; flex-direction: column; height: 100vh; }
+        .console-output { flex: 1; overflow-y: auto; padding: 16px; background: #0a0a0a; }
+        .console-input { display: flex; border-top: 1px solid #313244; }
+        .console-input input { flex: 1; background: #1e1e2e; border: none; padding: 12px 16px; color: #cdd6f4; outline: none; font-family: monospace; }
+        .console-input button { background: #89b4fa; border: none; padding: 12px 20px; color: #1e1e2e; cursor: pointer; }
+        .log-line { padding: 2px 0; }
+        .log-line.error { color: #f38ba8; }
+        .log-line.success { color: #a6e3a1; }
+        .log-line.warning { color: #f9e2af; }
+        .log-line.info { color: #89b4fa; }
+        .prompt { color: #a6e3a1; }
+    </style>
+</head>
+<body>
+    <div class="console-output" id="consoleOutput">
+        <div class="log-line info">=== 交互式调试控制台 ===</div>
+        <div class="log-line">输入 Python 代码执行，例如: print("hello")</div>
+    </div>
+    <div class="console-input">
+        <input type="text" id="consoleInput" placeholder="输入 Python 代码...">
+        <button id="runBtn">▶ 运行</button>
+    </div>
+    <script>
+        const output = document.getElementById('consoleOutput');
+        const input = document.getElementById('consoleInput');
+        const runBtn = document.getElementById('runBtn');
+        
+        function log(text, type = '') {
+            const line = document.createElement('div');
+            line.className = `log-line ${type}`;
+            line.textContent = text;
+            output.appendChild(line);
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        async function runCode(code) {
+            log(`>>> ${code}`, 'info');
+            try {
+                const resp = await fetch('/api/v5/debug/execute', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: code })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    log(data.result || '执行成功', 'success');
+                } else {
+                    log(`错误: ${data.error}`, 'error');
+                }
+            } catch (e) {
+                log(`请求失败: ${e.message}`, 'error');
+            }
+        }
+        
+        runBtn.addEventListener('click', () => {
+            const code = input.value.trim();
+            if (code) {
+                runCode(code);
+                input.value = '';
+            }
+        });
+        
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                runBtn.click();
+            }
+        });
+        
+        log('就绪，输入代码并运行');
+    </script>
+</body>
+</html>

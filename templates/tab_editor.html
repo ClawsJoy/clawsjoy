@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多标签编辑器</title>
+    <style>
+        body { margin: 0; background: #1e1e2e; color: #cdd6f4; font-family: system-ui; display: flex; flex-direction: column; height: 100vh; }
+        .tab-bar { display: flex; background: #181825; border-bottom: 1px solid #313244; overflow-x: auto; padding: 0 8px; flex-shrink: 0; }
+        .tab { padding: 10px 16px; cursor: pointer; border-bottom: 2px solid transparent; font-size: 13px; white-space: nowrap; display: flex; align-items: center; gap: 8px; }
+        .tab.active { border-bottom-color: #89b4fa; color: #89b4fa; }
+        .tab:hover { background: #313244; }
+        .tab-close { color: #6c7086; cursor: pointer; padding: 0 4px; }
+        .tab-close:hover { color: #f38ba8; }
+        .editor-area { flex: 1; display: flex; overflow: hidden; }
+        .editor-panel { flex: 1; display: none; flex-direction: column; }
+        .editor-panel.active { display: flex; }
+        .editor-panel textarea { flex: 1; background: #1e1e2e; border: none; color: #cdd6f4; font-family: monospace; font-size: 13px; padding: 16px; resize: none; outline: none; }
+        .tab-bar-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; padding: 0 8px; }
+        .tab-bar-actions button { background: none; border: 1px solid #313244; color: #cdd6f4; padding: 4px 12px; border-radius: 4px; cursor: pointer; }
+        .tab-bar-actions button:hover { background: #313244; }
+    </style>
+</head>
+<body>
+    <div class="tab-bar" id="tabBar">
+        <div id="tabList"></div>
+        <div class="tab-bar-actions">
+            <button id="newTabBtn">+ 新建</button>
+        </div>
+    </div>
+    <div class="editor-area" id="editorArea"></div>
+    <script>
+        let tabs = [];
+        let activeTabId = null;
+        let tabCounter = 0;
+        
+        function createTab(filePath = null, content = "") {
+            const id = ++tabCounter;
+            const name = filePath ? filePath.split('/').pop() : `未命名-${id}`;
+            tabs.push({ id, name, content, filePath });
+            renderTabs();
+            renderEditors();
+            activateTab(id);
+        }
+        
+        function renderTabs() {
+            const container = document.getElementById('tabList');
+            container.innerHTML = tabs.map(tab => `
+                <div class="tab ${tab.id === activeTabId ? 'active' : ''}" data-id="${tab.id}">
+                    <span>${tab.name}</span>
+                    <span class="tab-close" onclick="event.stopPropagation(); closeTab(${tab.id})">✕</span>
+                </div>
+            `).join('');
+            
+            document.querySelectorAll('.tab').forEach(el => {
+                el.addEventListener('click', () => activateTab(parseInt(el.dataset.id)));
+            });
+        }
+        
+        function renderEditors() {
+            const container = document.getElementById('editorArea');
+            container.innerHTML = tabs.map(tab => `
+                <div class="editor-panel ${tab.id === activeTabId ? 'active' : ''}" data-id="${tab.id}">
+                    <textarea id="editor-${tab.id}" data-id="${tab.id}">${escapeHtml(tab.content)}</textarea>
+                </div>
+            `).join('');
+            
+            tabs.forEach(tab => {
+                const textarea = document.getElementById(`editor-${tab.id}`);
+                if (textarea) {
+                    textarea.addEventListener('input', () => {
+                        const idx = tabs.findIndex(t => t.id === tab.id);
+                        if (idx !== -1) tabs[idx].content = textarea.value;
+                    });
+                }
+            });
+        }
+        
+        function activateTab(id) {
+            activeTabId = id;
+            renderTabs();
+            renderEditors();
+        }
+        
+        function closeTab(id) {
+            const idx = tabs.findIndex(t => t.id === id);
+            if (idx !== -1) {
+                tabs.splice(idx, 1);
+                if (tabs.length === 0) {
+                    activeTabId = null;
+                } else if (activeTabId === id) {
+                    activeTabId = tabs[Math.min(idx, tabs.length - 1)].id;
+                }
+                renderTabs();
+                renderEditors();
+                if (activeTabId) activateTab(activeTabId);
+            }
+        }
+        
+        function escapeHtml(text) {
+            return text.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]);
+        }
+        
+        document.getElementById('newTabBtn').addEventListener('click', () => createTab());
+        
+        // 暴露方法给父窗口
+        window.openFile = function(filePath, content) {
+            const existing = tabs.find(t => t.filePath === filePath);
+            if (existing) {
+                activateTab(existing.id);
+                return;
+            }
+            createTab(filePath, content || "");
+        };
+        
+        // 初始化
+        createTab("README.md", "# 欢迎使用多标签编辑器\n\n支持同时编辑多个文件。");
+    </script>
+</body>
+</html>
