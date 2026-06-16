@@ -507,6 +507,22 @@ class DecisionAgentV4(BusinessAgent):
                 "code_agent": "agents.code_agent.agent_v4.CodeAgentV4",
                 "analysis_agent": "agents.analysis_agent.agent_v4.AnalysisAgentV4",
                 "butler_agent": "agents.butler_agent.agent_v4.ButlerAgentV4",
+                "decision_agent": "agents.decision_agent.agent_v4.DecisionAgentV4",
+                "translate_agent": "agents.translate_agent.agent_v4.TranslateAgentV4",
+                "calculator_agent": "agents.calculator_agent.agent_v4.CalculatorAgentV4",
+                "vision_agent": "agents.vision_agent.agent_v4.VisionAgentV4",
+                "memory_agent": "agents.memory_agent.agent_v4.MemoryAgentV4",
+                "file_agent": "agents.file_agent.agent_v4.FileAgentV4",
+                "youtube_agent": "agents.youtube_agent.agent_v4.YoutubeAgentV4",
+                "video_agent": "agents.video_agent.agent_v4.VideoAgentV4",
+                "audio_agent": "agents.audio_agent.agent_v4.AudioAgentV4",
+                "dialect_agent": "agents.dialect_agent.agent_v4.DialectAgentV4",
+                "collaboration_agent": "agents.collaboration_agent.agent_v4.CollaborationAgentV4",
+                "writer_agent": "agents.writer_agent.agent_v4.WriterAgentV4",
+                "proactive_agent": "agents.proactive_agent.agent_v4.ProactiveAgentV4",
+                "orchestrator": "agents.orchestrator.agent_v4.OrchestratorV4",
+                "three_d_agent": "agents.three_d_agent.agent_v4.ThreeDAgentV4",
+                "video_indexer_agent": "agents.video_indexer_agent.agent_v4.VideoIndexerAgentV4",
             }
         
             if agent_name in v4_imports:
@@ -518,12 +534,11 @@ class DecisionAgentV4(BusinessAgent):
                 except Exception as e:
                     print(f"[DecisionAgent] 加载 V4 {agent_name} 失败: {e}")
         
-            # 降级：加载原始版本
-            module = __import__(f"agents.{agent_name}.agent", fromlist=[agent_name])
-            for attr in dir(module):
-                if attr.endswith("Agent") and attr not in ["BusinessAgent", "BusinessAgentV2", "SmartAgent"]:
-                    agent_class = getattr(module, attr)
-                    return agent_class(self.user_id)
+            # 降级：使用 wisdom_factory
+            from core.agents.wisdom.wisdom_factory import wisdom_factory
+            agent = wisdom_factory.get_wisdom_agent(agent_name, self.user_id)
+            if agent:
+                return agent
         except Exception as e:
             print(f"[DecisionAgent] 加载 {agent_name} 失败: {e}")
     
@@ -700,3 +715,38 @@ if __name__ == "__main__":
     result = agent.decide("帮我写一个 Python 排序函数")
     print(f"决策结果: {result}")
     print("\n✅ DecisionAgentV4 测试通过")
+
+    def select_best(self, candidates: List[Dict], user_input: str) -> Dict:
+        """从候选能力中选择最佳"""
+        if not candidates:
+            return {}
+        
+        # 1. 如果有多个候选，使用 LLM 决策
+        if len(candidates) > 1:
+            prompt = f"""
+用户请求: {user_input}
+
+候选能力:
+"""
+            for i, cap in enumerate(candidates, 1):
+                prompt += f"{i}. {cap.get('name')} ({cap.get('_type', 'unknown')}): {cap.get('description', '')}\n"
+
+            prompt += """
+请选择最合适的一个，只输出数字。
+
+选择:"""
+            
+            response = self._call_llm(prompt)
+            try:
+                # 提取数字
+                import re
+                match = re.search(r'\d', response)
+                if match:
+                    idx = int(match.group()) - 1
+                    if 0 <= idx < len(candidates):
+                        return candidates[idx]
+            except:
+                pass
+        
+        # 2. 降级：返回第一个
+        return candidates[0]
