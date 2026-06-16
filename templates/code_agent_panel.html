@@ -273,6 +273,8 @@
         <select id="fileSelect"></select>
         <button id="refreshBtn">🔄 刷新</button>
         <button id="analyzeBtn" class="primary-btn">🔍 分析当前文件</button>
+        <button id="autoFixBtn" style="background:#a6e3a1; border: none; padding: 6px 12px; border-radius: 6px; color: #1e1e2e;">🔧 自动修复</button>
+        <button id="recommendBtn" class="primary-btn" style="background:#cba6f7;">🎯 推荐能力</button>
     </div>
     
     <div class="main-layout">
@@ -676,3 +678,68 @@ ${targetLine}
     </script>
 </body>
 </html>
+<script>
+// ========== 新增：使用能力推荐 ==========
+document.getElementById("recommendBtn").onclick = async function() {
+    const userInput = chatInput.value.trim();
+    if (!userInput) {
+        addChatMessage("请先输入需求，例如：下载视频", "assistant");
+        return;
+    }
+    
+    addChatMessage(`🔍 正在推荐能力: ${userInput}`, "assistant");
+    
+    try {
+        const res = await fetch("/api/v5/wisdom/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${TOKEN}` },
+            body: JSON.stringify({
+                user_id: "codex_user",
+                message: userInput
+                // 不指定 agent，让系统自动推荐
+            })
+        });
+        const data = await res.json();
+        const reply = data.response || data.output_content || "推荐完成";
+        addChatMessage(reply, "assistant");
+    } catch (err) {
+        addChatMessage(`推荐失败: ${err.message}`, "assistant");
+    }
+};
+</script>
+<script>
+// ========== 自动修复功能 ==========
+document.getElementById("autoFixBtn").onclick = async function() {
+    if (!currentProjectId || !currentFile) {
+        addChatMessage("⚠️ 请先选择项目和文件", "assistant");
+        return;
+    }
+    
+    const code = document.getElementById("codeEditor").value;
+    if (!code || code.trim() === "") {
+        addChatMessage("⚠️ 编辑器中没有代码", "assistant");
+        return;
+    }
+    
+    addChatMessage(`🔧 正在分析并修复 ${currentFile}...`, "assistant");
+    
+    try {
+        const res = await fetch("/api/v5/wisdom/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${TOKEN}` },
+            body: JSON.stringify({
+                user_id: "codex_user",
+                agent: "code_agent",
+                message: `修复代码：\n\`\`\`python\n${code.slice(0, 2000)}\n\`\`\``,
+                project_id: currentProjectId,
+                file_path: currentFile
+            })
+        });
+        const data = await res.json();
+        const reply = data.response || data.output_content || "修复完成";
+        addChatMessage(reply, "assistant");
+    } catch (err) {
+        addChatMessage(`修复失败: ${err.message}`, "assistant");
+    }
+};
+</script>
