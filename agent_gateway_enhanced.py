@@ -2066,6 +2066,66 @@ def project_graph(project_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@app.route("/api/v5/preview/markdown", methods=["POST"])
+def preview_markdown():
+    """渲染 Markdown"""
+    data = request.json or {}
+    content = data.get("content", "")
+    try:
+        import markdown
+        html = markdown.markdown(content, extensions=['tables', 'fenced_code'])
+        return jsonify({"success": True, "html": html})
+    except ImportError:
+        return jsonify({"success": False, "error": "markdown 未安装"})
+
+@app.route("/preview")
+def preview_page():
+    return send_from_directory("templates", "preview_panel.html")
+
+@app.route("/api/v5/debug/execute", methods=["POST"])
+def debug_execute():
+    """执行 Python 代码（沙箱）"""
+    data = request.json or {}
+    code = data.get("code", "")
+
+    if not code:
+        return jsonify({"success": False, "error": "请提供代码"})
+
+    # 安全限制
+    forbidden = ["import os", "import sys", "__import__", "eval(", "exec(", "open(", "file("]
+    for pattern in forbidden:
+        if pattern in code:
+            return jsonify({"success": False, "error": f"代码包含不安全操作: {pattern}"})
+
+    try:
+        # 限制执行环境
+        safe_globals = {
+            "__builtins__": {
+                "print": print,
+                "len": len,
+                "range": range,
+                "str": str,
+                "int": int,
+                "float": float,
+                "list": list,
+                "dict": dict,
+                "sum": sum,
+                "max": max,
+                "min": min,
+                "abs": abs,
+                "sorted": sorted,
+                "enumerate": enumerate,
+                "zip": zip,
+                "any": any,
+                "all": all,
+            }
+        }
+        exec(code, safe_globals)
+        return jsonify({"success": True, "result": "执行完成"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+
 # ========== 启动入口 ==========
 
 if __name__ == "__main__":
@@ -2091,6 +2151,3 @@ if __name__ == "__main__":
 # }
 
 
-
-   
- 

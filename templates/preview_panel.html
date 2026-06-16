@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实时预览</title>
+    <style>
+        body { margin: 0; background: #1e1e2e; color: #cdd6f4; font-family: system-ui; }
+        .preview-container { padding: 20px; height: 100vh; overflow-y: auto; }
+        .preview-container h1 { color: #89b4fa; }
+        .preview-container pre { background: #181825; padding: 16px; border-radius: 8px; overflow-x: auto; }
+        .preview-container code { font-family: monospace; }
+        .preview-container img { max-width: 100%; border-radius: 8px; }
+        .preview-container table { border-collapse: collapse; width: 100%; }
+        .preview-container th, .preview-container td { border: 1px solid #313244; padding: 8px; }
+        .markdown-body { line-height: 1.6; }
+        .markdown-body h2 { color: #f9e2af; border-bottom: 1px solid #313244; padding-bottom: 8px; }
+    </style>
+</head>
+<body>
+    <div class="preview-container" id="previewContainer">
+        <div class="markdown-body" id="markdownBody">
+            <p style="color: #6c7086;">选择文件后在此预览</p>
+        </div>
+    </div>
+    <script>
+        // 暴露渲染函数给父窗口
+        function renderMarkdown(content) {
+            const md = window.markdownit ? window.markdownit() : null;
+            if (md) {
+                document.getElementById('markdownBody').innerHTML = md.render(content);
+            } else {
+                document.getElementById('markdownBody').innerHTML = `<pre>${escapeHtml(content)}</pre>`;
+            }
+        }
+        
+        function renderHTML(content) {
+            document.getElementById('markdownBody').innerHTML = content;
+        }
+        
+        function escapeHtml(text) {
+            return text.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]);
+        }
+    </script>
+</body>
+</html>
