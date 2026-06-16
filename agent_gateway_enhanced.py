@@ -1464,6 +1464,9 @@ def wisdom_chat():
                 if test_agent:
                     agent_name = recommended
                     print(f"[Wisdom] LLM 推荐 Agent: {agent_name}")
+                    # 显示推荐信息（可选）
+                    if hasattr(test_agent, 'description'):
+                        print(f"[Wisdom] Agent 描述: {test_agent.description}")
                 else:
                     print(f"[Wisdom] LLM 推荐了无效 Agent: {recommended}，使用 orchestrator")
                     agent_name = "orchestrator"
