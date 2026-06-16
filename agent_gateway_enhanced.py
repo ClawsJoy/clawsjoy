@@ -1296,43 +1296,36 @@ def web_index():
 # ========== 新增智慧对话路由（不影响现有接口）==========
 
 @app.route("/api/v5/wisdom/chat", methods=["POST"])
-@swag_from({
-    'tags': ['智慧对话'],
-    'summary': '智慧对话接口',
-    'parameters': [
-        {
-            'name': 'body',
-            'in': 'body',
-            'required': True,
-            'schema': {
-                'type': 'object',
-                'properties': {
-                    'user_id': {'type': 'string', 'description': '用户ID'},
-                    'agent': {'type': 'string', 'description': 'Agent名称', 'default': 'chat_agent'},
-                    'message': {'type': 'string', 'description': '消息内容'},
-                }
-            }
-        }
-    ],
-    'responses': {
-        '200': {'description': '成功'},
-        '404': {'description': 'Agent不存在'},
-        '500': {'description': '服务器错误'}
-    }
-})
-
-    
-
-
 def wisdom_chat():
     """
-    智慧对话接口 - 新接口，独立于原有 enhanced_chat - 带请求验证
-
-    特点:
-    1. 支持标准化 JSON 输入
-    2. 支持自然语言输入
-    3. 自动路由到合适的 Agent
-    4. 带缓存和智慧能力
+    智慧对话接口 - 主入口
+    ---
+    tags:
+      - 智慧对话
+    summary: 智慧对话接口
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          properties:
+            user_id:
+              type: string
+              default: guest
+            message:
+              type: string
+              required: true
+            agent:
+              type: string
+              description: 指定Agent（可选）
+    responses:
+      200:
+        description: 成功
+      400:
+        description: 消息为空
+      404:
+        description: Agent不存在
     """
     try:
         data = request.get_json()
@@ -1344,8 +1337,7 @@ def wisdom_chat():
     user_id = data.get("user_id", "guest")
     message = data.get("message", "")
     agent_name = data.get("agent")
-    
-    # 验证必要字段
+   # 验证必要字段
     if not message:
         return jsonify({"success": False, "response": "消息不能为空"}), 400
     
@@ -1494,7 +1486,21 @@ def wisdom_chat():
     else:
         # 自然语言输入
         result = wisdom_agent.process(message)
-
+        # ========== 养成记录 ==========
+        # 在返回结果前记录交互
+        try:
+            from core.lib.llm_nurture import get_nurture
+            nurture = get_nurture(user_id)
+            # 判断是否成功
+            is_success = result.get("success", True)
+            nurture.record_interaction(
+                user_input=message[:200],
+                response=result.get("response", "")[:200],
+                success=is_success,
+                agent=agent_name or "unknown"
+            )
+        except Exception as e:
+            print(f"[Nurture] 记录失败: {e}")
         # ========== 6. 格式化请求检测（工具调用）==========
         response_text = result.get("response", "") or result.get("output_content", "")
 
@@ -1514,7 +1520,7 @@ def wisdom_chat():
                 result["response"] = response_text + "\n\n🔧 请回复「确认格式化」来执行格式化。"
 
         return jsonify(result)
-
+   
 @app.route("/api/v5/execute_tool", methods=["POST"])
 def execute_tool_api():
     """执行工具调用（需要用户确认后调用）"""
@@ -1566,7 +1572,6 @@ def execute_tool(tool_name: str, tool_args: dict, user_id: str) -> dict:
 # ========== 新增决策统计接口 ==========
 
 @app.route("/api/v5/wisdom/decision/stats", methods=["GET"])
-@swag_from('docs/swagger/decision_stats.yml')  # 添加这行
 def wisdom_decision_stats():
     """获取决策者学习统计"""
     user_id = request.args.get("user_id", "guest")
@@ -1588,7 +1593,6 @@ def wisdom_decision_stats():
 
 
 @app.route("/api/v5/wisdom/decision/feedback", methods=["POST"])
-@swag_from('docs/swagger/decision_feedback.yml')
 def wisdom_decision_feedback():
     """提供决策反馈（用于学习）"""
     data = request.json or {}
@@ -1610,7 +1614,6 @@ def wisdom_decision_feedback():
 
 
 @app.route("/api/v5/wisdom/decision/history", methods=["GET"])
-@swag_from('docs/swagger/decision_history.yml')
 def wisdom_decision_history():
     """获取决策历史"""
     user_id = request.args.get("user_id", "guest")
@@ -1636,7 +1639,6 @@ def wisdom_decision_history():
 # ========== 新增智慧统计接口 ==========
 
 @app.route("/api/v5/wisdom/stats", methods=["GET"])
-@swag_from('docs/swagger/wisdom_stats.yml')
 def wisdom_stats():
     """获取智慧 Agent 统计信息"""
     user_id = request.args.get("user_id", "guest")
@@ -1654,7 +1656,6 @@ def wisdom_stats():
 # ========== 新增决策解释接口 ==========
 
 @app.route("/api/v5/wisdom/explain", methods=["POST"])
-@swag_from('docs/swagger/wisdom_explain.yml')
 def wisdom_explain():
     """解释 Agent 的决策过程"""
     data = request.json or {}
@@ -1674,7 +1675,6 @@ def wisdom_explain():
 # ========== 新增热重载接口 ==========
 
 @app.route("/api/v5/wisdom/reload", methods=["POST"])
-@swag_from('docs/swagger/wisdom_reload.yml')
 def wisdom_reload():
     """热重载指定 Agent"""
     data = request.json or {}
@@ -1693,7 +1693,6 @@ def wisdom_reload():
 
 # ========== Agent 列表 API ==========
 @app.route("/api/v5/agent/list", methods=["GET"])
-@swag_from('docs/swagger/agent_list.yml')
 def agent_list():
     """列出所有已注册的 Agent"""
     from core.lib.agent_registry import agent_registry
@@ -2030,18 +2029,4 @@ if __name__ == "__main__":
 
 
 
-    # ========== 养成记录 ==========
-    # 在返回结果前记录交互
-    try:
-        from core.lib.llm_nurture import get_nurture
-        nurture = get_nurture(user_id)
-        # 判断是否成功
-        is_success = result.get("success", True)
-        nurture.record_interaction(
-            user_input=message[:200],
-            response=result.get("response", "")[:200],
-            success=is_success,
-            agent=agent_name or "unknown"
-        )
-    except Exception as e:
-        print(f"[Nurture] 记录失败: {e}")
+   
