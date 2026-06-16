@@ -36,7 +36,7 @@ class CapabilityScheduler:
         """调度流程：LLM 推荐 → 决策者选择 → Orchestrator 执行"""
         
         # 1. LLM 推荐 Top 3
-        candidates = capability_recommender.recommend(user_input, n=3)
+        candidates = capability_recommender.recommend_with_cache(user_input, n=3)
         print(f"[Scheduler] LLM 推荐: {[c.get('name') for c in candidates]}")
 
         if not candidates:

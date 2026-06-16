@@ -1330,6 +1330,10 @@ def web_index():
         '500': {'description': '服务器错误'}
     }
 })
+
+    
+
+
 def wisdom_chat():
     """
     智慧对话接口 - 新接口，独立于原有 enhanced_chat - 带请求验证
