@@ -1,0 +1,10 @@
+capabilities:
+- description: dual-script-writer skill
+  name: dual-script-writer
+description: dual-script-writer skill
+enabled: true
+name: dual-script-writer
+type: skill
+use_when:
+- dual-script-writer
+version: 1.0.0

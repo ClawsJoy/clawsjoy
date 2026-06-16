@@ -1,0 +1,10 @@
+capabilities:
+- description: cinematic-render skill
+  name: cinematic-render
+description: cinematic-render skill
+enabled: true
+name: cinematic-render
+type: skill
+use_when:
+- cinematic-render
+version: 1.0.0

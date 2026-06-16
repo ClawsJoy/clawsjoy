@@ -1,0 +1,10 @@
+capabilities:
+- description: document skill
+  name: document
+description: document skill
+enabled: true
+name: document
+type: skill
+use_when:
+- document
+version: 1.0.0

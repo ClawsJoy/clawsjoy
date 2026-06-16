@@ -1,0 +1,10 @@
+capabilities:
+- description: pro-script-writer skill
+  name: pro-script-writer
+description: pro-script-writer skill
+enabled: true
+name: pro-script-writer
+type: skill
+use_when:
+- pro-script-writer
+version: 1.0.0

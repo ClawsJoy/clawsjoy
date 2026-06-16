@@ -1,0 +1,10 @@
+capabilities:
+- description: atomic skill
+  name: atomic
+description: atomic skill
+enabled: true
+name: atomic
+type: skill
+use_when:
+- atomic
+version: 1.0.0

@@ -1,0 +1,10 @@
+capabilities:
+- description: improve-executor skill
+  name: improve-executor
+description: improve-executor skill
+enabled: true
+name: improve-executor
+type: skill
+use_when:
+- improve-executor
+version: 1.0.0

@@ -1,0 +1,10 @@
+capabilities:
+- description: gpu-safe skill
+  name: gpu-safe
+description: gpu-safe skill
+enabled: true
+name: gpu-safe
+type: skill
+use_when:
+- gpu-safe
+version: 1.0.0

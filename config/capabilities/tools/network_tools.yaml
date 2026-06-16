@@ -1,0 +1,14 @@
+name: network_tools
+type: tool
+description: 网络请求工具集
+capabilities:
+  - name: http_get
+    description: 发送 HTTP GET 请求
+  - name: http_post
+    description: 发送 HTTP POST 请求
+  - name: download_file
+    description: 下载文件
+use_when:
+  - 网络请求
+  - 下载文件
+  - API调用

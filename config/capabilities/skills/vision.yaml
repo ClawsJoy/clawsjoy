@@ -1,0 +1,10 @@
+capabilities:
+- description: vision skill
+  name: vision
+description: vision skill
+enabled: true
+name: vision
+type: skill
+use_when:
+- vision
+version: 1.0.0

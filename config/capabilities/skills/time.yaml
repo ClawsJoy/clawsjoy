@@ -1,0 +1,10 @@
+capabilities:
+- description: time skill
+  name: time
+description: time skill
+enabled: true
+name: time
+type: skill
+use_when:
+- time
+version: 1.0.0

@@ -1,0 +1,10 @@
+capabilities:
+- description: weather skill
+  name: weather
+description: weather skill
+enabled: true
+name: weather
+type: skill
+use_when:
+- weather
+version: 1.0.0

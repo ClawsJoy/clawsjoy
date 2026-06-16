@@ -1,0 +1,10 @@
+capabilities:
+- description: clean-script-v2 skill
+  name: clean-script-v2
+description: clean-script-v2 skill
+enabled: true
+name: clean-script-v2
+type: skill
+use_when:
+- clean-script-v2
+version: 1.0.0

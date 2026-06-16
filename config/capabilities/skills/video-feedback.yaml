@@ -1,0 +1,10 @@
+capabilities:
+- description: video-feedback skill
+  name: video-feedback
+description: video-feedback skill
+enabled: true
+name: video-feedback
+type: skill
+use_when:
+- video-feedback
+version: 1.0.0

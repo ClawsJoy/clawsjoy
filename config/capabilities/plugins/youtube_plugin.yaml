@@ -1,0 +1,13 @@
+name: youtube_plugin
+type: plugin
+description: YouTube 集成插件
+capabilities:
+  - name: upload_video
+    description: 上传视频到 YouTube
+  - name: publish_video
+    description: 发布视频
+  - name: get_analytics
+    description: 获取视频分析数据
+use_when:
+  - 上传YouTube
+  - YouTube发布

@@ -1,0 +1,10 @@
+capabilities:
+- description: image skill
+  name: image
+description: image skill
+enabled: true
+name: image
+type: skill
+use_when:
+- image
+version: 1.0.0

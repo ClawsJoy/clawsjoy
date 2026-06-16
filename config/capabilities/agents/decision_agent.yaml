@@ -1,0 +1,14 @@
+name: decision_agent
+description: 决策专家，提供技术选型和路由决策
+capabilities:
+  - name: recommend_tech_stack
+    description: 推荐技术栈
+  - name: route_decision
+    description: Agent路由决策
+  - name: conflict_arbitration
+    description: 多Agent冲突仲裁
+examples:
+  - input: "推荐Web技术栈"
+    output: "React + FastAPI + PostgreSQL"
+  - input: "哪个agent能处理代码"
+    output: "code_agent"

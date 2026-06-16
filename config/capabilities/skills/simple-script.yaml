@@ -1,0 +1,10 @@
+capabilities:
+- description: simple-script skill
+  name: simple-script
+description: simple-script skill
+enabled: true
+name: simple-script
+type: skill
+use_when:
+- simple-script
+version: 1.0.0

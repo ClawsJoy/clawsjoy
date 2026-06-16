@@ -1,0 +1,10 @@
+capabilities:
+- description: sd-image-gen skill
+  name: sd-image-gen
+description: sd-image-gen skill
+enabled: true
+name: sd-image-gen
+type: skill
+use_when:
+- sd-image-gen
+version: 1.0.0

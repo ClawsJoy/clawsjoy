@@ -1,0 +1,10 @@
+capabilities:
+- description: series-manager skill
+  name: series-manager
+description: series-manager skill
+enabled: true
+name: series-manager
+type: skill
+use_when:
+- series-manager
+version: 1.0.0

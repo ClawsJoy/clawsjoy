@@ -1,0 +1,10 @@
+capabilities:
+- description: video-analyze skill
+  name: video-analyze
+description: video-analyze skill
+enabled: true
+name: video-analyze
+type: skill
+use_when:
+- video-analyze
+version: 1.0.0

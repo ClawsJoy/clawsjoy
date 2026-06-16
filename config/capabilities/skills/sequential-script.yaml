@@ -1,0 +1,10 @@
+capabilities:
+- description: sequential-script skill
+  name: sequential-script
+description: sequential-script skill
+enabled: true
+name: sequential-script
+type: skill
+use_when:
+- sequential-script
+version: 1.0.0

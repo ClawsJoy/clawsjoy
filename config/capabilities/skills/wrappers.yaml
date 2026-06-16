@@ -1,0 +1,10 @@
+capabilities:
+- description: wrappers skill
+  name: wrappers
+description: wrappers skill
+enabled: true
+name: wrappers
+type: skill
+use_when:
+- wrappers
+version: 1.0.0

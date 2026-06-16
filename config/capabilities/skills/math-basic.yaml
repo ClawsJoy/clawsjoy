@@ -1,0 +1,10 @@
+capabilities:
+- description: math-basic skill
+  name: math-basic
+description: math-basic skill
+enabled: true
+name: math-basic
+type: skill
+use_when:
+- math-basic
+version: 1.0.0
