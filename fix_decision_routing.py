@@ -22,12 +22,12 @@ new_routing = '''    def _decide_and_route(self, user_input: str, context: dict 
         
         # 翻译直接路由到 chat_agent
         if "翻译" in user_input or "Translate" in user_input:
-            from agents.chat_agent.agent import chat_agent
+            from agents.chat_agent.agent_v4 import chat_agent
             return chat_agent.process(user_input, context)
         
         # 数学计算直接路由
         if any(op in user_input for op in ['+', '-', '*', '/']) and any(c.isdigit() for c in user_input):
-            from agents.chat_agent.agent import chat_agent
+            from agents.chat_agent.agent_v4 import chat_agent
             return chat_agent.process(user_input, context)
 
         # 检查缓存

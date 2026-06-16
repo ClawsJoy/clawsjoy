@@ -14,7 +14,7 @@ from core.lib.unified_config import unified_config
 
 sys.path.insert(0, smart_config.ROOT)
 
-from intelligence.code_agent_trainer import CodeAgentTrainer
+from intelligence.code_agent_trainer import CodeAgentV4 as CodeAgentTrainer
 
 
 class CodeAgent:

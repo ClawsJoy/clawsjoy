@@ -387,22 +387,17 @@ class BusinessAgent(SmartAgent, JSONCapableMixin):
     def _trigger_proactive_event(self, suggestions: list):
         """触发主动事件"""
         try:
-            # 尝试导入 agent_communication
-            import importlib
-            spec = importlib.util.find_spec("core.lib.agent_communication")
-            if spec:
-                from core.lib.agent_communication import agent_communication
-                agent_communication.publish("proactive.suggestion", {
-                    "agent": self.name,
-                    "user_id": self.user_id,
-                    "suggestions": suggestions,
-                    "timestamp": datetime.now().isoformat()
-                })
-            else:
-                # 降级：只打印日志
-                print(f"[Proactive] {self.name} 建议: {suggestions[0][:50]}...")
+            from core.lib.agent_communication import agent_communication
+            agent_communication.publish("proactive.suggestion", {
+                "agent": self.name,
+                "user_id": self.user_id,
+                "suggestions": suggestions,
+                "timestamp": datetime.now().isoformat()
+            })
+        except ImportError:
+            print(f"[Proactive] {self.name} 建议: {suggestions[0][:50]}...")
         except Exception as e:
-            print(f"主动事件触发失败: {e}")   
+            print(f"[Proactive] 事件触发失败: {e}")   
 
     # ========== 任务分解能力 ==========
     def decompose_task(self, task: str) -> Dict:

@@ -83,50 +83,8 @@ class ProactiveAgentV4(BusinessAgent):
             metadata=reminder
         )
     
-    def _get_suggestions(self, user_input: str) -> Dict:
-        """获取建议"""
-        prompt = f"""请根据以下用户请求提供建议：
-
-用户：{user_input}
-
-请提供 3 条实用建议，每条一行。"""
+   
         
-        response = self._call_llm(prompt)
-        
-        if response:
-            return self._response(
-                f"💡 **智能建议**\n\n{response}",
-                metadata={"type": "suggestions"}
-            )
-        
-        return self._response(self._get_default_suggestions())
-    
-    def _list_reminders(self) -> Dict:
-        """列出提醒"""
-        if not self._reminders:
-            return self._response("暂无提醒")
-        
-        pending = [r for r in self._reminders if r.get("status") == "pending"]
-        
-        if not pending:
-            return self._response("所有提醒已完成 ✅")
-        
-        lines = ["⏰ **提醒列表**"]
-        for r in pending:
-            time_str = datetime.fromisoformat(r["time"]).strftime("%H:%M:%S")
-            lines.append(f"  • {r['content']} - {time_str}")
-        
-        return self._response("\n".join(lines))
-    
-    def _get_default_suggestions(self) -> str:
-        return """💡 **智能建议**
-
-1. 设置提醒 - 不错过重要事项
-2. 使用待办清单 - 提高效率
-3. 定期复盘 - 持续改进
-
-💡 告诉我您的需求，我将提供更精准的建议"""
-    
     def _get_help(self) -> str:
         return """💡 **主动服务助手**
 
@@ -144,6 +102,70 @@ class ProactiveAgentV4(BusinessAgent):
             "output_content": content,
             **kwargs
         }
+
+
+    def _get_suggestions(self, user_input: str) -> Dict:
+        """获取个性化建议"""
+        from datetime import datetime
+        
+        # 获取用户信息
+        user_name = self.recall_forever("user_name")
+        hour = datetime.now().hour
+        
+        # 基于时间的建议
+        if 5 <= hour < 12:
+            time_suggestion = "早上好！新的一天开始了"
+            time_advice = "建议先规划今天的任务清单"
+        elif 12 <= hour < 14:
+            time_suggestion = "中午好"
+            time_advice = "建议适当休息，补充能量"
+        elif 14 <= hour < 18:
+            time_suggestion = "下午好"
+            time_advice = "建议专注于重要任务"
+        elif 18 <= hour < 22:
+            time_suggestion = "晚上好"
+            time_advice = "建议回顾今天的工作"
+        else:
+            time_suggestion = "夜深了"
+            time_advice = "建议早点休息，保持充足睡眠"
+        
+        # 获取用户偏好
+        user_prefs = []
+        for key in ["颜色", "食物", "电影", "音乐"]:
+            value = self.recall_forever(f"pref_{key}")
+            if value:
+                user_prefs.append(f"{key}: {value}")
+        
+        # 获取待办数量
+        todos = self.recall_forever("todos") or []
+        todo_count = len(todos) if isinstance(todos, list) else 0
+        
+        # 构建建议
+        suggestions = []
+        
+        # 时间建议
+        suggestions.append(f"⏰ {time_suggestion}！{time_advice}")
+        
+        # 待办建议
+        if todo_count > 0:
+            suggestions.append(f"📋 您还有 {todo_count} 个待办事项待完成")
+        else:
+            suggestions.append("✅ 当前没有待办事项，可以放松一下")
+        
+        # 个性化建议（如果有用户偏好）
+        if user_prefs:
+            suggestions.append(f"🎯 根据您的偏好: {', '.join(user_prefs[:2])}")
+        
+        # 通用建议（作为补充）
+        suggestions.append("💡 提示: 告诉我「我喜欢颜色是蓝色」让我记住你的偏好")
+        
+        if user_name:
+            response = f"{user_name}，{suggestions[0]}\n\n" + "\n".join(suggestions[1:])
+        else:
+            response = "\n".join(suggestions)
+        
+        return self._response(response, metadata={"type": "suggestions"})
+
 
 
 if __name__ == "__main__":

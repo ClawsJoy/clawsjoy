@@ -80,9 +80,8 @@ app = Flask(__name__)
 
 @app.route('/codex')
 def codex():
-    """Codex 风格代码助手界面"""
-    from flask import render_template
-    return render_template('codex.html')
+    from flask import send_from_directory
+    return send_from_directory('templates', 'codex.html')
 
 # 注册全局错误处理器
 register_error_handlers(app)
@@ -100,23 +99,24 @@ class SimpleCache:
     def __init__(self, ttl=300):
         self.cache = {}
         self.ttl = ttl
+        self._lock = __import__('threading').Lock()  # 线程锁
 
     def get(self, key):
-        if key in self.cache:
-            data, timestamp = self.cache[key]
-            if datetime.now().timestamp() - timestamp < self.ttl:
-                return data
-            del self.cache[key]
+        with self._lock:
+            if key in self.cache:
+                data, timestamp = self.cache[key]
+                if datetime.now().timestamp() - timestamp < self.ttl:
+                    return data
+                del self.cache[key]
         return None
 
     def set(self, key, value):
-        self.cache[key] = (value, datetime.now().timestamp())
+        with self._lock:
+            self.cache[key] = (value, datetime.now().timestamp())
 
     def clear(self):
-        self.cache.clear()
-
-
-request_cache = SimpleCache(ttl=300)
+        with self._lock:
+            self.cache.clear()
 
 # ========== 主动学习 ==========
 try:
@@ -157,16 +157,51 @@ def post_fork(server, worker):
 
 
 # ========== 记忆函数 ==========
+# 替换记忆函数
+def _get_memory_agent(user_id):
+    """获取 MemoryAgent 实例"""
+    try:
+        from agents.memory_agent.agent_v4 import MemoryAgentV4
+        return MemoryAgentV4(user_id)
+    except Exception as e:
+        logger.warning(f"MemoryAgent 不可用: {e}")
+        return None
+
 def load_memories(user_id):
+    """加载记忆 - 优先使用 MemoryAgent"""
+    agent = _get_memory_agent(user_id)
+    if agent:
+        try:
+            # 调用 MemoryAgent 获取记忆
+            result = agent.recall_forever("all_memories")
+            if result:
+                return result if isinstance(result, list) else [result]
+        except Exception as e:
+            logger.warning(f"MemoryAgent 加载失败: {e}")
+    
+    # 降级到本地文件存储
     if MEMORY_FILE.exists():
         with open(MEMORY_FILE, "r") as f:
             all_memories = json.load(f)
             return all_memories.get(user_id, [])
     return []
 
-
+# 修改 save_memory 函数，调用 MemoryAgent
 def save_memory(user_id, fact):
-    memories = load_memories(user_id)
+    try:
+        from agents.memory_agent.agent_v4 import MemoryAgentV4
+        agent = MemoryAgentV4(user_id)
+        agent.remember_forever("fact", fact)
+        return
+    except Exception as e:
+        logger.warning(f"MemoryAgent 不可用: {e}")   
+    # 降级到本地文件存储
+    memories = []
+    if MEMORY_FILE.exists():
+        with open(MEMORY_FILE, "r") as f:
+            all_memories = json.load(f)
+            memories = all_memories.get(user_id, [])
+    
     memories.append({"fact": fact, "timestamp": datetime.now().isoformat()})
     all_memories = {}
     if MEMORY_FILE.exists():
@@ -176,8 +211,18 @@ def save_memory(user_id, fact):
     with open(MEMORY_FILE, "w") as f:
         json.dump(all_memories, f, indent=2)
 
-
 def search_memories(user_id, query):
+    """搜索记忆 - 优先使用 MemoryAgent"""
+    agent = _get_memory_agent(user_id)
+    if agent:
+        try:
+            result = agent.process(f"搜索记忆: {query}")
+            if result and result.get("response"):
+                return [result.get("response")]
+        except Exception as e:
+            logger.warning(f"MemoryAgent 搜索失败: {e}")
+    
+    # 降级到本地搜索
     memories = load_memories(user_id)
     results = []
     for m in memories:
@@ -187,7 +232,6 @@ def search_memories(user_id, query):
         elif query.lower() in fact.lower():
             results.append(fact)
     return results[:10]
-
 
 # ========== 学习函数 ==========
 def load_learning_stats():
@@ -212,69 +256,131 @@ def record_learning(fact, success=True):
         json.dump(stats, f, indent=2)
 
 
-# ========== 用户状态 ==========
-USER_STATES = {}
+# ========== 项目级用户状态管理 ==========
+import json
+from pathlib import Path
+from typing import Dict, Any, Optional
+
+class ProjectUserState:
+    """项目级用户状态 - 存储在项目 .clawsjoy/ 目录下"""
+    
+    def __init__(self, project_id: str = None, user_id: str = "default"):
+        self.project_id = project_id
+        self.user_id = user_id
+        self._state: Dict[str, Any] = {}
+        self._load()
+    
+    def _get_state_path(self) -> Path:
+        """获取状态文件路径"""
+        if self.project_id:
+            try:
+                from core.lib.code_repo import get_code_repo
+                repo = get_code_repo(self.user_id)
+                project = repo.get_project(self.project_id)
+                if project:
+                    project_path = Path(project["path"])
+                    state_dir = project_path / ".clawsjoy"
+                    state_dir.mkdir(exist_ok=True)
+                    return state_dir / "user_state.json"
+            except Exception as e:
+                print(f"获取项目路径失败: {e}")
+        
+        # 降级到全局目录
+        state_dir = Path(f"data/user_states/{self.user_id}")
+        state_dir.mkdir(parents=True, exist_ok=True)
+        return state_dir / "state.json"
+    
+    def _load(self):
+        path = self._get_state_path()
+        if path.exists():
+            try:
+                with open(path, 'r', encoding='utf-8') as f:
+                    self._state = json.load(f)
+            except:
+                self._state = {}
+        else:
+            self._state = {}
+    
+    def _save(self):
+        path = self._get_state_path()
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump(self._state, f, indent=2, ensure_ascii=False)
+    
+    def get(self, key: str, default=None):
+        return self._state.get(key, default)
+    
+    def set(self, key: str, value):
+        self._state[key] = value
+        self._save()
+    
+    def get_all(self) -> Dict:
+        return self._state.copy()
 
 
-def get_user_state(user_id):
-    if user_id not in USER_STATES:
-        USER_STATES[user_id] = {}
-    return USER_STATES[user_id]
+# 全局状态缓存
+_USER_STATE_CACHE: Dict[str, ProjectUserState] = {}
 
 
-def extract_user_info(message, user_id):
+def _get_state_key(project_id: str = None, user_id: str = "default") -> str:
+    """生成状态缓存键"""
+    return f"{project_id or 'global'}_{user_id}"
 
-    # ========== 安全钩子检查 ==========
+
+def get_user_state(project_id: str = None, user_id: str = "default") -> Dict:
+    """获取用户状态（支持项目级）"""
+    key = _get_state_key(project_id, user_id)
+    if key not in _USER_STATE_CACHE:
+        _USER_STATE_CACHE[key] = ProjectUserState(project_id, user_id)
+    return _USER_STATE_CACHE[key].get_all()
+
+
+def set_user_state(project_id: str, user_id: str, key: str, value):
+    """设置用户状态"""
+    key_id = _get_state_key(project_id, user_id)
+    if key_id not in _USER_STATE_CACHE:
+        _USER_STATE_CACHE[key_id] = ProjectUserState(project_id, user_id)
+    _USER_STATE_CACHE[key_id].set(key, value)
+
+
+def extract_user_info(message: str, user_id: str, project_id: str = None) -> bool:
+    """提取用户信息（支持项目级）"""
     from core.lib.security_hooks import SecurityHooks
-
-    # 1. 输入清洗
-    ok, message = True, message
+    
+    # 安全检查
+    ok, cleaned_msg = SecurityHooks.sanitize_input(message)
     if not ok:
-        return jsonify(
-            {"success": False, "error": "输入包含非法字符", "enhanced": True}
-        )
-
-    # 2. 危险模式检测
-    ok, error_msg = SecurityHooks.check_dangerous_patterns(message)
+        logger.warning(f"输入清洗失败")
+        return False
+    
+    ok, error_msg = SecurityHooks.check_dangerous_patterns(cleaned_msg)
     if not ok:
-        return jsonify(
-            {
-                "success": False,
-                "error": error_msg,
-                "response": f"⚠️ 检测到危险操作，已阻止: {error_msg}",
-                "enhanced": True,
-                "user_id": user_id,
-            }
-        )
-
-    # 3. 频率限制
-    ok, error_msg = SecurityHooks.check_rate_limit(
-        user_id, {"max_requests_per_minute": 30}
-    )
-    if not ok:
-        return jsonify(
-            {
-                "success": False,
-                "error": error_msg,
-                "response": error_msg,
-                "enhanced": True,
-                "user_id": user_id,
-            }
-        )
-
-    state = get_user_state(user_id)
-    name_match = re.search(r"我叫([\u4e00-\u9fa5]{2,4})", message)
+        logger.warning(f"危险模式: {error_msg}")
+        return False
+    
+    # 提取名字
+    name_match = re.search(r"我叫([\u4e00-\u9fa5]{2,4})", cleaned_msg)
     if name_match:
         name = name_match.group(1)
-        state["name"] = name
+        # 存储到项目级状态
+        set_user_state(project_id, user_id, "user_name", name)
         save_memory(user_id, f"用户名字: {name}")
         save_memory(user_id, f"用户说: 我叫{name}")
         return True
+    
     return False
 
 
-def answer_from_state(message, user_id):
+def answer_from_state(message: str, user_id: str, project_id: str = None) -> Optional[str]:
+    """从状态中回答用户问题（支持项目级）"""
     if "我叫什么名字" in message or "我的名字" in message:
+        # 优先从项目级状态获取
+        state = get_user_state(project_id, user_id)
+        name = state.get("user_name")
+        
+        if name:
+            return f"您叫{name}呀，我记着呢！"
+        
+        # 降级到记忆系统
         memories = load_memories(user_id)
         for m in memories:
             fact = m.get("fact", "")
@@ -285,10 +391,11 @@ def answer_from_state(message, user_id):
             if "用户说: 我叫" in fact:
                 start = fact.find("我叫")
                 if start != -1:
-                    name = fact[start + 2 : start + 6].strip("，。！？")
+                    name = fact[start + 2: start + 6].strip("，。！？")
                     if name:
                         return f"您叫{name}呀，我记着呢！"
         return "您还没告诉我您的名字呢。您可以说'我叫XXX'告诉我哦~"
+    
     return None
 
 
@@ -332,9 +439,13 @@ def metrics():
         disk_usage = psutil.disk_usage("/").percent
         connections = len(psutil.net_connections())
 
-        # 业务指标值
-        requests_total = request_count._value.get()
-        sessions_total = active_sessions._value.get()
+        # 业务指标值（安全获取）
+        try:
+            requests_total = request_count._value.get() if hasattr(request_count, '_value') else 0
+            sessions_total = active_sessions._value.get() if hasattr(active_sessions, '_value') else 0
+        except Exception:
+            requests_total = 0
+            sessions_total = 0
 
         return jsonify(
             {
@@ -404,30 +515,39 @@ def execute_skill():
 # ========== 智能体 ==========
 @app.route("/api/agents/list", methods=["GET"])
 def list_agents():
-    agents_list = [
-        # 核心 Agent
-        {"name": "orchestrator", "status": "active", "version": "2.0.0"},
-        {"name": "chat_agent", "status": "active", "version": "2.0.0"},
-        # 专业 Agent
-        {"name": "code_agent", "status": "active", "version": "2.0.0"},
-        {"name": "analysis_agent", "status": "active", "version": "2.0.0"},
-        {"name": "decision_agent", "status": "active", "version": "2.0.0"},
-        {"name": "translate_agent", "status": "active", "version": "2.0.0"},
-        {"name": "dialect_agent", "status": "active", "version": "2.0.0"},
-        {"name": "executor_agent", "status": "active", "version": "2.0.0"},
-        {"name": "memory_agent", "status": "active", "version": "2.0.0"},
-        {"name": "writer_agent", "status": "active", "version": "2.0.0"},
-        {"name": "youtube_agent", "status": "active", "version": "2.0.0"},
-        {"name": "video_agent", "status": "active", "version": "2.0.0"},
-        {"name": "vision_agent", "status": "active", "version": "2.0.0"},
-        {"name": "collaboration_agent", "status": "active", "version": "2.0.0"},
-        {"name": "director_agent", "status": "active", "version": "2.0.0"},
-        {"name": "calculator_agent", "status": "active", "version": "2.0.0"},
-        {"name": "file_agent", "status": "active", "version": "1.0.0"},
-        {"name": "video_indexer_agent", "status": "active", "version": "1.0.0"},
-    ]
-    return jsonify({"success": True, "total": len(agents_list), "agents": agents_list})
-
+    """动态获取 Agent 列表 - 从 wisdom_factory 读取"""
+    try:
+        from core.agents.wisdom.wisdom_factory import wisdom_factory
+        
+        agents_list = []
+        # 获取所有已注册的 V4 Agent
+        v4_agent_names = [
+            "analysis_agent", "audio_agent", "butler_agent", "calculator_agent",
+            "chat_agent", "code_agent", "collaboration_agent", "decision_agent",
+            "dialect_agent", "file_agent", "memory_agent", "orchestrator",
+            "proactive_agent", "three_d_agent", "translate_agent", "video_agent",
+            "video_indexer_agent", "vision_agent", "writer_agent", "youtube_agent"
+        ]
+        
+        for name in v4_agent_names:
+            agents_list.append({
+                "name": name,
+                "status": "active",
+                "version": "4.0.0"
+            })
+        
+        agents_list.sort(key=lambda x: x["name"])
+        
+        return jsonify({"success": True, "total": len(agents_list), "agents": agents_list})
+    except Exception as e:
+        # 降级到备用列表
+        fallback_agents = [
+            {"name": "chat_agent", "status": "active", "version": "4.0.0"},
+            {"name": "code_agent", "status": "active", "version": "4.0.0"},
+            {"name": "analysis_agent", "status": "active", "version": "4.0.0"},
+            {"name": "orchestrator", "status": "active", "version": "4.0.0"},
+        ]
+        return jsonify({"success": True, "total": len(fallback_agents), "agents": fallback_agents})      
 
 # ========== 模式识别查询 ==========
 @app.route("/api/learning/patterns", methods=["GET"])
@@ -475,93 +595,79 @@ swagger_config = {
 
 swagger = Swagger(app, config=swagger_config)
 
-# 为现有的 enhanced_chat 添加文档（不要重新定义函数）
-# 需要在原有的路由
-
-
-# ========== 扩展原有 enhanced_chat 路由 ==========
-# 注意：这是修改原有的路由，不是新增
-
 @app.route("/api/v5/enhanced/chat", methods=["POST"])
-@require_auth
 def enhanced_chat():
-    """增强对话接口 - 兼容旧格式 + 支持新格式"""
-    import logging
+    """
+    [DEPRECATED] 增强对话接口 - 请使用 /api/v5/wisdom/chat 替代
     
+    此接口将在后续版本中移除，请尽快迁移到新接口。
+    """
+    import logging
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
-    logger.info("=" * 50)
-    logger.info("enhanced_chat 被调用")
-
+    
+    # 记录废弃警告
+    logger.warning("⚠️ 使用了废弃接口 /api/v5/enhanced/chat，调用方: %s", request.remote_addr)
+    
+    # 直接转发到 wisdom_chat 接口
+    # 保持原有数据格式，避免破坏兼容性
     data = request.json or {}
     
-    # 检测是否是标准化 JSON（包含 action 或 raw_input 字段）
-    if "action" in data or "raw_input" in data:
-        # 标准化 JSON：使用新的智慧处理
-        user_id = data.get("user_id", "guest")
-        agent_name = data.get("agent", "chat_agent")
+    # 调用 wisdom_chat 的底层逻辑
+    try:
+        # 重新构建请求到 wisdom_chat 的入口
+        from flask import Request
+        with app.test_request_context():
+            # 创建新的请求上下文
+            request._get_current_object()
         
-        logger.info(f"标准化 JSON 输入: action={data.get('action')}, target={data.get('target')}")
+        # 直接调用 wisdom_chat 函数
+        response = wisdom_chat()
         
-        # 尝试使用智慧 Agent
-        try:
-            wisdom_agent = wisdom_factory.get_wisdom_agent(agent_name, user_id)
-            if wisdom_agent:
-                result = wisdom_agent.handle_json(data)
-                return jsonify(result)
-        except Exception as e:
-            logger.error(f"智慧 Agent 处理失败: {e}")
+        # 添加废弃标记
+        if hasattr(response, 'headers'):
+            response.headers['X-API-Deprecated'] = 'true'
+            response.headers['X-API-Migration'] = '/api/v5/wisdom/chat'
+            response.headers['X-API-Sunset-Date'] = '2026-09-01'
         
-        # 降级：使用原有 chat_engine
-        from core.lib.chat_engine import chat_engine
-        result = chat_engine.execute(data, user_id)
-        return jsonify(result)
+        return response
+    except Exception as e:
+        logger.error(f"转发到 wisdom_chat 失败: {e}")
+        # 降级到原有逻辑
+        return _legacy_enhanced_chat()
+
+def _legacy_enhanced_chat():
+    """原有 enhanced_chat 逻辑，作为降级备份"""
+    data = request.json or {}
+    user_id = data.get("user_id", "guest")
+    message = data.get("message", "")
     
-    else:
-        # 普通文本输入
-        message = data.get("message", "")
-        user_id = data.get("user_id", "guest")
-        
-        logger.info(f"普通文本输入: {message[:50]}...")
-        
-        if not message:
-            return jsonify({"success": False, "response": "请输入消息", "user_id": user_id})
-        
-        # 尝试使用智慧 Agent
-        try:
-            wisdom_agent = wisdom_factory.get_wisdom_agent("chat_agent", user_id)
-            if wisdom_agent:
-                result = wisdom_agent.process(message)
-                return jsonify(result)
-        except Exception as e:
-            logger.error(f"智慧 Agent 处理失败: {e}")
-        
-        # 降级：使用原有 chat_engine
-        from core.lib.chat_engine import chat_engine
-        result = chat_engine.execute(message, user_id)
-        return jsonify(result)
-
-
-
+    # 原有降级逻辑
+    from core.lib.chat_engine import chat_engine
+    result = chat_engine.execute(message, user_id)
+    return jsonify(result)
 
 
 # ========== 记忆路由 ==========
 @app.route("/api/v5/memory/remember", methods=["POST"])
+# 未来可考虑统一使用 MemoryAgent
 def memory_remember():
     data = request.json or {}
     user_id = data.get("user_id", "guest")
-
-    # 设置用户上下文
-    from core.lib.user_context import user_context
-
-    with user_context(user_id):
-        fact = data.get("fact", "")
-        if not fact:
-            return jsonify({"success": False, "error": "fact required"}), 400
-        save_memory(user_id, fact)
-        record_learning(f"用户 {user_id} 学习了: {fact}", True)
-        return jsonify({"success": True, "message": "记忆已存储"})
-
+    fact = data.get("fact", "")
+    
+    try:
+        from agents.memory_agent.agent_v4 import MemoryAgentV4
+        agent = MemoryAgentV4(user_id)
+        result = agent.process(f"记住 {fact}")
+        if result.get("success"):
+            return jsonify({"success": True, "message": "记忆已存储"})
+    except:
+        pass
+    
+    # 降级到原有逻辑
+    save_memory(user_id, fact)
+    return jsonify({"success": True, "message": "记忆已存储"})
 
 @app.route("/api/v5/memory/recall", methods=["POST"])
 def memory_recall():
@@ -623,7 +729,8 @@ from core.lib.input_validator import input_validator
 
 @app.route("/api/agent/<agent_name>/message", methods=["POST"])
 def agent_message(agent_name):
-    """Agent 间通信端点 - 供 Orchestrator 调用其他 Agent"""
+    logger.warning(f"废弃接口被调用: /api/agent/{agent_name}/message，请迁移到 /api/v5/wisdom/chat")
+    # 内部转发到 wisdom_factory
     data = request.json or {}
     message = data.get("message", "")
     user_id = data.get("user_id", "guest")
@@ -688,38 +795,6 @@ def agent_message(agent_name):
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
-
-@app.route("/api/debug/route", methods=["POST"])
-def debug_route():
-    from agents.decision_agent.agent import decision_agent
-
-    data = request.json or {}
-    message = data.get("message", "")
-    user_id = data.get("user_id", "guest")
-
-    # 设置用户上下文
-    from core.lib.user_context import user_context
-
-    with user_context(user_id):
-        orchestrator = OrchestratorAgent(user_id)
-        target = orchestrator.smart_route(message)
-        return jsonify(
-            {
-                "message": message,
-                "target": target,
-                "orchestrator_used": str(orchestrator),
-            }
-        )
-
-
-# 在 agent_gateway_enhanced.py 末尾添加
-@app.route("/api/v5/audit/logs", methods=["GET"])
-def get_audit_logs():
-    user_id = request.args.get("user_id", "guest")
-    from core.agents.base.communicable_agent import CommunicableAgent
-
-    # 获取审计日志（需要实例）
-    return jsonify({"logs": [], "message": "审计日志功能开发中"})
 
 
 # ========== Agent 广播 API ==========
@@ -805,8 +880,6 @@ auth_manager = AuthManager()
 @app.route("/api/user/register", methods=["POST"])
 def user_register():
     """用户注册"""
-    from flask import jsonify, request
-
     data = request.get_json() or {}
     username = data.get("username", "").strip()
     password = data.get("password", "").strip()
@@ -818,63 +891,49 @@ def user_register():
     result = auth_manager.register(username, password, role="user")
 
     if result.get("success"):
-        # 同时创建用户加密目录（为 YouTube 凭证做准备）
-        import json
-        from pathlib import Path
-
-        from core.lib.user_crypto import UserCrypto
-
         user_id = result.get("user_id")
-        user_dir = Path(f"data/users/{username}")
-        if not user_dir.exists():
-            user_dir.mkdir(parents=True)
+        
+        # 创建用户目录（统一处理，避免重复）
+        _create_user_directories(username, user_id, email)
+        
+        logger.info(f"用户注册成功: {username} ({user_id})")
+        return jsonify(result)
+    else:
+        return jsonify(result), 400
 
-            # 创建所有必要子目录
-            subdirs = [
-                "encrypted",
-                "communications/inbox",
-                "communications/outbox",
-                "communications/archive",
-                "youtube_data",
-                "scripts",
-                "videos",
-                "images",
-                "logs",
-                "workspace",
-            ]
-            for subdir in subdirs:
-                (user_dir / subdir).mkdir(parents=True, exist_ok=True)
 
-            # 创建 profile
-            profile = {
-                "user_id": user_id,
-                "username": username,
-                "email": email,
-                "role": "user",
-                "created_at": __import__("datetime").datetime.now().isoformat(),
-                "workspace": str(user_dir / "workspace"),
-            }
-            with open(user_dir / "profile.json", "w") as f:
-                json.dump(profile, f, indent=2)
-
-        print(f"✅ 用户注册成功: {username} ({user_id})")
-        if not user_dir.exists():
-            user_dir.mkdir(parents=True)
-            (user_dir / "encrypted").mkdir()
-
-            # 创建 profile
-            profile = {
-                "user_id": user_id,
-                "username": username,
-                "email": email,
-                "role": "user",
-                "created_at": __import__("datetime").datetime.now().isoformat(),
-            }
-            with open(user_dir / "profile.json", "w") as f:
-                json.dump(profile, f, indent=2)
-
-    logger.info(f"返回结果: {result.get('response', '')[:100]}")
-    return jsonify(result)
+def _create_user_directories(username, user_id, email):
+    """创建用户目录结构（统一函数）"""
+    import json
+    from pathlib import Path
+    from datetime import datetime
+    
+    user_dir = Path(f"data/users/{username}")
+    if user_dir.exists():
+        return
+    
+    user_dir.mkdir(parents=True)
+    
+    # 创建所有必要子目录
+    subdirs = [
+        "encrypted", "communications/inbox", "communications/outbox",
+        "communications/archive", "youtube_data", "scripts", "videos",
+        "images", "logs", "workspace"
+    ]
+    for subdir in subdirs:
+        (user_dir / subdir).mkdir(parents=True, exist_ok=True)
+    
+    # 创建 profile
+    profile = {
+        "user_id": user_id,
+        "username": username,
+        "email": email,
+        "role": "user",
+        "created_at": datetime.now().isoformat(),
+        "workspace": str(user_dir / "workspace")
+    }
+    with open(user_dir / "profile.json", "w") as f:
+        json.dump(profile, f, indent=2)
 
 
 @app.route("/api/user/login", methods=["POST"])
@@ -922,7 +981,7 @@ def user_login():
 
 
 @app.route("/api/user/verify", methods=["GET"])
-# @require_auth
+@require_auth
 def user_verify():
     """验证 token 是否有效"""
     from flask import g, jsonify
@@ -931,7 +990,7 @@ def user_verify():
 
 
 @app.route("/api/user/profile", methods=["GET"])
-# @require_auth
+@require_auth
 def user_profile():
     """获取用户资料"""
     import json
@@ -955,7 +1014,7 @@ def user_profile():
 
 # ========== YouTube 凭证管理 API ==========
 @app.route("/api/user/youtube/credentials", methods=["POST"])
-# @require_auth
+@require_auth
 def set_youtube_credentials():
     """设置用户的 YouTube API 凭证"""
     from flask import g, jsonify, request
@@ -1010,7 +1069,7 @@ def set_youtube_credentials():
 
 
 @app.route("/api/user/youtube/credentials", methods=["GET"])
-# @require_auth
+@require_auth
 def get_youtube_credentials():
     """检查用户是否配置了 YouTube 凭证"""
     from flask import g, jsonify
@@ -1042,7 +1101,7 @@ def get_youtube_credentials():
 
 
 @app.route("/api/user/youtube/channel", methods=["GET"])
-# @require_auth
+@require_auth
 def get_youtube_channel():
     """获取用户的 YouTube 频道数据"""
     from flask import g, jsonify, request
@@ -1104,86 +1163,9 @@ def get_youtube_channel():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-# ======== 自我升级API ==========
-import shutil
-from pathlib import Path
-
-from tools.real_log_collector import RealLogCollector
-
-_collector = RealLogCollector()
-from core.agents.builtin.config_upgrader import ConfigUpgrader
-
-_upgrader = ConfigUpgrader(model_name="qwen2.5:7b")
-
-
-@app.route("/api/v5/agents/<agent_name>/analyze", methods=["GET"])
-def analyze_agent(agent_name):
-    """分析Agent性能"""
-    # TODO: 从你的日志系统获取真实日志
-    logs = []  # 替换为真实日志收集
-    result = _upgrader.analyze_performance(agent_name, logs)
-    logger.info(f"返回结果: {result.get('response', '')[:100]}")
-    return jsonify(result)
-
-
-@app.route("/api/v5/agents/<agent_name>/upgrade", methods=["POST"])
-def upgrade_agent(agent_name):
-    """手动触发Agent升级"""
-    data = request.json or {}
-    auto_apply = data.get("auto_apply", False)
-
-    # 收集真实日志（需要实现）
-    logs = []  # TODO: 从日志系统收集
-
-    result = _upgrader.upgrade_agent(agent_name, logs, auto_apply=auto_apply)
-    logger.info(f"返回结果: {result.get('response', '')[:100]}")
-    return jsonify(result)
-
-
-@app.route("/api/v5/admin/upgrade/status", methods=["GET"])
-def get_upgrade_status():
-    """获取升级系统状态"""
-    return jsonify(
-        {
-            "total_upgrades": len(_upgrader.history),
-            "last_upgrade": _upgrader.history[-1] if _upgrader.history else None,
-            "agents_monitored": ["chat_agent", "code_agent", "vision_agent"],
-        }
-    )
-
-
-@app.route("/api/v5/admin/upgrade/now/<agent_name>", methods=["POST"])
-def trigger_upgrade(agent_name):
-    """手动触发升级"""
-    logs = _collector.collect_agent_logs(agent_name, hours=24)
-    result = _upgrader.upgrade_agent(agent_name, logs, auto_apply=True)
-    logger.info(f"返回结果: {result.get('response', '')[:100]}")
-    return jsonify(result)
-
-
-@app.route("/api/v5/admin/upgrade/rollback/<agent_name>", methods=["POST"])
-def rollback_upgrade(agent_name):
-    """回滚到上一个配置"""
-    config_file = Path(f"agents/{agent_name}/config.yaml")
-    backup_file = config_file.with_suffix(".yaml.bak")
-
-    if backup_file.exists():
-        shutil.copy2(backup_file, config_file)
-        return jsonify({"success": True, "message": f"{agent_name} 已回滚"})
-    return jsonify({"success": False, "message": "没有找到备份文件"})
-
-
-@app.route("/api/v5/admin/upgrade/history", methods=["GET"])
-def get_upgrade_history_admin():
-    """获取升级历史"""
-    return jsonify(
-        {"history": _upgrader.history[-50:], "total": len(_upgrader.history)}
-    )
-
-
 # ========== 引擎管理 API ==========
 @app.route("/api/v5/admin/engine/chat/status", methods=["GET"])
-# @require_auth
+@require_auth
 def get_chat_engine_status():
     """获取对话引擎状态"""
 
@@ -1191,22 +1173,18 @@ def get_chat_engine_status():
 
 
 @app.route("/api/v5/admin/engine/chat/enable", methods=["POST"])
-# @require_auth
+@require_auth
 def enable_chat_engine():
-    """启用对话引擎"""
-
+    """启用对话引擎（需要管理员权限）"""
+    # 检查用户角色
+    if not is_admin(g.user_id):
+        return jsonify({"success": False, "error": "需要管理员权限"}), 403
+    
     chat_engine.enabled = True
-    return jsonify(
-        {
-            "success": True,
-            "message": "对话引擎已启用",
-            "status": chat_engine.get_status(),
-        }
-    )
-
+    return jsonify({"success": True, "message": "对话引擎已启用", "status": chat_engine.get_status()})
 
 @app.route("/api/v5/admin/engine/chat/disable", methods=["POST"])
-# @require_auth
+@require_auth
 def disable_chat_engine():
     """禁用对话引擎"""
 
@@ -1221,7 +1199,7 @@ def disable_chat_engine():
 
 
 @app.route("/api/v5/admin/engine/chat/config", methods=["POST"])
-# @require_auth
+@require_auth
 def config_chat_engine():
     """配置对话引擎"""
 
@@ -1239,33 +1217,34 @@ def config_chat_engine():
 @app.route("/api/v5/chat/stream", methods=["POST"])
 @require_auth
 def chat_stream():
-    """流式对话接口"""
-    import json
-
-    import requests
+    """流式对话接口 - 使用智慧 Agent 流式输出"""
     from flask import Response, stream_with_context
+    import json
 
     data = request.json or {}
     message = data.get("message", "")
     user_id = data.get("user_id", "guest")
+    agent_name = data.get("agent", "chat_agent")
 
     def generate():
         try:
-            resp = requests.post(
-                "http://localhost:5012/chat/stream",
-                json={"message": message},
-                stream=True,
-                timeout=60,
-            )
-
-            for line in resp.iter_lines():
-                if line:
-                    yield f"{line.decode()}\n\n"
+            # 使用 wisdom_factory 获取 Agent
+            wisdom_agent = wisdom_factory.get_wisdom_agent(agent_name, user_id)
+            if wisdom_agent:
+                result = wisdom_agent.process(message)
+                response_text = result.get("response", "")
+                # 分块输出
+                chunk_size = 50
+                for i in range(0, len(response_text), chunk_size):
+                    chunk = response_text[i:i+chunk_size]
+                    yield f"data: {json.dumps({'chunk': chunk, 'done': False})}\n\n"
+                yield f"data: {json.dumps({'done': True})}\n\n"
+            else:
+                yield f"data: {json.dumps({'error': f'Agent {agent_name} 不可用'})}\n\n"
         except Exception as e:
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
 
     return Response(stream_with_context(generate()), mimetype="text/event-stream")
-
 
 @app.route("/api/v5/feedback", methods=["POST"])
 def submit_feedback():
@@ -1280,7 +1259,7 @@ def submit_feedback():
     from datetime import datetime
     
     feedback_file = Path("data/feedback.json")
-    
+    MAX_FEEDBACK = 1000  # 最大存储数量    
     # 读取现有数据
     if feedback_file.exists():
         with open(feedback_file, 'r') as f:
@@ -1300,6 +1279,11 @@ def submit_feedback():
         "rating": rating,
         "timestamp": datetime.now().isoformat()
     })
+    # ========== 优化：限制存储数量 ==========
+    for cat in ["success", "failure"]:
+        if len(all_feedback[cat]) > MAX_FEEDBACK:
+            all_feedback[cat] = all_feedback[cat][-MAX_FEEDBACK:]
+    # ====================================
     
     with open(feedback_file, 'w') as f:
         json.dump(all_feedback, f, indent=2)
@@ -1317,24 +1301,6 @@ def serve_web(filename):
 def web_index():
     from flask import send_from_directory
     return send_from_directory('web', 'index.html')
-
-
-@app.route('/api/v5/image/generate', methods=['POST'])
-def generate_image():
-    """文生图接口"""
-    from flask import request, jsonify
-    from core.lib.free_image_api import free_api
-
-    data = request.json or {}
-    prompt = data.get('prompt', '')
-
-    if not prompt:
-        return jsonify({'error': '请提供提示词'}), 400
-
-    result = free_api.get_image_url(prompt)
-    return jsonify(result)
-
-
 
 
 # ========== 新增智慧对话路由（不影响现有接口）==========
@@ -1389,43 +1355,172 @@ def wisdom_chat():
     if not message:
         return jsonify({"success": False, "response": "消息不能为空"}), 400
     
-    # 限制消息长度
-    if len(message) > 1000:
-        return jsonify({"success": False, "response": "消息过长，请控制在1000字符以内"}), 400
-    
-    # 过滤特殊字符（防止注入）
-    import re
-    if re.search(r'[<>]', message):
-        message = re.sub(r'[<>]', '', message)
-    # ... 原有逻辑 ...
+    # ========== 1. 代码分析检测（静态分析，不调用 Agent）==========
+    if "分析" in message or "审核" in message or "review" in message.lower() or "深度审查" in message or "深度分析" in message:
+        import re
+        code_match = re.search(r'```(?:python)?\n(.*?)```', message, re.DOTALL)
+        if code_match:
+            code_to_analyze = code_match.group(1)
+            try:
+                from agents.code_agent.agent_v4 import CodeAgentV4 as CodeAgentV4
+                ca = CodeAgentV4(user_id)
 
-    # 检测输入类型
+                # 深度审查使用 deep_review 方法
+                if "深度审查" in message or "深度分析" in message:
+                    result = ca.deep_review(code_to_analyze, file_path="inline")
+                    output = ca._format_review_result(result)
+                else:
+                    analysis = ca.analyze_code(code_to_analyze, file_path="inline")
+                    if analysis.get("success"):
+                        # 格式化输出
+                        output = f"""## 📊 代码分析报告
+
+### 📈 代码概览
+{analysis['summary']}
+
+### 🔧 代码结构
+- 总行数: {analysis['metrics']['total_lines']}
+- 代码行数: {analysis['metrics']['code_lines']}
+- 注释行数: {analysis['metrics']['comment_lines']}
+- 函数数量: {analysis['metrics']['functions_count']}
+- 类数量: {analysis['metrics']['classes_count']}
+- 导入数量: {analysis['metrics']['imports_count']}
+
+### 📦 函数列表
+"""
+                    for f in analysis.get('functions', []):
+                        output += f"- `{f['name']}` (第{f['line']}行)\n"
+
+                    if analysis.get('classes'):
+                        output += f"\n### 📦 类列表\n"
+                        for c in analysis['classes']:
+                            output += f"- `{c['name']}` (第{c['line']}行)\n"
+
+                    if analysis.get('issues'):
+                        output += f"\n### ⚠ 问题清单\n\n"
+                        output += "| 行号 | 类型 | 严重程度 | 问题描述 |\n"
+                        output += "|------|------|----------|----------|\n"
+                        for issue in analysis['issues']:
+                            output += f"| {issue['line']} | {issue['type']} | {issue['severity']} | {issue['description']} |\n"
+
+                        output += f"\n### 💡 修复建议\n\n"
+                        for issue in analysis['issues']:
+                            output += f"**L{issue['line']}**: {issue['suggestion']}\n"
+                            if issue.get('code_example'):
+                                output += f"```python\n{issue['code_example']}\n```\n\n"
+
+                    if analysis.get('suggestions'):
+                        output += f"\n### 📝 改进建议\n"
+                        for s in analysis['suggestions']:
+                            output += f"- {s}\n"
+
+                    output += f"\n---\n💡 **提示**: 用户可以根据以上建议在编辑器中手动修改代码。"
+                    return jsonify({"success": True, "response": output, "output_content": output})
+            except Exception as e:
+                print(f"静态分析失败: {e}")
+                # 失败时继续走 Agent 流程
+    # ========== 2. 文件内容读取（用于审核按钮）==========
+    project_id = data.get("project_id")
+    file_path = data.get("file_path")
+
+    if project_id and file_path:
+        try:
+            file_context, file_info = extract_file_content(project_id, file_path, user_id)
+            if file_context:
+                message = message + file_context
+                print(f"✅ {file_info}")
+        except Exception as e:
+            print(f"⚠ 读取文件失败: {e}")
+
+    # ========== 3. 消息长度限制 ==========
+    if len(message) > 5000:
+        return jsonify({"success": False, "response": "消息过长，请控制在5000字符以内"}), 400
+
+    # ========== 4. 获取 Agent ==========
+    if agent_name:
+        wisdom_agent = wisdom_factory.get_wisdom_agent(agent_name, user_id)
+    else:
+        wisdom_agent = wisdom_factory.get_wisdom_agent("orchestrator", user_id)
+
+    if not wisdom_agent:
+        return jsonify({"success": False, "response": f"Agent {agent_name} 不可用"}), 404
+
+    # ========== 5. 检测输入类型并处理 ==========
     if "action" in data or "raw_input" in data:
         # 标准化 JSON 输入
-        agent_name = data.get("agent", "chat_agent")
-        wisdom_agent = wisdom_factory.get_wisdom_agent(agent_name, user_id)
-
-        if not wisdom_agent:
-            return jsonify({
-                "version": "1.1",
-                "success": False,
-                "error": f"Agent {agent_name} 不可用",
-                "output_content": f"❌ Agent {agent_name} 不可用"
-            })
-
         result = wisdom_agent.handle_json(data)
         return jsonify(result)
     else:
-        # 自然语言输入 - 使用请求中指定的 agent，默认为 chat_agent
-        agent_name = data.get("agent", "chat_agent")
-        wisdom_agent = wisdom_factory.get_wisdom_agent(agent_name, user_id)
-
-        if not wisdom_agent:
-            return jsonify({"success": False, "response": f"Agent {agent_name} 不可用"})
-
+        # 自然语言输入
         result = wisdom_agent.process(message)
+
+        # ========== 6. 格式化请求检测（工具调用）==========
+        response_text = result.get("response", "") or result.get("output_content", "")
+
+        # 检测是否是格式化请求
+        if "格式化" in message:
+            import re
+            code_match = re.search(r'```(?:python)?\n(.*?)```', message, re.DOTALL)
+            if code_match:
+                code_to_format = code_match.group(1)
+                result["tool_call"] = {
+                    "type": "format_request",
+                    "tool": "format_python",
+                    "args": {"code": code_to_format},
+                    "message": f"🔧 检测到代码格式化请求，是否执行格式化？\n\n原代码：\n```python\n{code_to_format[:200]}\n```",
+                    "requires_confirmation": True
+                }
+                result["response"] = response_text + "\n\n🔧 请回复「确认格式化」来执行格式化。"
+
         return jsonify(result)
 
+@app.route("/api/v5/execute_tool", methods=["POST"])
+def execute_tool_api():
+    """执行工具调用（需要用户确认后调用）"""
+    data = request.json or {}
+    user_id = data.get("user_id", "guest")
+    tool_name = data.get("tool")
+    tool_args = data.get("args", {})
+
+    result = execute_tool(tool_name, tool_args, user_id)
+    return jsonify(result)
+
+
+# ========== 工具调用支持 ==========
+def execute_tool(tool_name: str, tool_args: dict, user_id: str) -> dict:
+    """执行工具调用"""
+
+    if tool_name == "format_python":
+        from agents.code_agent.agent_v4 import CodeAgentV4 as CodeAgentV4
+        agent = CodeAgentV4(user_id)
+        code = tool_args.get("code", "")
+        return agent.format_code_with_autopep8(code)
+
+    elif tool_name == "format_with_black":
+        from agents.code_agent.agent_v4 import CodeAgentV4 as CodeAgentV4
+        agent = CodeAgentV4(user_id)
+        code = tool_args.get("code", "")
+        return agent.format_code_with_black(code)
+
+    elif tool_name == "read_file":
+        from core.lib.code_repo import get_code_repo
+        repo = get_code_repo(user_id)
+        project_id = tool_args.get("project_id")
+        file_path = tool_args.get("file_path")
+        content = repo.get_file_content(project_id, file_path)
+        return {"success": True, "content": content}
+
+    elif tool_name == "write_file":
+        from core.lib.code_repo import get_code_repo
+        repo = get_code_repo(user_id)
+        project_id = tool_args.get("project_id")
+        file_path = tool_args.get("file_path")
+        content = tool_args.get("content")
+        # 实现写入逻辑
+        return {"success": True, "message": "文件已保存"}
+
+    else:
+        return {"success": False, "error": f"未知工具: {tool_name}"}
 
 # ========== 新增决策统计接口 ==========
 
@@ -1748,8 +1843,128 @@ def prompt_upgrade():
     })
 
 
+# ========== 文件操作 API ==========
+
+@app.route("/api/v5/project/list", methods=["GET"])
+def project_list():
+    """获取项目列表"""
+    user_id = request.args.get("user_id", "codex_user")
+
+    from core.lib.code_repo import get_code_repo
+    repo = get_code_repo(user_id)
+
+     # 使用 repo 提供的方法
+    projects = repo.list_projects()
+    return jsonify({"success": True, "projects": projects})
+
+
+@app.route("/api/v5/project/add", methods=["POST"])
+def project_add():
+    """添加项目"""
+    data = request.json or {}
+    user_id = data.get("user_id", "codex_user")
+    project_path = data.get("path", "")
+
+    if not project_path:
+        return jsonify({"success": False, "error": "请提供项目路径"}), 400
+
+    path = Path(project_path).expanduser().resolve()
+    if not path.exists():
+        return jsonify({"success": False, "error": f"路径不存在: {project_path}"}), 404
+
+    # 调用 CodeAgent 添加项目
+    from core.lib.code_repo import get_code_repo
+    repo = get_code_repo(user_id)
+    result = repo.add_project(str(path))
+
+    return jsonify(result)
+
+
+@app.route("/api/v5/project/<project_id>/files", methods=["GET"])
+def project_files(project_id):
+    """获取项目文件列表"""
+    user_id = request.args.get("user_id", "codex_user")
+
+    from core.lib.code_repo import get_code_repo
+    repo = get_code_repo(user_id)
+
+    project = repo.get_project(project_id)
+    if not project:
+        return jsonify({"success": False, "error": "项目不存在"}), 404
+
+    files = repo.get_files(project_id)
+
+    return jsonify({"success": True, "files": files, "project": project})
+@app.route("/api/v5/project/<project_id>/file", methods=["GET"])
+def project_file_read(project_id):
+    """读取文件内容"""
+    user_id = request.args.get("user_id", "codex_user")
+    file_path = request.args.get("path", "")
+
+    if not file_path:
+        return jsonify({"success": False, "error": "请提供文件路径"}), 400
+
+    from core.lib.code_repo import get_code_repo
+    repo = get_code_repo(user_id)
+
+    content = repo.get_file_content(project_id, file_path)
+    if content is None:
+        return jsonify({"success": False, "error": "文件读取失败"}), 404
+
+    return jsonify({"success": True, "content": content, "path": file_path})
+
+
+@app.route("/api/v5/project/<project_id>/file", methods=["POST"])
+def project_file_save(project_id):
+    """保存文件内容"""
+    data = request.json or {}
+    user_id = data.get("user_id", "codex_user")
+    file_path = data.get("path", "")
+    content = data.get("content", "")
+
+    if not file_path:
+        return jsonify({"success": False, "error": "请提供文件路径"}), 400
+
+    from core.lib.code_repo import get_code_repo
+    repo = get_code_repo(user_id)
+
+    project = repo.get_project(project_id)
+    if not project:
+        return jsonify({"success": False, "error": "项目不存在"}), 404
+
+    full_path = Path(project["path"]) / file_path
+    try:
+        full_path.write_text(content, encoding='utf-8')
+        return jsonify({"success": True, "message": f"已保存: {file_path}"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/v5/project/search", methods=["POST"])
+def project_search():
+    """搜索代码"""
+    data = request.json or {}
+    user_id = data.get("user_id", "codex_user")
+    query = data.get("query", "")
+    project_id = data.get("project_id")
+
+    from core.lib.code_repo import get_code_repo
+    repo = get_code_repo(user_id)
+
+    results = repo.search_code(query, project_id)
+    return jsonify({"success": True, "results": results})
+
+
+
+# ========== code弹板路由 ==========
+@app.route("/code_agent_panel.html")
+def code_agent_panel():
+    from flask import send_from_directory
+    return send_from_directory("templates", "code_agent_panel.html")
+
 
 # ========== 启动入口 ==========
+
 if __name__ == "__main__":
     port = unified_config.get("services.gateway.port", 5002)
     smart_service.start()

@@ -17,7 +17,7 @@ def enhanced_chat():
         return jsonify({"success": False, "response": "请输入消息", "user_id": user_id})
     
     # 使用决策者进行智能路由
-    from agents.decision_agent.agent import decision_agent
+    from agents.decision_agent.agent_v4 import decision_agent
     result = decision_agent.process(message, {"user_id": user_id})
     
     return jsonify(result)'''
