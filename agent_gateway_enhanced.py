@@ -2032,7 +2032,38 @@ def collaboration_users():
     users = collaboration_manager.get_users(project_id)
     return jsonify({"success": True, "users": users})
 
+@app.route("/api/v5/project/<project_id>/graph", methods=["GET"])
+def project_graph(project_id):
+    """获取项目依赖图"""
+    user_id = request.args.get("user_id", "codex_user")
 
+    try:
+        from core.lib.code_repo import get_code_repo
+        repo = get_code_repo(user_id)
+        project = repo.get_project(project_id)
+        if not project:
+            return jsonify({"success": False, "error": "项目不存在"}), 404
+
+        from core.lib.project_graph import ProjectGraph
+        graph = ProjectGraph(project["path"])
+
+        # 构建节点和边
+        nodes = []
+        edges = []
+        for file, deps in graph.graph.items():
+            nodes.append({"id": file, "label": file.split('/')[-1]})
+            for dep in deps:
+                if dep in graph.graph:
+                    edges.append({"from": file, "to": dep})
+
+        return jsonify({
+            "success": True,
+            "nodes": nodes[:100],
+            "edges": edges[:200],
+            "stats": graph.get_stats()
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 # ========== 启动入口 ==========

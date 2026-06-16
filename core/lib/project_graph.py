@@ -18,24 +18,43 @@ class ProjectGraph:
         """构建依赖图"""
         py_files = list(self.project_path.rglob("*.py"))
         
+        # 先收集所有文件名
+        all_files = {f.name: str(f.relative_to(self.project_path)) for f in py_files}
+        
         for file in py_files:
             try:
                 content = file.read_text(encoding='utf-8')
-                imports = self._extract_imports(content)
+                imports = self._extract_imports(content, all_files)
                 rel_path = str(file.relative_to(self.project_path))
                 self.graph[rel_path] = imports
             except Exception as e:
                 print(f"跳过 {file}: {e}")
 
-    def _extract_imports(self, content: str) -> Set[str]:
-        """提取导入"""
+    def _extract_imports(self, content: str, all_files: Dict[str, str]) -> Set[str]:
+        """提取导入 - 支持多行"""
         imports = set()
+        
+        # 移除注释和字符串
+        content = re.sub(r'#.*?$', '', content, flags=re.MULTILINE)
+        content = re.sub(r'""".*?"""', '', content, flags=re.DOTALL)
+        
         # import xxx
-        for m in re.findall(r'^import\s+(\w+)', content, re.MULTILINE):
-            imports.add(f"{m}.py")
+        for m in re.findall(r'^import\s+([\w_.]+)', content, re.MULTILINE):
+            module = m.split('.')[0]
+            if f"{module}.py" in all_files:
+                imports.add(all_files[f"{module}.py"])
+        
         # from xxx import
-        for m in re.findall(r'^from\s+(\w+)', content, re.MULTILINE):
-            imports.add(f"{m}.py")
+        for m in re.findall(r'^from\s+([\w_.]+)\s+import', content, re.MULTILINE):
+            module = m.split('.')[0]
+            if f"{module}.py" in all_files:
+                imports.add(all_files[f"{module}.py"])
+        
+        # from .xxx import (相对导入)
+        for m in re.findall(r'^from\s+\.([\w_]+)\s+import', content, re.MULTILINE):
+            if f"{m}.py" in all_files:
+                imports.add(all_files[f"{m}.py"])
+        
         return imports
 
     def get_affected_files(self, file_path: str) -> List[str]:
