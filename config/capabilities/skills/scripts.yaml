@@ -1,0 +1,10 @@
+capabilities:
+- description: scripts skill
+  name: scripts
+description: scripts skill
+enabled: true
+name: scripts
+type: skill
+use_when:
+- scripts
+version: 1.0.0

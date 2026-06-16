@@ -1,0 +1,10 @@
+capabilities:
+- description: youtube-collector skill
+  name: youtube-collector
+description: youtube-collector skill
+enabled: true
+name: youtube-collector
+type: skill
+use_when:
+- youtube-collector
+version: 1.0.0

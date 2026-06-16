@@ -1,0 +1,10 @@
+capabilities:
+- description: video-project skill
+  name: video-project
+description: video-project skill
+enabled: true
+name: video-project
+type: skill
+use_when:
+- video-project
+version: 1.0.0

@@ -1,0 +1,10 @@
+capabilities:
+- description: svg-generator skill
+  name: svg-generator
+description: svg-generator skill
+enabled: true
+name: svg-generator
+type: skill
+use_when:
+- svg-generator
+version: 1.0.0

@@ -1,0 +1,10 @@
+capabilities:
+- description: memory skill
+  name: memory
+description: memory skill
+enabled: true
+name: memory
+type: skill
+use_when:
+- memory
+version: 1.0.0

@@ -1,0 +1,10 @@
+capabilities:
+- description: ai-image-gen skill
+  name: ai-image-gen
+description: ai-image-gen skill
+enabled: true
+name: ai-image-gen
+type: skill
+use_when:
+- ai-image-gen
+version: 1.0.0

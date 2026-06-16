@@ -1,0 +1,10 @@
+capabilities:
+- description: network skill
+  name: network
+description: network skill
+enabled: true
+name: network
+type: skill
+use_when:
+- network
+version: 1.0.0

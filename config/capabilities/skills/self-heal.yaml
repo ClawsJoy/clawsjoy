@@ -1,0 +1,10 @@
+capabilities:
+- description: self-heal skill
+  name: self-heal
+description: self-heal skill
+enabled: true
+name: self-heal
+type: skill
+use_when:
+- self-heal
+version: 1.0.0

@@ -1,0 +1,10 @@
+capabilities:
+- description: calculator skill
+  name: calculator
+description: calculator skill
+enabled: true
+name: calculator
+type: skill
+use_when:
+- calculator
+version: 1.0.0

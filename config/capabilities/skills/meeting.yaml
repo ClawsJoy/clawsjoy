@@ -1,0 +1,10 @@
+capabilities:
+- description: meeting skill
+  name: meeting
+description: meeting skill
+enabled: true
+name: meeting
+type: skill
+use_when:
+- meeting
+version: 1.0.0

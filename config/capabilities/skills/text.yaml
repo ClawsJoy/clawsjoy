@@ -1,0 +1,10 @@
+capabilities:
+- description: text skill
+  name: text
+description: text skill
+enabled: true
+name: text
+type: skill
+use_when:
+- text
+version: 1.0.0

@@ -1,0 +1,10 @@
+capabilities:
+- description: cartoon-images skill
+  name: cartoon-images
+description: cartoon-images skill
+enabled: true
+name: cartoon-images
+type: skill
+use_when:
+- cartoon-images
+version: 1.0.0

@@ -1,0 +1,10 @@
+capabilities:
+- description: version skill
+  name: version
+description: version skill
+enabled: true
+name: version
+type: skill
+use_when:
+- version
+version: 1.0.0

@@ -1,0 +1,10 @@
+capabilities:
+- description: math skill
+  name: math
+description: math skill
+enabled: true
+name: math
+type: skill
+use_when:
+- math
+version: 1.0.0

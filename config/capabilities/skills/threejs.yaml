@@ -1,0 +1,10 @@
+capabilities:
+- description: threejs skill
+  name: threejs
+description: threejs skill
+enabled: true
+name: threejs
+type: skill
+use_when:
+- threejs
+version: 1.0.0

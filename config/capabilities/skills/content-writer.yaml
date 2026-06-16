@@ -1,0 +1,10 @@
+capabilities:
+- description: content-writer skill
+  name: content-writer
+description: content-writer skill
+enabled: true
+name: content-writer
+type: skill
+use_when:
+- content-writer
+version: 1.0.0

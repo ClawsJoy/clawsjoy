@@ -1,0 +1,10 @@
+capabilities:
+- description: storyteller skill
+  name: storyteller
+description: storyteller skill
+enabled: true
+name: storyteller
+type: skill
+use_when:
+- storyteller
+version: 1.0.0

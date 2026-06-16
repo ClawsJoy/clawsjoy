@@ -1,0 +1,10 @@
+capabilities:
+- description: translate skill
+  name: translate
+description: translate skill
+enabled: true
+name: translate
+type: skill
+use_when:
+- translate
+version: 1.0.0
