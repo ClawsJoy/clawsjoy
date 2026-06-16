@@ -1,0 +1,10 @@
+name: my-calculator
+type: skill
+description: 自定义计算器技能
+version: 1.0.0
+capabilities:
+  - name: calculate
+    description: 执行数学计算
+use_when:
+  - 计算
+  - 数学
