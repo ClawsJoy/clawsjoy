@@ -2029,3 +2029,19 @@ if __name__ == "__main__":
 # }
 
 
+
+    # ========== 养成记录 ==========
+    # 在返回结果前记录交互
+    try:
+        from core.lib.llm_nurture import get_nurture
+        nurture = get_nurture(user_id)
+        # 判断是否成功
+        is_success = result.get("success", True)
+        nurture.record_interaction(
+            user_input=message[:200],
+            response=result.get("response", "")[:200],
+            success=is_success,
+            agent=agent_name or "unknown"
+        )
+    except Exception as e:
+        print(f"[Nurture] 记录失败: {e}")
