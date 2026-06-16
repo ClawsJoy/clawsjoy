@@ -160,7 +160,36 @@ class CodeAgentV4(BusinessAgent):
                 return self._response(f"未找到文件: {file_path}")
             return self._response("请提供文件名。示例：读取文件 main.py")
 
-        # ========== 1. 深度代码审查（新增）==========
+        # ========== 1. 代码修复（自动修复）==========
+        if "修复" in user_input and any(kw in user_input for kw in ["代码", "函数", "bug", "错误"]):
+            code_match = re.search(r'```(?:python)?\s*\n(.*?)```', user_input, re.DOTALL)
+            if not code_match: 
+                return self._response("请提供要修复的代码，格式：```python\\n代码\\n```")
+                
+            code_to_fix = code_match.group(1)
+            result = self.auto_fix(code_to_fix)
+            if not result.get("success"):
+                return self._response(f"自动修复失败: {result.get("message", "未知错误")}")
+            output = f"""## 🔧 自动修复报告
+
+### 📊 修复概览
+{result['message']}
+
+### 📝 问题清单
+"""
+            for issue in result.get("issues", []):
+                output += f"- L{issue['line']}: {issue['description']}\n"
+
+            output += f"""
+### 💾 修复后代码
+```python
+{result['fixed_code']}
+✅ 验证结果
+{result.get('verification', {}).get('message', '验证完成')}
+"""
+            return self._response(output, metadata={"type": "auto_fix"})
+                                
+        # ========== 2. 深度代码审查（新增）==========
         if "深度审查" in user_input or "深度分析" in user_input or "全面审查" in user_input:
             code_match = re.search(r'```(\w*)\n(.*?)```', user_input, re.DOTALL)
             if code_match:
@@ -170,7 +199,7 @@ class CodeAgentV4(BusinessAgent):
                 return self._response(self._format_review_result(result), metadata={"type": "deep_review"})
             return self._response("请提供要审查的代码。格式：```python\n代码\n```")
 
-        # ========== 2. 通用代码生成 ==========
+        # ========== 3. 通用代码生成 ==========
         is_code_request = False
         code_task = user_input
 
@@ -196,7 +225,7 @@ class CodeAgentV4(BusinessAgent):
                 metadata={"language": language, "type": "generated"}
             )
 
-        # ========== 3. 设置代码风格 ==========
+        # ========== 4. 设置代码风格 ==========
         if "偏好风格" in user_input or "代码风格" in user_input:
             style_match = re.search(r'(?:偏好风格|代码风格)[：:]?\s*(\w+)', user_input)
             if style_match:
@@ -207,7 +236,7 @@ class CodeAgentV4(BusinessAgent):
             current = self._code_memory.recall_style() or "默认"
             return self._response(f"当前代码风格偏好：{current}\n可设置：pep8, google, airbnb")
 
-        # ========== 4. 生成单元测试 ==========
+        # ========== 5. 生成单元测试 ==========
         if "生成测试" in user_input or "单元测试" in user_input:
             code_match = re.search(r'```(\w*)\n(.*?)```', user_input, re.DOTALL)
             if code_match:
@@ -217,7 +246,7 @@ class CodeAgentV4(BusinessAgent):
                 return self._response(tests, metadata={"type": "tests"})
             return self._response("请提供要生成测试的代码。格式：```python\n代码\n```")
 
-        # ========== 5. 代码审查（增强版）==========
+        # ========== 6. 代码审查（增强版）==========
         if "审查" in user_input or "review" in user_input.lower():
             # 多种代码块格式匹配
                         # 1. 标准闭合代码块
@@ -243,26 +272,25 @@ class CodeAgentV4(BusinessAgent):
             # 如果没有代码块，尝试从消息中提取
             return self._response("请提供要审查的代码，格式：\n```python\n代码\n```")
 
-        # ========== 6. 代码解释 ==========
+        # ========== 7. 代码解释 ==========
         if any(kw in user_input for kw in ["解释", "说明", "什么意思", "作用"]):
             explanation = self._explain_code(user_input)
             return self._response(explanation, metadata={"type": "explanation"})
 
-        # ========== 7. 代码调试 ==========
-        if any(kw in user_input for kw in ["调试", "debug", "错误", "bug", "修复"]):
+        #========== 8. 代码调试 ==========
+        if any(kw in user_input for kw in ["调试", "debug", "错误", "bug"]):
             debug_result = self._debug_code(user_input)
             return self._response(debug_result, metadata={"type": "debug"})
-
-        # ========== 8. 代码优化 ==========
+        # ========== 9. 代码优化 ==========
         if any(kw in user_input for kw in ["优化", "改进", "重构", "性能"]):
             optimized = self._optimize_code(user_input)
             return self._response(optimized, metadata={"type": "optimized"})
 
-        # ========== 9. 设置偏好 ==========
+        # ========== 10. 设置偏好 ==========
         if "偏好" in user_input or "喜欢" in user_input:
             return self._handle_preference(user_input)
 
-        # ========== 10. 默认帮助 ==========
+        # ========== 11. 默认帮助 ==========
         # 默认帮助
         return self._response("")
 
@@ -320,7 +348,7 @@ class CodeAgentV4(BusinessAgent):
         """根据任务复杂度选择模型"""
         if len(prompt) > 500:
             return "qwen2.5:7b"
-        return "qwen2.5:1.5b"
+        return "qwen2:1.5b-instruct"
 
     def _generate_code(self, prompt: str) -> str:
         language = self._detect_language(prompt)
@@ -1067,15 +1095,101 @@ if __name__ == "__main__":
         return ""
 
 
+    # ========== 自主修复功能 ==========
+    def auto_fix(self, code: str, file_path: str = "") -> Dict:
+        """自动修复代码中的问题"""
+        
+        # 1. 分析代码
+        analysis = self.analyze_code(code, file_path)
+        
+        if not analysis.get("issues"):
+            return {
+                "success": True,
+                "message": "未发现需要修复的问题",
+                "fixed_code": code,
+                "issues": []
+            }
+        
+        # 2. 生成修复方案
+        fix_prompt = self._build_fix_prompt(code, analysis["issues"])
+        fixed_code = self._call_llm(fix_prompt)
+        
+        if not fixed_code:
+            return {
+                "success": False,
+                "message": "生成修复方案失败",
+                "fixed_code": code,
+                "issues": analysis["issues"]
+            }
+        
+        # 3. 提取修复后的代码
+        fixed_code = self._extract_code(fixed_code)
+        
+        # 4. 验证修复
+        verification = self._verify_fix(code, fixed_code)
+        
+        return {
+            "success": True,
+            "message": f"已修复 {len(analysis['issues'])} 个问题",
+            "original_code": code,
+            "fixed_code": fixed_code,
+            "issues": analysis["issues"],
+            "verification": verification
+        }
+    
+    def _build_fix_prompt(self, code: str, issues: list) -> str:
+        """构建修复提示词"""
+        issues_text = ""
+        for i, issue in enumerate(issues, 1):
+            issues_text += f"{i}. 行 {issue['line']}: {issue['description']}\n"
+            issues_text += f"   建议: {issue['suggestion']}\n"
+        
+        return f"""请修复以下代码中的所有问题：
+
+## 代码
+```python
+{code}
+需要修复的问题
+{issues_text}
+
+要求
+1.保持原有功能不变
+
+2.修复所有问题
+
+3.只输出修复后的完整代码
+
+4.不要解释
+
+修复后的代码："""
+    def _extract_code(self, text: str) -> str:
+        """从响应中提取代码"""
+        import re
+        match = re.search(r'```(?:python)?\s*\n(.*?)```', text, re.DOTALL)
+        if match:
+            return match.group(1).strip()
+        return text.strip()
+
+    def _verify_fix(self, original: str, fixed: str) -> Dict:
+        """验证修复是否正确"""
+        # 简单验证：检查代码是否有效
+        import re
+    
+        # 检查代码是否变化
+        if original.strip() == fixed.strip():
+            return {"status": "warning", "message": "代码未发生变化"}
+    
+        # 检查是否有语法错误（简单检查）
+        try:
+            compile(fixed, '<string>', 'exec')
+            return {"status": "success", "message": "代码语法正确"}
+        except SyntaxError as e:
+            return {"status": "error", "message": f"修复后代码有语法错误: {e}"}
+
+
+
 if __name__ == "__main__":
     agent = CodeAgentV4("test")
     result = agent.process("写一个快速排序函数")
     print(result.get('response')[:300])
     print("\n✅ CodeAgentV4 测试通过")
-
-
-
-    # 修改 _execute_business 末尾，不返回帮助信息
-    # 找到 "默认帮助" 部分，修改为：
-    # # ========== 10. 默认 ==========
-    # return self._response("")
