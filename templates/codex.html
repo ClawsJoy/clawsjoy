@@ -130,6 +130,10 @@
                 <button class="action-btn" id="fixBtn">🔧 修复</button>
                 <button class="action-btn" id="testBtn">🧪 测试</button>
                 <button class="action-btn primary" id="saveBtn">💾 保存</button>
+                <button class="action-btn" id="previewBtn">👁️ 预览</button>
+                <button class="action-btn" id="tabEditorBtn">📑 多标签</button>
+                <button class="action-btn" id="debugBtn">🐛 调试</button>
+                <button class="action-btn" id="graphBtn">📊 依赖图</button>
             </div>
         </div>
         <div class="file-info" id="fileInfo"><span>未选择文件</span><span></span></div>
@@ -715,5 +719,46 @@ const originalFixBtn = document.getElementById("fixBtn").onclick;
 document.getElementById("fixBtn").onclick = async function() {
     // 原有修复逻辑... 生成 fixedCode
     // 然后调用 showDiffView(originalCode, fixedCode)
+};
+</script>
+<script>
+// ========== 新增功能按钮 ==========
+
+// 1. 实时预览
+document.getElementById("previewBtn").onclick = function() {
+    const editor = document.getElementById("codeEditor");
+    const content = editor.value;
+    
+    // 检测文件类型
+    const isMarkdown = currentFile && currentFile.endsWith('.md');
+    const isHTML = currentFile && (currentFile.endsWith('.html') || currentFile.endsWith('.htm'));
+    
+    if (isMarkdown) {
+        window.open('/preview?type=markdown', 'Preview', 'width=800,height=600');
+    } else if (isHTML) {
+        window.open('/preview?type=html', 'Preview', 'width=800,height=600');
+    } else {
+        addMessage('💡 支持预览 Markdown (.md) 和 HTML (.html) 文件');
+    }
+};
+
+// 2. 多标签编辑器
+document.getElementById("tabEditorBtn").onclick = function() {
+    window.open('/tab_editor.html', 'TabEditor', 'width=1200,height=800');
+};
+
+// 3. 交互式调试
+document.getElementById("debugBtn").onclick = function() {
+    window.open('/debug_console.html', 'DebugConsole', 'width=900,height=600');
+};
+
+// 4. 依赖图
+document.getElementById("graphBtn").onclick = async function() {
+    if (!currentProjectId) {
+        addMessage("⚠️ 请先选择项目");
+        return;
+    }
+    addMessage("📊 正在生成依赖图...");
+    window.open(`/api/v5/project/${currentProjectId}/graph?user_id=codex_user`, 'Graph', 'width=1200,height=800');
 };
 </script>
