@@ -64,7 +64,7 @@ class MemoryAgentV4(BusinessAgent):
             return self._handle_list()
 
         # ========== 5. 默认帮助 ==========
-        return self._response(self._get_help())
+        return self._response(self._smart_fallback(user_input))
 
     def _handle_remember(self, user_input: str) -> Optional[Dict]:
         """处理记忆请求 - 支持多种格式"""

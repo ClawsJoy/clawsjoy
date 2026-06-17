@@ -44,7 +44,7 @@ class VisionAgentV4(BusinessAgent):
         if any(kw in user_input for kw in ["分析图片", "识别", "描述图像"]):
             return self._analyze_image(user_input)
         
-        return self._response(self._get_help())
+        return self._response(self._smart_fallback(user_input))
     
     def _generate_image(self, prompt: str) -> Dict:
         """生成图像"""

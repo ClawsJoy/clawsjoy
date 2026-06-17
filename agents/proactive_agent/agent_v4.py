@@ -46,7 +46,7 @@ class ProactiveAgentV4(BusinessAgent):
         if "我的提醒" in user_input:
             return self._list_reminders()
         
-        return self._response(self._get_help())
+        return self._response(self._smart_fallback(user_input))
     
     def _set_reminder(self, user_input: str) -> Dict:
         """设置提醒"""

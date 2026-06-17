@@ -56,7 +56,7 @@ class CollaborationAgentV4(BusinessAgent):
         if "我的任务" in user_input or "任务列表" in user_input:
             return self._list_tasks()
 
-        return self._response(self._get_help())
+        return self._response(self._smart_fallback(user_input))
 
     def _assign_task(self, user_input: str) -> Dict:
         """分配任务"""

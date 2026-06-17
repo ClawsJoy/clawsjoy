@@ -43,7 +43,7 @@ class AudioAgentV4(BusinessAgent):
         if any(kw in user_input for kw in ["分析音频", "音频分析"]):
             return self._analyze_audio(user_input)
         
-        return self._response(self._get_help())
+        return self._response(self._smart_fallback(user_input))
     
     def _transcribe_audio(self, user_input: str) -> Dict:
         """音频转文字"""

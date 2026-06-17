@@ -59,7 +59,7 @@ class YoutubeAgentV4(BusinessAgent):
             return self._optimize_seo(user_input)
 
         # ========== 默认帮助 ==========
-        return self._response(self._get_help())
+        return self._response(self._smart_fallback(user_input))
 
     # ========== 1. 下载功能 ==========
     def _download_video(self, user_input: str) -> Dict:
