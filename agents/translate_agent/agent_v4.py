@@ -185,8 +185,7 @@ class TranslateAgentV4(BusinessAgent):
         return f"翻译失败，请重试。\n原文：{text}\n\n💡 提示：可以尝试更清晰的表达"
     
     def _get_help(self) -> str:
-        languages = "、".join([v["name"] for v in self.LANGUAGES.values()])
-        return f"""🌐 **翻译助手**
+        return f"💡 我是 {self.name}，请描述你需要什么帮助，我会尽力帮你。"
 
 支持语言：{languages}
 
