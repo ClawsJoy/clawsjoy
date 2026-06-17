@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 工作流助手 - ClawsJoy</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #1e1e2e;
+            color: #cdd6f4;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .title-bar {
+            background: #181825;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #313244;
+            cursor: move;
+            -webkit-app-region: drag;
+        }
+        .title-bar h1 { font-size: 16px; color: #f9e2af; }
+        .title-bar-buttons button {
+            background: none; border: none; color: #cdd6f4;
+            cursor: pointer; padding: 4px 8px;
+            -webkit-app-region: no-drag;
+        }
+        .title-bar-buttons button:hover { background: #313244; }
+        
+        .main-layout {
+            flex: 1;
+            display: flex;
+            gap: 16px;
+            padding: 16px;
+            overflow: hidden;
+        }
+        
+        .left-panel { flex: 1; display: flex; flex-direction: column; gap: 16px; }
+        .right-panel { width: 350px; display: flex; flex-direction: column; gap: 16px; }
+        
+        .card {
+            background: #181825;
+            border-radius: 12px;
+            padding: 16px;
+            overflow-y: auto;
+        }
+        .card h3 { margin-bottom: 12px; color: #f9e2af; }
+        
+        /* 进度条 */
+        .progress-container { margin: 12px 0; }
+        .progress-bar {
+            height: 8px; background: #313244; border-radius: 4px; overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%; background: #a6e3a1; border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        .progress-label { display: flex; justify-content: space-between; font-size: 12px; color: #6c7086; }
+        
+        /* 阶段指示器 */
+        .stages {
+            display: flex; gap: 8px; margin: 12px 0;
+        }
+        .stage {
+            flex: 1; text-align: center; padding: 12px 8px;
+            border-radius: 8px; background: #313244; font-size: 12px;
+        }
+        .stage.done { background: #a6e3a1; color: #1e1e2e; }
+        .stage.active { background: #f9e2af; color: #1e1e2e; }
+        .stage.pending { background: #313244; color: #6c7086; }
+        
+        /* 任务列表 */
+        .task-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 12px; margin: 4px 0;
+            border-radius: 6px; background: #1e1e2e;
+        }
+        .task-item:hover { background: #313244; }
+        .task-item .status { font-size: 16px; width: 24px; }
+        .task-item .task-name { flex: 1; }
+        .task-item .task-agent { font-size: 11px; color: #6c7086; }
+        .task-item.done { opacity: 0.6; }
+        .task-item.done .task-name { text-decoration: line-through; }
+        
+        /* Agent 推荐 */
+        .agent-chip {
+            display: inline-block; padding: 4px 12px; margin: 4px;
+            border-radius: 12px; background: #313244; font-size: 12px;
+            cursor: pointer;
+        }
+        .agent-chip:hover { background: #4f46e5; }
+        .agent-chip.recommended { background: #4f46e5; }
+        
+        .actions {
+            display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap;
+        }
+        .actions button {
+            padding: 8px 20px; border: none; border-radius: 6px;
+            cursor: pointer; font-size: 13px;
+        }
+        .btn-start { background: #a6e3a1; color: #1e1e2e; }
+        .btn-pause { background: #f9e2af; color: #1e1e2e; }
+        .btn-resume { background: #89b4fa; color: #1e1e2e; }
+        .btn-done { background: #cba6f7; color: #1e1e2e; }
+        .btn-add { background: #313244; color: #cdd6f4; }
+        .actions button:hover { opacity: 0.8; }
+        
+        .chat-area {
+            flex: 1; overflow-y: auto; font-size: 12px;
+        }
+        .chat-msg {
+            padding: 8px 12px; margin: 4px 0; border-radius: 6px;
+        }
+        .chat-msg.system { background: #313244; border-left: 3px solid #f9e2af; }
+        .chat-msg.user { background: #313244; border-left: 3px solid #89b4fa; }
+        .chat-msg.agent { background: #1e1e2e; border-left: 3px solid #a6e3a1; }
+        
+        .input-area {
+            display: flex; gap: 8px; margin-top: 12px;
+        }
+        .input-area input {
+            flex: 1; background: #1e1e2e; border: 1px solid #313244;
+            border-radius: 20px; padding: 8px 16px; color: #cdd6f4;
+            outline: none;
+        }
+        .input-area button {
+            background: #f9e2af; border: none; border-radius: 20px;
+            padding: 8px 16px; color: #1e1e2e; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="title-bar">
+        <h1>🚀 工作流助手</h1>
+        <div class="title-bar-buttons">
+            <button id="minimizeBtn">─</button>
+            <button id="closeBtn">✕</button>
+        </div>
+    </div>
+    
+    <div class="main-layout">
+        <div class="left-panel">
+            <div class="card">
+                <h3>📋 当前工作流</h3>
+                <div class="progress-container">
+                    <div class="progress-label">
+                        <span id="taskName">分析销售数据 → 生成图表 → 导出报告</span>
+                        <span id="progressText">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill" style="width:0%"></div>
+                    </div>
+                </div>
+                <div class="stages">
+                    <div class="stage done" id="stage1">📋 需求 ✅</div>
+                    <div class="stage active" id="stage2">💻 开发 🔄</div>
+                    <div class="stage pending" id="stage3">🧪 测试 ⏳</div>
+                    <div class="stage pending" id="stage4">🚀 部署 ⏳</div>
+                </div>
+            </div>
+            
+            <div class="card" style="flex:1;">
+                <h3>📝 任务列表</h3>
+                <div id="taskList">
+                    <div class="task-item done">
+                        <span class="status">✅</span>
+                        <span class="task-name">收集需求</span>
+                        <span class="task-agent">orchestrator</span>
+                    </div>
+                    <div class="task-item">
+                        <span class="status">🔄</span>
+                        <span class="task-name">分析销售数据</span>
+                        <span class="task-agent">analysis_agent</span>
+                    </div>
+                    <div class="task-item">
+                        <span class="status">⏳</span>
+                        <span class="task-name">生成图表</span>
+                        <span class="task-agent">code_agent</span>
+                    </div>
+                    <div class="task-item">
+                        <span class="status">⏳</span>
+                        <span class="task-name">导出报告</span>
+                        <span class="task-agent">writer_agent</span>
+                    </div>
+                </div>
+                <div class="actions">
+                    <button class="btn-start" id="startBtn">▶ 开始</button>
+                    <button class="btn-pause" id="pauseBtn">⏸ 暂停</button>
+                    <button class="btn-resume" id="resumeBtn">▶ 继续</button>
+                    <button class="btn-done" id="doneBtn">✅ 完成</button>
+                    <button class="btn-add" id="addTaskBtn">➕ 添加任务</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="right-panel">
+            <div class="card" style="flex:1;">
+                <h3>🤖 推荐 Agent</h3>
+                <div id="agentRecommendations">
+                    <span class="agent-chip recommended">analysis_agent</span>
+                    <span class="agent-chip">code_agent</span>
+                    <span class="agent-chip">writer_agent</span>
+                    <span class="agent-chip">translate_agent</span>
+                    <span class="agent-chip">calculator_agent</span>
+                </div>
+                <div style="margin-top:12px;font-size:12px;color:#6c7086;">
+                    💡 点击 Agent 名称可快速调用
+                </div>
+            </div>
+            
+            <div class="card" style="flex:1.5;">
+                <h3>💬 工作流日志</h3>
+                <div class="chat-area" id="chatLog">
+                    <div class="chat-msg system">🚀 工作流已启动</div>
+                    <div class="chat-msg system">📋 任务: 分析销售数据 → 生成图表 → 导出报告</div>
+                    <div class="chat-msg agent">🤖 analysis_agent: 开始分析销售数据...</div>
+                </div>
+                <div class="input-area">
+                    <input type="text" id="logInput" placeholder="输入指令...">
+                    <button id="logSendBtn">发送</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let progress = 0;
+        let isRunning = false;
+        
+        function updateProgress(value) {
+            progress = Math.min(100, Math.max(0, value));
+            document.getElementById('progressFill').style.width = progress + '%';
+            document.getElementById('progressText').textContent = progress + '%';
+        }
+        
+        document.getElementById('startBtn').onclick = () => {
+            isRunning = true;
+            addLog('system', '▶️ 工作流已开始执行');
+            const interval = setInterval(() => {
+                if (isRunning && progress < 100) {
+                    updateProgress(progress + 5);
+                    if (progress % 25 === 0) {
+                        addLog('agent', `🤖 进度 ${progress}%...`);
+                    }
+                }
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    addLog('system', '✅ 工作流执行完成！');
+                }
+            }, 500);
+        };
+        
+        document.getElementById('pauseBtn').onclick = () => {
+            isRunning = false;
+            addLog('system', '⏸ 工作流已暂停');
+        };
+        
+        document.getElementById('resumeBtn').onclick = () => {
+            isRunning = true;
+            addLog('system', '▶️ 工作流已恢复');
+        };
+        
+        document.getElementById('doneBtn').onclick = () => {
+            updateProgress(100);
+            addLog('system', '✅ 工作流已完成！');
+        };
+        
+        document.getElementById('addTaskBtn').onclick = () => {
+            const task = prompt('输入新任务名称:');
+            if (task) {
+                const list = document.getElementById('taskList');
+                const div = document.createElement('div');
+                div.className = 'task-item';
+                div.innerHTML = `
+                    <span class="status">⏳</span>
+                    <span class="task-name">${task}</span>
+                    <span class="task-agent">待分配</span>
+                `;
+                list.appendChild(div);
+                addLog('system', `📝 添加任务: ${task}`);
+            }
+        };
+        
+        function addLog(type, msg) {
+            const chat = document.getElementById('chatLog');
+            const div = document.createElement('div');
+            div.className = `chat-msg ${type}`;
+            div.textContent = msg;
+            chat.appendChild(div);
+            chat.scrollTop = chat.scrollHeight;
+        }
+        
+        document.getElementById('logSendBtn').onclick = () => {
+            const input = document.getElementById('logInput');
+            const msg = input.value.trim();
+            if (msg) {
+                addLog('user', `👤 ${msg}`);
+                input.value = '';
+                setTimeout(() => {
+                    addLog('agent', `🤖 收到指令: "${msg}"，正在处理...`);
+                }, 500);
+            }
+        };
+        
+        document.getElementById('logInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') document.getElementById('logSendBtn').click();
+        });
+        
+        document.getElementById('minimizeBtn').onclick = () => window.parent.postMessage({ type: "minimize" }, "*");
+        document.getElementById('closeBtn').onclick = () => window.parent.postMessage({ type: "close" }, "*");
+    </script>
+</body>
+</html>
+<script>
+// 从 URL 获取会话 ID
+const urlParams = new URLSearchParams(window.location.search);
+const SESSION_ID = urlParams.get('session');
+
+if (SESSION_ID) {
+    console.log(`📌 工作流使用会话: ${SESSION_ID}`);
+    // 在工作流日志中显示
+    addLog('system', `📌 会话: ${SESSION_ID}`);
+}
+</script>

@@ -10,6 +10,7 @@
 - 俱乐部、管家、隐私保护
 """
 import json
+import uuid
 import os
 import re
 import sys
@@ -48,7 +49,7 @@ from engine.security import desensitizer
 from core.agents.wisdom.wisdom_factory import wisdom_factory
 from core.agents.business.business_agent import BusinessAgent
 from core.lib.json_standard import StandardJSON
-
+from core.lib.session_manager import session_manager
 
 # 配置日志级别
 logging.basicConfig(
@@ -258,6 +259,7 @@ def record_learning(fact, success=True):
 
 # ========== 项目级用户状态管理 ==========
 import json
+import uuid
 from pathlib import Path
 from typing import Dict, Any, Optional
 
@@ -905,6 +907,7 @@ def user_register():
 def _create_user_directories(username, user_id, email):
     """创建用户目录结构（统一函数）"""
     import json
+    import uuid
     from pathlib import Path
     from datetime import datetime
     
@@ -940,6 +943,7 @@ def _create_user_directories(username, user_id, email):
 def user_login():
     """用户登录 - 返回 JWT token"""
     from flask import jsonify, request
+    import uuid
 
     from core.lib.auth_api import AuthManager
 
@@ -992,6 +996,7 @@ def user_verify():
 def user_profile():
     """获取用户资料"""
     import json
+    import uuid
     from pathlib import Path
 
     from flask import g, jsonify
@@ -1210,6 +1215,7 @@ def chat_stream():
     """流式对话接口 - 使用智慧 Agent 流式输出"""
     from flask import Response, stream_with_context
     import json
+    import uuid
 
     data = request.json or {}
     message = data.get("message", "")
@@ -1246,6 +1252,7 @@ def submit_feedback():
     
     from pathlib import Path
     import json
+    import uuid
     from datetime import datetime
     
     feedback_file = Path("data/feedback.json")
@@ -1490,6 +1497,7 @@ def wisdom_chat():
         # 在返回结果前记录交互
         try:
             from core.lib.llm_nurture import get_nurture
+
             nurture = get_nurture(user_id)
             # 判断是否成功
             is_success = result.get("success", True)
@@ -2136,6 +2144,120 @@ def debug_console_page():
 @app.route("/diff_viewer.html")
 def diff_viewer_page():
     return send_from_directory("templates", "diff_viewer.html")
+
+@app.route("/writer_panel.html")
+def writer_panel():
+    return send_from_directory("templates", "writer_panel.html")
+
+@app.route("/workflow_panel.html")
+def workflow_panel():
+    return send_from_directory("templates", "workflow_panel.html")
+
+
+@app.route("/butler_3d.html")
+def butler_3d():
+    return send_from_directory("templates", "butler_3d.html")
+
+# ========== 会话 API ==========
+@app.route("/api/v5/session/create", methods=["POST"])
+def session_create():
+    data = request.json or {}
+    user_id = data.get("user_id", "default")
+    session_id = str(uuid.uuid4())[:8]
+    session = session_manager.get_or_create(session_id, user_id)
+    return jsonify({
+        "success": True,
+        "session_id": session.id,
+        "created_at": session.created_at
+    })
+
+@app.route("/api/v5/session/<session_id>", methods=["GET"])
+def session_get(session_id):
+    session = session_manager.load(session_id)
+    if not session:
+        return jsonify({"success": False, "error": "会话不存在"}), 404
+    return jsonify({
+        "success": True,
+        "session": session.to_dict()
+    })
+
+@app.route("/api/v5/session/<session_id>/message", methods=["POST"])
+def session_message(session_id):
+    data = request.json or {}
+    role = data.get("role", "user")
+    content = data.get("content", "")
+    agent = data.get("agent", "chat_agent")
+    
+    session = session_manager.load(session_id)
+    if not session:
+        return jsonify({"success": False, "error": "会话不存在"}), 404
+    
+    # 添加消息
+    session.add_message(role, content)
+    session_manager.save(session)
+    
+    # 调用 Agent
+    from core.agents.wisdom.wisdom_factory import wisdom_factory
+    wisdom_agent = wisdom_factory.get_wisdom_agent(agent, session.user_id)
+    
+    if wisdom_agent:
+        result = wisdom_agent.process(content)
+        response = result.get("response", result.get("output_content", "处理完成"))
+        session.add_message("assistant", response)
+        session_manager.save(session)
+        return jsonify({
+            "success": True,
+            "response": response,
+            "session_id": session.id
+        })
+    
+    return jsonify({"success": False, "error": "Agent 不可用"}), 404
+
+@app.route("/api/v5/session/<session_id>/task", methods=["POST"])
+def session_task(session_id):
+    data = request.json or {}
+    name = data.get("name", "任务")
+    agent = data.get("agent", "orchestrator")
+    
+    session = session_manager.load(session_id)
+    if not session:
+        return jsonify({"success": False, "error": "会话不存在"}), 404
+    
+    task = session.add_task(name, agent)
+    session_manager.save(session)
+    
+    return jsonify({
+        "success": True,
+        "task": {
+            "id": task.id,
+            "name": task.name,
+            "status": task.status,
+            "agent": task.agent
+        }
+    })
+
+@app.route("/api/v5/session/<session_id>/task/<task_id>", methods=["PUT"])
+def session_task_update(session_id, task_id):
+    data = request.json or {}
+    status = data.get("status")
+    progress = data.get("progress")
+    result = data.get("result")
+    
+    session = session_manager.load(session_id)
+    if not session:
+        return jsonify({"success": False, "error": "会话不存在"}), 404
+    
+    session.update_task(task_id, status, progress, result)
+    session_manager.save(session)
+    
+    return jsonify({"success": True})
+
+@app.route("/api/v5/session/list", methods=["GET"])
+def session_list():
+    user_id = request.args.get("user_id", "default")
+    sessions = session_manager.list_sessions(user_id)
+    return jsonify({"success": True, "sessions": sessions})
+
 
 
 # ========== 启动入口 ==========

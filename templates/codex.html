@@ -105,6 +105,7 @@
     </style>
 </head>
 <body>
+    <div id="three-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;"></div>
 <div class="app">
     <div class="project-sidebar" id="projectSidebar">
         <div class="sidebar-header"><h1>📁 项目</h1></div>
@@ -126,6 +127,9 @@
             <div class="agent-selector" id="agentSelector"></div>
             <div class="action-buttons">
                 <button class="action-btn" id="openCodeAgentBtn">🤖 Code Agent</button>
+                <button class="action-btn" id="openWriterBtn" style="background:#cba6f7; color:#1e1e2e;">✍️ 作家</button>
+                <button class="action-btn" id="openWorkflowBtn" style="background:#f9e2af; color:#1e1e2e;">🚀 工作流</button>
+                <button class="action-btn" id="openButlerBtn" style="background:#cba6f7; color:#1e1e2e;">👔 3D管家</button>
                 <button class="action-btn" id="reviewBtn">🔍 审核</button>
                 <button class="action-btn" id="fixBtn">🔧 修复</button>
                 <button class="action-btn" id="testBtn">🧪 测试</button>
@@ -167,7 +171,7 @@ let originalContent = "";
 let currentAgent = "chat_agent";
 
 const AGENTS = {
-    code_agent: { name: "Code", icon: "💻" }, chat_agent: { name: "Chat", icon: "💬" },
+    chat_agent: { name: "Chat", icon: "💬" },
     analysis_agent: { name: "Analysis", icon: "📊" }, translate_agent: { name: "Translate", icon: "🌐" },
     calculator_agent: { name: "Calc", icon: "🔢" }, butler_agent: { name: "Butler", icon: "👤" },
     orchestrator: { name: "Orch", icon: "🎯" }, memory_agent: { name: "Memory", icon: "🧠" },
@@ -762,3 +766,230 @@ document.getElementById("graphBtn").onclick = async function() {
     window.open(`/api/v5/project/${currentProjectId}/graph?user_id=codex_user`, 'Graph', 'width=1200,height=800');
 };
 </script>
+<script>
+// ========== Diff 视图集成 ==========
+let diffWindow = null;
+
+function showDiffView(original, fixed) {
+    if (diffWindow && !diffWindow.closed) {
+        diffWindow.close();
+    }
+    diffWindow = window.open('/diff_viewer.html', 'DiffViewer', 'width=1200,height=800,resizable=yes');
+    
+    // 等待加载完成后发送数据
+    const checkReady = setInterval(() => {
+        if (diffWindow && !diffWindow.closed && diffWindow.document) {
+            diffWindow.postMessage({
+                type: 'show_diff',
+                original: original,
+                fixed: fixed
+            }, '*');
+            clearInterval(checkReady);
+        }
+    }, 200);
+}
+
+// 监听 Diff 视图的确认消息
+window.addEventListener('message', function(event) {
+    if (event.data.type === 'apply_fix') {
+        const fixed = event.data.fixed;
+        if (fixed) {
+            const editor = document.getElementById('codeEditor');
+            editor.value = fixed;
+            currentFileContent = fixed;
+            addMessage('✅ 修复已应用到编辑器');
+            if (diffWindow && !diffWindow.closed) {
+                diffWindow.close();
+            }
+        }
+    }
+    if (event.data.type === 'close_diff') {
+        if (diffWindow && !diffWindow.closed) {
+            diffWindow.close();
+        }
+    }
+});
+
+// 修改修复功能，显示 Diff 视图
+document.getElementById("fixBtn").onclick = async function() {
+    if (!currentProjectId || !currentFile) {
+        addMessage("⚠️ 请先选择项目和文件");
+        return;
+    }
+    
+    const currentCode = document.getElementById("codeEditor").value;
+    addMessage(`🔧 正在生成修复方案...`);
+    
+    const fixPrompt = `请修复以下代码中的问题，只输出修复后的完整代码，不要解释：
+
+${currentCode}`;
+    
+    try {
+        const response = await fetch("/api/v5/wisdom/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + TOKEN },
+            body: JSON.stringify({
+                user_id: "codex_user",
+                agent: "code_agent",
+                message: fixPrompt.slice(0, 3500),
+                project_id: currentProjectId,
+                file_path: currentFile
+            })
+        });
+        const data = await response.json();
+        let fixedCode = data.response || data.output_content || "";
+        
+        const codeMatch = fixedCode.match(/```(?:python)?\n([\s\S]*?)```/);
+        if (codeMatch) {
+            fixedCode = codeMatch[1];
+        }
+        fixedCode = fixedCode.replace(/^```python\n?/, '').replace(/\n?```$/, '');
+        
+        if (fixedCode && fixedCode.length > 50) {
+            // 显示 Diff 视图
+            showDiffView(currentCode, fixedCode);
+            window.pendingFixedCode = fixedCode;
+        } else {
+            addMessage(`⚠️ 未能生成修复代码`);
+        }
+    } catch (err) {
+        addMessage(`❌ 修复失败: ${err.message}`);
+    }
+};
+</script>
+<script>
+document.getElementById("openWriterBtn").onclick = function() {
+    window.open('/writer_panel.html', 'WriterPanel', 'width=1200,height=800,resizable=yes');
+};
+</script>
+<script>
+document.getElementById("openWorkflowBtn").onclick = function() {
+    window.open('/workflow_panel.html', 'WorkflowPanel', 'width=1200,height=800,resizable=yes');
+};
+</script>
+
+<style>
+/* 3D 背景 - CSS 实现，无需 Three.js */
+#three-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse at center, #0f172a 0%, #050510 100%);
+    overflow: hidden;
+}
+#three-canvas::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: 
+        radial-gradient(circle at 30% 40%, rgba(123, 47, 247, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 70% 60%, rgba(0, 243, 255, 0.08) 0%, transparent 50%);
+    animation: rotate 60s linear infinite;
+}
+#three-canvas::after {
+    content: '';
+    position: absolute;
+    top: 20%;
+    left: 20%;
+    width: 60%;
+    height: 60%;
+    background: radial-gradient(circle at center, rgba(123, 47, 247, 0.05) 0%, transparent 70%);
+    animation: pulse 8s ease-in-out infinite;
+}
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.5); opacity: 1; }
+}
+</style>
+<script>
+// CSS 粒子系统
+(function() {
+    const container = document.getElementById('three-canvas');
+    if (!container) return;
+    for (let i = 0; i < 100; i++) {
+        const p = document.createElement('div');
+        p.style.cssText = `
+            position: absolute;
+            width: ${Math.random() * 3 + 1}px;
+            height: ${Math.random() * 3 + 1}px;
+            background: ${Math.random() > 0.5 ? 'rgba(123, 47, 247, 0.6)' : 'rgba(0, 243, 255, 0.6)'};
+            border-radius: 50%;
+            left: ${Math.random() * 100}%;
+            top: ${Math.random() * 100}%;
+            animation: float ${15 + Math.random() * 20}s linear infinite;
+            animation-delay: ${Math.random() * 10}s;
+            opacity: ${Math.random() * 0.5 + 0.2};
+        `;
+        container.appendChild(p);
+    }
+})();
+</script>
+<script>
+document.getElementById("openButlerBtn").onclick = function() {
+    window.open('/butler_3d.html', 'Butler3D', 'width=600,height=700,resizable=yes');
+};
+</script>
+<script>
+// 统一会话 ID（在页面加载时创建）
+let SESSION_ID = null;
+
+async function getSession() {
+    if (SESSION_ID) return SESSION_ID;
+    
+    try {
+        const res = await fetch("/api/v5/session/create", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: "codex_user" })
+        });
+        const data = await res.json();
+        SESSION_ID = data.session_id;
+        console.log(`📌 会话已创建: ${SESSION_ID}`);
+        return SESSION_ID;
+    } catch (e) {
+        console.error("会话创建失败:", e);
+        return null;
+    }
+}
+
+// 所有弹板打开时传递会话 ID
+function openPanelWithSession(url, name) {
+    getSession().then(sessionId => {
+        if (sessionId) {
+            window.open(`${url}?session=${sessionId}`, name, 'width=1200,height=800,resizable=yes');
+        } else {
+            window.open(url, name, 'width=1200,height=800,resizable=yes');
+        }
+    });
+}
+
+// 修改弹板按钮
+document.getElementById("openCodeAgentBtn").onclick = () => {
+    openPanelWithSession('/code_agent_panel.html', 'CodeAgent');
+};
+
+document.getElementById("openWriterBtn").onclick = () => {
+    openPanelWithSession('/writer_panel.html', 'WriterPanel');
+};
+
+document.getElementById("openWorkflowBtn").onclick = () => {
+    openPanelWithSession('/workflow_panel.html', 'WorkflowPanel');
+};
+
+document.getElementById("openButlerBtn").onclick = () => {
+    openPanelWithSession('/butler_3d.html', 'Butler3D');
+};
+</script>
+<script>
+// 统一弹板打开函数（已存在，验证）

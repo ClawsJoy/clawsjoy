@@ -743,3 +743,22 @@ document.getElementById("autoFixBtn").onclick = async function() {
     }
 };
 </script>
+<script>
+// 从 URL 获取会话 ID
+const urlParams = new URLSearchParams(window.location.search);
+const SESSION_ID = urlParams.get('session');
+
+if (SESSION_ID) {
+    console.log(`📌 Code Agent 使用会话: ${SESSION_ID}`);
+    // 所有 API 请求都带上 session_id
+}
+
+// API 调用统一添加 session
+async function apiWithSession(endpoint, method, body) {
+    const payload = body || {};
+    if (SESSION_ID) {
+        payload.session_id = SESSION_ID;
+    }
+    // ... 原有 API 逻辑
+}
+</script>
