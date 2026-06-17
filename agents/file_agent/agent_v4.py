@@ -63,7 +63,7 @@ class FileAgentV4(BusinessAgent):
         if "搜索" in user_input:
             return self._search_files(user_input)
         
-        return self._response(self._get_help())
+        return self._response(self._smart_fallback(user_input))
     
     def _read_file(self, user_input: str) -> Dict:
         """读取文件"""

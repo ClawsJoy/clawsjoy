@@ -75,7 +75,7 @@ class CalculatorAgentV4(BusinessAgent):
         expression = self._extract_expression(user_input)
         
         if not expression:
-            return self._response(self._get_help())
+            return self._response(self._smart_fallback(user_input))
         
         # 科学计算
         result = self._scientific_calculate(expression)
@@ -200,7 +200,7 @@ class CalculatorAgentV4(BusinessAgent):
         if response:
             return f"🔢 **科学计算结果**\n\n📐 表达式：`{expression}`\n\n🤖 LLM 计算：\n{response}"
         
-        return self._get_help()
+        return "💡 我是计算助手，请告诉我你要计算什么。"
     
     def _get_help(self) -> str:
         """帮助信息"""

@@ -62,7 +62,7 @@ class WriterAgentV4(BusinessAgent):
         if any(kw in user_input for kw in ["重写", "改写", "换种说法"]):
             return self._rewrite(user_input)
         
-        return self._response(self._get_help())
+        return self._response(self._smart_fallback(user_input))
     
     def _write(self, user_input: str) -> Dict:
         """撰写文案"""

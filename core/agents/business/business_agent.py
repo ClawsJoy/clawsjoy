@@ -845,3 +845,9 @@ class BusinessAgent(SmartAgent, JSONCapableMixin):
             # 热重载
             if hasattr(self, '_load_scriptbook'):
                 self._load_scriptbook()
+
+    def _smart_fallback(self, user_input: str) -> str:
+        """智能 fallback - 子类可覆盖"""
+        from core.lib.smart_fallback import smart_fallback
+        description = getattr(self, 'description', '智能助手')
+        return smart_fallback(self.name, user_input, description)

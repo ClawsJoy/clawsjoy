@@ -52,7 +52,7 @@ class VideoAgentV4(BusinessAgent):
         if any(kw in user_input for kw in ["生成脚本", "写脚本", "视频脚本"]):
             return self._generate_script(user_input)
         
-        return self._response(self._get_help())
+        return self._response(self._smart_fallback(user_input))
     
     def _analyze_video(self, user_input: str) -> Dict:
         """分析视频"""

@@ -39,7 +39,7 @@ class ThreeDAgentV4(BusinessAgent):
         if any(kw in user_input for kw in ["渲染", "场景"]):
             return self._render_scene(user_input)
         
-        return self._response(self._get_help())
+        return self._response(self._smart_fallback(user_input))
     
     def _generate_model(self, user_input: str) -> Dict:
         """生成 3D 模型描述"""

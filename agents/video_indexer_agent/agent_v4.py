@@ -40,7 +40,7 @@ class VideoIndexerAgentV4(BusinessAgent):
         if any(kw in user_input for kw in ["搜索视频", "查找视频"]):
             return self._search_video(user_input)
         
-        return self._response(self._get_help())
+        return self._response(self._smart_fallback(user_input))
     
     def _index_video(self, user_input: str) -> Dict:
         """索引视频"""

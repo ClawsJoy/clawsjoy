@@ -45,7 +45,7 @@ class AnalysisAgentV4(BusinessAgent):
             return self._response(result)
         
         # 默认
-        return self._response(self._get_help())
+        return self._response(self._smart_fallback(user_input))
     
     def _analyze(self, text: str) -> str:
         """深度数据分析 - 增强版"""
