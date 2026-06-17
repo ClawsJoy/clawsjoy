@@ -76,25 +76,3 @@ class VisionAgentV4(BusinessAgent):
             metadata={"type": "analysis"}
         )
     
-    def _get_help(self) -> str:
-        return """👁️ **视觉助手**
-
-支持功能:
-- 生成图片: "生成图片 一只猫"
-- 分析图片: "分析图片 /path/to/image.jpg"
-- 图像描述: "描述这张图片"
-
-💡 提示: 可接入 Stable Diffusion 实现真实图像生成"""
-    
-    def _response(self, content: str, **kwargs) -> Dict:
-        return {
-            "success": True,
-            "response": content,
-            "output_content": content,
-            **kwargs
-        }
-
-
-if __name__ == "__main__":
-    agent = VisionAgentV4("test")
-    print("✅ vision_agent_v4 测试通过")

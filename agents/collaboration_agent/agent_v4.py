@@ -241,29 +241,3 @@ class CollaborationAgentV4(BusinessAgent):
 
         return self._response("\n".join(lines))
 
-    def _get_help(self) -> str:
-        return """🤝 **协作助手**
-
-支持功能:
-- 分配任务: "分配任务 写季度报告 给 张三"
-- 安排会议: "安排会议 项目讨论 时间 今天下午3点"
-- 委托 Agent: "委托 code_agent 写一个排序函数"
-- 多 Agent 协作: "先用 analysis_agent 分析数据，再用 code_agent 生成报表"
-- 查看任务: "我的任务"
-
-💡 可委托的 Agent: chat_agent, code_agent, analysis_agent, translate_agent, calculator_agent"""
-
-    def _response(self, content: str, **kwargs) -> Dict:
-        return {
-            "success": True,
-            "response": content,
-            "output_content": content,
-            **kwargs
-        }
-
-
-if __name__ == "__main__":
-    agent = CollaborationAgentV4("test")
-    print("✅ collaboration_agent_v4 测试通过")
-
-    

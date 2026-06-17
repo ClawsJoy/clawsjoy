@@ -127,8 +127,7 @@ class DialectAgentV4(BusinessAgent):
         return self._response(self._get_help())
     
     def _get_help(self) -> str:
-        name = self._profile.get_dialect_name()
-        return f"""🗣️ **{name}大师**
+        return f"💡 我是 {self.name}，请描述你需要什么帮助，我会尽力帮你。"
 
 📖 **教方盲**：学习方言 阿拉 = 我们
 🏷️ **起名字**：设置方言：{name}

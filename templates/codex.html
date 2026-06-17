@@ -614,7 +614,7 @@ async function sendChat() {
             })
         });
         const data = await response.json();
-        addMessage(data.response || data.output_content || "处理完成");
+        addMessage(data.response || data.output_content || "🤔 没有收到有效回复，请重试");
     } catch (err) {
         addMessage(`请求失败: ${err.message}`);
     }
