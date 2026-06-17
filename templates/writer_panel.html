@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✍️ 作家助手 - ClawsJoy</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #1e1e2e;
+            color: #cdd6f4;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .title-bar {
+            background: #181825;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #313244;
+            cursor: move;
+            -webkit-app-region: drag;
+        }
+        .title-bar h1 {
+            font-size: 16px;
+            color: #cba6f7;
+        }
+        .title-bar-buttons button {
+            background: none;
+            border: none;
+            color: #cdd6f4;
+            cursor: pointer;
+            padding: 4px 8px;
+            -webkit-app-region: no-drag;
+        }
+        .title-bar-buttons button:hover { background: #313244; }
+        
+        .toolbar {
+            background: #181825;
+            padding: 12px 16px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            border-bottom: 1px solid #313244;
+            flex-wrap: wrap;
+        }
+        .toolbar select, .toolbar button {
+            background: #1e1e2e;
+            border: 1px solid #313244;
+            border-radius: 6px;
+            padding: 6px 12px;
+            color: #cdd6f4;
+            cursor: pointer;
+        }
+        .toolbar button:hover { background: #313244; }
+        .toolbar .primary-btn {
+            background: #cba6f7;
+            color: #1e1e2e;
+            border: none;
+        }
+        .toolbar .primary-btn:hover { background: #b4befe; }
+        
+        .main-layout {
+            flex: 1;
+            display: flex;
+            gap: 16px;
+            padding: 16px;
+            overflow: hidden;
+        }
+        
+        .left-panel {
+            width: 350px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            overflow: hidden;
+        }
+        
+        .style-section {
+            background: #181825;
+            border-radius: 12px;
+            padding: 16px;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .style-section h3 { color: #cba6f7; margin-bottom: 12px; }
+        .style-btn {
+            display: inline-block;
+            padding: 6px 14px;
+            margin: 4px;
+            background: #1e1e2e;
+            border: 1px solid #313244;
+            border-radius: 16px;
+            cursor: pointer;
+            font-size: 12px;
+            color: #cdd6f4;
+        }
+        .style-btn:hover { background: #313244; }
+        .style-btn.active { background: #cba6f7; color: #1e1e2e; }
+        
+        .chat-section {
+            background: #181825;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex: 1;
+        }
+        .chat-history {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            font-size: 12px;
+        }
+        .chat-message {
+            padding: 8px 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            word-break: break-word;
+        }
+        .chat-message.user {
+            background: #313244;
+            border-left: 3px solid #89b4fa;
+        }
+        .chat-message.assistant {
+            background: #1e1e2e;
+            border-left: 3px solid #cba6f7;
+        }
+        .chat-message .role { font-weight: bold; margin-bottom: 4px; }
+        
+        .editor-panel {
+            flex: 1;
+            background: #181825;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .editor-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid #313244;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #textEditor {
+            flex: 1;
+            background: #1e1e2e;
+            border: none;
+            font-family: 'Fira Code', monospace;
+            font-size: 14px;
+            padding: 16px;
+            resize: none;
+            outline: none;
+            color: #cdd6f4;
+            line-height: 1.8;
+        }
+        
+        .input-area {
+            background: #181825;
+            border-top: 1px solid #313244;
+            padding: 12px 16px;
+            display: flex;
+            gap: 12px;
+        }
+        .input-area input {
+            flex: 1;
+            background: #1e1e2e;
+            border: 1px solid #313244;
+            border-radius: 20px;
+            padding: 10px 16px;
+            color: #cdd6f4;
+            outline: none;
+        }
+        .input-area button {
+            background: #cba6f7;
+            border: none;
+            border-radius: 20px;
+            padding: 10px 20px;
+            color: #1e1e2e;
+            cursor: pointer;
+        }
+        .input-area button:hover { background: #b4befe; }
+    </style>
+</head>
+<body>
+    <div class="title-bar">
+        <h1>✍️ 作家助手 - 智能写作</h1>
+        <div class="title-bar-buttons">
+            <button id="minimizeBtn">─</button>
+            <button id="closeBtn">✕</button>
+        </div>
+    </div>
+    
+    <div class="toolbar">
+        <span>📁 项目:</span>
+        <select id="projectSelect"></select>
+        <span>📄 文件:</span>
+        <select id="fileSelect"></select>
+        <button id="refreshBtn">🔄 刷新</button>
+        <button id="analyzeBtn" class="primary-btn">📖 分析当前文件</button>
+    </div>
+    
+    <div class="main-layout">
+        <div class="left-panel">
+            <div class="style-section">
+                <h3>🎨 写作风格</h3>
+                <div>
+                    <span class="style-btn active" data-style="formal">正式</span>
+                    <span class="style-btn" data-style="casual">轻松</span>
+                    <span class="style-btn" data-style="humorous">幽默</span>
+                    <span class="style-btn" data-style="poetic">诗意</span>
+                    <span class="style-btn" data-style="business">商务</span>
+                    <span class="style-btn" data-style="academic">学术</span>
+                </div>
+                <br>
+                <h3>📝 写作类型</h3>
+                <div>
+                    <span class="style-btn active" data-type="article">文章</span>
+                    <span class="style-btn" data-type="email">邮件</span>
+                    <span class="style-btn" data-type="report">报告</span>
+                    <span class="style-btn" data-type="social">社交媒体</span>
+                    <span class="style-btn" data-type="poem">诗歌</span>
+                    <span class="style-btn" data-type="story">故事</span>
+                </div>
+                <br>
+                <button id="generateBtn" class="primary-btn" style="width:100%;padding:10px;">✨ 生成内容</button>
+            </div>
+            <div class="chat-section">
+                <div class="chat-history" id="chatHistory">
+                    <div class="chat-message assistant">
+                        <div class="role">✍️ 作家助手</div>
+                        <div>您好！我是作家助手，可以帮您写作、润色、续写和转换风格。</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="editor-panel">
+            <div class="editor-header">
+                <span id="currentFileLabel">未选择文件</span>
+                <button id="saveBtn" style="background:#a6e3a1; border: none; padding: 4px 12px; border-radius: 6px;">💾 保存</button>
+            </div>
+            <textarea id="textEditor" placeholder="在此写作... 或点击「生成内容」"></textarea>
+        </div>
+    </div>
+    
+    <div class="input-area">
+        <input type="text" id="chatInput" placeholder="与作家助手对话... Ctrl+Enter 发送">
+        <button id="sendBtn">发送</button>
+    </div>
+
+    <script>
+        const TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZDE2YjIwYjJjZWRjZjNjZiIsInVzZXJuYW1lIjoidGVzdHVzZXIiLCJyb2xlIjoidXNlciIsImV4cCI6MTc4MTE4MzMyMn0.2cbQMYnwasdm1cxjxtUuhJyODjaF4GyXoHdma-TZnzQ";
+        
+        let currentProjectId = null;
+        let currentFile = null;
+        let currentFileContent = "";
+        let currentStyle = "formal";
+        let currentType = "article";
+        let projects = [];
+        let files = [];
+        
+        const chatHistory = document.getElementById("chatHistory");
+        const chatInput = document.getElementById("chatInput");
+        const textEditor = document.getElementById("textEditor");
+        
+        function escapeHtml(text) {
+            if (!text) return "";
+            return text.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
+        }
+        
+        function addChatMessage(text, role) {
+            const msgDiv = document.createElement("div");
+            msgDiv.className = `chat-message ${role}`;
+            msgDiv.innerHTML = `<div class="role">${role === 'user' ? '👤 用户' : '✍️ 作家助手'}</div><div>${escapeHtml(text)}</div>`;
+            chatHistory.appendChild(msgDiv);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+        
+        async function api(endpoint, method, body) {
+            const opts = { method, headers: { "Content-Type": "application/json", "Authorization": `Bearer ${TOKEN}` } };
+            if (body) opts.body = JSON.stringify(body);
+            const res = await fetch(endpoint, opts);
+            return res.json();
+        }
+        
+        async function loadProjects() {
+            const data = await api("/api/v5/project/list?user_id=codex_user", "GET");
+            projects = data.success ? (data.projects || []) : [];
+            const select = document.getElementById("projectSelect");
+            select.innerHTML = '<option value="">选择项目</option>' + 
+                projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+        }
+        
+        async function loadFiles() {
+            if (!currentProjectId) return;
+            const data = await api(`/api/v5/project/${currentProjectId}/files?user_id=codex_user`, "GET");
+            files = data.success ? (data.files || []) : [];
+            const select = document.getElementById("fileSelect");
+            select.innerHTML = '<option value="">选择文件</option>' +
+                files.map(f => `<option value="${f}">${f.split('/').pop()}</option>`).join('');
+        }
+        
+        async function loadFile(filePath) {
+            if (!currentProjectId) return;
+            currentFile = filePath;
+            document.getElementById("currentFileLabel").innerText = filePath;
+            const data = await api(`/api/v5/project/${currentProjectId}/file?user_id=codex_user&path=${encodeURIComponent(filePath)}`, "GET");
+            if (data.success) {
+                currentFileContent = data.content;
+                textEditor.value = currentFileContent;
+                addChatMessage(`已加载文件: ${filePath}`, "assistant");
+            }
+        }
+        
+        async function saveFile() {
+            if (!currentProjectId || !currentFile) {
+                addChatMessage("请先选择文件", "assistant");
+                return;
+            }
+            const content = textEditor.value;
+            const data = await api(`/api/v5/project/${currentProjectId}/file`, "POST", {
+                user_id: "codex_user", path: currentFile, content: content
+            });
+            if (data.success) {
+                currentFileContent = content;
+                addChatMessage("✅ 文件保存成功", "assistant");
+            } else {
+                addChatMessage("❌ 保存失败", "assistant");
+            }
+        }
+        
+        async function generateContent() {
+            const prompt = `写一篇${currentStyle}风格的${currentType}，关于：${chatInput.value || '春天的美好'}`;
+            addChatMessage(`🎨 生成: ${prompt}`, "assistant");
+            
+            try {
+                const res = await fetch("/api/v5/wisdom/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${TOKEN}` },
+                    body: JSON.stringify({
+                        user_id: "codex_user",
+                        agent: "writer_agent",
+                        message: prompt
+                    })
+                });
+                const data = await res.json();
+                const reply = data.response || data.output_content || "生成完成";
+                textEditor.value = reply;
+                addChatMessage("✅ 内容已生成，请查看编辑器", "assistant");
+            } catch (err) {
+                addChatMessage(`生成失败: ${err.message}`, "assistant");
+            }
+        }
+        
+        document.getElementById("projectSelect").onchange = (e) => {
+            currentProjectId = e.target.value;
+            loadFiles();
+        };
+        document.getElementById("fileSelect").onchange = (e) => {
+            if (e.target.value) loadFile(e.target.value);
+        };
+        document.getElementById("refreshBtn").onclick = () => { loadProjects(); loadFiles(); };
+        document.getElementById("analyzeBtn").onclick = generateContent;
+        document.getElementById("saveBtn").onclick = saveFile;
+        document.getElementById("generateBtn").onclick = generateContent;
+        
+        document.getElementById("sendBtn").onclick = async () => {
+            const msg = chatInput.value.trim();
+            if (!msg) return;
+            addChatMessage(msg, "user");
+            chatInput.value = "";
+            
+            try {
+                const res = await fetch("/api/v5/wisdom/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${TOKEN}` },
+                    body: JSON.stringify({
+                        user_id: "codex_user",
+                        agent: "writer_agent",
+                        message: msg
+                    })
+                });
+                const data = await res.json();
+                const reply = data.response || data.output_content || "处理完成";
+                addChatMessage(reply, "assistant");
+            } catch (err) {
+                addChatMessage(`错误: ${err.message}`, "assistant");
+            }
+        };
+        
+        chatInput.addEventListener("keydown", (e) => {
+            if (e.ctrlKey && e.key === "Enter") {
+                document.getElementById("sendBtn").click();
+            }
+        });
+        
+        document.querySelectorAll('.style-btn[data-style]').forEach(el => {
+            el.addEventListener('click', () => {
+                document.querySelectorAll('.style-btn[data-style]').forEach(b => b.classList.remove('active'));
+                el.classList.add('active');
+                currentStyle = el.dataset.style;
+            });
+        });
+        
+        document.querySelectorAll('.style-btn[data-type]').forEach(el => {
+            el.addEventListener('click', () => {
+                document.querySelectorAll('.style-btn[data-type]').forEach(b => b.classList.remove('active'));
+                el.classList.add('active');
+                currentType = el.dataset.type;
+            });
+        });
+        
+        document.getElementById("minimizeBtn").onclick = () => window.parent.postMessage({ type: "minimize" }, "*");
+        document.getElementById("closeBtn").onclick = () => window.parent.postMessage({ type: "close" }, "*");
+        
+        loadProjects();
+        addChatMessage("✍️ 作家助手已启动，选择风格和类型开始创作！", "assistant");
+    </script>
+</body>
+</html>
+<script>
+// 从 URL 获取会话 ID
+const urlParams = new URLSearchParams(window.location.search);
+const SESSION_ID = urlParams.get('session');
+
+if (SESSION_ID) {
+    console.log(`📌 作家助手使用会话: ${SESSION_ID}`);
+}
+
+// 增强 API 调用，传递 session_id
+const originalApi = api;
+window.api = async function(endpoint, method, body) {
+    const payload = body || {};
+    if (SESSION_ID) {
+        payload.session_id = SESSION_ID;
+    }
+    return originalApi(endpoint, method, payload);
+};
+</script>
