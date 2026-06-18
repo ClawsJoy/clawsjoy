@@ -1,228 +1,341 @@
 #!/usr/bin/env python3
-"""writer_agent v4.0 - 智慧化文案写作智能体"""
+"""WriterAgent v4.2 - 精简稳定版（保留小说创作核心能力）"""
 
 import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 import re
-from typing import Dict, Optional, Tuple
+import json
+import time
 from datetime import datetime
+from typing import Dict, Optional, Tuple, List
 
 from core.agents.business.business_agent import BusinessAgent
 
 
 class WriterAgentV4(BusinessAgent):
-    """智慧化文案写作智能体"""
-    
+    """写作 Agent - 精简稳定版"""
+
     name = "writer_agent_v4"
-    description = "智慧化文案助手"
-    version = "4.0.0"
-    
+    description = "智能写作助手"
+    version = "4.2.0"
+
     def __init__(self, user_id: str = "default"):
         super().__init__(user_id=user_id)
-        self._writing_history = []
-        print(f"✍️ {self.name} v{self.version} 智慧化启动")
-    
-    def can_handle_json(self, action: str, target: str) -> Tuple[bool, float]:
-        capabilities = {
-            ("write", "text"): (True, 0.95),
-            ("polish", "text"): (True, 0.90),
-            ("summarize", "text"): (True, 0.90),
-            ("rewrite", "text"): (True, 0.85),
-            ("change_style", "text"): (True, 0.85),
-            ("continue", "text"): (True, 0.85),
-            ("translate", "text"): (True, 0.85),
+        self._session_id = None
+        self._novel = {
+            "title": "",
+            "outline": "",
+            "chapters": [],
+            "characters": [],
+            "current_chapter": 0,
+            "status": "idle"
         }
-        return capabilities.get((action, target), (False, 0.0))
-    
+        self._llm_model = "qwen2.5:7b"
+        self._max_retries = 2
+        print(f"✍️ WriterAgent v{self.version} 启动")
+
+    def process(self, user_input: str, context: Optional[Dict] = None) -> Dict:
+        if context and "session_id" in context:
+            self._session_id = context["session_id"]
+        return super().process(user_input, context)
+
     def _execute_business(self, user_input: str, context: Optional[Dict] = None) -> Dict:
+        intent = self._detect_intent(user_input)
         
-        # 写作/撰写
-        if any(kw in user_input for kw in ["写", "撰写", "创作", "编写"]):
-            return self._write(user_input)
-        
-        # 润色/优化
-        if any(kw in user_input for kw in ["润色", "优化", "改进", "美化"]):
-            return self._polish(user_input)
-        
-        # 总结/摘要
-        if any(kw in user_input for kw in ["总结", "摘要", "概括", "归纳"]):
-            return self._summarize(user_input)
-        
-        # 重写/改写
-
-        # 风格转换
-        if any(kw in user_input for kw in ["转换风格", "风格转换", "改写为"]):
-            return self.change_style(user_input)
-
-        # 续写
-        if any(kw in user_input for kw in ["续写", "继续写"]):
-            return self.continue_writing(user_input)
-        if any(kw in user_input for kw in ["重写", "改写", "换种说法"]):
-            return self._rewrite(user_input)
-        
-        return self._response(self._smart_fallback(user_input))
-    
-    def _write(self, user_input: str) -> Dict:
-        """撰写文案"""
-        # 提取写作主题和类型
-        topic = user_input
-        
-        # 检测写作类型
-        writing_type = "general"
-        if "邮件" in user_input or "email" in user_input.lower():
-            writing_type = "email"
-        elif "报告" in user_input:
-            writing_type = "report"
-        elif "文章" in user_input:
-            writing_type = "article"
-        elif "朋友圈" in user_input or "微博" in user_input:
-            writing_type = "social"
-        elif "广告" in user_input or "营销" in user_input:
-            writing_type = "ad"
-        elif "诗歌" in user_input:
-            writing_type = "poem"
-        
-        # 提取具体内容
-        content = re.sub(r'^写.*?[：:]', '', user_input)
-        if not content or content == user_input:
-            content = re.sub(r'^(写|撰写|创作|编写)', '', user_input)
-        
-        if not content.strip():
-            return self._response("请告诉我你想写什么内容。\n\n示例：\n- 写一封邮件给客户介绍产品\n- 写一篇关于人工智能的文章")
-        
-        # 根据类型构建 prompt
-        prompts = {
-            "email": f"请写一封专业的邮件，主题是：{content}\n要求：格式规范、语气得体、内容清晰。",
-            "report": f"请写一份简洁的报告，内容关于：{content}\n要求：结构清晰、重点突出、数据准确。",
-            "article": f"请写一篇短文，主题是：{content}\n要求：语言流畅、观点明确、引人入胜。",
-            "social": f"请写一条社交媒体文案，内容是：{content}\n要求：简洁有趣、有吸引力、适合分享。",
-            "ad": f"请写一段广告文案，内容是：{content}\n要求：有说服力、突出卖点、引人注目。",
-            "poem": f"请写一首关于{content}的诗\n要求：有意境、押韵、优美。",
-            "general": f"请写一段文字，内容是：{content}\n要求：通顺流畅、表达清晰。"
+        handlers = {
+            "start_novel": self._handle_start_novel,
+            "continue": self._handle_continue,
+            "new_chapter": self._handle_new_chapter,
+            "modify": self._handle_modify,
+            "character": self._handle_character,
+            "outline": self._handle_outline,
+            "complete": self._handle_complete,
+            "write": self._handle_write,
+            "polish": self._handle_polish,
         }
         
-        prompt = prompts.get(writing_type, prompts["general"])
-        response = self._call_llm(prompt)
-        
-        if response:
-            # 记录写作历史
-            self._writing_history.append({
-                "type": writing_type,
-                "topic": content[:50],
-                "result": response[:200],
-                "timestamp": datetime.now().isoformat()
-            })
-            return self._response(
-                f"✍️ **{self._get_type_name(writing_type)}**\n\n{response}",
-                metadata={"type": writing_type}
-            )
-        
-        return self._response(self._get_sample(content, writing_type))
-    
-    def _polish(self, user_input: str) -> Dict:
-        """润色文案"""
-        # 提取要润色的内容
-        content = re.sub(r'^润色|优化|改进|美化[：:]?', '', user_input)
-        
-        if not content.strip():
-            return self._response("请提供要润色的内容。\n\n示例：润色 这段文字需要改进...")
-        
-        prompt = f"""请润色以下文字，使其更优美、流畅：
+        handler = handlers.get(intent, self._handle_write)
+        return handler(user_input, context)
 
-原文：{content}
+    # ================================================================
+    #  意图检测
+    # ================================================================
 
-要求：
-1. 保持原意
-2. 改进表达
-3. 优化语言
-4. 只输出润色后的结果"""
+    def _detect_intent(self, text: str) -> str:
+        t = text.lower()
         
-        response = self._call_llm(prompt)
+        if any(kw in t for kw in ["写小说", "创作小说", "开始写小说"]):
+            return "start_novel"
+        if any(kw in t for kw in ["继续", "继续写", "接着写", "然后呢"]):
+            return "continue"
+        if any(kw in t for kw in ["新章节", "下一章"]):
+            return "new_chapter"
+        if any(kw in t for kw in ["修改", "改成", "调整"]):
+            return "modify"
+        if any(kw in t for kw in ["角色", "人物"]):
+            return "character"
+        if any(kw in t for kw in ["大纲", "框架"]):
+            return "outline"
+        if any(kw in t for kw in ["完成", "定稿", "写完了"]):
+            return "complete"
+        if any(kw in t for kw in ["润色", "优化"]):
+            return "polish"
+        if any(kw in t for kw in ["写", "撰写", "创作"]):
+            return "write"
         
-        if response:
-            return self._response(
-                f"✨ **润色结果**\n\n**原文：**\n{content}\n\n**润色后：**\n{response}",
-                metadata={"original": content, "polished": response}
-            )
-        
-        return self._response(f"润色后的文字：\n\n{content}\n\n(请确保 LLM 服务正在运行)")
-    
-    def _summarize(self, user_input: str) -> Dict:
-        """总结摘要"""
-        content = re.sub(r'^总结|摘要|概括|归纳[：:]?', '', user_input)
-        
-        if not content.strip():
-            return self._response("请提供要总结的内容。\n\n示例：总结 这是一段很长的文字...")
-        
-        prompt = f"""请为以下内容生成简洁的摘要：
+        return "write"
 
-{content}
+    # ================================================================
+    #  意图处理器
+    # ================================================================
 
-要求：
-1. 提取核心观点
-2. 保留关键信息
-3. 语言简洁
-4. 只输出摘要"""
+    def _handle_start_novel(self, user_input: str, context: Optional[Dict] = None) -> Dict:
+        topic = re.sub(r'^(写小说|创作小说|开始写小说)', '', user_input).strip()
+        if not topic:
+            topic = "一个动人的故事"
         
-        response = self._call_llm(prompt)
+        self._novel["title"] = f"《{topic[:20]}》"
         
-        if response:
-            return self._response(
-                f"📝 **内容摘要**\n\n**原文：**\n{content[:200]}...\n\n**摘要：**\n{response}",
-                metadata={"summary": response}
-            )
-        
-        return self._response(f"内容摘要：\n\n{content[:200]}...\n\n(请确保 LLM 服务正在运行)")
-    
-    def _rewrite(self, user_input: str) -> Dict:
-        """重写文案"""
-        content = re.sub(r'^重写|改写|换种说法[：:]?', '', user_input)
-        
-        if not content.strip():
-            return self._response("请提供要重写的内容。\n\n示例：重写 这段文字需要换个风格")
-        
-        prompt = f"""请用不同的表达方式重写以下内容：
+        prompt = f"""请为一篇小说创作完整大纲：
 
-原文：{content}
+主题：{topic}
 
-要求：
-1. 保持原意
-2. 换一种风格
-3. 语言更生动
-4. 只输出重写后的结果"""
+要求：三幕结构、主要角色、核心冲突、情感主题
+
+输出格式：Markdown，用 ## 标题
+"""
+        outline = self._call_llm(prompt)
+        self._novel["outline"] = outline
+        self._novel["status"] = "outline_ready"
+        self._record_event("novel_started", {"topic": topic})
         
-        response = self._call_llm(prompt)
+        return self._resp(f"""
+## 📋 小说大纲：《{topic[:20]}》
+
+{outline}
+
+💡 输入「继续」开始写第一章
+""")
+
+    def _handle_continue(self, user_input: str, context: Optional[Dict] = None) -> Dict:
+        if self._novel["status"] == "idle":
+            return self._resp("请先输入「写小说」开始创作。")
         
-        if response:
-            return self._response(
-                f"🔄 **重写结果**\n\n**原文：**\n{content}\n\n**重写后：**\n{response}",
-                metadata={"rewritten": response}
-            )
+        chapter_num = self._novel["current_chapter"] + 1
+        current_text = self._get_current_text()
         
-        return self._response(f"重写结果：\n\n{content}\n\n(请确保 LLM 服务正在运行)")
-    
-    def _get_type_name(self, writing_type: str) -> str:
-        """获取写作类型名称"""
-        names = {
-            "email": "邮件",
-            "report": "报告",
-            "article": "文章",
-            "social": "社交媒体",
-            "ad": "广告文案",
-            "poem": "诗歌",
-            "general": "文字"
-        }
-        return names.get(writing_type, "文字")
-    
-    def _get_sample(self, topic: str, writing_type: str) -> str:
-        """获取示例文案（降级方案）"""
-        samples = {
-            "email": f"**邮件示例**\n\n主题：{topic}\n\n尊敬的客户：\n\n您好！感谢您的关注。\n\n[具体内容]\n\n此致\n敬礼",
-            "social": f"**朋友圈文案**\n\n{topic}\n\n✨ 今日分享 ✨\n\n#美好生活 #分享快乐",
-            "article": f"**文章开头**\n\n{topic}\n\n在这个信息爆炸的时代，{topic}成为了我们关注的焦点...",
-            "general": f"**写作内容**\n\n{topic}\n\n{topic}是一个值得深入探讨的话题..."
-        }
-        return samples.get(writing_type, samples["general"])
-    
+        prompt = f"""
+继续写第{chapter_num}章：
+
+标题：{self._novel['title']}
+前文：{current_text[:800] if current_text else '（第一章）'}
+
+要求：保持风格一致，800-1500字，以「## 第{chapter_num}章：」开头
+"""
+        chapter = self._call_llm(prompt)
+        
+        self._novel["chapters"].append({
+            "number": chapter_num,
+            "title": self._extract_title(chapter),
+            "content": chapter
+        })
+        self._novel["current_chapter"] = chapter_num
+        self._novel["status"] = "writing"
+        self._record_event("chapter_generated", {"chapter": chapter_num})
+        
+        return self._resp(f"{chapter}\n\n📊 当前：第{chapter_num}章 | 输入「继续」写下一章")
+
+    def _handle_new_chapter(self, user_input: str, context: Optional[Dict] = None) -> Dict:
+        chapter_num = len(self._novel["chapters"]) + 1
+        title = f"第{chapter_num}章"
+        
+        prompt = f"""
+为《{self._novel['title'] or '未命名'}》创作新章节：
+
+前文：{self._get_summary()}
+要求：承接前文，800-1500字
+"""
+        chapter = self._call_llm(prompt)
+        
+        self._novel["chapters"].append({
+            "number": chapter_num,
+            "title": title,
+            "content": chapter
+        })
+        self._novel["current_chapter"] = chapter_num
+        self._record_event("new_chapter", {"chapter": chapter_num})
+        
+        return self._resp(f"{chapter}\n\n✅ 第{chapter_num}章完成")
+
+    def _handle_modify(self, user_input: str, context: Optional[Dict] = None) -> Dict:
+        instruction = re.sub(r'^(修改|改成|调整)', '', user_input).strip()
+        if not instruction:
+            return self._resp("请说明要修改什么。")
+        
+        current = self._get_current_text()[:1500]
+        prompt = f"""
+根据用户要求修改内容：
+
+要求：{instruction}
+当前内容：{current}
+
+只输出修改后的内容，保持风格一致。
+"""
+        modified = self._call_llm(prompt)
+        self._record_event("modified", {"instruction": instruction[:50]})
+        
+        return self._resp(f"✏️ 修改完成\n\n{modified}")
+
+    def _handle_character(self, user_input: str, context: Optional[Dict] = None) -> Dict:
+        prompt = f"""
+为《{self._novel['title'] or '未命名'}》设计角色：
+
+{user_input if '角色' not in user_input else '主要角色'}
+
+要求：姓名、性格、动机、背景、弧光
+输出格式：Markdown
+"""
+        result = self._call_llm(prompt)
+        self._novel["characters"].append({"content": result})
+        self._record_event("character_designed", {})
+        
+        return self._resp(f"🎭 角色设定\n\n{result}")
+
+    def _handle_outline(self, user_input: str, context: Optional[Dict] = None) -> Dict:
+        prompt = f"""
+优化小说大纲：
+
+标题：{self._novel['title'] or '未命名'}
+当前大纲：{self._novel['outline'][:500] if self._novel['outline'] else '无'}
+
+用户要求：{user_input}
+要求：三幕结构、清晰主线、关键节点
+输出格式：Markdown
+"""
+        outline = self._call_llm(prompt)
+        self._novel["outline"] = outline
+        self._record_event("outline_updated", {})
+        
+        return self._resp(f"📋 大纲\n\n{outline}")
+
+    def _handle_complete(self, user_input: str, context: Optional[Dict] = None) -> Dict:
+        self._novel["status"] = "completed"
+        total = len(self._novel["chapters"])
+        words = self._count_words()
+        self._record_event("novel_completed", {"chapters": total, "words": words})
+        
+        return self._resp(f"""
+🎉 小说完成！
+
+标题：{self._novel['title']}
+章节：{total} 章
+字数：约 {words} 字
+
+💡 下一步：导出文件或在导演台进行剧本转化
+""")
+
+    def _handle_write(self, user_input: str, context: Optional[Dict] = None) -> Dict:
+        prompt = f"""
+根据用户要求写作：
+
+要求：{user_input}
+风格：自然、流畅、清晰
+只输出内容，不要解释。
+"""
+        result = self._call_llm(prompt)
+        self._record_event("general_writing", {})
+        return self._resp(result)
+
+    def _handle_polish(self, user_input: str, context: Optional[Dict] = None) -> Dict:
+        content = re.sub(r'^(润色|优化)', '', user_input).strip()
+        if not content:
+            return self._resp("请提供要润色的内容。")
+        
+        prompt = f"润色以下文字，保持原意，语言更优美：{content}"
+        result = self._call_llm(prompt)
+        self._record_event("polished", {})
+        return self._resp(f"✨ 润色结果\n\n{result}")
+
+    # ================================================================
+    #  辅助方法
+    # ================================================================
+
+    def _get_current_text(self) -> str:
+        chapters = self._novel.get("chapters", [])
+        if not chapters:
+            return self._novel.get("outline", "")
+        return "\n\n".join([c.get("content", "") for c in chapters])
+
+    def _get_summary(self) -> str:
+        chapters = self._novel.get("chapters", [])
+        if not chapters:
+            return "（尚未开始写作）"
+        return "\n".join([f"- 第{c['number']}章" for c in chapters[-3:]])
+
+    def _extract_title(self, text: str) -> str:
+        match = re.search(r'##\s*(第\d+章[：:]\s*.+)', text)
+        if match:
+            return match.group(1).strip()
+        match = re.search(r'第\d+章[：:]\s*(.+)', text)
+        if match:
+            return match.group(1).strip()
+        return f"第{len(self._novel['chapters']) + 1}章"
+
+    def _count_words(self) -> int:
+        text = self._get_current_text()
+        return len(text.replace("\n", "").replace(" ", ""))
+
+    def _record_event(self, event_type: str, data: Dict = {}):
+        if not self._session_id:
+            return
+        try:
+            from core.lib.session_manager import session_manager
+            session = session_manager.load(self._session_id)
+            if session:
+                events = session.get_context().get("writer_events", [])
+                events.append({"type": event_type, "timestamp": datetime.now().isoformat(), "data": data})
+                session.set_context("writer_events", events)
+                session.set_context("writer_status", {
+                    "title": self._novel.get("title", ""),
+                    "chapters": len(self._novel.get("chapters", [])),
+                    "words": self._count_words(),
+                    "status": self._novel.get("status", "idle"),
+                    "last_updated": datetime.now().isoformat()
+                })
+                session_manager.save(session)
+        except Exception as e:
+            print(f"[Writer] 记录事件失败: {e}")
+
+    def _call_llm(self, prompt: str) -> str:
+        for attempt in range(self._max_retries):
+            try:
+                import requests
+                resp = requests.post(
+                    "http://localhost:11434/api/generate",
+                    json={
+                        "model": self._llm_model,
+                        "prompt": prompt,
+                        "stream": False,
+                        "options": {"temperature": 0.7, "num_predict": 1024}
+                    },
+                    timeout=90
+                )
+                if resp.status_code == 200:
+                    return resp.json().get("response", "")
+            except Exception as e:
+                print(f"[Writer] 尝试 {attempt+1} 失败: {e}")
+                time.sleep(0.5 * (attempt + 1))
+        return ""
+
+    def _resp(self, content: str, **kwargs) -> Dict:
+        return {"success": True, "response": content, "output_content": content, **kwargs}
+
+    def can_handle_json(self, action: str, target: str) -> Tuple[bool, float]:
+        return (True, 0.85)
+
+
+if __name__ == "__main__":
+    agent = WriterAgentV4("test")
+    print(agent.process("写小说 关于AI觉醒")["response"])

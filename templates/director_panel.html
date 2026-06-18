@@ -1,0 +1,2162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎬 导演 - 电影制作工作台</title>
+    <style>
+        /* ============ 基础样式 ============ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #0d0d1a;
+            color: #cdd6f4;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* ============ 标题栏 ============ */
+        .title-bar {
+            background: #181825;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #313244;
+            flex-shrink: 0;
+            min-height: 48px;
+        }
+        .title-bar .left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .title-bar h1 {
+            font-size: 16px;
+            color: #f9e2af;
+        }
+        .title-bar .subtitle {
+            font-size: 11px;
+            color: #6c7086;
+        }
+
+        .title-bar-buttons {
+            display: flex;
+            gap: 4px;
+        }
+        .title-bar-buttons button {
+            background: none;
+            border: none;
+            color: #cdd6f4;
+            cursor: pointer;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .title-bar-buttons button:hover {
+            background: #313244;
+        }
+        .title-bar-buttons .close-btn:hover {
+            background: #f38ba8;
+            color: #1e1e2e;
+        }
+
+        /* ============ 模式切换 ============ */
+        .mode-switcher {
+            display: flex;
+            background: #1e1e2e;
+            border-radius: 8px;
+            padding: 3px;
+            gap: 2px;
+        }
+        .mode-switcher button {
+            background: transparent;
+            border: none;
+            padding: 5px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            color: #6c7086;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .mode-switcher button.active {
+            background: #313244;
+            color: #f9e2af;
+        }
+        .mode-switcher button:hover:not(.active) {
+            color: #cdd6f4;
+        }
+
+        /* ============ 主体布局 ============ */
+        .main-container {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* ============ 对话模式 ============ */
+        #chatMode {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            gap: 16px;
+            overflow: hidden;
+        }
+        #chatMode.hidden {
+            display: none;
+        }
+
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            font-size: 13px;
+            padding-right: 8px;
+        }
+        .chat-area::-webkit-scrollbar {
+            width: 4px;
+        }
+        .chat-area::-webkit-scrollbar-thumb {
+            background: #313244;
+            border-radius: 2px;
+        }
+
+        .chat-msg {
+            padding: 10px 14px;
+            margin: 6px 0;
+            border-radius: 8px;
+            word-break: break-word;
+            animation: fadeIn 0.25s ease;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-6px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .chat-msg.system {
+            background: #181825;
+            border-left: 3px solid #f9e2af;
+        }
+        .chat-msg.user {
+            background: #181825;
+            border-left: 3px solid #89b4fa;
+        }
+        .chat-msg.agent {
+            background: #11111b;
+            border-left: 3px solid #a6e3a1;
+        }
+        .chat-msg .role {
+            font-weight: 600;
+            margin-bottom: 4px;
+            font-size: 11px;
+            color: #6c7086;
+        }
+        .chat-msg .content {
+            line-height: 1.7;
+            font-size: 13px;
+        }
+        .chat-msg .content pre {
+            background: #0d0d1a;
+            padding: 12px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 12px;
+            margin: 6px 0;
+            border: 1px solid #1e1e2e;
+        }
+
+        .input-area {
+            display: flex;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+        .input-area input {
+            flex: 1;
+            background: #1e1e2e;
+            border: 1px solid #313244;
+            border-radius: 24px;
+            padding: 10px 18px;
+            color: #cdd6f4;
+            outline: none;
+            font-size: 13px;
+            transition: border 0.2s;
+        }
+        .input-area input:focus {
+            border-color: #f9e2af;
+        }
+        .input-area input::placeholder {
+            color: #6c7086;
+        }
+        .input-area button {
+            background: #f9e2af;
+            border: none;
+            border-radius: 24px;
+            padding: 10px 24px;
+            color: #1e1e2e;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+        .input-area button:hover {
+            background: #b4befe;
+        }
+
+        /* ============ 画布模式 ============ */
+        #canvasMode {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        #canvasMode.active {
+            display: flex;
+        }
+
+        /* 画布工具栏 */
+        .canvas-toolbar {
+            background: #181825;
+            padding: 10px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #313244;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .canvas-toolbar .left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .canvas-toolbar .right {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .canvas-toolbar .project-name {
+            font-size: 13px;
+            color: #f9e2af;
+        }
+        .canvas-toolbar .project-name .highlight {
+            color: #a6e3a1;
+        }
+
+        .canvas-btn {
+            padding: 6px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s;
+            background: #313244;
+            color: #cdd6f4;
+        }
+        .canvas-btn:hover {
+            background: #45475a;
+            transform: translateY(-1px);
+        }
+        .canvas-btn.primary {
+            background: #f9e2af;
+            color: #1e1e2e;
+        }
+        .canvas-btn.primary:hover {
+            background: #b4befe;
+        }
+        .canvas-btn.success {
+            background: #a6e3a1;
+            color: #1e1e2e;
+        }
+        .canvas-btn.success:hover {
+            background: #94e2d5;
+        }
+        .canvas-btn.danger {
+            background: #f38ba8;
+            color: #1e1e2e;
+        }
+        .canvas-btn.danger:hover {
+            background: #eba0ac;
+        }
+        .canvas-btn.purple {
+            background: #cba6f7;
+            color: #1e1e2e;
+        }
+        .canvas-btn.purple:hover {
+            background: #b4befe;
+        }
+
+        /* 画布主体：左侧节点面板 + 中间画布 + 右侧属性面板 */
+        .canvas-body {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 左侧节点面板 */
+        .node-panel {
+            width: 220px;
+            background: #181825;
+            border-right: 1px solid #313244;
+            padding: 12px;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+        .node-panel::-webkit-scrollbar {
+            width: 3px;
+        }
+        .node-panel::-webkit-scrollbar-thumb {
+            background: #313244;
+            border-radius: 2px;
+        }
+
+        .node-panel .section-title {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: #6c7086;
+            letter-spacing: 1px;
+            margin: 12px 0 6px 0;
+            font-weight: 600;
+        }
+        .node-panel .section-title:first-child {
+            margin-top: 0;
+        }
+
+        .node-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: #1e1e2e;
+            border-radius: 6px;
+            margin-bottom: 4px;
+            cursor: grab;
+            font-size: 12px;
+            color: #cdd6f4;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+        .node-item:hover {
+            background: #313244;
+            border-color: #45475a;
+            transform: translateX(3px);
+        }
+        .node-item:active {
+            cursor: grabbing;
+        }
+        .node-item .icon {
+            font-size: 16px;
+        }
+        .node-item .label {
+            flex: 1;
+        }
+        .node-item .badge {
+            font-size: 9px;
+            background: #313244;
+            padding: 1px 8px;
+            border-radius: 10px;
+            color: #6c7086;
+        }
+
+        /* 中间画布区域 */
+        .canvas-area {
+            flex: 1;
+            position: relative;
+            background: #0d0d1a;
+            overflow: hidden;
+            background-image:
+                radial-gradient(circle, #1a1a2e 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        .canvas-area .empty-hint {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #313244;
+            text-align: center;
+            pointer-events: none;
+        }
+        .canvas-area .empty-hint .big-icon {
+            font-size: 48px;
+            display: block;
+            margin-bottom: 12px;
+        }
+        .canvas-area .empty-hint p {
+            font-size: 14px;
+            color: #6c7086;
+        }
+
+        /* 画布上的节点 */
+        .canvas-node {
+            position: absolute;
+            min-width: 160px;
+            max-width: 220px;
+            background: #1e1e2e;
+            border: 2px solid #313244;
+            border-radius: 10px;
+            padding: 10px 14px;
+            cursor: move;
+            transition: box-shadow 0.2s, border-color 0.2s;
+            z-index: 1;
+        }
+        .canvas-node:hover {
+            border-color: #6c7086;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            z-index: 2;
+        }
+        .canvas-node.selected {
+            border-color: #f9e2af;
+            box-shadow: 0 0 0 2px rgba(249, 226, 175, 0.2);
+            z-index: 3;
+        }
+        .canvas-node .node-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        .canvas-node .node-header .icon {
+            font-size: 18px;
+        }
+        .canvas-node .node-header .name {
+            font-size: 12px;
+            font-weight: 600;
+            flex: 1;
+            margin-left: 8px;
+        }
+        .canvas-node .node-header .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .canvas-node .node-header .status-dot.idle {
+            background: #6c7086;
+        }
+        .canvas-node .node-header .status-dot.running {
+            background: #f9e2af;
+            animation: pulse-dot 0.8s ease-in-out infinite;
+        }
+        .canvas-node .node-header .status-dot.done {
+            background: #a6e3a1;
+        }
+        .canvas-node .node-header .status-dot.error {
+            background: #f38ba8;
+        }
+
+        @keyframes pulse-dot {
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.5);
+                opacity: 0.5;
+            }
+        }
+
+        .canvas-node .node-body {
+            font-size: 11px;
+            color: #6c7086;
+            line-height: 1.4;
+            margin-top: 4px;
+            word-break: break-word;
+        }
+        .canvas-node .node-body .param {
+            display: inline-block;
+            background: #313244;
+            padding: 1px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            color: #cdd6f4;
+            margin-right: 4px;
+        }
+
+        .canvas-node .node-actions {
+            display: none;
+            margin-top: 6px;
+            gap: 4px;
+        }
+        .canvas-node:hover .node-actions {
+            display: flex;
+        }
+        .canvas-node .node-actions button {
+            background: #313244;
+            border: none;
+            border-radius: 4px;
+            padding: 2px 8px;
+            cursor: pointer;
+            font-size: 10px;
+            color: #cdd6f4;
+            transition: background 0.2s;
+        }
+        .canvas-node .node-actions button:hover {
+            background: #45475a;
+        }
+        .canvas-node .node-actions .del-btn:hover {
+            background: #f38ba8;
+            color: #1e1e2e;
+        }
+
+        /* 节点类型颜色 */
+        .canvas-node.type-input {
+            border-color: #89b4fa;
+        }
+        .canvas-node.type-input .node-header .name {
+            color: #89b4fa;
+        }
+        .canvas-node.type-processing {
+            border-color: #f9e2af;
+        }
+        .canvas-node.type-processing .node-header .name {
+            color: #f9e2af;
+        }
+        .canvas-node.type-output {
+            border-color: #cba6f7;
+        }
+        .canvas-node.type-output .node-header .name {
+            color: #cba6f7;
+        }
+
+        /* SVG连接线 */
+        .canvas-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .canvas-svg .connection-line {
+            stroke: #45475a;
+            stroke-width: 2;
+            marker-end: url(#arrowhead);
+            pointer-events: stroke;
+            cursor: pointer;
+        }
+        .canvas-svg .connection-line:hover {
+            stroke: #f9e2af;
+            stroke-width: 3;
+        }
+
+        /* 右侧属性面板 */
+        .property-panel {
+            width: 260px;
+            background: #181825;
+            border-left: 1px solid #313244;
+            padding: 16px;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+        .property-panel::-webkit-scrollbar {
+            width: 3px;
+        }
+        .property-panel::-webkit-scrollbar-thumb {
+            background: #313244;
+            border-radius: 2px;
+        }
+
+        .property-panel .panel-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #f9e2af;
+            margin-bottom: 12px;
+        }
+        .property-panel .empty-text {
+            color: #6c7086;
+            font-size: 12px;
+            text-align: center;
+            padding: 30px 0;
+        }
+
+        .property-group {
+            margin-bottom: 14px;
+        }
+        .property-group label {
+            display: block;
+            font-size: 11px;
+            color: #6c7086;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+        .property-group input,
+        .property-group select,
+        .property-group textarea {
+            width: 100%;
+            background: #1e1e2e;
+            border: 1px solid #313244;
+            border-radius: 6px;
+            padding: 6px 10px;
+            color: #cdd6f4;
+            font-size: 12px;
+            outline: none;
+            transition: border 0.2s;
+        }
+        .property-group input:focus,
+        .property-group select:focus,
+        .property-group textarea:focus {
+            border-color: #f9e2af;
+        }
+        .property-group textarea {
+            resize: vertical;
+            min-height: 50px;
+            font-family: inherit;
+        }
+
+        /* ============ 状态栏 ============ */
+        .status-bar {
+            background: #181825;
+            border-top: 1px solid #313244;
+            padding: 6px 20px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #6c7086;
+            flex-shrink: 0;
+        }
+        .status-bar .right {
+            display: flex;
+            gap: 16px;
+        }
+        .status-bar .status-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .status-bar .status-item .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #6c7086;
+        }
+        .status-bar .status-item .dot.green {
+            background: #a6e3a1;
+        }
+        .status-bar .status-item .dot.yellow {
+            background: #f9e2af;
+        }
+
+        /* ============ 上下文菜单 ============ */
+        .context-menu {
+            position: fixed;
+            background: #181825;
+            border: 1px solid #313244;
+            border-radius: 8px;
+            padding: 4px 0;
+            min-width: 160px;
+            z-index: 1000;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+            display: none;
+        }
+        .context-menu.show {
+            display: block;
+        }
+        .context-menu .menu-item {
+            padding: 6px 16px;
+            cursor: pointer;
+            font-size: 12px;
+            color: #cdd6f4;
+            transition: background 0.2s;
+        }
+        .context-menu .menu-item:hover {
+            background: #313244;
+        }
+        .context-menu .menu-item.danger {
+            color: #f38ba8;
+        }
+        .context-menu .menu-item.danger:hover {
+            background: #f38ba8;
+            color: #1e1e2e;
+        }
+        .context-menu .menu-divider {
+            border-top: 1px solid #313244;
+            margin: 4px 8px;
+        }
+
+        /* ============ 执行日志浮窗 ============ */
+        .execution-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            backdrop-filter: blur(4px);
+        }
+        .execution-overlay.show {
+            display: flex;
+        }
+        .execution-panel {
+            background: #1e1e2e;
+            border-radius: 16px;
+            padding: 32px 40px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 1px solid #313244;
+        }
+        .execution-panel .title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #f9e2af;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        .execution-panel .log-item {
+            padding: 6px 0;
+            font-size: 13px;
+            border-bottom: 1px solid #181825;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .execution-panel .log-item .status-icon {
+            font-size: 16px;
+            width: 24px;
+            text-align: center;
+        }
+        .execution-panel .log-item .node-name {
+            flex: 1;
+            color: #cdd6f4;
+        }
+        .execution-panel .log-item .node-status {
+            font-size: 11px;
+            padding: 2px 10px;
+            border-radius: 10px;
+        }
+        .execution-panel .log-item .node-status.running {
+            background: #f9e2af;
+            color: #1e1e2e;
+        }
+        .execution-panel .log-item .node-status.done {
+            background: #a6e3a1;
+            color: #1e1e2e;
+        }
+        .execution-panel .log-item .node-status.error {
+            background: #f38ba8;
+            color: #1e1e2e;
+        }
+
+        .execution-panel .close-exec {
+            margin-top: 16px;
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: #f9e2af;
+            color: #1e1e2e;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .execution-panel .close-exec:hover {
+            background: #b4befe;
+        }
+
+        /* ============ 响应式 ============ */
+        @media (max-width: 1024px) {
+            .property-panel {
+                width: 200px;
+            }
+            .node-panel {
+                width: 170px;
+            }
+        }
+        @media (max-width: 768px) {
+            .node-panel {
+                display: none;
+            }
+            .property-panel {
+                width: 100%;
+                max-height: 40%;
+                border-left: none;
+                border-top: 1px solid #313244;
+            }
+            .canvas-body {
+                flex-direction: column-reverse;
+            }
+            .canvas-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 6px;
+            }
+            .canvas-toolbar .left,
+            .canvas-toolbar .right {
+                flex-wrap: wrap;
+            }
+        }
+
+        /* ============ 工具类 ============ */
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ==================== 标题栏 ==================== -->
+    <div class="title-bar">
+        <div class="left">
+            <h1>🎬 导演工作台</h1>
+            <span class="subtitle">v2.0 · 乐高式创作平台</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+            <div class="mode-switcher">
+                <button class="active" data-mode="chat" onclick="switchMode('chat')">💬 对话</button>
+                <button data-mode="canvas" onclick="switchMode('canvas')">🧩 画布</button>
+            </div>
+            <div class="title-bar-buttons">
+                <button id="minimizeBtn">─</button>
+                <button class="close-btn" id="closeBtn">✕</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 主体 ==================== -->
+    <div class="main-container">
+
+        <!-- ====== 对话模式 ====== -->
+        <div id="chatMode">
+            <div class="chat-area" id="chatLog">
+                <div class="chat-msg system">
+                    <div class="role">🎬 导演</div>
+                    <div class="content">欢迎！我是电影导演助手，可以帮你完成从创意到发布的完整电影制作流程。</div>
+                </div>
+                <div class="chat-msg system">
+                    <div class="role">💡 提示</div>
+                    <div class="content">
+                        <strong>快速开始：</strong><br>
+                        • 输入「创作一部《XXX》科幻电影」创建项目<br>
+                        • 输入「写剧本」生成剧本<br>
+                        • 输入「审查剧本」质量评估<br>
+                        • 或切换到 <strong>🧩 画布模式</strong> 可视化编排创作流程
+                    </div>
+                </div>
+            </div>
+            <div class="input-area">
+                <input type="text" id="cmdInput" placeholder="输入指令... 如：写剧本 或 创作一部《AI崛起》科幻电影">
+                <button id="cmdBtn">发送</button>
+            </div>
+        </div>
+
+        <!-- ====== 画布模式 ====== -->
+        <div id="canvasMode">
+            <!-- 工具栏 -->
+            <div class="canvas-toolbar">
+                <div class="left">
+                    <span class="project-name">🎬 <span class="highlight" id="canvasProjectName">未命名项目</span></span>
+                    <span style="color:#6c7086;font-size:11px;" id="canvasNodeCount">0 个节点</span>
+                </div>
+                <div class="right">
+                    <button class="canvas-btn" onclick="loadTemplate('quick')">📦 快速短片</button>
+                    <button class="canvas-btn purple" onclick="loadTemplate('professional')">🎥 专业剧本</button>
+                    <button class="canvas-btn" onclick="loadTemplate('short_video')">📱 短视频</button>
+                    <button class="canvas-btn" onclick="loadWorkflowFromFile()">📂 加载</button>
+                    <button class="canvas-btn success" onclick="executeWorkflow()">▶️ 执行</button>
+                    <button class="canvas-btn" onclick="saveWorkflow()">💾 保存</button>
+                    <button class="canvas-btn danger" onclick="clearCanvas()">🗑️ 清空</button>
+                </div>
+            </div>
+
+            <!-- 画布主体 -->
+            <div class="canvas-body">
+                <!-- 左侧节点面板 -->
+                <div class="node-panel" id="nodePanel">
+                    <!-- 由JS动态渲染 -->
+                </div>
+
+                <!-- 中间画布 -->
+                <div class="canvas-area" id="canvasArea">
+                    <svg class="canvas-svg" id="canvasSvg">
+                        <defs>
+                            <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                                <polygon points="0 0, 8 3, 0 6" fill="#45475a" />
+                            </marker>
+                        </defs>
+                    </svg>
+                    <div class="empty-hint" id="emptyHint">
+                        <span class="big-icon">🧩</span>
+                        <p>从左侧拖拽节点到画布</p>
+                        <p style="font-size:12px;color:#45475a;margin-top:6px;">或点击「📦 快速短片」加载模板</p>
+                    </div>
+                </div>
+
+                <!-- 右侧属性面板 -->
+                <div class="property-panel" id="propertyPanel">
+                    <div class="panel-title">⚙️ 节点属性</div>
+                    <div class="empty-text" id="propertyEmpty">点击画布上的节点<br>查看和编辑属性</div>
+                    <div id="propertyContent" style="display:none;"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ==================== 状态栏 ==================== -->
+    <div class="status-bar">
+        <div>
+            <span id="statusProject">📂 无项目</span>
+        </div>
+        <div class="right">
+            <span class="status-item">
+                <span class="dot green"></span>
+                <span id="statusAgent">导演Agent v5.0</span>
+            </span>
+            <span class="status-item">
+                <span class="dot yellow"></span>
+                <span id="statusSession">会话: <span id="sessionDisplay">-</span></span>
+            </span>
+        </div>
+    </div>
+
+    <!-- ==================== 上下文菜单 ==================== -->
+    <div class="context-menu" id="contextMenu">
+        <div class="menu-item" onclick="contextAction('configure')">⚙️ 配置</div>
+        <div class="menu-item" onclick="contextAction('duplicate')">📋 复制</div>
+        <div class="menu-divider"></div>
+        <div class="menu-item danger" onclick="contextAction('delete')">🗑️ 删除节点</div>
+    </div>
+
+    <!-- ==================== 执行日志浮窗 ==================== -->
+    <div class="execution-overlay" id="executionOverlay">
+        <div class="execution-panel">
+            <div class="title">▶️ 工作流执行中...</div>
+            <div id="executionLog"></div>
+            <button class="close-exec" onclick="closeExecution()">关闭</button>
+        </div>
+    </div>
+
+    <!-- ==================== JavaScript ==================== -->
+    <script>
+        // ========================================================================
+        //  配置
+        // ========================================================================
+        const TOKEN =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZDE2YjIwYjJjZWRjZjNjZiIsInVzZXJuYW1lIjoidGVzdHVzZXIiLCJyb2xlIjoidXNlciIsImV4cCI6MTc4MTE4MzMyMn0.2cbQMYnwasdm1cxjxtUuhJyODjaF4GyXoHdma-TZnzQ";
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const SESSION_ID = urlParams.get('session') || 'default';
+
+        // ========================================================================
+        //  节点定义
+        // ========================================================================
+        const NODE_TYPES = {
+            input: [{
+                id: 'creative_input',
+                icon: '🎬',
+                label: '创意输入',
+                category: '输入',
+                desc: '一句话创意→故事大纲',
+                defaultParams: { style: '详细', length: 'medium' }
+            }, {
+                id: 'material_import',
+                icon: '📚',
+                label: '素材导入',
+                category: '输入',
+                desc: '导入已有素材/参考',
+                defaultParams: { source: 'text' }
+            }],
+            processing: [{
+                id: 'script_generator',
+                icon: '✍️',
+                label: '剧本生成',
+                category: '处理',
+                desc: '叙事→格式两阶段生成',
+                defaultParams: { model: 'qwen2.5:7b', length: 'medium' }
+            }, {
+                id: 'character_design',
+                icon: '🎭',
+                label: '角色设计',
+                category: '处理',
+                desc: '深度角色档案生成',
+                defaultParams: { count: 3, detail: '详细' }
+            }, {
+                id: 'convert_novel_to_script',
+                icon: '🎬',
+                label: '小说→剧本转化',
+                category: '处理',
+                desc: '从会话读取小说，转化为标准剧本',
+                defaultParams: { format: 'fountain' }
+            }, {
+                id: 'scene_design',
+                icon: '🎨',
+                label: '场景设计',
+                category: '处理',
+                desc: '关键场景+冲突密度',
+                defaultParams: { count: 6, visualize: false }
+            }, {
+                id: 'storyboard',
+                icon: '🎬',
+                label: '分镜生成',
+                category: '处理',
+                desc: '调用vision_agent生成分镜',
+                defaultParams: { style: '电影感', resolution: '1024x768' }
+            }, {
+                id: 'refine',
+                icon: '🔄',
+                label: '迭代精炼',
+                category: '处理',
+                desc: '基于反馈修改剧本',
+                defaultParams: { rounds: 2, focus: 'all' }
+            }, {
+                id: 'voiceover',
+                icon: '🎙️',
+                label: '配音生成',
+                category: '处理',
+                desc: '调用audio_agent生成配音',
+                defaultParams: { voice: '默认', speed: 1.0, emotion: '中性' }
+            }],
+            output: [{
+                id: 'quality_review',
+                icon: '📊',
+                label: '质量审查',
+                category: '输出',
+                desc: '5维度评分+改进建议',
+                defaultParams: { detailed: true, focus: 'all' }
+            }, {
+                id: 'export_script',
+                icon: '📤',
+                label: '导出剧本',
+                category: '输出',
+                desc: 'Fountain/Markdown/PDF',
+                defaultParams: { format: 'fountain' }
+            }, {
+                id: 'project_report',
+                icon: '📈',
+                label: '项目报告',
+                category: '输出',
+                desc: '完整项目总结',
+                defaultParams: { format: 'markdown' }
+            }, {
+                id: 'one_click_film',
+                icon: '🎬',
+                label: '一键成片',
+                category: '输出',
+                desc: '调用orchestrator全流程',
+                defaultParams: { completeness: 'full' }
+            }]
+        };
+
+        const ALL_NODE_TYPES = {};
+        Object.values(NODE_TYPES).forEach(category => {
+            category.forEach(node => {
+                ALL_NODE_TYPES[node.id] = node;
+            });
+        });
+
+        // ========================================================================
+        //  预设模板
+        // ========================================================================
+        const TEMPLATES = {
+            quick: {
+                name: '快速短片',
+                nodes: [
+                    { type: 'creative_input', x: 50, y: 80, params: { style: '快速', length: 'short' } },
+                    { type: 'script_generator', x: 320, y: 80, params: { length: 'short' } },
+                    { type: 'quality_review', x: 590, y: 80, params: { detailed: true } }
+                ],
+                connections: [
+                    { from: 0, to: 1 },
+                    { from: 1, to: 2 }
+                ]
+            },
+            professional: {
+                name: '专业剧本',
+                nodes: [
+                    { type: 'creative_input', x: 50, y: 50, params: { style: '深度开发', length: 'long' } },
+                    { type: 'character_design', x: 50, y: 220, params: { count: 4, detail: '详细' } },
+                    { type: 'script_generator', x: 320, y: 50, params: { length: 'long' } },
+                    { type: 'scene_design', x: 320, y: 220, params: { count: 8, visualize: true } },
+                    { type: 'quality_review', x: 590, y: 50, params: { detailed: true, focus: 'all' } },
+                    { type: 'refine', x: 590, y: 220, params: { rounds: 3, focus: 'all' } },
+                    { type: 'export_script', x: 860, y: 50, params: { format: 'fountain' } }
+                ],
+                connections: [
+                    { from: 0, to: 2 },
+                    { from: 1, to: 2 },
+                    { from: 2, to: 4 },
+                    { from: 3, to: 4 },
+                    { from: 4, to: 5 },
+                    { from: 5, to: 6 }
+                ]
+            },
+            short_video: {
+                name: '短视频',
+                nodes: [
+                    { type: 'creative_input', x: 50, y: 80, params: { style: '爆款', length: 'short' } },
+                    { type: 'script_generator', x: 320, y: 80, params: { length: 'short' } },
+                    { type: 'storyboard', x: 590, y: 80, params: { style: '竖屏' } },
+                    { type: 'voiceover', x: 860, y: 80, params: { emotion: '活力' } },
+                    { type: 'export_script', x: 1130, y: 80, params: { format: 'markdown' } }
+                ],
+                connections: [
+                    { from: 0, to: 1 },
+                    { from: 1, to: 2 },
+                    { from: 2, to: 3 },
+                    { from: 3, to: 4 }
+                ]
+            }
+        };
+
+        // ========================================================================
+        //  状态管理
+        // ========================================================================
+        let state = {
+            nodes: [],
+            connections: [],
+            selectedNodeId: null,
+            nodeIdCounter: 0,
+            isExecuting: false
+        };
+
+        let dragState = null;
+        let contextTarget = null;
+        let currentMode = 'chat';
+
+        // ========================================================================
+        //  DOM 引用
+        // ========================================================================
+        const $ = id => document.getElementById(id);
+        const canvasArea = $('canvasArea');
+        const canvasSvg = $('canvasSvg');
+        const emptyHint = $('emptyHint');
+        const nodePanel = $('nodePanel');
+        const propertyContent = $('propertyContent');
+        const propertyEmpty = $('propertyEmpty');
+        const contextMenu = $('contextMenu');
+        const executionOverlay = $('executionOverlay');
+        const executionLog = $('executionLog');
+
+        // ========================================================================
+        //  工具函数
+        // ========================================================================
+        function escapeHtml(text) {
+            if (!text) return '';
+            return String(text).replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
+        }
+
+        function getParamOptions(key) {
+            const map = {
+                model: ['qwen2.5:7b', 'qwen2.5:14b', 'llama3.1'],
+                format: ['fountain', 'markdown', 'pdf'],
+                voice: ['默认', '男声1', '女声1'],
+                style: ['快速', '详细', '深度开发', '爆款', '电影感', '竖屏'],
+                length: ['short', 'medium', 'long'],
+                focus: ['all', '结构', '角色', '对白', '节奏', '主题'],
+                emotion: ['中性', '活力', '深情', '紧张', '幽默'],
+                completeness: ['full', 'quick', 'draft']
+            };
+            return map[key] || [key];
+        }
+
+        // ========================================================================
+        //  对话模式
+        // ========================================================================
+        function addLog(text, type = 'system', sender = '') {
+            const chat = $('chatLog');
+            const div = document.createElement('div');
+            div.className = `chat-msg ${type}`;
+            const roleMap = {
+                'system': '🎬 导演',
+                'user': '👤 用户',
+                'agent': '🤖 Agent'
+            };
+            div.innerHTML = `
+                <div class="role">${sender || roleMap[type] || '📌'}</div>
+                <div class="content">${escapeHtml(text)}</div>
+            `;
+            chat.appendChild(div);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        async function sendCommand(msg) {
+            if (!msg || !msg.trim()) return;
+            $('cmdInput').value = '';
+            addLog(msg, 'user', '👤 用户');
+
+            try {
+                const payload = {
+                    user_id: "codex_user",
+                    agent: "director_agent",
+                    message: msg.trim()
+                };
+                if (SESSION_ID && SESSION_ID !== 'default') payload.session_id = SESSION_ID;
+
+                const res = await fetch("/api/v5/wisdom/chat", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${TOKEN}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+                const reply = data.response || data.output_content || "处理完成";
+                addLog(reply, 'agent', '🎬 导演');
+                updateProjectInfo(reply);
+
+                const titleMatch = reply.match(/标题[：:]\s*《?(.+?)》?/);
+                if (titleMatch) {
+                    $('canvasProjectName').textContent = titleMatch[1];
+                    $('statusProject').textContent = `📂 ${titleMatch[1]}`;
+                }
+
+            } catch (err) {
+                addLog(`❌ 错误: ${err.message}`, 'system');
+            }
+        }
+
+        function updateProjectInfo(text) {
+            const titleMatch = text.match(/标题[：:]\s*《?(.+?)》?/);
+            if (titleMatch) {
+                $('canvasProjectName').textContent = titleMatch[1];
+                $('statusProject').textContent = `📂 ${titleMatch[1]}`;
+            }
+        }
+
+        // ========================================================================
+        //  节点面板渲染
+        // ========================================================================
+        function renderNodePanel() {
+            let html = '';
+            const categories = [
+                { key: 'input', label: '📋 输入类' },
+                { key: 'processing', label: '🔧 处理类' },
+                { key: 'output', label: '📊 输出类' }
+            ];
+
+            categories.forEach(cat => {
+                html += `<div class="section-title">${cat.label}</div>`;
+                const nodes = NODE_TYPES[cat.key] || [];
+                nodes.forEach(node => {
+                    html += `
+                        <div class="node-item" draggable="true" 
+                             data-node-type="${node.id}"
+                             ondragstart="onDragStart(event, '${node.id}')"
+                             ondragend="onDragEnd(event)">
+                            <span class="icon">${node.icon}</span>
+                            <span class="label">${node.label}</span>
+                            <span class="badge">${node.desc}</span>
+                        </div>
+                    `;
+                });
+            });
+
+            nodePanel.innerHTML = html;
+        }
+
+        // ========================================================================
+        //  画布操作
+        // ========================================================================
+        function addNode(typeId, x, y, params) {
+            const type = ALL_NODE_TYPES[typeId];
+            if (!type) return null;
+
+            const node = {
+                id: `node_${++state.nodeIdCounter}`,
+                type: typeId,
+                icon: type.icon,
+                label: type.label,
+                category: type.category,
+                params: { ...type.defaultParams, ...(params || {}) },
+                x: x || 100,
+                y: y || 100,
+                status: 'idle',
+                result: null
+            };
+
+            state.nodes.push(node);
+            renderCanvas();
+            return node;
+        }
+
+        function deleteNode(nodeId) {
+            state.nodes = state.nodes.filter(n => n.id !== nodeId);
+            state.connections = state.connections.filter(c => c.from !== nodeId && c.to !== nodeId);
+            if (state.selectedNodeId === nodeId) {
+                state.selectedNodeId = null;
+                renderProperties();
+            }
+            renderCanvas();
+            updateStatus();
+        }
+
+        function addConnection(fromId, toId) {
+            if (fromId === toId) return;
+            const exists = state.connections.some(c => c.from === fromId && c.to === toId);
+            if (exists) return;
+            state.connections.push({ from: fromId, to: toId });
+            renderCanvas();
+        }
+
+        function deleteConnection(fromId, toId) {
+            state.connections = state.connections.filter(c => c.from !== fromId || c.to !== toId);
+            renderCanvas();
+        }
+
+        function clearCanvas() {
+            if (state.nodes.length === 0) return;
+            if (!confirm('确定要清空画布吗？')) return;
+            state.nodes = [];
+            state.connections = [];
+            state.selectedNodeId = null;
+            renderCanvas();
+            renderProperties();
+            updateStatus();
+        }
+
+        // ========================================================================
+        //  渲染画布
+        // ========================================================================
+        function renderCanvas() {
+            document.querySelectorAll('.canvas-node').forEach(el => el.remove());
+            emptyHint.style.display = state.nodes.length === 0 ? 'block' : 'none';
+
+            state.nodes.forEach((node) => {
+                const el = document.createElement('div');
+                el.className = `canvas-node type-${node.category}`;
+                if (node.id === state.selectedNodeId) el.classList.add('selected');
+                el.style.left = node.x + 'px';
+                el.style.top = node.y + 'px';
+                el.dataset.nodeId = node.id;
+
+                const statusClass = node.status || 'idle';
+
+                el.innerHTML = `
+                    <div class="node-header">
+                        <span class="icon">${node.icon}</span>
+                        <span class="name">${node.label}</span>
+                        <span class="status-dot ${statusClass}"></span>
+                    </div>
+                    <div class="node-body">
+                        ${Object.entries(node.params).map(([k,v]) => 
+                            `<span class="param">${k}: ${v}</span>`
+                        ).join('')}
+                        ${node.result ? `<div style="color:#a6e3a1;margin-top:4px;">✅ 已完成</div>` : ''}
+                    </div>
+                    <div class="node-actions">
+                        <button onclick="selectNode('${node.id}')">⚙️</button>
+                        <button class="del-btn" onclick="deleteNode('${node.id}')">🗑️</button>
+                    </div>
+                `;
+
+                el.addEventListener('mousedown', (e) => {
+                    if (e.target.closest('.node-actions')) return;
+                    selectNode(node.id);
+                    startDrag(e, node.id);
+                });
+
+                el.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    showContextMenu(e.clientX, e.clientY, node.id);
+                });
+
+                canvasArea.appendChild(el);
+            });
+
+            renderConnections();
+            $('canvasNodeCount').textContent = `${state.nodes.length} 个节点`;
+        }
+
+        function renderConnections() {
+            canvasSvg.querySelectorAll('.connection-line').forEach(el => el.remove());
+
+            state.connections.forEach(conn => {
+                const fromNode = state.nodes.find(n => n.id === conn.from);
+                const toNode = state.nodes.find(n => n.id === conn.to);
+                if (!fromNode || !toNode) return;
+
+                const fromRect = getNodeRect(conn.from);
+                const toRect = getNodeRect(conn.to);
+                if (!fromRect || !toRect) return;
+
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', fromRect.right);
+                line.setAttribute('y1', fromRect.centerY);
+                line.setAttribute('x2', toRect.left);
+                line.setAttribute('y2', toRect.centerY);
+                line.classList.add('connection-line');
+                line.dataset.from = conn.from;
+                line.dataset.to = conn.to;
+
+                line.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (confirm('删除此连接？')) {
+                        deleteConnection(conn.from, conn.to);
+                    }
+                });
+
+                canvasSvg.appendChild(line);
+            });
+        }
+
+        function getNodeRect(nodeId) {
+            const el = document.querySelector(`.canvas-node[data-node-id="${nodeId}"]`);
+            if (!el) return null;
+            const rect = el.getBoundingClientRect();
+            const containerRect = canvasArea.getBoundingClientRect();
+            return {
+                left: rect.left - containerRect.left,
+                right: rect.right - containerRect.left,
+                top: rect.top - containerRect.top,
+                bottom: rect.bottom - containerRect.top,
+                centerX: (rect.left + rect.right) / 2 - containerRect.left,
+                centerY: (rect.top + rect.bottom) / 2 - containerRect.top
+            };
+        }
+
+        // ========================================================================
+        //  拖拽
+        // ========================================================================
+        function onDragStart(e, typeId) {
+            e.dataTransfer.setData('text/plain', typeId);
+            e.dataTransfer.effectAllowed = 'copy';
+        }
+
+        function onDragEnd(e) {}
+
+        canvasArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+        });
+
+        canvasArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const typeId = e.dataTransfer.getData('text/plain');
+            if (!typeId || !ALL_NODE_TYPES[typeId]) return;
+
+            const rect = canvasArea.getBoundingClientRect();
+            const x = e.clientX - rect.left - 80;
+            const y = e.clientY - rect.top - 30;
+
+            addNode(typeId, Math.max(10, x), Math.max(10, y));
+            updateStatus();
+        });
+
+        function startDrag(e, nodeId) {
+            const node = state.nodes.find(n => n.id === nodeId);
+            if (!node) return;
+
+            dragState = {
+                nodeId: nodeId,
+                startX: e.clientX,
+                startY: e.clientY,
+                origX: node.x,
+                origY: node.y
+            };
+
+            document.addEventListener('mousemove', onDragMove);
+            document.addEventListener('mouseup', onDragEndInternal);
+        }
+
+        function onDragMove(e) {
+            if (!dragState) return;
+            const dx = e.clientX - dragState.startX;
+            const dy = e.clientY - dragState.startY;
+
+            const node = state.nodes.find(n => n.id === dragState.nodeId);
+            if (node) {
+                node.x = Math.max(0, dragState.origX + dx);
+                node.y = Math.max(0, dragState.origY + dy);
+                renderCanvas();
+            }
+        }
+
+        function onDragEndInternal(e) {
+            document.removeEventListener('mousemove', onDragMove);
+            document.removeEventListener('mouseup', onDragEndInternal);
+            dragState = null;
+        }
+
+        // ========================================================================
+        //  选择与属性
+        // ========================================================================
+        function selectNode(nodeId) {
+            state.selectedNodeId = nodeId;
+            renderCanvas();
+            renderProperties();
+        }
+
+        function renderProperties() {
+            const node = state.nodes.find(n => n.id === state.selectedNodeId);
+            if (!node) {
+                propertyEmpty.style.display = 'block';
+                propertyContent.style.display = 'none';
+                return;
+            }
+
+            propertyEmpty.style.display = 'none';
+            propertyContent.style.display = 'block';
+
+            const type = ALL_NODE_TYPES[node.type];
+            let html = `
+                <div class="property-group">
+                    <label>节点名称</label>
+                    <input type="text" value="${node.label}" readonly style="color:#6c7086;">
+                </div>
+                <div class="property-group">
+                    <label>类型</label>
+                    <input type="text" value="${node.category} · ${type ? type.desc : ''}" readonly style="color:#6c7086;font-size:11px;">
+                </div>
+            `;
+
+            Object.entries(node.params).forEach(([key, value]) => {
+                const val = value !== undefined && value !== null ? value : '';
+                if (typeof val === 'boolean') {
+                    html += `
+                        <div class="property-group">
+                            <label>${key}</label>
+                            <select onchange="updateParam('${node.id}','${key}',this.value)">
+                                <option value="true" ${val ? 'selected' : ''}>是</option>
+                                <option value="false" ${!val ? 'selected' : ''}>否</option>
+                            </select>
+                        </div>
+                    `;
+                } else if (typeof val === 'string' && ['model', 'format', 'voice', 'style', 'length', 'focus', 'emotion', 'completeness'].includes(key)) {
+                    const options = getParamOptions(key);
+                    html += `
+                        <div class="property-group">
+                            <label>${key}</label>
+                            <select onchange="updateParam('${node.id}','${key}',this.value)">
+                                ${options.map(o => `<option value="${o}" ${o === val ? 'selected' : ''}>${o}</option>`).join('')}
+                            </select>
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="property-group">
+                            <label>${key}</label>
+                            <input type="text" value="${val}" onchange="updateParam('${node.id}','${key}',this.value)">
+                        </div>
+                    `;
+                }
+            });
+
+            if (node.result) {
+                html += `
+                    <div class="property-group">
+                        <label>执行结果</label>
+                        <div style="background:#1e1e2e;padding:8px;border-radius:6px;font-size:11px;color:#a6e3a1;max-height:100px;overflow-y:auto;">
+                            ${escapeHtml(String(node.result).slice(0, 200))}${String(node.result).length > 200 ? '...' : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
+            html += `
+                <div style="display:flex;gap:6px;margin-top:12px;">
+                    <button class="canvas-btn success" style="flex:1;" onclick="executeSingleNode('${node.id}')">▶ 执行此节点</button>
+                    <button class="canvas-btn danger" onclick="deleteNode('${node.id}')">🗑️</button>
+                </div>
+            `;
+
+            propertyContent.innerHTML = html;
+        }
+
+        function updateParam(nodeId, key, value) {
+            const node = state.nodes.find(n => n.id === nodeId);
+            if (!node) return;
+            if (value === 'true') node.params[key] = true;
+            else if (value === 'false') node.params[key] = false;
+            else node.params[key] = value;
+            renderCanvas();
+            renderProperties();
+        }
+
+        // ========================================================================
+        //  上下文菜单
+        // ========================================================================
+        function showContextMenu(x, y, nodeId) {
+            contextTarget = nodeId;
+            contextMenu.style.left = x + 'px';
+            contextMenu.style.top = y + 'px';
+            contextMenu.classList.add('show');
+        }
+
+        document.addEventListener('click', () => {
+            contextMenu.classList.remove('show');
+        });
+
+        function contextAction(action) {
+            contextMenu.classList.remove('show');
+            if (!contextTarget) return;
+            if (action === 'delete') {
+                deleteNode(contextTarget);
+            } else if (action === 'configure') {
+                selectNode(contextTarget);
+            } else if (action === 'duplicate') {
+                const node = state.nodes.find(n => n.id === contextTarget);
+                if (node) {
+                    const newNode = addNode(node.type, node.x + 30, node.y + 30, node.params);
+                    if (newNode) {
+                        state.connections.forEach(c => {
+                            if (c.from === node.id) addConnection(newNode.id, c.to);
+                            if (c.to === node.id) addConnection(c.from, newNode.id);
+                        });
+                        renderCanvas();
+                    }
+                }
+            }
+            contextTarget = null;
+        }
+
+        // ========================================================================
+        //  模板
+        // ========================================================================
+        function loadTemplate(name) {
+            const template = TEMPLATES[name];
+            if (!template) return;
+
+            clearCanvas();
+            const nodeMap = {};
+            template.nodes.forEach((tNode, index) => {
+                const node = addNode(tNode.type, tNode.x, tNode.y, tNode.params || {});
+                if (node) nodeMap[index] = node.id;
+            });
+
+            template.connections.forEach(conn => {
+                const fromId = nodeMap[conn.from];
+                const toId = nodeMap[conn.to];
+                if (fromId && toId) addConnection(fromId, toId);
+            });
+
+            updateStatus();
+            addLog(`📦 已加载模板: ${template.name}`, 'system');
+        }
+
+        // ========================================================================
+        //  🚀 核心：节点执行 - 对接后端API（替换原有模拟版本）
+        // ========================================================================
+
+        async function executeNodeAPI(node) {
+        // ===== 🆕 小说→剧本转化：显示导入弹窗 =====
+            if (node.type === 'convert_novel_to_script') {
+            return new Promise((resolve) => {
+                // 弹窗选择导入方式
+                const choice = confirm(
+                    '📄 导入小说进行剧本转化\n\n' +
+                    '点击「确定」从文件导入小说\n' +
+                    '点击「取消」粘贴文本\n\n' +
+                    '💡 提示：创作内容不共享，请手动导入'
+                );
+            
+                if (choice) {
+                    // 从文件导入
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = '.md,.txt,.fountain,.docx';
+                    input.onchange = async (e) => {
+                        const file = e.target.files[0];
+                        if (!file) {
+                            resolve({ success: false, error: '未选择文件' });
+                            return;
+                        }
+                        const reader = new FileReader();
+                        reader.onload = async (event) => {
+                            const content = event.target.result;
+                            // 调用后端转化API
+                            const result = await executeNovelToScriptAPI(node, content);
+                            resolve(result);
+                        };
+                        reader.readAsText(file);
+                    };
+                    input.click();
+                } else {
+                    // 粘贴文本
+                    const content = prompt('📋 请粘贴小说内容：');
+                    if (content && content.trim()) {
+                        executeNovelToScriptAPI(node, content).then(resolve);
+                    } else {
+                        resolve({ success: false, error: '未提供小说内容' });
+                    }
+                }
+            });
+        }
+        // ============================================
+
+        // 原有逻辑：其他节点走正常API
+	    try {
+                const response = await fetch('/api/director/canvas/execute', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${TOKEN}`
+                    },
+                    body: JSON.stringify({
+                        session_id: SESSION_ID,
+                        node_id: node.id,
+                        node_type: node.type,
+                        params: node.params
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || '执行失败');
+                }
+
+                return data.result || '执行完成';
+
+            } catch (e) {
+                console.warn('画布API调用失败，降级到对话API:', e.message);
+                return await executeNodeFallback(node);
+            }
+        }
+
+        // ===== 🆕 新增：小说→剧本转化API调用 =====
+        async function executeNovelToScriptAPI(node, novelContent) {
+            try {
+                const response = await fetch('/api/director/canvas/execute', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${TOKEN}`
+                    },
+                    body: JSON.stringify({
+                        session_id: SESSION_ID,
+                        node_id: node.id,
+                        node_type: node.type,
+                        params: {
+                            novel_content: novelContent,
+                            format: node.params.format || 'fountain'
+                        }
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || '转化失败');
+                }
+
+                // 显示成功提示
+                addLog('✅ 剧本生成成功！请查看结果。', 'system');
+                return data.result || '转化完成';
+
+            } catch (e) {
+                addLog(`❌ 转化失败: ${e.message}`, 'system');
+                return { success: false, error: e.message };
+            }
+        }
+	        // 降级方案
+                async function executeNodeFallback(node) {
+                    const typeMap = {
+                        'creative_input': '创作故事大纲',
+                        'script_generator': '写剧本',
+                        'character_design': '设定角色',
+                        'scene_design': '设计场景',
+                        'storyboard': '生成分镜',
+                        'refine': '精炼剧本',
+                        'voiceover': '生成配音',
+                        'quality_review': '审查剧本',
+                        'export_script': '导出剧本',
+                        'project_report': '项目报告',
+                        'one_click_film': '制作电影',
+                        'convert_novel_to_script': '转化小说为剧本'  // 🆕 新增 
+	            };
+
+                    const command = typeMap[node.type] || '执行任务';
+                    const params = Object.entries(node.params).map(([k, v]) => `${k}:${v}`).join(' ');
+                    const message = `${command} ${params}`.trim();
+
+                    const response = await fetch("/api/v5/wisdom/chat", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${TOKEN}`
+                        },
+                        body: JSON.stringify({
+                            user_id: "codex_user",
+                            agent: "director_agent",
+                            message: message,
+                            session_id: SESSION_ID
+                        })
+                    });
+
+                    const data = await response.json();
+                    return data.response || data.output_content || '执行完成';
+                }
+
+        
+	// ========================================================================
+        //  执行单个节点
+        // ========================================================================
+
+        async function executeSingleNode(nodeId) {
+            const node = state.nodes.find(n => n.id === nodeId);
+            if (!node) return;
+            if (node.status === 'running') return;
+
+            node.status = 'running';
+            renderCanvas();
+
+            try {
+                const result = await executeNodeAPI(node);
+                node.status = 'done';
+                node.result = result;
+                addLog(`✅ ${node.label} 执行完成`, 'system');
+            } catch (e) {
+                node.status = 'error';
+                node.result = e.message;
+                addLog(`❌ ${node.label} 执行失败: ${e.message}`, 'system');
+            }
+
+            renderCanvas();
+            renderProperties();
+        }
+
+        // ========================================================================
+        //  🚀 工作流批量执行（替换原有模拟版本）
+        // ========================================================================
+
+        async function executeWorkflow() {
+            if (state.isExecuting) return;
+            if (state.nodes.length === 0) {
+                addLog('⚠️ 画布为空，请先添加节点', 'system');
+                return;
+            }
+
+            state.isExecuting = true;
+            executionOverlay.classList.add('show');
+            executionLog.innerHTML = '<div style="text-align:center;color:#6c7086;padding:20px;">⏳ 准备执行...</div>';
+
+            try {
+                const nodesData = state.nodes.map(n => ({
+                    id: n.id,
+                    type: n.type,
+                    params: n.params
+                }));
+
+                const connectionsData = state.connections.map(c => ({
+                    from: c.from,
+                    to: c.to
+                }));
+
+                const response = await fetch('/api/director/canvas/workflow/execute', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${TOKEN}`
+                    },
+                    body: JSON.stringify({
+                        session_id: SESSION_ID,
+                        nodes: nodesData,
+                        connections: connectionsData
+                    })
+                });
+
+                const data = await response.json();
+                executionLog.innerHTML = '';
+
+                if (!data.success && data.error) {
+                    executionLog.innerHTML = `<div style="color:#f38ba8;">❌ ${data.error}</div>`;
+                    addLog(`❌ 工作流执行失败: ${data.error}`, 'system');
+                    state.isExecuting = false;
+                    return;
+                }
+
+                data.results.forEach((result) => {
+                    const node = state.nodes.find(n => n.id === result.node_id);
+                    if (node) {
+                        if (result.success) {
+                            node.status = 'done';
+                            node.result = result.result;
+                        } else {
+                            node.status = 'error';
+                            node.result = result.error || '执行失败';
+                        }
+                        addExecutionLog(node, result.success ? 'done' : 'error', result.result || result.error);
+                    }
+                });
+
+                const hasError = data.results.some(r => !r.success);
+
+                if (!hasError) {
+                    addLog('✅ 工作流执行完成！所有节点均已成功执行。', 'system');
+                    executionLog.innerHTML += '<div style="text-align:center;color:#a6e3a1;padding:12px;">🎉 所有节点执行完成！</div>';
+                } else {
+                    const errorCount = data.results.filter(r => !r.success).length;
+                    addLog(`⚠️ 工作流执行完成，但有 ${errorCount} 个节点失败。`, 'system');
+                    executionLog.innerHTML += `<div style="text-align:center;color:#f38ba8;padding:12px;">⚠️ 有 ${errorCount} 个节点执行失败，请检查</div>`;
+                }
+
+                renderCanvas();
+                renderProperties();
+
+            } catch (e) {
+                executionLog.innerHTML = `<div style="color:#f38ba8;">❌ 执行异常: ${e.message}</div>`;
+                addLog(`❌ 工作流执行异常: ${e.message}`, 'system');
+            }
+
+            state.isExecuting = false;
+        }
+
+        function addExecutionLog(node, status, result) {
+            const statusMap = { 'running': '⏳ 执行中', 'done': '✅ 完成', 'error': '❌ 错误' };
+            const statusClassMap = { 'running': 'running', 'done': 'done', 'error': 'error' };
+
+            const div = document.createElement('div');
+            div.className = 'log-item';
+            div.innerHTML = `
+                <span class="status-icon">${node.icon}</span>
+                <span class="node-name">${node.label}</span>
+                <span class="node-status ${statusClassMap[status] || 'pending'}">${statusMap[status] || status}</span>
+                ${result ? `<span style="font-size:11px;color:#6c7086;flex:1;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100px;">${escapeHtml(String(result).slice(0,50))}</span>` : ''}
+            `;
+            executionLog.appendChild(div);
+            executionLog.scrollTop = executionLog.scrollHeight;
+        }
+
+        function closeExecution() {
+            executionOverlay.classList.remove('show');
+        }
+
+        // ========================================================================
+        //  保存/加载工作流
+        // ========================================================================
+
+        function saveWorkflow() {
+            if (SESSION_ID && SESSION_ID !== 'default') {
+                saveWorkflowToServer();
+            } else {
+                saveWorkflowLocal();
+            }
+        }
+
+        async function saveWorkflowToServer() {
+            try {
+                const data = {
+                    session_id: SESSION_ID,
+                    workflow: {
+                        nodes: state.nodes.map(n => ({
+                            id: n.id,
+                            type: n.type,
+                            x: n.x,
+                            y: n.y,
+                            params: n.params
+                        })),
+                        connections: state.connections
+                    }
+                };
+
+                const response = await fetch('/api/director/canvas/workflow/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${TOKEN}`
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    addLog('💾 工作流已保存到服务器', 'system');
+                } else {
+                    addLog('⚠️ 服务器保存失败，保存到本地', 'system');
+                    saveWorkflowLocal();
+                }
+            } catch (e) {
+                saveWorkflowLocal();
+            }
+        }
+
+        function saveWorkflowLocal() {
+            const data = {
+                nodes: state.nodes.map(n => ({
+                    type: n.type,
+                    x: n.x,
+                    y: n.y,
+                    params: n.params
+                })),
+                connections: state.connections.map(c => ({
+                    from: state.nodes.findIndex(n => n.id === c.from),
+                    to: state.nodes.findIndex(n => n.id === c.to)
+                }))
+            };
+
+            const json = JSON.stringify(data, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `workflow_${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            addLog('💾 工作流已保存到本地', 'system');
+        }
+
+        function loadWorkflowFromFile() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const data = JSON.parse(event.target.result);
+                        loadWorkflowFromJSON(data);
+                    } catch (err) {
+                        addLog(`❌ 解析工作流文件失败: ${err.message}`, 'system');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        function loadWorkflowFromJSON(jsonData) {
+            try {
+                const data = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
+                clearCanvas();
+
+                const nodeMap = {};
+                data.nodes.forEach((tNode, index) => {
+                    const node = addNode(tNode.type, tNode.x || 100 + index * 50, tNode.y || 100 + index * 30, tNode
+                        .params || {});
+                    if (node) nodeMap[index] = node.id;
+                });
+
+                (data.connections || []).forEach(conn => {
+                    const fromId = nodeMap[conn.from];
+                    const toId = nodeMap[conn.to];
+                    if (fromId && toId) addConnection(fromId, toId);
+                });
+
+                renderCanvas();
+                updateStatus();
+                addLog('📂 工作流已加载', 'system');
+
+            } catch (e) {
+                addLog(`❌ 加载工作流失败: ${e.message}`, 'system');
+            }
+        }
+
+        // ========================================================================
+        //  模式切换
+        // ========================================================================
+
+        function switchMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.mode-switcher button').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === mode);
+            });
+
+            if (mode === 'chat') {
+                $('chatMode').classList.remove('hidden');
+                $('canvasMode').classList.remove('active');
+            } else {
+                $('chatMode').classList.add('hidden');
+                $('canvasMode').classList.add('active');
+                renderNodePanel();
+                renderCanvas();
+                updateStatus();
+            }
+        }
+
+        function updateStatus() {
+            $('canvasNodeCount').textContent = `${state.nodes.length} 个节点`;
+            $('sessionDisplay').textContent = SESSION_ID.slice(0, 8);
+        }
+
+        // ========================================================================
+        //  快捷键
+        // ========================================================================
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.ctrlKey && currentMode === 'chat') {
+                const input = $('cmdInput');
+                if (input.value.trim()) sendCommand(input.value.trim());
+            }
+
+            if ((e.key === 'Delete' || e.key === 'Backspace') && state.selectedNodeId) {
+                if (!e.target.closest('input, textarea, select')) {
+                    e.preventDefault();
+                    deleteNode(state.selectedNodeId);
+                }
+            }
+
+            if (e.key === 'Escape') {
+                state.selectedNodeId = null;
+                renderCanvas();
+                renderProperties();
+                closeExecution();
+                contextMenu.classList.remove('show');
+            }
+        });
+
+        // ========================================================================
+        //  窗口控制
+        // ========================================================================
+
+        $('minimizeBtn').onclick = () => window.parent.postMessage({ type: "minimize" }, "*");
+        $('closeBtn').onclick = () => window.parent.postMessage({ type: "close" }, "*");
+
+        // ========================================================================
+        //  初始化
+        // ========================================================================
+
+        document.addEventListener('DOMContentLoaded', () => {
+            $('sessionDisplay').textContent = SESSION_ID.slice(0, 8);
+
+            $('cmdBtn').addEventListener('click', () => {
+                const input = $('cmdInput');
+                if (input.value.trim()) sendCommand(input.value.trim());
+            });
+
+            $('cmdInput').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (currentMode === 'chat') {
+                        const input = $('cmdInput');
+                        if (input.value.trim()) sendCommand(input.value.trim());
+                    }
+                }
+            });
+
+            switchMode('chat');
+            updateStatus();
+
+            setTimeout(() => {
+                if (SESSION_ID !== 'default') sendCommand('项目状态');
+            }, 800);
+
+            setTimeout(() => {
+                addLog('💡 快捷键: Ctrl+Enter 发送 | Delete 删除节点', 'system');
+            }, 2000);
+
+            console.log('🎬 导演工作台 v2.0 已加载');
+            console.log(`📌 会话: ${SESSION_ID}`);
+        });
+    </script>
+</body>
+</html>

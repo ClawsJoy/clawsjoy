@@ -53,6 +53,7 @@ class WisdomFactory:
             "three_d_agent": ("agents.three_d_agent.agent_v4", "ThreeDAgentV4"),
             "video_indexer_agent": ("agents.video_indexer_agent.agent_v4", "VideoIndexerAgentV4"),
             "proactive_agent": ("agents.proactive_agent.agent_v4", "ProactiveAgentV4"),
+            "director_agent": ("agents.director_agent.agent_v4", "DirectorAgentV4"),
         }
 
         for agent_name, (module_path, class_name) in v4_agents.items():
@@ -77,7 +78,7 @@ class WisdomFactory:
             "translate_agent", "calculator_agent", "orchestrator", "decision_agent",
             "vision_agent" ,"memory_agent", "file_agent", "video_agent", "youtube_agent",
             "audio_agent", "dialect_agent", "collaboration_agent", "writer_agent",
-            "three_d_agent", "video_indexer_agent", "proactive_agent"
+            "three_d_agent", "video_indexer_agent", "proactive_agent","director_agent"
         ]
         
         for agent_name in v4_agent_names:
@@ -173,6 +174,7 @@ class WisdomFactory:
                 "three_d_agent": ("agents.three_d_agent.agent_v4", "ThreeDAgentV4"),
                 "video_indexer_agent": ("agents.video_indexer_agent.agent_v4", "VideoIndexerAgentV4"),
                 "proactive_agent": ("agents.proactive_agent.agent_v4", "ProactiveAgentV4"),
+                "director_agent": ("agents.director_agent.agent_v4", "DirectorAgentV4"),
             }
             
             if agent_name in v4_imports:
@@ -237,5 +239,30 @@ class WisdomFactory:
         stats["lazy_loaded"] = [k for k in lazy_loader._loaded.keys() if "agent" in k]
         
         return stats
+    def _auto_discover_agents(self):
+        """自动发现并注册所有 Agent"""
+        from core.lib.agent_discovery import agent_discovery
+        
+        discovered = agent_discovery.discover_all()
+        print(f"🔍 自动发现 {len(discovered)} 个 Agent")
+        
+        for agent_name, (module_path, class_name) in discovered.items():
+            if agent_name not in self._wrapped_agents:
+                # 注册到懒加载
+                def make_loader(mod_path, cls_name):
+                    def loader():
+                        try:
+                            module = __import__(mod_path, fromlist=[cls_name])
+                            return getattr(module, cls_name)
+                        except Exception as e:
+                            print(f"加载 {mod_path} 失败: {e}")
+                            return None
+                    return loader
+                
+                self._register_lazy(f"{agent_name}_v4", make_loader(module_path, class_name))
+                print(f"  📦 自动注册: {agent_name}")
+
 
 wisdom_factory = WisdomFactory()
+
+         

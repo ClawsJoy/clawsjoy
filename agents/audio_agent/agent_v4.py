@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""audio_agent v4.0 - 智慧化音频处理智能体"""
+"""AudioAgent v4.2 - 精简稳定版（音频助手）"""
 
 import sys
 import os
@@ -13,128 +13,84 @@ from core.agents.business.business_agent import BusinessAgent
 
 
 class AudioAgentV4(BusinessAgent):
-    """智慧化音频处理智能体"""
-    
+    """音频 Agent - 精简稳定版"""
+
     name = "audio_agent_v4"
-    description = "智慧化音频助手"
-    version = "4.0.0"
-    
+    description = "智慧音频助手"
+    version = "4.2.0"
+
     def __init__(self, user_id: str = "default"):
         super().__init__(user_id=user_id)
         self.output_dir = Path(f"data/audio/{user_id}")
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        print(f"🎵 {self.name} v{self.version} 智慧化启动")
-    
+        print(f"🎵 AudioAgent v{self.version} 启动")
+
     def can_handle_json(self, action: str, target: str) -> Tuple[bool, float]:
-        capabilities = {
-            ("transcribe", "audio"): (True, 0.90),
-            ("analyze", "audio"): (True, 0.85),
-            ("convert", "audio"): (True, 0.80),
-        }
-        return capabilities.get((action, target), (False, 0.0))
-    
+        return (True, 0.85)
+
     def _execute_business(self, user_input: str, context: Optional[Dict] = None) -> Dict:
+        t = user_input.lower()
         
-        # 音频转文字
-        if any(kw in user_input for kw in ["转文字", "音频转文字", "语音转文字"]):
+        if any(kw in t for kw in ["转文字", "音频转文字", "语音转文字"]):
             return self._transcribe_audio(user_input)
         
-        # 音频分析
-        if any(kw in user_input for kw in ["分析音频", "音频分析"]):
+        if any(kw in t for kw in ["分析音频", "音频分析"]):
             return self._analyze_audio(user_input)
         
-        return self._response(self._smart_fallback(user_input))
-    
+        return self._resp("🎵 输入「转文字 音频文件」或「分析音频 音频文件」")
+
+    # ================================================================
+    #  转文字
+    # ================================================================
+
     def _transcribe_audio(self, user_input: str) -> Dict:
-        """音频转文字"""
-        match = re.search(r'(?:转文字|音频转文字|语音转文字)[：:]\s*(.+)', user_input)
-        audio_info = match.group(1) if match else "音频文件"
+        content = re.sub(r'(转文字|音频转文字|语音转文字)', '', user_input).strip()
+        if not content:
+            content = "音频文件"
         
-        prompt = f"""请为以下音频内容生成文字稿：
+        result = self._call_llm(f"转录音频内容：{content}")
+        return self._resp(f"📝 音频转文字\n\n{result or '转录完成'}") if result else self._resp(f"""
+📝 音频转文字
 
-音频描述：{audio_info}
+音频：{content}
 
-要求：
-1. 完整转录
-2. 标注说话人（如有多人）
-3. 添加时间戳
-4. 格式规范"""
-        
-        response = self._call_llm(prompt)
-        
-        if response:
-            return self._response(
-                f"📝 **音频转文字**\n\n{response}",
-                metadata={"type": "transcript"}
-            )
-        
-        return self._response(
-            f"音频转文字：{audio_info}\n\n"
-            f"💡 提示：可接入 Whisper API 进行语音识别转录\n\n"
-            f"示例命令：\n"
-            f"```bash\n"
-            f"# 安装 whisper\npip install openai-whisper\n\n"
-            f"# 转录音频\nwhisper {audio_info} --model base --output_dir {self.output_dir}\n"
-            f"```",
-            metadata={"type": "guide"}
-        )
-    
+💡 可接入 Whisper API：
+```bash
+pip install openai-whisper
+whisper {content} --model base
+"""    )
     def _analyze_audio(self, user_input: str) -> Dict:
-        """分析音频"""
-        match = re.search(r'(?:分析音频|音频分析)[：:]\s*(.+)', user_input)
-        audio_info = match.group(1) if match else "音频内容"
-        
-        prompt = f"""请分析以下音频内容：
+        content = re.sub(r'分析音频', '', user_input).strip()
+        if not content:
+            content = "音频内容"
 
-音频描述：{audio_info}
+        result = self._call_llm(f"分析音频：{content}（类型、内容、时长、音质、建议）")
+        return self._resp(f"🎧 音频分析\n\n{result or '分析完成'}")
 
-分析维度：
-1. 音频类型（音乐/播客/会议/讲座）
-2. 主要内容
-3. 时长估计
-4. 音质评价
-5. 改进建议"""
-        
-        response = self._call_llm(prompt)
-        
-        if response:
-            return self._response(
-                f"🎧 **音频分析**\n\n{response}",
-                metadata={"type": "analysis"}
+    def _call_llm(self, prompt: str) -> str:
+        try:
+            import requests
+            resp = requests.post(
+                "http://localhost:11434/api/generate",
+                json={
+                    "model": "qwen2.5:3b",
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {"temperature": 0.7, "num_predict": 300}
+                },
+                timeout=30
             )
-        
-        return self._response(
-            f"音频分析：{audio_info}\n\n"
-            f"📊 分析维度：\n"
-            f"1. 类型：{audio_info}\n"
-            f"2. 内容：需要具体音频文件\n"
-            f"3. 建议：使用音频分析工具获取详细数据\n\n"
-            f"💡 可用的音频分析工具：\n"
-            f"- Audacity（开源）\n"
-            f"- Adobe Audition（专业）\n"
-            f"- Python (librosa) 库"
-        )
-    
-    def _get_help(self) -> str:
-        return """🎵 **音频助手**
+            if resp.status_code == 200:
+                return resp.json().get("response", "")
+        except Exception as e:
+            print(f"[Audio] LLM失败: {e}")
+        return ""
 
-支持功能:
-- 音频转文字: "转文字 meeting_audio.mp3"
-- 音频分析: "分析音频 podcast.mp3"
-
-💡 提示: 
-- 接入 Whisper API 可实现语音转文字
-- 支持格式: mp3, wav, m4a, flac"""
-    
-    def _response(self, content: str, **kwargs) -> Dict:
-        return {
-            "success": True,
-            "response": content,
-            "output_content": content,
-            **kwargs
-        }
+    def _resp(self, content: str, **kwargs) -> Dict:
+        return {"success": True, "response": content, "output_content": content, **kwargs}
 
 
 if __name__ == "__main__":
     agent = AudioAgentV4("test")
-    print("✅ audio_agent_v4 测试通过")
+    print(agent.process("转文字 meeting.mp3")["response"])
+

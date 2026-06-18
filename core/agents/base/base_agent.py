@@ -289,38 +289,52 @@ class BaseAgent(ABC):
         self._stats["ethical_decisions"] += 1
         return True, "符合伦理原则"
 
-    # ==================== 🤝 社会性 ====================
+    # ==================== 社交礼仪（由 LLM 驱动）====================
 
     def greet(self, user_name: str = None) -> str:
-        """社交礼仪 - 问候"""
-        if user_name:
-            return f"您好，{user_name}！很高兴见到您。我是 {self.name}，有什么可以帮助您的吗？"
-        return f"您好！我是 {self.name}，很高兴为您服务。"
+        """由 LLM 生成问候语"""
+        name_context = f"，用户名叫 {user_name}" if user_name else ""
+        prompt = f"生成一个友好、自然的问候{name_context}。我是 {self.name}，一个智能助手。直接输出问候语："
+        response = self._call_llm(prompt)
+        return response.strip() if response else f"您好{user_name if user_name else ''}！我是 {self.name}，很高兴为您服务。"
 
     def farewell(self) -> str:
-        """社交礼仪 - 告别"""
-        return f"再见！感谢您的使用，{self.name} 随时为您服务。"
+        """由 LLM 生成告别语"""
+        prompt = f"生成一个温暖、自然的告别语，我是 {self.name}，一个智能助手。直接输出告别语："
+        response = self._call_llm(prompt)
+        return response.strip() if response else f"再见！感谢您的使用，{self.name} 随时为您服务。"
 
     def thank(self) -> str:
-        """社交礼仪 - 感谢"""
-        return "不客气！很高兴能帮到您。"
+        """由 LLM 生成感谢语"""
+        prompt = "生成一个自然、友好的感谢回应。直接输出回应："
+        response = self._call_llm(prompt)
+        return response.strip() if response else "不客气！很高兴能帮到您。"
 
     def apologize(self, reason: str = None) -> str:
-        """社交礼仪 - 道歉"""
-        if reason:
-            return f"很抱歉，{reason}。我会努力改进。"
-        return "很抱歉给您带来了不便。"
+        """由 LLM 生成道歉语"""
+        context = f"原因是：{reason}" if reason else ""
+        prompt = f"生成一个真诚、自然的道歉回应。{context} 直接输出回应："
+        response = self._call_llm(prompt)
+        return response.strip() if response else f"很抱歉{reason if reason else ''}。我会努力改进。"
 
-    def collaborate(self, target_agent: str, task: str) -> Dict:
-        """协作能力 - 与其他 Agent 协作"""
-        self._stats["total_interactions"] += 1
-        return {
-            "success": True,
-            "message": f"请求 {target_agent} 协作处理: {task}",
-            "from": self.name,
-            "to": target_agent,
-        }
-
+    def _call_llm(self, prompt: str) -> str:
+        try:
+            import requests
+            resp = requests.post(
+                "http://localhost:11434/api/generate",
+                json={
+                    "model": "qwen2:1.5b-instruct",
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {"num_predict": 100, "temperature": 0.7}
+                },
+                timeout=20
+            )
+            if resp.status_code == 200:
+                return resp.json().get("response", "")
+        except:
+            pass
+        return ""
     # ==================== 💾 永久记忆 ====================
 
     def _get_memory_file(self) -> Path:
