@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""three_d_agent v4.0 - 智慧化 3D 处理智能体"""
+"""ThreeDAgent v4.2 - 精简稳定版（3D 助手）"""
 
 import sys
 import os
@@ -12,130 +12,118 @@ from core.agents.business.business_agent import BusinessAgent
 
 
 class ThreeDAgentV4(BusinessAgent):
-    """智慧化 3D 处理助手"""
-    
+    """3D Agent - 精简稳定版"""
+
     name = "three_d_agent_v4"
-    description = "智慧化 3D 助手"
-    version = "4.0.0"
-    
+    description = "智慧 3D 助手"
+    version = "4.2.0"
+
     def __init__(self, user_id: str = "default"):
         super().__init__(user_id=user_id)
-        print(f"🎨 {self.name} v{self.version} 智慧化启动")
-    
+        print(f"🎨 ThreeDAgent v{self.version} 启动")
+
     def can_handle_json(self, action: str, target: str) -> Tuple[bool, float]:
-        capabilities = {
-            ("generate", "model"): (True, 0.85),
-            ("render", "scene"): (True, 0.80),
-        }
-        return capabilities.get((action, target), (False, 0.0))
-    
+        return (True, 0.85)
+
     def _execute_business(self, user_input: str, context: Optional[Dict] = None) -> Dict:
+        t = user_input.lower()
         
-        # 生成 3D 模型
-        if any(kw in user_input for kw in ["生成模型", "创建模型", "3D模型"]):
+        if any(kw in t for kw in ["生成模型", "创建模型", "3d模型"]):
             return self._generate_model(user_input)
         
-        # 渲染场景
-        if any(kw in user_input for kw in ["渲染", "场景"]):
+        if any(kw in t for kw in ["渲染", "场景"]):
             return self._render_scene(user_input)
         
-        return self._response(self._smart_fallback(user_input))
-    
+        return self._resp("🎨 输入「生成模型 椅子」或「渲染 场景」")
+
+    # ================================================================
+    #  生成模型
+    # ================================================================
+
     def _generate_model(self, user_input: str) -> Dict:
-        """生成 3D 模型描述"""
-        match = re.search(r'(?:生成模型|创建模型|3D模型)[：:]\s*(.+)', user_input)
-        description = match.group(1) if match else user_input.replace("生成模型", "").strip()
+        desc = re.sub(r'(生成模型|创建模型|3d模型)', '', user_input).strip()
+        if not desc:
+            desc = "椅子"
         
-        if not description:
-            return self._response("请描述要生成的模型。\n\n示例：生成模型 一个现代风格的椅子")
-        
-        prompt = f"""请为以下 3D 模型生成创建指南：
+        result = self._call_llm(f"""
+为「{desc}」生成 3D 模型创建指南（Blender）：
 
-模型描述：{description}
+1. 建模步骤（3-5步）
+2. 材质建议
+3. 渲染设置
+""")
+        return self._resp(f"🎨 3D 模型指南\n\n{result or self._model_template(desc)}")
 
-输出内容：
-1. 模型类型
-2. 推荐软件（Blender/Maya/3ds Max）
-3. 创建步骤（3-5步）
-4. 材质建议
-5. 渲染设置"""
-        
-        response = self._call_llm(prompt)
-        
-        if response:
-            return self._response(
-                f"🎨 **3D 模型指南**\n\n{response}",
-                metadata={"type": "guide"}
-            )
-        
-        return self._response(self._get_model_template(description))
-    
+    def _model_template(self, desc: str) -> str:
+        return f"""
+模型：{desc}
+
+📌 软件：Blender
+
+步骤：
+1. 收集参考图
+2. 使用基础形状建模
+3. 添加细节
+4. 材质：金属/塑料
+5. 渲染输出
+"""
+
+    # ================================================================
+    #  渲染场景
+    # ================================================================
+
     def _render_scene(self, user_input: str) -> Dict:
-        """渲染场景"""
-        match = re.search(r'渲染[：:]\s*(.+)', user_input)
-        scene = match.group(1) if match else "场景"
+        scene = re.sub(r'渲染', '', user_input).strip()
+        if not scene:
+            scene = "场景"
         
-        prompt = f"""请为以下 3D 场景提供渲染建议：
+        result = self._call_llm(f"""
+为「{scene}」提供 3D 渲染建议：
 
-场景描述：{scene}
-
-输出内容：
-1. 推荐渲染器（Cycles/Eevee/V-Ray）
+1. 推荐渲染器
 2. 灯光设置
 3. 相机角度
-4. 材质参数
-5. 输出设置"""
-        
-        response = self._call_llm(prompt)
-        
-        if response:
-            return self._response(
-                f"🎬 **渲染建议**\n\n{response}",
-                metadata={"type": "render"}
-            )
-        
-        return self._response(self._get_render_template(scene))
-    
-    def _get_model_template(self, description: str) -> str:
-        return f"""🎨 **3D 模型创建指南**
+4. 输出设置
+""")
+        return self._resp(f"🎬 渲染建议\n\n{result or self._render_template(scene)}")
 
-模型：{description}
-
-📌 推荐软件：Blender（免费开源）
-
-📝 创建步骤：
-1. 收集参考图
-2. 建模：使用基础形状搭建结构
-3. 细化：添加细节和倒角
-4. UV 展开：准备贴图坐标
-5. 材质：添加颜色和纹理
-
-🎨 材质建议：
-- 主体：金属/塑料
-- 细节：粗糙度贴图
-- 高光：镜面反射
-
-💡 提示：可在 Blender 中使用插件加速流程"""
-    
-    def _get_render_template(self, scene: str) -> str:
-        return f"""🎬 **渲染建议**
-
+    def _render_template(self, scene: str) -> str:
+        return f"""
 场景：{scene}
 
-🖥️ 推荐渲染器：Cycles（高质量）
+🖥 渲染器：Cycles
+💡 灯光：三点布光法
+🎥 相机：50mm, f/2.8
+⚙ 输出：1920x1080, 512采样
+"""
 
-💡 灯光设置：
-- 主光：三点布光法
-- 补光：柔光箱
-- 背光：轮廓光
+    # ================================================================
+    #  辅助
+    # ================================================================
 
-🎥 相机：
-- 焦距：50mm（标准视角）
-- 光圈：f/2.8（浅景深）
-- 角度：平视略带俯视
+    def _call_llm(self, prompt: str) -> str:
+        try:
+            import requests
+            resp = requests.post(
+                "http://localhost:11434/api/generate",
+                json={
+                    "model": "qwen2.5:3b",
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {"temperature": 0.7, "num_predict": 400}
+                },
+                timeout=30
+            )
+            if resp.status_code == 200:
+                return resp.json().get("response", "")
+        except Exception as e:
+            print(f"[3D] LLM失败: {e}")
+        return ""
 
-⚙️ 输出：
-- 分辨率：1920x1080
-- 采样：512
-- 格式：PNG"""
-    
+    def _resp(self, content: str, **kwargs) -> Dict:
+        return {"success": True, "response": content, "output_content": content, **kwargs}
+
+
+if __name__ == "__main__":
+    agent = ThreeDAgentV4("test")
+    print(agent.process("生成模型 椅子")["response"])   

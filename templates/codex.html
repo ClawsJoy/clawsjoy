@@ -130,6 +130,7 @@
                 <button class="action-btn" id="openWriterBtn" style="background:#cba6f7; color:#1e1e2e;">✍️ 作家</button>
                 <button class="action-btn" id="openWorkflowBtn" style="background:#f9e2af; color:#1e1e2e;">🚀 工作流</button>
                 <button class="action-btn" id="openButlerBtn" style="background:#cba6f7; color:#1e1e2e;">👔 3D管家</button>
+                <button class="action-btn" id="openDirectorBtn" style="background:#f9e2af; color:#1e1e2e;">🎬 导演</button>
                 <button class="action-btn" id="reviewBtn">🔍 审核</button>
                 <button class="action-btn" id="fixBtn">🔧 修复</button>
                 <button class="action-btn" id="testBtn">🧪 测试</button>
@@ -993,3 +994,13 @@ document.getElementById("openButlerBtn").onclick = () => {
 </script>
 <script>
 // 统一弹板打开函数（已存在，验证）
+<script>
+document.getElementById("openDirectorBtn").onclick = function() {
+    openPanelWithSession("/director_panel.html", "DirectorPanel");
+};
+</script>
+<script>
+document.getElementById("openDirectorBtn").onclick = function() {
+    openPanelWithSession('/director_panel.html', 'DirectorPanel');
+};
+</script>

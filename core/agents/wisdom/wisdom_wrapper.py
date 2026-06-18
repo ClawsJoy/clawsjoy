@@ -7,7 +7,7 @@ from collections import defaultdict
 import json
 import hashlib
 import time
-
+from core.agents.wisdom.reverse_polisher import ReversePolisher
 
 @dataclass
 class Experience:
@@ -104,7 +104,10 @@ class WisdomWrapper:
         self._load_experiences()
         
         print(f"🧠 智慧包装器已激活: {self._self_awareness['name']}")
-    
+        # 🆕 初始化逆向润色器
+        self._polisher = ReversePolisher(self._call_llm)
+
+  
     def _default_config(self) -> Dict:
         return {
             "learning_enabled": True,
@@ -120,38 +123,41 @@ class WisdomWrapper:
             return getattr(self._agent, name)
         raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
 
+
     # ==================== 核心入口 ====================
-    
+
     def process(self, user_input: str, context: Dict = None) -> Dict:
         """智慧处理入口 - 带元认知和执行链"""
         self._current_input = user_input  # 保存当前输入
         start_time = time.time()
         self._stats["total_processed"] += 1
-        
+
         # ========== 1. 感知层 ==========
         perception = self._perceive(user_input)
-        
+
         # ========== 2. 认知层 ==========
         cognition = self._cognize(user_input, perception)
-        
+
         # ========== 3. 决策层 ==========
         decision = self._decide(user_input, cognition)
-        
+
         # ========== 4. 执行层 ==========
         result = self._execute(decision, context)
-        
+
         # ========== 5. 学习层 ==========
         experience = self._record_experience(
             user_input, result, start_time, cognition
         )
-        
+
         # ========== 6. 智慧层 ==========
         if self._config["learning_enabled"]:
             self._reflect_and_learn(experience)
-        
+
+        # ========== 7. 🆕 逆向润色层 ==========
+        result = self._reverse_polish(result, user_input, context)
+
         # 包装结果
-        return self._wrap_result(result, cognition, experience)
-    
+        return self._wrap_result(result, cognition, experience)   
     # ==================== 感知层 ====================
     
     def _perceive(self, user_input: str) -> Dict:
@@ -198,26 +204,43 @@ class WisdomWrapper:
         return "low"
     
     def _infer_intent(self, text: str) -> Dict:
-        """推断意图（简化版）"""
-        # 如果有意图解析器，使用它
+        """由 LLM 推断意图，降级方案保留"""
+        prompt = f"""分析用户意图，输出 JSON。
+
+用户输入：{text[:200]}
+
+可用动作：chat, code, write, analyze, search, calculate, translate, direct
+可用目标：text, code, data, info, number, file, project
+
+输出格式：{{"action": "动作", "target": "目标", "confidence": 0.0-1.0, "description": "简短描述"}}
+
+只输出 JSON：
+"""
         try:
-            from core.lib.unified_intent_parser import unified_parser
-            result = unified_parser.parse(text)
-            return {
-                "action": result.get("action", "chat"),
-                "target": result.get("target", "text"),
-                "confidence": result.get("confidence", 0.5)
-            }
-        except:
-            # 简单规则
-            if any(kw in text for kw in ["代码", "编程", "写"]):
-                return {"action": "generate", "target": "code", "confidence": 0.7}
-            if any(kw in text for kw in ["翻译", "translate"]):
-                return {"action": "translate", "target": "text", "confidence": 0.8}
-            if any(kw in text for kw in ["分析", "分析一下"]):
-                return {"action": "analyze", "target": "data", "confidence": 0.7}
-            return {"action": "chat", "target": "text", "confidence": 0.9}
-    
+            response = self._call_llm(prompt)
+            if response:
+                import re
+                match = re.search(r'\{.*\}', response, re.DOTALL)
+                if match:
+                    data = json.loads(match.group())
+                    return {
+                        "action": data.get("action", "chat"),
+                        "target": data.get("target", "text"),
+                        "confidence": data.get("confidence", 0.5),
+                        "description": data.get("description", "")
+                    }
+        except Exception as e:
+            print(f"[WisdomWrapper] LLM意图推断失败: {e}")
+
+        # 降级：简单规则（保留安全兜底）
+        if any(kw in text for kw in ["代码", "编程", "写一个"]):
+            return {"action": "generate", "target": "code", "confidence": 0.6}
+        if any(kw in text for kw in ["翻译", "translate"]):
+            return {"action": "translate", "target": "text", "confidence": 0.6}
+        if any(kw in text for kw in ["分析", "分析一下"]):
+            return {"action": "analyze", "target": "data", "confidence": 0.6}
+        return {"action": "chat", "target": "text", "confidence": 0.9}
+
     # ==================== 认知层 ====================
     
     def _cognize(self, user_input: str, perception: Dict) -> Dict:
@@ -276,22 +299,40 @@ class WisdomWrapper:
         }
     
     def _ask_agent_capability(self, action: str, target: str) -> float:
-        """询问 Agent 自身能力"""
-        # 优先使用新的 JSON 能力接口
+        """由 LLM 评估 Agent 能力"""
+        # 优先使用 JSON 能力接口
         if hasattr(self._agent, 'can_handle_json'):
             can, conf = self._agent.can_handle_json(action, target)
             return conf if can else 0.0
-        
-        # 使用旧的 can_handle
+
+        # 使用旧的 can_handle（仅保留接口）
         if hasattr(self._agent, 'can_handle'):
             result = self._agent.can_handle(f"{action} {target}")
             if isinstance(result, dict):
                 return result.get("confidence", 0.5) if result.get("can", False) else 0.0
             elif isinstance(result, bool):
                 return 0.8 if result else 0.0
-        
-        # 默认试探
-        return 0.8
+
+        # LLM 评估
+        prompt = f"""评估是否擅长处理 {action}/{target}，只输出 0.0-1.0 的数值。
+
+Agent：{getattr(self._agent, 'name', 'unknown')}
+描述：{getattr(self._agent, 'description', '')}
+能力：{getattr(self._agent, '_capability_descriptions', [])}
+
+输出数值：
+"""
+        try:
+            response = self._call_llm(prompt)
+            if response:
+                import re
+                match = re.search(r'0\.\d+|1\.0', response)
+                if match:
+                    return float(match.group())
+        except Exception as e:
+            print(f"[WisdomWrapper] LLM能力评估失败: {e}")
+
+        return 0.8  
     
     def _find_delegation_candidates(self, action: str, target: str) -> List[str]:
         """找到可委托的候选 Agent"""
@@ -353,37 +394,39 @@ class WisdomWrapper:
         return decision
     
     def _federated_voting(self, cognition: Dict) -> Dict:
-        """联邦投票 - 多 Agent 共识"""
-        
+        """由 LLM 辅助联邦投票"""
         intent = cognition["intent"]
         candidates = cognition["self_awareness"].get("delegation_candidates", [])
-        
+
         if not candidates:
             return {"has_consensus": False}
-        
-        # 收集各 Agent 意见
-        opinions = []
-        for candidate in candidates:
-            opinion = self._query_agent_opinion(candidate, intent["action"], intent["target"])
-            if opinion:
-                opinions.append(opinion)
-        
-        if not opinions:
-            return {"has_consensus": False}
-        
-        # 加权投票
-        total_weight = sum(o["confidence"] for o in opinions)
-        best = max(opinions, key=lambda o: o["confidence"])
-        
-        # 计算共识强度
-        consensus_strength = best["confidence"] / total_weight if total_weight > 0 else 0
-        
-        return {
-            "has_consensus": consensus_strength > 0.5,
-            "winner": best["agent"],
-            "confidence": best["confidence"],
-            "reasoning": [f"联邦投票: {best['agent']} 获得最高置信度 {best['confidence']:.0%}"]
-        }
+
+        prompt = f"""根据以下信息，选择最佳 Agent。
+
+任务：{intent.get('action', 'chat')}/{intent.get('target', 'text')}
+候选：{json.dumps(candidates, ensure_ascii=False)}
+
+输出格式：{{"best": "agent_name", "confidence": 0.0-1.0, "reason": "理由"}}
+
+只输出 JSON：
+"""
+        try:
+            response = self._call_llm(prompt)
+            if response:
+                import re
+                match = re.search(r'\{.*\}', response, re.DOTALL)
+                if match:
+                    data = json.loads(match.group())
+                    return {
+                        "has_consensus": data.get("confidence", 0) > 0.6,
+                        "winner": data.get("best", candidates[0]),
+                        "confidence": data.get("confidence", 0.5),
+                        "reasoning": [data.get("reason", "LLM 投票")]
+                    }
+        except Exception as e:
+            print(f"[WisdomWrapper] LLM联邦投票失败: {e}")
+
+        return {"has_consensus": False}  
     
     def _query_agent_opinion(self, agent_name: str, action: str, target: str) -> Optional[Dict]:
         """查询其他 Agent 的意见"""
@@ -802,3 +845,166 @@ class WisdomWrapper:
         
         # 调用 process 方法
         return self.process(raw_input)
+
+
+   # ==================== 🆕 逆向润色方法 ====================
+
+    def _reverse_polish(self, result: Dict, user_input: str, context: Dict = None) -> Dict:
+        """
+        LLM 逆向润色 - 让系统输出变成用户能理解的语言
+        所有 Agent 共享，在 WisdomWrapper 层统一处理
+        """
+        # 1. 提取原始响应
+        raw_response = result.get('response', '') or result.get('output_content', '')
+
+        # 2. 如果为空或已经是自然语言，跳过
+        if not raw_response or self._is_natural_language(raw_response):
+            return result
+
+        # 3. 获取 Agent 名称
+        agent_name = getattr(self._agent, 'name', 'unknown')
+
+        # 4. 构建润色提示词
+        polish_prompt = self._build_reverse_polish_prompt(
+            raw_response=raw_response,
+            user_input=user_input,
+            agent_name=agent_name,
+            context=context
+        )
+
+        # 5. 调用 LLM 润色
+        try:
+            polished = self._call_llm(polish_prompt)
+            if polished and len(polished) > 10:
+                result['response'] = polished
+                result['output_content'] = polished
+                result['polished'] = True
+                result['original_response'] = raw_response  # 保留原始结果供调试
+        except Exception as e:
+            # 润色失败，保留原始响应
+            result['polish_error'] = str(e)
+
+        return result
+
+    def _is_natural_language(self, text: str) -> bool:
+        """判断是否已经是自然语言"""
+        import re
+        natural_patterns = [
+            r'^(我|你|他|她|它|我们|你们|您好|你好|嗨|嘿)',
+            r'^(好|行|嗯|对|是|好的|明白了|知道|了解|清楚)',
+            r'^(让我|我来|帮你|给你|为你|可以|没问题|当然)',
+            r'^(谢谢|感谢|不客气|再见|拜拜)',
+        ]
+        for pattern in natural_patterns:
+            if re.search(pattern, text.strip(), re.IGNORECASE):
+                return True
+        # 如果包含 emoji 也可能是自然语言
+        if any(c in text for c in ['😊', '👍', '🎉', '💡', '✨', '📊', '✅']):
+            return True
+        return False
+
+    def _build_reverse_polish_prompt(
+        self,
+        raw_response: str,
+        user_input: str,
+        agent_name: str,
+        context: Dict = None
+    ) -> str:
+        """构建逆向润色提示词"""
+        # Agent 显示名称映射
+        agent_display = {
+            'code_agent': '代码助手',
+            'writer_agent': '作家助手',
+            'director_agent': '导演助手',
+            'chat_agent': '聊天助手',
+        }.get(agent_name, '助手')
+
+        # 检测用户情绪
+        emotion = self._detect_user_emotion(user_input)
+
+        # 上下文信息
+        context_info = ""
+        if context:
+            if context.get('user_level'):
+                context_info += f"\n- 用户水平: {context.get('user_level')}"
+            if context.get('task_type'):
+                context_info += f"\n- 任务类型: {context.get('task_type')}"
+
+        return f"""
+你是一个专业的翻译官，负责把{agent_display}的输出翻译成用户能理解的自然语言。
+
+## {agent_display}的原始输出
+{raw_response}
+
+## 用户刚才说
+{user_input}
+
+## 用户情绪
+{emotion}
+
+## 上下文
+- Agent: {agent_name}{context_info}
+
+## 翻译要求
+1. 信息完整，不丢失关键内容
+2. 语言自然、友好、口语化，像人在对话
+3. 专业术语用通俗语言解释
+4. 根据用户情绪调整语气：
+   - 焦虑/着急 → 温和、耐心
+   - 急切 → 简洁、直接
+   - 积极 → 热情、鼓励
+   - 中性 → 自然、友好
+5. 结尾引导用户下一步可以做什么
+6. 不要使用 Markdown 格式，纯文本即可
+7. 不要加任何前缀或后缀，直接输出翻译后的内容
+
+## 输出
+直接输出翻译后的内容：
+"""
+    def _detect_user_emotion(self, text: str) -> str:
+        """由 LLM 检测用户情绪"""
+        prompt = f"""分析用户情绪，只输出一个词：积极/焦虑/急切/疑惑/中性
+
+用户输入：{text[:100]}
+
+输出：
+"""
+        try:
+            response = self._call_llm(prompt)
+            if response:
+                emotion = response.strip()
+                if emotion in ["积极", "焦虑", "急切", "疑惑", "中性"]:
+                    return emotion
+        except Exception as e:
+            print(f"[WisdomWrapper] LLM情感检测失败: {e}")
+
+        # 降级
+        if any(w in text for w in ['急', '快', '马上', '赶紧', '帮帮我']):
+            return '急切'
+        if any(w in text for w in ['难', '烦', '不懂', '不会', '头疼']):
+            return '焦虑'
+        if any(w in text for w in ['好', '谢谢', '感谢', '厉害']):
+            return '积极'
+        return '中性'
+    
+    def _call_llm(self, prompt: str) -> str:
+        try:
+            import requests
+            resp = requests.post(
+                "http://localhost:11434/api/generate",
+                json={
+                    "model": "qwen2:1.5b-instruct",  # 🆕 轻量快速
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {
+                        "num_predict": 256,
+                        "temperature": 0.3,
+                    }
+                },
+                timeout=20
+            )
+            if resp.status_code == 200:
+                return resp.json().get("response", "")
+        except Exception as e:
+            print(f"[WisdomWrapper] LLM调用失败: {e}")
+        return ""
