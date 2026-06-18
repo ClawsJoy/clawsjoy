@@ -50,6 +50,7 @@ from core.agents.wisdom.wisdom_factory import wisdom_factory
 from core.agents.business.business_agent import BusinessAgent
 from core.lib.json_standard import StandardJSON
 from core.lib.session_manager import session_manager
+from routes.director_canvas_routes import canvas_bp
 
 # 配置日志级别
 logging.basicConfig(
@@ -93,7 +94,7 @@ CORS(app)
 app.register_blueprint(agents.api_bp, url_prefix="/api/v5")
 app.register_blueprint(health.api_bp, url_prefix="/api/v5")
 app.register_blueprint(butler.api_bp, url_prefix="/api/v5")
-
+app.register_blueprint(canvas_bp)
 
 # ========== 简单缓存 ==========
 class SimpleCache:
@@ -1224,10 +1225,13 @@ def chat_stream():
 
     def generate():
         try:
-            # 使用 wisdom_factory 获取 Agent
             wisdom_agent = wisdom_factory.get_wisdom_agent(agent_name, user_id)
             if wisdom_agent:
-                result = wisdom_agent.process(message)
+                # 传递 session_id 给 Agent
+                if data.get("session_id"):
+                    result = wisdom_agent.process(message, {"session_id": data.get("session_id")})
+                else:
+                    result = wisdom_agent.process(message)
                 response_text = result.get("response", "")
                 # 分块输出
                 chunk_size = 10
@@ -1239,8 +1243,7 @@ def chat_stream():
                 yield f"data: {json.dumps({'error': f'Agent {agent_name} 不可用'})}\n\n"
         except Exception as e:
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
-
-    return Response(stream_with_context(generate()), mimetype="text/event-stream")
+        return Response(stream_with_context(generate()), mimetype="text/event-stream")
 
 @app.route("/api/v5/feedback", methods=["POST"])
 def submit_feedback():
@@ -1492,7 +1495,11 @@ def wisdom_chat():
         return jsonify(result)
     else:
         # 自然语言输入
-        result = wisdom_agent.process(message)
+        # 传递 session_id 给 Agent
+        if data.get("session_id"):
+            result = wisdom_agent.process(message, {"session_id": data.get("session_id")})
+        else:
+            result = wisdom_agent.process(message)
         # ========== 养成记录 ==========
         # 在返回结果前记录交互
         try:
@@ -2257,6 +2264,10 @@ def session_list():
     user_id = request.args.get("user_id", "default")
     sessions = session_manager.list_sessions(user_id)
     return jsonify({"success": True, "sessions": sessions})
+
+@app.route("/director_panel.html")
+def director_panel():
+    return send_from_directory("templates", "director_panel.html")
 
 
 
