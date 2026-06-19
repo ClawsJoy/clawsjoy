@@ -19,7 +19,7 @@ import numpy as np
 
 from core.lib.unified_config import unified_config
 
-sys.path.insert(0, smart_config.ROOT)
+sys.path.insert(0, "/home/flybo/clawsjoy_v5")
 
 from agent_core.brain_enhanced import brain as brain_core
 
@@ -42,7 +42,7 @@ class BrainNeuralNetwork:
 
     def load_or_init_weights(self):
         """加载或初始化神经网络权重"""
-        weights_file = Path(f"{config_helper.get_data_root()}/brain_weights.json")
+        weights_file = Path(f"{"data"}/brain_weights.json")
 
         if weights_file.exists():
             with open(weights_file, "r") as f:
@@ -57,7 +57,7 @@ class BrainNeuralNetwork:
 
     def save_weights(self):
         """保存权重"""
-        weights_file = Path(f"{config_helper.get_data_root()}/brain_weights.json")
+        weights_file = Path(f"{"data"}/brain_weights.json")
         with open(weights_file, "w") as f:
             json.dump(self.weights, f, indent=2)
 

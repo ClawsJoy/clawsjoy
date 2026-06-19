@@ -1,3 +1,4 @@
+from core.lib.vector_knowledge_center import vector_knowledge_center
 """向量检索增强 - 可选插件，需要时可启用"""
 
 import chromadb
@@ -10,7 +11,7 @@ class VectorMemoryEnhancement:
     def __init__(self, persist_dir="data/vector_kb"):
         self.enabled = False
         try:
-            self.client = chromadb.PersistentClient(path=persist_dir)
+            self.client = vector_knowledge_center.client
             self.embedder = SentenceTransformer('all-MiniLM-L6-v2')
             self.enabled = True
             print("✅ 向量记忆增强已启用")

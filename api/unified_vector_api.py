@@ -1,3 +1,4 @@
+from core.lib.vector_knowledge_center import vector_knowledge_center
 #!/usr/bin/env python3
 """Unified Vector Api - Unified Vector Api 模块
 
@@ -31,7 +32,7 @@ def search_all():
     # 1. 记忆向量
     if "memory" in sources:
         try:
-            client = chromadb.PersistentClient(path="data/chroma/memory")
+            client = vector_knowledge_center.client
             collection = client.get_collection("memory_vectors")
             res = collection.query(query_texts=[query], n_results=n)
             if res.get("documents") and res["documents"][0]:
@@ -53,7 +54,7 @@ def search_all():
     # 2. 技能向量
     if "skills" in sources:
         try:
-            client = chromadb.PersistentClient(path="data/skill_vectors")
+            client = vector_knowledge_center.client
             collection = client.get_collection("skill_vectors")
             res = collection.query(query_texts=[query], n_results=n)
             if res.get("documents") and res["documents"][0]:
@@ -101,7 +102,7 @@ def get_stats():
 
     # 记忆向量
     try:
-        client = chromadb.PersistentClient(path="data/chroma/memory")
+        client = vector_knowledge_center.client
         collection = client.get_collection("memory_vectors")
         stats["memory"] = collection.count()
     except Exception as e:
@@ -109,7 +110,7 @@ def get_stats():
 
     # 技能向量
     try:
-        client = chromadb.PersistentClient(path="data/skill_vectors")
+        client = vector_knowledge_center.client
         collection = client.get_collection("skill_vectors")
         stats["skills"] = collection.count()
     except Exception as e:

@@ -1,3 +1,4 @@
+from core.lib.vector_knowledge_center import vector_knowledge_center
 #!/usr/bin/env python3
 """Tenant Vector Index - Tenant Vector Index 模块
 
@@ -35,7 +36,7 @@ class TenantVectorIndex:
             url=ollama_url, model_name=embedding_model
         )
 
-        self.client = chromadb.PersistentClient(path=str(self.persist_dir))
+        self.client = vector_knowledge_center.client
         try:
             self.skill_collection = self.client.get_collection("tenant_skills")
         except Exception as e:

@@ -13,7 +13,7 @@ from typing import Dict, List
 from datetime import datetime
 from collections import defaultdict
 from pathlib import Path
-
+from typing import Union, Dict, List, Optional
 logger = logging.getLogger(__name__)
 
 
@@ -113,8 +113,9 @@ class UnifiedChatEngine:
         return None
 
     def __init__(self):
-        self.llm_url = "http://localhost:5012/chat"
-        self.timeout = 120
+        self.llm_url = "http://localhost:11434/api/generate"
+        self.llm_model = "qwen2:1.5b-instruct"
+        self.timeout = 30
         self.max_retries = 2
         self.conversations: Dict[str, List[Dict]] = defaultdict(list)
         self.user_profiles: Dict[str, Dict] = defaultdict(dict)
@@ -176,325 +177,301 @@ class UnifiedChatEngine:
         if context:
             logger.info(f"📚 加载持久化记忆: {user_id}")
 
-    def _build_context(self, user_id: str, message: str) -> str:
+    def _build_context(self, user_id: str, message: str, standard_json: Dict = None) -> str:
+        """构建 LLM 上下文 - 完整版
+    
+        数据来源：
+        1. soul_context - 当前会话状态（名字、情绪），来自 chat_agent
+        2. persistent_memory - 长期记忆，来自文件存储
+        3. profile - 用户偏好，来自会话内存
+        4. history - 对话历史，来自会话内存
+        5. 当前用户输入
+        """
         history = self.conversations.get(user_id, [])
         profile = self.user_profiles.get(user_id, {})
-        
-        parts = []
-        
-        # 从持久化记忆获取用户信息
         user_info = self.persistent_memory.get_user_info(user_id)
-        if user_info.get('name'):
-            parts.append(f"【用户】姓名: {user_info['name']}")
-        if user_info.get('preferences'):
-            parts.append(f"【用户】偏好: {', '.join(user_info['preferences'])}")
-        
-        if history:
-            parts.append("【会话历史】")
-            for h in history[-6:]:
-                parts.append(f"{h['role']}: {h['content']}")
-        
-        parts.append(f"【当前】{message}")
+        parts = []
 
-        # 向量检索相关知识
-        try:
-            search_result = vector_knowledge_center.search(message, top_k=3)
-            if search_result:
-                parts.append("\n📚 相关知识：")
-                for item in search_result[:3]:
-                    if isinstance(item, dict):
-                        content_text = item.get("content", item.get("text", ""))[:200]
-                        if content_text:
-                            parts.append(f"  • {content_text}")
-        except Exception as e:
-            logger.debug(f"向量检索失败: {e}")
+        # 1. 系统信息（soul_context，无标签，LLM 自然理解）
+        if standard_json:
+            params = standard_json.get("params", {})
+            context = params.get("context", {})
+            soul_context = context.get("soul", {})
+            if soul_context and soul_context.get("user_known"):
+                parts.append(soul_context.get("user_known"))
+
+        # 2. 用户信息（profile + persistent_memory，去重）
+        known_name = None
+        for source in [profile, user_info]:
+            if source.get("name") and not known_name:
+                known_name = source.get("name")
+                parts.append(f"用户姓名: {known_name}")
+
+        # 3. 用户偏好（去重）
+        prefs = []
+        if profile.get("preferences"):
+            prefs.extend(profile.get("preferences"))
+        if user_info.get("preferences"):
+            prefs.extend(user_info.get("preferences"))
+        if prefs:
+            parts.append(f"用户偏好: {', '.join(set(prefs))}")
+
+        # 4. 会话历史
+        for h in history[-6:]:
+            parts.append(f"{h['role']}: {h['content']}")
+
+        # 5. 当前用户输入
+        parts.append(f"用户: {message}")
 
         return "\n".join(parts)
 
-
-
-    def execute(self, message, user_id: str = "guest") -> Dict:
-        from core.lib.config_driven_router import config_router
-        from core.lib.unified_intent_parser import unified_parser
-        import uuid
-
-        def generate_id() -> str:
-            return uuid.uuid4().hex[:8]
-
-        # 处理标准化 JSON 输入
-        session_id = generate_id()
-        thread_id = generate_id()
-        turn = 0
+    def execute(self, message: Union[str, Dict], user_id: str = "guest") -> Dict:
+        """
+        执行对话 - 支持 2.5 层 JSON 规范
     
-        if isinstance(message, dict):
-            # 提取会话信息
-            session_id = message.get("session_id", generate_id())
-            thread_id = message.get("thread_id", generate_id())
-            turn = message.get("turn", 0)
-            raw_input = message.get("raw_input", message.get("message", ""))
-            action = message.get("action", "")
-            target = message.get("target", "")
-            keywords = message.get("keywords", [])
-            confidence = message.get("confidence", 0.95)
-        
-            if raw_input:
-                message = raw_input
-            else:
-                message = " ".join(keywords) if keywords else "chat"
-        else:
-            # 非标准化输入，使用意图解析器转换
-            parse_result = unified_parser.parse(message)
-            if parse_result.get("success"):
-                parsed = parse_result.get("intent", {})
-                action = parsed.get("action", "chat")
-                target = parsed.get("target", "text")
-                keywords = parsed.get("keywords", [])
-                confidence = parsed.get("confidence", 0.8)
-            else:
-                action = "chat"
-                target = "text"
-                keywords = []
-                confidence = 0.5
+        Args:
+            message: 字符串（兼容旧版）或 2.5 层标准 JSON
+            user_id: 用户 ID（当 message 是字符串时使用）
+        """
+        # ============================================================
+        # 1. 解析输入（支持 2.5 层 JSON 或纯字符串）
+        # ============================================================
+        raw_input = ""
+        session_id = None
+        thread_id = None
+        turn = 0
+        action = "chat"
+        target = "text"
+        keywords = []
+        confidence = 0.85
+        params = {}
+    
+        if isinstance(message, str):
+            # 兼容旧版：纯字符串
             raw_input = message
-
-        # 确保 message 是字符串
-        if not isinstance(message, str):
-            message = str(message)
-
-        logger.info(f"处理 {user_id}: {message[:40]}...")
-
+            standard_json = None
+        else:
+            # 2.5 层 JSON
+            standard_json = message
+            raw_input = standard_json.get("raw_input", message.get("message", ""))
+            session_id = standard_json.get("session_id")
+            thread_id = standard_json.get("thread_id")
+            turn = standard_json.get("turn", 0)
+            action = standard_json.get("action", "chat")
+            target = standard_json.get("target", "text")
+            keywords = standard_json.get("keywords", [])
+            confidence = standard_json.get("confidence", 0.85)
+            params = standard_json.get("params", {})
+            user_id = standard_json.get("user_id", user_id)
+    
+        if not raw_input:
+            raw_input = message.get("raw_input", "") if isinstance(message, dict) else str(message)
+    
+        # ============================================================
+        # 2. 从 2.5 层 JSON 中提取上下文
+        # ============================================================
+        context = params.get("context", {})
+        memories = context.get("memories", [])
+        emotion = context.get("emotion", {})
+        soul = context.get("soul", {})
+        soul_emotion = context.get("soul_emotion", {})
+        history = context.get("history", [])
+        suggestion = context.get("suggestion")
+        has_dialect = context.get("has_dialect", False)
+    
+        # ============================================================
+        # 3. 构建增强的 prompt
+        # ============================================================
+        enhanced_message = raw_input
+    
+        # 注入记忆
+        if memories:
+            memory_text = "\n".join([f"【记忆】用户之前说: {m.get('user', '')[:50]}" for m in memories[-3:]])
+            enhanced_message = f"{enhanced_message}\n\n{memory_text}"
+    
+        # 注入情感（如果有）
+        if emotion and emotion.get("dominant_emotion"):
+            enhanced_message = f"[用户情绪: {emotion.get('dominant_emotion')}] {enhanced_message}"
+    
+        # 注入灵魂（如果有）
+        if soul and soul.get("user_known"):
+            enhanced_message = f"{soul.get('user_known')} {enhanced_message}"
+    
+        # 注入主动建议
+        if suggestion:
+            enhanced_message = f"{enhanced_message}\n\n[主动建议] {suggestion}"
+    
+        # ============================================================
+        # 4. 调用原有处理逻辑
+        # ============================================================
+        logger.info(f"处理 {user_id}: {raw_input[:40]}...")
+    
         # 加载持久化记忆
         self._load_persistent_memory(user_id)
-
-        # 使用现有意图路由器
-        intent_result = config_router.route(message)
+    
+        # 构建上下文
+        context_str = self._build_context(user_id, enhanced_message)
+    
+        # 意图识别
+        from core.lib.config_driven_router import config_router
+        intent_result = config_router.route(raw_input)
         intent = intent_result.get('intent', 'chat')
-        logger.info(f"意图识别: {intent} (置信度: {intent_result.get('confidence', 0)})")
-
-        # 根据意图调整处理策略
-        is_simple = len(message) < 80 and "我叫" not in message and "喜欢" not in message
-     
+        logger.info(f"意图识别: {intent}")
+    
         # 检查缓存
+        is_simple = len(raw_input) < 80 and "我叫" not in raw_input and "喜欢" not in raw_input
         if is_simple:
-            cached = self._cache_get(message)
+            cached = self._cache_get(raw_input)
             if cached:
-                logger.info(f"⚡ 缓存命中: {message[:30]}")
-                return self._build_standard_response(
-                    raw_input=raw_input,
-                    user_id=user_id,
-                    session_id=session_id,
-                    thread_id=thread_id,
-                    turn=turn,
-                    action=action,
-                    target=target,
-                    keywords=keywords,
-                    confidence=confidence,
+                logger.info(f"⚡ 缓存命中: {raw_input[:30]}")
+                return self._build_response(
+                    standard_json=standard_json,
                     output_content=cached,
                     output_data={"cached": True, "agent": "cached"}
-                )  
-
-        context = self._build_context(user_id, message)
-
+                )
+    
+        # 调用 LLM
         for attempt in range(self.max_retries):
             try:
                 resp = requests.post(
                     self.llm_url,
-                    json={"message": context},
+                    json={
+                        "model": "qwen2:1.5b-instruct",
+                        "prompt": context_str,
+                        "stream": False,
+                        "options": {"temperature": 0.7, "num_predict": 256}
+                    },
                     timeout=self.timeout,
                     headers={"Content-Type": "application/json"}
                 )
-
+            
                 if resp.status_code == 200:
                     result = resp.json()
                     response = result.get("response", "")
-
+                
                     if response:
                         # 保存到会话历史
-                        self.conversations[user_id].append({"role": "user", "content": message})
+                        self.conversations[user_id].append({"role": "user", "content": raw_input})
                         self.conversations[user_id].append({"role": "assistant", "content": response})
-
-                        # 推理链增强
-                        reasoning = None
-                        if any(word in message for word in ['为什么', '怎么', '如何', '推理', '如果', '那么']):
-                            reasoning = self._add_reasoning_chain(message, response)
-                        final_response = reasoning if reasoning else response
-
+                     
                         # 限制历史长度
                         if len(self.conversations[user_id]) > 20:
                             self.conversations[user_id] = self.conversations[user_id][-20:]
-
+                    
                         # 持久化保存
-                        self.persistent_memory.save_conversation(user_id, message, final_response)
-
+                        self.persistent_memory.save_conversation(user_id, raw_input, response)
+                    
                         # 缓存
                         if is_simple:
-                            self._cache_set(message, final_response)
+                            self._cache_set(raw_input, response)
                     
-                        # ✅ 返回标准化 JSON
-                        return self._build_standard_response(
-                            raw_input=raw_input,
-                            user_id=user_id,
-                            session_id=session_id,
-                            thread_id=thread_id,
-                            turn=turn,
-                            action=action,
-                            target=target,
-                            keywords=keywords,
-                            confidence=confidence,
-                            output_content=final_response,
+                        # 返回 2.5 层 JSON
+                        return self._build_response(
+                            standard_json=standard_json,
+                            output_content=response,
                             output_data={
                                 "agent": "chat_engine",
                                 "intent": intent,
-                                "reasoning_applied": reasoning is not None
+                                "memories_used": len(memories)
                             }
                         )
                     else:
                         if attempt < self.max_retries - 1:
                             continue
-                        return self._build_standard_response(
-                            raw_input=raw_input,
-                            user_id=user_id,
-                            session_id=session_id,
-                            thread_id=thread_id,
-                            turn=turn,
-                            action=action,
-                            target=target,
-                            keywords=keywords,
-                            confidence=0.3,
-                            output_content="空响应",
+                        return self._build_response(
+                            standard_json=standard_json,
+                            output_content="抱歉，我暂时无法处理。",
                             status="failed",
                             output_data={"error": "empty_response"}
                         )
                 else:
                     if attempt < self.max_retries - 1:
                         continue
-                    return self._build_standard_response(
-                        raw_input=raw_input,
-                        user_id=user_id,
-                        session_id=session_id,
-                        thread_id=thread_id,
-                        turn=turn,
-                        action=action,
-                        target=target,
-                        keywords=keywords,
-                        confidence=0.2,
-                        output_content=f"HTTP {resp.status_code}",
+                    return self._build_response(
+                        standard_json=standard_json,
+                        output_content=f"服务错误: {resp.status_code}",
                         status="failed",
                         output_data={"error": f"http_{resp.status_code}"}
                     )
-
             except requests.Timeout as e:
                 logger.error(f"LLM 超时: {e}")
                 if attempt < self.max_retries - 1:
                     continue
-                return self._build_standard_response(
-                    raw_input=raw_input,
-                    user_id=user_id,
-                    session_id=session_id,
-                    thread_id=thread_id,
-                    turn=turn,
-                    action=action,
-                    target=target,
-                    keywords=keywords,
-                    confidence=0.1,
-                    output_content="服务响应超时",
+                return self._build_response(
+                    standard_json=standard_json,
+                    output_content="服务响应超时，请稍后重试。",
                     status="failed",
                     output_data={"error": "timeout"}
-                )
-            except requests.ConnectionError as e:
-                logger.error(f"LLM 连接失败: {e}")
-                if attempt < self.max_retries - 1:
-                    continue
-                return self._build_standard_response(
-                    raw_input=raw_input,
-                    user_id=user_id,
-                    session_id=session_id,
-                    thread_id=thread_id,
-                    turn=turn,
-                    action=action,
-                    target=target,
-                    keywords=keywords,
-                    confidence=0.1,
-                    output_content="无法连接LLM服务",
-                    status="failed",
-                    output_data={"error": "connection_error"}
                 )
             except Exception as e:
                 logger.error(f"异常: {e}")
                 if attempt < self.max_retries - 1:
                     continue
-                return self._build_standard_response(
-                    raw_input=raw_input,
-                    user_id=user_id,
-                    session_id=session_id,
-                    thread_id=thread_id,
-                    turn=turn,
-                    action=action,
-                    target=target,
-                    keywords=keywords,
-                    confidence=0.1,
-                    output_content=str(e),
+                return self._build_response(
+                    standard_json=standard_json,
+                    output_content=f"处理失败: {str(e)}",
                     status="failed",
                     output_data={"error": "exception"}
                 )
-
-        return self._build_standard_response(
-            raw_input=raw_input,
-            user_id=user_id,
-            session_id=session_id,
-            thread_id=thread_id,
-            turn=turn,
-            action=action,
-            target=target,
-            keywords=keywords,
-            confidence=0.1,
+    
+        return self._build_response(
+            standard_json=standard_json,
             output_content="服务不可用",
             status="failed",
             output_data={"error": "service_unavailable"}
         )
 
 
-    def _build_standard_response(
-        self,
-        raw_input: str,
-        user_id: str,
-        session_id: str,
-        thread_id: str,
-        turn: int,
-        action: str,
-        target: str,
-        keywords: list,
-        confidence: float,
-        output_content: str,
-        output_data: dict = None,
-        status: str = "completed",
-        next_action: str = "done"
-    ) -> Dict:
-        """构建标准化 JSON v1.0 响应"""
+    def _build_response(self, standard_json: Dict, output_content: str, 
+                        status: str = "completed", output_data: Dict = None) -> Dict:
+        """构建 2.5 层 JSON 响应"""
         from datetime import datetime
     
         if output_data is None:
             output_data = {}
     
-        return {
-            "version": "1.0",
-            "session_id": session_id,
-            "user_id": user_id,
-            "thread_id": thread_id,
-            "turn": turn + 1,
-            "raw_input": raw_input,
-            "timestamp": datetime.now().isoformat(),
-            "action": action,
-            "target": target,
-            "keywords": keywords,
-            "confidence": confidence,
-            "output_type": "text",
-            "output_content": output_content,
-            "output_data": output_data,
-            "status": status,
-            "next": next_action
-        }
-
+        if standard_json:
+            # 基于 2.5 层 JSON 构建响应
+            return {
+                "version": "2.5",
+                "session_id": standard_json.get("session_id"),
+                "user_id": standard_json.get("user_id"),
+                "thread_id": standard_json.get("thread_id"),
+                "turn": standard_json.get("turn", 0) + 1,
+                "raw_input": standard_json.get("raw_input", ""),
+                "timestamp": datetime.now().isoformat(),
+                "action": standard_json.get("action", "chat"),
+                "target": standard_json.get("target", "text"),
+                "keywords": standard_json.get("keywords", []),
+                "confidence": standard_json.get("confidence", 0.85),
+                "params": standard_json.get("params", {}),
+                "output_type": "text",
+                "output_content": output_content,
+                "output_data": output_data,
+                "status": status,
+                "next": "done"
+            }
+        else:
+            # 兼容旧版（没有标准 JSON 输入）
+            return {
+                "version": "2.5",
+                "session_id": None,
+                "user_id": "guest",
+                "thread_id": None,
+                "turn": 0,
+                "raw_input": "",
+                "timestamp": datetime.now().isoformat(),
+                "action": "chat",
+                "target": "text",
+                "keywords": [],
+                "confidence": 0.5,
+                "params": {},
+                "output_type": "text",
+                "output_content": output_content,
+                "output_data": output_data,
+                "status": status,
+                "next": "done"
+            }
 
 
     def _add_reasoning_chain(self, question: str, answer: str) -> str:

@@ -17,7 +17,8 @@ import sys
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
-
+# ========== 2.5 层 JSON 统一引擎 ==========
+from engine.atomic.atomic_engine_v25 import atomic_engine
 # ========== 安全保护模块（新增）==========
 from core.lib.safety_guard import set_safe_recursion_limit
 
@@ -2050,10 +2051,6 @@ def debug_console_page():
 def diff_viewer_page():
     return send_from_directory("templates", "diff_viewer.html")
 
-@app.route("/writer_panel.html")
-def writer_panel():
-    return send_from_directory("templates", "writer_panel.html")
-
 @app.route("/workflow_panel.html")
 def workflow_panel():
     return send_from_directory("templates", "workflow_panel.html")
@@ -2069,11 +2066,12 @@ def session_create():
     data = request.json or {}
     user_id = data.get("user_id", "default")
     session_id = str(uuid.uuid4())[:8]
+    # get_or_create 返回 session_id（字符串）
     session = session_manager.get_or_create(session_id, user_id)
     return jsonify({
         "success": True,
-        "session_id": session.id,
-        "created_at": session.created_at
+        "session_id": session_id,
+        "created_at": datetime.now().isoformat()
     })
 
 @app.route("/api/v5/session/<session_id>", methods=["GET"])
@@ -2163,6 +2161,86 @@ def session_list():
     sessions = session_manager.list_sessions(user_id)
     return jsonify({"success": True, "sessions": sessions})
 
+# ========== 2.5 层 JSON 统一接口 ==========
+@app.route('/v5/execute', methods=['POST'])
+def v5_execute():
+    """统一执行接口 - 2.5 层 JSON 标准"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "需要 JSON 数据"}), 400
+        
+        result = atomic_engine.process(data)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e), "status": "failed"}), 500
+
+@app.route('/v5/memory', methods=['POST'])
+def v5_memory():
+    """记忆接口 - 2.5 层 JSON 标准"""
+    try:
+        data = request.get_json() or {}
+        data["action"] = "memory"
+        result = atomic_engine.process(data)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e), "status": "failed"}), 500
+
+@app.route('/v5/tool', methods=['POST'])
+def v5_tool():
+    """工具接口 - 2.5 层 JSON 标准"""
+    try:
+        data = request.get_json() or {}
+        data["action"] = "tool"
+        result = atomic_engine.process(data)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e), "status": "failed"}), 500
+
+# ========== 技能推荐 API ==========
+@app.route('/v5/skill/recommend', methods=['POST'])
+def skill_recommend():
+    """技能推荐 - 2.5 层 JSON"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "需要 JSON 数据"}), 400
+        
+        from core.lib.skill_recommender import skill_recommender
+        result = skill_recommender.recommend(
+            user_request=data.get('raw_input', ''),
+            user_id=data.get('user_id', 'default')
+        )
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e), "status": "failed"}), 500
+
+@app.route('/v5/skill/install', methods=['POST'])
+def skill_install():
+    """安装技能 - 2.5 层 JSON"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "需要 JSON 数据"}), 400
+        
+        from core.lib.skill_recommender import skill_recommender
+        result = skill_recommender.install(
+            skill_name=data.get('skill_name', ''),
+            user_id=data.get('user_id', 'default')
+        )
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e), "status": "failed"}), 500
+
+@app.route('/v5/skill/list', methods=['GET'])
+def skill_list():
+    """列出所有可用技能 - 2.5 层 JSON"""
+    try:
+        from core.lib.skill_recommender import skill_recommender
+        result = skill_recommender.get_available_skills()
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e), "status": "failed"}), 500
 
 
 # ========== 启动入口 ==========

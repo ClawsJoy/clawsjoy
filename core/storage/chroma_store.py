@@ -1,3 +1,5 @@
+from core.lib.vector_knowledge_center import vector_knowledge_center
+from core.lib.config_helper import get_data_root
 #!/usr/bin/env python3
 """Chroma Store - Chroma Store 模块
 
@@ -20,11 +22,11 @@ class ChromaStore:
 
     def __init__(self, user_id: str, collection_name: str = "memories"):
         self.user_id = user_id
-        self.persist_dir = Path(f"{config_helper.get_data_root()}/chroma/{user_id}")
+        self.persist_dir = Path(f"{get_data_root()}/chroma/{user_id}")
         self.persist_dir.mkdir(parents=True, exist_ok=True)
 
         # 初始化客户端
-        self.client = chromadb.PersistentClient(path=str(self.persist_dir))
+        self.client = vector_knowledge_center.client
 
         # 使用默认 embedding 函数
         self.embedding_fn = embedding_functions.DefaultEmbeddingFunction()
