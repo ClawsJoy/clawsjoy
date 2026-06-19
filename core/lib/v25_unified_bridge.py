@@ -1,15 +1,11 @@
-#!/usr/bin/env python3
-"""
-2.5 层 JSON 统一桥梁 - 集成所有核心能力
-整合: agent_capability_loader, decision_evaluator, memory_layers, capability_recommender
-"""
-
 import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 import uuid
+import json
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, Any, Optional, List
 
 class V25UnifiedBridge:
@@ -24,6 +20,38 @@ class V25UnifiedBridge:
         self._evaluator = None
         self._recommender = None
         self._local_memory = {}
+        self._memory_file = Path("data/memory.json")
+        self._memory_file.parent.mkdir(parents=True, exist_ok=True)
+        self._load_memory_from_file()
+        self._memory_file = Path("data/memory.json")
+        self._memory_file.parent.mkdir(parents=True, exist_ok=True)
+        self._load_memory_from_file()
+
+        self._local_memory = {}
+
+    def _load_memory_from_file(self):
+        """从文件加载记忆"""
+        if self._memory_file.exists():
+            try:
+                with open(self._memory_file, 'r') as f:
+                    self._local_memory = json.load(f)
+                print(f"   ✅ 加载了 {len(self._local_memory)} 个用户的记忆")
+            except Exception as e:
+                print(f"   ⚠️ 加载记忆失败: {e}")
+                self._local_memory = {}
+        else:
+            self._local_memory = {}
+
+    def _save_memory_to_file(self):
+        """保存记忆到文件"""
+        try:
+            with open(self._memory_file, 'w') as f:
+                json.dump(self._local_memory, f, indent=2, ensure_ascii=False)
+            return True
+        except Exception as e:
+            print(f"   ⚠️ 保存记忆失败: {e}")
+            return False
+
         
         self._init_all()
     
@@ -204,6 +232,7 @@ class V25UnifiedBridge:
         if user_id not in self._local_memory:
             self._local_memory[user_id] = {}
         self._local_memory[user_id][key] = value
+        self._save_memory_to_file()
     
     def _get_local(self, user_id: str, key: str) -> Optional[Any]:
         """本地读取"""
