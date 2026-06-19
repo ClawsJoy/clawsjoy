@@ -94,7 +94,7 @@ CORS(app)
 app.register_blueprint(agents.api_bp, url_prefix="/api/v5")
 app.register_blueprint(health.api_bp, url_prefix="/api/v5")
 app.register_blueprint(butler.api_bp, url_prefix="/api/v5")
-app.register_blueprint(canvas_bp)
+app.register_blueprint(canvas_bp)#注册时没有指定 url_prefix，但蓝图内部已定义 url_prefix='/api/director/canvas'
 
 # ========== 简单缓存 ==========
 class SimpleCache:
@@ -413,16 +413,24 @@ def list_endpoints():
 
 
 # ========== 统一监控指标（支持 JSON 和 Prometheus 格式） ==========
-from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
+# ========== 统一监控指标 ==========
+try:
+    from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
+except ImportError:
+    CONTENT_TYPE_LATEST = "text/plain; version=0.0.4; charset=utf-8"
+    def generate_latest():
+        return ""
+    Counter = Histogram = None
+    logger.warning("⚠️ prometheus_client 未安装")
 
-# 业务指标定义
-request_count = Counter(
-    "clawsjoy_requests_total", "Total requests", ["method", "endpoint", "status"]
-)
-request_duration = Histogram(
-    "clawsjoy_request_duration_seconds", "Request duration", ["method", "endpoint"]
-)
-active_sessions = Counter("clawsjoy_active_sessions", "Active sessions")
+if Counter is not None:
+    request_count = Counter("clawsjoy_requests_total", "Total requests", ["method", "endpoint", "status"])
+    request_duration = Histogram("clawsjoy_request_duration_seconds", "Request duration", ["method", "endpoint"])
+    active_sessions = Counter("clawsjoy_active_sessions", "Active sessions")
+else:
+    request_count = None
+    request_duration = None
+    active_sessions = None
 
 
 @app.route("/metrics", methods=["GET"])
@@ -517,42 +525,24 @@ def execute_skill():
 
 # ========== 智能体 ==========
 @app.route("/api/agents/list", methods=["GET"])
-def list_agents():
-    """动态获取 Agent 列表 - 从 wisdom_factory 读取"""
+def list_agents_legacy():
+    """兼容旧接口 - 从 agent_registry 动态读取"""
     try:
-        from core.agents.wisdom.wisdom_factory import wisdom_factory
-        
-        agents_list = []
-        # 获取所有已注册的 V4 Agent
-        v4_agent_names = [
-            "analysis_agent", "audio_agent", "butler_agent", "calculator_agent",
-            "chat_agent", "code_agent", "collaboration_agent", "decision_agent",
-            "dialect_agent", "file_agent", "memory_agent", "orchestrator",
-            "proactive_agent", "three_d_agent", "translate_agent", "video_agent",
-            "video_indexer_agent", "vision_agent", "writer_agent", "youtube_agent"
-        ]
-        
-        for name in v4_agent_names:
-            agents_list.append({
-                "name": name,
-                "status": "active",
-                "version": "4.0.0"
-            })
-        
-        agents_list.sort(key=lambda x: x["name"])
-        
-        return jsonify({"success": True, "total": len(agents_list), "agents": agents_list})
+        from core.lib.agent_registry import agent_registry
+        agents = agent_registry.list_all()
+        return jsonify({
+            "success": True,
+            "total": len(agents) if isinstance(agents, dict) else len(agents) if isinstance(agents, list) else 0,
+            "agents": agents
+        })
     except Exception as e:
-        # 降级到备用列表
-        fallback_agents = [
-            {"name": "chat_agent", "status": "active", "version": "4.0.0"},
-            {"name": "code_agent", "status": "active", "version": "4.0.0"},
-            {"name": "analysis_agent", "status": "active", "version": "4.0.0"},
-            {"name": "orchestrator", "status": "active", "version": "4.0.0"},
-        ]
-        return jsonify({"success": True, "total": len(fallback_agents), "agents": fallback_agents})      
+        return jsonify({
+            "success": True,
+            "total": 0,
+            "agents": []
+        })
 
-# ========== 模式识别查询 ==========
+#========== 模式识别查询 ==========
 @app.route("/api/learning/patterns", methods=["GET"])
 def get_patterns():
     try:
@@ -1164,52 +1154,7 @@ def get_youtube_channel():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-# ========== 引擎管理 API ==========
-@app.route("/api/v5/admin/engine/chat/status", methods=["GET"])
-def get_chat_engine_status():
-    """获取对话引擎状态"""
-
-    return jsonify(chat_engine.get_status())
-
-
-@app.route("/api/v5/admin/engine/chat/enable", methods=["POST"])
-def enable_chat_engine():
-    """启用对话引擎（需要管理员权限）"""
-    # 检查用户角色
-    if not is_admin(g.user_id):
-        return jsonify({"success": False, "error": "需要管理员权限"}), 403
-    
-    chat_engine.enabled = True
-    return jsonify({"success": True, "message": "对话引擎已启用", "status": chat_engine.get_status()})
-
-@app.route("/api/v5/admin/engine/chat/disable", methods=["POST"])
-def disable_chat_engine():
-    """禁用对话引擎"""
-
-    chat_engine.enabled = False
-    return jsonify(
-        {
-            "success": True,
-            "message": "对话引擎已禁用",
-            "status": chat_engine.get_status(),
-        }
-    )
-
-
-@app.route("/api/v5/admin/engine/chat/config", methods=["POST"])
-def config_chat_engine():
-    """配置对话引擎"""
-
-    data = request.json or {}
-    chat_engine.update_config(data)
-    return jsonify(
-        {
-            "success": True,
-            "message": "引擎配置已更新",
-            "status": chat_engine.get_status(),
-        }
-    )
-
+# ========== 流式输出 ==========
 
 @app.route("/api/v5/chat/stream", methods=["POST"])
 def chat_stream():
@@ -1243,7 +1188,9 @@ def chat_stream():
                 yield f"data: {json.dumps({'error': f'Agent {agent_name} 不可用'})}\n\n"
         except Exception as e:
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
-        return Response(stream_with_context(generate()), mimetype="text/event-stream")
+    return Response(stream_with_context(generate()), mimetype="text/event-stream")
+
+# ==========用户反馈收集 ==========
 
 @app.route("/api/v5/feedback", methods=["POST"])
 def submit_feedback():
@@ -1290,7 +1237,7 @@ def submit_feedback():
     
     return jsonify({"success": True, "message": "感谢您的反馈！"})
 
-
+# ============静态文件服务=============
 
 @app.route('/web/<path:filename>')
 def serve_web(filename):
@@ -1303,8 +1250,20 @@ def web_index():
     return send_from_directory('web', 'index.html')
 
 
-# ========== 新增智慧对话路由（不影响现有接口）==========
+# ========== 文件内容读取（用于代码审核） ==========
+def extract_file_content(project_id, file_path, user_id):
+    """从项目读取文件内容（用于代码审核）"""
+    try:
+        from core.lib.code_repo import get_code_repo
+        repo = get_code_repo(user_id)
+        content = repo.get_file_content(project_id, file_path)
+        if content:
+            return content, f"文件: {file_path} ({len(content)} 字符)"
+        return "", "文件为空或不存在"
+    except Exception as e:
+        return "", f"读取失败: {e}"
 
+# ========== 新增智慧对话路由（不影响现有接口）==========
 @app.route("/api/v5/wisdom/chat", methods=["POST"])
 def wisdom_chat():
     """
@@ -1535,7 +1494,9 @@ def wisdom_chat():
                 result["response"] = response_text + "\n\n🔧 请回复「确认格式化」来执行格式化。"
 
         return jsonify(result)
-   
+
+
+# ========== 工具调用支持 ==========
 @app.route("/api/v5/execute_tool", methods=["POST"])
 def execute_tool_api():
     """执行工具调用（需要用户确认后调用）"""
@@ -1547,8 +1508,6 @@ def execute_tool_api():
     result = execute_tool(tool_name, tool_args, user_id)
     return jsonify(result)
 
-
-# ========== 工具调用支持 ==========
 def execute_tool(tool_name: str, tool_args: dict, user_id: str) -> dict:
     """执行工具调用"""
 
@@ -1571,16 +1530,22 @@ def execute_tool(tool_name: str, tool_args: dict, user_id: str) -> dict:
         file_path = tool_args.get("file_path")
         content = repo.get_file_content(project_id, file_path)
         return {"success": True, "content": content}
-
+    
     elif tool_name == "write_file":
         from core.lib.code_repo import get_code_repo
+        from pathlib import Path
         repo = get_code_repo(user_id)
         project_id = tool_args.get("project_id")
         file_path = tool_args.get("file_path")
         content = tool_args.get("content")
-        # 实现写入逻辑
-        return {"success": True, "message": "文件已保存"}
-
+        project = repo.get_project(project_id)
+        if project:
+            full_path = Path(project["path"]) / file_path
+            full_path.parent.mkdir(parents=True, exist_ok=True)
+            full_path.write_text(content, encoding='utf-8')
+            return {"success": True, "message": f"文件已保存: {file_path}"}
+        return {"success": False, "error": "项目不存在"}
+    
     else:
         return {"success": False, "error": f"未知工具: {tool_name}"}
 
@@ -1717,163 +1682,15 @@ def agent_list():
         "stats": agent_registry.get_stats()
     })
 
-# ========== 话本管理 API ==========
 
-@app.route("/api/v5/scriptbook/stats", methods=["GET"])
-def scriptbook_stats():
-    """获取话本统计"""
-    agent_name = request.args.get("agent", "chat_agent")
-    
-    from core.lib.scriptbook_learner import scriptbook_learner
-    # 重新初始化指定 agent 的学习器
-    scriptbook_learner.agent_name = agent_name
-    scriptbook_learner._load_stats()
-    
-    stats = scriptbook_learner.get_stats()
-    return jsonify({
-        "success": True,
-        "agent": agent_name,
-        "stats": stats
-    })
-
-
-@app.route("/api/v5/scriptbook/optimize", methods=["POST"])
-def scriptbook_optimize():
-    """触发话本优化"""
-    data = request.json or {}
-    agent_name = data.get("agent")
-    auto_apply = data.get("auto_apply", False)
-    
-    from core.lib.scriptbook_learner import scriptbook_learner
-    scriptbook_learner.agent_name = agent_name
-    scriptbook_learner._load_stats()
-    
-    stats = scriptbook_learner.get_stats()
-    suggestions = stats.get("suggestions", [])
-    
-    result = {
-        "success": True,
-        "agent": agent_name,
-        "hit_rate": stats["hit_rate"],
-        "suggestions": suggestions
-    }
-    
-    if auto_apply and suggestions:
-        # 自动应用建议
-        result["auto_applied"] = _apply_scriptbook_suggestions(agent_name, suggestions)
-    
-    return jsonify(result)
-
-
-@app.route("/api/v5/scriptbook/update", methods=["POST"])
-def scriptbook_update():
-    """手动更新话本"""
-    data = request.json or {}
-    agent_name = data.get("agent")
-    intent = data.get("intent")
-    keywords = data.get("keywords", [])
-    template = data.get("template")
-    
-    if not intent or not template:
-        return jsonify({"success": False, "error": "intent and template required"}), 400
-    
-    # 更新话本文件
-    import yaml
-    from pathlib import Path
-    
-    script_path = Path(f"agents/{agent_name}/scriptbook.yaml")
-    if not script_path.exists():
-        script_path = Path(f"config/butler/scriptbook.yaml")
-    
-    if script_path.exists():
-        with open(script_path, 'r') as f:
-            config = yaml.safe_load(f) or {}
-        
-        # 添加新意图
-        if "intents" not in config:
-            config["intents"] = []
-        
-        config["intents"].append({
-            "keywords": keywords,
-            "response": intent
-        })
-        
-        if "templates" not in config:
-            config["templates"] = {}
-        config["templates"][intent] = template
-        
-        with open(script_path, 'w') as f:
-            yaml.dump(config, f, allow_unicode=True, default_flow_style=False)
-        
-        return jsonify({"success": True, "message": f"话本已更新: {intent}"})
-    
-    return jsonify({"success": False, "error": "话本文件不存在"}), 404
-
-
-def _apply_scriptbook_suggestions(agent_name: str, suggestions: list) -> list:
-    """自动应用话本建议"""
-    applied = []
-    for sug in suggestions:
-        # 生成新话本
-        new_intent = f"auto_{sug['type']}"
-        keywords = sug.get("suggested_keywords", [])
-        template = f"用户说了「{'」、「'.join(keywords)}」之类的话，需要友好回应。"
-        
-        # 更新话本
-        import yaml
-        from pathlib import Path
-        
-        script_path = Path(f"agents/{agent_name}/scriptbook.yaml")
-        if script_path.exists():
-            with open(script_path, 'r') as f:
-                config = yaml.safe_load(f) or {}
-            
-            if "intents" not in config:
-                config["intents"] = []
-            
-            # 避免重复
-            existing = [i.get("response") for i in config["intents"]]
-            if new_intent not in existing:
-                config["intents"].append({
-                    "keywords": keywords,
-                    "response": new_intent
-                })
-                config["templates"][new_intent] = template
-                
-                with open(script_path, 'w') as f:
-                    yaml.dump(config, f, allow_unicode=True, default_flow_style=False)
-                
-                applied.append(new_intent)
-    
-    return applied
-
-
-@app.route("/api/v5/scriptbook/hot-reload", methods=["POST"])
-def scriptbook_hot_reload():
-    """热重载话本"""
-    agent_name = request.json.get("agent", "chat_agent")
-    
-    # 清除缓存，重新加载
-    from core.agents.wisdom.wisdom_factory import wisdom_factory
-    wisdom_agent = wisdom_factory.get_wisdom_agent(agent_name, "system")
-    
-    if wisdom_agent and hasattr(wisdom_agent, '_load_scriptbook'):
-        wisdom_agent._load_scriptbook()
-        return jsonify({"success": True, "message": f"话本已热重载: {agent_name}"})
-    
-    return jsonify({"success": False, "error": "Agent 不支持话本热重载"}), 400
-
-
-# ========== Prompt 升级 API ==========
+# ========== Prompt 升级 API（增强版） ==========
 
 @app.route("/api/v5/prompt/stats", methods=["GET"])
 def prompt_stats():
     """获取 Prompt 升级统计"""
     agent_name = request.args.get("agent", "chat_agent")
-    
     from core.lib.prompt_upgrader import get_prompt_upgrader
     upgrader = get_prompt_upgrader(agent_name)
-    
     return jsonify({
         "success": True,
         "agent": agent_name,
@@ -1885,11 +1702,9 @@ def prompt_stats():
 def prompt_upgrade():
     """手动触发 Prompt 升级"""
     agent_name = request.json.get("agent", "chat_agent")
-    
     from core.lib.prompt_upgrader import get_prompt_upgrader
     upgrader = get_prompt_upgrader(agent_name)
     upgrader._generate_new_version()
-    
     return jsonify({
         "success": True,
         "message": f"已触发 {agent_name} Prompt 升级",
@@ -1897,6 +1712,79 @@ def prompt_upgrade():
         "test_version": upgrader.test_version
     })
 
+
+# ========== 🆕 Prompt 建议 & 人工确认 ==========
+@app.route("/api/v5/prompt/suggest", methods=["POST"])
+def prompt_suggest():
+    """生成 Prompt 改进建议（LLM 生成）"""
+    agent_name = request.json.get("agent", "chat_agent")
+    
+    from core.lib.prompt_upgrader import get_prompt_upgrader
+    upgrader = get_prompt_upgrader(agent_name)
+    
+    # 收集当前 Prompt 信息
+    current_prompt = upgrader.get_current_prompt()
+    stats = upgrader.get_stats()
+    
+    # 调用 LLM 生成建议报告
+    llm_prompt = f"""
+    请分析以下 Prompt 的使用情况，生成改进建议报告：
+
+    当前 Prompt 版本: v{stats.get('current_version', 1)}
+    使用次数: {stats.get('total_usage', 0)}
+    成功率: {stats.get('success_rate', 0) * 100}%
+    平均响应长度: {stats.get('avg_response_length', 0)} 字符
+    
+    当前 Prompt 内容:
+    {current_prompt[:500]}
+    
+    请输出:
+    1. 问题分析（当前 Prompt 的不足）
+    2. 改进方向（如何优化）
+    3. 具体建议（修改哪些部分）
+    
+    输出格式: Markdown
+    """
+    
+    suggestion = call_llm(llm_prompt)
+    
+    return jsonify({
+        "success": True,
+        "agent": agent_name,
+        "suggestion": suggestion,
+        "current_version": upgrader.current_version,
+        "stats": stats,
+        "generated_by": "llm"
+    })
+
+@app.route("/api/v5/prompt/apply", methods=["POST"])
+def prompt_apply():
+    """人工确认后应用 Prompt 版本"""
+    agent_name = request.json.get("agent", "chat_agent")
+    version = request.json.get("version")
+    from core.lib.prompt_upgrader import get_prompt_upgrader
+    upgrader = get_prompt_upgrader(agent_name)
+    upgrader.apply_version(version)
+    return jsonify({
+        "success": True,
+        "message": f"已应用 Prompt 版本 {version}",
+        "current_version": upgrader.current_version
+    })
+
+
+@app.route("/api/v5/prompt/rollback", methods=["POST"])
+def prompt_rollback():
+    """回滚到历史版本"""
+    agent_name = request.json.get("agent", "chat_agent")
+    version = request.json.get("version")
+    from core.lib.prompt_upgrader import get_prompt_upgrader
+    upgrader = get_prompt_upgrader(agent_name)
+    upgrader.rollback(version)
+    return jsonify({
+        "success": True,
+        "message": f"已回滚到 Prompt 版本 {version}",
+        "current_version": upgrader.current_version
+    })
 
 # ========== 文件操作 API ==========
 
@@ -2010,12 +1898,22 @@ def project_search():
     return jsonify({"success": True, "results": results})
 
 
-
-# ========== code弹板路由 ==========
+# ========== Agent 弹板路由 ==========
 @app.route("/code_agent_panel.html")
 def code_agent_panel():
     from flask import send_from_directory
     return send_from_directory("templates", "code_agent_panel.html")
+
+@app.route("/writer_panel.html")
+def writer_panel():
+    from flask import send_from_directory
+    return send_from_directory("templates", "writer_panel.html")
+
+@app.route("/director_panel.html")
+def director_panel():
+    from flask import send_from_directory
+    return send_from_directory("templates", "director_panel.html")
+
 
 
 # ========== WebSocket 协作 API ==========
@@ -2264,10 +2162,6 @@ def session_list():
     user_id = request.args.get("user_id", "default")
     sessions = session_manager.list_sessions(user_id)
     return jsonify({"success": True, "sessions": sessions})
-
-@app.route("/director_panel.html")
-def director_panel():
-    return send_from_directory("templates", "director_panel.html")
 
 
 
