@@ -111,13 +111,33 @@ class CodeAgentV4(BusinessAgent):
     # ================================================================
 
     def _execute_business(self, user_input: str, context: Optional[Dict] = None) -> Dict:
+        print(f"[CodeAgent DEBUG] context: {context}")
         """核心逻辑 - 调用积木"""
+        # ========== 0. 加载用户记忆 ==========
+        user_memory_text = ""
+        if context and context.get("memories"):
+            try:
+                memories = context.get("memories", [])
+                if memories:
+                    memory_lines = []
+                    for mem in memories[:5]:
+                        if isinstance(mem, dict):
+                            content_text = mem.get("content", mem.get("user_input", ""))
+                            if content_text:
+                                memory_lines.append(f"- {content_text}")
+                        else:
+                            memory_lines.append(f"- {mem}")
+                    if memory_lines:
+                        user_memory_text = "\n用户历史记忆:\n" + "\n".join(memory_lines)
+            except Exception as e:
+                print(f"[CodeAgent] 记忆提取失败: {e}")
+        
         t = user_input.lower()
 
         # ========== 1. 感知层（通用积木）==========
         # 1.1 语义理解
         semantic_result = None
-        if self.semantic:
+        if hasattr(self, "semantic") and self.semantic:
             try:
                 semantic_result = self.semantic.understand(user_input)
             except Exception as e:
@@ -125,7 +145,7 @@ class CodeAgentV4(BusinessAgent):
 
         # 1.2 情感感知
         emotion_result = {}
-        if self.emotion:
+        if hasattr(self, "emotion") and self.emotion:
             try:
                 emotion_result = self.emotion.analyze(user_input)
             except Exception as e:
@@ -133,7 +153,7 @@ class CodeAgentV4(BusinessAgent):
 
         # 1.3 推理增强（如果是复杂推理任务）
         reasoning_result = None
-        if self.reasoning and any(kw in t for kw in ["为什么", "怎么", "如何", "如果", "那么"]):
+        if hasattr(self, "reasoning") and self.reasoning and any(kw in t for kw in ["为什么", "怎么", "如何", "如果", "那么"]):
             try:
                 reasoning_result = self.reasoning.process(user_input)
             except Exception as e:
@@ -141,7 +161,7 @@ class CodeAgentV4(BusinessAgent):
 
         # ========== 2. 知识检索 ==========
         knowledge_result = None
-        if self.knowledge:
+        if hasattr(self, "knowledge") and self.knowledge:
             try:
                 knowledge_result = self.knowledge.query(user_input)
             except Exception as e:
@@ -162,7 +182,7 @@ class CodeAgentV4(BusinessAgent):
             return self._handle_explain(user_input)
 
         # 3.2 复杂任务：分解 + 决策
-        if self.task_decomposer and self._is_complex(user_input):
+        if hasattr(self, "task_decomposer") and self.task_decomposer and self._is_complex(user_input):
             try:
                 decomposed = self.task_decomposer.decompose(user_input)
                 return self._handle_decomposed(decomposed)
@@ -175,8 +195,11 @@ class CodeAgentV4(BusinessAgent):
         
         if any(kw in t for kw in ["读取文件", "打开文件"]):
             return self._handle_file(user_input)
+        # 3.4 记忆/名字查询
+        if any(kw in t for kw in ["名字", "姓名", "叫什么", "我是谁", "我的名字"]):
+            return self._handle_memory_query(user_input, context)
 
-        # 3.4 默认：对话
+        # 3.5 默认：对话
         return self._handle_chat(user_input)
 
     # ================================================================
@@ -318,6 +341,47 @@ class CodeAgentV4(BusinessAgent):
             preview = content[:500] + ("..." if len(content) > 500 else "")
             return self._resp(f"📄 **{file_path}**\n\n```\n{preview}\n```")
         return self._resp(f"未找到文件: {file_path}")
+    
+    # ================================================================
+    #  记忆查询（名字/身份）
+    # ================================================================
+
+    def _handle_memory_query(self, user_input: str, context: Optional[Dict] = None) -> Dict:
+        """处理名字/身份查询，从记忆中获取"""
+        try:
+            # 从 context 中获取记忆
+            memories = context.get("memories", []) if context else []
+
+            # 在记忆中搜索名字
+            for mem in memories:
+                if isinstance(mem, dict):
+                    content_text = mem.get("content", mem.get("user_input", ""))
+                    if "名字" in content_text or "姓名" in content_text:
+                        import re
+                        match = re.search(r'(?:名字|姓名)[：:]\s*(\S+)', content_text)
+                        if match:
+                            name = match.group(1)
+                            return self._resp(f"您的名字是：{name}")
+                elif isinstance(mem, str):
+                    if "名字" in mem or "姓名" in mem:
+                        import re
+                        match = re.search(r'(?:名字|姓名)[：:]\s*(\S+)', mem)
+                        if match:
+                            name = match.group(1)
+                            return self._resp(f"您的名字是：{name}")
+
+            # 检查用户输入中是否包含名字信息
+            import re
+            name_match = re.search(r'(?:我叫|叫我|名字是)[：:]\s*(\S+)', user_input)
+            if name_match:
+                name = name_match.group(1)
+                return self._resp(f"您的名字是：{name}")
+
+            return self._resp("我暂时没有您名字的记忆，请告诉我您的名字。")
+        except Exception as e:
+            print(f"[CodeAgent] 记忆查询失败: {e}")
+            return self._resp("我暂时无法获取您的名字信息。")
+
 
     # ================================================================
     #  对话
@@ -403,3 +467,5 @@ class CodeAgentV4(BusinessAgent):
 if __name__ == "__main__":
     agent = CodeAgentV4("test")
     print(agent.process("写一个排序函数")["response"])
+
+ 

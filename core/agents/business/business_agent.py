@@ -24,103 +24,28 @@ from core.lib.performance.optimizer import cache_manager, batch_processor, model
 
 
 class BusinessAgent(SmartAgent, JSONCapableMixin):
-    """
-    LLM-First 业务基类
-    """
+    # 🔧 所有 Agent 共享同一个记忆实例（跨 Agent 记忆共享）
+    _shared_memory = None
 
-    _CACHE_SIZE = 100
-    _BATCH_SIZE = 8
-
-    def __init__(self, user_id: str = "default"):
-        super().__init__(user_id=user_id)
-        JSONCapableMixin.__init__(self)
-
-        self.engines = {}
-        self._response_cache = {}
-        self._embedding_cache = {}
-        self._pending_tasks = []
-
-        self._stats = {
-            "cache_hits": 0,
-            "cache_misses": 0,
-            "batch_processed": 0,
-            "model_used": {},
-            "total_interactions": 0,
-        }
-
-        self._federated_enabled = True
-
-        agent_name = getattr(self, 'name', 'unknown')
-        print(f"🧠 BusinessAgent v4.1 初始化: {agent_name}")
-        # 🧩 通用积木（懒加载）
-        self._semantic = None
-        self._emotion = None
-        self._memory = None
-        self._soul = None
-        self._context = None
-        self._common_blocks_initialized = False
-        self._reasoning = None
-        self._knowledge = None
-        # 添加属性
-    @property
-    def reasoning(self):
-        if self._reasoning is None:
+    @classmethod
+    def _get_shared_memory(cls):
+        """获取共享的记忆实例"""
+        if cls._shared_memory is None:
             try:
-                from engine.reasoning import reasoning_engine
-                self._reasoning = reasoning_engine
+                from core.lib.memory_layers import MemoryLayers
+                cls._shared_memory = MemoryLayers()
+                print("🧠 BusinessAgent: 共享记忆实例已创建")
             except Exception as e:
-                print(f"[BusinessAgent] 加载推理引擎失败: {e}")
-                self._reasoning = None
-        return self._reasoning
-    @property
-    def knowledge(self):
-        if self._knowledge is None:
-            try:
-                from engine.knowledge import knowledge_engine
-                self._knowledge = knowledge_engine
-            except Exception as e:
-                print(f"[BusinessAgent] 加载知识引擎失败: {e}")
-                self._knowledge = None
-        return self._knowledge
-
-    def _init_common_blocks(self):
-        """初始化通用积木（懒加载，只初始化一次）"""
-        if self._common_blocks_initialized:
-            return
-        self._common_blocks_initialized = True
-
-    @property
-    def semantic(self):
-        if self._semantic is None:
-            try:
-                from engine.semantic import semantic_engine
-                self._semantic = semantic_engine
-            except Exception as e:
-                print(f"[BusinessAgent] 加载语义引擎失败: {e}")
-                self._semantic = None
-        return self._semantic
-
-    @property
-    def emotion(self):
-        if self._emotion is None:
-            try:
-                from engine.emotion import emotion_engine
-                self._emotion = emotion_engine
-            except Exception as e:
-                print(f"[BusinessAgent] 加载情感引擎失败: {e}")
-                self._emotion = None
-        return self._emotion
+                print(f"🧠 BusinessAgent: 共享记忆创建失败: {e}")
+                cls._shared_memory = None
+        return cls._shared_memory
 
     @property
     def memory(self):
-        if self._memory is None:
-            try:
-                from core.lib.memory_layers import MemoryLayers
-                self._memory = MemoryLayers()
-            except Exception as e:
-                print(f"[BusinessAgent] 加载记忆系统失败: {e}")
-                self._memory = None
-        return self._memory
+        """返回共享的记忆实例（所有 Agent 共享）"""
+        return self._get_shared_memory()
+
+
 
     @property
     def soul(self):
@@ -271,6 +196,32 @@ class BusinessAgent(SmartAgent, JSONCapableMixin):
         pass
 
     def process(self, user_input: str, context: Optional[Dict] = None) -> Dict:
+        # 🔧 自动加载用户记忆，注入到上下文
+        if context is None:
+            context = {}
+        
+        shared_mem = self._get_shared_memory()
+        if shared_mem:
+            try:
+                memories = []
+                # 1. 获取长期记忆（包含用户名字等永久信息）
+                long_term = shared_mem.get_long_term_memory(limit=10)
+                if long_term:
+                    memories.extend(long_term)
+                # 2. 如果有 session_id，获取会话记忆
+                session_id = context.get("session_id")
+                if session_id:
+                    session_mem = shared_mem.get_session_memory(session_id, limit=5)
+                    if session_mem:
+                        memories.extend(session_mem)
+                if memories:
+                    context["memories"] = memories
+            except Exception as e:
+                print(f"[BusinessAgent] 记忆加载失败: {e}")       
+        # 如果有 memory 属性（共享实例），也保存到 context
+        if hasattr(self, 'memory') and self.memory:
+            context["_has_memory"] = True
+
         self._stats["total_interactions"] = self._stats.get("total_interactions", 0) + 1
         cache_key = hashlib.md5(f"{user_input}:{self.name}".encode()).hexdigest()
 

@@ -195,7 +195,16 @@ class AtomicEngineV25:
         try:
             from agents.code_agent.agent_v4 import CodeAgentV4
             agent = CodeAgentV4(json_data.get("user_id", "default"))
-            return agent.process(json_data.get("raw_input", ""))
+            # 构建 context，传递 session_id 用于记忆
+            context = {
+                "session_id": json_data.get("session_id"),
+                "user_id": json_data.get("user_id", "default"),
+                "raw_input": json_data.get("raw_input", "")
+            }
+            # 合并 params 中的 context
+            if json_data.get("params") and json_data["params"].get("context"):
+                context.update(json_data["params"]["context"])
+            return agent.process(json_data.get("raw_input", ""), context)
         except Exception as e:
             return {"error": str(e)}
     
@@ -203,7 +212,14 @@ class AtomicEngineV25:
         try:
             from agents.writer_agent.agent_v4 import WriterAgentV4
             agent = WriterAgentV4(json_data.get("user_id", "default"))
-            return agent.process(json_data.get("raw_input", ""))
+            context = {
+                "session_id": json_data.get("session_id"),
+                "user_id": json_data.get("user_id", "default"),
+                "raw_input": json_data.get("raw_input", "")
+            }
+            if json_data.get("params") and json_data["params"].get("context"):
+                context.update(json_data["params"]["context"])
+            return agent.process(json_data.get("raw_input", ""), context)
         except Exception as e:
             return {"error": str(e)}
     
@@ -281,7 +297,14 @@ class AtomicEngineV25:
         try:
             from agents.translate_agent.agent_v4 import TranslateAgentV4
             agent = TranslateAgentV4(json_data.get("user_id", "default"))
-            return agent.process(json_data.get("raw_input", ""))
+            context = {
+                "session_id": json_data.get("session_id"),
+                "user_id": json_data.get("user_id", "default"),
+                "raw_input": json_data.get("raw_input", "")
+            }
+            if json_data.get("params") and json_data["params"].get("context"):
+                context.update(json_data["params"]["context"])
+            return agent.process(json_data.get("raw_input", ""), context)
         except Exception as e:
             return {"error": str(e)}
     
