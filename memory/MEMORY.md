@@ -43,5 +43,40 @@
     "timestamp": "2026-06-19T23:12:40.992418",
     "content": "名字: 李四",
     "importance": 1
+  },
+  {
+    "timestamp": "2026-06-19T23:36:57.855754",
+    "content": "测试键: 测试值",
+    "importance": 1
+  },
+  {
+    "timestamp": "2026-06-19T23:39:54.816364",
+    "content": "主题: 项目A",
+    "importance": 1
+  },
+  {
+    "timestamp": "2026-06-19T23:39:55.060570",
+    "content": "主题: 项目B",
+    "importance": 1
+  },
+  {
+    "timestamp": "2026-06-19T23:47:02.904504",
+    "content": "主题: 项目A",
+    "importance": 1
+  },
+  {
+    "timestamp": "2026-06-19T23:47:03.259704",
+    "content": "主题: 项目B",
+    "importance": 1
+  },
+  {
+    "timestamp": "2026-06-19T23:49:07.605990",
+    "content": "测试: Redis存储成功",
+    "importance": 1
+  },
+  {
+    "timestamp": "2026-06-20T00:15:37.848163",
+    "content": "名字: 王小明",
+    "importance": 1
   }
 ]
