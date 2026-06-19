@@ -106,8 +106,91 @@ class WisdomWrapper:
         print(f"🧠 智慧包装器已激活: {self._self_awareness['name']}")
         # 🆕 初始化逆向润色器
         self._polisher = ReversePolisher(self._call_llm)
+        # 🧩 智慧层积木（懒加载）
+        self._brain = None
+        self._closed_loop = None
+        self._adaptive = None
+        self._decision_engine = None
+        self._task_decomposer = None
+        self._self_healer = None
 
-  
+    @property
+    def brain(self):
+        if self._brain is None:
+            try:
+                from core.intelligence.brain_network import BrainNeuralNetwork
+                self._brain = BrainNeuralNetwork()
+            except Exception as e:
+                print(f"[WisdomWrapper] 加载大脑网络失败: {e}")
+                self._brain = None
+        return self._brain
+
+    @property
+    def closed_loop(self):
+        if self._closed_loop is None:
+            try:
+                from core.intelligence.closed_loop import ClosedLoop
+                self._closed_loop = ClosedLoop()
+            except Exception as e:
+                print(f"[WisdomWrapper] 加载闭环学习器失败: {e}")
+                self._closed_loop = None
+        return self._closed_loop
+
+    @property
+    def adaptive(self):
+        if self._adaptive is None:
+            try:
+                from core.lib.adaptive_system import AdaptiveSystem
+                self._adaptive = AdaptiveSystem()
+            except Exception as e:
+                print(f"[WisdomWrapper] 加载自适应系统失败: {e}")
+                self._adaptive = None
+        return self._adaptive
+
+    @property
+    def decision_engine(self):
+        if self._decision_engine is None:
+            try:
+                from core.autonomous.decision_engine import DecisionEngine
+                self._decision_engine = DecisionEngine()
+            except Exception as e:
+                print(f"[WisdomWrapper] 加载决策引擎失败: {e}")
+                self._decision_engine = None
+        return self._decision_engine
+
+    @property
+    def task_decomposer(self):
+        if self._task_decomposer is None:
+            try:
+                from core.autonomous.task_decomposer import TaskDecomposer
+                self._task_decomposer = TaskDecomposer()
+            except Exception as e:
+                print(f"[WisdomWrapper] 加载任务分解器失败: {e}")
+                self._task_decomposer = None
+        return self._task_decomposer
+
+    @property
+    def self_healer(self):
+        if self._self_healer is None:
+            try:
+                from core.intelligence.self_healer import SelfHealer
+                self._self_healer = SelfHealer()
+            except Exception as e:
+                print(f"[WisdomWrapper] 加载自愈器失败: {e}")
+                self._self_healer = None
+        return self._self_healer
+
+    def get_wise_blocks(self) -> Dict:
+        """获取所有智慧层积木（用于调试）"""
+        return {
+            "brain": self.brain is not None,
+            "closed_loop": self.closed_loop is not None,
+            "adaptive": self.adaptive is not None,
+            "decision_engine": self.decision_engine is not None,
+            "task_decomposer": self.task_decomposer is not None,
+            "self_healer": self.self_healer is not None,
+        }
+       
     def _default_config(self) -> Dict:
         return {
             "learning_enabled": True,

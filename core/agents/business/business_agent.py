@@ -52,7 +52,107 @@ class BusinessAgent(SmartAgent, JSONCapableMixin):
 
         agent_name = getattr(self, 'name', 'unknown')
         print(f"🧠 BusinessAgent v4.1 初始化: {agent_name}")
+        # 🧩 通用积木（懒加载）
+        self._semantic = None
+        self._emotion = None
+        self._memory = None
+        self._soul = None
+        self._context = None
+        self._common_blocks_initialized = False
+        self._reasoning = None
+        self._knowledge = None
+        # 添加属性
+    @property
+    def reasoning(self):
+        if self._reasoning is None:
+            try:
+                from engine.reasoning import reasoning_engine
+                self._reasoning = reasoning_engine
+            except Exception as e:
+                print(f"[BusinessAgent] 加载推理引擎失败: {e}")
+                self._reasoning = None
+        return self._reasoning
+    @property
+    def knowledge(self):
+        if self._knowledge is None:
+            try:
+                from engine.knowledge import knowledge_engine
+                self._knowledge = knowledge_engine
+            except Exception as e:
+                print(f"[BusinessAgent] 加载知识引擎失败: {e}")
+                self._knowledge = None
+        return self._knowledge
 
+    def _init_common_blocks(self):
+        """初始化通用积木（懒加载，只初始化一次）"""
+        if self._common_blocks_initialized:
+            return
+        self._common_blocks_initialized = True
+
+    @property
+    def semantic(self):
+        if self._semantic is None:
+            try:
+                from engine.semantic import semantic_engine
+                self._semantic = semantic_engine
+            except Exception as e:
+                print(f"[BusinessAgent] 加载语义引擎失败: {e}")
+                self._semantic = None
+        return self._semantic
+
+    @property
+    def emotion(self):
+        if self._emotion is None:
+            try:
+                from engine.emotion import emotion_engine
+                self._emotion = emotion_engine
+            except Exception as e:
+                print(f"[BusinessAgent] 加载情感引擎失败: {e}")
+                self._emotion = None
+        return self._emotion
+
+    @property
+    def memory(self):
+        if self._memory is None:
+            try:
+                from core.lib.memory_layers import MemoryLayers
+                self._memory = MemoryLayers()
+            except Exception as e:
+                print(f"[BusinessAgent] 加载记忆系统失败: {e}")
+                self._memory = None
+        return self._memory
+
+    @property
+    def soul(self):
+        if self._soul is None:
+            try:
+                from core.lib.soul.soul_injector import SoulInjector
+                self._soul = SoulInjector(self.user_id, self.name)
+            except Exception as e:
+                print(f"[BusinessAgent] 加载灵魂注入器失败: {e}")
+                self._soul = None
+        return self._soul
+
+    @property
+    def context(self):
+        if self._context is None:
+            try:
+                from core.lib.context_learner import ContextLearner
+                self._context = ContextLearner()
+            except Exception as e:
+                print(f"[BusinessAgent] 加载上下文学习器失败: {e}")
+                self._context = None
+        return self._context
+
+    def get_common_blocks(self) -> Dict:
+        """获取所有通用积木（用于调试）"""
+        return {
+            "semantic": self.semantic is not None,
+            "emotion": self.emotion is not None,
+            "memory": self.memory is not None,
+            "soul": self.soul is not None,
+            "context": self.context is not None,
+        }
     # ========== 缓存（保留）==========
 
     def _get_cache_key(self, user_input: str, context: Dict = None) -> str:

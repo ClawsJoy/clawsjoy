@@ -1,9 +1,17 @@
-
-## 2026-05-17 08:33:13 [normal]
-ClawsJoy 系统架构：四层记忆设计
-
-## 2026-05-17 08:33:14 [normal]
-ClawsJoy 系统架构：四层记忆设计
-
-## 2026-05-17 08:34:36 [normal]
-ClawsJoy 系统架构：四层记忆设计
+[
+  {
+    "timestamp": "2026-06-19T20:06:47.193974",
+    "content": "名字: 小明",
+    "importance": 1
+  },
+  {
+    "timestamp": "2026-06-19T20:13:49.952289",
+    "content": "语言: Python",
+    "importance": 1
+  },
+  {
+    "timestamp": "2026-06-19T20:14:20.880271",
+    "content": "名字: 小明",
+    "importance": 1
+  }
+]

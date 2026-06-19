@@ -1,4 +1,5 @@
-"""统一意图解析器 - 标准化 JSON v1.0"""
+
+"""统一意图解析器 - 标准化 JSON v1.0（话本已移除，使用内置模板）"""
 
 import yaml
 import json
@@ -13,52 +14,67 @@ from typing import Dict, Any, Optional
 
 class UnifiedIntentParser:
     """统一意图解析器 - 输出标准化 JSON"""
-    
+
     # 标准枚举值
     ACTIONS = ["play", "search", "generate", "schedule", "translate", "calculate", "chat"]
     TARGETS = ["media", "code", "image", "info", "task", "text", "number"]
     OUTPUT_TYPES = ["text", "image", "video", "link", "code"]
     STATUSES = ["pending", "processing", "completed", "failed"]
     NEXT_ACTIONS = ["continue", "done", "wait"]
-    
+
     def __init__(self, spec_path="config/prompt/unified_spec.yaml"):
         self.spec = self._load_spec(spec_path)
         self.llm_url = "http://localhost:11434/api/generate"
-        self.llm_model = "qwen2:1.5b-instruct"  # 添加这行
+        self.llm_model = "qwen2:1.5b-instruct"
         self.prompt_template = self._load_prompt_template()
-    
+
     def _load_spec(self, path: str) -> Dict:
         with open(path, 'r') as f:
             return yaml.safe_load(f)
-    
+
     def _load_prompt_template(self) -> Template:
+        """加载提示词模板 - 话本不存在时使用内置模板"""
         prompt_path = Path("prompts/unified_intent.prompt")
-        with open(prompt_path, 'r') as f:
-            return Template(f.read())
-    
+        if prompt_path.exists():
+            with open(prompt_path, 'r') as f:
+                return Template(f.read())
+        else:
+            # 话本不存在时使用内置模板
+            default_template = """
+分析以下用户输入，输出 JSON 格式的意图解析结果。
+
+用户输入：${raw_prompt}
+
+可用动作：play, search, generate, schedule, translate, calculate, chat
+可用目标：media, code, image, info, task, text, number
+
+输出格式：
+{"action": "动作", "target": "目标", "keywords": ["关键词"], "confidence": 0.0-1.0}
+
+只输出 JSON，不要其他内容。
+"""
+            return Template(default_template)
+
     def _generate_session_id(self) -> str:
         return str(uuid.uuid4())[:8]
-    
-    def parse(self, raw_input: str, user_id: str = "default", 
+
+    def parse(self, raw_input: str, user_id: str = "default",
               thread_id: str = None, session_id: str = None) -> Dict[str, Any]:
         """解析用户输入，输出标准化 JSON"""
-        
-        # 生成会话标识
+
         if not session_id:
             session_id = self._generate_session_id()
         if not thread_id:
             thread_id = self._generate_session_id()
-        
-        # 构建提示词
+
         prompt = self.prompt_template.substitute(raw_prompt=raw_input)
-        
+
         action = "chat"
         target = "text"
         keywords = []
         confidence = 0.5
-        
+
         try:
-            # 调用 Ollama
             resp = requests.post(
                 self.llm_url,
                 json={
@@ -79,16 +95,14 @@ class UnifiedIntentParser:
                     target = intent_data.get("target", "text")
                     keywords = intent_data.get("keywords", [])
                     confidence = intent_data.get("confidence", 0.8)
-                    
-                    # 验证枚举值
+
                     if action not in self.ACTIONS:
                         action = "chat"
                     if target not in self.TARGETS:
                         target = "text"
         except Exception as e:
             print(f"意图解析失败: {e}")
-        
-        # 构建标准化 JSON
+
         return {
             "version": "1.0",
             "session_id": session_id,
@@ -108,17 +122,17 @@ class UnifiedIntentParser:
             "status": "pending",
             "next": "continue"
         }
-    
+
     def get_agent_name(self, standardized_json: Dict) -> str:
         """根据标准化 JSON 获取 Agent 名称"""
         route_map = self.spec.get('route_map', {})
         action = standardized_json.get("action", "chat")
         target = standardized_json.get("target", "text")
-        
+
         key = f"{action}_{target}"
         return route_map.get(key, "chat_agent")
-    
-    def complete(self, standardized_json: Dict, output_type: str, 
+
+    def complete(self, standardized_json: Dict, output_type: str,
                  output_content: str, output_data: Dict = None) -> Dict:
         """标记任务完成，填充输出"""
         standardized_json["output_type"] = output_type
@@ -127,7 +141,7 @@ class UnifiedIntentParser:
         standardized_json["status"] = "completed"
         standardized_json["next"] = "done"
         return standardized_json
-    
+
     def fail(self, standardized_json: Dict, error_msg: str) -> Dict:
         """标记任务失败"""
         standardized_json["status"] = "failed"

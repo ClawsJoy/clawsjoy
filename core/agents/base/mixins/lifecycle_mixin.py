@@ -7,11 +7,15 @@ from typing import Callable, Dict, List, Optional
 
 
 class LifecycleMixin:
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._lifecycle_state = "sleeping"
+        self._state = {}  # 业务状态字典
     """生命周期混入类 - 让 Agent 拥有完整的生命周期"""
 
     def _init_lifecycle(self):
         """初始化生命周期（在 Agent __init__ 中调用）"""
-        self._state = "sleeping"  # sleeping, waking, active, dreaming
+        self._lifecycle_state = "sleeping"  # sleeping, waking, active, dreaming
         self._last_wake = None
         self._last_dream = None
         self._wake_count = 0
@@ -28,22 +32,33 @@ class LifecycleMixin:
         def loop():
             while self._lifecycle_running:
                 try:
-                    if self._state == "sleeping":
+                    if self._lifecycle_state == "sleeping":
                         if self._should_wake():
                             self._wake_up()
 
-                    elif self._state == "active":
+                    elif self._lifecycle_state == "active":
                         self._do_routine()
                         self._go_to_dream()
 
-                    elif self._state == "dreaming":
+                    elif self._lifecycle_state == "dreaming":
                         self._do_dream()
-                        self._state = "sleeping"
+                        self._lifecycle_state = "sleeping"
 
                     time.sleep(60)
+                    # 🔧 确保 _state 是字典（防御性编程）
+                    if hasattr(self, "_state") and not isinstance(self._state, dict):
+                        self._state = {}
+                    if hasattr(self, "_state") and "total_interactions" not in self._state:
+                        self._state["total_interactions"] = 0
+                    if hasattr(self, "_stats") and not isinstance(self._stats, dict):
+                        self._stats = {}
+                    if hasattr(self, "_stats") and "total_interactions" not in self._stats:
+                        self._stats["total_interactions"] = 0
+
+
                 except Exception as e:
                     print(f"[{self.name}] 生命周期错误: {e}")
-                    self._state = "sleeping"
+                    self._lifecycle_state = "sleeping"
 
         thread = threading.Thread(target=loop, daemon=True)
         thread.start()
@@ -57,7 +72,7 @@ class LifecycleMixin:
 
     def _wake_up(self):
         """唤醒"""
-        self._state = "waking"
+        self._lifecycle_state = "waking"
         self._last_wake = datetime.now()
         self._wake_count += 1
         self.log(f"🌞 唤醒 (第{self._wake_count}次)")
@@ -66,15 +81,27 @@ class LifecycleMixin:
             health = self.health_check()
             self.log(f"🏥 健康检查: {health.get('status', 'ok')}")
 
-        self._state = "active"
+        self._lifecycle_state = "active"
 
     def _do_routine(self):
         """执行例行任务（子类可覆盖）"""
+        # 🔧 确保状态是字典
+        if not hasattr(self, "_state") or not isinstance(self._state, dict):
+            self._state = {}
+        if "total_interactions" not in self._state:
+            self._state["total_interactions"] = 0
+
         self.log(f"⚙️ 执行例行任务...")
 
     def _go_to_dream(self):
         """进入梦境"""
-        self._state = "dreaming"
+        # 🔧 确保状态是字典
+        if not hasattr(self, "_state") or not isinstance(self._state, dict):
+            self._state = {}
+        if "total_interactions" not in self._state:
+            self._state["total_interactions"] = 0
+
+        self._lifecycle_state = "dreaming"
         self._last_dream = datetime.now()
         self._dream_count += 1
         self.log(f"💭 进入梦境 (第{self._dream_count}次)")
@@ -88,7 +115,7 @@ class LifecycleMixin:
     def get_lifecycle_status(self) -> Dict:
         """获取生命周期状态"""
         return {
-            "state": self._state,
+            "state": self._lifecycle_state,
             "last_wake": self._last_wake.isoformat() if self._last_wake else None,
             "last_dream": self._last_dream.isoformat() if self._last_dream else None,
             "wake_count": self._wake_count,

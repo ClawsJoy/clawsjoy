@@ -33,15 +33,6 @@ class ChatAgentV4(BusinessAgent):
 
     def __init__(self, user_id: str = "default"):
         super().__init__(user_id=user_id)
-
-        # 🔧 显式初始化 _state 为字典（业务状态）
-        self._state = {
-            "total_interactions": 0,
-            "session_count": 0,
-            "last_active": datetime.now().isoformat()
-        }
-        self._stats = self._state
-
         self._history = []
         self._max_history = 10
         self._session_id = None

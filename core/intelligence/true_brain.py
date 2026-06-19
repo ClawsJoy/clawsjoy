@@ -19,7 +19,7 @@ import requests
 
 from core.lib.unified_config import unified_config
 
-sys.path.insert(0, smart_config.ROOT)
+sys.path.insert(0, "/home/flybo/clawsjoy_v5")
 
 from agent_core.brain_enhanced import brain
 
