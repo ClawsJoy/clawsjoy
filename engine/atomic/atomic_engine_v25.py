@@ -57,17 +57,12 @@ class AtomicEngineV25:
                           status: str = "completed", 
                           output_data: Optional[Dict] = None) -> Dict:
         """创建 2.5 层 JSON 响应 - 避免循环引用"""
-        # 安全处理 output_data：如果是 None 或者是包含循环引用的对象，使用空字典
         safe_output_data = {}
         if output_data and isinstance(output_data, dict):
-            # 只复制简单字段，避免循环引用
             for key, value in output_data.items():
-                # 跳过可能包含循环引用的字段
                 if key in ['output_data', 'self', '_state', '_stats', '_cache']:
                     continue
-                # 只复制可序列化的简单类型
                 if isinstance(value, (str, int, float, bool, list, dict)):
-                    # 如果是字典，只复制一层
                     if isinstance(value, dict):
                         safe_output_data[key] = {k: v for k, v in value.items() 
                                                  if isinstance(v, (str, int, float, bool, list, dict, type(None)))}
@@ -91,10 +86,26 @@ class AtomicEngineV25:
             "params": request.get("params", {}),
             "output_type": request.get("output_type", "text"),
             "output_content": output_content,
-            "output_data": safe_output_data,  # ← 使用安全的副本
+            "output_data": safe_output_data,
             "status": status,
             "next": "done"
         }
+    
+    def _ensure_v25_response(self, request: Dict, result: Dict) -> Dict:
+        """确保结果是 2.5 层 JSON"""
+        if isinstance(result, dict) and "version" not in result:
+            content = result.get("response", result.get("output_content", "处理完成"))
+            output_data = {}
+            for key in ["agent", "intent", "memories_used", "success", "result", "error"]:
+                if key in result:
+                    output_data[key] = result[key]
+            return self._create_response(
+                request,
+                content,
+                "completed" if result.get("success", True) else "failed",
+                output_data
+            )
+        return result
     
     def process(self, input_data: Union[str, Dict]) -> Dict:
         """统一处理入口"""
@@ -120,23 +131,8 @@ class AtomicEngineV25:
             action = request.get("action", "chat")
             result = self._route(request, action)
             
-            # 3. 确保响应格式 - 避免循环引用
-            if isinstance(result, dict):
-                if "version" not in result:
-                    # 提取响应内容
-                    content = result.get("response", result.get("output_content", "处理完成"))
-                    # 提取 output_data（安全地）
-                    output_data = {}
-                    for key in ["agent", "intent", "memories_used", "success", "result"]:
-                        if key in result:
-                            output_data[key] = result[key]
-                    
-                    result = self._create_response(
-                        request,
-                        content,
-                        "completed" if result.get("success", True) else "failed",
-                        output_data
-                    )
+            # 3. 确保 2.5 层 JSON 格式
+            result = self._ensure_v25_response(request, result)
             
             return result
             
@@ -181,16 +177,17 @@ class AtomicEngineV25:
             return handler(json_data)
         except Exception as e:
             print(f"⚠️ 处理器 {action} 执行失败: {e}")
+            import traceback
+            traceback.print_exc()
             return {"error": str(e), "response": f"处理失败: {e}"}
     
     def _handle_chat(self, json_data: Dict) -> Dict:
         try:
             from core.lib.chat_engine import chat_engine
-            result = chat_engine.execute(
+            return chat_engine.execute(
                 message=json_data.get("raw_input", ""),
                 user_id=json_data.get("user_id", "guest")
             )
-            return result
         except Exception as e:
             return {"error": str(e), "response": f"聊天处理失败: {e}"}
     
@@ -246,7 +243,31 @@ class AtomicEngineV25:
             return {"error": "工具系统不可用"}
     
     def _handle_skill(self, json_data: Dict) -> Dict:
-        return {"response": "技能系统处理中", "success": True}
+        """处理技能请求"""
+        params = json_data.get("params", {})
+        skill_action = params.get("skill", "list")
+        user_id = json_data.get("user_id", "default")
+        raw_input = json_data.get("raw_input", "")
+        
+        try:
+            from core.lib.skill_recommender import skill_recommender
+            
+            if skill_action == "list":
+                # 列出所有可用技能
+                return skill_recommender.get_available_skills()
+            elif skill_action == "install":
+                # 安装技能
+                skill_name = params.get("skill_name", "")
+                return skill_recommender.install(skill_name, user_id)
+            elif skill_action == "uninstall":
+                # 卸载技能
+                skill_name = params.get("skill_name", "")
+                return skill_recommender.uninstall(skill_name)
+            else:
+                # 推荐技能
+                return skill_recommender.recommend(raw_input, user_id)
+        except Exception as e:
+            return {"error": str(e), "response": f"技能处理失败: {e}", "success": False}
     
     def _handle_calculate(self, json_data: Dict) -> Dict:
         try:
@@ -284,9 +305,15 @@ class AtomicEngineV25:
         try:
             from agents.orchestrator.agent_v4 import OrchestratorV4
             agent = OrchestratorV4(json_data.get("user_id", "default"))
-            return agent.process(json_data.get("raw_input", ""))
+            result = agent.process(json_data.get("raw_input", ""))
+            # 确保返回字典
+            if not isinstance(result, dict):
+                return {"response": str(result), "success": True}
+            return result
         except Exception as e:
-            return {"error": str(e)}
+            import traceback
+            traceback.print_exc()
+            return {"error": str(e), "response": f"编排失败: {e}", "success": False}
     
     def get_capabilities(self) -> Dict:
         return {

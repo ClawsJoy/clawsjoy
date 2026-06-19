@@ -1,32 +1,64 @@
-#!/usr/bin/env python3
-"""
-工具系统 - 2.5 层 JSON 标准
-"""
+import re
 
-from typing import Dict, Any
+file_path = "core/lib/tool_system.py"
 
-class ToolSystem:
-    """工具系统"""
-    
-    VERSION = "2.5"
-    
-    TOOLS = {
-        "calculate": {
-            "description": "数学计算",
-            "params": {
-                "expression": {"type": "string", "required": True}
+with open(file_path, 'r') as f:
+    content = f.read()
+
+# 在 execute 方法中添加 translate 处理
+old_execute = '''    @classmethod
+    def execute(cls, tool_name: str, params: Dict, user_id: str = "default") -> Dict:
+        """执行工具"""
+        tool = cls.TOOLS.get(tool_name)
+        if not tool:
+            return {
+                "version": cls.VERSION,
+                "success": False,
+                "error": f"未知工具: {tool_name}",
+                "available": list(cls.TOOLS.keys())
             }
-        },
-        "translate": {
-            "description": "翻译文本",
-            "params": {
-                "text": {"type": "string", "required": True},
-                "target_lang": {"type": "string", "required": True}
-            }
-        }
-    }
-    
-    @classmethod
+        
+        # 验证参数
+        for key, spec in tool.get("params", {}).items():
+            if spec.get("required") and key not in params:
+                return {
+                    "version": cls.VERSION,
+                    "success": False,
+                    "error": f"缺少必要参数: {key}"
+                }
+        
+        # 执行
+        if tool_name == "calculate":
+            try:
+                expression = params.get("expression", "")
+                allowed = set("0123456789+-*/(). ")
+                if all(c in allowed for c in expression):
+                    result = eval(expression)
+                    return {
+                        "version": cls.VERSION,
+                        "success": True,
+                        "result": str(result)
+                    }
+                else:
+                    return {
+                        "version": cls.VERSION,
+                        "success": False,
+                        "error": "表达式包含不允许的字符"
+                    }
+            except Exception as e:
+                return {
+                    "version": cls.VERSION,
+                    "success": False,
+                    "error": f"计算错误: {str(e)}"
+                }
+        
+        return {
+            "version": cls.VERSION,
+            "success": False,
+            "error": f"工具 {tool_name} 未实现"
+        }'''
+
+new_execute = '''    @classmethod
     def execute(cls, tool_name: str, params: Dict, user_id: str = "default") -> Dict:
         """执行工具"""
         tool = cls.TOOLS.get(tool_name)
@@ -96,14 +128,11 @@ class ToolSystem:
             "version": cls.VERSION,
             "success": False,
             "error": f"工具 {tool_name} 未实现"
-        }
-    
-    @classmethod
-    def get_tool_declaration(cls) -> Dict:
-        return {
-            "version": cls.VERSION,
-            "tools": cls.TOOLS
-        }
+        }'''
 
-# 全局实例
-tool_system = ToolSystem()
+content = content.replace(old_execute, new_execute)
+
+with open(file_path, 'w') as f:
+    f.write(content)
+
+print("✅ tool_system.py 已修复 - 添加 translate 实现")

@@ -380,12 +380,12 @@ class CodeAgentV4(BusinessAgent):
             resp = requests.post(
                 "http://localhost:11434/api/generate",
                 json={
-                    "model": "qwen2.5:7b",
+                    "model": "qwen2.5:3b",
                     "prompt": prompt,
                     "stream": False,
-                    "options": {"temperature": 0.3, "num_predict": 500}
+                    "options": {"temperature": 0.3, "num_predict": 200}
                 },
-                timeout=60
+                timeout=120
             )
             if resp.status_code == 200:
                 return resp.json().get("response", "")
