@@ -1,3 +1,4 @@
+import time
 #!/usr/bin/env python3
 """Agent池 - 预热+复用+按需扩容"""
 
@@ -31,6 +32,7 @@ class AgentPool:
         self._lock = threading.Lock()
         self._stats = {"hits": 0, "misses": 0, "created": 0}
         self._warmed = False
+        self._warmup_done = False
     
     def get(self, agent_name: str, user_id: str = "default"):
         """从池中获取Agent实例，池空时自动创建"""
@@ -70,6 +72,7 @@ class AgentPool:
                 if agent:
                     self._pools[agent_name].append(agent)
         print(f"✅ Agent池预热完成: {self._total_size()}个实例")
+        self._warmup_done = True
     
     def _create(self, agent_name: str, user_id: str):
         """创建Agent实例"""
