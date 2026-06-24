@@ -112,3 +112,5 @@ tmp/
 *.pem
 *.crt
 secrets/
+install.sh
+memory/session_*.json
