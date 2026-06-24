@@ -130,61 +130,43 @@ class BusinessAgent(SmartAgent, JSONCapableMixin):
     # ========== LLM-First 模型选择 ==========
 
     def _select_model(self, user_input: str) -> str:
-        """由 LLM 评估任务复杂度，选择模型"""
-        prompt = f"""评估以下任务的复杂度，只输出一个关键词：light/medium/heavy
+        """根据输入复杂度选择模型"""
+        from core.lib.llm_client import llm_client
+        return llm_client.select_model(user_input)
 
-用户输入：{user_input[:200]}
+    def _call_llm(self, prompt: str, model: str = None, task_type: str = "default") -> str:
+        """委托给统一LLM客户端"""
+        from core.lib.llm_client import llm_client
+        return llm_client.generate(
+            prompt=prompt,
+            model=model,
+            temperature=self._get_temperature(task_type),
+            max_tokens=self._get_max_tokens(task_type),
+            task_type=task_type
+        )
 
-输出：
-"""
-        try:
-            import requests
-            resp = requests.post(
-                "http://localhost:11434/api/generate",
-                json={
-                    "model": "qwen2:1.5b-instruct",
-                    "prompt": prompt,
-                    "stream": False,
-                    "options": {"num_predict": 10, "temperature": 0.1}
-                },
-                timeout=10
-            )
-            if resp.status_code == 200:
-                result = resp.json().get("response", "").strip().lower()
-                if result == "heavy":
-                    return "qwen2.5:7b"
-                elif result == "medium":
-                    return "qwen2.5:3b"
-        except:
-            pass
+    def _select_model(self, user_input: str) -> str:
+        from core.lib.llm_client import llm_client
+        return llm_client.select_model(user_input)
 
-        # 降级：按长度
-        if len(user_input) > 100:
-            return "qwen2.5:3b"
-        return "qwen2:1.5b-instruct"
+    def _get_temperature(self, task_type: str = "default") -> float:
+        """根据任务类型返回温度"""
+        if task_type == "intent":
+            return 0.1
+        elif task_type in ("code", "review", "analyze"):
+            return 0.2
+        return 0.7
 
-    def _call_llm(self, prompt: str, model: str = None) -> str:
-        if not model:
-            model = self._select_model(prompt)
-
-        try:
-            import requests
-            resp = requests.post(
-                "http://localhost:11434/api/generate",
-                json={
-                    "model": model,
-                    "prompt": prompt,
-                    "stream": False,
-                    "options": {"temperature": 0.7, "num_predict": 150}
-                },
-                timeout=60
-            )
-            if resp.status_code == 200:
-                return resp.json().get("response", "")
-        except Exception as e:
-            print(f"[DEBUG] LLM 调用异常: {e}")
-
-        return ""
+    def _get_max_tokens(self, task_type: str = "default") -> int:
+        """根据任务类型返回 max_tokens"""
+        configs = {
+            "outline": 4096,
+            "chapter": 2048,
+            "character": 2048,
+            "polish": 8192,
+            "intent": 50,
+        }
+        return configs.get(task_type, 2048)
 
     # ========== 核心方法 ==========
 
@@ -386,3 +368,115 @@ class BusinessAgent(SmartAgent, JSONCapableMixin):
         if not self._federated_enabled:
             return []
         return federated_learning.query_knowledge(self.name, query)
+
+        # ========== 统一记忆存储 ==========
+
+    def _store_state(self, key: str, business: str, state: Dict, summary: str = "") -> bool:
+        """
+        统一记忆存储 - 子类调用此方法保存状态
+        Args:
+            key: 记忆键名，如 "writer_state"
+            business: 业务域，如 "novel", "film", "code"
+            state: 实际状态数据
+            summary: 摘要（供其他 Agent 发现用）
+        Returns:
+            bool: 是否保存成功
+        """
+        if not self._session_id:
+            return False
+        if not self.memory:
+            return False
+
+        from datetime import datetime
+
+        payload = {
+            "version": "2.5",
+            "business": business,
+            "agent": getattr(self, 'name', 'unknown'),
+            "capability": getattr(self, 'capability', 'unknown'),
+            "state": state,
+            "summary": summary or self._generate_summary(state),
+            "timestamp": datetime.now().isoformat()
+        }
+
+        try:
+            self.memory.add_session_memory(
+                self._session_id,
+                key,
+                json.dumps(payload, ensure_ascii=False)
+            )
+            print(f"[{getattr(self, 'name', 'unknown')}] 💾 状态已保存: {key} ({business})")
+            return True
+        except Exception as e:
+            print(f"[{getattr(self, 'name', 'unknown')}] 保存失败: {e}")
+            return False
+
+    def _generate_summary(self, state: Dict) -> str:
+        """生成摘要（子类可覆盖）"""
+        if not state:
+            return ""
+        title = state.get("title", "")
+        if title:
+            return title[:50]
+        return ""
+
+    def discover_agents(self, business: str = None, exclude_self: bool = True) -> List[Dict]:
+        """
+        发现同 session 中的其他 Agent
+        Args:
+            business: 过滤业务域，如 "novel", "film", "code"
+            exclude_self: 是否排除自己
+        Returns:
+            List[Dict]: 发现的 Agent 列表
+        """
+        result = []
+        if not self._session_id or not self.memory:
+            return result
+
+        try:
+            memories = self.memory.get_session_memory(self._session_id, limit=50)
+            current_agent = getattr(self, 'name', 'unknown')
+            import json
+            seen = set()  # ← 添加去重集合
+            
+            for mem in memories:
+                if not isinstance(mem, dict):
+                    continue
+
+                assistant = mem.get("assistant", {})
+
+                # 如果是 JSON 字符串，解析为字典
+                if isinstance(assistant, str):
+                    try:
+                        assistant = json.loads(assistant)
+                    except:
+                        continue
+
+                if not assistant:
+                    continue
+
+                agent_name = assistant.get("agent", "unknown")
+                if exclude_self and agent_name == current_agent:
+                    continue
+                # ← 去重检查
+                if agent_name in seen:
+                    continue
+                seen.add(agent_name)
+                
+                biz = assistant.get("business", "unknown")
+                if business and biz != business:
+                    continue
+
+                if assistant.get("state"):
+                    result.append({
+                        "agent": agent_name,
+                        "business": biz,
+                        "capability": assistant.get("capability", "unknown"),
+                        "summary": assistant.get("summary", ""),
+                        "state": assistant.get("state", {}),
+                        "timestamp": assistant.get("timestamp", "")
+                    })
+        except Exception as e:
+            print(f"[{getattr(self, 'name', 'unknown')}] 发现 Agent 失败: {e}")
+
+        return result

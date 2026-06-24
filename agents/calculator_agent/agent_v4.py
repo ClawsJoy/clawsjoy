@@ -17,7 +17,7 @@ class CalculatorAgentV4(BusinessAgent):
 
     name = "calculator_agent_v4"
     description = "科学计算助手"
-    version = "4.2.0"
+    version = "5.0.0"
 
     MATH_FUNCTIONS = {
         'sqrt': math.sqrt, 'sin': math.sin, 'cos': math.cos, 'tan': math.tan,
@@ -50,6 +50,11 @@ class CalculatorAgentV4(BusinessAgent):
     # ================================================================
 
     def _calculate(self, expression: str) -> str:
+        # 安全检查：表达式不能太长，不能包含危险字符
+        if len(expression) > 200:
+            return "❌ 表达式过长"
+        if any(kw in expression.lower() for kw in ['__', 'import', 'exec', 'open', 'file']):
+            return "❌ 不安全的表达式"
         try:
             expr = self._preprocess(expression)
             safe_dict = {

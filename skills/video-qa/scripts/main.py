@@ -41,21 +41,12 @@ class VideoQASkill:
         answers = []
         for frame_path in frames.get("frames", []):
             try:
-                import requests
+                from core.lib.llm_client import llm_client
 
                 with open(frame_path, "rb") as f:
                     image_base64 = base64.b64encode(f.read()).decode()
 
-                response = requests.post(
-                    "http://localhost:11434/api/generate",
-                    json={
-                        "model": model,
-                        "prompt": question,
-                        "images": [image_base64],
-                        "stream": False,
-                    },
-                    timeout=60,
-                )
+                response = llm_client.generate(prompt=question, model="qwen2.5:7b", max_tokens=512, temperature=0.7, task_type="skill")
 
                 if response.status_code == 200:
                     result = response.json()

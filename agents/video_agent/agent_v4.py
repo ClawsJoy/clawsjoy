@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
-"""VideoAgent v4.2 - 精简稳定版（视频助手）"""
+"""VideoAgent v5.0 - 视频助手
 
-import sys
-import os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+能力:
+- 视频脚本生成
+- 视频内容分析
+- 视频摘要
+- 字幕/转文字指导
+"""
 
 import re
 from pathlib import Path
@@ -13,127 +16,81 @@ from core.agents.business.business_agent import BusinessAgent
 
 
 class VideoAgentV4(BusinessAgent):
-    """视频 Agent - 精简稳定版"""
-
     name = "video_agent_v4"
     description = "智慧视频助手"
-    version = "4.2.0"
+    version = "5.0.0"
 
     def __init__(self, user_id: str = "default"):
         super().__init__(user_id=user_id)
         self.output_dir = Path(f"data/video/{user_id}")
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        print(f"🎬 VideoAgent v{self.version} 启动")
+        print(f"🎬 VideoAgent v{self.version}")
 
     def can_handle_json(self, action: str, target: str) -> Tuple[bool, float]:
         return (True, 0.85)
 
     def _execute_business(self, user_input: str, context: Optional[Dict] = None) -> Dict:
         t = user_input.lower()
-        
-        if any(kw in t for kw in ["分析", "视频分析"]):
-            return self._analyze_video(user_input)
-        
-        if any(kw in t for kw in ["摘要", "总结"]):
-            return self._summarize_video(user_input)
-        
-        if any(kw in t for kw in ["转文字", "字幕", "转录"]):
-            return self._transcribe_video(user_input)
-        
-        if any(kw in t for kw in ["生成脚本", "写脚本", "视频脚本"]):
-            return self._generate_script(user_input)
-        
-        return self._resp("🎬 输入「分析视频」、「视频摘要」、「转文字」或「生成脚本」")
 
-    # ================================================================
-    #  分析
-    # ================================================================
+        if any(kw in t for kw in ["生成脚本", "写脚本", "视频脚本", "脚本"]):
+            return self._script(user_input)
+        elif any(kw in t for kw in ["转文字", "字幕", "转录"]):
+            return self._transcribe(user_input)
+        elif any(kw in t for kw in ["摘要", "总结"]):
+            return self._summary(user_input)
+        elif any(kw in t for kw in ["分析"]):
+            return self._analyze(user_input)
+        else:
+            return self._script(user_input)  # 默认生成脚本
 
-    def _analyze_video(self, user_input: str) -> Dict:
-        content = re.sub(r'分析视频', '', user_input).strip()
-        if not content:
-            content = "视频内容"
-        
-        result = self._call_llm(f"分析视频内容：{content}，给出主题、内容、受众、建议")
-        return self._resp(f"🎬 视频分析\n\n{result or '分析完成'}")
+    def _script(self, user_input: str) -> Dict:
+        topic = re.sub(r'(生成脚本|写脚本|视频脚本|制作视频|帮我|关于|一个|的|视频)', '', user_input).strip()
+        if not topic or len(topic) < 2:
+            topic = "AI技术"
 
-    # ================================================================
-    #  摘要
-    # ================================================================
+        prompt = f"""为「{topic}」生成一个3-5分钟的视频脚本。
 
-    def _summarize_video(self, user_input: str) -> Dict:
-        content = re.sub(r'视频摘要', '', user_input).strip()
-        if not content:
-            content = "视频内容"
-        
-        result = self._call_llm(f"生成视频摘要（3-5点）：{content}")
-        return self._resp(f"📋 视频摘要\n\n{result or '摘要生成完成'}")
+格式要求：
+【开场】10-15秒，吸引注意力
+【正文】2-3个要点，每个30-60秒
+【结尾】10秒，总结+行动号召
 
-    # ================================================================
-    #  转文字
-    # ================================================================
+直接输出脚本："""
 
-    def _transcribe_video(self, user_input: str) -> Dict:
-        content = re.sub(r'(转文字|字幕|转录)', '', user_input).strip()
-        if not content:
-            content = "视频文件"
-        
-        return self._resp(f"""
-📝 视频转文字
+        result = self._call_llm(prompt, task_type="video_script")
+        return self._resp(f"🎬 视频脚本：{topic}\n\n{result}" if result else self._script_fallback(topic))
 
-视频：{content}
+    def _analyze(self, user_input: str) -> Dict:
+        content = re.sub(r'(分析视频|分析)', '', user_input).strip() or "视频内容"
+        prompt = f"分析视频内容「{content}」，从主题、受众、亮点、改进建议四个维度输出："
+        result = self._call_llm(prompt, task_type="video_analyze")
+        return self._resp(f"🎬 视频分析\n\n{result}" if result else "分析完成，请提供更多视频信息")
 
-💡 可接入 Whisper API 进行语音识别转录：
-```bash
-pip install openai-whisper
-whisper {content} --model base
-"""    )
-    def _generate_script(self, user_input: str) -> Dict:
-        topic = re.sub(r'(生成脚本|写脚本|视频脚本)', '', user_input).strip()
-        if not topic:
-            return self._resp("请提供主题。示例：生成脚本 人工智能介绍")
+    def _summary(self, user_input: str) -> Dict:
+        content = re.sub(r'(摘要|总结)', '', user_input).strip() or "视频内容"
+        prompt = f"为视频「{content}」生成3-5个要点的摘要："
+        result = self._call_llm(prompt, task_type="video_summary")
+        return self._resp(f"📋 视频摘要\n\n{result}" if result else "摘要生成完成")
 
-        result = self._call_llm(f"""
-为「{topic}」生成视频脚本（3-5分钟）：
+    def _transcribe(self, user_input: str) -> Dict:
+        content = re.sub(r'(转文字|字幕|转录)', '', user_input).strip() or "视频文件"
+        return self._resp(
+            f"📝 视频转文字指引\n\n"
+            f"视频：{content}\n\n"
+            f"💡 可使用以下工具：\n"
+            f"• OpenAI Whisper: pip install openai-whisper && whisper video.mp4\n"
+            f"• 剪映/必剪：导入视频自动生成字幕\n"
+            f"• YouTube Studio：自动生成字幕"
+        )
 
-格式：【开场】【正文】【总结】
-"""    )
-        return self._resp(f"🎬 视频脚本\n\n主题：{topic}\n\n{result or self._script_template(topic)}")
+    def _script_fallback(self, topic: str) -> str:
+        return f"""🎬 视频脚本：{topic}
 
-    def _script_template(self, topic: str) -> str:
-        return f"""
-【开场】
-大家好，今天我们来聊聊 {topic}。
+【开场】大家好，今天我们来聊聊 {topic}
 
-【正文】
+【正文】{topic} 是当前热门话题，让我们深入了解它的核心要点和应用场景
 
-什么是 {topic}
-
-{topic} 的重要性
-
-实际应用案例
-
-【总结】
-以上就是关于 {topic} 的介绍，希望对你有帮助！
-"""
-    def _call_llm(self, prompt: str) -> str:
-        try:
-            import requests
-            resp = requests.post(
-                "http://localhost:11434/api/generate",
-                json={
-                    "model": "qwen2.5:3b",
-                    "prompt": prompt,
-                    "stream": False,
-                    "options": {"temperature": 0.7, "num_predict": 500}
-                },
-                timeout=30
-            )
-            if resp.status_code == 200:
-                return resp.json().get("response", "")
-        except Exception as e:
-            print(f"[Video] LLM失败: {e}")
-        return ""
+【结尾】以上就是关于 {topic} 的介绍，希望对你有帮助！"""
 
     def _resp(self, content: str, **kwargs) -> Dict:
         return {"success": True, "response": content, "output_content": content, **kwargs}
@@ -141,4 +98,4 @@ whisper {content} --model base
 
 if __name__ == "__main__":
     agent = VideoAgentV4("test")
-    print(agent.process("生成脚本 人工智能")["response"])     
+    print(agent.process("生成脚本 人工智能介绍")["response"][:200])

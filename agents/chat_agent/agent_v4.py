@@ -1,77 +1,41 @@
 #!/usr/bin/env python3
-"""ChatAgent v4.2 - 乐高拼装版（完整修复）"""
+"""ChatAgent v5.0 - 精简对话助手
 
-import sys
-import os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+职责:
+- 对话（委托给 chat_engine）
+- 方言处理
+- 名字记忆
+- 简单情感检测
+
+删除:
+- 批处理缓冲区（Gateway 应做）
+- 主动服务评估（AgentCortex 应做）
+- 语义理解注入（AgentCortex 应做）
+- 灵魂注入（移到专用模块）
+"""
 
 import re
-import threading
-import time
-from typing import Dict, Optional, Tuple, Callable
+from typing import Dict, Optional, Tuple
 from datetime import datetime
 
 from core.agents.business.business_agent import BusinessAgent
 from core.lib.dialect.dialect_helper import get_dialect_helper
-from core.lib.proactive_service import proactive_service
+
 
 class ChatAgentV4(BusinessAgent):
     name = "chat_agent_v4"
     description = "智慧对话助手"
-    version = "4.2.0"
-    def _get_state_safe(self):
-        """安全获取状态字典"""
-        if not isinstance(self._state, dict):
-            self._state = {}
-        return self._state
-
-    def _ensure_state_dict(self):
-        """确保状态是字典"""
-        if not isinstance(self._state, dict):
-            self._state = {}
-
+    version = "5.0.0"
 
     def __init__(self, user_id: str = "default"):
         super().__init__(user_id=user_id)
 
-        # 🔧 显式初始化 _state 为字典（业务状态）
-        self._state = {
-            "total_interactions": 0,
-            "session_count": 0,
-            "last_active": datetime.now().isoformat()
-        }
-        self._stats = self._state
-
-        self._history = []
+        self._history: list = []
         self._max_history = 10
-        self._session_id = None
-
-        self._input_buffer = []
-        self._buffer_timer = None
-        self._buffer_lock = threading.Lock()
-        self._buffer_wait = 2.0
-        self._buffer_pending = False
-        self._on_buffer_flush = None
-
-        self._proactive = None
+        self._session_id: Optional[str] = None
         self._chat_engine = None
-        self._stats = {
-            "total_interactions": 0,
-            "start_time": datetime.now().isoformat(),
-            "last_active": datetime.now().isoformat()
-        }
-        print(f"💬 ChatAgent v{self.version} 启动（乐高拼装版）")
 
-    @property
-    def proactive(self):
-        if self._proactive is None:
-            try:
-                from core.lib.proactive_service import ProactiveService
-                self._proactive = ProactiveService()
-            except Exception as e:
-                print(f"[ChatAgent] 加载主动服务失败: {e}")
-                self._proactive = None
-        return self._proactive
+        print(f"💬 ChatAgent v{self.version} 启动")
 
     @property
     def chat_engine(self):
@@ -81,197 +45,153 @@ class ChatAgentV4(BusinessAgent):
                 self._chat_engine = chat_engine
             except Exception as e:
                 print(f"[ChatAgent] 加载对话引擎失败: {e}")
-                self._chat_engine = None
         return self._chat_engine
+
+    # ====================================================================
+    #  入口
+    # ====================================================================
 
     def process(self, user_input: str, context: Optional[Dict] = None) -> Dict:
         if context and "session_id" in context:
             self._session_id = context["session_id"]
         return super().process(user_input, context)
 
-    def feed(self, text: str, callback: Optional[Callable] = None):
-        with self._buffer_lock:
-            self._input_buffer.append(text)
-            self._buffer_pending = True
-            if callback:
-                self._on_buffer_flush = callback
-            if self._buffer_timer:
-                self._buffer_timer.cancel()
-            self._buffer_timer = threading.Timer(self._buffer_wait, self._flush_buffer)
-            self._buffer_timer.daemon = True
-            self._buffer_timer.start()
+    def can_handle_json(self, action: str, target: str) -> Tuple[bool, float]:
+        return (True, 0.85)
 
-    def _flush_buffer(self):
-        with self._buffer_lock:
-            if not self._buffer_pending:
-                return
-            full_input = " ".join(self._input_buffer).strip()
-            self._input_buffer.clear()
-            self._buffer_pending = False
-            if not full_input:
-                return
-            result = self.process(full_input)
-            if self._on_buffer_flush:
-                self._on_buffer_flush(result)
+    # ====================================================================
+    #  核心业务
+    # ====================================================================
 
     def _execute_business(self, user_input: str, context: Optional[Dict] = None) -> Dict:
         original = user_input
-        session_id = self._session_id or (context.get("session_id") if context else None) or "default"
+        session_id = self._session_id or "default"
 
+        # 1. 方言处理
         dialect = get_dialect_helper(self.user_id)
         has_dialect = dialect.has_dialect(user_input)
         if has_dialect:
             user_input, _ = dialect.to_standard(user_input)
-        # ========== 名字提取 ==========
-        user_name = self.recall_forever("user_name") or ""
-        name_match = re.search(r'(?:我叫|叫我|可以叫我|英文名叫)[：: ]*(\S+)', original)
-        if name_match:
-            name = name_match.group(1)
-            if name and len(name) <= 6 and name not in ["什么", "啥", "谁", "吗"]:
-                self.remember_forever("user_name", name)
-                if self.soul:
-                    try:
-                        self.soul.set_user_name(name)
-                    except Exception as e:
-                        print(f"[ChatAgent] 灵魂设置名字失败: {e}")
-                user_name = name
-        
-        emotion_result = {}
-        if self.emotion:
-            try:
-                emotion_result = self.emotion.analyze(user_input)
-            except Exception as e:
-                print(f"[ChatAgent] 情感分析失败: {e}")
 
-        semantic_result = None
-        if self.semantic:
-            try:
-                semantic_result = self.semantic.understand(user_input)
-            except Exception as e:
-                print(f"[ChatAgent] 语义理解失败: {e}")
+        # 2. 名字提取
+        user_name = self._extract_name(original)
 
-        memories = []
-        if self.memory and session_id:
-            try:
-                memories = self.memory.get_session_memory(session_id, limit=5)
-            except Exception as e:
-                print(f"[ChatAgent] 记忆检索失败: {e}")
+        # 3. 简单情感
+        emotion = self._detect_emotion(user_input)
 
-        soul_context = {}
-        soul_emotion = {}
-        if self.soul:
-            try:
-                soul_context = self.soul.inject(user_input)
-                soul_emotion = self.soul.inject_emotion(user_input)
-            except Exception as e:
-                print(f"[ChatAgent] 灵魂注入失败: {e}")
+        # 4. 记忆
+        memories = self._load_memories(session_id)
 
-        suggestion = None
-        if self.proactive:
-            try:
-                # 构建事件上下文
-                event_context = {
-                    "user_intent": self._detect_intent(user_input),
-                    "idle_seconds": 0,
-                    "emotion": emotion_result.get("dominant_emotion", "neutral"),
-                    "is_new_session": len(self._history) == 0,
-                    "interaction_count": len(self._history),
-                    "task_completed": False,
-                    "is_repeat": len(self._history) > 2 and self._history[-1].get("user", "") == self._history[-2].get("user", ""),
-                    "input_length": len(user_input),
-                    "user_name": user_name
-                }
-                suggestion = self.proactive.evaluate(self.user_id, event_context)  # ← 新接口
-            except Exception as e:
-                print(f"[ChatAgent] 主动建议评估失败: {e}")
-                suggestion = None
+        # 5. 对话引擎
+        response = self._chat(user_input, original, session_id, emotion, memories)
 
-        enhanced_context = {
-            "user_input": user_input,
-            "original": original,
-            "session_id": session_id,
-            "emotion": emotion_result,
-            "semantic": semantic_result,
-            "memories": memories,
-            "soul": soul_context,
-            "soul_emotion": soul_emotion,
-            "suggestion": suggestion,
-            "has_dialect": has_dialect,
-            "history": self._history[-6:],
-        }
-
-        if self.chat_engine:
-            try:
-                # 构建 2.5 层 JSON
-                standard_json = {
-                    "version": "2.5",
-                    "session_id": session_id,
-                    "user_id": self.user_id,
-                    "thread_id": session_id or "default",
-                    "turn": len(self._history),
-                    "raw_input": original,
-                    "timestamp": datetime.now().isoformat(),
-                    "action": "chat",
-                    "target": "text",
-                    "keywords": [],
-                    "confidence": 0.85,
-                    "params": {
-                        "context": {
-                            "memories": memories,
-                            "emotion": emotion_result,
-                            "soul": soul_context,
-                            "soul_emotion": soul_emotion,
-                            "history": self._history[-6:],
-                            "suggestion": suggestion,
-                            "has_dialect": has_dialect
-                        }
-                    },
-                    "output_type": "text",
-                    "status": "pending"
-                }
-        
-                result = self.chat_engine.execute(
-                    message=standard_json,
-                    user_id=self.user_id
-                )
-                response = result.get("output_content", "")
-                if not response:
-                    response = self._fallback_response(user_input)
-            except Exception as e:
-                print(f"[ChatAgent] 对话引擎失败: {e}")
-                response = self._fallback_response(user_input)
-        else:
-            response = self._fallback_response(user_input)
+        # 6. 方言回译
         if has_dialect and response:
             try:
                 response, _ = dialect.to_dialect(response)
             except Exception as e:
                 print(f"[ChatAgent] 方言回译失败: {e}")
 
+        # 7. 记录
         self._update_history(original, response)
-
-        if self.proactive:
-            try:
-                self.proactive.record_activity(self.user_id, {"text": original[:50]})
-            except Exception as e:
-                print(f"[ChatAgent] 记录活动失败: {e}")
-
-        if self.soul:
-            try:
-                self.soul.update_relationship(original, response)
-            except Exception as e:
-                print(f"[ChatAgent] 更新关系失败: {e}")
-
-        if self.memory and session_id:
-            try:
-                self.memory.add_session_memory(session_id, original, response)
-            except Exception as e:
-                print(f"[ChatAgent] 保存记忆失败: {e}")
+        self._save_memory(session_id, original, response)
 
         return self._response(response)
 
-    def _fallback_response(self, user_input: str) -> str:
-        return f"您好！我是小爪，有什么可以帮您的吗？"
+    # ====================================================================
+    #  名字提取
+    # ====================================================================
+
+    def _extract_name(self, text: str) -> str:
+        """从输入中提取用户名字"""
+        user_name = self.recall_forever("user_name") or ""
+        name_match = re.search(
+            r'(?:我叫|叫我|可以叫我|英文名叫)[：: ]*(\S+)', text
+        )
+        if name_match:
+            name = name_match.group(1)
+            if name and len(name) <= 6 and name not in ["什么", "啥", "谁", "吗", "是"]:
+                self.remember_forever("user_name", name)
+                return name
+        return user_name
+
+    # ====================================================================
+    #  情感（纯规则）
+    # ====================================================================
+
+    def _detect_emotion(self, text: str) -> dict:
+        """简单情感检测 - 纯规则"""
+        t = text.lower()
+        if any(w in t for w in ["开心", "高兴", "哈哈", "太好了", "谢谢", "😊", "👍"]):
+            return {"dominant_emotion": "happy", "confidence": 0.8}
+        if any(w in t for w in ["难过", "伤心", "哭", "难受", "郁闷", "😢"]):
+            return {"dominant_emotion": "sad", "confidence": 0.8}
+        if any(w in t for w in ["生气", "愤怒", "烦", "讨厌", "滚", "😡"]):
+            return {"dominant_emotion": "angry", "confidence": 0.8}
+        if any(w in t for w in ["怕", "担心", "紧张", "焦虑", "😰"]):
+            return {"dominant_emotion": "fearful", "confidence": 0.7}
+        return {"dominant_emotion": "neutral", "confidence": 0.5}
+
+    # ====================================================================
+    #  记忆
+    # ====================================================================
+
+    def _load_memories(self, session_id: str) -> list:
+        try:
+            if self.memory:
+                return self.memory.get_session_memory(session_id, limit=5)
+        except Exception as e:
+            print(f"[ChatAgent] 记忆检索失败: {e}")
+        return []
+
+    def _save_memory(self, session_id: str, user_input: str, response: str):
+        try:
+            if self.memory and session_id:
+                self.memory.add_session_memory(session_id, user_input, response)
+        except Exception as e:
+            print(f"[ChatAgent] 保存记忆失败: {e}")
+
+    # ====================================================================
+    #  对话
+    # ====================================================================
+
+    def _chat(self, user_input: str, original: str, session_id: str,
+              emotion: dict, memories: list) -> str:
+        """委托给对话引擎"""
+        if not self.chat_engine:
+            return self._fallback_response(user_input)
+
+        try:
+            standard_json = {
+                "version": "2.5",
+                "session_id": session_id,
+                "user_id": self.user_id,
+                "raw_input": original,
+                "timestamp": datetime.now().isoformat(),
+                "action": "chat",
+                "target": "text",
+                "confidence": 0.85,
+                "params": {
+                    "context": {
+                        "memories": memories,
+                        "emotion": emotion,
+                        "history": self._history[-6:],
+                    }
+                },
+            }
+
+            result = self.chat_engine.execute(
+                message=standard_json, user_id=self.user_id
+            )
+            response = result.get("output_content", "") or result.get("response", "")
+            return response or self._fallback_response(user_input)
+        except Exception as e:
+            print(f"[ChatAgent] 对话引擎失败: {e}")
+            return self._fallback_response(user_input)
+
+    # ====================================================================
+    #  历史
+    # ====================================================================
 
     def _update_history(self, user_input: str, response: str):
         self._history.append({
@@ -282,34 +202,22 @@ class ChatAgentV4(BusinessAgent):
         if len(self._history) > self._max_history:
             self._history = self._history[-self._max_history:]
 
+    # ====================================================================
+    #  辅助
+    # ====================================================================
+
+    def _fallback_response(self, user_input: str) -> str:
+        return f"您好！我是ClawsJoy助手，有什么可以帮您的吗？"
+
     def _response(self, content: str, **kwargs) -> Dict:
+        return {"success": True, "response": content, "output_content": content, **kwargs}
+
+    def get_stats(self) -> Dict:
         return {
-            "success": True,
-            "response": content,
-            "output_content": content,
-            **kwargs
+            "name": self.name,
+            "version": self.version,
+            "history_size": len(self._history),
         }
-
-    def can_handle_json(self, action: str, target: str) -> Tuple[bool, float]:
-        return (True, 0.85)
-
-    def _detect_intent(self, text: str) -> str:
-        """检测用户意图类型"""
-        t = text.lower()
-    
-        # 问题类
-        if any(kw in t for kw in ["什么", "怎么", "如何", "为什么", "吗", "？", "?"]):
-            return "question"
-    
-        # 命令类
-        if any(kw in t for kw in ["帮我", "写", "生成", "执行", "做", "创建"]):
-            return "command"
-    
-        # 闲聊
-        if len(text) < 20:
-            return "idle"
-    
-        return "chat"
 
 
 if __name__ == "__main__":

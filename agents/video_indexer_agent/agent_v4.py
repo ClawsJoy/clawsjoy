@@ -16,7 +16,7 @@ class VideoIndexerAgentV4(BusinessAgent):
 
     name = "video_indexer_agent_v4"
     description = "智慧视频索引助手"
-    version = "4.2.0"
+    version = "5.0.0"
 
     def __init__(self, user_id: str = "default"):
         super().__init__(user_id=user_id)
@@ -73,26 +73,6 @@ class VideoIndexerAgentV4(BusinessAgent):
     # ================================================================
     #  辅助
     # ================================================================
-
-    def _call_llm(self, prompt: str) -> str:
-        try:
-            import requests
-            resp = requests.post(
-                "http://localhost:11434/api/generate",
-                json={
-                    "model": "qwen2.5:3b",
-                    "prompt": prompt,
-                    "stream": False,
-                    "options": {"temperature": 0.7, "num_predict": 300}
-                },
-                timeout=30
-            )
-            if resp.status_code == 200:
-                return resp.json().get("response", "")
-        except Exception as e:
-            print(f"[VideoIndexer] LLM失败: {e}")
-        return ""
-
     def _resp(self, content: str, **kwargs) -> Dict:
         return {"success": True, "response": content, "output_content": content, **kwargs}
 

@@ -4,7 +4,7 @@ import base64
 import subprocess
 from pathlib import Path
 
-import requests
+from core.lib.llm_client import llm_client
 
 
 class VideoUnderstandSkill:
@@ -44,16 +44,7 @@ class VideoUnderstandSkill:
         frame_path.unlink()
 
         try:
-            r = requests.post(
-                "http://localhost:11434/api/generate",
-                json={
-                    "model": "moondream:1.8b",
-                    "prompt": question,
-                    "images": [image_base64],
-                    "stream": False,
-                },
-                timeout=60,
-            )
+            r = llm_client.generate(prompt=question, model="moondream:1.8b", max_tokens=512, temperature=0.7, task_type="skill")
             answer = r.json().get("response", "") if r.status_code == 200 else ""
             return {"success": True, "result": answer, "answer": answer}
         except Exception as e:

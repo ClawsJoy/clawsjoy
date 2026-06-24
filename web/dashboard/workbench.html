@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClawsJoy · 智能体矩阵</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  --bg: #0d1117; --card: #161b22; --border: #30363d;
+  --text: #c9d1d9; --sub: #8b949e;
+  --blue: #58a6ff; --green: #3fb950; --purple: #bc8cff; --orange: #d2991d;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); height:100vh; display:flex; }
+
+/* 左侧能力面板 */
+.sidebar { width:280px; background:var(--card); border-right:1px solid var(--border); display:flex; flex-direction:column; overflow-y:auto; }
+.sidebar-header { padding:20px; border-bottom:1px solid var(--border); }
+.sidebar-header h2 { font-size:18px; font-weight:700; }
+.sidebar-header p { font-size:12px; color:var(--sub); margin-top:4px; }
+
+.agent-list { flex:1; padding:12px; }
+.agent-group { margin-bottom:16px; }
+.agent-group h3 { font-size:11px; color:var(--sub); text-transform:uppercase; letter-spacing:1px; margin:0 0 8px 8px; }
+.agent-btn { 
+  display:block; width:100%; padding:8px 12px; margin-bottom:4px;
+  background:transparent; border:1px solid var(--border); border-radius:8px;
+  color:var(--text); font-size:13px; text-align:left; cursor:pointer;
+  transition:all 0.2s;
+}
+.agent-btn:hover { background:rgba(88,166,255,0.08); border-color:var(--blue); }
+.agent-btn .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; }
+.dot.ready { background:var(--green); }
+.dot.idle { background:var(--sub); }
+
+/* 主区域 */
+.main { flex:1; display:flex; flex-direction:column; }
+
+/* 快捷命令栏 */
+.quickbar { 
+  display:flex; gap:8px; padding:16px 20px; flex-wrap:wrap;
+  border-bottom:1px solid var(--border); background:var(--card);
+}
+.quickbar .title { font-size:12px; color:var(--sub); width:100%; margin-bottom:4px; }
+.quick-chip {
+  padding:6px 16px; border-radius:20px; border:1px solid var(--border);
+  font-size:13px; cursor:pointer; transition:all 0.2s;
+  background:transparent; color:var(--text); white-space:nowrap;
+}
+.quick-chip:hover { border-color:var(--blue); background:rgba(88,166,255,0.08); }
+.quick-chip.active { border-color:var(--green); color:var(--green); background:rgba(63,185,80,0.06); }
+
+/* 对话区 */
+.chat { flex:1; overflow-y:auto; padding:24px; display:flex; flex-direction:column; gap:20px; }
+.empty-state { text-align:center; padding:60px 20px; color:var(--sub); }
+.empty-state .icon { font-size:64px; margin-bottom:20px; }
+.empty-state h2 { font-size:24px; color:var(--text); margin-bottom:8px; }
+.empty-state p { font-size:14px; max-width:500px; margin:0 auto 20px; line-height:1.6; }
+
+/* 消息 */
+.msg { max-width:85%; padding:14px 18px; border-radius:12px; font-size:14px; line-height:1.6; animation:in 0.3s; }
+@keyframes in { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+.msg.user { align-self:flex-end; background:#1f6feb; }
+.msg.agent { align-self:flex-start; background:var(--card); border:1px solid var(--border); }
+.msg .agent-tag { font-size:11px; color:var(--blue); margin-bottom:4px; font-weight:600; }
+.msg .thinking { color:var(--sub); font-style:italic; }
+
+/* 追踪面板 */
+.tracer { 
+  position:fixed; right:20px; bottom:80px; width:300px; max-height:300px;
+  background:var(--card); border:1px solid var(--border); border-radius:12px;
+  padding:12px; overflow-y:auto; font-size:11px; z-index:10;
+  display:none;
+}
+.tracer.show { display:block; }
+.tracer h4 { color:var(--sub); margin-bottom:8px; }
+.tracer .trace { padding:4px 0; border-bottom:1px solid var(--border); color:var(--sub); }
+.tracer .trace .agent-name { color:var(--purple); }
+.tracer .trace .ok { color:var(--green); }
+
+/* 输入区 */
+.input-box { padding:16px 20px; background:var(--card); border-top:1px solid var(--border); display:flex; gap:12px; }
+.input-box input { flex:1; padding:12px 18px; background:var(--bg); border:1px solid var(--border); border-radius:10px; color:var(--text); font-size:14px; outline:none; }
+.input-box input:focus { border-color:var(--blue); }
+.input-box button { padding:12px 24px; background:var(--blue); border:none; border-radius:10px; color:#fff; font-weight:600; cursor:pointer; font-size:14px; }
+.input-box button:hover { opacity:0.9; }
+</style>
+</head>
+<body>
+
+<!-- 左栏：能力面板 -->
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h2>🧠 ClawsJoy</h2>
+    <p>23个Agent · 本地运行 · 隐私安全</p>
+  </div>
+  <div class="agent-list">
+    <div class="agent-group">
+      <h3>🧠 核心</h3>
+      <button class="agent-btn" onclick="quickSend('你好')"><span class="dot ready"></span>对话</button>
+      <button class="agent-btn" onclick="quickSend('帮我写一个Python快速排序')"><span class="dot ready"></span>写代码</button>
+      <button class="agent-btn" onclick="quickSend('记住 密码=123456')"><span class="dot ready"></span>记忆</button>
+    </div>
+    <div class="agent-group">
+      <h3>✍️ 创作</h3>
+      <button class="agent-btn" onclick="quickSend('写一首关于AI的诗')"><span class="dot idle"></span>写作</button>
+      <button class="agent-btn" onclick="quickSend('翻译 Hello world 成中文')"><span class="dot idle"></span>翻译</button>
+      <button class="agent-btn" onclick="quickSend('创建 星际迷航 科幻')"><span class="dot idle"></span>导演</button>
+    </div>
+    <div class="agent-group">
+      <h3>🎬 媒体</h3>
+      <button class="agent-btn" onclick="quickSend('生成 海边日落 动漫风格')"><span class="dot idle"></span>图像</button>
+      <button class="agent-btn" onclick="quickSend('生成脚本 AI介绍')"><span class="dot idle"></span>视频</button>
+    </div>
+    <div class="agent-group">
+      <h3>🔧 工具</h3>
+      <button class="agent-btn" onclick="quickSend('1+1等于几')"><span class="dot idle"></span>计算</button>
+      <button class="agent-btn" onclick="quickSend('列出 .')"><span class="dot idle"></span>文件</button>
+    </div>
+  </div>
+</div>
+
+<!-- 主区域 -->
+<div class="main">
+  <div class="quickbar">
+    <div class="title">💡 试试这些 — 一键体验23个Agent协作</div>
+    <button class="quick-chip" onclick="quickSend('帮我写一个Python快速排序')">写快速排序</button>
+    <button class="quick-chip" onclick="quickSend('翻译 Hello world 成中文')">翻译英文</button>
+    <button class="quick-chip" onclick="quickSend('分析销售数据：1月100, 2月150, 3月120 然后生成报告')">多Agent分析</button>
+    <button class="quick-chip" onclick="quickSend('记住 我的密码=123456')">测试记忆</button>
+    <button class="quick-chip" onclick="quickSend('写一首关于AI的诗')">写诗</button>
+    <button class="quick-chip" onclick="quickSend('生成 赛博朋克城市 动漫风格')">生成图像</button>
+  </div>
+
+  <div class="chat" id="chat">
+    <div class="empty-state">
+      <div class="icon">🧠</div>
+      <h2>23个AI Agent 协同工作</h2>
+      <p>不只是聊天。写作、代码、翻译、导演、数据分析、图像生成...23个专业Agent像一个团队为你服务。点击上方任意按钮开始，或直接输入你的需求。</p>
+    </div>
+  </div>
+
+  <div class="input-box">
+    <input id="input" placeholder="告诉ClawsJoy你想做什么..." onkeydown="if(event.key==='Enter') send()">
+    <button onclick="send()">发送</button>
+  </div>
+</div>
+
+<!-- 追踪面板 -->
+<div class="tracer" id="tracer">
+  <h4>📡 Agent追踪</h4>
+</div>
+
+<script>
+let tracing = [];
+
+function quickSend(msg) {
+  document.getElementById('input').value = msg;
+  send();
+}
+
+async function send() {
+  const input = document.getElementById('input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  
+  const chat = document.getElementById('chat');
+  const empty = chat.querySelector('.empty-state');
+  if (empty) empty.remove();
+  
+  // 用户消息
+  chat.innerHTML += `<div class="msg user">${esc(msg)}</div>`;
+  
+  // 思考中
+  const thinkId = 'think'+Date.now();
+  chat.innerHTML += `<div class="msg agent" id="${thinkId}"><span class="thinking">🧠 分析中...</span></div>`;
+  chat.scrollTop = chat.scrollHeight;
+  
+  const start = performance.now();
+  try {
+    const resp = await fetch('/v5/execute', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ message: msg, user_id: 'demo' })
+    });
+    const data = await resp.json();
+    const time = Math.round(performance.now() - start);
+    
+    // 移除思考
+    document.getElementById(thinkId)?.remove();
+    
+    const agent = (data.agents_used || ['AgentCortex'])[0].replace('_agent','');
+    const method = data.method || '?';
+    chat.innerHTML += `<div class="msg agent">
+      <div class="agent-tag">🤖 ${agent} · ${method} · ${time}ms</div>
+      ${esc(data.response || data.output_content || '完成')}
+    </div>`;
+    
+    // 追踪
+    addTrace(agent, method, time);
+  } catch(e) {
+    document.getElementById(thinkId)?.remove();
+    chat.innerHTML += `<div class="msg agent">❌ 网络错误: ${esc(e.message)}</div>`;
+  }
+  
+  chat.scrollTop = chat.scrollHeight;
+  document.getElementById('input').focus();
+}
+
+function addTrace(agent, method, time) {
+  tracing.unshift({agent,method,time});
+  if (tracing.length > 10) tracing.pop();
+  
+  const tracer = document.getElementById('tracer');
+  tracer.className = 'tracer show';
+  tracer.innerHTML = '<h4>📡 Agent追踪</h4>' + 
+    tracing.map(t => `<div class="trace"><span class="agent-name">${t.agent}</span> ${t.method} <span class="ok">${t.time}ms</span></div>`).join('');
+}
+
+function esc(s) { return String(s).replace(/</g,'&lt;'); }
+
+document.getElementById('input').focus();
+</script>
+</body>
+</html>

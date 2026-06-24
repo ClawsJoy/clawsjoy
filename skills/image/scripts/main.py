@@ -10,7 +10,7 @@
 import base64
 from pathlib import Path
 
-import requests
+from core.lib.llm_client import llm_client
 
 
 class VisionSkill:
@@ -39,28 +39,3 @@ class VisionSkill:
 
         # 调用 Ollama moondream
         try:
-            response = requests.post(
-                "http://localhost:11434/api/generate",
-                json={
-                    "model": "moondream:1.8b",
-                    "prompt": prompt,
-                    "images": [image_base64],
-                    "stream": False,
-                },
-                timeout=60,
-            )
-
-            if response.status_code == 200:
-                return {
-                    "success": True,
-                    "result": response.json().get("response", ""),
-                    "image": str(path),
-                }
-            else:
-                return {"success": False, "error": f"API error: {response.status_code}"}
-        except Exception as e:
-            return {"success": False, "error": str(e)}
-
-
-# 全局实例（技能加载器需要）
-skill = VisionSkill()

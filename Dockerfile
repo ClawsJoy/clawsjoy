@@ -1,32 +1,37 @@
-FROM python:3.10-slim
+FROM python:3.11-slim
 
-LABEL maintainer="ClawsJoy Team"
-LABEL description="ClawsJoy AI Assistant - Enterprise Chatbot System"
-
-WORKDIR /app
+LABEL name="ClawsJoy"
+LABEL version="5.0.0"
+LABEL description="智能体矩阵系统"
 
 # 安装系统依赖
 RUN apt-get update && apt-get install -y \
-    gcc \
-    g++ \
+    curl \
+    procps \
     && rm -rf /var/lib/apt/lists/*
+
+# 安装Ollama
+RUN curl -fsSL https://ollama.com/install.sh | sh
+
+WORKDIR /app
 
 # 复制依赖文件
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt 2>/dev/null || \
+    pip install flask flask-cors pyyaml requests psutil pydantic tiktoken chromadb
 
-# 复制项目文件
+# 复制项目
 COPY . .
 
-# 创建必要目录
-RUN mkdir -p logs data/memories data/vector_kb
+# 创建数据目录
+RUN mkdir -p data logs
 
-# 暴露端口
-EXPOSE 5002 5012
+# 启动脚本
+RUN echo '#!/bin/bash\nollama serve &\nsleep 2\npython3 agent_gateway_enhanced.py' > /app/entrypoint.sh \
+    && chmod +x /app/entrypoint.sh
 
-# 健康检查
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:5002/health || exit 1
+EXPOSE 5002
 
-# 启动命令
-CMD ["./start_clawsjoy.sh"]
+ENV PYTHONUNBUFFERED=1
+
+CMD ["/app/entrypoint.sh"]

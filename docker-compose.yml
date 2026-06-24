@@ -1,6 +1,20 @@
 version: '3.8'
 
 services:
+  clawsjoy:
+    build: .
+    container_name: clawsjoy
+    ports:
+      - "5002:5002"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    environment:
+      - OLLAMA_HOST=ollama
+    restart: unless-stopped
+    depends_on:
+      - ollama
+
   ollama:
     image: ollama/ollama:latest
     container_name: clawsjoy-ollama
@@ -8,50 +22,16 @@ services:
       - "11434:11434"
     volumes:
       - ollama_data:/root/.ollama
-    restart: unless-stopped
-    networks:
-      - clawsjoy-network
-
-  llm-service:
-    build: .
-    container_name: clawsjoy-llm
-    ports:
-      - "5012:5012"
     environment:
-      - OLLAMA_HOST=http://ollama:11434
-    depends_on:
-      - ollama
-    volumes:
-      - ./logs:/app/logs
-      - ./data:/app/data
-    command: python3 scripts/llm_service_optimized.py
+      - OLLAMA_KEEP_ALIVE=24h
     restart: unless-stopped
-    networks:
-      - clawsjoy-network
-
-  gateway:
-    build: .
-    container_name: clawsjoy-gateway
-    ports:
-      - "5002:5002"
-    environment:
-      - JWT_SECRET=${JWT_SECRET:-change-me-in-production}
-      - OLLAMA_HOST=http://ollama:11434
-    depends_on:
-      - ollama
-      - llm-service
-    volumes:
-      - ./logs:/app/logs
-      - ./data:/app/data
-      - ./config:/app/config
-    command: python3 agent_gateway_enhanced.py
-    restart: unless-stopped
-    networks:
-      - clawsjoy-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
 
 volumes:
   ollama_data:
-
-networks:
-  clawsjoy-network:
-    driver: bridge
