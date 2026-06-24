@@ -2,7 +2,7 @@
 
 import re
 
-import requests
+from core.lib.llm_client import llm_client
 
 
 class TranslateSkill:
@@ -81,11 +81,7 @@ class TranslateSkill:
         # 使用 Ollama 翻译
         try:
             prompt = f"请将以下文本翻译成中文，只输出翻译结果：\n{content}"
-            response = requests.post(
-                "http://localhost:11434/api/generate",
-                json={"model": "qwen2.5:3b", "prompt": prompt, "stream": False},
-                timeout=30,
-            )
+            response = llm_client.generate(prompt=prompt, model="qwen2.5:3b", max_tokens=512, temperature=0.7, task_type="skill")
             if response.status_code == 200:
                 result = response.json().get("response", "")
                 result = re.sub(r"^（我是 ClawsJoy 助手）", "", result)

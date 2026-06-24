@@ -1,17 +1,74 @@
 #!/usr/bin/env python3
-"""智慧 Agent 工厂 - 集成版（兼容现有注册中心、懒加载）"""
+"""Agent 工厂 v5.0 - 统一Agent实例化 + 缓存
+
+改动:
+- 删除 WisdomWrapper 包装（AgentCortex 替代）
+- 删除懒加载器依赖（简化）
+- 保留 Agent 注册 + 缓存 + 热重载
+- 新增 get_agent() 直接返回 agent_v4 实例
+"""
 
 from typing import Dict, Optional
-from core.lib.lazy_loader import lazy_loader
+
 from core.lib.agent_registry import agent_registry
 
 
 class WisdomFactory:
-    """智慧 Agent 工厂 - 集成现有基础设施"""
+    """Agent 工厂 - 实例化 + 缓存"""
 
     _instance = None
-    _wrapped_agents: Dict[str, object] = {}
     _agent_cache: Dict[str, object] = {}
+
+    # 完整的 Agent 注册表（模块路径 → 类名）
+    AGENT_REGISTRY = {
+        "chat_agent": ("agents.chat_agent.agent_v4", "ChatAgentV4"),
+        "code_agent": ("agents.code_agent.agent_v4", "CodeAgentV4"),
+        "analysis_agent": ("agents.analysis_agent.agent_v4", "AnalysisAgentV4"),
+        "butler_agent": ("agents.butler_agent.agent_v4", "ButlerAgentV4"),
+        "translate_agent": ("agents.translate_agent.agent_v4", "TranslateAgentV4"),
+        "calculator_agent": ("agents.calculator_agent.agent_v4", "CalculatorAgentV4"),
+        "decision_agent": ("agents.decision_agent.agent_v4", "DecisionAgentV4"),
+        "vision_agent": ("agents.vision_agent.agent_v4", "VisionAgentV4"),
+        "memory_agent": ("agents.memory_agent.agent_v4", "MemoryAgentV4"),
+        "file_agent": ("agents.file_agent.agent_v4", "FileAgentV4"),
+        "video_agent": ("agents.video_agent.agent_v4", "VideoAgentV4"),
+        "youtube_agent": ("agents.youtube_agent.agent_v4", "YoutubeAgentV4"),
+        "audio_agent": ("agents.audio_agent.agent_v4", "AudioAgentV4"),
+        "dialect_agent": ("agents.dialect_agent.agent_v4", "DialectAgentV4"),
+        "collaboration_agent": ("agents.collaboration_agent.agent_v4", "CollaborationAgentV4"),
+        "writer_agent": ("agents.writer_agent.agent_v4", "WriterAgentV4"),
+        "three_d_agent": ("agents.three_d_agent.agent_v4", "ThreeDAgentV4"),
+        "video_indexer_agent": ("agents.video_indexer_agent.agent_v4", "VideoIndexerAgentV4"),
+        "proactive_agent": ("agents.proactive_agent.agent_v4", "ProactiveAgentV4"),
+        "director_agent": ("agents.director_agent.agent_v4", "DirectorAgentV4"),
+        "comic_writer_agent": ("agents.comic_writer_agent.agent_v4", "ComicWriterAgentV4"),
+        "executor_agent": ("agents.executor_agent.agent_v4", "ExecutorAgentV4"),
+    }
+
+    CAPABILITIES = {
+        "chat_agent": ["聊天", "对话", "问答"],
+        "code_agent": ["代码生成", "调试", "审查", "优化"],
+        "analysis_agent": ["数据分析", "统计", "趋势", "报告"],
+        "butler_agent": ["待办", "提醒", "日程管理"],
+        "translate_agent": ["翻译", "多语言"],
+        "calculator_agent": ["计算", "数学"],
+        "decision_agent": ["决策", "路由", "评估"],
+        "vision_agent": ["图像生成", "图像分析"],
+        "memory_agent": ["记忆存储", "记忆回忆", "记忆管理"],
+        "file_agent": ["文件读写", "文件管理"],
+        "video_agent": ["视频制作", "视频剪辑"],
+        "youtube_agent": ["YouTube管理", "频道分析"],
+        "audio_agent": ["音频处理", "语音合成"],
+        "dialect_agent": ["方言学习", "方言翻译"],
+        "collaboration_agent": ["多Agent协作", "任务分配"],
+        "writer_agent": ["写作", "创作", "润色"],
+        "three_d_agent": ["3D内容生成"],
+        "video_indexer_agent": ["视频索引", "视频分析"],
+        "proactive_agent": ["主动建议", "主动服务"],
+        "director_agent": ["导演模式", "拍摄计划"],
+        "comic_writer_agent": ["漫画创作", "漫画脚本"],
+        "executor_agent": ["任务执行", "工作流执行"],
+    }
 
     def __new__(cls):
         if cls._instance is None:
@@ -20,249 +77,125 @@ class WisdomFactory:
         return cls._instance
 
     def _init(self):
-        """初始化：注册 V4 Agent 到懒加载器"""
-        print("🧠 WisdomFactory 初始化（集成模式）")
-        
-        # 将 V4 Agent 注册到懒加载器
-        self._register_v4_agents_to_lazy()
-        
-        # 同步到 agent_registry
+        print("🧠 WisdomFactory v5.0 初始化")
         self._sync_to_registry()
 
-    def _register_v4_agents_to_lazy(self):
-        """将 V4 Agent 注册到懒加载器"""
-        
-        v4_agents = {
-            "chat_agent": ("agents.chat_agent.agent_v4", "ChatAgentV4"),
-            "code_agent": ("agents.code_agent.agent_v4", "CodeAgentV4"),
-            "analysis_agent": ("agents.analysis_agent.agent_v4", "AnalysisAgentV4"),
-            "butler_agent": ("agents.butler_agent.agent_v4", "ButlerAgentV4"),
-            "translate_agent": ("agents.translate_agent.agent_v4", "TranslateAgentV4"),
-            "calculator_agent": ("agents.calculator_agent.agent_v4", "CalculatorAgentV4"),
-            "orchestrator": ("agents.orchestrator.agent_v4", "OrchestratorV4"),
-            "decision_agent": ("agents.decision_agent.agent_v4", "DecisionAgentV4"),
-            "vision_agent": ("agents.vision_agent.agent_v4", "VisionAgentV4"),
-            "memory_agent": ("agents.memory_agent.agent_v4", "MemoryAgentV4"),
-            "file_agent": ("agents.file_agent.agent_v4", "FileAgentV4"),
-            "video_agent": ("agents.video_agent.agent_v4", "VideoAgentV4"),
-            "youtube_agent": ("agents.youtube_agent.agent_v4", "YoutubeAgentV4"),
-            "audio_agent": ("agents.audio_agent.agent_v4", "AudioAgentV4"),
-            "dialect_agent": ("agents.dialect_agent.agent_v4", "DialectAgentV4"),
-            "collaboration_agent": ("agents.collaboration_agent.agent_v4", "CollaborationAgentV4"),
-            "writer_agent": ("agents.writer_agent.agent_v4", "WriterAgentV4"),
-            "three_d_agent": ("agents.three_d_agent.agent_v4", "ThreeDAgentV4"),
-            "video_indexer_agent": ("agents.video_indexer_agent.agent_v4", "VideoIndexerAgentV4"),
-            "proactive_agent": ("agents.proactive_agent.agent_v4", "ProactiveAgentV4"),
-            "director_agent": ("agents.director_agent.agent_v4", "DirectorAgentV4"),
-        }
-
-        for agent_name, (module_path, class_name) in v4_agents.items():
-            def make_loader(mod_path, cls_name):
-                def loader():
-                    try:
-                        module = __import__(mod_path, fromlist=[cls_name])
-                        agent_class = getattr(module, cls_name)
-                        return agent_class
-                    except Exception as e:
-                        print(f"❌ 懒加载 {mod_path} 失败: {e}")
-                        return None
-                return loader
-
-            lazy_loader.register(f"{agent_name}_v4", make_loader(module_path, class_name))
-            print(f"  📦 注册懒加载: {agent_name}_v4")
-
     def _sync_to_registry(self):
-        """同步 V4 Agent 到 agent_registry"""
-        v4_agent_names = [
-            "chat_agent", "code_agent", "analysis_agent", "butler_agent",
-            "translate_agent", "calculator_agent", "orchestrator", "decision_agent",
-            "vision_agent" ,"memory_agent", "file_agent", "video_agent", "youtube_agent",
-            "audio_agent", "dialect_agent", "collaboration_agent", "writer_agent",
-            "three_d_agent", "video_indexer_agent", "proactive_agent","director_agent"
-        ]
-        
-        for agent_name in v4_agent_names:
+        """同步 Agent 到注册中心"""
+        for agent_name in self.AGENT_REGISTRY:
             if agent_name not in agent_registry.agents:
                 agent_registry.register(agent_name, {
                     "name": agent_name,
-                    "type": "v4_wisdom",
-                    "version": "4.0.0",
-                    "description": f"智慧化 {agent_name}",
-                    "capabilities": self._get_agent_capabilities(agent_name),
+                    "type": "v5",
+                    "version": "5.0.0",
+                    "description": f"Agent {agent_name}",
+                    "capabilities": self.CAPABILITIES.get(agent_name, []),
                     "status": "active"
                 })
-                print(f"  📋 同步到注册中心: {agent_name}")
+        print(f"  📋 同步 {len(self.AGENT_REGISTRY)} 个Agent到注册中心")
 
-    def _get_agent_capabilities(self, agent_name: str) -> list:
-        """获取 Agent 能力描述"""
-        capabilities = {
-            "chat_agent": ["chat", "对话", "记忆", "情感", "主动建议"],
-            "code_agent": ["code", "代码生成", "调试", "优化", "测试"],
-            "analysis_agent": ["analysis", "数据分析", "统计", "报告"],
-            "butler_agent": ["butler", "待办", "提醒", "日程"],
-            "translate_agent": ["translate", "翻译", "多语言"],
-            "calculator_agent": ["calculate", "计算", "科学计算"],
-            "orchestrator": ["orchestrate", "编排", "调度", "分解"],
-            "decision_agent": ["decision", "决策", "路由", "评估"],
-            "vision_agent": ["vision", "视觉", "处理"],
-            "memory_agent": ["memory", "视觉", "处理"],
-            "file_agent": ["file", "视觉", "处理"],
-            "video_agent": ["video", "视觉", "处理"],
-            "youtube_agent": ["youtube", "视觉", "处理"],
-            "audio_agent": ["audio", "视觉", "处理"],
-            "dialect_agent": ["dialect", "视觉", "处理"],
-            "collaboration_agent": ["collaboration", "视觉", "处理"],
-            "writer_agent": ["writer", "视觉", "处理"],
-            "three_d_agent": ["three_d", "视觉", "处理"],
-            "video_indexer_agent": ["video_indexer", "视觉", "处理"],
-            "proactive_agent": ["proactive", "视觉", "处理"],
-        }
-        return capabilities.get(agent_name, [])
+    # ====================================================================
+    #  获取Agent（唯一入口）
+    # ====================================================================
 
+    def get_agent(self, agent_name: str, user_id: str = "default"):
+        """获取Agent实例（带缓存）
+
+        AgentCortex 和所有需要直接调Agent的地方走这里。
+        """
+        cache_key = f"{agent_name}:{user_id}"
+        if cache_key in self._agent_cache:
+            return self._agent_cache[cache_key]
+
+        agent = self._instantiate(agent_name, user_id)
+        if agent:
+            self._agent_cache[cache_key] = agent
+        return agent
+
+    # 兼容旧接口名
     def get_wisdom_agent(self, agent_name: str, user_id: str = "default"):
-        """获取智慧 Agent（支持懒加载）"""
-        key = f"{agent_name}:{user_id}"
-        
-        # 检查缓存
-        if key in self._wrapped_agents:
-            return self._wrapped_agents[key]
-        
-        # 从懒加载器获取
-        agent_class = None
-        lazy_key = f"{agent_name}_v4"
-        
-        if lazy_loader.is_loaded(lazy_key):
-            agent_class = lazy_loader.get(lazy_key)
-        
-        # 降级：使用原有加载逻辑
-        if not agent_class:
-            agent_class = self._legacy_load_agent(agent_name)
-        
-        if agent_class:
-            # 实例化 Agent
-            agent = agent_class(user_id)
-            
-            # 包装为智慧包装器
-            from core.agents.wisdom.wisdom_wrapper import WisdomWrapper
-            self._wrapped_agents[key] = WisdomWrapper(agent)
-            return self._wrapped_agents[key]
-        
-        return None
+        """[兼容] 等同 get_agent()"""
+        return self.get_agent(agent_name, user_id)
 
-    def _legacy_load_agent(self, agent_name: str):
-        """降级加载（兼容原有逻辑）"""
+    # ====================================================================
+    #  实例化
+    # ====================================================================
+
+    def _instantiate(self, agent_name: str, user_id: str):
+        """实例化Agent"""
+        if agent_name not in self.AGENT_REGISTRY:
+            # 尝试动态发现
+            agent = self._dynamic_import(agent_name, user_id)
+            if agent:
+                return agent
+            print(f"❌ Agent未注册: {agent_name}")
+            return None
+
+        module_path, class_name = self.AGENT_REGISTRY[agent_name]
         try:
-            # 直接导入 V4 版本
-            v4_imports = {
-                "chat_agent": ("agents.chat_agent.agent_v4", "ChatAgentV4"),
-                "code_agent": ("agents.code_agent.agent_v4", "CodeAgentV4"),
-                "analysis_agent": ("agents.analysis_agent.agent_v4", "AnalysisAgentV4"),
-                "butler_agent": ("agents.butler_agent.agent_v4", "ButlerAgentV4"),
-                "translate_agent": ("agents.translate_agent.agent_v4", "TranslateAgentV4"),
-                "calculator_agent": ("agents.calculator_agent.agent_v4", "CalculatorAgentV4"),
-                "orchestrator": ("agents.orchestrator.agent_v4", "OrchestratorV4"),
-                "decision_agent": ("agents.decision_agent.agent_v4", "DecisionAgentV4"),
-                "vision_agent": ("agents.vision_agent.agent_v4", "VisionAgentV4"),
-                "memory_agent": ("agents.memory_agent.agent_v4", "MemoryAgentV4"),
-                "file_agent": ("agents.file_agent.agent_v4", "FileAgentV4"),
-                "video_agent": ("agents.video_agent.agent_v4", "VideoAgentV4"),
-                "youtube_agent": ("agents.youtube_agent.agent_v4", "YoutubeAgentV4"),
-                "audio_agent": ("agents.audio_agent.agent_v4", "AudioAgentV4"),
-                "dialect_agent": ("agents.dialect_agent.agent_v4", "DialectAgentV4"),
-                "collaboration_agent": ("agents.collaboration_agent.agent_v4", "CollaborationAgentV4"),
-                "writer_agent": ("agents.writer_agent.agent_v4", "WriterAgentV4"),
-                "three_d_agent": ("agents.three_d_agent.agent_v4", "ThreeDAgentV4"),
-                "video_indexer_agent": ("agents.video_indexer_agent.agent_v4", "VideoIndexerAgentV4"),
-                "proactive_agent": ("agents.proactive_agent.agent_v4", "ProactiveAgentV4"),
-                "director_agent": ("agents.director_agent.agent_v4", "DirectorAgentV4"),
-            }
-            
-            if agent_name in v4_imports:
-                module_path, class_name = v4_imports[agent_name]
-                module = __import__(module_path, fromlist=[class_name])
-                return getattr(module, class_name)
-            
-            # 原始 Agent 加载
-            module = __import__(f"agents.{agent_name}.agent", fromlist=[agent_name])
-            for attr in dir(module):
-                if attr.endswith("Agent"):
-                    agent_class = getattr(module, attr)
-                    if not getattr(agent_class, '__abstractmethods__', False):
-                        return agent_class
+            module = __import__(module_path, fromlist=[class_name])
+            agent_class = getattr(module, class_name)
+            return agent_class(user_id)
         except Exception as e:
-            print(f"❌ 降级加载 {agent_name} 失败: {e}")
-        
+            print(f"❌ 实例化 {agent_name} 失败: {e}")
+            return None
+
+    def _dynamic_import(self, agent_name: str, user_id: str):
+        """动态导入（兜底）"""
+        try:
+            mod = __import__(f"agents.{agent_name}.agent_v4", fromlist=["*"])
+            for attr in dir(mod):
+                if attr.endswith("V4") and hasattr(getattr(mod, attr), 'process'):
+                    return getattr(mod, attr)(user_id)
+        except ImportError:
+            pass
         return None
 
-    def reload_agent(self, agent_name: str, user_id: str = "default") -> bool:
-        """热重载 Agent"""
-        key = f"{agent_name}:{user_id}"
-        
-        # 清除缓存
-        if key in self._wrapped_agents:
-            del self._wrapped_agents[key]
-        
-        # 清除懒加载缓存
-        lazy_key = f"{agent_name}_v4"
-        if lazy_loader.is_loaded(lazy_key):
-            lazy_loader.reload(lazy_key)
-        
-        print(f"🔄 热重载 Agent: {agent_name}")
+    # ====================================================================
+    #  管理
+    # ====================================================================
+
+    def reload_agent(self, agent_name: str, user_id: str = "default"):
+        """热重载"""
+        cache_key = f"{agent_name}:{user_id}"
+        self._agent_cache.pop(cache_key, None)
+        self._agent_cache.pop(agent_name, None)
+        print(f"🔄 热重载: {agent_name}")
         return True
 
-    def create_wisdom_agent(self, agent, config: Dict = None):
-        """创建智慧包装的 Agent（兼容原接口）"""
-        from core.agents.wisdom.wisdom_wrapper import WisdomWrapper
+    def clear_cache(self):
+        """清除所有缓存"""
+        self._agent_cache.clear()
 
-        agent_name = getattr(agent, 'name', 'unknown')
+    def list_agents(self) -> list:
+        return list(self.AGENT_REGISTRY.keys())
 
-        if agent_name in self._wrapped_agents:
-            return self._wrapped_agents[agent_name]
+    def get_agent_class(self, agent_name: str):
+        """获取Agent类（不实例化）"""
+        if agent_name not in self.AGENT_REGISTRY:
+            return None
+        module_path, class_name = self.AGENT_REGISTRY[agent_name]
+        try:
+            module = __import__(module_path, fromlist=[class_name])
+            return getattr(module, class_name)
+        except Exception:
+            return None
 
-        wrapper = WisdomWrapper(agent, config)
-        self._wrapped_agents[agent_name] = wrapper
-        return wrapper
+    # ====================================================================
+    #  统计
+    # ====================================================================
+
+    def get_stats(self) -> Dict:
+        return {
+            "total_registered": len(self.AGENT_REGISTRY),
+            "cached_instances": len(self._agent_cache),
+            "registry_stats": agent_registry.get_stats(),
+        }
 
     def get_all_wisdom_stats(self) -> Dict:
-        """获取所有智慧 Agent 统计"""
-        stats = {
-            "wrapped_agents": len(self._wrapped_agents),
-            "agents": {}
-        }
-        
-        for name, wrapper in self._wrapped_agents.items():
-            if hasattr(wrapper, 'get_self_awareness'):
-                stats["agents"][name] = wrapper.get_self_awareness()
-        
-        # 合并注册中心统计
-        stats["registry"] = agent_registry.get_stats()
-        stats["lazy_loaded"] = [k for k in lazy_loader._loaded.keys() if "agent" in k]
-        
-        return stats
-    def _auto_discover_agents(self):
-        """自动发现并注册所有 Agent"""
-        from core.lib.agent_discovery import agent_discovery
-        
-        discovered = agent_discovery.discover_all()
-        print(f"🔍 自动发现 {len(discovered)} 个 Agent")
-        
-        for agent_name, (module_path, class_name) in discovered.items():
-            if agent_name not in self._wrapped_agents:
-                # 注册到懒加载
-                def make_loader(mod_path, cls_name):
-                    def loader():
-                        try:
-                            module = __import__(mod_path, fromlist=[cls_name])
-                            return getattr(module, cls_name)
-                        except Exception as e:
-                            print(f"加载 {mod_path} 失败: {e}")
-                            return None
-                    return loader
-                
-                self._register_lazy(f"{agent_name}_v4", make_loader(module_path, class_name))
-                print(f"  📦 自动注册: {agent_name}")
+        """[兼容]"""
+        return self.get_stats()
 
 
+# 全局单例
 wisdom_factory = WisdomFactory()
-
-         

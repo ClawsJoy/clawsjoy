@@ -6,7 +6,7 @@ import json
 import sys
 from pathlib import Path
 
-import requests
+from core.lib.llm_client import llm_client
 
 
 class VisionSkill:
@@ -31,16 +31,7 @@ class VisionSkill:
 
         # 调用 Ollama 视觉模型
         try:
-            response = requests.post(
-                "http://localhost:11434/api/generate",
-                json={
-                    "model": "moondream:1.8b",
-                    "prompt": prompt,
-                    "images": [image_base64],
-                    "stream": False,
-                },
-                timeout=60,
-            )
+            response = llm_client.generate(prompt=prompt, model="moondream:1.8b", max_tokens=512, temperature=0.7, task_type="skill")
 
             if response.status_code == 200:
                 result = response.json()

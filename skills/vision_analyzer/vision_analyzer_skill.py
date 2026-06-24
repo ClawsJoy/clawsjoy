@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
-"""视觉分析技能 - 使用 Ollama llava"""
+"""视觉分析技能 - 基于统一LLM客户端"""
 
-import requests
 import base64
 from pathlib import Path
+from core.lib.llm_client import llm_client
 
 
 class VisionAnalyzerSkill:
     name = "vision_analyzer"
     description = "图像分析"
-    version = "1.0.0"
+    version = "1.1.0"
 
     def __init__(self):
-        self.llm_url = "http://localhost:11434/api/generate"
         self.model = "llava"
 
     def analyze(self, image_path: str, prompt: str = "描述这张图片") -> dict:
@@ -26,26 +25,15 @@ class VisionAnalyzerSkill:
         except Exception as e:
             return {"success": False, "error": f"读取图像失败: {e}"}
 
-        payload = {
-            "model": self.model,
-            "prompt": prompt,
-            "images": [image_data],
-            "stream": False,
-            "options": {"temperature": 0.3}
-        }
-
-        try:
-            resp = requests.post(self.llm_url, json=payload, timeout=60)
-            if resp.status_code == 200:
-                result = resp.json()
-                return {
-                    "success": True,
-                    "description": result.get("response", "无法描述"),
-                    "model": self.model
-                }
-            return {"success": False, "error": f"LLM 错误: {resp.status_code}"}
-        except Exception as e:
-            return {"success": False, "error": str(e)}
+        return llm_client.generate_multimodal(
+            prompt=prompt,
+            model=self.model,
+            images=[image_data],
+            temperature=0.3,
+            max_tokens=512,
+            timeout=60,
+            task_type="vision"
+        )
 
 
 def execute(params):

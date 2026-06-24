@@ -17,7 +17,7 @@ class ProactiveAgentV4(BusinessAgent):
 
     name = "proactive_agent_v4"
     description = "主动服务助手"
-    version = "4.2.0"
+    version = "5.0.0"
 
     def __init__(self, user_id: str = "default"):
         super().__init__(user_id=user_id)

@@ -18,7 +18,7 @@ class DecisionAgentV4(BusinessAgent):
 
     name = "decision_agent_v4"
     description = "智慧决策者"
-    version = "4.2.0"
+    version = "5.0.0"
 
     AGENT_CAPABILITIES = {
         "chat_agent": ["聊天", "对话", "问答"],

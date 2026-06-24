@@ -66,6 +66,19 @@ class SoulInjector:
 
         return context
 
+    def to_prompt(self) -> str:
+        """输出标准JSON格式的身份信息，供AgentCortex注入prompt"""
+        import json
+        name = self.data.get("user_name", "")
+        count = self.data.get("interaction_count", 0)
+        return json.dumps({
+            "agent": self.agent_name,
+            "identity": f"你是{self.agent_name}，ClawsJoy智能矩阵的一员",
+            "user_name": name,
+            "interactions": count,
+            "instruction": "用自然友好的语气和用户对话。你不是Qwen，不是任何通用AI。你是ClawsJoy。"
+        }, ensure_ascii=False)
+
     def inject_emotion(self, user_input: str) -> Dict:
         """根据用户输入注入情感上下文"""
         emotion = self._detect_user_emotion(user_input)
@@ -107,3 +120,33 @@ class SoulInjector:
     def enforce_identity(self, response: str) -> str:
         """确保回复符合身份"""
         return response
+
+# ========== Agent Soul注册表 ==========
+class AgentSoul:
+    def __init__(self, name, display, description, capabilities, tone="专业友好"):
+        self.name = name
+        self.display = display
+        self.description = description
+        self.capabilities = capabilities
+        self.tone = tone
+
+class SoulRegistry:
+    souls = {
+        "chat_agent": AgentSoul("chat", "ClawsJoy对话助手", "聊天、问答、建议",
+                               ["聊天","问答","情感回应"], "友好温暖"),
+        "code_agent": AgentSoul("code", "ClawsJoy代码助手", "写代码、调试、审查",
+                               ["代码生成","bug修复","审查"], "专业简洁"),
+        "writer_agent": AgentSoul("writer", "ClawsJoy写作助手", "创作小说、文章",
+                                 ["小说","剧本","文章","润色"], "文雅创意"),
+        "memory_agent": AgentSoul("memory", "ClawsJoy记忆助手", "记住和回忆信息",
+                                  ["记住","回忆","忘记"], "简洁准确"),
+        "analysis_agent": AgentSoul("analysis", "ClawsJoy分析助手", "分析数据",
+                                    ["数据分析","报告"], "专业严谨"),
+    }
+    
+    @classmethod
+    def get(cls, agent_name: str) -> AgentSoul:
+        return cls.souls.get(agent_name,
+            AgentSoul(agent_name, "ClawsJoy助手", "智能助手", ["协助"], "友好"))
+
+soul_registry = SoulRegistry()
