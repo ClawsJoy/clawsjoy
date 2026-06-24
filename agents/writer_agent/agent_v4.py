@@ -145,6 +145,10 @@ class WriterAgentV4(BusinessAgent):
 
     def _load_state(self):
         """从 memory 和联邦知识恢复创作状态"""
+        # 0. 从 memory/ 目录恢复（最可靠的 fallback）
+        if self._load_from_memory_files():
+            return
+
         # 每次都尝试从联邦知识恢复（跨会话持久化）
         self._load_from_federated()
         
@@ -275,6 +279,22 @@ class WriterAgentV4(BusinessAgent):
             )
         except Exception:
             pass
+    def _save_to_session_file(self):
+        """保存到 memory/ 目录的 session 文件"""
+        from pathlib import Path
+        session_file = Path("memory") / f"session_novel_{self.user_id}.json"
+        entry = {
+            "user": "writer_state",
+            "assistant": json.dumps({
+                "version": "2.5",
+                "business": "novel",
+                "agent": self.name,
+                "state": self._novel
+            }, ensure_ascii=False),
+            "timestamp": datetime.now().isoformat()
+        }
+        with open(session_file, 'a') as f:
+            f.write(json.dumps(entry, ensure_ascii=False) + '\n')
 
     # ================================================================
     #  入口
@@ -1224,6 +1244,70 @@ class WriterAgentV4(BusinessAgent):
         except Exception as e:
             print(f"[Writer] 发布事件失败: {e}")
 
+    def _load_from_memory_files(self) -> bool:
+        """从 memory/ 目录的 session JSON 文件恢复（最可靠的 fallback）"""
+        from pathlib import Path
+        
+        memory_dir = Path("memory")
+        if not memory_dir.exists():
+            return False
+
+        session_files = sorted(
+            memory_dir.glob("session_novel_*.json"),
+            key=lambda f: f.stat().st_mtime,
+            reverse=True
+        )
+
+        for sf in session_files:
+            try:
+                data = json.loads(sf.read_text())
+                if not isinstance(data, list):
+                    continue
+                
+                for item in reversed(data):
+                    assistant = item.get("assistant", "")
+                    state = None
+                    need_clean = False
+                    
+                    # 新格式：JSON 字符串（title 干净）
+                    if isinstance(assistant, str) and "state" in assistant:
+                        try:
+                            payload = json.loads(assistant)
+                            state = payload.get("state") or payload.get("novel_state")
+                        except:
+                            pass
+                    
+                    # 旧格式：字典（title 需要清理）
+                    if isinstance(assistant, dict):
+                        state = assistant.get("state") or assistant.get("novel_state")
+                        need_clean = True
+                    
+                    # 统一加载
+                    if state and isinstance(state, dict) and state.get("chapters"):
+                        self._novel = state
+                        if need_clean:
+                            self._clean_title()
+                        self._session_id = sf.stem
+                        print(f"[Writer] ✅ 从文件恢复: {self._novel.get('title', '未命名')} ({len(self._novel.get('chapters', []))}章)")
+                        return True                                   
+            except Exception:
+                continue
+
+        return False
+
+    def _clean_title(self):
+        """清理脏标题，从第一章提取真实标题"""
+        title = self._novel.get("title", "")
+        if "基于以下设定" in title or "【小说大纲" in title or "小说大纲" in title:
+            chapters = self._novel.get("chapters", [])
+            if chapters:
+                text = chapters[0].get("content", "")
+                m = re.search(r'第[一二三四五六七八九十\d]+章\s*(.+)', text)
+                if m:
+                    self._novel["title"] = m.group(1).strip()[:30]
+                else:
+                    clean = text.replace('#', '').replace('*', '').strip()[:30]
+                    self._novel["title"] = clean if clean else "未命名"   
 
     def _load_from_federated(self):
         """从联邦知识恢复创作状态"""
