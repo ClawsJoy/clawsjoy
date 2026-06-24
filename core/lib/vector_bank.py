@@ -63,8 +63,13 @@ class VectorBank:
         return np.frombuffer(h[:128], dtype=np.float32)
     
     def _cosine(self, a: np.ndarray, b: np.ndarray) -> float:
-        """余弦相似度"""
-        return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-8))
+        """余弦相似度，维度不匹配时返回0"""
+        try:
+            if a.shape != b.shape:
+                return 0.0
+            return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-8))
+        except Exception:
+            return 0.0
     
     # ========== 存 ==========
     

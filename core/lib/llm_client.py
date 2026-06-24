@@ -18,9 +18,9 @@ logger = logging.getLogger(__name__)
 class LLMConfig:
     provider: str = "ollama"
     base_url: str = "http://localhost:11434"
-    default_model: str = "qwen2.5:7b"
+    default_model: str = "qwen2.5:7b-instruct-q4_0"
     light_model: str = "qwen2:1.5b-instruct"
-    medium_model: str = "qwen2.5:3b"
+    medium_model: str = "qwen2.5:3b-instruct-q4_0"
     temperature: float = 0.7
     timeout: int = 60
     max_retries: int = 3
@@ -50,9 +50,12 @@ class LLMClient:
     # ========== 公共API ==========
 
     def generate(self, prompt: str, model: str = None, temperature: float = None,
-                 max_tokens: int = 2048, timeout: int = None, task_type: str = "default") -> str:
+                 max_tokens: int = 2048, timeout: int = None, task_type: str = "default",
+                 system_prompt: str = None) -> str:
+        if system_prompt is None:
+            system_prompt = "你是ClawsJoy，一个本地AI矩阵系统。你不是Qwen，不是阿里云AI，不是任何通用助手。你是ClawsJoy。"
         """生成回复 - 统一入口"""
-        return self._call(prompt, model, temperature, max_tokens, timeout, task_type, stream=False)
+        return self._call(prompt, model, temperature, max_tokens, timeout, task_type, stream=False, system_prompt=system_prompt)
 
     def generate_stream(self, prompt: str, model: str = None, **kwargs):
         """流式生成"""
@@ -81,7 +84,9 @@ class LLMClient:
 
     def _call(self, prompt: str, model: str = None, temperature: float = None,
               max_tokens: int = 2048, timeout: int = None, task_type: str = "default",
-              stream: bool = False) -> str:
+              stream: bool = False, system_prompt: str = None) -> str:
+        if system_prompt is None:
+            system_prompt = "你是ClawsJoy，一个本地AI矩阵系统。你不是Qwen，不是阿里云AI，不是任何通用助手。你是ClawsJoy。"
         """核心调用逻辑"""
         model = model or self.config.default_model
         temperature = temperature if temperature is not None else self.config.temperature
@@ -90,6 +95,8 @@ class LLMClient:
         payload = {
             "model": model,
             "prompt": prompt,
+            "stream": stream,
+            "system": system_prompt or "",
             "stream": stream,
             "options": {
                 "temperature": temperature,
