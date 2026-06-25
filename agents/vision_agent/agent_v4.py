@@ -53,7 +53,7 @@ class VisionAgentV4(BusinessAgent):
         # 用LLM优化提示词
         enhanced = self._call_llm(
             f"作为AI绘画专家，将以下描述优化为Stable Diffusion英文提示词，包含画风、光照、构图、细节：\n\n{prompt}\n\n风格：{style}\n比例：{ratio}\n\n只输出英文提示词：",
-            task_type="prompt_enhance", max_tokens=200
+            task_type="prompt_enhance"
         )
 
         return self._resp(
@@ -71,7 +71,7 @@ class VisionAgentV4(BusinessAgent):
 
         enhanced = self._call_llm(
             f"生成角色立绘提示词，包含：全身像、服装细节、发型、表情、三视图(front/side/back)、白色背景、高质量：\n\n{prompt}\n\n只输出英文提示词：",
-            task_type="character_sheet", max_tokens=200
+            task_type="character_sheet"
         )
 
         return self._resp(
@@ -87,7 +87,7 @@ class VisionAgentV4(BusinessAgent):
 
         enhanced = self._call_llm(
             f"生成场景概念图提示词，包含：环境、氛围、光照、景深、广角、高质量：\n\n{prompt}\n\n只输出英文提示词：",
-            task_type="scene_image", max_tokens=200
+            task_type="scene_image"
         )
 
         return self._resp(
@@ -103,7 +103,7 @@ class VisionAgentV4(BusinessAgent):
 
         enhanced = self._call_llm(
             f"生成漫剧分镜画面提示词，包含：角色动作、表情、场景、镜头角度、漫画风格、清晰线条：\n\n{prompt}\n\n只输出英文提示词：",
-            task_type="storyboard_frame", max_tokens=200
+            task_type="storyboard_frame"
         )
 
         return self._resp(
@@ -114,22 +114,47 @@ class VisionAgentV4(BusinessAgent):
         )
 
     def _analyze(self, user_input: str) -> Dict:
-        """图像分析"""
+        """图像分析 - 使用 llava 模型"""
         path = self._extract_path(user_input)
         if not path:
-            return self._resp("请提供图像路径。例如：分析 /path/to/image.png")
-
+            return self._resp("请提供图像路径。例如：分析 data/vision/demo/characters/林浩/01_素体_正面.png")
+        
         img_path = Path(path)
         if not img_path.exists():
             return self._resp(f"图像不存在: {path}")
-
-        return self._resp(
-            f"## 🖼 图像分析\n\n"
-            f"**文件**: {path}\n"
-            f"**大小**: {img_path.stat().st_size}B\n\n"
-            f"💡 可接入 llava 模型进行内容描述\n"
-            f"💡 可接入 OCR 进行文字提取"
-        )
+        
+        # 提取问题（"分析 xxx 有什么问题" → question）
+        question = user_input.replace(path, "").strip()
+        if not question or len(question) < 3:
+            question = "描述这张图片的内容、画风、质量，是否有手指/面部畸形？"
+        
+        try:
+            import base64, requests
+            with open(img_path, 'rb') as f:
+                img_b64 = base64.b64encode(f.read()).decode()
+            
+            resp = requests.post(
+                "http://localhost:11434/api/generate",
+                json={
+                    "model": "llava:latest",
+                    "prompt": question,
+                    "images": [img_b64],
+                    "stream": False
+                },
+                timeout=60
+            )
+            if resp.status_code == 200:
+                description = resp.json().get('response', '无描述')
+                return self._resp(
+                    f"## 🖼 图像分析\n\n"
+                    f"**文件**: {path}\n"
+                    f"**大小**: {img_path.stat().st_size}B\n\n"
+                    f"**llava 描述**:\n{description}"
+                )
+            else:
+                return self._resp(f"llava 调用失败: {resp.status_code}")
+        except Exception as e:
+            return self._resp(f"分析失败: {e}")
 
     def _list_styles(self) -> Dict:
         return self._resp(

@@ -379,7 +379,7 @@ class AgentCortex:
 回复:"""
 
         try:
-            resp = llm_client.generate(prompt, model=MODEL_MAIN, max_tokens=200, temperature=0.3, task_type="reply", timeout=10)
+            resp = llm_client.generate(f"用户说：{user_input}\n请简短回复。", model=MODEL_MAIN, max_tokens=200, task_type="reply", timeout=10)
             if resp and len(resp.strip())>2: return resp.strip()
         except: pass
 
@@ -390,9 +390,11 @@ class AgentCortex:
         if action=="memory":
             k = extracted.get("key","信息"); v = extracted.get("value") or context.get("补全",{}).get("value","")
             return f"已记住{k}" + (f"={v}" if v else "")
+        if action=="chat": return "我在，请继续。";
         if action=="identity":
             n = extracted.get("名字") or context.get("补全",{}).get("名字","")
             return f"你好，{n}！" if n else "好的。"
+        if action=="chat": return "好的，请继续。"
         if action=="recall": return f"查一下{extracted.get('query','信息')}..."
         return "好的。"
 

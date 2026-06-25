@@ -142,67 +142,60 @@ class WriterAgentV4(BusinessAgent):
     # ================================================================
     #  状态持久化
     # ================================================================
-
     def _load_state(self):
         """从 memory 和联邦知识恢复创作状态"""
-        # 0. 从 memory/ 目录恢复（最可靠的 fallback）
-        if self._load_from_memory_files():
-            return
+        # 0. 从 memory/ 目录恢复（打底）
+        self._load_from_memory_files()
 
-        # 每次都尝试从联邦知识恢复（跨会话持久化）
+        # 1. 从联邦知识恢复元数据
         self._load_from_federated()
-        
-        if not self._session_id:
+
+        if not self._session_id or not self.memory:
             return
 
         try:
-            if self.memory:
-                states = self.memory.get_session_memory(self._session_id, limit=20)
-                if not states:
-                    return
+            states = self.memory.get_session_memory(self._session_id, limit=20)
+            if not states:
+                return
 
-                for state_record in reversed(states):
-                    if not isinstance(state_record, dict):
-                        continue
+            for state_record in reversed(states):
+                if not isinstance(state_record, dict):
+                    continue
 
-                    assistant = state_record.get("assistant", {})
+                assistant = state_record.get("assistant", {})
 
-                    # 新格式：JSON 字符串
-                    if isinstance(assistant, str):
-                        try:
-                            payload = json.loads(assistant)
-                            if payload.get("business") == "novel":
-                                novel_state = payload.get("state")
-                                if novel_state and isinstance(novel_state, dict) and novel_state.get("chapters"):
-                                    self._novel = novel_state
-                                    print(f"[Writer] ✅ 加载状态: {self._novel.get('title', '未命名')} ({len(self._novel.get('chapters', []))}章)")
-                                    return
-                        except:
-                            pass
-
-                    # 旧格式：字典
-                    if isinstance(assistant, dict):
-                        novel_state = assistant.get("state")
+                # 新格式：JSON 字符串
+                if isinstance(assistant, str):
+                    try:
+                        payload = json.loads(assistant)
+                        novel_state = payload.get("state")
                         if novel_state and isinstance(novel_state, dict) and novel_state.get("chapters"):
-                            self._novel = novel_state
-                            print(f"[Writer] ✅ 加载状态: {self._novel.get('title', '未命名')} ({len(self._novel.get('chapters', []))}章)")
-                            return
+                            if len(novel_state.get("chapters", [])) >= len(self._novel.get("chapters", [])):
+                                self._novel = novel_state
+                                print(f"[Writer] ✅ 加载状态(新): {self._novel.get('title', '未命名')} ({len(self._novel.get('chapters', []))}章)")
+                    except:
+                        pass
+                    continue
 
-                        novel_state = assistant.get("novel_state")
-                        if novel_state and isinstance(novel_state, dict) and novel_state.get("chapters"):
+                # 旧格式：字典
+                if isinstance(assistant, dict):
+                    novel_state = assistant.get("state") or assistant.get("novel_state")
+                    if novel_state and isinstance(novel_state, dict) and novel_state.get("chapters"):
+                        if len(novel_state.get("chapters", [])) >= len(self._novel.get("chapters", [])):
                             self._novel = novel_state
-                            print(f"[Writer] ✅ 加载状态: {self._novel.get('title', '未命名')} ({len(self._novel.get('chapters', []))}章)")
-                            return
+                            print(f"[Writer] ✅ 加载状态(旧): {self._novel.get('title', '未命名')} ({len(self._novel.get('chapters', []))}章)")
+                    continue
 
-                    if state_record.get("novel_state"):
-                        novel_state = state_record.get("novel_state")
-                        if isinstance(novel_state, dict) and novel_state.get("chapters"):
+                if state_record.get("novel_state"):
+                    novel_state = state_record.get("novel_state")
+                    if isinstance(novel_state, dict) and novel_state.get("chapters"):
+                        if len(novel_state.get("chapters", [])) >= len(self._novel.get("chapters", [])):
                             self._novel = novel_state
-                            print(f"[Writer] ✅ 加载状态: {self._novel.get('title', '未命名')} ({len(self._novel.get('chapters', []))}章)")
-                            return
+                            print(f"[Writer] ✅ 加载状态(旧2): {self._novel.get('title', '未命名')} ({len(self._novel.get('chapters', []))}章)")
 
         except Exception as e:
             print(f"[Writer] 加载状态失败: {e}")
+
 
     def _save_state(self):
         """保存创作状态到 memory 和联邦知识"""
