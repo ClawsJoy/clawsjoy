@@ -35,7 +35,7 @@ class ComicWriterAgentV4(BusinessAgent):
         # 1. 大纲
         outline = self._call_llm(
             f"为漫剧创作故事大纲(200字内)，含核心冲突、三幕结构：\n\n{user_input}",
-            task_type="outline", max_tokens=500
+            task_type="outline"
         )
         if not outline:
             return self._resp("大纲生成失败")
@@ -43,7 +43,7 @@ class ComicWriterAgentV4(BusinessAgent):
         # 2. 人物
         characters = self._call_llm(
             f"基于大纲设计3-5个角色(姓名/性格/动机/关系)：\n\n{outline}",
-            task_type="character", max_tokens=800
+            task_type="character"
         )
 
         # 3. 小说
@@ -54,7 +54,7 @@ class ComicWriterAgentV4(BusinessAgent):
 角色：{characters or '自行设计'}
 
 要求：清晰的三幕结构、情感真实、适合改编漫剧""",
-            task_type="novel", max_tokens=3000
+            task_type="novel"
         )
         if not novel:
             return self._resp("小说生成失败")
@@ -74,14 +74,14 @@ class ComicWriterAgentV4(BusinessAgent):
     def _outline(self, user_input: str) -> Dict:
         result = self._call_llm(
             f"为漫剧创作详细故事大纲，含核心冲突、三幕结构、情感高潮：\n\n{user_input}",
-            task_type="outline", max_tokens=800
+            task_type="outline"
         )
         return self._resp(f"## 📋 故事大纲\n\n{result}" if result else "大纲生成失败")
 
     def _characters(self, user_input: str) -> Dict:
         result = self._call_llm(
             f"设计漫剧角色(3-5个)，含姓名/年龄/外貌/性格/动机/关系/弧光：\n\n{user_input}",
-            task_type="character", max_tokens=1000
+            task_type="character"
         )
         return self._resp(f"## 👥 角色设定\n\n{result}" if result else "角色设计失败")
 
@@ -91,7 +91,7 @@ class ComicWriterAgentV4(BusinessAgent):
             # 用户给的是主题，先生成小说
             novel = self._call_llm(
                 f"创作短篇小说(1000-1500字)，画面感强：\n\n{user_input}",
-                task_type="novel", max_tokens=2500
+                task_type="novel"
             )
         storyboard = self._to_storyboard(novel)
         return self._resp(storyboard or "分镜转换失败")
@@ -115,7 +115,7 @@ class ComicWriterAgentV4(BusinessAgent):
 输出："""
 
         for attempt in range(2):
-            result = self._call_llm(prompt, task_type="storyboard", max_tokens=4000)
+            result = self._call_llm(prompt, task_type="storyboard")
             if result and "### 分镜" in result:
                 return f"## 🎬 分镜剧本\n\n{result}"
             prompt += "\n\n【重要】每个分镜必须以 ### 分镜X | 景别 | 角度 开头"
