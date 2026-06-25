@@ -2,7 +2,10 @@
 """DirectorAgent v6.0 - 电影制作导演"""
 
 import re
+import json
 from datetime import datetime
+from pathlib import Path
+from pathlib import Path
 from typing import Dict, Optional, Tuple
 from dataclasses import dataclass, field
 
@@ -43,6 +46,8 @@ class DirectorAgentV4(BusinessAgent):
 
         if "创建" in t or "新项目" in t:
             return self._create(user_input)
+        if "导演" in t or "出片" in t:
+            return self._comic_direct()
         if not self._project:
             return self._resp("请先创建项目。输入「创建 电影名 类型」开始。\n\n示例：创建 星际迷航 科幻")
 
@@ -148,8 +153,134 @@ class DirectorAgentV4(BusinessAgent):
 
     def _resp(self, content: str, **kwargs) -> Dict:
         return {"success": True, "response": content, "output_content": content, **kwargs}
+    
 
+    # ================================================================
+    #  漫剧导演（新增能力）
+    # ================================================================
+
+    def _comic_direct(self, episode="EP01", frame_duration=5):
+        """导演一集漫剧：llava描述 → qwen审片 → zoompan出视频"""
+        import subprocess, base64, requests, tempfile, shutil, glob as g, os as os_
+
+        storyboard_dir = f"data/assets/novels/{self._project.title}/storyboard"
+        os_.makedirs(storyboard_dir, exist_ok=True)
+        output = f"{storyboard_dir}/{episode}.mp4"
+
+        # 收集分镜帧
+        frames = sorted(g.glob(f"{storyboard_dir}/{episode}_分镜*.png"))
+        final = {}
+        for f in frames:
+            num = re.search(r'分镜(\d+)', os_.path.basename(f))
+            if num:
+                final[num.group(1)] = f
+        frames = ["data/assets/novels/AI觉醒/storyboard/片头.png"] + [final[k] for k in sorted(final.keys())] + ["data/assets/novels/AI觉醒/storyboard/片尾.png"]
+
+        # 预热 llava
+        try:
+            requests.post('http://localhost:11434/api/generate', json={
+                'model': 'llava:latest', 'prompt': 'warmup', 'stream': False
+            }, timeout=120)
+            print('llava 就绪')
+        except:
+            pass
+
+        # llava 逐帧描述
+        print(f'llava 审片中 ({len(frames)} 帧)...')
+        descriptions = []
+        for i, frame in enumerate(frames):
+            with open(frame, 'rb') as fp:
+                img = base64.b64encode(fp.read()).decode()
+            try:
+                r = requests.post('http://localhost:11434/api/generate', json={
+                    'model': 'llava:latest',
+                    'prompt': '描述画面：角色、场景、光影。20字。',
+                    'images': [img], 'stream': False
+                }, timeout=30)
+                desc = r.json().get('response', '')
+            except:
+                desc = ''
+            descriptions.append("帧{}: {}".format(i, desc[:30]))  # 截断到50字
+            print(f'  帧{i}: {desc[:60]}')
+
+        # qwen 导演审片 + 镜头运动
+        director_prompt = "你是漫剧导演。以下是{}个分镜的画面描述：\n{}\n\n请输出：\n1. 综合评分(1-5)与理由\n2. 缺失素材清单\n3. 每个分镜的镜头运动指令，格式：分镜N:运动类型\n   选型：zoom_in(强调情感) zoom_out(展示环境) pan_right/left(跟随视线) static(对话思考)\n4. 优先改进项".format(
+            len(frames), "\n".join(descriptions))
+
+        try:
+            r = requests.post('http://localhost:11434/api/generate', json={
+                'model': 'qwen2.5:7b',
+                'prompt': director_prompt,
+                'stream': False
+            }, timeout=120)
+            director_advice = r.json().get('response', '')
+        except Exception as _e:
+            director_advice = '导演建议生成失败'
+            print(f'qwen 调用失败: {_e}')
+
+        # 解析镜头运动
+        import re as _re
+        camera_moves = {0: "zoom_in"}
+        for _line in director_advice.split(chr(10)):
+            _m = _re.search(r'分镜\s*(\d+)\s*[:：]\s*(zoom_in|zoom_out|pan_left|pan_right|static)', _line)
+            if _m:
+                camera_moves[int(_m.group(1))] = _m.group(2)
+        for i in range(1, len(frames)):
+            if i not in camera_moves:
+                camera_moves[i] = "static"
+
+        # 逐帧 zoompan 出视频
+        _tmpdir = tempfile.mkdtemp()
+        processed = []
+        for i, frame in enumerate(frames):
+            move = camera_moves.get(i, "static")
+            out_frame = "{}/f_{:03d}.mp4".format(_tmpdir, i)
+            if move == "zoom_in":
+                vf = "zoompan=z='min(zoom+0.001,1.1)':d=100:s=768x512"
+            elif move == "zoom_out":
+                vf = "zoompan=z='max(zoom-0.001,0.9)':d=100:s=768x512"
+            elif move == "pan_right":
+                vf = "zoompan=z=1.05:x='iw/2+10*on':y='ih/2':d=100:s=768x512"
+            elif move == "pan_left":
+                vf = "zoompan=z=1.05:x='iw/2-10*on':y='ih/2':d=100:s=768x512"
+            else:
+                vf = "zoompan=z=1.02:d=100:s=768x512"
+            subprocess.run(['ffmpeg', '-y', '-loop', '1', '-i', frame,
+                          '-vf', vf, '-t', str(frame_duration),
+                          '-c:v', 'libx264', '-pix_fmt', 'yuv420p', out_frame], capture_output=True)
+            processed.append(out_frame)
+
+        with open('/tmp/processed_frames.txt', 'w') as f:
+            for p in processed:
+                f.write("file '{}'\n".format(p))
+        subprocess.run(['ffmpeg', '-y', '-f', 'concat', '-safe', '0',
+                      '-i', '/tmp/processed_frames.txt',
+                      '-c:v', 'libx264', '-pix_fmt', 'yuv420p', output], capture_output=True)
+        shutil.rmtree(_tmpdir, ignore_errors=True)
+
+        # 日志
+        self._comic_log(episode, 1, {"frames": len(frames), "camera": str(camera_moves), "advice": director_advice[:500]})
+
+        return self._resp(
+            "## 🎬 {} 完成\n\n帧数: {}\n镜头: {}\n\n### 🎯 导演建议\n{}\n\n文件: {}".format(
+                episode, len(frames), camera_moves, director_advice, output)
+        )
+
+    def _comic_log(self, episode, version, data):
+        """记录漫剧导演日志"""
+        log_file = f"data/assets/novels/{self._project.title}/director_log.jsonl"
+        Path(log_file).parent.mkdir(parents=True, exist_ok=True)
+        log = {
+            "time": datetime.now().isoformat(),
+            "episode": episode,
+            "version": version,
+            **data
+        }
+        with open(log_file, 'a') as f:
+            f.write(json.dumps(log, ensure_ascii=False) + '\n')
+ 
 
 if __name__ == "__main__":
     agent = DirectorAgentV4("test")
     print(agent.process("创建 星际迷航 科幻")["response"][:200])
+
