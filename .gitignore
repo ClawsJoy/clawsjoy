@@ -116,3 +116,5 @@ install.sh
 memory/session_*.json
 data/
 works/
+data/
+results/
