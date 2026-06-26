@@ -1,11 +1,8 @@
-\"\"\"text-basic 技能实现\"\"\"
-
-
+"""文本处理"""
 class text_basic:
     name = "text-basic"
-    description = "text-basic 技能"
+    description = "基础文本处理"
     version = "1.0.0"
-
     def execute(self, params):
-        # TODO: 实现具体逻辑
-        return {"success": True, "result": "text-basic 执行成功"}
+        text = params.get("text", "")
+        return {"success": True, "length": len(text), "upper": text.upper(), "words": len(text.split())}

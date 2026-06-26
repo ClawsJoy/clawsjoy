@@ -1,11 +1,9 @@
-\"\"\"extract-content 技能实现\"\"\"
-
-
+"""内容提取"""
+import re
 class extract_content:
     name = "extract-content"
-    description = "extract-content 技能"
+    description = "文本内容提取"
     version = "1.0.0"
-
     def execute(self, params):
-        # TODO: 实现具体逻辑
-        return {"success": True, "result": "extract-content 执行成功"}
+        text = params.get("text", "")
+        return {"success": True, "emails": re.findall(r'[\w.-]+@[\w.-]+\.[\w.]+', text), "urls": re.findall(r'https?://[^\s]+', text)}

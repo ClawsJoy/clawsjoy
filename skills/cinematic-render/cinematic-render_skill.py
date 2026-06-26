@@ -1,4 +1,4 @@
-\"\"\"cinematic-render 技能实现\"\"\"
+"""cinematic-render 技能实现"""
 
 
 class cinematic_render:

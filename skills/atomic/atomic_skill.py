@@ -1,4 +1,4 @@
-\"\"\"atomic 技能实现\"\"\"
+"""atomic 技能实现"""
 
 
 class atomic:
