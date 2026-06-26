@@ -1,13 +1,10 @@
 ---
 name: time
-description: time 技能
-category: general
-version: 1.0.0
-author: ClawsJoy
+actions:
+  - time
+  - 时间
+description: 时间查询
+use_when: 时间, 几点, 日期
 ---
-
 # time
-
-## 功能说明
-
-time 技能
+时间查询

@@ -1,4 +1,4 @@
----
+actions: []
 name: my_calculator
 version: 1.0.0
 description: '自定义计算器技能 支持加减乘除四则运算 数学计算 加法 减法 乘法 除法'

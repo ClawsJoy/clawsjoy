@@ -1,7 +1,6 @@
-description: TTS配音+字幕
-enabled: true
+actions:
+- subtitle
+- 字幕
+description: subtitle-burner 技能
 name: subtitle-burner
 type: skill
-use_when:
-- 配音, 字幕
-version: 1.0.0

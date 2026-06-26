@@ -1,10 +1,6 @@
-capabilities:
-- description: network skill
-  name: network
-description: network skill
-enabled: true
+actions:
+- network
+- 网络
+description: network 技能
 name: network
 type: skill
-use_when:
-- network
-version: 1.0.0

@@ -1,8 +1,10 @@
 ---
 name: svg-generator
-version: 1.0.0
-description: SVG图表生成技能
-use_when: 需要生成图表、架构图
+actions:
+  - svg
+  - 
+description: SVG生成
+use_when: svg, 图标
 ---
-
-# SVG Generator
+# svg-generator
+SVG生成

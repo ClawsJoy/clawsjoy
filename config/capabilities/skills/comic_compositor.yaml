@@ -1,7 +1,6 @@
-description: 漫剧分镜合成
-enabled: true
+actions:
+- compose
+- 合成
+description: comic_compositor 技能
 name: comic_compositor
 type: skill
-use_when:
-- 合成, 分镜, 漫剧
-version: 1.0.0

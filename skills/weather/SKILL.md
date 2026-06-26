@@ -1,7 +1,10 @@
 ---
 name: weather
-description: weather 技能
-category: general
-version: 1.0.0
+actions:
+  - weather
+  - 天气
+description: 天气查询
+use_when: 天气, 气温, 下雨
 ---
-# weather 技能
+# weather
+天气查询

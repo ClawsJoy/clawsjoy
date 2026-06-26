@@ -1,10 +1,6 @@
-capabilities:
-- description: video-description skill
-  name: video-description
-description: video-description skill
-enabled: true
+actions:
+- video
+- 视频
+description: video-description 技能
 name: video-description
 type: skill
-use_when:
-- video-description
-version: 1.0.0

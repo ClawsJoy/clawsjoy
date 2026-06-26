@@ -1,10 +1,6 @@
-capabilities:
-- description: gpu-safe skill
-  name: gpu-safe
-description: gpu-safe skill
-enabled: true
+actions:
+- gpu
+- 显卡
+description: gpu-safe 技能
 name: gpu-safe
 type: skill
-use_when:
-- gpu-safe
-version: 1.0.0

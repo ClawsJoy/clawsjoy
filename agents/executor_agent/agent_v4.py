@@ -44,8 +44,24 @@ class ExecutorAgentV4(BusinessAgent):
         elif t.startswith("workflow "):
             return self._exec_workflow(user_input.split(maxsplit=1)[1])
         else:
+            # cortex 已匹配 Skill，直接执行
+            skill_name = context.get("extracted", {}).get("_skill_name", "") if context else ""
+            if skill_name:
+                result = self._exec_skill(skill_name)
+                if "Skill不存在" not in str(result.get("response", "")):
+                    return result
+            
+            # 没匹配到 → chat_agent 兜底
+            try:
+                from core.agents.wisdom.wisdom_factory import wisdom_factory
+                chat = wisdom_factory.get_agent("chat_agent", self.user_id)
+                if chat:
+                    return chat.process(user_input, {})
+            except:
+                pass
+            
             return self._help()
-
+    
     def _exec_cmd(self, cmd: str) -> Dict:
         if not self._safe(cmd):
             return self._resp(f"❌ 命令被拒绝")

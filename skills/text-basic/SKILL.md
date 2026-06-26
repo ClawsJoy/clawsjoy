@@ -1,4 +1,4 @@
----
+actions: []
 name: text_basic
 description: text_basic 技能
 category: general
