@@ -1,51 +1,47 @@
-# ClawsJoy v6.0 - 本地AI矩阵系统
+# ClawsJoy v6.0 - 通用 AI 智能体操作系统
 
-## 简介
-ClawsJoy 是一个本地 AI 矩阵系统，支持 22 个 Agent 协作、漫剧工厂、意图识别、记忆管理。
+## 定位
+本地化部署的通用 AI 智能体操作系统。用户可二次开发垂直场景，通过 Skill 市场扩展能力。
 
-## v6.0.0 - 漫剧工厂 (当前版本)
+## 核心能力
 
-### 🎬 漫剧生产流水线
-- **小说创作**: WriterAgent 17章AI觉醒，支持session自动恢复
-- **分镜剧本**: ComicWriterAgent 小说→分镜剧本
-- **角色资产**: 林浩14张（三视图/表情/道具），豆包/即梦出图
-- **场景图**: DreamShaper SDXL 出图
-- **分镜合成**: rembg抠图+Pillow合成+亮度匹配
-- **表情切换**: 对白关键词自动匹配角色表情
-- **镜头运动**: zoompan规则引擎（推/拉/摇/静）
-- **视频输出**: ffmpeg concat → MP4
+### 🧠 智能体引擎
+- **意图识别**：fastText + 正则双引擎，口语化准确率 12/12
+- **记忆管理**：MemoryBank 双引用，多租户隔离
+- **22 个 Agent**：对话/代码/写作/翻译/计算/导演/记忆/文件/视频/音频/3D/方言...
 
-### 🎯 DirectorAgent 导演闭环
-- llava(CPU)逐帧审片 → qwen(GPU)评分+建议
-- 综合评分(1-5)、缺失素材清单、改进建议
-- video-description: 逐帧描述+分析日志
+### 📦 Skill 生态
+- **28 个内置 Skill**：漫剧合成/TTS配音/字幕/图像分析/天气/网络...
+- **社区市场**：双向兼容 OpenClaw，一键安装/发布
+- **安全校验**：安装自动安全检查
 
-### 🧠 意图识别升级
-- **fastText 分类器**: 口语化识别准确率 12/12
-- 全局单例加载，<1ms 推理
-- 正则降级为 fallback
+### 🎬 垂直场景示例：漫剧工厂
+- 小说创作 → 分镜剧本 → 角色资产 → 场景图 → 合成 → TTS 配音 → 字幕 → 视频
 
-### 🔧 核心修复
-- Intent Router WRITE/READ 分流，写入不检索历史
-- MemoryBank 双引用 permanent_memory，零双写
-- 多租户隔离：agent_pool 按 user_id 区分
-- cache_manager 缓存键含 user_id
-- LLM 模型统一为 qwen2.5:7b-instruct-q4_0
+## 硬件要求
+- Python 3.10+
+- Ollama（qwen2.5:7b / llava）
+- 6GB+ 显存（GPU）或 CPU 模式
+- Linux / WSL / macOS
 
-### 📦 新增 Skill
-- comic_compositor: 漫剧分镜合成
-- expression-switcher: 对白→表情匹配
-- video-description: 视频逐帧分析
-- vision_log: 图片自动描述存档
-- export_fasttext: 训练数据导出
+## 快速开始
+```bash
+git clone https://github.com/ClawsJoy/clawsjoy.git
+cd clawsjoy
+pip install -r requirements.txt
+python agent_gateway_enhanced.py
+访问 http://127.0.0.1:5002
 
+二次开发
+安装社区 Skill → web/skill_market.html
 
-## 版本历史
+开发新 Agent → 继承 BusinessAgent
 
-### v5.4.0 - 智慧化升级
-- 8个智慧Agent: Chat/Code/Analysis/Butler/Translate/Calculator/Orchestrator/Decision
-- 联邦学习: Agent间知识共享
-- 科学计算器、多语言翻译、任务编排
+发布到社区 → developer_api.py
 
-### v5.3.0 - 基础版本
-- 多轮对话记忆、持久化存储、意图识别、代码生成
+版本历史
+v6.0：通用智能体操作系统，Skill 市场，漫剧工厂
+
+v5.4：智慧化升级，联邦学习，多 Agent
+
+v5.3：多轮对话，意图识别，代码生成
