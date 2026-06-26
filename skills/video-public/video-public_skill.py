@@ -1,4 +1,4 @@
-\"\"\"video-public 技能实现\"\"\"
+"""video-public 技能实现"""
 
 
 class video_public:
