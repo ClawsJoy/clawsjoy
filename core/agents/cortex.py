@@ -14,6 +14,18 @@ from core.lib.llm_client import llm_client
 from core.lib.memory_bank import get_bank
 from core.lib.vector_bank import get_vector_bank
 from core.lib.growth_engine import get_growth
+
+# fastText 全局模型（只加载一次）
+_ft_model = None
+def _get_ft_model():
+    global _ft_model
+    if _ft_model is None:
+        try:
+            import fasttext
+            _ft_model = fasttext.load_model('models/intent_classifier.bin')
+        except:
+            pass
+    return _ft_model
 from core.lib.context_manager import get_context
 from core.agents.agent_pool import agent_pool
 
@@ -169,6 +181,16 @@ class AgentCortex:
     # ========== 意图识别 ==========
 
     def _infer_action(self, user_input: str) -> Tuple[str,float]:
+        # 1. fastText 意图分类（优先）
+        model = _get_ft_model()
+        if model:
+            label, conf = model.predict(user_input.strip())
+            action = label[0].replace('__label__', '')
+            if conf[0] > 0.7:
+                return action, conf[0]
+        except:
+            pass
+        
         text = user_input.strip().lower()
 
         import sys
