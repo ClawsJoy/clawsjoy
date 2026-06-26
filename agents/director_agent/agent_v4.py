@@ -209,7 +209,7 @@ class DirectorAgentV4(BusinessAgent):
 
         try:
             r = requests.post('http://localhost:11434/api/generate', json={
-                'model': 'qwen2.5:7b',
+                'model': 'qwen2.5:7b-instruct-q4_0',
                 'prompt': director_prompt,
                 'stream': False
             }, timeout=120)

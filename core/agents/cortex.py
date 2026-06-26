@@ -378,6 +378,12 @@ class AgentCortex:
 意图: {action}
 回复:"""
 
+        # 预热 LLM（首次加载慢）
+        try:
+            llm_client.generate("ready", model=MODEL_MAIN, max_tokens=5, task_type="reply", timeout=30)
+        except:
+            pass
+
         try:
             resp = llm_client.generate(f"用户说：{user_input}\n请简短回复。", model=MODEL_MAIN, max_tokens=200, task_type="reply", timeout=10)
             if resp and len(resp.strip())>2: return resp.strip()
