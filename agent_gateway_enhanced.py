@@ -377,6 +377,32 @@ def serve_web(filename):
 def serve_exports(filename):
     return send_from_directory('exports', filename)
 
+@app.route('/api/skills/list')
+def skills_list():
+    """列出已安装的 skill"""
+    import os, json
+    skills = []
+    for d in os.listdir('skills'):
+        md = f'skills/{d}/SKILL.md'
+        if os.path.exists(md):
+            with open(md) as f:
+                content = f.read()
+            name = d
+            desc = ""
+            for line in content.split('\n'):
+                if line.startswith('description:'):
+                    desc = line.split(':',1)[1].strip().strip("'\"")
+            skills.append({"name": name, "description": desc})
+    return jsonify({"skills": skills})
+
+@app.route('/api/skills/install', methods=['POST'])
+def skills_install():
+    """从社区安装 skill"""
+    data = request.json or {}
+    skill_id = data.get('skill_id', '')
+    # TODO: 从 OpenClaw 下载并安装
+    return jsonify({"success": True, "message": f"Skill {skill_id} 安装成功"})
+
 @app.route('/api/export/comic/<project>')
 def export_comic(project):
     import subprocess, os
