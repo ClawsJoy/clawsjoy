@@ -421,7 +421,15 @@ class AgentCortex:
             vbank.remember(action, user_input[:200], json.dumps({"input":user_input[:200],"extracted":extracted,"response":response[:200]}, ensure_ascii=False))
         growth.grow(user_input, {"action":action,"extracted":extracted}, response)
 
-    def get_stats(self): return {**self._stats,"cached_agents":len(self._agent_cache)}
+    def get_stats(self):
+        stats = {**self._stats}
+        stats["cached_agents"] = len(self._agent_cache)
+        stats["success_rate"] = round(stats["success"]/max(stats["total"],1)*100, 1)
+        stats["agents"] = {}
+        for k in self._agent_cache:
+            name = k.split(":")[0]
+            stats["agents"][name] = stats["agents"].get(name, 0) + 1
+        return stats
     def clear_cache(self): self._agent_cache.clear()
 
 
