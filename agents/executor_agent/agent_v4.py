@@ -88,19 +88,37 @@ class ExecutorAgentV4(BusinessAgent):
             return self._resp(f"❌ {e}")
 
     def _exec_skill(self, skill_name: str) -> Dict:
-        skill_path = Path(f"skills/{skill_name}")
-        if not skill_path.exists():
-            return self._resp(f"这个功能暂时不可用")
+        skill_dir = Path(f"skills/{skill_name}")
+        if not skill_dir.exists():
+            return self._resp("这个功能暂时不可用")
         try:
-            import sys
-            sys.path.insert(0, str(skill_path.parent))
-            module = __import__(skill_name)
-            if hasattr(module, 'execute'):
-                result = module.execute({})
-                return self._resp(f"✅ Skill完成\n\n{json.dumps(result, ensure_ascii=False, indent=2)[:2000]}")
-            return self._resp(f"这个功能暂时不可用")
-        except Exception as e:
-            return self._resp(f"❌ {e}")
+            import importlib.util, sys
+            py_files = [f for f in skill_dir.iterdir() if f.suffix == '.py' and f.stem != '__init__']
+            if not py_files:
+                return self._resp("这个功能暂时不可用")
+            
+            skill_file = str(py_files[0])
+            spec = importlib.util.spec_from_file_location(skill_name, skill_file)
+            mod = importlib.util.module_from_spec(spec)
+            sys.modules[skill_name] = mod
+            spec.loader.exec_module(mod)
+            
+            if hasattr(mod, 'execute'):
+                result = mod.execute({"text": "", "input": ""})
+                return self._resp(str(result.get("result", result.get("response", "完成")))[:500])
+            
+            for attr in dir(mod):
+                if attr.startswith('_'):
+                    continue
+                obj = getattr(mod, attr)
+                if hasattr(obj, 'execute'):
+                    result = obj().execute({"text": "", "input": ""})
+                    return self._resp(str(result.get("result", result.get("response", "完成")))[:500])
+            
+            return self._resp("这个功能暂时不可用")
+        except Exception:
+            return self._resp("这个功能暂时不可用")
+
 
     def _file_op(self, op: str) -> Dict:
         parts = op.split(maxsplit=1)

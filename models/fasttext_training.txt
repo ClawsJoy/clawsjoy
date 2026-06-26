@@ -99,3 +99,10 @@ __label__subtitle 加字幕
 __label__subtitle 配音
 __label__video 视频分析
 __label__video 视频描述
+
+__label__identity 我叫测试
+__label__identity 我叫张三
+__label__identity 我叫李四
+__label__identity 我是小红
+__label__identity 叫我小王
+__label__identity 我名字叫
