@@ -36,7 +36,18 @@ class ProactiveAgentV4(BusinessAgent):
         if any(kw in t for kw in ["查看提醒", "我的提醒"]):
             return self._list_reminders()
         
-        return self._resp("💡 输入「提醒我 5分钟后 喝水」或「查看提醒」")
+        # 根据上下文生成智能建议
+        suggestions = []
+        if "写" in t or "创作" in t:
+            suggestions.append("需要我帮你续写小说吗？")
+        if "漫剧" in t or "视频" in t:
+            suggestions.append("需要导出素材到视频工具吗？")
+        if "名字" in t or "我是" in t:
+            suggestions.append("需要我记住你的偏好吗？")
+        if not suggestions:
+            suggestions.append("输入「提醒我」设置提醒")
+            suggestions.append("输入「记住」保存信息")
+        return self._resp("💡 " + " | ".join(suggestions[:3]))
 
     # ================================================================
     #  设置提醒

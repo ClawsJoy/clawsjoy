@@ -17,7 +17,7 @@ from core.lib.config_helper import get_data_root
 class SelfUpgradingAgent:
     """自我升级型元认知智能体 - 不仅反思，还能改进"""
 
-    def __init__(self, model_name: str = "qwen2.5:7b"):
+    def __init__(self, model_name: str = "qwen2.5:7b-instruct-q4_0"):
         self.model_name = model_name
         self.reflection_dir = Path(f"{get_data_root()}/metacognition")
         self.reflection_dir.mkdir(parents=True, exist_ok=True)
@@ -263,7 +263,7 @@ class SelfUpgradingAgent:
 # 使用示例
 if __name__ == "__main__":
     # 测试
-    upgrader = SelfUpgradingAgent(model_name="qwen2.5:7b")
+    upgrader = SelfUpgradingAgent(model_name="qwen2.5:7b-instruct-q4_0")
 
     # 模拟chat_agent的日志
     mock_logs = [

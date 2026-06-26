@@ -179,7 +179,16 @@ class AgentCortex:
         self._learn(user_input, action, extracted, reply, latency_ms, user_id)
         self._stats["success"] += 1
 
-        return {"success":True,"response":reply,"output_content":reply,"intent":action,"confidence":confidence,"method":"v4","agents_used":agents,"extracted":extracted}
+        # 主动服务：生成建议
+        proactive = ""
+        try:
+            from core.agents.wisdom.wisdom_factory import wisdom_factory
+            pa = wisdom_factory.get_agent("proactive_agent", user_id)
+            proactive = pa.process(user_input, {"user_id": user_id}).get("response", "")[:300]
+        except:
+            pass
+
+        return {"success":True,"response":reply,"output_content":reply,"intent":action,"confidence":confidence,"method":"v4","agents_used":agents,"extracted":extracted,"proactive":proactive}
 
     # ========== 意图识别 ==========
 
@@ -433,6 +442,16 @@ class AgentCortex:
     # ========== 学习 ==========
 
     def _learn(self, user_input, action, extracted, response, latency_ms, user_id):
+        # 决策反馈记录
+        try:
+            feedback_file = Path("data/feedback.json")
+            existing = json.loads(feedback_file.read_text()) if feedback_file.exists() else {"success": [], "failure": []}
+            cat = "success" if latency_ms < 5000 else "failure"
+            existing[cat].append({"user_id": user_id, "action": action, "input": user_input[:100], "latency_ms": latency_ms, "time": datetime.now().isoformat()})
+            feedback_file.write_text(json.dumps(existing, indent=2))
+        except:
+            pass
+
         bank = get_bank(user_id, "memory_agent_v4")
         vbank = get_vector_bank(user_id)
         growth = get_growth(user_id)

@@ -15,7 +15,7 @@ import yaml
 class ConfigUpgrader:
     """配置升级器 - 自动优化Agent配置文件"""
 
-    def __init__(self, model_name: str = "qwen2.5:7b"):
+    def __init__(self, model_name: str = "qwen2.5:7b-instruct-q4_0"):
         self.model_name = model_name
         self.upgrade_log = Path("data/upgrades/upgrade_history.json")
         self.upgrade_log.parent.mkdir(parents=True, exist_ok=True)
@@ -160,7 +160,7 @@ class ConfigUpgrader:
                             if success_rate < 0.5
                             else 0.8 if success_rate > 0.9 else None
                         ),
-                        "model": "qwen2.5:7b",
+                        "model": "qwen2.5:7b-instruct-q4_0",
                         "max_tokens": None,
                         "prompt_improvements": "",
                     },
@@ -361,7 +361,7 @@ def _update_agent_workflow(self, agent_name: str, suggestion: Dict) -> bool:
 
 
 if __name__ == "__main__":
-    upgrader = ConfigUpgrader(model_name="qwen2.5:7b")
+    upgrader = ConfigUpgrader(model_name="qwen2.5:7b-instruct-q4_0")
 
     # 创建测试日志（成功率50%）
     bad_logs = []

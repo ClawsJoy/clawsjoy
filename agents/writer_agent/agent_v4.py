@@ -76,7 +76,7 @@ class WriterAgentV4(BusinessAgent):
         self._proactive = None
 
         # ========== LLM 配置 ==========
-        self._llm_model = "qwen2.5:7b"
+        self._llm_model = "qwen2.5:7b-instruct-q4_0"
         self._max_retries = 2
 
         # ========== 启动 ==========
