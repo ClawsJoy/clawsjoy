@@ -120,3 +120,5 @@ data/
 results/
 SadTalker/
 memory/session_*
+models/intent_classifier.bin
+client/
