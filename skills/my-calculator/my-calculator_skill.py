@@ -1,11 +1,11 @@
-\"\"\"my-calculator 技能实现\"\"\"
-
-
+"""计算器"""
 class my_calculator:
     name = "my-calculator"
-    description = "my-calculator 技能"
+    description = "简单计算器"
     version = "1.0.0"
-
     def execute(self, params):
-        # TODO: 实现具体逻辑
-        return {"success": True, "result": "my-calculator 执行成功"}
+        try:
+            expr = params.get("text", "0").replace("x", "*")
+            return {"success": True, "result": eval(expr)}
+        except:
+            return {"success": False, "error": "计算失败"}
