@@ -466,6 +466,17 @@ class AgentCortex:
             vbank.remember(action, user_input[:200], json.dumps({"input":user_input[:200],"extracted":extracted,"response":response[:200]}, ensure_ascii=False))
         growth.grow(user_input, {"action":action,"extracted":extracted}, response)
 
+    def get_learning_stats(self, user_id: str = None) -> Dict:
+        """查询学习数据"""
+        feedback_file = Path("data/feedback.json")
+        if feedback_file.exists():
+            data = json.loads(feedback_file.read_text())
+            return {
+                "total": len(data.get("success", [])) + len(data.get("failure", [])),
+                "success_rate": round(len(data.get("success", [])) / max(len(data.get("success", [])) + len(data.get("failure", [])), 1) * 100, 1)
+            }
+        return {"total": 0, "success_rate": 0}
+
     def get_stats(self):
         stats = {**self._stats}
         stats["cached_agents"] = len(self._agent_cache)
