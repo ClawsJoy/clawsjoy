@@ -1,11 +1,16 @@
-\"\"\"check-video-status 技能实现\"\"\"
+"""视频状态检查"""
+import subprocess, json
 
-
-class check_video_status:
+class check_video_status_skill:
     name = "check-video-status"
-    description = "check-video-status 技能"
+    description = "检查视频文件状态"
     version = "1.0.0"
-
+    
     def execute(self, params):
-        # TODO: 实现具体逻辑
-        return {"success": True, "result": "check-video-status 执行成功"}
+        path = params.get("path", "")
+        if not os.path.exists(path):
+            return {"success": False, "error": "文件不存在"}
+        result = subprocess.run(['ffprobe', '-v', 'quiet', '-print_format', 'json', '-show_format', path],
+                              capture_output=True, text=True)
+        info = json.loads(result.stdout)['format']
+        return {"success": True, "duration": float(info['duration']), "size": int(info['size'])}
