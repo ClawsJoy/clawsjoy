@@ -126,6 +126,7 @@ class AgentCortex:
         # 第1层：意图识别
         action, confidence = self._infer_action(user_input)
         extracted = self._extract(user_input, action)
+        self._last_extracted = {}  # 重置，防止跨请求污染
         self._last_action = action
         self._last_extracted = extracted
 
@@ -261,8 +262,12 @@ class AgentCortex:
             if model:
                 label, conf = model.predict(user_input.strip())
                 action = label[0].replace('__label__', '')
-                if conf[0] > 0.7:
+                # 高置信度直接返回，低置信度降级为 chat
+                if conf[0] > 0.8:
                     return action, conf[0]
+                if conf[0] < 0.5:
+                    return "chat", conf[0]
+                # 0.5-0.8 之间，走正则兜底，不直接信任
         except:
             pass
         
