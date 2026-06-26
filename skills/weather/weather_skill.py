@@ -1,11 +1,15 @@
-\"\"\"weather 技能实现\"\"\"
+"""天气查询"""
+import requests
 
-
-class weather:
+class weather_skill:
     name = "weather"
-    description = "weather 技能"
+    description = "天气查询"
     version = "1.0.0"
-
+    
     def execute(self, params):
-        # TODO: 实现具体逻辑
-        return {"success": True, "result": "weather 执行成功"}
+        city = params.get("city", "北京")
+        prompt = f"查询{city}今天的天气，给出简短回答。"
+        r = requests.post('http://127.0.0.1:11434/api/generate', json={
+            'model': 'qwen2.5:7b', 'prompt': prompt, 'stream': False
+        }, timeout=30)
+        return {"success": True, "weather": r.json().get('response', '')}

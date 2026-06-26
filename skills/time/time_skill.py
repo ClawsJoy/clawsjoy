@@ -1,11 +1,15 @@
-\"\"\"time 技能实现\"\"\"
+"""时间查询"""
+from datetime import datetime
 
-
-class time:
+class time_skill:
     name = "time"
-    description = "time 技能"
+    description = "时间查询"
     version = "1.0.0"
-
+    
     def execute(self, params):
-        # TODO: 实现具体逻辑
-        return {"success": True, "result": "time 执行成功"}
+        return {
+            "success": True,
+            "now": datetime.now().isoformat(),
+            "date": datetime.now().strftime("%Y-%m-%d"),
+            "weekday": ["周一","周二","周三","周四","周五","周六","周日"][datetime.now().weekday()]
+        }

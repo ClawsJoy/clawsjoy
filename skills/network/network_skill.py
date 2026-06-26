@@ -1,11 +1,14 @@
-\"\"\"network 技能实现\"\"\"
+"""网络检测"""
+import requests
 
-
-class network:
+class network_skill:
     name = "network"
-    description = "network 技能"
+    description = "网络检测"
     version = "1.0.0"
-
+    
     def execute(self, params):
-        # TODO: 实现具体逻辑
-        return {"success": True, "result": "network 执行成功"}
+        try:
+            r = requests.get('https://baidu.com', timeout=5)
+            return {"success": True, "online": True, "latency_ms": r.elapsed.total_seconds()*1000}
+        except:
+            return {"success": True, "online": False}
