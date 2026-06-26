@@ -43,6 +43,13 @@ class CacheManager:
         """清空缓存"""
         self._cache.clear()
     
+    def invalidate(self, key_prefix: str):
+        """精准失效：删除匹配前缀的缓存"""
+        keys = [k for k in self._cache if k.startswith(key_prefix)]
+        for k in keys:
+            del self._cache[k]
+        return len(keys)
+    
     def get_stats(self) -> Dict:
         """获取统计"""
         total = self._stats["hits"] + self._stats["misses"]
