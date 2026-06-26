@@ -205,7 +205,7 @@ class BusinessAgent(SmartAgent, JSONCapableMixin):
             context["_has_memory"] = True
 
         self._stats["total_interactions"] = self._stats.get("total_interactions", 0) + 1
-        cache_key = hashlib.md5(f"{user_input}:{self.name}".encode()).hexdigest()
+        cache_key = hashlib.md5(f"{self.user_id}:{user_input}:{self.name}".encode()).hexdigest()
 
         cached = cache_manager.get(cache_key)
         if cached:
