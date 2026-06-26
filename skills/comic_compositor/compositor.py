@@ -106,3 +106,13 @@ class StoryboardRecipe:
         }
 
 compositor = ComicCompositor()
+
+
+def execute(params):
+    """标准skill入口"""
+    comp = ComicCompositor()
+    return comp.composite(
+        params.get("scene", "场景01_林浩小屋"),
+        params.get("characters", []),
+        params.get("output", "合成.png")
+    )

@@ -1,41 +1,23 @@
-#!/usr/bin/env python3
-"""视觉分析技能 - 基于统一LLM客户端"""
+"""图像分析 - 使用llava"""
+import base64, requests, os
 
-import base64
-from pathlib import Path
-from core.lib.llm_client import llm_client
-
-
-class VisionAnalyzerSkill:
+class vision_analyzer:
     name = "vision_analyzer"
-    description = "图像分析"
-    version = "1.1.0"
+    description = "使用Ollama llava分析图像"
+    version = "1.0.0"
 
-    def __init__(self):
-        self.model = "llava"
-
-    def analyze(self, image_path: str, prompt: str = "描述这张图片") -> dict:
-        """分析图像"""
-        if not Path(image_path).exists():
-            return {"success": False, "error": f"图像不存在: {image_path}"}
-
+    def execute(self, params):
+        path = params.get("path", "")
+        if not path or not os.path.exists(path):
+            return {"success": False, "error": "请提供有效的图片路径"}
         try:
-            with open(image_path, 'rb') as f:
-                image_data = base64.b64encode(f.read()).decode()
+            with open(path, 'rb') as fp:
+                img = base64.b64encode(fp.read()).decode()
+            r = requests.post('http://localhost:11434/api/generate', json={
+                'model': 'llava:latest',
+                'prompt': params.get("question", "描述图片"),
+                'images': [img], 'stream': False
+            }, timeout=30)
+            return {"success": True, "description": r.json().get('response', '')}
         except Exception as e:
-            return {"success": False, "error": f"读取图像失败: {e}"}
-
-        return llm_client.generate_multimodal(
-            prompt=prompt,
-            model=self.model,
-            images=[image_data],
-            temperature=0.3,
-            max_tokens=512,
-            timeout=60,
-            task_type="vision"
-        )
-
-
-def execute(params):
-    skill = VisionAnalyzerSkill()
-    return skill.analyze(params.get("image"), params.get("prompt", "描述这张图片"))
+            return {"success": False, "error": str(e)}
