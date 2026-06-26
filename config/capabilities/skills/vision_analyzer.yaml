@@ -1,0 +1,7 @@
+description: 图像分析
+enabled: true
+name: vision_analyzer
+type: skill
+use_when:
+- 分析图, 看图
+version: 1.0.0

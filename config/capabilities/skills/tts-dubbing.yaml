@@ -1,0 +1,7 @@
+description: TTS配音
+enabled: true
+name: tts-dubbing
+type: skill
+use_when:
+- 配音, 语音
+version: 1.0.0
