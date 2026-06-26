@@ -37,7 +37,7 @@ class AgentPool:
     def get(self, agent_name: str, user_id: str = "default"):
         """从池中获取Agent实例，池空时自动创建"""
         with self._lock:
-            pool = self._pools.get(agent_name, [])
+            pool = self._pools.get(f"{agent_name}:{user_id}", [])
             if pool:
                 agent = pool.pop()
                 self._stats["hits"] += 1
@@ -46,8 +46,8 @@ class AgentPool:
         self._stats["misses"] += 1
         agent = self._create(agent_name, user_id)
         # 放入池中供后续复用
-        if agent and len(self._pools.get(agent_name, [])) < self.MAX_PER_AGENT:
-            self._pools[agent_name].append(agent)
+        if agent and len(self._pools.get(f"{agent_name}:{user_id}", [])) < self.MAX_PER_AGENT:
+            self._pools[f"{agent_name}:{user_id}"].append(agent)
         return agent
     
     def release(self, agent_name: str, agent):
@@ -70,7 +70,7 @@ class AgentPool:
             for i in range(count):
                 agent = self._create(agent_name, "pool")
                 if agent:
-                    self._pools[agent_name].append(agent)
+                    self._pools[f"{agent_name}:{user_id}"].append(agent)
         print(f"✅ Agent池预热完成: {self._total_size()}个实例")
         self._warmup_done = True
     
