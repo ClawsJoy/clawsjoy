@@ -90,7 +90,7 @@ class ExecutorAgentV4(BusinessAgent):
     def _exec_skill(self, skill_name: str) -> Dict:
         skill_path = Path(f"skills/{skill_name}")
         if not skill_path.exists():
-            return self._resp(f"❌ Skill不存在: {skill_name}")
+            return self._resp(f"这个功能暂时不可用")
         try:
             import sys
             sys.path.insert(0, str(skill_path.parent))
@@ -98,7 +98,7 @@ class ExecutorAgentV4(BusinessAgent):
             if hasattr(module, 'execute'):
                 result = module.execute({})
                 return self._resp(f"✅ Skill完成\n\n{json.dumps(result, ensure_ascii=False, indent=2)[:2000]}")
-            return self._resp(f"❌ {skill_name} 无execute函数")
+            return self._resp(f"这个功能暂时不可用")
         except Exception as e:
             return self._resp(f"❌ {e}")
 

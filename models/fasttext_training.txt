@@ -76,3 +76,26 @@ __label__gpu 显卡状态
 __label__gpu GPU显存
 __label__svg 生成svg
 __label__svg 画个图标
+
+__label__svg 画个SVG图
+__label__svg 生成svg
+__label__svg 画个图标
+__label__svg 做个logo
+__label__weather 天气怎么样
+__label__weather 今天天气
+__label__weather 会下雨吗
+__label__time 几点了
+__label__time 今天几号
+__label__time 星期几
+__label__version 版本
+__label__version 系统版本
+__label__network 网络检测
+__label__network 联网了吗
+__label__gpu 显卡状态
+__label__gpu GPU显存
+__label__compose 合成画面
+__label__compose 分镜合成
+__label__subtitle 加字幕
+__label__subtitle 配音
+__label__video 视频分析
+__label__video 视频描述
