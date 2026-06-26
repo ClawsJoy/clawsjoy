@@ -21,8 +21,10 @@ def _get_ft_model():
     global _ft_model
     if _ft_model is None:
         try:
-            import fasttext
-            _ft_model = fasttext.load_model('models/intent_classifier.bin')
+            import fasttext, warnings
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                _ft_model = fasttext.load_model('models/intent_classifier.bin')
         except:
             pass
     return _ft_model
