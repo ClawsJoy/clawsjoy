@@ -1,0 +1,23 @@
+# ClawsJoy v6.0 依赖
+
+# LLM
+ollama>=0.1.0
+
+# 图像处理
+Pillow>=10.0.0
+rembg>=2.0.0
+
+# 意图分类
+fasttext>=0.9.2
+
+# 深度学习
+torch>=2.0.0
+diffusers>=0.25.0
+transformers>=4.36.0
+
+# 视频
+ffmpeg-python>=0.2.0
+
+# 工具
+requests>=2.28.0
+numpy<2.0.0
