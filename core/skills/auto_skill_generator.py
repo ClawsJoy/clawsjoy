@@ -124,7 +124,7 @@ skill = {class_name}()
             results["{skill}"] = {{"success": False, "error": "image_path required"}}"""
                 )
 
-            elif skill == "translate":
+            elif skill == "translate_agent":
                 mappings.append(
                     f"""        # {skill}: 需要 text
         if "text" in params:
@@ -141,7 +141,7 @@ skill = {class_name}()
                     "target": params.get("target", "zh")
                 }})
             else:
-                results["{skill}"] = {{"success": False, "error": "no text to translate"}}
+                results["{skill}"] = {{"success": False, "error": "no text to translate - use translate_agent"}}
         else:
             results["{skill}"] = {{"success": False, "error": "text required"}}"""
                 )
@@ -171,7 +171,7 @@ skill = {class_name}()
         for skill in skills:
             if skill == "vision":
                 skill_entry += f"\n- {skill}: 需要 `image_path` 参数"
-            elif skill == "translate":
+            elif skill == "translate_agent":
                 skill_entry += (
                     f"\n- {skill}: 需要 `text` 参数，会自动从前置技能结果提取"
                 )
