@@ -14,7 +14,7 @@ from core.agents.builtin.config_upgrader import ConfigUpgrader
 class SmartUpgrader(ConfigUpgrader):
     """智能升级器 - 避免无效重复升级"""
 
-    def __init__(self, model_name: str = "qwen2.5:7b"):
+    def __init__(self, model_name: str = "qwen2.5:7b-instruct-q4_0"):
         super().__init__(model_name)
         self.cooldown_hours = 4  # 同Agent升级冷却时间4小时
         self.min_improvement_threshold = 0.05  # 最小改进阈值5%

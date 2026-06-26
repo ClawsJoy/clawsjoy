@@ -25,7 +25,7 @@ def timeout_handler(signum, frame):
 class ConfigUpgraderFixed:
     """配置升级器 - 增强版，带超时控制"""
 
-    def __init__(self, model_name: str = "qwen2.5:7b", timeout_seconds: int = 30):
+    def __init__(self, model_name: str = "qwen2.5:7b-instruct-q4_0", timeout_seconds: int = 30):
         self.model_name = model_name
         self.timeout_seconds = timeout_seconds
         self.upgrade_log = Path("data/upgrades/upgrade_history.json")
