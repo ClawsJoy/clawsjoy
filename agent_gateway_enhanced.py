@@ -110,13 +110,13 @@ def wisdom_chat():
 
 @app.route("/api/v5/enhanced/chat", methods=["POST"])
 def enhanced_chat():
-    """[DEPRECATED] → 转发到统一入口"""
+    """[兼容旧版] 转发到统一入口"""
     return v5_execute()
 
 
 @app.route("/api/agent/<agent_name>/message", methods=["POST"])
 def agent_message(agent_name):
-    """[DEPRECATED] 旧Agent直调 → 转发到统一入口"""
+    """[兼容旧版] 旧Agent直调 → 转发到统一入口"""
     return v5_execute()
 
 
