@@ -1,7 +1,9 @@
-"""video-download 技能"""
+"""video_download 技能"""
 
 from .video_download_skill import video_download
 
-def execute(params):
-    skill = video_download()
-    return skill.execute(params)
+
+def execute(params=None):
+    if params is None:
+        params = {}
+    return video_download().execute(params)

@@ -441,7 +441,8 @@ class AgentCortex:
         if agents:
             return agents[:1]
         if skills:
-            return ["executor_agent"]  # 交给executor调skill
+            self._last_extracted["_skill_name"] = skills[0]
+            return ["executor_agent"]
         if not agents:
             agents = ["chat_agent"]
         

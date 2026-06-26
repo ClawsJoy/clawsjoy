@@ -1,9 +1,9 @@
-# 大脑调度器 v6.0 - 适配当前系统
+# 大脑调度器 v6.0 _ 适配当前系统
 
 executors:
   math_executor:
     enabled: true
-    module: skills.my-calculator.my-calculator_skill
+    module: skills.my_calculator.my_calculator_skill
     class: my_calculator
     description: 数学计算
 
@@ -33,7 +33,7 @@ executors:
 
   gpu:
     enabled: true
-    module: skills.gpu-safe.gpu-safe_skill
+    module: skills.gpu_safe.gpu_safe_skill
     class: gpu_safe_skill
     description: GPU状态
 
@@ -44,30 +44,30 @@ executors:
     description: LLM兜底
 
 priority:
-  - name: math
+  _ name: math
     keywords: ["计算", "等于", "1+1", "算", "加", "减", "乘", "除"]
     handler: math_executor
 
-  - name: weather
+  _ name: weather
     keywords: ["天气", "气温", "下雨"]
     handler: weather
 
-  - name: time
+  _ name: time
     keywords: ["时间", "几点了", "今天几号", "星期几"]
     handler: time
 
-  - name: version
+  _ name: version
     keywords: ["版本", "version"]
     handler: version
 
-  - name: network
+  _ name: network
     keywords: ["网络", "联网", "在线"]
     handler: network
 
-  - name: gpu
+  _ name: gpu
     keywords: ["显卡", "GPU", "显存"]
     handler: gpu
 
-  - name: llm
+  _ name: llm
     default: true
     handler: llm_executor
