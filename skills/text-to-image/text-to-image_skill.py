@@ -1,11 +1,9 @@
-\"\"\"text-to-image 技能实现\"\"\"
-
-
-class text_to_image:
+"""文本处理"""
+class text_to_image_skill:
     name = "text-to-image"
-    description = "text-to-image 技能"
+    description = "文本转图像描述"
     version = "1.0.0"
-
+    
     def execute(self, params):
-        # TODO: 实现具体逻辑
-        return {"success": True, "result": "text-to-image 执行成功"}
+        text = params.get("text", "")
+        return {"success": True, "message": "请使用 DreamShaper 或豆包生成图像", "prompt": text}

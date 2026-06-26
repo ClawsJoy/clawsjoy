@@ -1,11 +1,22 @@
-\"\"\"todo 技能实现\"\"\"
+"""待办管理"""
+import json, os
 
-
-class todo:
+class todo_skill:
     name = "todo"
-    description = "todo 技能"
+    description = "待办事项管理"
     version = "1.0.0"
-
+    
+    def __init__(self):
+        self.file = "data/todos.json"
+        os.makedirs(os.path.dirname(self.file), exist_ok=True)
+    
     def execute(self, params):
-        # TODO: 实现具体逻辑
-        return {"success": True, "result": "todo 执行成功"}
+        action = params.get("action", "list")
+        todos = json.load(open(self.file)) if os.path.exists(self.file) else []
+        if action == "add":
+            todos.append({"task": params.get("task", ""), "done": False})
+        elif action == "done":
+            idx = params.get("index", 0)
+            if idx < len(todos): todos[idx]["done"] = True
+        json.dump(todos, open(self.file, 'w'))
+        return {"success": True, "todos": todos}
