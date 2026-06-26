@@ -1,11 +1,15 @@
-\"\"\"gpu-safe 技能实现\"\"\"
+"""GPU检测"""
+import torch
 
-
-class gpu_safe:
+class gpu_safe_skill:
     name = "gpu-safe"
-    description = "gpu-safe 技能"
+    description = "GPU状态检测"
     version = "1.0.0"
-
+    
     def execute(self, params):
-        # TODO: 实现具体逻辑
-        return {"success": True, "result": "gpu-safe 执行成功"}
+        return {
+            "success": True,
+            "cuda_available": torch.cuda.is_available(),
+            "device_count": torch.cuda.device_count(),
+            "device_name": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "N/A"
+        }

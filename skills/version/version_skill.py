@@ -1,11 +1,8 @@
-\"\"\"version 技能实现\"\"\"
-
-
-class version:
+"""版本查询"""
+class version_skill:
     name = "version"
-    description = "version 技能"
+    description = "系统版本"
     version = "1.0.0"
-
+    
     def execute(self, params):
-        # TODO: 实现具体逻辑
-        return {"success": True, "result": "version 执行成功"}
+        return {"success": True, "version": "6.0.0", "name": "ClawsJoy"}
