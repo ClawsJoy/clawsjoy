@@ -1,10 +1,6 @@
-capabilities:
-- description: version skill
-  name: version
-description: version skill
-enabled: true
+actions:
+- version
+- 版本
+description: version 技能
 name: version
 type: skill
-use_when:
-- version
-version: 1.0.0

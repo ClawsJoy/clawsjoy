@@ -1,3 +1,6 @@
+actions:
+- chat
+- recall
 agent:
   capabilities:
   - 视频策划

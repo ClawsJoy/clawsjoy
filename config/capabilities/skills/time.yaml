@@ -1,10 +1,6 @@
-capabilities:
-- description: time skill
-  name: time
-description: time skill
-enabled: true
+actions:
+- time
+- 时间
+description: time 技能
 name: time
 type: skill
-use_when:
-- time
-version: 1.0.0

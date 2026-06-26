@@ -60,3 +60,19 @@ __label__code 实现一个算法
 __label__code 写个网页
 __label__code 帮我写个API
 __label__code 写个工具
+
+__label__weather 天气怎么样
+__label__weather 今天天气
+__label__weather 气温多少
+__label__weather 会下雨吗
+__label__time 几点了
+__label__time 今天几号
+__label__time 星期几
+__label__version 版本
+__label__version 系统版本
+__label__network 网络检测
+__label__network 联网了吗
+__label__gpu 显卡状态
+__label__gpu GPU显存
+__label__svg 生成svg
+__label__svg 画个图标

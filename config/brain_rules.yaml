@@ -1,70 +1,73 @@
-# 大脑调度器规则配置
+# 大脑调度器 v6.0 - 适配当前系统
 
 executors:
   math_executor:
     enabled: true
-    module: core.executors.math_executor
-    class: MathExecutor
-    description: 数学计算执行器
+    module: skills.my-calculator.my-calculator_skill
+    class: my_calculator
+    description: 数学计算
 
-  workflow_executor:
+  weather:
     enabled: true
-    module: core.lib.workflow_executor
-    class: WorkflowExecutor
-    description: 工作流执行器
+    module: skills.weather.weather_skill
+    class: weather_skill
+    description: 天气查询
 
-  translate_executor:
+  time:
     enabled: true
-    module: skills.translate.translate_skill
-    class: TranslateSkill
-    description: 翻译执行器
-
-  llm_executor:
-    enabled: true
-    module: core.executors.llm_executor
-    class: LLMExecutor
-    description: LLM 通用执行器
-
-  video-download:
-    enabled: true
-    module: skills.video-download.scripts.main
-    class: VideoDownload
-    description: YouTube 视频下载
+    module: skills.time.time_skill
+    class: time_skill
+    description: 时间查询
 
   version:
     enabled: true
-    module: skills.version.scripts.main
-    class: VersionSkill
-    description: 获取系统版本信息
+    module: skills.version.version_skill
+    class: version_skill
+    description: 系统版本
+
+  network:
+    enabled: true
+    module: skills.network.network_skill
+    class: network_skill
+    description: 网络检测
+
+  gpu:
+    enabled: true
+    module: skills.gpu-safe.gpu-safe_skill
+    class: gpu_safe_skill
+    description: GPU状态
+
+  llm_executor:
+    enabled: true
+    module: core.agents.wisdom.wisdom_factory
+    class: wisdom_factory
+    description: LLM兜底
 
 priority:
-  - name: video-download
-    keywords: ["下载视频", "保存视频", "youtube下载", "下载YouTube"]
-    pattern: "https?://(?:youtu\\.be/|youtube\\.com/watch\\?v=)"
-    handler: video-download
-    description: YouTube视频下载
+  - name: math
+    keywords: ["计算", "等于", "1+1", "算", "加", "减", "乘", "除"]
+    handler: math_executor
+
+  - name: weather
+    keywords: ["天气", "气温", "下雨"]
+    handler: weather
+
+  - name: time
+    keywords: ["时间", "几点了", "今天几号", "星期几"]
+    handler: time
 
   - name: version
-    keywords: ["版本", "version", "系统版本"]
+    keywords: ["版本", "version"]
     handler: version
-    description: 查看版本
 
-  - name: math
-    keywords: ["计算", "加法", "减法", "乘法", "除法", "加", "减", "乘", "除"]
-    handler: math_executor
-    description: 数学计算
+  - name: network
+    keywords: ["网络", "联网", "在线"]
+    handler: network
 
-  - name: translate
-    keywords: ["翻译", "translate", "译成", "翻成"]
-    handler: translate_executor
-    description: 文本翻译
-
-  - name: workflow
-    keywords: ["工作流", "流程", "编排"]
-    handler: workflow_executor
-    description: 工作流执行
+  - name: gpu
+    keywords: ["显卡", "GPU", "显存"]
+    handler: gpu
 
   - name: llm
     default: true
     handler: llm_executor
-    description: LLM 兜底

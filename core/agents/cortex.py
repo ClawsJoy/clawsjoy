@@ -114,6 +114,7 @@ class AgentCortex:
         self._last_action = "chat"
         self._last_extracted: Dict = {}
         self.validator = CortexValidator()
+        self._agent_capabilities = self._load_agent_capabilities()
         logger.info("🧠 AgentCortex v4.0")
 
     def process(self, user_input: str, user_id: str = "default", context: Dict = None) -> Dict:
@@ -167,17 +168,59 @@ class AgentCortex:
                 return {"success":True,"response":f"我还需要知道：{'、'.join(validation['missing'])}。","method":"ask_user"}
 
         # 第1.8层：决策编排 - 复杂任务分解
-        if "然后" in user_input or "接着" in user_input or "再" in user_input:
+        # 检测是否需要编排
+        complex_kw = ["然后", "接着", "再", "漫剧", "做成视频", "一键", "全套", "帮我做", "整个流程", "帮我写", "写一首", "写个", "帮我画", "翻译成"]
+        need_orchestrate = any(kw in user_input for kw in complex_kw)
+        
+        if need_orchestrate:
             import re
-            steps = re.split(r'[，,然后接着再]+', user_input)
-            steps = [s.strip() for s in steps if s.strip()]
+            # 先用 LLM 分解
+            steps = []
+            try:
+                r = requests.post('http://127.0.0.1:11434/api/generate', json={
+                    'model': 'qwen2.5:7b-instruct-q4_0',
+                    'prompt': f'将用户请求分解为3-5个执行步骤，每行一个，只输出步骤：\n用户：{user_input}\n分解：',
+                    'stream': False
+                }, timeout=15)
+                for line in r.json().get('response', '').split('\n'):
+                    line = line.strip().lstrip('0123456789. -')
+                    if line and len(line) > 3:
+                        steps.append(line)
+            except:
+                pass
+            
+            # LLM 失败则用简单规则
+            if not steps:
+                steps = re.split(r'[，,然后接着再]+', user_input)
+                steps = [s.strip() for s in steps if s.strip()]
+            
             if 1 < len(steps) <= 10:
+                # 用 do_anything 智能路由每个步骤
                 results = []
                 for i, step in enumerate(steps):
                     if (time.time()-start_time) > 60:  # 总超时60秒
                         results.append("...")
                         break
-                    r = self.process(step, user_id, context)
+                    # do_anything 智能路由
+                    try:
+                        from skills.core.do_anything import DoAnythingSkill
+                        router = DoAnythingSkill()
+                        route = router.execute({"text": step, "input": step})
+                        target = route.get("target", "")
+                        if target and target != "llm":
+                            agent = self._get_agent(target, user_id)
+                            if agent:
+                                r = agent.process(step, {})
+                                results.append(r.get("response", "")[:300])
+                                continue
+                    except:
+                        pass
+                    # 如果是翻译步骤，传入上一步结果
+                    prev = results[-1] if results else ""
+                    if ("翻译" in step or "译" in step) and prev:
+                        r = self.process(f"翻译：{prev[:200]}", user_id, context)
+                    else:
+                        r = self.process(step, user_id, context)
                     results.append(r.get("response", ""))
                 reply = " | ".join(results)
                 latency_ms = (time.time()-start_time)*1000
@@ -378,10 +421,31 @@ class AgentCortex:
     # ========== Agent路由 ==========
 
     def _infer_agents(self, action):
-        m = {"greeting":["chat_agent"],"chat":["chat_agent"],"identity":["memory_agent"],"memory":["memory_agent"],"recall":["memory_agent"],"code":["code_agent"],"analyze":["analysis_agent"],"translate":["translate_agent"],"calculate":["calculator_agent"],"task":["butler_agent"]}
-        agents = m.get(action,["chat_agent"])
+        """精确匹配 Agent + Skill 的 actions 字段"""
+        agents = []
+        skills = []
+        try:
+            for name, info in self._agent_capabilities.items():
+                if action in info.get("actions", []):
+                    if info.get("type") == "skill":
+                        skills.append(name)
+                    else:
+                        agents.append(name)
+        except:
+            pass
         
-        # 学习优化：如果该 action 历史成功率低，降级到 chat_agent
+        # 优先级
+        priority = ["memory_agent", "chat_agent", "code_agent", "calculator_agent", "translate_agent"]
+        agents.sort(key=lambda x: priority.index(x) if x in priority else 99)
+        
+        if agents:
+            return agents[:1]
+        if skills:
+            return ["executor_agent"]  # 交给executor调skill
+        if not agents:
+            agents = ["chat_agent"]
+        
+        # 学习优化：低成功率降级
         try:
             fb = Path("data/feedback.json")
             if fb.exists():
@@ -390,11 +454,11 @@ class AgentCortex:
                 successes = sum(1 for f in data.get("success",[]) if f.get("action")==action)
                 total = failures + successes
                 if total > 3 and successes / total < 0.5:
-                    return ["chat_agent"]  # 降级
+                    return ["chat_agent"]
         except:
             pass
         
-        return agents
+        return agents[:1]  # 返回最佳匹配
 
     def _execute_single(self, agent_name: str, user_input: str, user_id: str, context_data: Dict = None) -> Dict:
         agent = self._get_agent(agent_name, user_id)
@@ -510,6 +574,45 @@ class AgentCortex:
                 "success_rate": round(len(data.get("success", [])) / max(len(data.get("success", [])) + len(data.get("failure", [])), 1) * 100, 1)
             }
         return {"total": 0, "success_rate": 0}
+
+    def _load_agent_capabilities(self) -> Dict:
+        """从配置加载 Agent + Skill 能力声明"""
+        caps = {}
+        import yaml
+        
+        # Agent 能力声明
+        cap_dir = Path("config/agents/capabilities")
+        if cap_dir.exists():
+            for f in cap_dir.glob("*.yaml"):
+                try:
+                    data = yaml.safe_load(f.read_text())
+                    agent = data.get("agent", data)
+                    name = agent.get("name", f.stem)
+                    actions = agent.get("actions", [])
+                    for cap in agent.get("capabilities", []):
+                        if isinstance(cap, dict):
+                            actions.append(cap.get("name", ""))
+                        elif isinstance(cap, str):
+                            actions.append(cap)
+                    if actions:
+                        caps[name] = {"type": "agent", "actions": actions}
+                except:
+                    pass
+        
+        # Skill 能力声明（和 Agent 同样的加载方式）
+        skill_cap_dir = Path("config/capabilities/skills")
+        if skill_cap_dir.exists():
+            for f in skill_cap_dir.glob("*.yaml"):
+                try:
+                    data = yaml.safe_load(f.read_text())
+                    name = data.get("name", f.stem)
+                    actions = data.get("actions", [])
+                    if actions:
+                        caps[name] = {"type": "skill", "actions": actions}
+                except:
+                    pass
+        
+        return caps
 
     def get_stats(self):
         stats = {**self._stats}
