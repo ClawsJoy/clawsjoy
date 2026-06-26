@@ -1,11 +1,16 @@
-\"\"\"document 技能实现\"\"\"
+"""文档处理"""
+import requests
 
-
-class document:
+class document_skill:
     name = "document"
-    description = "document 技能"
+    description = "文档格式转换和处理"
     version = "1.0.0"
-
+    
     def execute(self, params):
-        # TODO: 实现具体逻辑
-        return {"success": True, "result": "document 执行成功"}
+        text = params.get("text", "")
+        action = params.get("action", "summarize")
+        prompt = f"{action}: {text[:1000]}"
+        r = requests.post('http://127.0.0.1:11434/api/generate', json={
+            'model': 'qwen2.5:7b', 'prompt': prompt, 'stream': False
+        }, timeout=30)
+        return {"success": True, "result": r.json().get('response', '')}
