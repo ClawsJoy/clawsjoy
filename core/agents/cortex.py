@@ -166,6 +166,25 @@ class AgentCortex:
             else:
                 return {"success":True,"response":f"我还需要知道：{'、'.join(validation['missing'])}。","method":"ask_user"}
 
+        # 第1.8层：决策编排 - 复杂任务分解
+        if "然后" in user_input or "接着" in user_input or "再" in user_input:
+            import re
+            steps = re.split(r'[，,然后接着再]+', user_input)
+            steps = [s.strip() for s in steps if s.strip()]
+            if 1 < len(steps) <= 10:
+                results = []
+                for i, step in enumerate(steps):
+                    if (time.time()-start_time) > 60:  # 总超时60秒
+                        results.append("...")
+                        break
+                    r = self.process(step, user_id, context)
+                    results.append(r.get("response", ""))
+                reply = " | ".join(results)
+                latency_ms = (time.time()-start_time)*1000
+                self._learn(user_input, "orchestrated", {}, reply, latency_ms, user_id)
+                self._stats["success"] += 1
+                return {"success":True,"response":reply,"method":"orchestrated","steps":len(steps)}
+
         # 第2层：Agent执行
         agents = self._infer_agents(action)
         agent_result = None
@@ -360,7 +379,22 @@ class AgentCortex:
 
     def _infer_agents(self, action):
         m = {"greeting":["chat_agent"],"chat":["chat_agent"],"identity":["memory_agent"],"memory":["memory_agent"],"recall":["memory_agent"],"code":["code_agent"],"analyze":["analysis_agent"],"translate":["translate_agent"],"calculate":["calculator_agent"],"task":["butler_agent"]}
-        return m.get(action,["chat_agent"])
+        agents = m.get(action,["chat_agent"])
+        
+        # 学习优化：如果该 action 历史成功率低，降级到 chat_agent
+        try:
+            fb = Path("data/feedback.json")
+            if fb.exists():
+                data = json.loads(fb.read_text())
+                failures = sum(1 for f in data.get("failure",[]) if f.get("action")==action)
+                successes = sum(1 for f in data.get("success",[]) if f.get("action")==action)
+                total = failures + successes
+                if total > 3 and successes / total < 0.5:
+                    return ["chat_agent"]  # 降级
+        except:
+            pass
+        
+        return agents
 
     def _execute_single(self, agent_name: str, user_input: str, user_id: str, context_data: Dict = None) -> Dict:
         agent = self._get_agent(agent_name, user_id)
