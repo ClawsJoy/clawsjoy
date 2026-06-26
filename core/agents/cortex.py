@@ -182,12 +182,13 @@ class AgentCortex:
 
     def _infer_action(self, user_input: str) -> Tuple[str,float]:
         # 1. fastText 意图分类（优先）
-        model = _get_ft_model()
-        if model:
-            label, conf = model.predict(user_input.strip())
-            action = label[0].replace('__label__', '')
-            if conf[0] > 0.7:
-                return action, conf[0]
+        try:
+            model = _get_ft_model()
+            if model:
+                label, conf = model.predict(user_input.strip())
+                action = label[0].replace('__label__', '')
+                if conf[0] > 0.7:
+                    return action, conf[0]
         except:
             pass
         

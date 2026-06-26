@@ -373,6 +373,21 @@ def submit_feedback():
 def serve_web(filename):
     return send_from_directory('web', filename)
 
+@app.route('/exports/<path:filename>')
+def serve_exports(filename):
+    return send_from_directory('exports', filename)
+
+@app.route('/api/export/comic/<project>')
+def export_comic(project):
+    import subprocess, os
+    script = "scripts/export_for_seedance.py"
+    if not os.path.exists(script):
+        return {"success": False, "error": "导出脚本不存在"}
+    result = subprocess.run(["python3", script], capture_output=True, text=True, timeout=30)
+    if result.returncode == 0:
+        return {"success": True, "download_url": f"/exports/seedance_{project}.zip"}
+    return {"success": False, "error": result.stderr[:200]}
+
 @app.route('/workbench')
 def workbench():
     return send_from_directory('web/dashboard', 'workbench.html')

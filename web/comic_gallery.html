@@ -75,5 +75,42 @@
             </div>
         `).join('');
     </script>
+
+        <div style="text-align:center; margin:40px 0;">
+            <button id="exportBtn" onclick="exportAssets()" style="
+                background:gold; color:#1a1a2e; border:none; padding:15px 40px;
+                font-size:18px; font-weight:bold; border-radius:30px; cursor:pointer;
+            ">📦 导出漫剧素材包</button>
+            <p id="exportStatus" style="color:#aaa; margin-top:10px;"></p>
+        </div>
+        <script>
+        async function exportAssets() {
+            const btn = document.getElementById('exportBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ 打包中...';
+            document.getElementById('exportStatus').textContent = '正在打包...';
+            try {
+                const resp = await fetch('/api/export/comic/AI觉醒');
+                const data = await resp.json();
+                if (data.success) {
+                    const a = document.createElement('a');
+                    a.href = data.download_url;
+                    a.download = '';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    document.getElementById('exportStatus').textContent = '✅ 下载完成';
+            btn.disabled = false;
+            btn.textContent = '📦 导出漫剧素材包';
+                }
+            } catch(e) {
+                document.getElementById('exportStatus').textContent = '❌ 导出失败';
+            btn.disabled = false;
+            btn.textContent = '📦 导出漫剧素材包';
+            }
+        }
+        </script>
+    </div>
+
 </body>
 </html>

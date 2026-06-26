@@ -57,3 +57,20 @@ def health():
 def v3_status():
     """v3 兼容接口"""
     return jsonify({"version": "3.2.0", "compatible": True})
+
+@api_bp.route("/export/comic/<project>")
+def export_comic(project):
+    """导出漫剧素材包"""
+    import subprocess, os
+    script = "scripts/export_for_seedance.py"
+    if not os.path.exists(script):
+        return {"success": False, "error": "导出脚本不存在"}
+    
+    result = subprocess.run(["python3", script], capture_output=True, text=True)
+    if result.returncode == 0:
+        return {
+            "success": True,
+            "download_url": f"/exports/seedance_{project}.zip",
+            "message": "导出成功"
+        }
+    return {"success": False, "error": result.stderr}
