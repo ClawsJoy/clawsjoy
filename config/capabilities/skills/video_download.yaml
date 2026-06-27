@@ -8,3 +8,4 @@ type: skill
 use_when:
 - video_download
 version: 1.0.0
+actions: ['video_download', '下载视频']

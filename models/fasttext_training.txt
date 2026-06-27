@@ -106,3 +106,6 @@ __label__identity 我叫李四
 __label__identity 我是小红
 __label__identity 叫我小王
 __label__identity 我名字叫
+__label__youtube youtube.com
+__label__youtube youtu.be
+__label__youtube 下载 youtube 视频

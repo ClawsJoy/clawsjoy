@@ -38,7 +38,7 @@ class video_download:
         return self._download(url, quality)
 
     def _extract_url(self, text: str) -> str:
-        pattern = r'https?://(?:www\.)?(?:youtu\.be/|youtube\.com/watch\?v=)[^\s]+'
+        pattern = r'https?://(?:www\.)?(?:youtu\.be/|youtube\.com/(?:watch\?v=|shorts/))[^\s]+'
         match = re.search(pattern, text)
         return match.group(0) if match else ""
 
