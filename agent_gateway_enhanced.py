@@ -19,7 +19,7 @@ from flask import Flask, Response, jsonify, request, send_from_directory
 from flask_cors import CORS
 
 # ========== Ollama 自动启动 ==========
-import subprocess, time, requests as _req
+import subprocess as _sp, time as _time, requests as _req
 
 def _ensure_ollama():
     """确保 Ollama 双实例运行"""
@@ -27,8 +27,8 @@ def _ensure_ollama():
         _req.get('http://127.0.0.1:11434/api/tags', timeout=3)
     except:
         print("启动 Ollama GPU 实例...")
-        subprocess.Popen(['ollama', 'serve'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        time.sleep(3)
+        _sp.Popen(['ollama', 'serve'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        _time.sleep(3)
     
     try:
         _req.get('http://127.0.0.1:11435/api/tags', timeout=3)
@@ -38,8 +38,8 @@ def _ensure_ollama():
         env = os.environ.copy()
         env['OLLAMA_HOST'] = '127.0.0.1:11435'
         env['OLLAMA_NUM_GPU'] = '0'
-        subprocess.Popen(['ollama', 'serve'], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        time.sleep(5)
+        _sp.Popen(['ollama', 'serve'], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        _time.sleep(5)
 
 _ensure_ollama()
 
