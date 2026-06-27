@@ -112,7 +112,6 @@ class AgentCortex:
         self._stats = {"total":0,"success":0}
         self._agent_cache: Dict[str,Any] = {}
         self._last_action = "chat"
-        self._last_extracted: Dict = {}
         self.validator = CortexValidator()
         self._agent_capabilities = self._load_agent_capabilities()
         logger.info("🧠 AgentCortex v4.0")
@@ -126,9 +125,7 @@ class AgentCortex:
         # 第1层：意图识别
         action, confidence = self._infer_action(user_input)
         extracted = self._extract(user_input, action)
-        self._last_extracted = {}  # 重置，防止跨请求污染
         self._last_action = action
-        self._last_extracted = extracted
 
         # 第1.5层：改动点：根据action决定是否检索上下文 =====
         # WRITE类action：跳过上下文检索，不补全extracted
@@ -230,10 +227,10 @@ class AgentCortex:
                 return {"success":True,"response":reply,"method":"orchestrated","steps":len(steps)}
 
         # 第2层：Agent执行
-        agents = self._infer_agents(action)
+        agents = self._infer_agents(action, extracted)
         agent_result = None
         if agents and action not in ("greeting","chat"):
-            agent_result = self._execute_single(agents[0], user_input, user_id, context_data)
+            agent_result = self._execute_single(agents[0], user_input, user_id, context_data, extracted)
 
         # 第3层：回复生成
         reply = self._generate_reply(user_input, action, extracted, context_data, user_id, agent_result)
@@ -425,7 +422,7 @@ class AgentCortex:
 
     # ========== Agent路由 ==========
 
-    def _infer_agents(self, action):
+    def _infer_agents(self, action, extracted):
         """精确匹配 Agent + Skill 的 actions 字段"""
         agents = []
         skills = []
@@ -446,7 +443,7 @@ class AgentCortex:
         if agents:
             return agents[:1]
         if skills:
-            self._last_extracted["_skill_name"] = skills[0]
+            extracted["_skill_name"] = skills[0]
             return ["executor_agent"]
         if not agents:
             agents = ["chat_agent"]
@@ -466,7 +463,7 @@ class AgentCortex:
         
         return agents[:1]  # 返回最佳匹配
 
-    def _execute_single(self, agent_name: str, user_input: str, user_id: str, context_data: Dict = None) -> Dict:
+    def _execute_single(self, agent_name: str, user_input: str, user_id: str, context_data: Dict = None, extracted: Dict = None) -> Dict:
         agent = self._get_agent(agent_name, user_id)
         if not agent:
             return {"success": False, "response": f"Agent不可用"}
@@ -474,7 +471,7 @@ class AgentCortex:
         ctx = {
             "user_id": user_id,
             "action": self._last_action,
-            "extracted": self._last_extracted,
+            "extracted": extracted or {},
             "pre_fetched": context_data.get("补全", {}).get("pre_fetched", []) if context_data else [], # ✅ 传递预检索结果
         }
 
