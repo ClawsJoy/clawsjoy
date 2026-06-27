@@ -18,3 +18,4 @@ examples:
     output: "视频已下载到 ~/Downloads/"
   - input: "视频信息 https://youtu.be/xxx"
     output: "标题: xxx, 时长: 10:00"
+actions: ['youtube', '视频下载', 'download']

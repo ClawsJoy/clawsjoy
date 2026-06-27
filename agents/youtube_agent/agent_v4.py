@@ -51,12 +51,22 @@ class YoutubeAgentV4(BusinessAgent):
     # ================================================================
     #  下载
     # ================================================================
-
     def _download_video(self, user_input: str) -> Dict:
         url = self._extract_url(user_input)
         if not url:
             return self._resp("请提供 YouTube 链接。示例：下载 https://youtu.be/xxx")
-        return self._resp(f"⏳ 正在下载：{url}\n\n💡 需要安装 yt-dlp 技能")
+        
+        # 调 video_download skill 执行实际下载
+        try:
+            from skills.video_download.video_download_skill import video_download
+            result = video_download().execute({"url": url})
+            if result.get("success"):
+                return self._resp(f"✅ 下载完成\n\n{result.get('file', result.get('message', ''))}")
+            else:
+                return self._resp(f"❌ 下载失败：{result.get('error', '未知错误')}")
+        except Exception as e:
+            return self._resp(f"❌ 下载失败：{e}")
+
 
     # ================================================================
     #  视频信息
@@ -129,7 +139,7 @@ class YoutubeAgentV4(BusinessAgent):
     # ================================================================
 
     def _extract_url(self, text: str) -> str:
-        pattern = r'https?://(?:www\.)?(?:youtu\.be/|youtube\.com/watch\?v=)[^\s]+'
+        pattern = r'https?://(?:www\.)?(?:youtu\.be/|youtube\.com/(?:watch\?v=|shorts/))[^\s]+'
         match = re.search(pattern, text)
         return match.group(0) if match else ""
 

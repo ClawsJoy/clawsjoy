@@ -253,37 +253,38 @@ class AgentCortex:
     # ========== 意图识别 ==========
 
     def _infer_action(self, user_input: str) -> Tuple[str,float]:
-        # 1. fastText 意图分类（优先）
-        try:
-            model = _get_ft_model()
-            if model:
-                label, conf = model.predict(user_input.strip())
-                action = label[0].replace('__label__', '')
-                # 高置信度直接返回，低置信度降级为 chat
-                if conf[0] > 0.8:
-                    return action, conf[0]
-                if conf[0] < 0.5:
-                    return "chat", conf[0]
-                # 0.5-0.8 之间，走正则兜底，不直接信任
-        except:
-            pass
-        
+        """意图识别 - 规则优先 → fastText → 正则 → chat"""
         text = user_input.strip().lower()
-
         import sys
 
-        # ===== 第0层：特殊查询（最高优先级） =====
+        # 第0层：规则优先（最高优先级）
+        # 0.1 YouTube URL
+        if 'youtube.com' in text or 'youtu.be' in text:
+            return "youtube", 0.95
+        # 0.2 特殊查询
         if re.search(r"我叫(?:什么|来着)", text):
             return "recall", 0.90
         if re.search(r"上次.*密码|密码.*多少|那个密码", text):
             return "recall", 0.90
 
+        # 第1层：fastText 分类
+        try:
+            model = _get_ft_model()
+            if model:
+                label, conf = model.predict(user_input.strip())
+                action = label[0].replace('__label__', '')
+                if conf[0] > 0.8:
+                    return action, conf[0]
+        except:
+            pass
+
+        # 第2层：正则匹配
         # greeting
         greet = ["^你好","^嗨","^hi","^hello","^你是谁","^你叫什么","^你是哪位","^介绍一下"]
         for p in greet:
             if re.search(p, text): return "greeting", 0.95
 
-        # identity（必须在memory之前）
+        # identity
         if re.search(r"^我是[^谁]", text) or re.search(r"^我叫[^什来]", text) or re.search(r"^叫我", text):
             return "identity", 0.90
         if "名字叫" in text and not any(w in text for w in ["什么","来着","呢"]):
@@ -296,7 +297,7 @@ class AgentCortex:
 
         # recall
         recall_words = ["还记得","记不记得","记得吗","你忘了吗","帮我查","帮我找","查一下","找一下",
-                        "是什么","哪些","哪里","怎么","如何","谁","来着","多少","是多少", "是啥", "啥", "什么东西", "吃的", "爱吃什么", "喜欢什么", "有没有", "在哪儿", "在哪"]
+                        "是什么","哪些","哪里","怎么","如何","谁","来着","多少","是多少","是啥","啥"]
         if any(w in text for w in recall_words):
             return "recall", 0.80
 
