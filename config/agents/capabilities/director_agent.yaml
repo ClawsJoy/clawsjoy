@@ -43,3 +43,4 @@ agent:
     - 缺失素材检测与建议
     title: 导演
   type: builtin
+type: agent

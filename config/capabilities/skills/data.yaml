@@ -1,3 +1,7 @@
+actions:
+- data
+- 数据处理
+- 处理数据
 capabilities:
 - description: data skill
   name: data
@@ -5,6 +9,4 @@ description: data skill
 enabled: true
 name: data
 type: skill
-use_when:
-- data
 version: 1.0.0

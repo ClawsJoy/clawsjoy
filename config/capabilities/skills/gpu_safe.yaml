@@ -2,5 +2,7 @@ actions:
 - gpu
 - 显卡
 description: gpu-safe 技能
+enabled: true
 name: gpu-safe
 type: skill
+version: 1.0.0

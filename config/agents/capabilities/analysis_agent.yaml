@@ -14,3 +14,4 @@ examples:
 - input: 总结这份报告
   output: 返回3-5个关键要点
 name: analysis_agent
+type: agent

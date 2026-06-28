@@ -109,3 +109,46 @@ __label__identity 我名字叫
 __label__youtube youtube.com
 __label__youtube youtu.be
 __label__youtube 下载 youtube 视频
+
+__label__fetch 拿水杯
+__label__fetch 帮我拿遥控器
+__label__fetch 给我杯子
+__label__fetch 把书拿来
+__label__fetch 取一下手机
+__label__fetch 拿瓶子
+__label__fetch 帮我拿本书
+__label__fetch 递给我遥控器
+__label__patrol 巡逻
+__label__patrol 去巡逻
+__label__cleanup 收拾
+__label__cleanup 整理桌子
+__label__cleanup 打扫
+
+__label__data 处理数据
+__label__data 数据处理
+__label__data 分析数据
+
+__label__data 处理数据
+__label__data 数据处理
+__label__data 分析数据
+
+__label__data 处理数据
+__label__data 数据处理
+__label__data 分析数据
+
+__label__data 处理数据
+__label__data 数据处理
+__label__data 分析数据
+
+__label__dialect 方言训练
+__label__dialect 方言练习
+__label__dialect 讲方言
+__label__dialect 方言对话
+__label__dialect 方言模式
+__label__dialect 教方言
+__label__dialect 方言学习
+__label__dialect 练方言
+__label__exit 退出
+__label__exit 结束
+__label__exit 停止
+__label__exit 关闭

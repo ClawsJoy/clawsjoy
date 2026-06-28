@@ -83,6 +83,25 @@ class DecisionAgentV4(BusinessAgent):
                 "reasoning": f"匹配: {', '.join(matched)}" if matched else "无关键词匹配"
             })
         
+        # 语义消歧：防止明显的误匹配
+        DISAMBIGUATION = {
+            "code_agent": {
+                "写诗": 0, "写歌": 0, "写小说": 0, "写文章": 0, "写作文": 0,
+                "写日记": 0, "写故事": 0, "写剧本": 0, "写信": 0, "写邮件": 0,
+            },
+            "calculator_agent": {
+                "日历": 0, "日期": 0, "星期": 0, "时间": 0,
+            },
+        }
+        
+        for r in results:
+            agent = r["agent"]
+            if agent in DISAMBIGUATION:
+                for keyword, penalty in DISAMBIGUATION[agent].items():
+                    if keyword in t:
+                        r["confidence"] = penalty
+                        r["reasoning"] = f"语义消歧: '{keyword}' 不应路由到 {agent}"
+        
         return sorted(results, key=lambda x: x["confidence"], reverse=True)
 
     # ================================================================

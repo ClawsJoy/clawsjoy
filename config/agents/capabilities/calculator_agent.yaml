@@ -12,3 +12,4 @@ examples:
 - input: 计算 sin(pi/2)
   output: sin(pi/2) = 1
 name: calculator_agent
+type: agent

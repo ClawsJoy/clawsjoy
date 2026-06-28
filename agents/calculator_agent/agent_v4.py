@@ -38,7 +38,9 @@ class CalculatorAgentV4(BusinessAgent):
         return (True, 0.85)
 
     def _execute_business(self, user_input: str, context: Optional[Dict] = None) -> Dict:
-        expression = self._extract_expression(user_input)
+        # 优先从 context 获取已提取的表达式
+        extracted = context.get("extracted", {}) if context else {}
+        expression = extracted.get("expression", "") or self._extract_expression(user_input)
         if not expression:
             return self._resp(self._help())
         

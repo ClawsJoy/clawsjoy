@@ -2,5 +2,7 @@ actions:
 - network
 - 网络
 description: network 技能
+enabled: true
 name: network
 type: skill
+version: 1.0.0

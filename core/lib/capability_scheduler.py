@@ -105,7 +105,7 @@ class CapabilityScheduler:
     def _execute_skill(self, skill_name: str, user_input: str, user_id: str) -> Dict:
         """执行 Skill"""
         try:
-            from core.lib.skill_registry_v4 import skill_registry
+            from core.lib.skill_registry_v6 import skill_registry
             params = {"input": user_input}
             result = skill_registry.execute_skill(skill_name, params)
             return {"success": True, "result": result}
