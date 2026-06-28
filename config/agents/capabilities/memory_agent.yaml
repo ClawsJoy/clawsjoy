@@ -24,3 +24,4 @@ examples:
 - input: 回忆 名字
   output: 📖 名字 = 张三
 name: memory_agent
+type: agent

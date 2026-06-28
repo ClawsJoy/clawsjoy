@@ -12,3 +12,4 @@ examples:
 - input: 翻译 你好 为英文
   output: 你好 的英文是'hello'
 name: translate_agent
+type: agent

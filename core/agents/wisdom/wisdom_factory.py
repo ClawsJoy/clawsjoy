@@ -8,6 +8,9 @@
 - 新增 get_agent() 直接返回 agent_v4 实例
 """
 
+import sys, os
+sys.path.insert(0, os.path.expanduser('~/clawsjoy_robotics'))
+
 from typing import Dict, Optional
 
 from core.lib.agent_registry import agent_registry
@@ -26,6 +29,7 @@ class WisdomFactory:
         "analysis_agent": ("agents.analysis_agent.agent_v4", "AnalysisAgentV4"),
         "butler_agent": ("agents.butler_agent.agent_v4", "ButlerAgentV4"),
         "translate_agent": ("agents.translate_agent.agent_v4", "TranslateAgentV4"),
+        "robotics_agent": ("robotics_agent", "RoboticsAgentV4"),
         "calculator_agent": ("agents.calculator_agent.agent_v4", "CalculatorAgentV4"),
         "decision_agent": ("agents.decision_agent.agent_v4", "DecisionAgentV4"),
         "vision_agent": ("agents.vision_agent.agent_v4", "VisionAgentV4"),
@@ -76,9 +80,20 @@ class WisdomFactory:
             cls._instance._init()
         return cls._instance
 
+    # 预热配置
+    WARM_POOL = {
+        "chat_agent": 2,
+        "code_agent": 1,
+        "memory_agent": 1,
+        "calculator_agent": 1,
+        "translate_agent": 1,
+        "writer_agent": 1,
+    }
+
     def _init(self):
         print("🧠 WisdomFactory v5.0 初始化")
         self._sync_to_registry()
+        self._warmup()
 
     def _sync_to_registry(self):
         """同步 Agent 到注册中心"""
@@ -93,6 +108,20 @@ class WisdomFactory:
                     "status": "active"
                 })
         print(f"  📋 同步 {len(self.AGENT_REGISTRY)} 个Agent到注册中心")
+
+    def _warmup(self):
+        """后台预热高频Agent"""
+        import threading
+        def _do_warmup():
+            print("🔥 Agent预热中...")
+            for agent_name, count in self.WARM_POOL.items():
+                for _ in range(count):
+                    try:
+                        self.get_agent(agent_name, "pool")
+                    except:
+                        pass
+            print(f"✅ Agent预热完成")
+        threading.Thread(target=_do_warmup, daemon=True).start()
 
     # ====================================================================
     #  获取Agent（唯一入口）

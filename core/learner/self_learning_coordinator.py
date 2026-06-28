@@ -21,7 +21,7 @@ from typing import Dict, List, Optional
 from core.agents.builtin.chat_agent import chat_agent
 from core.agents.builtin.personal_butler_v2 import PersonalButlerV2
 from core.lib.skill_loader_v3 import skill_loader
-from core.lib.skill_registry_v2 import SkillRegistryV2
+from core.lib.skill_registry_v6 import SkillRegistryV6 as SkillRegistryV2
 
 # 尝试导入可选模块
 try:

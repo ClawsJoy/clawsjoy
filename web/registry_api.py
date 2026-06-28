@@ -27,7 +27,7 @@ from agents.multi.agent_registry_v2 import agent_registry
 
 from lib.service_registry_v2 import service_registry
 from lib.skill_loader_v3 import skill_loader
-from lib.skill_registry_v2 import skill_registry
+from core.lib.skill_registry_v6 import skill_registry
 
 
 # 静态页面
@@ -76,7 +76,7 @@ def get_skills_stats():
             cat = "image"
         elif skill_name in ["manju_maker", "video_uploader", "add_subtitles"]:
             cat = "video"
-        elif skill_name in ["do_anything", "calibrated_executor", "quality_gate"]:
+        elif skill_name in ["calibrated_executor", "quality_gate"]:
             cat = "core"
         elif skill_name in ["text_processor", "json_parser", "hot_dual_script"]:
             cat = "text"

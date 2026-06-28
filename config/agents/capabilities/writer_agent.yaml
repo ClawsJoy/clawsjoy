@@ -20,3 +20,4 @@ examples:
 - input: 润色：今天天气很好
   output: 今日阳光明媚，心情愉悦
 name: writer_agent
+type: agent

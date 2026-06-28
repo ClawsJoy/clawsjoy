@@ -1,3 +1,5 @@
+actions:
+- video-scene
 capabilities:
 - description: video-scene skill
   name: video-scene
@@ -5,6 +7,4 @@ description: video-scene skill
 enabled: true
 name: video-scene
 type: skill
-use_when:
-- video-scene
 version: 1.0.0

@@ -1,7 +1,0 @@
-description: 智能调度器
-enabled: true
-name: core
-type: skill
-use_when:
-- 调度, 路由, 计算
-version: 1.0.0

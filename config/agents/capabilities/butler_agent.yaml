@@ -20,3 +20,4 @@ examples:
 - input: 我的待办
   output: 📋 待办列表：1. 买牛奶
 name: butler_agent
+type: agent

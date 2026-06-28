@@ -30,7 +30,6 @@ def _get_ft_model():
             pass
     return _ft_model
 from core.lib.context_manager import get_context
-from core.agents.agent_pool import agent_pool
 
 logger = logging.getLogger(__name__)
 
@@ -113,6 +112,7 @@ class AgentCortex:
         self._agent_cache: Dict[str,Any] = {}
         self._last_action = "chat"
         self.validator = CortexValidator()
+        self._session_context: Dict[str, str] = {}  # user_id → mode
         self._agent_capabilities = self._load_agent_capabilities()
         logger.info("🧠 AgentCortex v4.0")
 
@@ -122,9 +122,49 @@ class AgentCortex:
         if not user_input or len(user_input.strip()) == 0:
             return {"success": True, "response": "请输入您的问题", "method": "empty"}
 
+        # 第0层：加载会话模式配置 + 检测当前模式
+        session_modes = self._load_session_modes()
+        current_mode = self._session_context.get(user_id, "")
+        
+        # 退出指令：从配置读取退出关键词
+        if current_mode and current_mode in session_modes:
+            exit_keywords = session_modes[current_mode].get("exit_keywords", ["退出", "结束"])
+        else:
+            exit_keywords = ["退出", "结束", "停止", "关闭"]
+        if current_mode and any(kw in user_input for kw in exit_keywords):
+            old_mode = current_mode
+            self._session_context.pop(user_id, None)
+            return {
+                "success": True,
+                "response": f"👋 已退出{old_mode}模式",
+                "method": "session_exit",
+                "intent": "chat",
+                "agents_used": ["chat_agent"]
+            }
+        
         # 第1层：意图识别
         action, confidence = self._infer_action(user_input)
         extracted = self._extract(user_input, action)
+        
+        # 模式切换检测（使用已加载的 session_modes）
+        for mode_name, mode_config in session_modes.items():
+            for kw in mode_config.get("keywords", []):
+                if kw in user_input:
+                    self._session_context[user_id] = mode_name
+                    # 查找该模式对应的 agent action
+                    agent_name = mode_config.get("agent", "")
+                    agent_actions = self._agent_capabilities.get(agent_name, {}).get("actions", [])
+                    if agent_actions:
+                        action = agent_actions[0]  # 用第一个注册的 action
+                    break
+        
+        # 会话上下文覆盖：如果用户在某个模式中
+        if current_mode and current_mode in session_modes:
+            extracted["_mode"] = current_mode
+            agent_name = session_modes[current_mode].get("agent", "")
+            agent_actions = self._agent_capabilities.get(agent_name, {}).get("actions", [])
+            if agent_actions:
+                action = agent_actions[0]
         self._last_action = action
 
         # 第1.5层：改动点：根据action决定是否检索上下文 =====
@@ -163,7 +203,7 @@ class AgentCortex:
                 for field, results in retrieved.items():
                     if results and not extracted.get(field): extracted[field] = results[0].content
             else:
-                return {"success":True,"response":f"我还需要知道：{'、'.join(validation['missing'])}。","method":"ask_user"}
+                return {"success":True,"response":f"我还需要知道：{'、'.join(validation['missing'])}。","method":"ask_user","intent":action,"agents_used":[]}
 
         # 第1.8层：决策编排 - 复杂任务分解
         # 检测是否需要编排
@@ -193,15 +233,12 @@ class AgentCortex:
                 steps = [s.strip() for s in steps if s.strip()]
             
             if 1 < len(steps) <= 10:
-                # 用 do_anything 智能路由每个步骤
                 results = []
                 for i, step in enumerate(steps):
                     if (time.time()-start_time) > 60:  # 总超时60秒
                         results.append("...")
                         break
-                    # do_anything 智能路由
                     try:
-                        from skills.core.do_anything import DoAnythingSkill
                         router = DoAnythingSkill()
                         route = router.execute({"text": step, "input": step})
                         target = route.get("target", "")
@@ -315,6 +352,12 @@ class AgentCortex:
     def _extract(self, user_input: str, action: str) -> Dict:
         text = user_input.strip()
         extracted = {}
+
+        if action == "calculate":
+            expr = re.sub(r'[^0-9+\-*/().]', '', text)
+            if expr:
+                extracted["表达式"] = expr
+            return extracted
 
         if action == "memory":
             content = text
@@ -487,12 +530,11 @@ class AgentCortex:
     def _get_agent(self, agent_name, user_id):
         k = f"{agent_name}:{user_id}"
         if k in self._agent_cache: return self._agent_cache[k]
-        a = agent_pool.get(agent_name, user_id)
-        if not a:
-            try:
-                from core.agents.wisdom.wisdom_factory import wisdom_factory
-                a = wisdom_factory.get_agent(agent_name, user_id)
-            except: pass
+        try:
+            from core.agents.wisdom.wisdom_factory import wisdom_factory
+            a = wisdom_factory.get_agent(agent_name, user_id)
+        except:
+            a = None
         if a: self._agent_cache[k] = a
         return a
 
@@ -578,6 +620,15 @@ class AgentCortex:
                 "success_rate": round(len(data.get("success", [])) / max(len(data.get("success", [])) + len(data.get("failure", [])), 1) * 100, 1)
             }
         return {"total": 0, "success_rate": 0}
+
+    def _load_session_modes(self) -> Dict:
+        """加载会话模式配置"""
+        import yaml
+        config_path = Path("config/session_modes.yaml")
+        if config_path.exists():
+            data = yaml.safe_load(config_path.read_text())
+            return data.get("modes", {})
+        return {}
 
     def _load_agent_capabilities(self) -> Dict:
         """从配置加载 Agent + Skill 能力声明"""

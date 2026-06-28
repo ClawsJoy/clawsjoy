@@ -1,21 +1,17 @@
 #!/usr/bin/env python3
-"""DialectAgent v4.2 - 精简稳定版（方言助手 - 能说能学）"""
+"""DialectAgent v4.3 - 方言学习引擎版"""
 
-import sys
-import os
+import sys, os, re, json, random
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-import re
-import json
 from pathlib import Path
 from typing import Dict, Optional, Tuple
 
 from core.agents.business.business_agent import BusinessAgent
+from core.lib.dialect_learning_engine import DialectLearningEngine
 
 
 class DialectAgentV4(BusinessAgent):
-    """方言 Agent - 精简稳定版（支持学习新方言）"""
-
     name = "dialect_agent_v4"
     description = "智慧方言助手"
     version = "5.0.0"
@@ -23,132 +19,139 @@ class DialectAgentV4(BusinessAgent):
     def __init__(self, user_id: str = "default"):
         super().__init__(user_id=user_id)
         self.user_id = user_id
-        self._dialect_db = self._load_dialect_db()
+        self._learner = DialectLearningEngine(user_id)
+        self._mode = "idle"
         print(f"🗣 DialectAgent v{self.version} 启动")
-        print(f"   📚 已加载 {len(self._dialect_db)} 条方言知识")
+        stats = self._learner.stats()
+        v = stats["vocabulary_size"]
+        r = stats["reply_templates"]
+        print(f"   📚 已学 {v} 方言词 | {r} 回复 | 共 {v + r} 项")
 
     def can_handle_json(self, action: str, target: str) -> Tuple[bool, float]:
         return (True, 0.85)
 
     def _execute_business(self, user_input: str, context: Optional[Dict] = None) -> Dict:
-        t = user_input.lower()
-        
-        # 学习方言：用户教方言
-        if any(kw in t for kw in ["就是", "意思是", "指的是", "叫"]) and "方言" in t:
-            return self._learn_dialect(user_input)
-        
-        # 查询方言
-        if any(kw in t for kw in ["怎么说", "怎么讲", "方言", "用方言"]):
-            return self._translate_to_dialect(user_input)
-        
-        # 列出已学方言
-        if any(kw in t for kw in ["列出方言", "已学方言", "方言列表"]):
+        t = user_input.strip()
+        mode = context.get("extracted", {}).get("_mode", "") if context else ""
+        if not mode:
+            mode = self._mode
+
+        # 模式切换
+        if t in ["讲方言", "方言对话", "方言模式"]:
+            self._mode = "dialogue"
+            return self._resp("🗣 进入方言对话模式！直接跟我说方言，听不懂我会问你~")
+        if t in ["方言训练", "教方言", "方言学习"]:
+            self._mode = "training"
+            return self._resp("📚 进入方言训练模式！格式：食饱未 就是 吃饱了吗")
+        if t in ["方言练习", "练方言"]:
+            self._mode = "practice"
+            return self._resp("✏️ 进入方言练习模式！我说普通话，你来说方言~")
+        if t in ["列出方言", "已学方言", "方言列表"]:
             return self._list_dialects()
-        
-        return self._resp("🗣 输入「你好用方言怎么说」、「方言 开心 就是 高兴」或「列出方言」")
 
-    # ================================================================
-    #  学习方言
-    # ================================================================
+        # 训练模式
+        if self._mode == "training" or mode == "dialect_training":
+            # 回复教学：回复 X 说 Y
+            reply_match = re.search(r'回复\s+(.+?)\s+说\s+(.+)', t)
+            if reply_match:
+                trigger = reply_match.group(1).strip()
+                reply = reply_match.group(2).strip()
+                self._learner.learn_reply(trigger, reply)
+                return self._resp(f"✅ 学会啦！当「{trigger}」时，回复「{reply}」~")
+            
+            # 动作教学：当我说 X 就 通知/拨打 Y
+            action_match = re.search(r'(?:当我说|我说)\s*(.+?)\s*(?:就|要)\s*(通知|拨打|发送|提醒)\s*(.+)', t)
+            if action_match:
+                trigger = action_match.group(1).strip()
+                action_type = action_match.group(2).strip()
+                target = action_match.group(3).strip()
+                self._learner.learn_action(trigger, action_type, target)
+                return self._resp(f"✅ 学会啦！当你说「{trigger}」时，系统会{action_type}{target}")
+            
+            # 词汇教学：X 就是 Y
+            match = re.search(r'(.+?)\s+(?:就是|意思是|指的是|叫)\s+(.+)', t)
+            if match:
+                word, meaning = match.group(1).strip(), match.group(2).strip()
+                self._learner.learn(word, meaning)
+                return self._resp(f"✅ 学会啦！「{word}」就是「{meaning}」~")
+            return self._resp("📚 格式：「食饱未 就是 吃饱了吗」")
 
-    def _learn_dialect(self, user_input: str) -> Dict:
-        """学习新方言表达"""
-        # 格式1: 方言 开心 就是 高兴
-        match = re.search(r'(?:方言|用方言)\s*(.+?)\s+(?:就是|意思是|指的是|叫)\s+(.+)', user_input)
-        if match:
-            word, meaning = match.group(1).strip(), match.group(2).strip()
-            self._save_dialect(word, meaning)
-            return self._resp(f"✅ 学会啦！「{word}」就是「{meaning}」的意思~ 😊")
-        
-        # 格式2: 开心用方言怎么说
-        match = re.search(r'(.+?)\s*(?:用方言怎么说|怎么用方言说|方言怎么说)', user_input)
-        if match:
-            word = match.group(1).strip()
-            meaning = self._lookup_dialect(word)
-            if meaning:
-                return self._resp(f"🗣 「{word}」用方言说就是「{meaning}」~")
-            # 如果不知道，用 LLM 生成
-            result = self._call_llm(f"用方言（四川话/东北话/广东话）表达「{word}」，只输出结果")
-            if result:
-                self._save_dialect(word, result.strip())
-                return self._resp(f"🗣 「{word}」用方言说就是「{result.strip()}」~ 我记住啦！")
-            return self._resp(f"🤔 我不太确定「{word}」的方言说法，你可以教我吗？格式：方言 {word} 就是 xxx")
-        
-        return self._resp("🗣 格式：方言 开心 就是 高兴 或者 开心用方言怎么说")
+        # 练习模式
+        if self._mode == "practice" or mode == "dialect_practice":
+            vocab = self._learner.vocabulary
+            if vocab:
+                word, info = random.choice(list(vocab.items()))
+                standard = info.get("standard", info) if isinstance(info, dict) else info
+                return self._resp(f"✏️ 「{standard}」用方言怎么说？")
+            return self._resp("📭 还没学任何词，先用「方言训练」教我~")
 
-    # ================================================================
-    #  翻译到方言
-    # ================================================================
+        # 对话模式
+        if self._mode == "dialogue" or mode == "dialect_dialogue":
+            # 优先查动作触发器（不需要词库匹配）
+            action = self._learner.get_action(t)
+            if action:
+                action_type = action.get("action", "")
+                target = action.get("target", "")
+                return self._resp(f"🚨 已触发：{action_type}{target}")
+            
+            # 用词库翻译
+            result = t
+            for word, info in sorted(self._learner.vocabulary.items(), key=lambda x: -len(x[0])):
+                std = info.get("standard", info) if isinstance(info, dict) else info
+                if word in result:
+                    result = result.replace(word, std)
+            
+            if result != t:
+                # 记录上一轮理解结果（用于上下文拼接）
+                self._last_understood = result
+                # 路径A：查已学回复模板
+                reply_text = self._learner.get_reply(result, self._last_understood)
+                
+                # 路径A2：内置模板
+                if not reply_text:
+                    if "吃" in result and ("吗" in result or "没" in result):
+                        reply_text = "吃饱了，谢谢！"
+                    elif "你好" in result:
+                        reply_text = "你好！我很好，你呢？"
+                    elif "谢谢" in result or "多谢" in result:
+                        reply_text = "不客气！"
+                    elif "再见" in result or "拜拜" in result:
+                        reply_text = "再见！"
+                
+                # 路径B：LLM 兜底
+                if not reply_text:
+                    try:
+                        from core.lib.llm_client import llm_client
+                        reply_text = llm_client.generate(
+                            f"用户说：{result}\n请用普通话简短回复（20字以内）：",
+                            model="qwen2.5:7b-instruct-q4_0",
+                            max_tokens=50, task_type="dialect_reply", timeout=10
+                        )
+                    except:
+                        pass
+                
+                if reply_text and len(reply_text.strip()) >= 2:
+                    dialect_reply = self._learner.express(reply_text)
+                    return self._resp(f"🗣 {dialect_reply}")
+                return self._resp(f"🗣 理解: {result}")
+            
+            # 完全没匹配
+            self._learner.unknown_words = [t]
+            return self._resp(self._learner.ask_clarification())
 
-    def _translate_to_dialect(self, user_input: str) -> Dict:
-        """翻译成方言"""
-        word = re.sub(r'(怎么说|怎么讲|方言|用方言)', '', user_input).strip()
-        if not word:
-            return self._resp("请说：你好用方言怎么说")
-        
-        # 查本地数据库
-        meaning = self._lookup_dialect(word)
-        if meaning:
-            return self._resp(f"🗣 「{word}」用方言说就是「{meaning}」~")
-        
-        # 用 LLM 生成
-        result = self._call_llm(f"用方言（四川话/东北话/广东话）表达「{word}」，只输出结果")
-        if result:
-            self._save_dialect(word, result.strip())
-            return self._resp(f"🗣 「{word}」用方言说就是「{result.strip()}」~ 我记住啦！")
-        
-        return self._resp(f"🤔 我不太确定「{word}」的方言说法，你可以教我吗？格式：方言 {word} 就是 xxx")
-
-    # ================================================================
-    #  列出方言
-    # ================================================================
+        # 引导
+        return self._resp("🗣 方言助手：\n  📞 「讲方言」\n  📚 「方言训练」\n  ✏️ 「方言练习」\n  📋 「列出方言」")
 
     def _list_dialects(self) -> Dict:
-        if not self._dialect_db:
-            return self._resp("📭 还没有学会方言，你可以教我！格式：方言 开心 就是 高兴")
-        
+        vocab = self._learner.vocabulary
+        if not vocab:
+            return self._resp("📭 还没学任何方言词")
         lines = ["🗣 已学方言："]
-        for word, meaning in list(self._dialect_db.items())[:20]:
-            lines.append(f"  • {word} → {meaning}")
-        if len(self._dialect_db) > 20:
-            lines.append(f"  ... 还有 {len(self._dialect_db) - 20} 条")
+        for word, info in list(vocab.items())[:20]:
+            standard = info.get("standard", info) if isinstance(info, dict) else info
+            dtype = info.get("dialect_type", "") if isinstance(info, dict) else ""
+            lines.append(f"  • {word} → {standard} ({dtype})" if dtype else f"  • {word} → {standard}")
         return self._resp("\n".join(lines))
-
-    # ================================================================
-    #  数据库操作
-    # ================================================================
-
-    def _load_dialect_db(self) -> Dict:
-        """加载方言数据库"""
-        path = Path(f"data/dialects/{self.user_id}.json")
-        if path.exists():
-            try:
-                with open(path, 'r', encoding='utf-8') as f:
-                    return json.load(f)
-            except:
-                pass
-        return {}
-
-    def _save_dialect_db(self):
-        """保存方言数据库"""
-        path = Path(f"data/dialects/{self.user_id}.json")
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with open(path, 'w', encoding='utf-8') as f:
-            json.dump(self._dialect_db, f, ensure_ascii=False, indent=2)
-
-    def _save_dialect(self, word: str, meaning: str):
-        """保存一条方言"""
-        self._dialect_db[word] = meaning
-        self._save_dialect_db()
-
-    def _lookup_dialect(self, word: str) -> Optional[str]:
-        """查询方言"""
-        return self._dialect_db.get(word)
-
-    # ================================================================
-    #  辅助
-    # ================================================================
-
 
     def _resp(self, content: str, **kwargs) -> Dict:
         return {"success": True, "response": content, "output_content": content, **kwargs}
@@ -156,4 +159,4 @@ class DialectAgentV4(BusinessAgent):
 
 if __name__ == "__main__":
     agent = DialectAgentV4("test")
-    print(agent.process("方言 开心 就是 高兴")["response"])
+    print(agent.process("方言训练")["response"])

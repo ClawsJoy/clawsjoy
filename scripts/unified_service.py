@@ -17,7 +17,7 @@ sys.path.insert(0, "core")
 
 from core.agent.smart_agent import smart_agent as config_agent
 from lib.config_loader import config
-from lib.skill_registry_v4 import skill_registry
+from core.lib.skill_registry_v6 import skill_registry
 
 app = Flask(__name__)
 CORS(app)

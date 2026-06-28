@@ -61,7 +61,7 @@ def index():
 def health_check():
     """系统健康检查"""
     from lib.agent_registry import agent_registry
-    from lib.skill_registry_v4 import skill_registry
+    from core.lib.skill_registry_v6 import skill_registry
 
     system = {
         "cpu_percent": psutil.cpu_percent(),
