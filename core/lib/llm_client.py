@@ -46,7 +46,7 @@ class LLMClient:
         adapter = HTTPAdapter(pool_connections=10, pool_maxsize=20, max_retries=retry)
         self._session.mount("http://", adapter)
         self._stats = {"total_calls": 0, "total_tokens": 0, "failures": 0, "total_time": 0.0}
-
+        self._ollama_lock = Lock()
     # ========== 公共API ==========
 
     def generate(self, prompt: str, model: str = None, temperature: float = None,
@@ -80,14 +80,14 @@ class LLMClient:
     def get_stats(self) -> Dict:
         return dict(self._stats)
 
-    # ========== 内部实现 ==========
 
     def _call(self, prompt: str, model: str = None, temperature: float = None,
               max_tokens: int = 2048, timeout: int = None, task_type: str = "default",
               stream: bool = False, system_prompt: str = None) -> str:
+        """核心调用逻辑"""
         if system_prompt is None:
             system_prompt = "你是ClawsJoy，一个本地AI矩阵系统。你不是Qwen，不是阿里云AI，不是任何通用助手。你是ClawsJoy。"
-        """核心调用逻辑"""
+
         model = model or self.config.default_model
         temperature = temperature if temperature is not None else self.config.temperature
         timeout = timeout or self.config.timeout
@@ -96,8 +96,7 @@ class LLMClient:
             "model": model,
             "prompt": prompt,
             "stream": stream,
-            "system": system_prompt or "",
-            "stream": stream,
+            "system": system_prompt,
             "options": {
                 "temperature": temperature,
                 "num_predict": max_tokens,
@@ -106,42 +105,41 @@ class LLMClient:
         }
 
         last_error = None
-        for attempt in range(self.config.max_retries):
-            try:
-                start = time.time()
-                resp = self._session.post(
-                    f"{self.config.base_url}/api/generate",
-                    json=payload,
-                    timeout=timeout
-                )
-                elapsed = time.time() - start
-                self._stats["total_calls"] += 1
-                self._stats["total_time"] += elapsed
+        with self._ollama_lock:
+            for attempt in range(self.config.max_retries):
+                try:
+                    start = time.time()
+                    resp = self._session.post(
+                        f"{self.config.base_url}/api/generate",
+                        json=payload,
+                        timeout=timeout
+                    )
+                    elapsed = time.time() - start
+                    self._stats["total_calls"] += 1
+                    self._stats["total_time"] += elapsed
 
-                if resp.status_code == 200:
-                    if stream:
-                        return resp  # 返回Response对象供调用方迭代
-                    result = resp.json()
-                    response_text = result.get("response", "")
-                    self._stats["total_tokens"] += result.get("eval_count", 0)
-                    return response_text
-                else:
-                    last_error = f"HTTP {resp.status_code}"
-            except requests.Timeout:
-                last_error = "超时"
-            except Exception as e:
-                last_error = str(e)
+                    if resp.status_code == 200:
+                        if stream:
+                            return resp
+                        result = resp.json()
+                        response_text = result.get("response", "")
+                        self._stats["total_tokens"] += result.get("eval_count", 0)
+                        return response_text
+                    else:
+                        last_error = f"HTTP {resp.status_code}"
+                except requests.Timeout:
+                    last_error = "超时"
+                except Exception as e:
+                    last_error = str(e)
 
-            if attempt < self.config.max_retries - 1:
-                wait = 0.5 * (attempt + 1)
-                logger.warning(f"[LLM] 第{attempt+1}次重试，等待{wait}s: {last_error}")
-                time.sleep(wait)
+                if attempt < self.config.max_retries - 1:
+                    wait = 0.5 * (attempt + 1)
+                    logger.warning(f"[LLM] 第{attempt+1}次重试，等待{wait}s: {last_error}")
+                    time.sleep(wait)
 
         self._stats["failures"] += 1
         logger.error(f"[LLM] 调用失败 ({task_type}): {last_error}")
-        return ""
-
-
+        return ""    
 
     def _call_multimodal(self, prompt: str, model: str = None, images: list = None,
                          temperature: float = 0.3, max_tokens: int = 512,
