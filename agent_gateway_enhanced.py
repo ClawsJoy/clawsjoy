@@ -6,7 +6,7 @@
 - 所有业务逻辑委托给 AgentCortex / lib
 - 单一入口: /v5/execute
 """
-
+import yaml
 import json
 import uuid
 import os
@@ -27,7 +27,7 @@ def _ensure_ollama():
         _req.get('http://127.0.0.1:11434/api/tags', timeout=3)
     except:
         print("启动 Ollama GPU 实例...")
-        _sp.Popen(['ollama', 'serve'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        _sp.Popen(['ollama', 'serve'], stdout=_sp.DEVNULL, stderr=_sp.DEVNULL)
         _time.sleep(3)
     
     try:
@@ -38,7 +38,7 @@ def _ensure_ollama():
         env = os.environ.copy()
         env['OLLAMA_HOST'] = '127.0.0.1:11435'
         env['OLLAMA_NUM_GPU'] = '0'
-        _sp.Popen(['ollama', 'serve'], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        _sp.Popen(['ollama', 'serve'], env=env, stdout=_sp.DEVNULL, stderr=_sp.DEVNULL)
         _time.sleep(5)
 
 _ensure_ollama()
@@ -124,6 +124,18 @@ def v5_execute():
     context = {"session_id": session_id} if session_id else None
 
     result = agent_cortex.process(raw_input, user_id, context)
+    # v8 记账钩子
+    try:
+        from core.lib.v8.billing_hook import record_if_roster_member
+        server_id = data.get("server_id", "default")
+        agent_name = result.get("agents_used", [""])[0] if result.get("agents_used") else ""
+        tokens = result.get("tokens", 0)
+        model = result.get("model", "")
+        if agent_name and tokens:
+            record_if_roster_member(server_id, agent_name, tokens, model)
+    except:
+        pass
+
     return jsonify(result)
 
 
@@ -433,14 +445,275 @@ for panel in ["code_agent_panel", "writer_panel", "director_panel",
     app.add_url_rule(f"/{panel}.html", panel.replace("_panel", "_page") if "panel" in panel else panel,
                      lambda p=panel: send_from_directory("templates", f"{p}.html"))
 
+@app.route("/")
+def index():
+    return jsonify({"service": "ClawsJoy Gateway", "version": "6.0.0"})
+
+# ========== v8 API：AI劳动力管理 ==========
+from core.lib.v8.roster_engine import roster_engine
+
+@app.route("/v8/roster/list")
+def v8_roster_list():
+    server_id = request.args.get("server_id", "default")
+    return jsonify(roster_engine.list(server_id))
+
+@app.route("/v8/roster/hire", methods=["POST"])
+def v8_roster_hire():
+    data = request.json or {}
+    server_id = data.get("server_id", "default")
+    name = data.get("name", "")
+    position_id = data.get("position", "")
+    model = data.get("model", "")
+    budget = data.get("budget", 0)
+    try:
+        with open(f"config/v8/positions/{position_id}.yaml") as f:
+            pos = yaml.safe_load(f)
+        if model:
+            pos["model"] = model
+        if budget:
+            pos["budget"] = float(budget)
+        result = roster_engine.hire(server_id, name, pos)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+@app.route("/v8/roster/fire", methods=["POST"])
+def v8_roster_fire():
+    data = request.json or {}
+    result = roster_engine.fire(data.get("server_id", "default"), data.get("name", ""))
+    return jsonify(result)
+
+@app.route("/v8/roster/pause", methods=["POST"])
+def v8_roster_pause():
+    data = request.json or {}
+    result = roster_engine.pause(data.get("server_id", "default"), data.get("name", ""))
+    return jsonify(result)
+
+@app.route("/v8/roster/resume", methods=["POST"])
+def v8_roster_resume():
+    data = request.json or {}
+    result = roster_engine.resume(data.get("server_id", "default"), data.get("name", ""))
+    return jsonify(result)
+
+@app.route("/v8/roster/permissions", methods=["POST"])
+def v8_roster_permissions():
+    data = request.json or {}
+    result = roster_engine.update_permissions(
+        data.get("server_id", "default"), data.get("name", ""), data.get("permissions", {})
+    )
+    return jsonify(result)
+
+@app.route("/v8/roster/budget", methods=["POST"])
+def v8_roster_budget():
+    data = request.json or {}
+    result = roster_engine.update_budget(
+        data.get("server_id", "default"), data.get("name", ""), float(data.get("budget", 0))
+    )
+    return jsonify(result)
+
+@app.route("/v8/positions/list")
+def v8_positions_list():
+    positions = []
+    pos_dir = Path("config/v8/positions")
+    for f in pos_dir.glob("*.yaml"):
+        with open(f) as fp:
+            pos = yaml.safe_load(fp)
+            pos["id"] = f.stem
+            positions.append(pos)
+    return jsonify(positions)
+
+@app.route("/v8/billing/realtime")
+def v8_billing_realtime():
+    server_id = request.args.get("server_id", "default")
+    members = roster_engine.list(server_id)
+    billing = []
+    total = 0
+    for m in members:
+        billing.append({
+            "name": m["name"],
+            "position": m["position"],
+            "spent": m.get("spent", 0),
+            "budget": m.get("budget", 0),
+            "task_count": m.get("task_count", 0),
+            "status": m["status"],
+        })
+        total += m.get("spent", 0)
+    return jsonify({"total": round(total, 4), "members": billing})
+
+# ========== v8 Ledger API ==========
+from core.lib.v8.ledger import ledger
+
+@app.route("/v8/ledger/billing")
+def v8_ledger_billing():
+    server_id = request.args.get("server_id", "default")
+    month = request.args.get("month", None)
+    return jsonify(ledger.get_billing(server_id, month))
+
+@app.route("/v8/ledger/timeline")
+def v8_ledger_timeline():
+    server_id = request.args.get("server_id", "default")
+    limit = int(request.args.get("limit", 30))
+    return jsonify(ledger.get_timeline(server_id, limit))
+
+# ========== v8 Task API ==========
+from core.lib.v8.task_engine import task_engine
+
+@app.route("/v8/task/create", methods=["POST"])
+def v8_task_create():
+    data = request.json or {}
+    result = task_engine.create(
+        server_id=data.get("server_id", "default"),
+        title=data.get("title", ""),
+        assigned_to=data.get("assigned_to", ""),
+        assigned_position=data.get("assigned_position", ""),
+        created_by=data.get("created_by", "老板"),
+    )
+    return jsonify(result)
+
+@app.route("/v8/task/transition", methods=["POST"])
+def v8_task_transition():
+    data = request.json or {}
+    result = task_engine.transition(
+        server_id=data.get("server_id", "default"),
+        task_id=data.get("task_id", ""),
+        new_state=data.get("new_state", ""),
+        comment=data.get("comment", ""),
+    )
+    return jsonify(result)
+
+@app.route("/v8/task/list")
+def v8_task_list():
+    server_id = request.args.get("server_id", "default")
+    status = request.args.get("status", None)
+    return jsonify(task_engine.list(server_id, status))
+
+
+# ========== v8 任务状态变更钩子 ==========
+from core.lib.v8.task_engine import task_engine as _task_engine
+
+def _auto_review(task_id, task_data):
+    """自动调 Agent 做代码审查"""
+    try:
+        from core.lib.v8.roster_engine import roster_engine
+
+        # 找 CEO
+        ceo_name = "决策者"
+        for m in roster_engine.list_active("default"):
+            if m.get("role") == "ceo" or "决策" in m.get("name", ""):
+                ceo_name = m["name"]
+                break
+
+        # 从岗位 YAML 取审查 prompt
+        review_prompt = "审查以下任务，直接给出意见："
+        assigned = task_data.get("assigned_to", "")
+        member = roster_engine.get("default", assigned)
+        if member:
+            review_prompt = member.get("review_prompt", review_prompt)
+
+        from core.agents.wisdom.wisdom_factory import wisdom_factory
+        agent = wisdom_factory.get_agent("chat_agent", "workbench")
+        prompt = f"{review_prompt}\n\n{task_data['title']}"
+        result = agent.process(prompt)
+        review_text = result.get("response", "")[:500]
+
+        import requests as _r
+        _r.post("http://localhost:5002/v8/discord/notify",
+                json={
+                    "channel_id": "1103302124261085338",
+                    "message": f"🤖 **{ceo_name}**: {review_text}",
+                    "username": ceo_name,
+                },
+                timeout=10)
+
+        if "通过" in review_text or "没有问题" in review_text:
+            _task_engine.transition("default", task_id, "reviewed", "审查通过")
+        else:
+            print(f"[v8审查] {ceo_name}: 发现问题，需修改")
+    except Exception as e:
+        print(f"[v8审查] 审查失败: {e}")
+
+def _on_task_state_change(task_id, old_state, new_state, task_data):
+    """状态变更时，按岗位分工让对应 Agent 发言"""
+    executor = task_data.get("assigned_to", "")
+    position = task_data.get("assigned_position", "")
+    title = task_data.get("title", "")
+
+    # 执行者发言
+    if new_state == "running":
+        _say(executor, f"收到，开始执行「{title}」")
+
+    elif new_state == "done":
+        _say(executor, f"「{title}」已完成，请审查")
+        # 通知 CEO 审查
+        ceo = _find_ceo()
+        if ceo:
+            _say(ceo, f"收到，审查「{title}」...")
+            _auto_review(task_id, task_data)
+
+    elif new_state == "reviewed":
+        _say(executor, f"「{title}」审查通过")
+
+    elif new_state == "failed":
+        _say("老板", f"「{title}」执行失败，请人工处理")
+
+
+def _say(who, message):
+    """Agent 在频道里发言"""
+    try:
+        import requests as _r
+        _r.post("http://localhost:5002/v8/discord/notify",
+                json={
+                    "channel_id": "1103302124261085338",
+                    "message": f"🤖 **{who}**: {message}",
+                    "username": who,
+                },
+                timeout=5)
+    except Exception as e:
+        print(f"[v8] 发言失败: {e}")
+
+
+def _find_ceo():
+    """从花名册找 CEO"""
+    try:
+        from core.lib.v8.roster_engine import roster_engine
+        for m in roster_engine.list_active("default"):
+            if m.get("role") == "ceo" or "决策" in m.get("name", ""):
+                return m["name"]
+    except:
+        pass
+    return None
+
+
+_task_engine.on_state_change(_on_task_state_change)
+
+
+@app.route("/v8/discord/notify", methods=["POST"])
+def v8_discord_notify():
+    """接收内部通知，通过 Webhook 转发到 Discord（支持多身份）"""
+    data = request.json or {}
+    channel_id = data.get("channel_id", "")
+    content = data.get("message", "")
+    username = data.get("username", "")
+    avatar_url = data.get("avatar_url", "")
+
+    if not channel_id or not content:
+        return jsonify({"success": False})
+
+    import requests as _r
+    payload = {"content": content}
+    if username:
+        payload["username"] = username
+    if avatar_url:
+        payload["avatar_url"] = avatar_url
+
+    r = _r.post("https://discord.com/api/webhooks/1521526206518792482/B0kL_EdzmGFoaq6nuRTx-kVPjKB9AF4yBpBUgXl0nvFiSepXUNHpT7WF1kpy23zC8fQt",
+                json=payload, timeout=10)
+    return jsonify({"success": r.status_code == 204})
+
 
 # ====================================================================
 #  启动
 # ====================================================================
-
-@app.route("/")
-def index():
-    return jsonify({"service": "ClawsJoy Gateway", "version": "6.0.0"})
 
 if __name__ == "__main__":
     from core.lib.hook_manager import HookManager

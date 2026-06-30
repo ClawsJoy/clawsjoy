@@ -58,7 +58,6 @@ class StartupManager:
     
     def _step_agent_pool(self):
         from core.agents.wisdom.wisdom_factory import wisdom_factory
-        wisdom_factory._warmup()
         stats = agent_pool.get_stats()
         print(f"  Agent池: {stats['pool_size']}个实例就绪")
     

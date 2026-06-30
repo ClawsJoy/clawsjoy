@@ -3,226 +3,360 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ClawsJoy · 智能体矩阵</title>
+<title>ClawsJoy · AI劳动力管理</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
 :root {
   --bg: #0d1117; --card: #161b22; --border: #30363d;
-  --text: #c9d1d9; --sub: #8b949e;
-  --blue: #58a6ff; --green: #3fb950; --purple: #bc8cff; --orange: #d2991d;
+  --text: #c9d1d9; --sub: #8b949e; --blue: #58a6ff;
+  --green: #3fb950; --red: #f85149; --purple: #bc8cff;
+  --radius: 8px;
 }
-
 * { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); height:100vh; display:flex; }
-
-/* 左侧能力面板 */
-.sidebar { width:280px; background:var(--card); border-right:1px solid var(--border); display:flex; flex-direction:column; overflow-y:auto; }
-.sidebar-header { padding:20px; border-bottom:1px solid var(--border); }
-.sidebar-header h2 { font-size:18px; font-weight:700; }
-.sidebar-header p { font-size:12px; color:var(--sub); margin-top:4px; }
-
-.agent-list { flex:1; padding:12px; }
-.agent-group { margin-bottom:16px; }
-.agent-group h3 { font-size:11px; color:var(--sub); text-transform:uppercase; letter-spacing:1px; margin:0 0 8px 8px; }
-.agent-btn { 
-  display:block; width:100%; padding:8px 12px; margin-bottom:4px;
-  background:transparent; border:1px solid var(--border); border-radius:8px;
-  color:var(--text); font-size:13px; text-align:left; cursor:pointer;
-  transition:all 0.2s;
-}
-.agent-btn:hover { background:rgba(88,166,255,0.08); border-color:var(--blue); }
-.agent-btn .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; }
-.dot.ready { background:var(--green); }
-.dot.idle { background:var(--sub); }
-
-/* 主区域 */
+body { background:var(--bg); color:var(--text); font-family:Inter,-apple-system,sans-serif; height:100vh; display:flex; }
+.sidebar { width:260px; background:var(--card); border-right:1px solid var(--border); display:flex; flex-direction:column; }
+.sidebar-header { padding:16px; border-bottom:1px solid var(--border); font-weight:700; font-size:14px; display:flex; align-items:center; gap:8px; }
+.sidebar-header .dot { width:8px; height:8px; border-radius:50%; background:var(--green); }
+.nav { display:flex; flex-direction:column; padding:8px; }
+.nav-btn { background:none; border:none; color:var(--sub); padding:10px 12px; text-align:left; border-radius:6px; cursor:pointer; font-size:13px; display:flex; align-items:center; gap:8px; }
+.nav-btn:hover,.nav-btn.active { background:rgba(88,166,255,0.08); color:var(--text); }
+.nav-btn .icon { font-size:16px; }
+.members { padding:8px; border-top:1px solid var(--border); margin-top:auto; }
+.members-title { font-size:11px; color:var(--sub); padding:8px; text-transform:uppercase; letter-spacing:1px; }
+.member-row { display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:6px; font-size:12px; position:relative; }
+.member-row:hover { background:rgba(255,255,255,0.03); }
+.member-row .avatar { width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
+.member-row .info { flex:1; min-width:0; }
+.member-row .name { font-weight:500; }
+.member-row .pos { font-size:10px; color:var(--sub); }
+.member-row .status { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+.member-row .status.active { background:var(--green); }
+.member-row .status.paused { background:#d2991d; }
+.member-row .actions { display:none; gap:4px; }
+.member-row:hover .actions { display:flex; }
+.member-row .actions button { background:none; border:none; color:var(--sub); cursor:pointer; font-size:12px; padding:2px 4px; border-radius:4px; }
+.member-row .actions button:hover { color:var(--text); background:rgba(255,255,255,0.05); }
 .main { flex:1; display:flex; flex-direction:column; }
-
-/* 快捷命令栏 */
-.quickbar { 
-  display:flex; gap:8px; padding:16px 20px; flex-wrap:wrap;
-  border-bottom:1px solid var(--border); background:var(--card);
-}
-.quickbar .title { font-size:12px; color:var(--sub); width:100%; margin-bottom:4px; }
-.quick-chip {
-  padding:6px 16px; border-radius:20px; border:1px solid var(--border);
-  font-size:13px; cursor:pointer; transition:all 0.2s;
-  background:transparent; color:var(--text); white-space:nowrap;
-}
-.quick-chip:hover { border-color:var(--blue); background:rgba(88,166,255,0.08); }
-.quick-chip.active { border-color:var(--green); color:var(--green); background:rgba(63,185,80,0.06); }
-
-/* 对话区 */
-.chat { flex:1; overflow-y:auto; padding:24px; display:flex; flex-direction:column; gap:20px; }
-.empty-state { text-align:center; padding:60px 20px; color:var(--sub); }
-.empty-state .icon { font-size:64px; margin-bottom:20px; }
-.empty-state h2 { font-size:24px; color:var(--text); margin-bottom:8px; }
-.empty-state p { font-size:14px; max-width:500px; margin:0 auto 20px; line-height:1.6; }
-
-/* 消息 */
-.msg { max-width:85%; padding:14px 18px; border-radius:12px; font-size:14px; line-height:1.6; animation:in 0.3s; }
-@keyframes in { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
-.msg.user { align-self:flex-end; background:#1f6feb; }
+.tab-content { display:none; flex:1; flex-direction:column; }
+.tab-content.active { display:flex; }
+.chat-header { padding:12px 16px; border-bottom:1px solid var(--border); font-weight:600; font-size:14px; display:flex; align-items:center; gap:8px; }
+.chat-messages { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:12px; }
+.msg { max-width:80%; padding:10px 14px; border-radius:12px; font-size:13px; line-height:1.5; white-space:pre-wrap; word-break:break-word; }
+.msg.user { align-self:flex-end; background:var(--blue); color:#fff; }
 .msg.agent { align-self:flex-start; background:var(--card); border:1px solid var(--border); }
-.msg .agent-tag { font-size:11px; color:var(--blue); margin-bottom:4px; font-weight:600; }
-.msg .thinking { color:var(--sub); font-style:italic; }
-
-/* 追踪面板 */
-.tracer { 
-  position:fixed; right:20px; bottom:80px; width:300px; max-height:300px;
-  background:var(--card); border:1px solid var(--border); border-radius:12px;
-  padding:12px; overflow-y:auto; font-size:11px; z-index:10;
-  display:none;
-}
-.tracer.show { display:block; }
-.tracer h4 { color:var(--sub); margin-bottom:8px; }
-.tracer .trace { padding:4px 0; border-bottom:1px solid var(--border); color:var(--sub); }
-.tracer .trace .agent-name { color:var(--purple); }
-.tracer .trace .ok { color:var(--green); }
-
-/* 输入区 */
-.input-box { padding:16px 20px; background:var(--card); border-top:1px solid var(--border); display:flex; gap:12px; }
-.input-box input { flex:1; padding:12px 18px; background:var(--bg); border:1px solid var(--border); border-radius:10px; color:var(--text); font-size:14px; outline:none; }
-.input-box input:focus { border-color:var(--blue); }
-.input-box button { padding:12px 24px; background:var(--blue); border:none; border-radius:10px; color:#fff; font-weight:600; cursor:pointer; font-size:14px; }
-.input-box button:hover { opacity:0.9; }
+.msg .tag { font-size:11px; color:var(--purple); margin-bottom:4px; font-weight:600; }
+.chat-input { padding:12px 16px; border-top:1px solid var(--border); display:flex; gap:8px; position:relative; }
+.chat-input input { flex:1; background:var(--card); border:1px solid var(--border); color:var(--text); padding:10px 14px; border-radius:20px; font-size:13px; outline:none; }
+.chat-input button { background:var(--blue); color:#fff; border:none; padding:10px 20px; border-radius:20px; cursor:pointer; font-size:13px; font-weight:600; }
+.market { padding:20px; display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; align-content:start; }
+.card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; cursor:pointer; transition:border-color .2s; }
+.card:hover { border-color:var(--blue); }
+.card .pos-icon { font-size:32px; margin-bottom:8px; }
+.card .pos-name { font-weight:600; font-size:14px; }
+.card .pos-desc { font-size:12px; color:var(--sub); margin:6px 0; }
+.card .pos-budget { font-size:12px; color:var(--green); }
+.card .hire-btn { margin-top:10px; width:100%; background:var(--blue); color:#fff; border:none; padding:8px; border-radius:6px; cursor:pointer; font-size:12px; font-weight:600; }
+/* 时间线 */
+.timeline { padding:20px; overflow-y:auto; }
+.tl-item { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-bottom:10px; display:flex; gap:12px; align-items:flex-start; }
+.tl-icon { font-size:20px; flex-shrink:0; margin-top:2px; }
+.tl-body { flex:1; }
+.tl-agent { font-weight:600; font-size:13px; }
+.tl-action { font-size:13px; margin:4px 0; }
+.tl-meta { font-size:11px; color:var(--sub); }
+.tl-status { font-size:11px; padding:2px 8px; border-radius:10px; display:inline-block; }
+.tl-status.completed { background:rgba(63,185,80,0.15); color:var(--green); }
+.tl-status.failed { background:rgba(248,81,73,0.15); color:var(--red); }
+/* 账单 */
+.billing { padding:20px; overflow-y:auto; }
+.billing .total { font-size:36px; font-weight:700; margin-bottom:20px; }
+.billing .total span { font-size:14px; color:var(--sub); font-weight:400; }
+.bill-row { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-bottom:12px; display:flex; align-items:center; gap:12px; }
+.bill-row .bar-wrap { flex:1; height:8px; background:var(--border); border-radius:4px; overflow:hidden; }
+.bill-row .bar { height:100%; border-radius:4px; transition:width .5s; }
+.bill-row .bar.normal { background:var(--green); }
+.bill-row .bar.warn { background:#d2991d; }
+.bill-row .bar.danger { background:var(--red); }
+.bill-info { font-size:12px; color:var(--sub); min-width:120px; text-align:right; }
+.modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:100; justify-content:center; align-items:center; }
+.modal.show { display:flex; }
+.modal-content { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:24px; width:360px; }
+.modal-content h3 { margin-bottom:16px; }
+.modal-content label { display:block; font-size:12px; color:var(--sub); margin:8px 0 4px; }
+.modal-content input,.modal-content select { width:100%; background:var(--bg); border:1px solid var(--border); color:var(--text); padding:8px; border-radius:6px; font-size:13px; margin-bottom:8px; }
+.modal-content button { width:100%; background:var(--blue); color:#fff; border:none; padding:10px; border-radius:6px; cursor:pointer; font-weight:600; margin-top:8px; }
+.modal-content .btn-cancel { background:var(--border); margin-top:4px; }
+.at-list { position:absolute; bottom:60px; left:16px; background:var(--card); border:1px solid var(--border); border-radius:8px; padding:4px; z-index:50; max-height:200px; overflow-y:auto; min-width:180px; }
+.at-list div { padding:6px 12px; cursor:pointer; border-radius:4px; font-size:13px; }
+.at-list div:hover { background:rgba(88,166,255,0.1); }
+.empty-hint { text-align:center; color:var(--sub); padding:40px; font-size:13px; }
 </style>
 </head>
 <body>
 
-<!-- 左栏：能力面板 -->
 <div class="sidebar">
-  <div class="sidebar-header">
-    <h2>🧠 ClawsJoy</h2>
-    <p>23个Agent · 本地运行 · 隐私安全</p>
+  <div class="sidebar-header"><span class="dot"></span> ClawsJoy v8</div>
+  <div class="nav">
+    <button class="nav-btn active" data-tab="chat"><span class="icon">💬</span> 团队频道</button>
+    <button class="nav-btn" data-tab="market"><span class="icon">🏪</span> 岗位市场</button>
+    <button class="nav-btn" data-tab="timeline"><span class="icon">📋</span> 时间线</button>
+    <button class="nav-btn" data-tab="billing"><span class="icon">💰</span> 账单</button>
   </div>
-  <div class="agent-list">
-    <div class="agent-group">
-      <h3>🧠 核心</h3>
-      <button class="agent-btn" onclick="quickSend('你好')"><span class="dot ready"></span>对话</button>
-      <button class="agent-btn" onclick="quickSend('帮我写一个Python快速排序')"><span class="dot ready"></span>写代码</button>
-      <button class="agent-btn" onclick="quickSend('记住 密码=123456')"><span class="dot ready"></span>记忆</button>
-    </div>
-    <div class="agent-group">
-      <h3>✍️ 创作</h3>
-      <button class="agent-btn" onclick="quickSend('写一首关于AI的诗')"><span class="dot idle"></span>写作</button>
-      <button class="agent-btn" onclick="quickSend('翻译 Hello world 成中文')"><span class="dot idle"></span>翻译</button>
-      <button class="agent-btn" onclick="quickSend('创建 星际迷航 科幻')"><span class="dot idle"></span>导演</button>
-    </div>
-    <div class="agent-group">
-      <h3>🎬 媒体</h3>
-      <button class="agent-btn" onclick="quickSend('生成 海边日落 动漫风格')"><span class="dot idle"></span>图像</button>
-      <button class="agent-btn" onclick="quickSend('生成脚本 AI介绍')"><span class="dot idle"></span>视频</button>
-    </div>
-    <div class="agent-group">
-      <h3>🔧 工具</h3>
-      <button class="agent-btn" onclick="quickSend('1+1等于几')"><span class="dot idle"></span>计算</button>
-      <button class="agent-btn" onclick="quickSend('列出 .')"><span class="dot idle"></span>文件</button>
-    </div>
-  </div>
+  <div class="members-title">团队成员</div>
+  <div class="members" id="memberList"><div class="empty-hint">暂无AI员工<br>去岗位市场招聘吧</div></div>
 </div>
 
-<!-- 主区域 -->
 <div class="main">
-  <div class="quickbar">
-    <div class="title">💡 试试这些 — 一键体验23个Agent协作</div>
-    <button class="quick-chip" onclick="quickSend('帮我写一个Python快速排序')">写快速排序</button>
-    <button class="quick-chip" onclick="quickSend('翻译 Hello world 成中文')">翻译英文</button>
-    <button class="quick-chip" onclick="quickSend('分析销售数据：1月100, 2月150, 3月120 然后生成报告')">多Agent分析</button>
-    <button class="quick-chip" onclick="quickSend('记住 我的密码=123456')">测试记忆</button>
-    <button class="quick-chip" onclick="quickSend('写一首关于AI的诗')">写诗</button>
-    <button class="quick-chip" onclick="quickSend('生成 赛博朋克城市 动漫风格')">生成图像</button>
-  </div>
-
-  <div class="chat" id="chat">
-    <div class="empty-state">
-      <div class="icon">🧠</div>
-      <h2>23个AI Agent 协同工作</h2>
-      <p>不只是聊天。写作、代码、翻译、导演、数据分析、图像生成...23个专业Agent像一个团队为你服务。点击上方任意按钮开始，或直接输入你的需求。</p>
+  <div id="tab-chat" class="tab-content active">
+    <div class="chat-header">💬 团队频道</div>
+    <div class="chat-messages" id="chatMessages"><div class="empty-hint">👋 欢迎使用 ClawsJoy v8<br>输入消息开始工作</div></div>
+    <div class="chat-input">
+      <input id="chatInput" placeholder="发消息或指令..." onkeydown="if(event.key==='Enter')send()">
+      <button onclick="send()">发送</button>
     </div>
   </div>
-
-  <div class="input-box">
-    <input id="input" placeholder="告诉ClawsJoy你想做什么..." onkeydown="if(event.key==='Enter') send()">
-    <button onclick="send()">发送</button>
+  <div id="tab-market" class="tab-content">
+    <div class="chat-header">🏪 岗位市场 · 聘用AI员工</div>
+    <div class="market" id="marketList"></div>
+  </div>
+  <div id="tab-timeline" class="tab-content">
+    <div class="chat-header">📋 时间线</div>
+    <div class="timeline" id="timelineContent"></div>
+  </div>
+  <div id="tab-billing" class="tab-content">
+    <div class="chat-header">💰 账单（仅供参考）</div>
+    <div class="billing" id="billingContent"></div>
   </div>
 </div>
 
-<!-- 追踪面板 -->
-<div class="tracer" id="tracer">
-  <h4>📡 Agent追踪</h4>
+<div class="modal" id="hireModal">
+  <div class="modal-content">
+    <h3 id="hireTitle">聘用 AI 员工</h3>
+    <label>员工名字</label><input id="hireName" placeholder="如：小程">
+    <label>模型</label>
+    <select id="hireModel">
+      <option value="">本地 Ollama（默认）</option>
+      <option value="deepseek-v3">DeepSeek V3（需 Key）</option>
+      <option value="claude-code">Claude Code CLI（需安装）</option>
+      <option value="claude-4">Claude 4 API（需 Key）</option>
+    </select>
+    <label>API Key <span style="color:var(--sub);font-weight:400">（本地模型可留空）</span></label>
+    <input id="hireApiKey" placeholder="sk-...">
+    <label>单价 <span style="color:var(--sub);font-weight:400">$/1K tokens</span></label>
+    <input id="hireUnitPrice" type="number" step="0.0001" value="0" placeholder="0=仅记账不估算">
+    <label>月预算 ($)</label>
+    <input id="hireBudget" type="number" step="0.01" value="0" placeholder="0=不限">
+    <button onclick="doHire()">聘用</button>
+    <button class="btn-cancel" onclick="closeModal()">取消</button>
+  </div>
 </div>
 
 <script>
-let tracing = [];
+const API = '';
+let currentPosition = '';
+let atList = null;
 
-function quickSend(msg) {
-  document.getElementById('input').value = msg;
-  send();
+// ========== 导航 ==========
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', function() { switchTab(this.dataset.tab); });
+});
+
+function switchTab(tab) {
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelector(`.nav-btn[data-tab="${tab}"]`).classList.add('active');
+  document.getElementById('tab-'+tab).classList.add('active');
+  if(tab==='market') loadMarket();
+  if(tab==='billing') loadBilling();
+  if(tab==='timeline') loadTimeline();
 }
 
+// ========== 聊天 ==========
 async function send() {
-  const input = document.getElementById('input');
+  const input = document.getElementById('chatInput');
   const msg = input.value.trim();
-  if (!msg) return;
+  if(!msg) return;
+  addMessage('user', msg);
   input.value = '';
-  
-  const chat = document.getElementById('chat');
-  const empty = chat.querySelector('.empty-state');
-  if (empty) empty.remove();
-  
-  // 用户消息
-  chat.innerHTML += `<div class="msg user">${esc(msg)}</div>`;
-  
-  // 思考中
-  const thinkId = 'think'+Date.now();
-  chat.innerHTML += `<div class="msg agent" id="${thinkId}"><span class="thinking">🧠 分析中...</span></div>`;
-  chat.scrollTop = chat.scrollHeight;
-  
-  const start = performance.now();
+  hideAtList();
   try {
-    const resp = await fetch('/v5/execute', {
+    const r = await fetch(API+'/v5/execute', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ message: msg, user_id: 'demo' })
+      body:JSON.stringify({raw_input:msg, user_id:'workbench', server_id:'default'})
     });
-    const data = await resp.json();
-    const time = Math.round(performance.now() - start);
-    
-    // 移除思考
-    document.getElementById(thinkId)?.remove();
-    
-    const agent = (data.agents_used || ['AgentCortex'])[0].replace('_agent','');
-    const method = data.method || '?';
-    chat.innerHTML += `<div class="msg agent">
-      <div class="agent-tag">🤖 ${agent} · ${method} · ${time}ms</div>
-      ${esc(data.response || data.output_content || '完成')}
-    </div>`;
-    
-    // 追踪
-    addTrace(agent, method, time);
+    const d = await r.json();
+    const reply = d.response || d.output_content || '嗯？';
+    const agent = d.agents_used?.[0] || 'ClawsJoy';
+    addMessage('agent', reply, agent);
+    loadMembers();
   } catch(e) {
-    document.getElementById(thinkId)?.remove();
-    chat.innerHTML += `<div class="msg agent">❌ 网络错误: ${esc(e.message)}</div>`;
+    addMessage('agent', '出错了: '+e.message);
   }
-  
-  chat.scrollTop = chat.scrollHeight;
-  document.getElementById('input').focus();
 }
 
-function addTrace(agent, method, time) {
-  tracing.unshift({agent,method,time});
-  if (tracing.length > 10) tracing.pop();
-  
-  const tracer = document.getElementById('tracer');
-  tracer.className = 'tracer show';
-  tracer.innerHTML = '<h4>📡 Agent追踪</h4>' + 
-    tracing.map(t => `<div class="trace"><span class="agent-name">${t.agent}</span> ${t.method} <span class="ok">${t.time}ms</span></div>`).join('');
+function addMessage(type, text, tag) {
+  const container = document.getElementById('chatMessages');
+  const hint = container.querySelector('.empty-hint');
+  if(hint) hint.remove();
+  const div = document.createElement('div');
+  div.className = 'msg '+type;
+  if(tag) {
+    const tagEl = document.createElement('div');
+    tagEl.className = 'tag';
+    tagEl.textContent = '🤖 '+tag;
+    div.appendChild(tagEl);
+  }
+  div.appendChild(document.createTextNode(text));
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
 }
 
-function esc(s) { return String(s).replace(/</g,'&lt;'); }
+// ========== @ 成员 ==========
+document.getElementById('chatInput').addEventListener('input', function() {
+  const val = this.value;
+  const lastAt = val.lastIndexOf('@');
+  if (lastAt >= 0 && (lastAt===0 || val[lastAt-1]===' ')) { showAtList(); }
+  else { hideAtList(); }
+});
 
-document.getElementById('input').focus();
+function showAtList() {
+  if (atList) return;
+  atList = document.createElement('div');
+  atList.className = 'at-list';
+  fetch(API+'/v8/roster/list?server_id=default')
+    .then(r=>r.json())
+    .then(members=>{
+      atList.innerHTML = members.length
+        ? members.map(m=>`<div onmousedown="event.preventDefault()" onclick="insertAt('${m.name}')">${m.position==='程序员'?'👨‍💻':m.position==='设计师'?'👩‍🎨':'📊'} ${m.name} · ${m.position}</div>`).join('')
+        : '<div style="color:var(--sub)">暂无成员</div>';
+    });
+  document.querySelector('.chat-input').appendChild(atList);
+}
+function hideAtList() { if (atList) { atList.remove(); atList = null; } }
+function insertAt(name) {
+  const input = document.getElementById('chatInput');
+  const val = input.value;
+  const lastAt = val.lastIndexOf('@');
+  input.value = val.substring(0, lastAt) + '@' + name + ' ';
+  hideAtList(); input.focus();
+}
+
+// ========== 成员 ==========
+async function loadMembers() {
+  try {
+    const r = await fetch(API+'/v8/roster/list?server_id=default');
+    const members = await r.json();
+    const el = document.getElementById('memberList');
+    if(!members.length) { el.innerHTML = '<div class="empty-hint">暂无AI员工<br>去岗位市场招聘吧</div>'; return; }
+    el.innerHTML = members.map(m=>`
+      <div class="member-row">
+        <div class="avatar">${m.position==='程序员'?'👨‍💻':m.position==='设计师'?'👩‍🎨':'📊'}</div>
+        <div class="info"><div class="name">${m.name}</div><div class="pos">${m.position}</div></div>
+        <div class="status ${m.status}"></div>
+        <div class="actions">
+          ${m.status==='active'?`<button title="暂停" onclick="togglePause('${m.name}',true)">⏸</button>`:`<button title="恢复" onclick="togglePause('${m.name}',false)">▶</button>`}
+          <button title="解雇" onclick="fireMember('${m.name}')">❌</button>
+        </div>
+      </div>`).join('');
+  } catch(e) {}
+}
+async function togglePause(name, pause) {
+  await fetch(API+'/v8/roster/'+(pause?'pause':'resume'), {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({server_id:'default',name})});
+  loadMembers(); addMessage('agent', pause?`${name} 已暂停`:`${name} 已恢复`);
+}
+async function fireMember(name) {
+  if(!confirm(`确定解雇 ${name}？`)) return;
+  await fetch(API+'/v8/roster/fire', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({server_id:'default',name})});
+  loadMembers(); addMessage('agent', `${name} 已解雇`);
+}
+
+// ========== 招聘 ==========
+async function loadMarket() {
+  try {
+    const r = await fetch(API+'/v8/positions/list');
+    const positions = await r.json();
+    document.getElementById('marketList').innerHTML = positions.map(p=>`
+      <div class="card">
+        <div class="pos-icon">${p.position==='程序员'?'👨‍💻':p.position==='设计师'?'👩‍🎨':'📊'}</div>
+        <div class="pos-name">${p.position}</div>
+        <div class="pos-desc">${p.description||''}</div>
+        <div class="pos-budget">默认模型: ${p.model}</div>
+        <button class="hire-btn" onclick="openHire('${p.id}','${p.position}')">聘用</button>
+      </div>`).join('');
+  } catch(e) {}
+}
+function openHire(id, position) {
+  currentPosition = id;
+  document.getElementById('hireTitle').textContent = `聘用 ${position}`;
+  document.getElementById('hireBudget').value = 0;
+  document.getElementById('hireUnitPrice').value = 0;
+  document.getElementById('hireApiKey').value = '';
+  document.getElementById('hireModel').value = '';
+  document.getElementById('hireName').value = '';
+  document.getElementById('hireModal').classList.add('show');
+}
+function closeModal() { document.getElementById('hireModal').classList.remove('show'); }
+async function doHire() {
+  const name = document.getElementById('hireName').value.trim();
+  if(!name) return alert('请输入员工名字');
+  const model = document.getElementById('hireModel').value;
+  const apiKey = document.getElementById('hireApiKey').value.trim();
+  const unitPrice = parseFloat(document.getElementById('hireUnitPrice').value)||0;
+  const budget = parseFloat(document.getElementById('hireBudget').value)||0;
+  try {
+    const r = await fetch(API+'/v8/roster/hire', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({server_id:'default', name, position:currentPosition, model, api_key:apiKey, unit_price:unitPrice, budget})
+    });
+    const d = await r.json();
+    if(d.success) { closeModal(); loadMembers(); switchTab('chat'); addMessage('agent', `${d.member.name}（${d.member.position}）加入了团队！`); }
+    else { alert(d.error||'聘用失败'); }
+  } catch(e) { alert('出错: '+e.message); }
+}
+
+// ========== 账单 ==========
+async function loadBilling() {
+  try {
+    const r = await fetch(API+'/v8/ledger/billing?server_id=default');
+    const d = await r.json();
+    const agents = Object.entries(d.by_agent||{});
+    if(!agents.length) { document.getElementById('billingContent').innerHTML='<div class="empty-hint">暂无账单数据</div>'; return; }
+    document.getElementById('billingContent').innerHTML = `
+      <div class="total">$${d.total.toFixed(4)}<span> 本月总花费（估算）</span></div>
+      <div style="font-size:11px;color:var(--sub);margin:-12px 0 16px">⚠️ 金额为本地估算，实际费用以API提供商账单为准</div>
+      ${agents.map(([name,info])=>{
+        return `<div class="bill-row">
+          <span>${info.position==='程序员'?'👨‍💻':info.position==='设计师'?'👩‍🎨':'📊'} ${name}</span>
+          <span style="font-size:12px;color:var(--sub)">${info.position} · ${info.model}</span>
+          <div style="flex:1;font-size:12px;color:var(--sub)">${info.calls}次调用 · ${info.tokens} tokens</div>
+          <div class="bill-info">$${info.cost.toFixed(4)}</div>
+        </div>`;
+      }).join('')}`;
+  } catch(e) { document.getElementById('billingContent').innerHTML='<div class="empty-hint">账单加载失败</div>'; }
+}
+
+// ========== 时间线 ==========
+async function loadTimeline() {
+  try {
+    const r = await fetch(API+'/v8/ledger/timeline?server_id=default&limit=30');
+    const events = await r.json();
+    if(!events.length) { document.getElementById('timelineContent').innerHTML='<div class="empty-hint">暂无事件</div>'; return; }
+    document.getElementById('timelineContent').innerHTML = events.map(e=>{
+      const icon = e.action.includes('bug')?'🐛':e.action.includes('代码')?'💻':e.action.includes('图')?'🎨':'📋';
+      const time = new Date(e.timestamp).toLocaleString('zh-CN');
+      return `<div class="tl-item">
+        <div class="tl-icon">${icon}</div>
+        <div class="tl-body">
+          <div class="tl-agent">${e.position==='程序员'?'👨‍💻':e.position==='设计师'?'👩‍🎨':'📊'} ${e.agent} · ${e.position}</div>
+          <div class="tl-action">${e.summary}</div>
+          <div class="tl-meta">${time} · <span class="tl-status ${e.status}">${e.status==='completed'?'完成':e.status}</span> · $${e.cost.toFixed(4)}</div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) { document.getElementById('timelineContent').innerHTML='<div class="empty-hint">加载失败</div>'; }
+}
+
+// ========== 初始化 ==========
+loadMembers();
 </script>
 </body>
 </html>

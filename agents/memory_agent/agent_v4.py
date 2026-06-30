@@ -45,28 +45,36 @@ class MemoryAgentV4(BusinessAgent):
         else:
             return self._legacy_parse(user_input)
     
+
+    ALLOWED_IDENTITY_KEYS = {"名字", "姓名", "昵称", "用户名", "name"}
     def _store_identity(self, extracted: dict) -> Dict:
-        """LLM提取的身份信息，直接存储"""
+        """LLM提取的身份信息，只存储白名单字段"""
         stored = []
         for key, value in extracted.items():
-            if value and len(str(value)) > 0:
+            if key in self.ALLOWED_IDENTITY_KEYS and value and len(str(value)) > 0 and len(str(value)) < 50:
                 self.remember_forever(key, str(value))
                 stored.append(f"{key}={value}")
-        cache_manager.clear()  # 清除缓存，避免写入后读到旧缓存
+        cache_manager.clear()
         if stored:
             return self._resp(f"已记住: {', '.join(stored)}")
         return self._resp("未能提取到身份信息")
-    
+
+
     def _store_memory(self, extracted: dict) -> Dict:
         """LLM提取的键值对，直接存储"""
         key = extracted.get("key", "")
         value = extracted.get("value", "")
         if key and value:
-            self.remember_forever(key, str(value))
-            cache_manager.clear()  # 清除缓存
+            value_str = str(value)
+            if len(value_str) > 200:
+                return self._resp(f"记忆内容过长，请精简后重试")
+            if "{" in value_str or "```" in value_str:
+                return self._resp(f"记忆内容格式异常，请重新输入")
+            self.remember_forever(key, value_str)
+            cache_manager.clear()
             return self._resp(f"已记住: {key}={value}")
         return self._resp("未能提取到键值对")
-    
+
     def _recall_memory(self, extracted: dict, pre_fetched: dict = None) -> Dict:
         """LLM提取的查询，直接检索（支持上游预检索）"""
         import logging

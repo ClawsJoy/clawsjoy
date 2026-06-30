@@ -99,10 +99,10 @@ class CortexValidator:
         action = reasoning.get("action","")
         if action not in self.VALID_ACTIONS: return {"status":"invalid"}
         if action in ("greeting","chat"): return {"status":"success"}
+        if extracted.get("需要澄清"): return {"status":"success"}  # 需要澄清时跳过检查
         needs = self.REQUIRED_FIELDS.get(action,[])
         missing = [f for f in needs if f not in extracted or not extracted[f]]
         return {"status":"missing","missing":missing} if missing else {"status":"success"}
-
 
 class AgentCortex:
     """v4.0 极简架构：意图识别→上下文检索→Agent执行→回复生成"""
@@ -117,6 +117,7 @@ class AgentCortex:
         logger.info("🧠 AgentCortex v4.0")
 
     def process(self, user_input: str, user_id: str = "default", context: Dict = None) -> Dict:
+        print(f"[DEBUG] process START: user_input={user_input[:50]}, user_id={user_id}")
         start_time = time.time()
         self._stats["total"] += 1
         if not user_input or len(user_input.strip()) == 0:
@@ -166,6 +167,7 @@ class AgentCortex:
             if agent_actions:
                 action = agent_actions[0]
         self._last_action = action
+        print(f"[DEBUG] final action={action}, extracted={extracted}")
 
         # 第1.5层：改动点：根据action决定是否检索上下文 =====
         # WRITE类action：跳过上下文检索，不补全extracted
@@ -188,11 +190,15 @@ class AgentCortex:
     
         else:
             # chat/greeting 等：轻量上下文
-            context_data = self._retrieve_context(action, extracted, user_input, user_id)
+            # 需要澄清时不补全，避免补全数据干扰澄清判断
+            if not extracted.get("需要澄清"):
+                context_data = self._retrieve_context(action, extracted, user_input, user_id)
+            else:
+                context_data = {"补全": {}}
             if context_data.get("补全"):
                 for k, v in context_data["补全"].items():
                     if not extracted.get(k):
-                        extracted[k] = v
+                        extracted[k] = v  
         # ===== 改动结束 =====
 
         # 验收
@@ -266,10 +272,16 @@ class AgentCortex:
         # 第2层：Agent执行
         agents = self._infer_agents(action, extracted)
         agent_result = None
+        print(f"[DEBUG] agents={agents}, action={action}")
         if agents and action not in ("greeting","chat"):
-            agent_result = self._execute_single(agents[0], user_input, user_id, context_data, extracted)
+            print(f"[DEBUG] 需要澄清检查: extracted={extracted}")
+            if extracted and extracted.get("需要澄清"):
+                agent_result = {"success": True, "response": "需要澄清"}
+            else:
+                agent_result = self._execute_single(agents[0], user_input, user_id, context_data, extracted)
 
         # 第3层：回复生成
+        print(f"[DEBUG] process->generate_reply: agent_result={agent_result}, extracted={extracted}")
         reply = self._generate_reply(user_input, action, extracted, context_data, user_id, agent_result)
 
         latency_ms = (time.time()-start_time)*1000
@@ -285,7 +297,7 @@ class AgentCortex:
         except:
             pass
 
-        return {"success":True,"response":reply,"output_content":reply,"intent":action,"confidence":confidence,"method":"v4","agents_used":agents,"extracted":extracted,"proactive":proactive}
+        return {"success":True,"response":reply,"output_content":reply,"intent":action,"confidence":confidence,"method":"v4","agents_used":agents,"extracted":extracted,"proactive":proactive,"tokens":self._stats.get("total_tokens",0),"model":llm_client.config.default_model}
 
     # ========== 意图识别 ==========
 
@@ -298,6 +310,11 @@ class AgentCortex:
         # 0.1 YouTube URL
         if 'youtube.com' in text or 'youtu.be' in text:
             return "youtube", 0.95
+        # 0.1.1 YouTube 搜索/分析（无URL）—— 必须在 recall 之前
+        if any(w in text for w in ["搜索", "搜", "找", "查"]) and any(w in text for w in ["youtube", "yt", "油管"]):
+            return "youtube", 0.90
+        if any(w in text for w in ["分析频道", "频道分析"]):
+            return "youtube", 0.90
         # 0.2 特殊查询
         if re.search(r"我叫(?:什么|来着)", text):
             return "recall", 0.90
@@ -331,10 +348,14 @@ class AgentCortex:
         if any(w in text for w in ["记住","保存","存储","记一下","记下","帮我记","帮我存","存一下"]):
             if any(w in text for w in ["是多少","是什么","什么","多少"]): return "recall", 0.80
             return "memory", 0.90
+        
+        # 精准查询：我的密码/名字等
+        if re.search(r'(我的|我.*的)\s*(密码|名字|姓名|昵称|账号|语言|偏好|爱好|兴趣|年龄|地址|电话|职业)', text):
+            return "recall", 0.85
+
 
         # recall
-        recall_words = ["还记得","记不记得","记得吗","你忘了吗","帮我查","帮我找","查一下","找一下",
-                        "是什么","哪些","哪里","怎么","如何","谁","来着","多少","是多少","是啥","啥"]
+        recall_words = ["还记得","记不记得","记得吗","你忘了吗","回忆","上次说过","之前说过","之前聊过"]
         if any(w in text for w in recall_words):
             return "recall", 0.80
 
@@ -346,6 +367,19 @@ class AgentCortex:
             for pattern in rules.get("patterns",[]):
                 if re.search(pattern, text):
                     return action, min(0.85+(len(re.search(pattern,text).group())/max(len(text),1))*0.1, 0.98)
+        # v8 岗位专线：查花名册
+        try:
+            from core.lib.v8.roster_engine import roster_engine
+            members = roster_engine.list_active("default")
+            positions = {m["position"]: m for m in members}
+            if "分析师" in positions and any(kw in text for kw in ["分析", "报告", "数据", "竞品", "市场", "趋势"]):
+                return "analyze", 0.85
+            if "设计师" in positions and any(kw in text for kw in ["设计", "logo", "海报", "图片", "画", "图"]):
+                return "vision", 0.85
+            if "程序员" in positions and any(kw in text for kw in ["写", "代码", "修复", "bug", "编程", "开发"]):
+                return "code", 0.85
+        except:
+            pass
 
         return "chat", 0.30
 
@@ -361,6 +395,18 @@ class AgentCortex:
 
         if action == "memory":
             content = text
+            # 智能识别 "记住我叫xxx"
+            m = re.search(r'(?:记住|记一下|记下|帮我记)\s*我(?:叫|是)\s*(.+)', text)
+            if m:
+                extracted["key"] = "名字"
+                extracted["value"] = m.group(1).strip()
+                return extracted
+            # 智能识别 "记住我的密码是xxx"
+            m = re.search(r'(?:记住|记一下|记下|帮我记)\s*我的\s*(密码|名字|账号)\s*(?:是|为|：|:)\s*(.+)', text)
+            if m:
+                extracted["key"] = m.group(1).strip()
+                extracted["value"] = m.group(2).strip()
+                return extracted
             prefixes = ["帮我存一下","帮我存","帮我记一下","帮我记","记一下","记下","记住","保存","存储"]
             for p in sorted(prefixes, key=len, reverse=True):
                 if text.startswith(p): content = text[len(p):].strip(); break
@@ -408,10 +454,15 @@ class AgentCortex:
 
         if action == "code":
             for p in ["写","编写"]:
-                if text.startswith(p): extracted["功能描述"]=text[len(p):].strip(); return extracted
-            extracted["功能描述"]=text
+                if p in text:
+                    extracted["功能描述"] = text[text.index(p)+len(p):].strip()
+                    break
+            if not extracted.get("功能描述"):
+                extracted["功能描述"] = text.strip()
+            if len(extracted.get("功能描述","")) <= 3:
+                extracted["需要澄清"] = True
             return extracted
-
+        
         return extracted
 
     # ========== 上下文检索 ==========
@@ -445,7 +496,7 @@ class AgentCortex:
 
         if needs_value and extracted.get("key"):
             r = bank.recall(extracted["key"], limit=1)
-            if r and "未找到" not in r and "{\"user\"" not in r: context["补全"]["value"]=r
+            if r and "未找到" not in r and len(r) < 50 and "{" not in r and "```" not in r: context["补全"]["value"]=r
 
         if needs_query:
             for item in reversed(history[-3:]):
@@ -541,11 +592,37 @@ class AgentCortex:
     # ========== 回复生成 ==========
 
     def _generate_reply(self, user_input, action, extracted, context, user_id, agent_result=None):
+        print(f"[DEBUG] _generate_reply: agent_result={agent_result}, extracted={extracted}")
         if agent_result and agent_result.get("success") and agent_result.get("response"):
             raw = str(agent_result.get("response"))
             if '{"user"' not in raw and '{"assistant"' not in raw:
+                # 检查是否需要澄清
+                if (extracted and extracted.get("需要澄清")) or raw == "需要澄清":
+                    try:
+                        clarify = llm_client.generate(
+                            f"用户说：{user_input}\n信息不够，请用一句话反问用户补充细节。",
+                            model=MODEL_MAIN, max_tokens=50, task_type="clarify", timeout=10
+                        )
+                        if clarify and len(clarify.strip()) > 2:
+                            return clarify.strip()
+                    except:
+                        pass
+                # LLM 润色
+                ctx_parts = []
+                if context.get("user_name"): ctx_parts.append(f"用户叫{context['user_name']}")
+                if action: ctx_parts.append(f"当前操作:{action}")
+                ctx_text = " | ".join(ctx_parts)
+                constraint = "直接回复用户，不要说你正在润色或整理。直接给出内容。" if action not in ("recall", "identity") else "这是记忆查询结果，直接告诉用户答案，不要说你正在查询或润色。"
+                try:
+                    polished = llm_client.generate(
+                        f"{ctx_text}\n将以下系统回复润色为自然对话。{'这是记忆查询结果，不要改变任何信息。' if action in ('recall','identity') else '不要改变事实。'}\n{raw}",
+                        model=MODEL_MAIN, max_tokens=100, task_type="polish", timeout=10
+                    )
+                    if polished and len(polished.strip()) > 2:
+                        return polished.strip()
+                except:
+                    pass
                 return raw
-
         ctx_parts = []
         if context.get("补全"): ctx_parts.append(f"系统补全:{json.dumps(context['补全'],ensure_ascii=False)}")
         if context.get("user_name"): ctx_parts.append(f"用户名字:{context['user_name']}")

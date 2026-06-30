@@ -122,10 +122,23 @@ ABILITY_REGEX = {
         ],
         "extract": "task_info",
     },
+    # ========== youtube_agent：YouTube ==========
+    "youtube": {
+        "agent": "youtube_agent",
+        "description": "YouTube 视频搜索/下载/分析",
+        "patterns": [
+            r"youtube\.com", r"youtu\.be",
+            r"油管", r"youtube\b", r"\byt\b",
+            r"下载.*视频", r"分析频道", r"频道分析",
+            r"生成标题", r"起标题",
+            r"seo.*优化|优化.*seo", r"搜索优化",
+        ],
+        "extract": "query",
+    },
 }
 
 # 匹配优先级（越靠前越优先）
-PRIORITY = ["greeting", "identity", "recall", "memory", "translate", "calculate", 
+PRIORITY = ["greeting", "identity", "recall", "memory", "youtube", "translate", "calculate",
             "code", "write", "analyze", "file", "task"]
 
 # 默认兜底
