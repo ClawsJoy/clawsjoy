@@ -27,7 +27,7 @@ def _get_ft_model():
             _ft_model = fasttext.load_model('models/intent_classifier.bin')
             sys.stderr = _stderr
         except:
-            pass
+                pass
     return _ft_model
 from core.lib.context_manager import get_context
 
@@ -114,7 +114,23 @@ class AgentCortex:
         self.validator = CortexValidator()
         self._session_context: Dict[str, str] = {}  # user_id → mode
         self._agent_capabilities = self._load_agent_capabilities()
+        # 初始化向量语义索引
+        self._index_agent_capabilities()
         logger.info("🧠 AgentCortex v4.0")
+    
+    def _index_agent_capabilities(self):
+        """把 Agent 能力描述索引到向量库"""
+        try:
+            from core.lib.vector_bank import get_vector_bank
+            vbank = get_vector_bank("system")
+            for name, info in self._agent_capabilities.items():
+                if info.get("type") == "agent":
+                    desc = info.get("description", "")
+                    actions = " ".join(info.get("actions", []))
+                    vbank.remember("agent_capability", f"{name} {actions} {desc}", name)
+        except Exception as e:
+            print(f"[向量索引] 失败: {e}")
+
 
     def process(self, user_input: str, user_id: str = "default", context: Dict = None) -> Dict:
         print(f"[DEBUG] process START: user_input={user_input[:50]}, user_id={user_id}")
@@ -230,7 +246,7 @@ class AgentCortex:
                     line = line.strip().lstrip('0123456789. -')
                     if line and len(line) > 3:
                         steps.append(line)
-            except:
+            except Exception as e:
                 pass
             
             # LLM 失败则用简单规则
@@ -254,7 +270,7 @@ class AgentCortex:
                                 r = agent.process(step, {})
                                 results.append(r.get("response", "")[:300])
                                 continue
-                    except:
+                    except Exception as e:
                         pass
                     # 如果是翻译步骤，传入上一步结果
                     prev = results[-1] if results else ""
@@ -293,11 +309,18 @@ class AgentCortex:
         try:
             from core.agents.wisdom.wisdom_factory import wisdom_factory
             pa = wisdom_factory.get_agent("proactive_agent", user_id)
-            proactive = pa.process(user_input, {"user_id": user_id}).get("response", "")[:300]
-        except:
-            pass
-
-        return {"success":True,"response":reply,"output_content":reply,"intent":action,"confidence":confidence,"method":"v4","agents_used":agents,"extracted":extracted,"proactive":proactive,"tokens":self._stats.get("total_tokens",0),"model":llm_client.config.default_model}
+            summary = reply[:80]
+            if agent_result and agent_result.get("videos"):
+                summary = f"返回了{len(agent_result['videos'])}个搜索结果"
+            ctx = {"user_id": user_id, "action": action, "result_summary": summary}
+            skip = action in ("vision",) or (agent_result and agent_result.get("videos"))
+            if not skip:
+                proactive = pa.process(user_input, ctx).get("response", "")[:300]
+                print(f"[DEBUG] proactive: action={action}, summary={summary}, result={proactive[:100]}")
+        except Exception as e:
+            print(f"[DEBUG] proactive error: {e}")
+        
+        return {"success":True,"response":reply,"output_content":reply,"intent":action,"confidence":confidence,"method":"v4","agents_used":agents,"extracted":extracted,"proactive":proactive,"videos":agent_result.get("videos", []) if agent_result else [],"tokens":self._stats.get("total_tokens",0),"model":llm_client.config.default_model}
 
     # ========== 意图识别 ==========
 
@@ -305,8 +328,12 @@ class AgentCortex:
         """意图识别 - 规则优先 → fastText → 正则 → chat"""
         text = user_input.strip().lower()
         import sys
-
+        if text.endswith('.mp4') or '分析视频' in text:
+            return "vision", 0.90
         # 第0层：规则优先（最高优先级）
+        # 0.0 图片/图表分析
+        if any(kw in text for kw in ["分析图片", "图片分析", "分析图像", "识别图片", "分析图表", "图表分析", "分析截图"]):
+            return "vision", 0.90
         # 0.1 YouTube URL
         if 'youtube.com' in text or 'youtu.be' in text:
             return "youtube", 0.95
@@ -331,6 +358,21 @@ class AgentCortex:
                     return action, conf[0]
         except:
             pass
+
+        # 第1.5层：向量语义匹配
+        try:
+            from core.lib.vector_bank import get_vector_bank
+            vbank = get_vector_bank("system")
+            results = vbank.recall(text, bucket="agent_capability", limit=1)
+            if results:
+                agent_name = results[0].get("content", "")
+                for action, info in self._agent_capabilities.items():
+                    if info.get("type") == "agent" and info.get("name") == agent_name:
+                        if info.get("actions"):
+                            return info["actions"][0], 0.75
+        except:
+            pass
+
 
         # 第2层：正则匹配
         # greeting
@@ -483,9 +525,12 @@ class AgentCortex:
             try:
                 for line in raw.split('\n'):
                     if line.strip():
-                        try: history.append(json.loads(line.strip()))
-                        except: pass
-            except: pass
+                        try: 
+                            history.append(json.loads(line.strip()))
+                        except:
+                            pass
+            except:
+                pass
 
         if needs_key:
             for item in reversed(history[-5:]):
@@ -559,6 +604,21 @@ class AgentCortex:
         return agents[:1]  # 返回最佳匹配
 
     def _execute_single(self, agent_name: str, user_input: str, user_id: str, context_data: Dict = None, extracted: Dict = None) -> Dict:
+        # V8 花名册覆盖：查员工是否有 API Key，有则走适配器
+        try:
+            from core.lib.v8.roster_engine import roster_engine
+            from core.lib.v8.adapters.factory import get_adapter
+            for m in roster_engine.list_active("default"):
+                mapping = m.get("agent_mapping", "")
+                if mapping and mapping in agent_name and m.get("api_key"):
+                    adapter = get_adapter(m.get("model", ""), api_key=m["api_key"])
+                    result = adapter.execute(user_input)
+                    if result.get("success"):
+                        return {"success": True, "response": result["content"], "tokens": result.get("tokens", 0)}
+        except:
+            pass
+
+        # 降级：ClawsJoy 内置 Agent
         agent = self._get_agent(agent_name, user_id)
         if not agent:
             return {"success": False, "response": f"Agent不可用"}
@@ -585,6 +645,7 @@ class AgentCortex:
             from core.agents.wisdom.wisdom_factory import wisdom_factory
             a = wisdom_factory.get_agent(agent_name, user_id)
         except:
+            pass
             a = None
         if a: self._agent_cache[k] = a
         return a
@@ -593,8 +654,12 @@ class AgentCortex:
 
     def _generate_reply(self, user_input, action, extracted, context, user_id, agent_result=None):
         print(f"[DEBUG] _generate_reply: agent_result={agent_result}, extracted={extracted}")
+        if agent_result and agent_result.get("videos"):
+            return agent_result.get("response", "")
         if agent_result and agent_result.get("success") and agent_result.get("response"):
             raw = str(agent_result.get("response"))
+            if action == "vision" and raw and (raw.startswith("🔍") or raw.startswith("📹")):
+                return raw
             if '{"user"' not in raw and '{"assistant"' not in raw:
                 # 检查是否需要澄清
                 if (extracted and extracted.get("需要澄清")) or raw == "需要澄清":
@@ -612,7 +677,7 @@ class AgentCortex:
                 if context.get("user_name"): ctx_parts.append(f"用户叫{context['user_name']}")
                 if action: ctx_parts.append(f"当前操作:{action}")
                 ctx_text = " | ".join(ctx_parts)
-                constraint = "直接回复用户，不要说你正在润色或整理。直接给出内容。" if action not in ("recall", "identity") else "这是记忆查询结果，直接告诉用户答案，不要说你正在查询或润色。"
+                constraint = "直接回复用户，不要说你正在润色或整理。不要添加任何额外建议。不要截断内容，保留完整信息。直接给出内容。" if action not in ("recall", "identity") else "这是记忆查询结果，直接告诉用户答案，不要说你正在查询或润色。"
                 try:
                     polished = llm_client.generate(
                         f"{ctx_text}\n将以下系统回复润色为自然对话。{'这是记忆查询结果，不要改变任何信息。' if action in ('recall','identity') else '不要改变事实。'}\n{raw}",
@@ -643,7 +708,8 @@ class AgentCortex:
         try:
             resp = llm_client.generate(f"用户说：{user_input}\n请简短回复。", model=MODEL_MAIN, max_tokens=200, task_type="reply", timeout=10)
             if resp and len(resp.strip())>2: return resp.strip()
-        except: pass
+        except:
+            pass
 
         return self._fallback(action, extracted, context)
 

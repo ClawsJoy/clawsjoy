@@ -7,7 +7,7 @@ import re
 from typing import Dict, Optional, Tuple
 
 from dotenv import load_dotenv
-load_dotenv("config/.env")
+load_dotenv("/home/flybo/clawsjoy_v5/config/.env")
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
@@ -24,17 +24,11 @@ class YoutubeAgentV4(BusinessAgent):
     def __init__(self, user_id: str = "default"):
         super().__init__(user_id=user_id)
         self.api_key = os.getenv("YOUTUBE_API_KEY", "")
-        self.youtube = None
         if self.api_key:
-            try:
-                from googleapiclient.discovery import build
-                self.youtube = build("youtube", "v3", developerKey=self.api_key)
-                print(f"📺 YoutubeAgent v{self.version} 启动 ✅ (API Key)")
-            except Exception as e:
-                print(f"📺 YoutubeAgent v{self.version} 启动 ⚠️ (API 初始化失败: {e})")
+            print(f"📺 YoutubeAgent v{self.version} 启动 ✅ (API Key)")
         else:
             print(f"📺 YoutubeAgent v{self.version} 启动 ⚠️ (未配置 YOUTUBE_API_KEY)")
-
+    
     def can_handle_json(self, action: str, target: str) -> Tuple[bool, float]:
         return (True, 0.85)
 
@@ -85,7 +79,7 @@ class YoutubeAgentV4(BusinessAgent):
             if result.get("success"):
                 return self._resp(f"✅ 下载完成\n\n{result.get('file', result.get('message', ''))}")
             else:
-                return self._resp(f"❌ 下载失败：{result.get('error', '未知错误')}")
+                return self._resp(f"❌ 下载失败：{result.get('error', '未知错误')}")  
         except Exception as e:
             return self._resp(f"❌ 下载失败：{e}")
 
@@ -95,33 +89,28 @@ class YoutubeAgentV4(BusinessAgent):
     def _get_video_info(self, user_input: str) -> Dict:
         url = self._extract_url(user_input)
         if not url:
-            return self._resp("请提供 YouTube 链接。示例：信息 https://youtu.be/xxx")
-
+            return self._resp("请提供 YouTube 链接")
         video_id = self._extract_video_id(url)
         if not video_id:
-            return self._resp("无法提取视频 ID，请检查链接格式")
-
-        if not self.youtube:
-            return self._resp("YouTube API 未配置，请在 config/.env 中设置 YOUTUBE_API_KEY")
+            return self._resp("无法提取视频 ID")
+        if not self.api_key:
+            return self._resp("YouTube API 未配置")
 
         try:
-            request = self.youtube.videos().list(
-                part="snippet,statistics,contentDetails",
-                id=video_id
+            import requests as _r
+            resp = _r.get(
+                "https://www.googleapis.com/youtube/v3/videos",
+                params={"part": "snippet,statistics,contentDetails", "id": video_id, "key": self.api_key},
+                timeout=10,
             )
-            response = request.execute()
-
-            if not response.get("items"):
+            data = resp.json()
+            if not data.get("items"):
                 return self._resp(f"未找到视频: {video_id}")
-
-            item = response["items"][0]
+            item = data["items"][0]
             snippet = item["snippet"]
             stats = item.get("statistics", {})
             details = item.get("contentDetails", {})
-
-            # 解析时长
             duration = self._parse_duration(details.get("duration", ""))
-
             info = (
                 f"📹 **{snippet.get('title', '未知')}**\n\n"
                 f"**频道**: {snippet.get('channelTitle', '未知')}\n"
@@ -134,87 +123,88 @@ class YoutubeAgentV4(BusinessAgent):
             )
             return self._resp(info)
         except Exception as e:
-            return self._resp(f"获取视频信息失败: {e}")
-
+            return self._resp(f"获取视频信息失败: {e}")   
     # ================================================================
     #  搜索（API Key 方案）
     # ================================================================
     def _search_video(self, user_input: str) -> Dict:
         keyword = re.sub(r'(搜索视频|找视频|查找视频|搜索|搜|油管|youtube|帮我|找几个|找)', '', user_input, flags=re.IGNORECASE).strip()
         if not keyword:
-            return self._resp("请提供关键词。示例：搜索 人工智能教程")
-
-        if not self.youtube:
-            return self._resp("YouTube API 未配置，请在 config/.env 中设置 YOUTUBE_API_KEY")
+            return self._resp("请提供关键词")
+        if not self.api_key:
+            return self._resp("YouTube API 未配置")
 
         try:
-            request = self.youtube.search().list(
-                part="snippet",
-                q=keyword,
-                type="video",
-                maxResults=5
+            import requests as _r
+            resp = _r.get(
+                "https://www.googleapis.com/youtube/v3/search",
+                params={"part": "snippet", "q": keyword, "type": "video", "maxResults": 5, "key": self.api_key},
+                timeout=10,
             )
-            response = request.execute()
-
-            if not response.get("items"):
+            data = resp.json()
+            if not data.get("items"):
                 return self._resp(f"未找到关于「{keyword}」的视频")
+            lines = [f"🔍 **搜索结果**: {keyword}\n"]
+            for i, item in enumerate(data["items"], 1):
+                snippet = item["snippet"]
+                vid = item["id"]["videoId"]
+                lines.append(f"{i}. **{snippet.get('title', '未知')}**\n   频道: {snippet.get('channelTitle', '未知')}\n   链接: https://youtu.be/{vid}\n")
+            videos = []
+            for item in data["items"]:
+                snippet = item["snippet"]
+                videos.append({
+                    "title": snippet.get("title", "未知"),
+                    "channel": snippet.get("channelTitle", "未知"),
+                    "video_id": item["id"]["videoId"],
+                    "url": f"https://youtu.be/{item['id']['videoId']}",
+                })
 
             lines = [f"🔍 **搜索结果**: {keyword}\n"]
-            for i, item in enumerate(response["items"], 1):
-                snippet = item["snippet"]
-                video_id = item["id"]["videoId"]
-                title = snippet.get("title", "未知")
-                channel = snippet.get("channelTitle", "未知")
-                lines.append(
-                    f"{i}. **{title}**\n"
-                    f"   频道: {channel}\n"
-                    f"   链接: https://youtu.be/{video_id}\n"
-                )
+            for i, v in enumerate(videos, 1):
+                lines.append(f"{i}. **{v['title']}**\n   {v['channel']} | {v['url']}")
 
-            return self._resp("\n".join(lines))
+            return {
+                "success": True,
+                "response": f"🔍 搜索「{keyword}」找到 {len(videos)} 个视频",
+                "output_content": "\n".join(lines),
+                "videos": videos,
+            }
         except Exception as e:
-            return self._resp(f"搜索失败: {e}")
-
+            return self._resp(f"搜索失败: {e}")   
     # ================================================================
     #  频道分析（API Key 方案）
     # ================================================================
     def _analyze_channel(self, user_input: str) -> Dict:
         channel = re.sub(r'(分析频道|频道分析)', '', user_input).strip()
         if not channel:
-            return self._resp("请提供频道名称或 ID。示例：分析频道 Google")
-
-        if not self.youtube:
-            return self._resp("YouTube API 未配置，请在 config/.env 中设置 YOUTUBE_API_KEY")
+            return self._resp("请提供频道名称")
+        if not self.api_key:
+            return self._resp("YouTube API 未配置")
 
         try:
-            # 先搜索频道
-            search_request = self.youtube.search().list(
-                part="snippet",
-                q=channel,
-                type="channel",
-                maxResults=1
+            import requests as _r
+            # 搜索频道
+            sr = _r.get(
+                "https://www.googleapis.com/youtube/v3/search",
+                params={"part": "snippet", "q": channel, "type": "channel", "maxResults": 1, "key": self.api_key},
+                timeout=10,
             )
-            search_response = search_request.execute()
-
-            if not search_response.get("items"):
+            sdata = sr.json()
+            if not sdata.get("items"):
                 return self._resp(f"未找到频道: {channel}")
-
-            channel_id = search_response["items"][0]["snippet"]["channelId"]
-
+            channel_id = sdata["items"][0]["snippet"]["channelId"]
             # 获取频道详情
-            channel_request = self.youtube.channels().list(
-                part="snippet,statistics",
-                id=channel_id
+            cr = _r.get(
+                "https://www.googleapis.com/youtube/v3/channels",
+                params={"part": "snippet,statistics", "id": channel_id, "key": self.api_key},
+                timeout=10,
             )
-            channel_response = channel_request.execute()
-
-            if not channel_response.get("items"):
-                return self._resp(f"无法获取频道信息: {channel}")
-
-            item = channel_response["items"][0]
+            cdata = cr.json()
+            if not cdata.get("items"):
+                return self._resp(f"无法获取频道信息")
+            item = cdata["items"][0]
             snippet = item["snippet"]
             stats = item.get("statistics", {})
-
             info = (
                 f"📊 **频道分析**: {snippet.get('title', '未知')}\n\n"
                 f"**订阅者**: {self._format_number(stats.get('subscriberCount', '0'))}\n"
@@ -227,7 +217,6 @@ class YoutubeAgentV4(BusinessAgent):
             return self._resp(info)
         except Exception as e:
             return self._resp(f"频道分析失败: {e}")
-
     # ================================================================
     #  标题生成（LLM，不改）
     # ================================================================

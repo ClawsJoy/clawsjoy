@@ -1,4 +1,6 @@
 actions:
+- vision
+- analyze
 - describe_image
 - detect_objects
 - ocr

@@ -15,7 +15,15 @@ def get_adapter(model: str, api_key: str = "", **kwargs):
     agent_name = kwargs.get("agent_name", "chat_agent_v4")
     return ClawsJoyAdapter(agent_name=agent_name, model="ollama")
     model_lower = model.lower()
-
+        
+    if "glm" in model_lower:
+        from .deepseek_adapter import DeepSeekAdapter
+        return DeepSeekAdapter(
+            api_key=api_key,
+            model="glm-5.2",
+            endpoint="https://api.z.ai/api/paas/v4/chat/completions",
+            **kwargs
+        )
     if "deepseek" in model_lower:
         return DeepSeekAdapter(api_key=api_key, model="deepseek-chat", **kwargs)
 

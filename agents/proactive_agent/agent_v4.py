@@ -29,14 +29,23 @@ class ProactiveAgentV4(BusinessAgent):
 
     def _execute_business(self, user_input: str, context: Optional[Dict] = None) -> Dict:
         t = user_input.lower()
-        
+
         if any(kw in t for kw in ["提醒", "闹钟"]):
             return self._set_reminder(user_input)
-        
+
         if any(kw in t for kw in ["查看提醒", "我的提醒"]):
             return self._list_reminders()
-        
-        # 根据上下文生成智能建议
+
+        # 基于实际结果生成下一步建议
+        if context and context.get("result_summary"):
+            prompt = f"用户刚做了：{user_input}\n系统回复摘要：{context['result_summary']}\n\n根据以上信息，生成1-2条下一步行动建议。不要重复系统已经给出的信息。直接给出简短建议。"
+            result = self._call_llm(prompt)
+            if result and len(result) > 150:
+                result = result[:150]
+            if result and result.strip():
+                return self._resp("💡 " + result.strip())
+
+        # 降级：关键词匹配
         suggestions = []
         if "写" in t or "创作" in t:
             suggestions.append("需要我帮你续写小说吗？")
@@ -48,6 +57,7 @@ class ProactiveAgentV4(BusinessAgent):
             suggestions.append("输入「提醒我」设置提醒")
             suggestions.append("输入「记住」保存信息")
         return self._resp("💡 " + " | ".join(suggestions[:3]))
+
 
     # ================================================================
     #  设置提醒

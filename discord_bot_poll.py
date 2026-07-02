@@ -56,6 +56,7 @@ def ask_clawsjoy(user_input, user_id, channel_id):
         "raw_input": user_input,
         "user_id": f"discord_{user_id}",
         "session_id": f"discord_ch_{channel_id}",
+        "channel_id": channel_id,  # 新增
     }
 
     # 前缀路由
@@ -84,7 +85,13 @@ if __name__ == "__main__":
 
     channels = get_guild_channels(guilds[0]["id"])
     print(f"📡 监听 {len(channels)} 个频道: {[c['name'] for c in channels]}")
-
+    # 初始化：记录每个频道最新消息ID，跳过历史消息
+    for ch in channels:
+        cid = ch["id"]
+        msgs = get_messages(cid, limit=1)
+        if msgs:
+            last_message_id[cid] = msgs[0]["id"]
+    
     while True:
         try:
             for ch in channels:
@@ -96,10 +103,9 @@ if __name__ == "__main__":
                         continue
                     if msg["author"].get("bot"):
                         continue
-                    if cid in last_message_id and mid <= last_message_id[cid]:
+                    if cid in last_message_id and int(mid) <= int(last_message_id[cid]):
                         continue
                     last_message_id[cid] = mid
-
                     content = msg["content"].strip()
                     if not content:
                         continue

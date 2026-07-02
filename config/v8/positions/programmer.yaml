@@ -12,3 +12,4 @@ constraints:
   - 不能删除文件
   - 代码需审查后才能合并
 review_prompt: "你是代码审查员。审查以下代码，直接给出意见："
+agent_mapping: code_agent
