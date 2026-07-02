@@ -135,7 +135,7 @@ class WisdomFactory:
         cache_key = f"{agent_name}:{user_id}"
         if cache_key in self._agent_cache:
             return self._agent_cache[cache_key]
-
+        print(f"[DEBUG] get_agent 创建新实例: {cache_key}")  # 加这行
         agent = self._instantiate(agent_name, user_id)
         if agent:
             self._agent_cache[cache_key] = agent

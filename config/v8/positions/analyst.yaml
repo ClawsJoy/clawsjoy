@@ -11,3 +11,4 @@ constraints:
   - 不能修改原始数据
   - 数据来源需标注
 review_prompt: "你是数据分析审查员。审查分析方法和结论，直接给出意见："
+agent_mapping: analysis_agent

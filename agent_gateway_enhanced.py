@@ -135,7 +135,34 @@ def v5_execute():
             record_if_roster_member(server_id, agent_name, tokens, model)
     except:
         pass
-
+    
+    # 逐条发送 YouTube 搜索结果到 Discord
+    videos = result.get("videos", [])
+    if videos:
+        channel_id = data.get("channel_id", "")
+        print(f"[DEBUG] 逐条发送 videos={len(videos)}, channel_id={channel_id}")
+        if channel_id:
+            import requests as _r
+            for i, v in enumerate(videos):
+                msg = f"**{v['title']}**\n{v['channel']} | {v['url']}"
+                try:
+                    r = _r.post("http://localhost:5002/v8/discord/notify",
+                            json={"channel_id": channel_id, "message": msg, "username": "YouTube"},
+                            timeout=5)
+                    print(f"[DEBUG] 发送 {i+1}/{len(videos)}: status={r.status_code}")
+                except Exception as e:
+                    print(f"[DEBUG] 发送失败 {i+1}: {e}")   
+    # 发送 proactive 建议到 Discord
+    proactive = result.get("proactive", "")
+    if proactive:
+        channel_id = data.get("channel_id", "")
+        if channel_id:
+            try:
+                _r.post("http://localhost:5002/v8/discord/notify",
+                        json={"channel_id": channel_id, "message": proactive, "username": "ClawsJoy"},
+                        timeout=5)
+            except:
+                pass   
     return jsonify(result)
 
 

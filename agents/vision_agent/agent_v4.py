@@ -29,6 +29,223 @@ class VisionAgentV4(BusinessAgent):
     def _execute_business(self, user_input: str, context: Optional[Dict] = None) -> Dict:
         t = user_input.lower()
 
+        if any(kw in t for kw in ["分析视频", "视频分析", "视频内容"]):
+            import threading
+            path = self._extract_path(user_input)
+            if not path:
+                return self._resp("请提供视频文件路径")
+            video_path = str(Path(path))
+            if not Path(video_path).exists():
+                return self._resp(f"视频不存在: {path}")
+            
+            from core.lib.v8.video_analyzer import VideoAnalyzer
+            import os
+            
+            def _async_analyze(video_path, subtitle_path):
+                try:
+                    analyzer = VideoAnalyzer()
+                    result = analyzer.analyze(video_path, subtitle_path)
+                    import requests as _r, time
+
+                    def _send(msg, username="视频分析"):
+                        for attempt in range(3):
+                            try:
+                                _r.post("http://localhost:5002/v8/discord/notify",
+                                        json={"channel_id": "1103302124261085338", "message": msg, "username": username},
+                                        timeout=30)
+                                return
+                            except:
+                                if attempt < 2:
+                                    time.sleep(2)
+
+                    for s in result.get("scenes", []):
+                        msg = f"📹 场景{s['id']} [{s['start']:.0f}s-{s['end']:.0f}s]: {s.get('frame_analysis','')[:200]}"
+                        _send(msg)
+                        time.sleep(0.5)
+                    report = result.get("report", "")
+                    for i in range(0, len(report), 1900):
+                        _send(report[i:i+1900])
+                        time.sleep(0.5)
+                except Exception as e:
+                    print(f"[Vision] 异步分析失败: {e}") 
+             
+            threading.Thread(target=_async_analyze, args=(video_path, "/tmp/subtitles.txt" if os.path.exists("/tmp/subtitles.txt") else None), daemon=True).start()
+            return self._resp("🔍 正在分析视频，请稍候...")
+
+        if any(kw in t for kw in ["批量分析图片", "分析目录图片", "目录图片分析", "整理图片"]):
+            import threading, os, glob
+            path = self._extract_path(user_input)
+            if not path:
+                return self._resp("请提供目录路径")
+            dir_path = path if os.path.isdir(path) else str(Path(path).parent)
+            if not os.path.isdir(dir_path):
+                return self._resp(f"目录不存在: {dir_path}")
+            
+            def _async_batch():
+                try:
+                    images = sorted(glob.glob(f"{dir_path}/*.png") + glob.glob(f"{dir_path}/*.jpg") + glob.glob(f"{dir_path}/*.jpeg"))
+                    # 支持 006-021 范围过滤
+                    import re
+                    range_match = re.search(r'(\d+)[-–](\d+)', user_input)
+                    
+                    if range_match:
+                        start, end = int(range_match.group(1)), int(range_match.group(2))
+                        filtered = []
+                        for img in images:
+                            m = re.search(r'(\d+)', os.path.basename(img))
+                            if m and start <= int(m.group(1)) <= end:
+                                filtered.append(img)
+                        images = filtered
+                    # 支持 6月份 过滤
+                    month_match = re.search(r'(\d+)\s*月', user_input)
+                    if month_match:
+                        target_month = int(month_match.group(1))
+                        import datetime
+                        filtered = []
+                        for img in images:
+                            mtime = os.path.getmtime(img)
+                            dt = datetime.datetime.fromtimestamp(mtime)
+                            if dt.month == target_month:
+                                filtered.append(img)
+                        images = filtered
+                    if not images:
+                        _send(f"📁 {dir_path}: 未找到图片")
+                        return
+
+                    from core.lib.v8.video_analyzer import VideoAnalyzer
+                    analyzer = VideoAnalyzer()
+                    results = []
+                    for i, img in enumerate(images):
+                        desc = analyzer._analyze_frame(img, mode="image")
+                        results.append({"file": os.path.basename(img), "analysis": desc[:300]})
+                        _send(f"🖼 [{i+1}/{len(images)}] {os.path.basename(img)}:\n{desc[:500]}")
+                        time.sleep(0.3)
+
+                    # 1. 去重
+                    try:
+                        from collections import defaultdict
+                        import hashlib
+                        hash_groups = defaultdict(list)
+                        for img in images:
+                            with open(img, 'rb') as f:
+                                file_hash = hashlib.md5(f.read()).hexdigest()
+                            hash_groups[file_hash].append(img)
+                        duplicates = {h: imgs for h, imgs in hash_groups.items() if len(imgs) > 1}
+                        if duplicates:
+                            dup_count = sum(len(imgs)-1 for imgs in duplicates.values())
+                            _send(f"🔍 发现 {dup_count} 张重复图片")
+                            dup_dir = f"{dir_path}/_duplicates"
+                            os.makedirs(dup_dir, exist_ok=True)
+                            for h, imgs in duplicates.items():
+                                for dup in imgs[1:]:
+                                    shutil.move(dup, f"{dup_dir}/{os.path.basename(dup)}")
+                            _send(f"✅ 重复图片已移至 _duplicates")
+                            images = [img for img in images if os.path.exists(img)]
+                        else:
+                            _send("✅ 未发现重复图片")
+                    except Exception as e:
+                        _send(f"⚠ 去重失败: {e}")
+
+                    # 2. 打标签
+                    try:
+                        import json
+                        tags_file = f"{dir_path}/_tags.json"
+                        tag_data = {}
+                        for r in results:
+                            if os.path.exists(f"{dir_path}/{r['file']}"):
+                                tag_prompt = f"根据以下图片分析，提取2-3个关键词标签，用逗号分隔：{r['analysis']}"
+                                tags = llm_client.generate(tag_prompt).strip()
+                                tag_data[r['file']] = {"tags": tags, "analysis": r['analysis'][:200]}
+                        with open(tags_file, 'w') as f:
+                            json.dump(tag_data, f, ensure_ascii=False, indent=2)
+                        _send(f"🏷 标签已保存至 _tags.json")
+                    except Exception as e:
+                        _send(f"⚠ 打标签失败: {e}")
+
+                    # 3. 生成缩略图
+                    try:
+                        thumb_dir = f"{dir_path}/_thumbnails"
+                        os.makedirs(thumb_dir, exist_ok=True)
+                        from PIL import Image
+                        count = 0
+                        for img in images[:50]:
+                            if os.path.exists(img):
+                                im = Image.open(img)
+                                im.thumbnail((200, 200))
+                                im.save(f"{thumb_dir}/thumb_{os.path.basename(img)}")
+                                count += 1
+                        _send(f"🖼 缩略图已生成 {count} 张")
+                    except Exception as e:
+                        _send(f"⚠ 缩略图失败: {e}")
+
+                    # 4. 分类整理
+                    summary = "\n".join([f"{r['file']}: {r['analysis'][:80]}" for r in results])
+                    prompt = f"以下是{len(images)}张图片的分析结果：\n{summary}\n\n请建议如何分类（按场景/风格/内容），并给出重命名建议。200字以内。"
+                    suggestion = llm_client.generate(prompt)
+                    _send(f"📋 分类建议:\n{suggestion}")
+
+                    try:
+                        map_prompt = f"根据以下分析，给出每个文件应该移到哪个子目录。格式：文件名→子目录名\n{summary}"
+                        mapping_text = llm_client.generate(map_prompt)
+                        import shutil
+                        for line in mapping_text.split("\n"):
+                            if "→" in line:
+                                parts = line.split("→")
+                                fname = parts[0].strip()
+                                subdir = parts[1].strip()
+                                src = f"{dir_path}/{fname}"
+                                dst_dir = f"{dir_path}/{subdir}"
+                                os.makedirs(dst_dir, exist_ok=True)
+                                if os.path.exists(src):
+                                    shutil.move(src, f"{dst_dir}/{fname}")
+                        _send(f"✅ 整理完成，文件已按分类移动到子目录")
+                    except Exception as e:
+                        _send(f"⚠ 整理失败: {e}")
+
+                    # 5. 导出报告
+                    if re.search(r'导出|报告|report', user_input) and results:
+                        report_file = f"{dir_path}/_analysis_report.md"
+                        with open(report_file, 'w') as f:
+                            f.write(f"# 图片分析报告\n\n")
+                            f.write(f"目录: {dir_path}\n")
+                            f.write(f"图片数: {len(images)}\n")
+                            f.write(f"分析时间: {datetime.datetime.now()}\n\n")
+                            f.write(f"## 分类建议\n{suggestion}\n\n")
+                            f.write(f"## 逐张分析\n")
+                            for r in results:
+                                f.write(f"- **{r['file']}**: {r['analysis'][:200]}\n")
+                        _send(f"📄 报告已导出至 _analysis_report.md")
+            
+                
+                except Exception as e:
+                    print(f"[Vision] 批量分析失败: {e}")
+            
+            import requests as _r, time
+            def _send(msg):
+                for attempt in range(3):
+                    try:
+                        _r.post("http://localhost:5002/v8/discord/notify",
+                                json={"channel_id": "1103302124261085338", "message": msg, "username": "图片分析"},
+                                timeout=30)
+                        return
+                    except:
+                        if attempt < 2:
+                            time.sleep(2)
+            
+            threading.Thread(target=_async_batch, daemon=True).start()
+            return self._resp(f"🔍 正在批量分析 {dir_path} 目录下的图片，请稍候...")
+    
+        if any(kw in t for kw in ["分析图片", "图片分析", "分析图像", "识别图片"]):
+            path = self._extract_path(user_input)
+            if not path:
+                return self._resp("请提供图片路径")
+            if not Path(path).exists():
+                return self._resp(f"图片不存在: {path}")
+            from core.lib.v8.video_analyzer import VideoAnalyzer
+            analyzer = VideoAnalyzer()
+            result = analyzer._analyze_frame(path, mode="image")
+            return self._resp(f"🖼  图片分析:\n{result}")
+
         if any(kw in t for kw in ["生成", "画", "创建", "绘制"]):
             return self._generate(user_input)
         elif any(kw in t for kw in ["分析", "识别", "描述图"]):
@@ -134,7 +351,7 @@ class VisionAgentV4(BusinessAgent):
                 img_b64 = base64.b64encode(f.read()).decode()
             
             resp = requests.post(
-                "http://localhost:11434/api/generate",
+                "http://localhost:11435/api/generate",
                 json={
                     "model": "llava:latest",
                     "prompt": question,
@@ -191,14 +408,60 @@ class VisionAgentV4(BusinessAgent):
             if k in text:
                 return k
         return "方形"
-
     def _extract_path(self, text: str) -> str:
-        m = re.search(r'["\']([^"\']+)["\']|([/\w\-\.]+\.\w{3,4})', text)
-        return (m.group(1) or m.group(2)) if m else ""
+        # 先匹配文件路径（带扩展名）
+        m = re.search(r'(/[^\s]+\.\w{2,5})', text)
+        if m:
+            return m.group(1)
+        # 再匹配目录路径（以/结尾或后面跟空格）
+        m = re.search(r'(/[^\s]+/)', text)
+        if m:
+            return m.group(1)
+        # 匹配不带扩展名的路径
+        m = re.search(r'(/[^\s]+)', text)
+        if m:
+            path = m.group(1)
+            if not any(path.endswith(ext) for ext in ['.png','.jpg','.jpeg','.mp4','.txt']):
+                return path
+        return ""
 
+    
     def _resp(self, content: str, **kwargs) -> Dict:
         return {"success": True, "response": content, "output_content": content, **kwargs}
 
+    def _analyze_video(self, user_input: str) -> Dict:
+        """分析视频内容 - 逆向工程分析"""
+        path = self._extract_path(user_input)
+        if not path:
+            return self._resp("请提供视频文件路径")
+        
+        video_path = Path(path)
+        if not video_path.exists():
+            return self._resp(f"视频不存在: {path}")
+        
+        import os
+        from core.lib.v8.video_analyzer import VideoAnalyzer
+        
+        analyzer = VideoAnalyzer()
+        subtitle_path = "/tmp/subtitles.txt"
+        
+        result = analyzer.analyze(
+            str(video_path),
+            subtitle_path if os.path.exists(subtitle_path) else None
+        )
+        
+        if "error" in result:
+            return self._resp(f"分析失败: {result['error']}")
+        
+        stats = result.get("stats", {})
+        report = result.get("report", "")
+        scenes_count = len(result.get("scenes", []))
+        
+        return self._resp(
+            f"📹 **{result['file']}**\n\n"
+            f"📊 场景数: {scenes_count} | 总时长: {stats.get('总时长', '?')}\n\n"
+            f"📋 **制作分析报告**:\n{report}"
+        ) 
 
 if __name__ == "__main__":
     agent = VisionAgentV4("test")
