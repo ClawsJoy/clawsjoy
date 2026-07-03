@@ -24,4 +24,5 @@ class VectorMemoryEnhancement:
         # 实现语义搜索
         pass
 
-vector_enhancement = VectorMemoryEnhancement()
+# 
+# vector_enhancement = VectorMemoryEnhancement()

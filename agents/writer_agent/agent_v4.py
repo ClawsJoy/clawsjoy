@@ -172,7 +172,6 @@ class WriterAgentV4(BusinessAgent):
                         if novel_state and isinstance(novel_state, dict) and novel_state.get("chapters"):
                             if len(novel_state.get("chapters", [])) >= len(self._novel.get("chapters", [])):
                                 self._novel = novel_state
-                                print(f"[Writer] ✅ 加载状态(新): {self._novel.get('title', '未命名')} ({len(self._novel.get('chapters', []))}章)")
                     except:
                         pass
                     continue
@@ -183,19 +182,20 @@ class WriterAgentV4(BusinessAgent):
                     if novel_state and isinstance(novel_state, dict) and novel_state.get("chapters"):
                         if len(novel_state.get("chapters", [])) >= len(self._novel.get("chapters", [])):
                             self._novel = novel_state
-                            print(f"[Writer] ✅ 加载状态(旧): {self._novel.get('title', '未命名')} ({len(self._novel.get('chapters', []))}章)")
                     continue
 
+                # 更旧格式
                 if state_record.get("novel_state"):
                     novel_state = state_record.get("novel_state")
                     if isinstance(novel_state, dict) and novel_state.get("chapters"):
                         if len(novel_state.get("chapters", [])) >= len(self._novel.get("chapters", [])):
                             self._novel = novel_state
-                            print(f"[Writer] ✅ 加载状态(旧2): {self._novel.get('title', '未命名')} ({len(self._novel.get('chapters', []))}章)")
 
         except Exception as e:
             print(f"[Writer] 加载状态失败: {e}")
 
+        if self._novel.get("chapters"):
+            print(f"[Writer] ✅ 加载状态: {self._novel.get('title', '未命名')} ({len(self._novel.get('chapters', []))}章)")
 
     def _save_state(self):
         """保存创作状态到 memory 和联邦知识"""

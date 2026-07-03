@@ -37,15 +37,12 @@ class TenantVectorIndex:
         )
 
         self.client = vector_knowledge_center.client
-        try:
-            self.skill_collection = self.client.get_collection("tenant_skills")
-        except Exception as e:
-            self.skill_collection = self.client.create_collection(
-                name="tenant_skills",
-                embedding_function=self.embedding_fn,
-                metadata={"tenant_id": tenant_id, "type": "skills"},
-            )
-
+        self.skill_collection = self.client.get_or_create_collection(
+            name="tenant_skills",
+            embedding_function=self.embedding_fn,
+            metadata={"tenant_id": tenant_id, "type": "skills"},
+        )   
+    
     def index_skill(
         self, skill_id: str, name: str, description: str, category: str = "general"
     ):
