@@ -113,6 +113,7 @@ class VisionAgentV4(BusinessAgent):
                         return
 
                     from core.lib.v8.video_analyzer import VideoAnalyzer
+                    from core.lib.llm_client import llm_client
                     analyzer = VideoAnalyzer()
                     results = []
                     for i, img in enumerate(images):

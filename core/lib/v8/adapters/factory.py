@@ -11,9 +11,9 @@ def get_adapter(model: str, api_key: str = "", **kwargs):
     model: "deepseek-v3" | "claude-code" | "claude-4" | "dalle" | "ollama" | 等
     """
     if not model or model.lower() in ("ollama", "qwen", "clawsjoy", ""):
-    from .clawsjoy_adapter import ClawsJoyAdapter
-    agent_name = kwargs.get("agent_name", "chat_agent_v4")
-    return ClawsJoyAdapter(agent_name=agent_name, model="ollama")
+        from .clawsjoy_adapter import ClawsJoyAdapter
+        agent_name = kwargs.get("agent_name", "chat_agent_v4")
+        return ClawsJoyAdapter(agent_name=agent_name, model="ollama")
     model_lower = model.lower()
         
     if "glm" in model_lower:
