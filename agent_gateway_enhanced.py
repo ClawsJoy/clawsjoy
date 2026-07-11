@@ -281,6 +281,14 @@ def v9_task_status(task_id):
     import json as _json
     user_id = request.args.get("user_id", "default")
     session_id = request.args.get("session_id", "default")
+    
+    # 优先检查异步任务状态
+    async_state_file = Path(f"data/projects/{user_id}/{session_id}/.task_state.json")
+    if async_state_file.exists():
+        async_state = _json.loads(async_state_file.read_text())
+        return jsonify({"success": True, "status": async_state.get("status", "running"), "async_task": async_state})
+    
+    # 回退到同步任务状态
     state_file = Path(f"data/projects/{user_id}/{session_id}/clawsjoy_dev/.agent_state.json")
     if state_file.exists():
         state = _json.loads(state_file.read_text())
@@ -913,9 +921,10 @@ def _execute_agent_task(user_id, session_id, messages, model, task_id):
             {"type": "function", "function": {"name": "list_dir", "strict": True, "description": "列出目录", "parameters": {"type": "object", "additionalProperties": False, "properties": {"path": {"type": "string"}}, "required": ["path"]}}},
             {"type": "function", "function": {"name": "search_files", "strict": True, "description": "搜索文件", "parameters": {"type": "object", "additionalProperties": False, "properties": {"query": {"type": "string"}, "path": {"type": "string"}}, "required": ["query", "path"]}}},
             {"type": "function", "function": {"name": "execute_command", "strict": True, "description": "执行命令", "parameters": {"type": "object", "additionalProperties": False, "properties": {"command": {"type": "string"}}, "required": ["command"]}}},
+            {"type": "function", "function": {"name": "query_index", "strict": True, "description": "查询代码索引，返回结构化结果。用法：query_index(query='analysis_agent 有哪些方法') 或 query_index(query='谁调用了 _resp')", "parameters": {"type": "object", "additionalProperties": False, "properties": {"query": {"type": "string", "description": "自然语言查询"}}, "required": ["query"]}}},
         ]
         adapter = DeepSeekAdapter(api_key=api_key, model=model)
-        max_rounds = 30
+        max_rounds = 100
         total_tokens = 0
         
         for _round in range(max_rounds):
@@ -944,9 +953,16 @@ def _execute_agent_task(user_id, session_id, messages, model, task_id):
             if msg.get("content"):
                 _save_state("running", msg["content"], total_tokens)
             for tc in msg["tool_calls"]:
-                args = _json.loads(tc["function"]["arguments"])
-                tool_result = _execute_sandbox_tool(tc["function"]["name"], args, user_id, session_id)
-                messages.append({"role": "tool", "tool_call_id": tc["id"], "content": str(tool_result)})
+                try:
+                    args = _json.loads(tc["function"]["arguments"])
+                    print(f"[V9 async] 执行工具: {tc['function']['name']}, args={str(args)[:100]}")
+                    tool_result = _execute_sandbox_tool(tc["function"]["name"], args, user_id, session_id)
+                    print(f"[V9 async] 工具返回: {str(tool_result)[:100]}")
+                    messages.append({"role": "tool", "tool_call_id": tc["id"], "content": str(tool_result)})
+                except Exception as _tool_err:
+                    print(f"[V9 async] 工具执行失败: {_tool_err}")
+                    _save_state("failed", f"工具执行失败: {_tool_err}")
+                    return
             
             _save_state("running", None, total_tokens)
         
@@ -964,8 +980,21 @@ def _execute_sandbox_tool(tool_name, args, user_id, session_id):
             return tool_executor.execute("file_tools", {"action": "read", "path": str(target)})
         elif tool_name == "write_file":
             target = _resolve_path(base, args.get("path", ""))
-            target.write_text(args.get("content", ""), encoding='utf-8')
-            return {"success": True}
+            line = args.get("line", 0)
+            content_str = args.get("content", "")
+            if line > 0:
+                # 按行修改
+                lines = target.read_text(encoding='utf-8').split('\n')
+                if line <= len(lines):
+                    lines[line - 1] = content_str
+                    target.write_text('\n'.join(lines), encoding='utf-8')
+                    return {"success": True, "line": line}
+                else:
+                    return {"success": False, "error": f"行号 {line} 超出文件范围 (1-{len(lines)})"}
+            else:
+                # 完整写入
+                target.write_text(content_str, encoding='utf-8')
+                return {"success": True}
         elif tool_name == "list_dir":
             target = _resolve_path(base, args.get("path", "."))
             files = [p.name for p in target.iterdir() if p.is_file()][:20]
@@ -982,6 +1011,30 @@ def _execute_sandbox_tool(tool_name, args, user_id, session_id):
             import subprocess
             result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=30, cwd=str(base / "clawsjoy_dev"))
             return {"success": True, "stdout": result.stdout, "stderr": result.stderr}
+        elif tool_name == "query_index":
+            import re as _re
+            query = args.get("query", "")
+            if _code_indexer is None or not _code_indexer._keyword_index:
+                return {"success": False, "error": "代码索引尚未初始化"}
+            # 关键词匹配
+            results = []
+            query_lower = query.lower()
+            for filepath, keywords in _code_indexer._keyword_index.items():
+                match_score = 0
+                for kw in keywords:
+                    if kw.lower() in query_lower or query_lower in kw.lower():
+                        match_score += 1
+                if match_score > 0:
+                    # 获取 AST 解析结果
+                    blocks = _code_indexer.parse_file(filepath)
+                    results.append({
+                        "file": filepath,
+                        "keywords": keywords,
+                        "match_score": match_score,
+                        "blocks": blocks[:20]
+                    })
+            results.sort(key=lambda x: x["match_score"], reverse=True)
+            return {"success": True, "query": query, "results": results[:10]}
         else:
             return {"success": False, "error": f"未知工具: {tool_name}"}
     except Exception as e:
@@ -1007,6 +1060,7 @@ def _resolve_path(base, path):
     return base / project_root / path
 # ===== 异步引擎结束 =====
 _background_tasks = {}  # {task_id: {"status": "running", "result": None, "thread": Thread}}
+_code_indexer = None  # CodeIndexer 实例，异步引擎可访问
 
 @app.route("/v9/sandbox/read", methods=["POST"])
 def v9_sandbox_read():
@@ -1290,6 +1344,70 @@ def v9_sandbox_search():
         return jsonify({"success": False, "error": "路径越权"})
     result = tool_executor.execute("search_tools", {"query": query, "path": str(target)})
     return jsonify(result)
+
+@app.route("/v9/sandbox/query_index", methods=["POST"])
+def v9_sandbox_query_index():
+    """查询代码索引"""
+    global _code_indexer
+    import re as _re
+    data = request.json or {}
+    query = data.get("query", "")
+    if not query:
+        return jsonify({"success": False, "error": "query 必填"})
+    if _code_indexer is None:
+        from core.lib.code_indexer import CodeIndexer
+        from pathlib import Path as _Path
+        _uid = data.get("user_id", "default")
+        _sid = data.get("session_id", "default")
+        _sandbox_base = _Path(f"data/projects/{_uid}/{_sid}")
+        _project_dir = _sandbox_base / "clawsjoy_dev" if (_sandbox_base / "clawsjoy_dev").exists() else _sandbox_base
+        _code_indexer = CodeIndexer(project_root=str(_project_dir))
+        if not _code_indexer._keyword_index:
+            _code_indexer._load()
+    if not _code_indexer._keyword_index:
+        return jsonify({"success": False, "error": "代码索引尚未初始化"})
+    # 快速路径：查询包含文件路径关键词时，直接用 AST 解析
+    import re as _re
+    file_match = _re.search(r'([\w_]+\.py|[\w_]+_agent)', query)
+    if file_match:
+        target = file_match.group(1)
+        matches = []
+        for fpath in _code_indexer._keyword_index:
+            if target in fpath:
+                # 优先源码文件，排除测试和备份
+                priority = 0
+                is_test = 'test_' in fpath or '/tests/' in fpath or fpath.endswith('.bak')
+                is_source = '/agents/' in fpath and not is_test
+                if is_source:
+                    priority = 2
+                elif is_test:
+                    priority = 0
+                else:
+                    priority = 1
+                matches.append((priority, fpath))
+        if matches:
+            matches.sort(key=lambda x: x[0], reverse=True)
+            best = matches[0][1]
+            blocks = _code_indexer.parse_file(best)
+            return jsonify({"success": True, "query": query, "file": best, "blocks": blocks, "mode": "ast_direct"})
+    
+    results = []
+    query_lower = query.lower()
+    for filepath, keywords in _code_indexer._keyword_index.items():
+        match_score = 0
+        for kw in keywords:
+            if kw.lower() in query_lower or query_lower in kw.lower():
+                match_score += 1
+        if match_score > 0:
+            blocks = _code_indexer.parse_file(filepath)
+            results.append({
+                "file": filepath,
+                "keywords": keywords,
+                "match_score": match_score,
+                "blocks": blocks[:20]
+            })
+    results.sort(key=lambda x: x["match_score"], reverse=True)
+    return jsonify({"success": True, "query": query, "results": results[:10]})
 
 @app.route("/v9/sandbox/exec", methods=["POST"])
 def v9_sandbox_exec():
@@ -1608,6 +1726,20 @@ def v9_agent_chat():
             "message": "任务已启动，可通过 /v9/task/<task_id> 查询状态"
         })
 
+    # 复杂度预判：≥2个文件或≥3个修改意图时注入规划指令
+    if messages and messages[-1]["role"] == "user":
+        import re as _re
+        user_msg = messages[-1]["content"]
+        # 匹配 agent 名称模式（calculator_agent、analysis_agent 等）
+        agent_count = len(_re.findall(r'\w+_agent', user_msg))
+        # 匹配文件路径模式（agents/xxx/xxx.py 或 tools/xxx.py）
+        file_count = len(_re.findall(r'(?:agents|tools)/[\w/]+\.py', user_msg))
+        # 修改意图关键词
+        modify_intents = sum(1 for kw in ["修改", "改", "重构", "提取", "统一", "合并", "拆分", "迁移"] if kw in user_msg)
+        # 任一条件触发：≥2个agent 或 ≥2个文件路径 或 ≥3个修改意图
+        if agent_count >= 2 or file_count >= 2 or modify_intents >= 3:
+            messages[-1]["content"] = user_msg + "\n\n[系统指令] 此任务涉及多个文件或步骤，请先列出修改计划，询问用户确认后再执行。"
+
     # 加载 Prompt 模板
     prompt_template = Path("config/prompts/agent_system.md").read_text()
     
@@ -1742,6 +1874,7 @@ def v9_agent_chat():
             
             from core.lib.code_indexer import CodeIndexer
             indexer = CodeIndexer(project_root=str(project_dir))
+            _code_indexer = indexer  # 模块级变量，供 _execute_sandbox_tool 使用
             
             index_file = project_dir / "data" / "code_index" / "keyword_index.json"
             print(f"[V9] index_file path: {index_file} exists: {index_file.exists()}")
@@ -1858,6 +1991,18 @@ def v9_agent_chat():
                         "path": {"type": "string", "description": "搜索目录"}
                     },
                     "required": ["query", "path"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "query_index", "strict": True,
+                "description": "查询代码索引，返回结构化结果。用法：query_index(query='analysis_agent 有哪些方法') 或 query_index(query='谁调用了 _resp')",
+                "parameters": {
+                    "type": "object", "additionalProperties": False,
+                    "properties": {"query": {"type": "string", "description": "自然语言查询"}},
+                    "required": ["query"]
                 }
             }
         },

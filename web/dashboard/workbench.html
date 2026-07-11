@@ -476,7 +476,8 @@ async function executeToolCall(name, args) {
   const endpoints = {
     read_file: '/v9/sandbox/read', write_file: '/v9/sandbox/write',
     list_dir: '/v9/sandbox/list', search_files: '/v9/sandbox/search',
-    execute_command: '/v9/sandbox/exec', edit_file: '/v9/sandbox/edit'
+    execute_command: '/v9/sandbox/exec', edit_file: '/v9/sandbox/edit',
+    query_index: '/v9/sandbox/query_index'
   };
   if (!endpoints[name]) return { success: false, error: '未知工具: ' + name };
   return await fetch(API + endpoints[name], { ...base, body: JSON.stringify(body) }).then(r => r.json());
