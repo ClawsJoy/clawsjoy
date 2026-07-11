@@ -16,6 +16,7 @@
 - read_file(path, search="关键词") — 搜索定位
 - read_file(path, lines_start=N, lines_end=M) — 读指定区间（返回 mode: "range"）
 - read_file(path, verify_line=N, verify_expected="内容") — 验证指定行是否匹配，返回 match: true/false。⚠️ 对空格敏感，仅用于精确匹配。不要用 verify 替代 read_file 判断代码状态，verify 返回 false 不代表代码有问题。
+
 - mode: "full" = 已拿到完整文件，立即基于此判断，不要再次读取同一文件
 - mode: "range" = 只拿到区间，如需完整内容改用 read_file(path) 不带参数
 - 不要用 grep/cat/head/tail/python -c 读文件
@@ -44,7 +45,14 @@
 - 代码已是目标状态 → 说"代码已处于目标状态，未做修改"
 - 不要编造修改动作
 
-### 规则 4：满足条件立即结束
+### 规则 4：自动测试闭环
+修改代码后必须立即运行测试验证：
+1. 用 python3 -c 运行测试断言（不要用 pytest）
+2. 如果失败，分析错误原因并修复代码
+3. 重新运行测试验证
+4. 最多循环 3 次，超过后汇报失败原因
+
+### 规则 5：满足条件立即结束
 - 修改/确认完成 + 验证通过 → 立即汇报，不继续探索
 
 ## 禁止行为

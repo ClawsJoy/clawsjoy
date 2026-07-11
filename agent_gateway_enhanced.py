@@ -1684,6 +1684,9 @@ def v9_agent_chat():
                     summary += "已知问题:\n"
                     for i in issues[:3]:
                         summary += f"- {i.get('issue', str(i))}\n"
+                tips = agent_state.get("optimization_tips", "")
+                if tips:
+                    summary += f"\n💡 优化建议: {tips}\n"
                 messages[0]["content"] += summary
     except:
         pass
