@@ -984,16 +984,24 @@ def _execute_sandbox_tool(tool_name, args, user_id, session_id):
             content_str = args.get("content", "")
             if line > 0:
                 # 按行修改
-                lines = target.read_text(encoding='utf-8').split('\n')
-                if line <= len(lines):
-                    lines[line - 1] = content_str
-                    target.write_text('\n'.join(lines), encoding='utf-8')
+                original_lines = target.read_text(encoding="utf-8").split("\n") if target.exists() else []
+                if line <= len(original_lines):
+                    original_lines[line - 1] = content_str
+                    target.write_text("\n".join(original_lines), encoding="utf-8")
                     return {"success": True, "line": line}
                 else:
-                    return {"success": False, "error": f"行号 {line} 超出文件范围 (1-{len(lines)})"}
+                    return {"success": False, "error": f"行号 {line} 超出文件范围 (1-{len(original_lines)})"}
             else:
-                # 完整写入
-                target.write_text(content_str, encoding='utf-8')
+                # 完整写入：行数保护 + 备份
+                if target.exists():
+                    original = target.read_text(encoding="utf-8")
+                    orig_lines = original.split("\n")
+                    new_lines = content_str.split("\n")
+                    if len(new_lines) < len(orig_lines) - 5:
+                        return {"success": False, "error": f"完整写入模式下 content 只有 {len(new_lines)} 行，原文件有 {len(orig_lines)} 行。请改用 line 参数修改单行。"}
+                    backup = target.with_suffix(target.suffix + ".bak")
+                    backup.write_text(original, encoding="utf-8")
+                target.write_text(content_str, encoding="utf-8")
                 return {"success": True}
         elif tool_name == "list_dir":
             target = _resolve_path(base, args.get("path", "."))
@@ -1013,6 +1021,8 @@ def _execute_sandbox_tool(tool_name, args, user_id, session_id):
             return {"success": True, "stdout": result.stdout, "stderr": result.stderr}
         elif tool_name == "query_index":
             import re as _re
+            import warnings
+            warnings.filterwarnings("ignore", category=SyntaxWarning)
             query = args.get("query", "")
             if _code_indexer is None or not _code_indexer._keyword_index:
                 return {"success": False, "error": "代码索引尚未初始化"}
@@ -1368,6 +1378,8 @@ def v9_sandbox_query_index():
         return jsonify({"success": False, "error": "代码索引尚未初始化"})
     # 快速路径：查询包含文件路径关键词时，直接用 AST 解析
     import re as _re
+    import warnings
+    warnings.filterwarnings("ignore", category=SyntaxWarning)
     file_match = _re.search(r'([\w_]+\.py|[\w_]+_agent)', query)
     if file_match:
         target = file_match.group(1)
