@@ -133,19 +133,21 @@ class VideoAnalyzer:
                 if attempt == 0:
                     time.sleep(5)
 
-        # 检测英文，自动翻译
-        if result and not any('\u4e00' <= c <= '\u9fff' for c in result[:50]):
-            try:
-                tr = requests.post(
-                    "http://localhost:11434/api/generate",
-                    json={"model": "qwen2.5:7b-instruct-q4_0", "prompt": f"翻译成中文，只输出翻译结果：{result[:500]}", "stream": False},
-                    timeout=30
-                )
-                if tr.status_code == 200:
-                    result = tr.json().get("response", result)
-            except:
-                pass
-
+        # 检测英文，自动翻译,重试机制
+        if result and not any('\u4e00' <= c <= '\u9fff' for c in result[:30]):
+            for tr_attempt in range(2):
+                try:
+                    tr = requests.post(
+                        "http://localhost:11434/api/generate",
+                        json={"model": "qwen2.5:7b-instruct-q4_0", "prompt": f"翻译成中文：{result[:500]}", "stream": False},
+                        timeout=30
+                    )
+                    if tr.status_code == 200:
+                        result = tr.json().get("response", result)
+                        break
+                except:
+                    time.sleep(3)       
+        
         return result or "[分析超时]"
     # ========== 第二层：字幕对齐 ==========
 

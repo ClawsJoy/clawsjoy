@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/three@0.157.0/build/three.min.js"></script>
     <title>管理中心 | ClawsJoy</title>
     <link rel="stylesheet" href="../css/themes.css">
     <style>
+        #three-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; }
         .admin-layout {
             display: flex;
             min-height: 100vh;
@@ -102,7 +104,7 @@
         </div>
     </div>
     
-    <script src="../js/3d_background.js"></script>
+    <!-- 3D背景暂时禁用 -->
     <script>
         const API_BASE = 'http://localhost:5002';
         

@@ -1,24 +1,20 @@
-# LoRA 微调配置
 model:
-  base: "qwen2.5:3b"
-  output: "qwen2.5:3b-clawsjoy"
-
+  base: "Qwen/Qwen2.5-7B-Instruct"
+  output: "qwen2.5-7b-clawsjoy"
 data:
   train: "data/finetune/train.jsonl"
   eval: "data/finetune/eval.jsonl"
-
 lora:
   r: 8
   alpha: 16
   dropout: 0.05
   target_modules: ["q_proj", "v_proj", "k_proj", "o_proj"]
-
 training:
   epochs: 3
-  batch_size: 4
+  batch_size: 2
+  gradient_accumulation_steps: 4
   learning_rate: 2e-4
   warmup_steps: 100
-
 tasks:
   - code_generation
   - code_explanation

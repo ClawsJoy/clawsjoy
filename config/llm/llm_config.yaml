@@ -12,6 +12,11 @@ providers:
       - deepseek-coder:6.7b
       - llama3.2:3b
       - nomic-embed-text
+  # ⭐ 新增
+  deepseek:
+    endpoint: https://api.deepseek.com/v1
+    model: deepseek-chat
+    api_key: ${DEEPSEEK_API_KEY}
 
   openai:
     model: gpt-3.5-turbo
@@ -21,7 +26,7 @@ providers:
 routing:
   code: deepseek-coder:6.7b
   math: qwen2.5:7b
-  creative: qwen2.5:7b
+  creative: deepseek:deepseek-chat    # ← 改为 DeepSeek
   simple: qwen2.5:3b
   english: llama3.2:3b
   embedding: nomic-embed-text

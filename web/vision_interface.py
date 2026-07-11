@@ -82,7 +82,7 @@ with col2:
             with st.spinner("生成中..."):
                 try:
                     resp = requests.post(
-                        "http://localhost:5000/api/v5/vision/generate",
+                        "http://localhost:5002/api/v5/vision/generate",
                         json={"prompt": prompt, "negative_prompt": negative},
                     )
                     if resp.status_code == 200:

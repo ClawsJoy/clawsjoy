@@ -13,6 +13,21 @@ DISCORD_TOKEN = os.getenv("DISCORD_BOT_TOKEN", "")
 CLAWSJOY_URL = "http://localhost:5002/v5/execute"
 API_BASE = "https://discord.com/api/v10"
 
+# PID 锁：同一 Token 禁止多开
+import hashlib
+PID_FILE = f"/tmp/clawsjoy_bot_{hashlib.md5(DISCORD_TOKEN.encode()).hexdigest()[:8]}.pid"
+if os.path.exists(PID_FILE):
+    with open(PID_FILE) as f:
+        old_pid = f.read().strip()
+    try:
+        os.kill(int(old_pid), 0)
+        print(f"❌ Bot 已在运行 (PID: {old_pid})，禁止多开")
+        exit(1)
+    except (OSError, ValueError):
+        os.remove(PID_FILE)
+with open(PID_FILE, "w") as f:
+    f.write(str(os.getpid()))
+
 if not DISCORD_TOKEN:
     print("❌ 请在 config/.env 中设置 DISCORD_BOT_TOKEN")
     exit(1)
@@ -67,6 +82,7 @@ def ask_clawsjoy(user_input, user_id, channel_id):
         payload["agent"] = "memory_agent"
 
     try:
+        print(f"[BOT] 即将发送请求: {user_input[:50]}", flush=True)
         r = requests.post(CLAWSJOY_URL, json=payload, timeout=90)
         result = r.json()
         return result.get("response") or result.get("output_content", "嗯？")

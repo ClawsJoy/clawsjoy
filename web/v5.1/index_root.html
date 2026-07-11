@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/three@0.157.0/build/three.min.js"></script>
     <title>ClawsJoy v5.1 | 智能体AI操作系统</title>
     <link rel="stylesheet" href="css/themes.css">
     <style>
+        #three-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; }
         .portal-container {
             display: flex;
             flex-direction: column;
@@ -127,7 +129,7 @@
         
         <div class="forks">
             <!-- 品牌导航页 (游客) -->
-            <div class="fork-card glass-card guest-card" onclick="location.href='pages/guest.html'">
+            <div class="fork-card glass-card guest-card" onclick="location.href='/v5.1/pages/guest.html'">
                 <div class="fork-icon">🌐</div>
                 <div class="fork-title">品牌体验</div>
                 <div class="fork-desc">探索ClawsJoy的智能世界</div>
@@ -141,7 +143,7 @@
             </div>
             
             <!-- 商店 (注册/登录) -->
-            <div class="fork-card glass-card" onclick="location.href='pages/marketplace.html'">
+            <div class="fork-card glass-card" onclick="location.href='/v5.1/pages/marketplace.html'">
                 <div class="fork-icon">🛒</div>
                 <div class="fork-title">智能市场</div>
                 <div class="fork-desc">发现Agent，购买技能</div>
@@ -155,7 +157,7 @@
             </div>
             
             <!-- 用户中心 (角色分发) -->
-            <div class="fork-card glass-card developer-card" onclick="location.href='pages/role_select.html'">
+            <div class="fork-card glass-card developer-card" onclick="location.href='/v5.1/pages/role_select.html'">
                 <div class="fork-icon">👤</div>
                 <div class="fork-title">工作空间</div>
                 <div class="fork-desc">您的专属智能工作区</div>
@@ -175,7 +177,8 @@
         </div>
     </div>
     
-    <script src="js/3d_background.js"></script>
-    <script src="js/brand.js"></script>
+    <script>console.log("THREE loaded:", typeof THREE);</script>
+    <script defer  src="js/3d_background.js"></script>
+    <script defer  src="js/brand.js"></script>
 </body>
 </html>

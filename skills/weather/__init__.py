@@ -1,9 +1,4 @@
-"""weather 技能"""
+from .weather_skill import WeatherSkill, weather_skill
 
-from .weather_skill import weather_skill
-
-
-def execute(params=None):
-    if params is None:
-        params = {}
-    return weather_skill().execute(params)
+# 兼容 ExecutorAgent 查找 "weather" 属性
+weather = weather_skill

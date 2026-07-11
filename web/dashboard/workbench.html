@@ -13,7 +13,9 @@
 }
 * { margin:0; padding:0; box-sizing:border-box; }
 body { background:var(--bg); color:var(--text); font-family:Inter,-apple-system,sans-serif; height:100vh; display:flex; }
-.sidebar { width:260px; background:var(--card); border-right:1px solid var(--border); display:flex; flex-direction:column; }
+.sidebar { width:260px; min-width:180px; max-width:500px; background:var(--card); border-right:1px solid var(--border); display:flex; flex-direction:column; position:relative; }
+.sidebar-resize { position:absolute; right:-4px; top:0; bottom:0; width:8px; cursor:col-resize; z-index:10; }
+.sidebar-resize:hover { background:var(--blue); opacity:0.4; }
 .sidebar-header { padding:16px; border-bottom:1px solid var(--border); font-weight:700; font-size:14px; display:flex; align-items:center; gap:8px; }
 .sidebar-header .dot { width:8px; height:8px; border-radius:50%; background:var(--green); }
 .nav { display:flex; flex-direction:column; padding:8px; }
@@ -46,7 +48,7 @@ body { background:var(--bg); color:var(--text); font-family:Inter,-apple-system,
 .msg .tag { font-size:11px; color:var(--purple); margin-bottom:4px; font-weight:600; }
 .chat-input { padding:12px 16px; border-top:1px solid var(--border); display:flex; gap:8px; position:relative; }
 .chat-input input { flex:1; background:var(--card); border:1px solid var(--border); color:var(--text); padding:10px 14px; border-radius:20px; font-size:13px; outline:none; }
-.chat-input button { background:var(--blue); color:#fff; border:none; padding:10px 20px; border-radius:20px; cursor:pointer; font-size:13px; font-weight:600; }
+.chat-input button { background:var(--blue); color:#fff; border:none; padding:10px 20px; border-radius:20px; cursor:pointer; font-size:13px; font-weight:600; white-space:nowrap; flex-shrink:0; }
 .market { padding:20px; display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; align-content:start; }
 .card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; cursor:pointer; transition:border-color .2s; }
 .card:hover { border-color:var(--blue); }
@@ -55,7 +57,6 @@ body { background:var(--bg); color:var(--text); font-family:Inter,-apple-system,
 .card .pos-desc { font-size:12px; color:var(--sub); margin:6px 0; }
 .card .pos-budget { font-size:12px; color:var(--green); }
 .card .hire-btn { margin-top:10px; width:100%; background:var(--blue); color:#fff; border:none; padding:8px; border-radius:6px; cursor:pointer; font-size:12px; font-weight:600; }
-/* 时间线 */
 .timeline { padding:20px; overflow-y:auto; }
 .tl-item { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-bottom:10px; display:flex; gap:12px; align-items:flex-start; }
 .tl-icon { font-size:20px; flex-shrink:0; margin-top:2px; }
@@ -66,7 +67,6 @@ body { background:var(--bg); color:var(--text); font-family:Inter,-apple-system,
 .tl-status { font-size:11px; padding:2px 8px; border-radius:10px; display:inline-block; }
 .tl-status.completed { background:rgba(63,185,80,0.15); color:var(--green); }
 .tl-status.failed { background:rgba(248,81,73,0.15); color:var(--red); }
-/* 账单 */
 .billing { padding:20px; overflow-y:auto; }
 .billing .total { font-size:36px; font-weight:700; margin-bottom:20px; }
 .billing .total span { font-size:14px; color:var(--sub); font-weight:400; }
@@ -89,17 +89,22 @@ body { background:var(--bg); color:var(--text); font-family:Inter,-apple-system,
 .at-list div { padding:6px 12px; cursor:pointer; border-radius:4px; font-size:13px; }
 .at-list div:hover { background:rgba(88,166,255,0.1); }
 .empty-hint { text-align:center; color:var(--sub); padding:40px; font-size:13px; }
+.plan-btn { transition:all 0.2s; }
 </style>
 </head>
 <body>
 
-<div class="sidebar">
+<div class="sidebar" id="sidebarPanel"><div class="sidebar-resize" id="sidebarResize"></div>
   <div class="sidebar-header"><span class="dot"></span> ClawsJoy v8</div>
   <div class="nav">
     <button class="nav-btn active" data-tab="chat"><span class="icon">💬</span> 团队频道</button>
     <button class="nav-btn" data-tab="market"><span class="icon">🏪</span> 岗位市场</button>
     <button class="nav-btn" data-tab="timeline"><span class="icon">📋</span> 时间线</button>
     <button class="nav-btn" data-tab="billing"><span class="icon">💰</span> 账单</button>
+    <button class="nav-btn" data-tab="agent" onclick="openAgent()"><span class="icon">🤖</span> Agent 工作区</button>
+    <a href="http://localhost:8502" target="_blank" class="nav-btn" style="text-decoration:none;color:var(--blue);"><span class="icon">🎯</span> AI Studio →</a>
+    <a href="http://localhost:7860" target="_blank" class="nav-btn" style="text-decoration:none;color:var(--purple);"><span class="icon">🎭</span> 数字人 →</a>
+    <a href="/v5.1" target="_blank" class="nav-btn" style="text-decoration:none;color:var(--green);"><span class="icon">🐾</span> v5.1 门户 →</a>
   </div>
   <div class="members-title">团队成员</div>
   <div class="members" id="memberList"><div class="empty-hint">暂无AI员工<br>去岗位市场招聘吧</div></div>
@@ -151,92 +156,189 @@ body { background:var(--bg); color:var(--text); font-family:Inter,-apple-system,
   </div>
 </div>
 
+<!-- Agent 弹窗 -->
+<div id="agentModal" style="display:none; position:fixed; top:0; left:0; right:0; height:100vh; background:rgba(0,0,0,0.85); z-index:9999; flex-direction:column;">
+  <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:#161b22; border-bottom:1px solid #30363d;">
+    <span style="color:#c9d1d9; font-size:16px; font-weight:600;">🤖 Agent 工作区</span>
+    <div style="display:flex; gap:6px; align-items:center;">
+      <select id="threadSelect" onchange="switchThread(this.value)" style="background:#0d1117; border:1px solid #30363d; color:#c9d1d9; border-radius:4px; padding:3px 6px; font-size:11px;"></select>
+      <span id="balanceDisplay" style="color:#8b949e; font-size:11px;">💰 --</span>
+      <button onclick="newThread()" style="background:#30363d; color:#c9d1d9; border:none; border-radius:4px; padding:3px 8px; font-size:11px; cursor:pointer;">+新建</button>
+    </div>
+    <button onclick="closeAgent()" style="background:none; border:none; color:#8b949e; font-size:20px; cursor:pointer;">✕</button>
+  </div>
+  <div style="flex:1; display:flex; gap:0; overflow:hidden; min-height:0;">
+    <div id="filePanel" style="width:220px; min-width:50px; max-width:50vw; background:#0d1117; border-right:1px solid #30363d; padding:12px; overflow-y:auto; position:relative;flex-shrink:0;">
+      <div id="fileDragHandle" style="position:absolute;right:-4px;top:0;bottom:0;width:8px;cursor:col-resize;z-index:10;"></div>
+      <div style="color:#58a6ff; font-size:12px; margin-bottom:8px; font-weight:600;">📁 文件系统</div>
+      <div id="fileTree" style="font-family:monospace; font-size:12px; color:#c9d1d9; line-height:1.8;"></div>
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column; background:#0d1117;">
+      <div id="agentTerminal" style="flex:1; min-height:0; padding:16px; overflow-y:auto; overflow-x:hidden; word-break:break-all; font-family:'JetBrains Mono',monospace; font-size:13px; color:#c9d1d9; white-space:pre-wrap; line-height:1.6;">
+        <div style="color:#58a6ff;">🤖 ClawsJoy Agent 就绪。输入任务开始。</div>
+      </div>
+      <div style="display:flex; gap:6px; padding:12px 16px; background:#161b22; border-top:1px solid #30363d; align-items:center; position:sticky; bottom:0;">
+        <input id="agentInput" placeholder="描述任务..." style="flex:1; width:0; min-width:150px; background:#0d1117; border:1px solid #30363d; border-radius:6px; padding:10px 14px; color:#c9d1d9; font-size:14px; outline:none;" onkeydown="if(event.key==='Enter') agentSend()">
+        <button onclick="agentSend()" style="background:#238636; color:#fff; border:none; border-radius:6px; padding:8px 14px; cursor:pointer; font-size:13px; font-weight:600; white-space:nowrap; flex-shrink:0;">▶ 执行</button>
+        <button onclick="agentSendAsync()" style="background:#1f6feb; color:#fff; border:none; border-radius:6px; padding:8px 14px; cursor:pointer; font-size:13px; white-space:nowrap; flex-shrink:0;" title="后台执行">🔗</button>
+        <button onclick="agentStop()" id="agentStopBtn" style="background:#30363d; color:#c9d1d9; border:none; border-radius:6px; padding:8px 14px; cursor:pointer; display:none; white-space:nowrap; flex-shrink:0;">⏹</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
+// ========== 全局状态 ==========
 const API = '';
-let currentPosition = '';
-let atList = null;
+let userId = localStorage.getItem('clawsjoy_user_id');
+if (!userId) { userId = 'web_' + Date.now(); localStorage.setItem('clawsjoy_user_id', userId); }
+
+let sessionId = localStorage.getItem('clawsjoy_session_id');
+if (!sessionId || sessionId === 'default') { sessionId = 'session_' + Date.now(); localStorage.setItem('clawsjoy_session_id', sessionId); }
+
+let currentThread = localStorage.getItem('current_thread');
+if (!currentThread || currentThread === 'default') { currentThread = sessionId; localStorage.setItem('current_thread', currentThread); }
+
+let threads = [...new Set(JSON.parse(localStorage.getItem('agent_threads') || '[]').filter(t => t && t !== 'default'))];
+if (!threads.includes(currentThread)) { threads.push(currentThread); }
+
+let agentRunning = false, agentAbort = false;
+let currentPosition = '', atList = null, selectedPlanBtn = null;
+
+function saveThreads() {
+  localStorage.setItem('agent_threads', JSON.stringify(threads.filter(t => t && t !== 'default')));
+  localStorage.setItem('current_thread', currentThread);
+}
+
+// ========== 侧边栏拖拽 ==========
+(function(){
+  const sb = document.getElementById('sidebarPanel');
+  const h = document.getElementById('sidebarResize');
+  if (!sb || !h) return;
+  let sx, sw;
+  h.addEventListener('mousedown', e => {
+    sx = e.clientX; sw = sb.offsetWidth;
+    document.addEventListener('mousemove', mv);
+    document.addEventListener('mouseup', mu);
+    e.preventDefault();
+  });
+  function mv(e) { const w = sw + e.clientX - sx; if (w >= 180 && w <= 500) sb.style.width = w + 'px'; }
+  function mu() { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', mu); }
+})();
+
+// ========== 文件树拖拽 ==========
+let fileDragInit = false;
+function initFileDrag() {
+  if (fileDragInit) return;
+  const h = document.getElementById('fileDragHandle'), p = document.getElementById('filePanel');
+  if (!h || !p) return;
+  fileDragInit = true;
+  let sx, sw;
+  h.addEventListener('mousedown', e => {
+    sx = e.clientX; sw = p.offsetWidth;
+    e.preventDefault(); e.stopPropagation();
+    document.addEventListener('mousemove', mv);
+    document.addEventListener('mouseup', mu);
+  });
+  function mv(e) { const w = sw + e.clientX - sx; if (w >= 50 && w <= window.innerWidth * 0.5) p.style.width = w + 'px'; }
+  function mu() { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', mu); }
+}
 
 // ========== 导航 ==========
 document.querySelectorAll('.nav-btn').forEach(btn => {
-  btn.addEventListener('click', function() { switchTab(this.dataset.tab); });
+  btn.addEventListener('click', function() { if (this.dataset.tab !== 'agent') switchTab(this.dataset.tab); });
 });
-
 function switchTab(tab) {
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.querySelector(`.nav-btn[data-tab="${tab}"]`).classList.add('active');
-  document.getElementById('tab-'+tab).classList.add('active');
-  if(tab==='market') loadMarket();
-  if(tab==='billing') loadBilling();
-  if(tab==='timeline') loadTimeline();
+  document.getElementById('tab-' + tab).classList.add('active');
+  if (tab === 'market') loadMarket();
+  if (tab === 'billing') loadBilling();
+  if (tab === 'timeline') loadTimeline();
 }
 
 // ========== 聊天 ==========
 async function send() {
-  const input = document.getElementById('chatInput');
-  const msg = input.value.trim();
-  if(!msg) return;
-  addMessage('user', msg);
-  input.value = '';
-  hideAtList();
+  const input = document.getElementById('chatInput'), msg = input.value.trim();
+  if (!msg) return;
+  addMessage('user', msg); input.value = ''; hideAtList();
+  addMessage('agent', '📋 正在规划任务...', '包工头');
   try {
-    const r = await fetch(API+'/v5/execute', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({raw_input:msg, user_id:'workbench', server_id:'default'})
+    const r = await fetch(API + '/v5/execute', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ raw_input: msg, user_id: userId, session_id: 'web_' + userId, server_id: 'default' })
     });
     const d = await r.json();
-    const reply = d.response || d.output_content || '嗯？';
-    const agent = d.agents_used?.[0] || 'ClawsJoy';
-    addMessage('agent', reply, agent);
-    loadMembers();
-  } catch(e) {
-    addMessage('agent', '出错了: '+e.message);
-  }
+    const reply = d.response || d.output_content || '';
+    if (reply) {
+      const msgs = document.getElementById('chatMessages').children;
+      if (msgs.length > 0) msgs[msgs.length - 1].remove();
+      addMessage('agent', reply, '包工头');
+    }
+    loadMembers(); loadTasks();
+  } catch (e) { addMessage('agent', '出错了: ' + e.message); }
+}
+
+async function loadTasks() {
+  try {
+    const r = await fetch(API + '/v8/task/list?server_id=default&created_by=' + userId);
+    const tasks = await r.json();
+    const container = document.getElementById('chatMessages');
+    container.querySelectorAll('.task-card').forEach(el => el.remove());
+    const card = document.createElement('div');
+    card.className = 'msg agent task-card';
+    let html = '<b>📋 任务看板</b><br>';
+    const emoji = { 'pending': '⏳', 'running': '🔄', 'done': '✅', 'reviewed': '✔️', 'failed': '❌' };
+    for (const t of tasks.slice(-4)) {
+      html += `${emoji[t.status] || '❓'} ${t.title || '无标题'} → @${t.assigned_to || '待分配'}<br>`;
+    }
+    const lastTask = localStorage.getItem('last_task_id');
+    if (lastTask) {
+      try {
+        const tr = await fetch(API + '/v9/task/' + lastTask + '?user_id=' + userId + '&session_id=' + sessionId);
+        const td = await tr.json();
+        if (td.success && td.status !== 'not_found') {
+          html += '<br><b>🤖 Agent 工作区</b><br>';
+          html += `${td.status === 'done' ? '✅' : '🔄'} 最近任务: ${td.status || '未知'}<br>`;
+        }
+      } catch (e) { }
+    }
+    card.innerHTML = html; container.appendChild(card);
+  } catch (e) { }
+  setTimeout(loadTasks, 5000);
 }
 
 function addMessage(type, text, tag) {
   const container = document.getElementById('chatMessages');
   const hint = container.querySelector('.empty-hint');
-  if(hint) hint.remove();
+  if (hint) hint.remove();
   const div = document.createElement('div');
-  div.className = 'msg '+type;
-  if(tag) {
-    const tagEl = document.createElement('div');
-    tagEl.className = 'tag';
-    tagEl.textContent = '🤖 '+tag;
-    div.appendChild(tagEl);
-  }
+  div.className = 'msg ' + type;
+  if (tag) { const t = document.createElement('div'); t.className = 'tag'; t.textContent = '🤖 ' + tag; div.appendChild(t); }
   div.appendChild(document.createTextNode(text));
   container.appendChild(div);
   container.scrollTop = container.scrollHeight;
 }
 
 // ========== @ 成员 ==========
-document.getElementById('chatInput').addEventListener('input', function() {
-  const val = this.value;
-  const lastAt = val.lastIndexOf('@');
-  if (lastAt >= 0 && (lastAt===0 || val[lastAt-1]===' ')) { showAtList(); }
-  else { hideAtList(); }
+document.getElementById('chatInput').addEventListener('input', function () {
+  const val = this.value, lastAt = val.lastIndexOf('@');
+  if (lastAt >= 0 && (lastAt === 0 || val[lastAt - 1] === ' ')) showAtList(); else hideAtList();
 });
-
 function showAtList() {
   if (atList) return;
-  atList = document.createElement('div');
-  atList.className = 'at-list';
-  fetch(API+'/v8/roster/list?server_id=default')
-    .then(r=>r.json())
-    .then(members=>{
-      atList.innerHTML = members.length
-        ? members.map(m=>`<div onmousedown="event.preventDefault()" onclick="insertAt('${m.name}')">${m.position==='程序员'?'👨‍💻':m.position==='设计师'?'👩‍🎨':'📊'} ${m.name} · ${m.position}</div>`).join('')
-        : '<div style="color:var(--sub)">暂无成员</div>';
-    });
+  atList = document.createElement('div'); atList.className = 'at-list';
+  fetch(API + '/v8/roster/list?server_id=default').then(r => r.json()).then(members => {
+    atList.innerHTML = members.length
+      ? members.map(m => `<div onmousedown="event.preventDefault()" onclick="insertAt('${m.name}')">${m.position === '程序员' ? '👨‍💻' : m.position === '设计师' ? '👩‍🎨' : '📊'} ${m.name} · ${m.position}</div>`).join('')
+      : '<div style="color:var(--sub)">暂无成员</div>';
+  });
   document.querySelector('.chat-input').appendChild(atList);
 }
 function hideAtList() { if (atList) { atList.remove(); atList = null; } }
 function insertAt(name) {
-  const input = document.getElementById('chatInput');
-  const val = input.value;
-  const lastAt = val.lastIndexOf('@');
+  const input = document.getElementById('chatInput'), val = input.value, lastAt = val.lastIndexOf('@');
   input.value = val.substring(0, lastAt) + '@' + name + ' ';
   hideAtList(); input.focus();
 }
@@ -244,120 +346,491 @@ function insertAt(name) {
 // ========== 成员 ==========
 async function loadMembers() {
   try {
-    const r = await fetch(API+'/v8/roster/list?server_id=default');
+    const r = await fetch(API + '/v8/roster/list?server_id=default');
     const members = await r.json();
     const el = document.getElementById('memberList');
-    if(!members.length) { el.innerHTML = '<div class="empty-hint">暂无AI员工<br>去岗位市场招聘吧</div>'; return; }
-    el.innerHTML = members.map(m=>`
+    if (!members.length) { el.innerHTML = '<div class="empty-hint">暂无AI员工<br>去岗位市场招聘吧</div>'; return; }
+    el.innerHTML = members.map(m => `
       <div class="member-row">
-        <div class="avatar">${m.position==='程序员'?'👨‍💻':m.position==='设计师'?'👩‍🎨':'📊'}</div>
+        <div class="avatar">${m.position === '程序员' ? '👨‍💻' : m.position === '设计师' ? '👩‍🎨' : '📊'}</div>
         <div class="info"><div class="name">${m.name}</div><div class="pos">${m.position}</div></div>
         <div class="status ${m.status}"></div>
         <div class="actions">
-          ${m.status==='active'?`<button title="暂停" onclick="togglePause('${m.name}',true)">⏸</button>`:`<button title="恢复" onclick="togglePause('${m.name}',false)">▶</button>`}
+          ${m.status === 'active' ? '<button title="暂停" onclick="togglePause(\'' + m.name + '\',true)">⏸</button>' : '<button title="恢复" onclick="togglePause(\'' + m.name + '\',false)">▶</button>'}
           <button title="解雇" onclick="fireMember('${m.name}')">❌</button>
         </div>
       </div>`).join('');
-  } catch(e) {}
+  } catch (e) { }
 }
 async function togglePause(name, pause) {
-  await fetch(API+'/v8/roster/'+(pause?'pause':'resume'), {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({server_id:'default',name})});
-  loadMembers(); addMessage('agent', pause?`${name} 已暂停`:`${name} 已恢复`);
+  await fetch(API + '/v8/roster/' + (pause ? 'pause' : 'resume'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ server_id: 'default', name }) });
+  loadMembers(); addMessage('agent', pause ? name + ' 已暂停' : name + ' 已恢复');
 }
 async function fireMember(name) {
-  if(!confirm(`确定解雇 ${name}？`)) return;
-  await fetch(API+'/v8/roster/fire', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({server_id:'default',name})});
-  loadMembers(); addMessage('agent', `${name} 已解雇`);
+  if (!confirm('确定解雇 ' + name + '？')) return;
+  await fetch(API + '/v8/roster/fire', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ server_id: 'default', name }) });
+  loadMembers(); addMessage('agent', name + ' 已解雇');
 }
 
 // ========== 招聘 ==========
 async function loadMarket() {
   try {
-    const r = await fetch(API+'/v8/positions/list');
+    const r = await fetch(API + '/v8/positions/list');
     const positions = await r.json();
-    document.getElementById('marketList').innerHTML = positions.map(p=>`
+    document.getElementById('marketList').innerHTML = positions.map(p => `
       <div class="card">
-        <div class="pos-icon">${p.position==='程序员'?'👨‍💻':p.position==='设计师'?'👩‍🎨':'📊'}</div>
+        <div class="pos-icon">${p.position === '程序员' ? '👨‍💻' : p.position === '设计师' ? '👩‍🎨' : '📊'}</div>
         <div class="pos-name">${p.position}</div>
-        <div class="pos-desc">${p.description||''}</div>
+        <div class="pos-desc">${p.description || ''}</div>
         <div class="pos-budget">默认模型: ${p.model}</div>
         <button class="hire-btn" onclick="openHire('${p.id}','${p.position}')">聘用</button>
       </div>`).join('');
-  } catch(e) {}
+  } catch (e) { }
 }
 function openHire(id, position) {
   currentPosition = id;
-  document.getElementById('hireTitle').textContent = `聘用 ${position}`;
-  document.getElementById('hireBudget').value = 0;
-  document.getElementById('hireUnitPrice').value = 0;
-  document.getElementById('hireApiKey').value = '';
-  document.getElementById('hireModel').value = '';
+  document.getElementById('hireTitle').textContent = '聘用 ' + position;
+  document.getElementById('hireBudget').value = 0; document.getElementById('hireUnitPrice').value = 0;
+  document.getElementById('hireApiKey').value = ''; document.getElementById('hireModel').value = '';
   document.getElementById('hireName').value = '';
   document.getElementById('hireModal').classList.add('show');
 }
 function closeModal() { document.getElementById('hireModal').classList.remove('show'); }
 async function doHire() {
   const name = document.getElementById('hireName').value.trim();
-  if(!name) return alert('请输入员工名字');
-  const model = document.getElementById('hireModel').value;
-  const apiKey = document.getElementById('hireApiKey').value.trim();
-  const unitPrice = parseFloat(document.getElementById('hireUnitPrice').value)||0;
-  const budget = parseFloat(document.getElementById('hireBudget').value)||0;
+  if (!name) return alert('请输入员工名字');
   try {
-    const r = await fetch(API+'/v8/roster/hire', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({server_id:'default', name, position:currentPosition, model, api_key:apiKey, unit_price:unitPrice, budget})
+    const r = await fetch(API + '/v8/roster/hire', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        server_id: 'default', name, position: currentPosition,
+        model: document.getElementById('hireModel').value,
+        api_key: document.getElementById('hireApiKey').value.trim(),
+        unit_price: parseFloat(document.getElementById('hireUnitPrice').value) || 0,
+        budget: parseFloat(document.getElementById('hireBudget').value) || 0
+      })
     });
     const d = await r.json();
-    if(d.success) { closeModal(); loadMembers(); switchTab('chat'); addMessage('agent', `${d.member.name}（${d.member.position}）加入了团队！`); }
-    else { alert(d.error||'聘用失败'); }
-  } catch(e) { alert('出错: '+e.message); }
+    if (d.success) { closeModal(); loadMembers(); switchTab('chat'); addMessage('agent', d.member.name + '（' + d.member.position + '）加入了团队！'); }
+    else alert(d.error || '聘用失败');
+  } catch (e) { alert('出错: ' + e.message); }
 }
 
 // ========== 账单 ==========
 async function loadBilling() {
   try {
-    const r = await fetch(API+'/v8/ledger/billing?server_id=default');
+    const r = await fetch(API + '/v8/ledger/billing?server_id=default');
     const d = await r.json();
-    const agents = Object.entries(d.by_agent||{});
-    if(!agents.length) { document.getElementById('billingContent').innerHTML='<div class="empty-hint">暂无账单数据</div>'; return; }
+    const agents = Object.entries(d.by_agent || {});
+    if (!agents.length) { document.getElementById('billingContent').innerHTML = '<div class="empty-hint">暂无账单数据</div>'; return; }
     document.getElementById('billingContent').innerHTML = `
       <div class="total">$${d.total.toFixed(4)}<span> 本月总花费（估算）</span></div>
       <div style="font-size:11px;color:var(--sub);margin:-12px 0 16px">⚠️ 金额为本地估算，实际费用以API提供商账单为准</div>
-      ${agents.map(([name,info])=>{
-        return `<div class="bill-row">
-          <span>${info.position==='程序员'?'👨‍💻':info.position==='设计师'?'👩‍🎨':'📊'} ${name}</span>
-          <span style="font-size:12px;color:var(--sub)">${info.position} · ${info.model}</span>
-          <div style="flex:1;font-size:12px;color:var(--sub)">${info.calls}次调用 · ${info.tokens} tokens</div>
-          <div class="bill-info">$${info.cost.toFixed(4)}</div>
-        </div>`;
-      }).join('')}`;
-  } catch(e) { document.getElementById('billingContent').innerHTML='<div class="empty-hint">账单加载失败</div>'; }
+      ${agents.map(([name, info]) => `<div class="bill-row">
+        <span>${info.position === '程序员' ? '👨‍💻' : info.position === '设计师' ? '👩‍🎨' : '📊'} ${name}</span>
+        <span style="font-size:12px;color:var(--sub)">${info.position} · ${info.model}</span>
+        <div style="flex:1;font-size:12px;color:var(--sub)">${info.calls}次调用 · ${info.tokens} tokens</div>
+        <div class="bill-info">$${info.cost.toFixed(4)}</div>
+      </div>`).join('')}`;
+  } catch (e) { document.getElementById('billingContent').innerHTML = '<div class="empty-hint">账单加载失败</div>'; }
 }
 
 // ========== 时间线 ==========
 async function loadTimeline() {
   try {
-    const r = await fetch(API+'/v8/ledger/timeline?server_id=default&limit=30');
+    const r = await fetch(API + '/v8/ledger/timeline?server_id=default&limit=30');
     const events = await r.json();
-    if(!events.length) { document.getElementById('timelineContent').innerHTML='<div class="empty-hint">暂无事件</div>'; return; }
-    document.getElementById('timelineContent').innerHTML = events.map(e=>{
-      const icon = e.action.includes('bug')?'🐛':e.action.includes('代码')?'💻':e.action.includes('图')?'🎨':'📋';
-      const time = new Date(e.timestamp).toLocaleString('zh-CN');
+    if (!events.length) { document.getElementById('timelineContent').innerHTML = '<div class="empty-hint">暂无事件</div>'; return; }
+    document.getElementById('timelineContent').innerHTML = events.map(e => {
+      const icon = e.action.includes('bug') ? '🐛' : e.action.includes('代码') ? '💻' : e.action.includes('图') ? '🎨' : '📋';
       return `<div class="tl-item">
         <div class="tl-icon">${icon}</div>
         <div class="tl-body">
-          <div class="tl-agent">${e.position==='程序员'?'👨‍💻':e.position==='设计师'?'👩‍🎨':'📊'} ${e.agent} · ${e.position}</div>
+          <div class="tl-agent">${e.position === '程序员' ? '👨‍💻' : e.position === '设计师' ? '👩‍🎨' : '📊'} ${e.agent} · ${e.position}</div>
           <div class="tl-action">${e.summary}</div>
-          <div class="tl-meta">${time} · <span class="tl-status ${e.status}">${e.status==='completed'?'完成':e.status}</span> · $${e.cost.toFixed(4)}</div>
+          <div class="tl-meta">${new Date(e.timestamp).toLocaleString('zh-CN')} · <span class="tl-status ${e.status}">${e.status === 'completed' ? '完成' : e.status}</span> · $${e.cost.toFixed(4)}</div>
         </div>
       </div>`;
     }).join('');
-  } catch(e) { document.getElementById('timelineContent').innerHTML='<div class="empty-hint">加载失败</div>'; }
+  } catch (e) { document.getElementById('timelineContent').innerHTML = '<div class="empty-hint">加载失败</div>'; }
+}
+
+// ========== Agent 工作区 ==========
+function agentLog(text, color = '#c9d1d9') {
+  const term = document.getElementById('agentTerminal');
+  if (!term) return;
+  const line = document.createElement('div');
+  line.style.color = color;
+  line.textContent = text;
+  term.appendChild(line);
+  term.scrollTop = term.scrollHeight;
+  let logs = JSON.parse(localStorage.getItem('agent_logs_' + currentThread) || '[]');
+  logs.push({ text, color, time: Date.now() });
+  if (logs.length > 200) logs = logs.slice(-200);
+  localStorage.setItem('agent_logs_' + currentThread, JSON.stringify(logs));
+}
+
+async function executeToolCall(name, args) {
+  const base = { method: 'POST', headers: { 'Content-Type': 'application/json' } };
+  const body = { user_id: userId, session_id: sessionId, ...args };
+  const endpoints = {
+    read_file: '/v9/sandbox/read', write_file: '/v9/sandbox/write',
+    list_dir: '/v9/sandbox/list', search_files: '/v9/sandbox/search',
+    execute_command: '/v9/sandbox/exec', edit_file: '/v9/sandbox/edit'
+  };
+  if (!endpoints[name]) return { success: false, error: '未知工具: ' + name };
+  return await fetch(API + endpoints[name], { ...base, body: JSON.stringify(body) }).then(r => r.json());
+}
+
+async function agentSend() {
+  const input = document.getElementById('agentInput');
+  const task = input.value.trim();
+  if (!task || agentRunning) return;
+  if (task.toUpperCase() === '/CLEAN') {
+    localStorage.removeItem('agent_logs_' + currentThread);
+    document.getElementById('agentTerminal').innerHTML = '<div style="color:#58a6ff;">🤖 ClawsJoy Agent 就绪。输入任务开始。</div>';
+    input.value = ''; return;
+  }
+  input.value = '';
+  agentRunning = true; agentAbort = false;
+  document.getElementById('agentStopBtn').style.display = 'inline-block';
+  agentLog('👤 ' + task, '#58a6ff');
+
+  const messages = [
+    { role: 'system', content: '你是 ClawsJoy 的 AI 助手。根据用户任务自动判断角色。每次开始工作时，第一句话声明角色，格式：🔄 以XX身份工作。你可以操作文件系统——读取、写入、搜索文件。遇到任务先分析，再动手。每次只做一件事，做完看结果再决定下一步。' },
+    { role: 'user', content: task }
+  ];
+
+  let maxLoops = 25;
+  while (!agentAbort && maxLoops > 0) {
+    // 读文件操作不消耗循环轮次
+    const lastMsg = messages[messages.length - 1];
+    const isReadOnly = lastMsg && lastMsg.tool_calls && lastMsg.tool_calls.every(t => ['read_file','list_dir','search_files'].includes(t.function.name));
+    if (!isReadOnly) maxLoops--;
+    try {
+      const resp = await fetch(API + '/v9/agent/chat', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId, session_id: sessionId, model: 'deepseek-v4-flash', messages })
+      });
+      const d = await resp.json();
+      if (!d.success) { agentLog('❌ API 错误: ' + d.error, '#f85149'); break; }
+
+      localStorage.setItem('last_task_id', Date.now().toString(36));
+
+      if (d.status === 'initializing') {
+        agentLog('🔧 ' + d.message, '#d2991d');
+        setTimeout(() => agentSend(), 3000);
+        return;
+      }
+
+      const msg = d.data.choices[0].message;
+      if (msg.content) {
+        if (msg.content.includes('📋 方案')) {
+          agentLog(renderPlanButtons(msg.content), '#c9d1d9');
+        } else {
+          agentLog('🤖 ' + msg.content, '#c9d1d9');
+        }
+      }
+
+      if (!msg.tool_calls || msg.tool_calls.length === 0) {
+        agentLog('✅ 任务完成', '#3fb950'); break;
+      }
+
+      messages.push({ role: 'assistant', content: msg.content || '', tool_calls: msg.tool_calls });
+      if (msg.reasoning_content) messages[messages.length - 1].reasoning_content = msg.reasoning_content;
+
+      for (const tool of msg.tool_calls) {
+        const args = JSON.parse(tool.function.arguments);
+        agentLog('🔧 ' + tool.function.name + '(' + JSON.stringify(args) + ')', '#d2991d');
+        let result, retries = 3;
+        while (retries > 0) {
+          result = await executeToolCall(tool.function.name, args);
+          if (result.success || (result.error && result.error.startsWith('未知工具'))) break;
+          retries--;
+          if (retries > 0) agentLog('🔄 重试中... (' + retries + '次剩余)', '#d2991d');
+        }
+        agentLog('📤 ' + JSON.stringify(result).substring(0, 500), '#8b949e');
+        let toolResult = JSON.stringify(result).substring(0, 500);
+        if (tool.function.name === 'edit_file' && !result.success && result.error && result.error.includes('FIM match failed')) {
+          toolResult = JSON.stringify({ error: "edit_file failed. Please use write_file with the full file content.", hint: "write_file(path, full_content)" });
+        }
+        messages.push({ role: 'tool', tool_call_id: tool.id, content: toolResult });
+      }
+      refreshFileTree();
+    } catch (e) { agentLog('❌ 错误: ' + e.message, '#f85149'); break; }
+  }
+  if (maxLoops === 0) {
+    agentLog('⚠️ 达到最大循环次数，当前进度：', '#d2991d');
+    let ps = getProgressSummary(messages);
+    if (ps.filesRead.length) agentLog('  📄 已读: ' + ps.filesRead.join(', '), '#8b949e');
+    if (ps.filesModified.length) agentLog('  ✏️ 已修改: ' + ps.filesModified.join(', '), '#8b949e');
+    agentLog('  📊 已执行: ' + messages.length + '轮', '#8b949e');
+    localStorage.setItem('agent_pause_' + currentThread, JSON.stringify({ task: task, messages: messages }));
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;display:flex;gap:8px;';
+    div.innerHTML = '<button id="btnContinue" style="background:#238636;color:#fff;border:none;border-radius:6px;padding:8px 16px;cursor:pointer;">▶ 继续任务(25轮)</button><button id="btnCancel" style="background:#30363d;color:#c9d1d9;border:none;border-radius:6px;padding:8px 16px;cursor:pointer;">✕ 放弃</button>';
+    document.getElementById('agentTerminal').appendChild(div);
+    document.getElementById('btnContinue').onclick = function() {
+      const saved = JSON.parse(localStorage.getItem('agent_pause_' + currentThread));
+      if (saved && saved.messages) { 
+  div.remove(); 
+  agentLog('▶ 继续执行...', '#d2991d'); 
+  agentRunning = true; 
+  document.getElementById('agentStopBtn').style.display = 'inline-block';
+  // 追加中断提示
+  saved.messages.push({
+    role: 'system', 
+    content: '【任务中断恢复】之前的任务因达到循环上限被暂停。已完成: ' + (saved.progress || '未知') + '。请从断点继续，不要重复已完成步骤。如果目标代码已处于期望状态，直接验证并汇报。'
+  });
+  continuePausedTask(saved.messages); 
+}
+    };
+    document.getElementById('btnCancel').onclick = function() {
+      localStorage.removeItem('agent_pause_' + currentThread); div.remove(); agentLog('✕ 任务已放弃', '#8b949e'); agentRunning = false; document.getElementById('agentStopBtn').style.display = 'none';
+    };
+    return;
+  }
+  if (agentAbort) agentLog('⏹ 已停止', '#8b949e');
+  agentRunning = false;
+  document.getElementById('agentStopBtn').style.display = 'none';
+}
+
+// ========== 方案按钮 ==========
+function renderPlanButtons(text) {
+  if (typeof text !== 'string') return text;
+  const plans = text.match(/📋\s*方案([A-Z])[：:][^\n]*/g);
+  if (!plans) return text;
+  let html = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  plans.forEach(plan => {
+    const letter = plan.match(/方案([A-Z])/)[1];
+    const btn = `<span class="plan-btn" style="display:inline-block;background:#1f6feb;color:#fff;padding:8px 16px;border-radius:6px;cursor:pointer;margin:4px;font-weight:600;" onmouseover="if(!this.dataset.sel)this.style.background='#388bfd'" onmouseout="if(!this.dataset.sel)this.style.background='#1f6feb'" onclick="selectPlan(this)" data-letter="${letter}">${plan.replace(/</g,'&lt;')} → 选择此方案</span>`;
+    html = html.replace(plan.replace(/</g,'&lt;'), btn);
+  });
+  return html;
+}
+
+function selectPlan(btn) {
+  document.querySelectorAll('.plan-btn').forEach(b => { b.style.background = '#1f6feb'; b.dataset.sel = ''; });
+  btn.style.background = '#238636'; btn.dataset.sel = '1'; selectedPlanBtn = btn;
+  document.getElementById('agentInput').value = '选择方案' + btn.dataset.letter + '，按此方案执行';
+  agentLog('📋 已选择方案' + btn.dataset.letter + '，点击执行按钮开始', '#3fb950');
+}
+
+// ========== 异步后台执行 ==========
+async function agentSendAsync() {
+  const input = document.getElementById('agentInput'), task = input.value.trim();
+  if (!task) return;
+  const taskId = 'async_' + Date.now().toString(36);
+  agentLog('🔗 后台任务 ' + taskId.substring(0, 12) + ' 已启动', '#1f6feb');
+  input.value = '';
+  try {
+    const resp = await fetch(API + '/v9/agent/chat', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ async: true, task_id: taskId, user_id: userId, session_id: sessionId, model: 'deepseek-v4-flash', messages: [{ role: 'system', content: '你是 ClawsJoy 的 AI 助手。' }, { role: 'user', content: task }] })
+    });
+    const d = await resp.json();
+    if (d.success) { agentLog('⏳ 后台执行中，可关闭页面，稍后查看结果', '#d2991d'); pollTaskResult(taskId); }
+    else agentLog('❌ 启动失败: ' + (d.error || '未知'), '#f85149');
+  } catch (e) { agentLog('❌ 网络错误', '#f85149'); }
+}
+
+async function pollTaskResult(taskId) {
+  try {
+    const resp = await fetch(API + '/v9/task/' + taskId + '?user_id=' + userId + '&session_id=' + sessionId);
+    const d = await resp.json();
+    if (d.success) {
+      if (d.status === 'done') { agentLog('✅ 后台任务完成', '#3fb950'); if (d.content) agentLog('🤖 ' + d.content, '#c9d1d9'); return; }
+      if (d.status === 'failed') { agentLog('❌ 后台任务失败: ' + (d.content || '未知错误'), '#f85149'); return; }
+    }
+    setTimeout(() => pollTaskResult(taskId), 3000);
+  } catch (e) { setTimeout(() => pollTaskResult(taskId), 5000); }
+}
+
+function getProgressSummary(messages) {
+  let filesRead = [...new Set(messages.filter(m => m.tool_calls).flatMap(m => m.tool_calls.filter(tc => tc.function.name === 'read_file').map(tc => JSON.parse(tc.function.arguments).path)))];
+  let filesModified = [...new Set(messages.filter(m => m.tool_calls).flatMap(m => m.tool_calls.filter(tc => tc.function.name === 'write_file').map(tc => JSON.parse(tc.function.arguments).path)))];
+  let summary = [];
+  if (filesRead.length) summary.push('已读文件: ' + filesRead.join(', '));
+  if (filesModified.length) summary.push('已修改: ' + filesModified.join(', '));
+  summary.push('总轮次: ' + messages.length);
+  return { filesRead, filesModified, text: summary.join('; ') };
+}
+
+function agentStop() { agentAbort = true; }
+
+async function continuePausedTask(messages) {
+  let maxLoops = 25;
+  while (!agentAbort && maxLoops > 0) {
+    maxLoops--;
+    try {
+      const resp = await fetch(API + '/v9/agent/chat', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId, session_id: sessionId, model: 'deepseek-v4-flash', messages })
+      });
+      const d = await resp.json();
+      if (!d.success) { agentLog('❌ API 错误: ' + d.error, '#f85149'); break; }
+      const msg = d.data.choices[0].message;
+      if (msg.content) agentLog('🤖 ' + msg.content, '#c9d1d9');
+      if (!msg.tool_calls || msg.tool_calls.length === 0) { agentLog('✅ 任务完成', '#3fb950'); break; }
+      messages.push({ role: 'assistant', content: msg.content || '', tool_calls: msg.tool_calls });
+      for (const tool of msg.tool_calls) {
+        const args = JSON.parse(tool.function.arguments);
+        agentLog('🔧 ' + tool.function.name + '(' + JSON.stringify(args) + ')', '#d2991d');
+        const result = await executeToolCall(tool.function.name, args);
+        agentLog('📤 ' + JSON.stringify(result).substring(0, 300), '#8b949e');
+        messages.push({ role: 'tool', tool_call_id: tool.id, content: JSON.stringify(result).substring(0, 500) });
+      }
+      if (maxLoops === 0) {
+    agentLog('⚠️ 达到最大循环次数，当前进度：', '#d2991d');
+    let filesRead = [...new Set(messages.filter(m => m.tool_calls).flatMap(m => m.tool_calls.filter(tc => tc.function.name === 'read_file').map(tc => JSON.parse(tc.function.arguments).path)))];
+    if (filesRead.length) agentLog('  📄 已读: ' + filesRead.join(', '), '#8b949e');
+    agentLog('  📊 已执行: ' + messages.length + '轮', '#8b949e');
+    // 生成进度清单
+let ps = getProgressSummary(messages);
+const progressData = {
+  original_task: (messages.find(m => m.role === 'user') || {}).content || '未知任务',
+  completed_steps: [
+    ...ps.filesRead.map(f => ({action: 'read_file', file: f})),
+    ...ps.filesModified.map(f => ({action: 'write_file', file: f}))
+  ],
+  pending_steps: ['验证测试'],
+  total_rounds: messages.length
+};
+localStorage.setItem('agent_pause_' + currentThread, JSON.stringify({ messages: messages, progress: ps.text }));
+
+// 持久化到 .agent_state.json
+fetch(API + '/v9/task/save_progress', {
+  method: 'POST', headers: {'Content-Type': 'application/json'},
+  body: JSON.stringify({ user_id: userId, session_id: sessionId, progress: progressData })
+}).catch(() => {});
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;display:flex;gap:8px;';
+    div.innerHTML = '<button id="btnContinue2" style="background:#238636;color:#fff;border:none;border-radius:6px;padding:8px 16px;cursor:pointer;">▶ 继续任务(25轮)</button><button id="btnCancel2" style="background:#30363d;color:#c9d1d9;border:none;border-radius:6px;padding:8px 16px;cursor:pointer;">✕ 放弃</button>';
+    document.getElementById('agentTerminal').appendChild(div);
+    document.getElementById('btnContinue2').onclick = function() {
+      const saved = JSON.parse(localStorage.getItem('agent_pause_' + currentThread));
+      if (saved && saved.messages) { div.remove(); agentLog('▶ 继续执行...', '#d2991d'); agentRunning = true; document.getElementById('agentStopBtn').style.display = 'inline-block'; continuePausedTask(saved.messages); }
+    };
+    document.getElementById('btnCancel2').onclick = function() {
+      localStorage.removeItem('agent_pause_' + currentThread); div.remove(); agentLog('✕ 任务已放弃', '#8b949e'); agentRunning = false; document.getElementById('agentStopBtn').style.display = 'none';
+    };
+    return;
+  }
+    } catch (e) { agentLog('❌ 错误: ' + e.message, '#f85149'); break; }
+  }
+  agentRunning = false;
+  document.getElementById('agentStopBtn').style.display = 'none';
+}
+
+// ========== 文件树 ==========
+async function refreshFileTree() {
+  try {
+    const resp = await fetch(API + '/v9/sandbox/list', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userId, session_id: sessionId, path: '.' }) });
+    const d = await resp.json();
+    if (d.success) {
+      let html = '';
+      for (const dir of (d.dirs || [])) html += `<div data-path="${dir}" onclick="openDir('${dir}')" style="cursor:pointer;">📁 ${dir}</div>`;
+      for (const file of (d.files || [])) html += `<div onclick="openFile('${file}')" style="cursor:pointer;">📄 ${file}</div>`;
+      document.getElementById('fileTree').innerHTML = html;
+    }
+  } catch (e) { }
+}
+
+async function openDir(path) {
+  const resp = await fetch(API + '/v9/sandbox/list', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userId, session_id: sessionId, path }) });
+  const d = await resp.json();
+  if (!d.success) return;
+  const tree = document.getElementById('fileTree'), folderDiv = tree.querySelector(`[data-path="${path}"]`);
+  if (!folderDiv) return;
+  if (folderDiv.classList.contains('expanded')) {
+    folderDiv.classList.remove('expanded');
+    const sub = folderDiv.nextElementSibling; if (sub && sub.classList.contains('sub-tree')) sub.remove();
+    return;
+  }
+  folderDiv.classList.add('expanded');
+  const subDiv = document.createElement('div'); subDiv.style.paddingLeft = '16px'; subDiv.className = 'sub-tree';
+  for (const dir of (d.dirs || [])) subDiv.innerHTML += `<div data-path="${path + '/' + dir}" onclick="event.stopPropagation();openDir('${path + '/' + dir}')" style="cursor:pointer;">📁 ${dir}</div>`;
+  for (const file of (d.files || [])) subDiv.innerHTML += `<div onclick="event.stopPropagation();openFile('${path + '/' + file}')" style="cursor:pointer;">📄 ${file}</div>`;
+  folderDiv.after(subDiv);
+}
+
+async function openFile(path) {
+  const resp = await fetch(API + '/v9/sandbox/read', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userId, session_id: sessionId, path }) });
+  const d = await resp.json();
+  if (d.success) { agentLog('📄 ' + path, '#58a6ff'); agentLog(d.content, '#c9d1d9'); }
+}
+
+async function refreshBalance() {
+  try {
+    const r = await fetch(API + '/v9/balance');
+    const d = await r.json();
+    if (d.success) {
+      const ds = (d.deepseek && d.deepseek.total) ? d.deepseek.total : '--';
+      const glm = (d.glm && d.glm.total) ? d.glm.total : '--';
+      const cost = d.total_cost || '--';
+      document.getElementById('balanceDisplay').innerHTML = `🔵 ¥${ds}  🟣 ¥${glm}  💰 ¥${cost}`;
+    }
+  } catch (e) { }
+}
+
+// ========== 线程管理 ==========
+function loadThreads() {
+  const sel = document.getElementById('threadSelect');
+  if (!sel) return;
+  sel.innerHTML = threads.map(t => `<option value="${t}" ${t === currentThread ? 'selected' : ''}>${t.substring(0, 20)}</option>`).join('');
+}
+function switchThread(id) {
+  currentThread = id; sessionId = id; localStorage.setItem('clawsjoy_session_id', id); saveThreads();
+  const term = document.getElementById('agentTerminal');
+  const logs = JSON.parse(localStorage.getItem('agent_logs_' + currentThread) || '[]');
+  term.innerHTML = '';
+  if (logs.length > 0) {
+    logs.forEach(l => {
+      const line = document.createElement('div');
+      line.style.color = l.color;
+      line.textContent = l.text;
+      if (l.text && l.text.includes('📋 方案')) { line.innerHTML = renderPlanButtons(l.text); line.style.whiteSpace = 'normal'; }
+      term.appendChild(line);
+    });
+  } else { term.innerHTML = '<div style="color:#58a6ff;">🤖 切换到线程 ' + id.substring(0, 16) + '</div>'; }
+  term.scrollTop = term.scrollHeight;
+  refreshFileTree();
+}
+function newThread() {
+  const id = 'session_' + Date.now();
+  threads.push(id); currentThread = id; sessionId = id; localStorage.setItem('clawsjoy_session_id', id); saveThreads(); loadThreads();
+  document.getElementById('agentTerminal').innerHTML = '<div style="color:#58a6ff;">🤖 新线程 ' + id.substring(0, 16) + ' 就绪</div>';
+  refreshFileTree();
+}
+
+// ========== Agent 面板 ==========
+function openAgent() {
+  setTimeout(initFileDrag, 100);
+  document.getElementById('agentModal').style.display = 'flex';
+  localStorage.setItem('agent_open', '1');
+  loadThreads(); refreshFileTree(); refreshBalance();
+  const term = document.getElementById('agentTerminal');
+  const logs = JSON.parse(localStorage.getItem('agent_logs_' + currentThread) || '[]');
+  if (logs.length > 0) {
+    term.innerHTML = '';
+    logs.forEach(l => {
+      const line = document.createElement('div');
+      line.style.color = l.color;
+      line.textContent = l.text;
+      if (l.text && l.text.includes('📋 方案')) { line.innerHTML = renderPlanButtons(l.text); line.style.whiteSpace = 'normal'; }
+      term.appendChild(line);
+    });
+    term.scrollTop = term.scrollHeight;
+  }
+}
+function closeAgent() {
+  document.getElementById('agentModal').style.display = 'none';
+  localStorage.setItem('agent_open', '0');
 }
 
 // ========== 初始化 ==========
 loadMembers();
+if (localStorage.getItem('agent_open') === '1') setTimeout(openAgent, 500);
 </script>
 </body>
 </html>

@@ -163,6 +163,7 @@ class AgentCortex:
         action, confidence = self._infer_action(user_input)
         extracted = self._extract(user_input, action)
         
+          
         # 模式切换检测（使用已加载的 session_modes）
         for mode_name, mode_config in session_modes.items():
             for kw in mode_config.get("keywords", []):
@@ -334,6 +335,8 @@ class AgentCortex:
         # 0.0 图片/图表分析
         if any(kw in text for kw in ["分析图片", "图片分析", "分析图像", "识别图片", "分析图表", "图表分析", "分析截图"]):
             return "vision", 0.90
+        if any(kw in text for kw in ["导出报告", "导出分析报告"]):
+            return "vision", 0.90
         # 0.1 YouTube URL
         if 'youtube.com' in text or 'youtu.be' in text:
             return "youtube", 0.95
@@ -418,8 +421,10 @@ class AgentCortex:
                 return "analyze", 0.85
             if "设计师" in positions and any(kw in text for kw in ["设计", "logo", "海报", "图片", "画", "图"]):
                 return "vision", 0.85
-            if "程序员" in positions and any(kw in text for kw in ["写", "代码", "修复", "bug", "编程", "开发"]):
+            if "程序员" in positions and any(kw in text for kw in ["写代码", "写程序", "写函数", "修复", "bug", "编程", "开发"]):
                 return "code", 0.85
+            if "作家" in positions and any(kw in text for kw in ["撰写", "写作", "创作", "写文章", "写脚本", "写文案", "写方案"]):
+                return "write", 0.85
         except:
             pass
 
@@ -658,7 +663,7 @@ class AgentCortex:
             return agent_result.get("response", "")
         if agent_result and agent_result.get("success") and agent_result.get("response"):
             raw = str(agent_result.get("response"))
-            if action == "vision" and raw and (raw.startswith("🔍") or raw.startswith("📹")):
+            if action == "vision" and raw and (raw.startswith("🔍") or raw.startswith("📹") or raw.startswith("📄") or raw.startswith("🖼")):
                 return raw
             if '{"user"' not in raw and '{"assistant"' not in raw:
                 # 检查是否需要澄清

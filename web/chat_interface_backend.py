@@ -12,7 +12,7 @@ import streamlit as st
 st.set_page_config(page_title="ClawsJoy Chat - 智能对话", page_icon="💬", layout="wide")
 
 # API配置
-API_BASE = "http://localhost:5000/api/v5"
+API_BASE = "http://localhost:5002/api/v5"
 
 # 初始化
 if "messages" not in st.session_state:
@@ -134,12 +134,19 @@ if user_input:
 
             if resp.status_code == 200:
                 response = resp.json().get("response", "无响应")
-
-                # 如果后端返回语音，播放
-                if use_voice and resp.json().get("audio"):
-                    audio_data = base64.b64decode(resp.json()["audio"])
-                    st.audio(audio_data, format="audio/wav")
-
+    
+                # 如果启用语音，调用 TTS 端点生成语音
+                if use_voice and response:
+                    try:
+                        tts_resp = requests.post(
+                            "http://localhost:5002/v5/tts",
+                            json={"text": response}
+                        )
+                         if tts_resp.status_code == 200:
+                             audio_bytes = base64.b64decode(tts_resp.json()["audio"])
+                             st.audio(audio_bytes, format="audio/mp3")        
+                    except Exception as e:
+                        st.warning(f"语音播报失败: {e}")               
                 st.session_state.messages.append(
                     {
                         "role": "assistant",

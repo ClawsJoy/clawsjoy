@@ -10,7 +10,7 @@ import streamlit as st
 
 st.set_page_config(page_title="ClawsJoy Code - AI编程", page_icon="💻", layout="wide")
 
-API_BASE = "http://localhost:5000/api/v5"
+API_BASE = "http://localhost:5002/api/v5"
 
 # 初始化
 if "code_history" not in st.session_state:
