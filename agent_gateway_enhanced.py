@@ -1072,6 +1072,17 @@ def _resolve_path(base, path):
 _background_tasks = {}  # {task_id: {"status": "running", "result": None, "thread": Thread}}
 _code_indexer = None  # CodeIndexer 实例，异步引擎可访问
 
+def _get_agent_tools():
+    """返回 Agent 工具定义列表。新增工具只需改此处。"""
+    return [
+        {"type": "function", "function": {"name": "read_file", "strict": True, "description": "读取文件内容，自动带行号。支持行范围和关键词搜索。cached:true表示文件已读过未变化。读取测试文件时可能返回status_hint:\"tests_found\"提示可直接验证。", "parameters": {"type": "object", "additionalProperties": False, "properties": {"path": {"type": "string", "description": "文件路径"}, "search": {"type": "string", "description": "搜索关键词，返回匹配行"}, "lines_start": {"type": "integer", "description": "起始行号"}, "lines_end": {"type": "integer", "description": "结束行号"}, "verify_line": {"type": "integer", "description": "验证指定行号"}, "verify_expected": {"type": "string", "description": "期望的内容，与指定行比对返回match"}}, "required": ["path"]}}},
+        {"type": "function", "function": {"name": "write_file", "strict": True, "description": "写入文件。支持按行修改：write_file(path, line=98, content=\"新行内容\")。也支持完整写入：write_file(path, content=\"完整内容\")", "parameters": {"type": "object", "additionalProperties": False, "properties": {"path": {"type": "string"}, "content": {"type": "string"}, "line": {"type": "integer", "description": "行号，只替换该行"}}, "required": ["path"]}}},
+        {"type": "function", "function": {"name": "list_dir", "strict": True, "description": "列出目录", "parameters": {"type": "object", "additionalProperties": False, "properties": {"path": {"type": "string"}}, "required": ["path"]}}},
+        {"type": "function", "function": {"name": "search_files", "strict": True, "description": "搜索文件", "parameters": {"type": "object", "additionalProperties": False, "properties": {"query": {"type": "string"}, "path": {"type": "string"}}, "required": ["query", "path"]}}},
+        {"type": "function", "function": {"name": "execute_command", "strict": True, "description": "执行命令", "parameters": {"type": "object", "additionalProperties": False, "properties": {"command": {"type": "string"}}, "required": ["command"]}}},
+        {"type": "function", "function": {"name": "query_index", "strict": True, "description": "查询代码索引，返回结构化结果。用法：query_index(query='analysis_agent 有哪些方法') 或 query_index(query='谁调用了 _resp')", "parameters": {"type": "object", "additionalProperties": False, "properties": {"query": {"type": "string", "description": "自然语言查询"}}, "required": ["query"]}}},
+    ]
+
 @app.route("/v9/sandbox/read", methods=["POST"])
 def v9_sandbox_read():
     data = request.json or {}
@@ -1951,104 +1962,7 @@ def v9_agent_chat():
         print(f"[V9] 上下文已压缩，剩余 {len(messages)} 条消息")
 
     # 构建 tools 定义
-    tools = [
-        {
-            "type": "function",
-            "function": {
-                "name": "read_file", "strict": True,
-                "description": "读取文件内容，自动带行号。支持行范围和关键词搜索。cached:true表示文件已读过未变化。读取测试文件时可能返回status_hint:\"tests_found\"提示可直接验证。",
-                "parameters": {
-                    "type": "object", "additionalProperties": False,
-                    "properties": {"path": {"type": "string", "description": "文件路径"}, "search": {"type": "string", "description": "搜索关键词，返回匹配行"}, "lines_start": {"type": "integer", "description": "起始行号"}, "lines_end": {"type": "integer", "description": "结束行号"}, "verify_line": {"type": "integer", "description": "验证指定行号"}, "verify_expected": {"type": "string", "description": "期望的内容，与指定行比对返回match"}},
-                    "required": ["path"]
-                }
-            }
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "write_file", "strict": True,
-                "description": "写入文件",
-                "parameters": {
-                    "type": "object", "additionalProperties": False,
-                    "properties": {
-                        "path": {"type": "string", "description": "文件路径"},
-                        "content": {"type": "string", "description": "文件内容"}
-                    },
-                    "required": ["path", "content"]
-                }
-            }
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "list_dir", "strict": True,
-                "description": "列出目录内容",
-                "parameters": {
-                    "type": "object", "additionalProperties": False,
-                    "properties": {"path": {"type": "string", "description": "目录路径"}},
-                    "required": ["path"]
-                }
-            }
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "search_files", "strict": True,
-                "description": "搜索文件名包含关键词的文件",
-                "parameters": {
-                    "type": "object", "additionalProperties": False,
-                    "properties": {
-                        "query": {"type": "string", "description": "搜索关键词"},
-                        "path": {"type": "string", "description": "搜索目录"}
-                    },
-                    "required": ["query", "path"]
-                }
-            }
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "query_index", "strict": True,
-                "description": "查询代码索引，返回结构化结果。用法：query_index(query='analysis_agent 有哪些方法') 或 query_index(query='谁调用了 _resp')",
-                "parameters": {
-                    "type": "object", "additionalProperties": False,
-                    "properties": {"query": {"type": "string", "description": "自然语言查询"}},
-                    "required": ["query"]
-                }
-            }
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "execute_command", "strict": True,
-                "description": "执行受限 shell 命令（白名单：python/pip/git/grep/cat/ls/pwd/echo/pytest/node/npm）",
-                "parameters": {
-                    "type": "object", "additionalProperties": False,
-                    "properties": {"command": {"type": "string", "description": "要执行的命令"}},
-                    "required": ["command"]
-                }
-            }
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "edit_file",
-                "strict": True,
-                "description": "精准编辑文件，使用 FIM（Fill-In-Middle）模式。提供要修改位置的前文和后文，AI 补全中间内容",
-                "parameters": {
-                    "type": "object",
-                    "additionalProperties": False,
-                    "properties": {
-                        "path": {"type": "string", "description": "文件路径"},
-                        "prompt": {"type": "string", "description": "要修改位置的前文（修改点之前的内容）"},
-                        "suffix": {"type": "string", "description": "要修改位置的后文（修改点之后的内容）"}
-                    },
-                    "required": ["path", "prompt", "suffix"]
-                }
-            }
-        }
-    ]
+    tools = _get_agent_tools()
 
     # 构建 tools 之后
     if state_file.exists():
@@ -2446,3 +2360,5 @@ if __name__ == "__main__":
     port = unified_config.get("services.gateway.port", 5002)
     print(f"🚀 ClawsJoy Gateway v6.0 启动在端口 {port}")
     app.run(host="0.0.0.0", port=port, debug=False, threaded=True)
+
+
