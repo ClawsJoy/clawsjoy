@@ -122,3 +122,17 @@ SadTalker/
 memory/session_*
 models/intent_classifier.bin
 client/
+
+# 临时/缓存文件 - 2026-07-11
+unsloth_compiled_cache/
+screenshots/
+_archive/
+0
+2026-06-20T00:00:00
+test_ktransformers.py
+verify_routing.py
+clean_writer_agent.py
+fix_re_import.py
+fix_save_state.py
+add_export_function.py
+fix_writer_agent_save.py
