@@ -635,7 +635,8 @@ async function agentSendAsync() {
   } catch (e) { agentLog('❌ 网络错误', '#f85149'); }
 }
 
-async function pollTaskResult(taskId) {
+async function pollTaskResult(taskId, retryCount = 0) {
+  if (retryCount > 20) { agentLog('⏰ 后台任务超时，请检查任务状态', '#f85149'); return; }
   try {
     const resp = await fetch(API + '/v9/task/' + taskId + '?user_id=' + userId + '&session_id=' + sessionId);
     const d = await resp.json();
@@ -643,8 +644,8 @@ async function pollTaskResult(taskId) {
       if (d.status === 'done') { agentLog('✅ 后台任务完成', '#3fb950'); if (d.content) agentLog('🤖 ' + d.content, '#c9d1d9'); return; }
       if (d.status === 'failed') { agentLog('❌ 后台任务失败: ' + (d.content || '未知错误'), '#f85149'); return; }
     }
-    setTimeout(() => pollTaskResult(taskId), 3000);
-  } catch (e) { setTimeout(() => pollTaskResult(taskId), 5000); }
+    setTimeout(() => pollTaskResult(taskId, retryCount + 1), 3000);
+  } catch (e) { setTimeout(() => pollTaskResult(taskId, retryCount + 1), 5000); }
 }
 
 function getProgressSummary(messages) {
