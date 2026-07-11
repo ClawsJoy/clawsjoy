@@ -10,7 +10,7 @@ from typing import Dict, Optional, List
 TASK_STATES = ["pending", "running", "done", "reviewed", "failed"]
 
 TASK_TRANSITIONS = {
-    "pending": ["running"],
+    "pending": ["running", "failed"],
     "running": ["done", "failed"],
     "done": ["reviewed"],
     "reviewed": ["done"],  # 审查不通过，打回重做
