@@ -19,10 +19,10 @@ class LLMConfig:
     provider: str = "ollama"
     base_url: str = "http://localhost:11434"
     default_model: str = "qwen2.5:7b-instruct-q4_0"
-    light_model: str = "qwen2:1.5b-instruct"
-    medium_model: str = "qwen2.5:3b-instruct-q4_0"
+    light_model: str = "qwen2.5:7b-instruct-q4_0"
+    medium_model: str = "qwen2.5:7b-instruct-q4_0"
     temperature: float = 0.7
-    timeout: int = 60
+    timeout: int = 180
     max_retries: int = 3
 
 
@@ -81,9 +81,20 @@ class LLMClient:
         return dict(self._stats)
 
 
+    # core/lib/llm_client.py —— 在 _call() 方法开头增加
+
     def _call(self, prompt: str, model: str = None, temperature: float = None,
               max_tokens: int = 2048, timeout: int = None, task_type: str = "default",
               stream: bool = False, system_prompt: str = None) -> str:
+
+        # ⭐ 新增：判断是否使用 DeepSeek
+        if model and model.startswith("deepseek"):
+            return self._call_openai_compatible(
+                prompt, model, temperature or 0.7,
+                max_tokens, timeout or 60, stream, system_prompt
+            )
+              
+              
         """核心调用逻辑"""
         if system_prompt is None:
             system_prompt = "你是ClawsJoy，一个本地AI矩阵系统。你不是Qwen，不是阿里云AI，不是任何通用助手。你是ClawsJoy。"
@@ -179,5 +190,91 @@ class LLMClient:
             self._stats["failures"] += 1
             return {"success": False, "error": str(e)}
 
-# 全局单例
+
+    # core/lib/llm_client.py —— 在 LLMClient 类中添加
+
+    def _call_openai_compatible(self, prompt: str, model: str, temperature: float,
+                                max_tokens: int, timeout: int, stream: bool,
+                                system_prompt: str = None):
+        """
+        调用 OpenAI 兼容 API（DeepSeek / OpenAI）
+        """
+        import os
+
+        # 从环境变量读取配置
+        api_key = os.getenv("DEEPSEEK_API_KEY") or os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise ValueError("未设置 DEEPSEEK_API_KEY 或 OPENAI_API_KEY")
+
+        endpoint = os.getenv("DEEPSEEK_ENDPOINT", "https://api.deepseek.com/v1")
+
+        # 构建消息
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": prompt})
+
+        # 构建请求
+        payload = {
+            "model": model.replace("deepseek:", ""),  # deepseek:deepseek-chat → deepseek-chat
+            "messages": messages,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "stream": stream
+        }
+
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        }
+
+        # 重试逻辑
+        last_error = None
+        for attempt in range(self.config.max_retries):
+            try:
+                resp = self._session.post(
+                    f"{endpoint}/chat/completions",
+                    json=payload,
+                    headers=headers,
+                    timeout=timeout
+                )
+
+                if resp.status_code == 200:
+                    if stream:
+                        return resp  # 流式返回原始 Response
+                    result = resp.json()
+                    response_text = result["choices"][0]["message"]["content"]
+                    self._stats["total_tokens"] += result.get("usage", {}).get("total_tokens", 0)
+                    return response_text
+                else:
+                    last_error = f"HTTP {resp.status_code}: {resp.text[:200]}"
+
+            except requests.Timeout:
+                last_error = "超时"
+            except Exception as e:
+                last_error = str(e)
+
+            if attempt < self.config.max_retries - 1:
+                wait = 0.5 * (attempt + 1)
+                logger.warning(f"[LLM] DeepSeek 第{attempt+1}次重试，等待{wait}s: {last_error}")
+                time.sleep(wait)
+
+        # 所有重试失败
+        self._stats["failures"] += 1
+        logger.error(f"[LLM] DeepSeek 调用失败: {last_error}")
+        return ""
+
+    # 在 llm_client.py 中添加成本统计
+    def get_cost_stats(self):
+        """统计 API 调用成本"""
+        total_tokens = self._stats.get("total_tokens", 0)
+        # DeepSeek 价格：¥0.001/1K tokens
+        cost = total_tokens / 1000 * 0.001
+        return {
+            "total_tokens": total_tokens,
+            "estimated_cost": f"¥{cost:.4f}"
+        }
+
+
+#全局单例
 llm_client = LLMClient()

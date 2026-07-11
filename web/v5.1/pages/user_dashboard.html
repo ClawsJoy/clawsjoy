@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/three@0.157.0/build/three.min.js"></script>
     <title>用户工作区 | ClawsJoy</title>
     <link rel="stylesheet" href="../css/themes.css">
     <style>
+        #three-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; }
         .dashboard-layout {
             display: flex;
             min-height: 100vh;
@@ -268,7 +270,7 @@ def hello_world():
         </div>
     </div>
     
-    <script src="../js/3d_background.js"></script>
+    <!-- 3D背景暂时禁用 -->
     <script>
         const API_BASE = 'http://localhost:5002';
         
@@ -293,7 +295,7 @@ def hello_world():
         
         async function loadSkills() {
             try {
-                const res = await fetch(`${API_BASE}/api/skills`);
+                const res = await fetch(`${API_BASE}/api/skills/list`);
                 const data = await res.json();
                 const skillsList = document.getElementById('skills-list');
                 if (data.skills) {
@@ -325,7 +327,7 @@ def hello_world():
             input.value = '';
             
             try {
-                const res = await fetch(`${API_BASE}/api/butler/chat`, {
+                const res = await fetch(`${API_BASE}/api/v5/wisdom/chat`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ user_id: 'default', message: msg })

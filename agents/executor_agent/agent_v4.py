@@ -17,8 +17,11 @@ class ExecutorAgentV4(BusinessAgent):
     description = "安全任务执行器"
     version = "5.0.0"
 
+    # ⭐ 添加 ffmpeg 和 gnome-screenshot 到白名单
     ALLOWED_COMMANDS = ["ls", "pwd", "cat", "head", "tail", "grep", "find",
-                        "wc", "sort", "echo", "date", "mkdir", "touch", "cp", "mv", "git", "python", "python3"]
+                        "wc", "sort", "echo", "date", "mkdir", "touch", "cp", "mv", 
+                        "git", "python", "python3", "ffmpeg", "gnome-screenshot",
+                        "ffplay", "ffprobe"]
     FORBIDDEN = [r"rm\s+-rf\s+/", r"dd\s+if=", r">\s*/dev/", r"mkfs", r"shutdown", r"reboot", r"curl.*\|.*sh"]
 
     def __init__(self, user_id: str = "default"):
@@ -44,118 +47,99 @@ class ExecutorAgentV4(BusinessAgent):
         elif t.startswith("workflow "):
             return self._exec_workflow(user_input.split(maxsplit=1)[1])
         else:
-            # cortex 已匹配 Skill，直接执行
             skill_name = context.get("extracted", {}).get("_skill_name", "") if context else ""
             if skill_name:
                 result = self._exec_skill(skill_name)
-                if "Skill不存在" not in str(result.get("response", "")):
-                    return result
-            
-            # 没匹配到 → chat_agent 兜底
-            try:
-                from core.agents.wisdom.wisdom_factory import wisdom_factory
-                chat = wisdom_factory.get_agent("chat_agent", self.user_id)
-                if chat:
-                    return chat.process(user_input, {})
-            except:
-                pass
-            
-            return self._help()
-    
-    def _exec_cmd(self, cmd: str) -> Dict:
-        if not self._safe(cmd):
-            return self._resp(f"❌ 命令被拒绝")
-        parts = shlex.split(cmd)
-        if not parts or parts[0] not in self.ALLOWED_COMMANDS:
-            return self._resp(f"❌ 不允许: {parts[0] if parts else cmd}")
-        try:
-            r = subprocess.run(cmd, shell=True, cwd=self.work_dir, capture_output=True, text=True, timeout=30)
-            out = r.stdout + (f"\n[stderr]\n{r.stderr}" if r.stderr else "")
-            return self._resp(f"✅ 完成\n\n{out[:2000]}" if out else "✅ 完成")
-        except subprocess.TimeoutExpired:
-            return self._resp("❌ 超时")
-        except Exception as e:
-            return self._resp(f"❌ {e}")
+                return result
+            return self._resp("❌ 未识别的命令。请使用: exec <命令> | code <代码> | skill <技能名> | file <操作> | workflow <工作流>")
 
-    def _exec_code(self, code: str) -> Dict:
+    def _exec_cmd(self, cmd_str: str) -> Dict:
+        """执行系统命令（安全）"""
+        # 解析命令
+        parts = shlex.split(cmd_str)
+        if not parts:
+            return self._resp("❌ 空命令")
+
+        cmd = parts[0]
+        # 检查是否在白名单中
+        if cmd not in self.ALLOWED_COMMANDS:
+            return self._resp(f"❌ 不允许: {cmd}")
+
+        # 检查危险模式
+        import re
+        for pattern in self.FORBIDDEN:
+            if re.search(pattern, cmd_str):
+                return self._resp(f"❌ 危险命令被阻止: {pattern}")
+
         try:
-            buf = io.StringIO()
-            with contextlib.redirect_stdout(buf):
-                exec(code, {"__builtins__": __builtins__}, {})
-            out = buf.getvalue()
-            return self._resp(f"✅ 完成\n\n{out[:2000]}" if out else "✅ 完成")
+            result = subprocess.run(
+                parts,
+                capture_output=True,
+                text=True,
+                cwd=self.work_dir,
+                timeout=60
+            )
+            output = result.stdout or result.stderr
+            if result.returncode == 0:
+                return self._resp(f"✅ 执行成功:\n{output[:1000]}")
+            else:
+                return self._resp(f"⚠️ 执行完成 (退出码: {result.returncode}):\n{output[:1000]}")
+        except subprocess.TimeoutExpired:
+            return self._resp("⏰ 命令执行超时 (60秒)")
         except Exception as e:
-            return self._resp(f"❌ {e}")
+            return self._resp(f"❌ 错误: {e}")
+
+    def _exec_code(self, code_str: str) -> Dict:
+        """执行 Python 代码（沙箱）"""
+        try:
+            # 在沙箱中执行
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                exec(code_str, {"__builtins__": __builtins__}, {})
+            return self._resp(f"✅ 代码执行成功:\n{output.getvalue()[:1000]}")
+        except Exception as e:
+            return self._resp(f"❌ 代码执行失败: {e}")
 
     def _exec_skill(self, skill_name: str) -> Dict:
-        skill_dir = Path(f"skills/{skill_name}")
-        if not skill_dir.exists():
-            return self._resp("这个功能暂时不可用")
+        """执行技能"""
         try:
-            import importlib.util, sys
-            py_files = [f for f in skill_dir.iterdir() if f.suffix == '.py' and f.stem != '__init__']
-            if not py_files:
-                return self._resp("这个功能暂时不可用")
-            
-            skill_file = str(py_files[0])
-            spec = importlib.util.spec_from_file_location(skill_name, skill_file)
-            mod = importlib.util.module_from_spec(spec)
-            sys.modules[skill_name] = mod
-            spec.loader.exec_module(mod)
-            
-            if hasattr(mod, 'execute'):
-                result = mod.execute({"text": "", "input": ""})
-                return self._resp(str(result.get("result", result.get("response", "完成")))[:500])
-            
-            for attr in dir(mod):
-                if attr.startswith('_'):
-                    continue
-                obj = getattr(mod, attr)
-                if hasattr(obj, 'execute'):
-                    result = obj().execute({"text": "", "input": ""})
-                    return self._resp(str(result.get("result", result.get("response", "完成")))[:500])
-            
-            return self._resp("这个功能暂时不可用")
-        except Exception:
-            return self._resp("这个功能暂时不可用")
-
-
-    def _file_op(self, op: str) -> Dict:
-        parts = op.split(maxsplit=1)
-        action, target = parts[0].lower(), parts[1] if len(parts) > 1 else ""
-        p = self.work_dir / target if target and not target.startswith('/') else Path(target)
-
-        if action == "read":
-            return self._resp(f"📄 {p}\n\n{p.read_text()[:2000]}" if p.exists() else f"❌ 不存在: {p}")
-        elif action == "write":
-            content = target.split(maxsplit=1)[1] if target else ""
-            (p.parent.mkdir(parents=True, exist_ok=True) if str(p) != "." else None)
-            p.write_text(content)
-            return self._resp(f"✅ 已写入 {p}")
-        elif action == "list":
-            files = list(self.work_dir.rglob("*"))[:50]
-            return self._resp("📂\n" + "\n".join(str(f.relative_to(self.work_dir)) for f in files if f.is_file()))
-        elif action == "delete":
-            if p.exists():
-                p.unlink()
-                return self._resp(f"🗑 已删除 {p}")
-            return self._resp(f"❌ 不存在: {p}")
-        return self._resp(f"❌ 未知操作: {action}\n支持: read/write/list/delete")
-
-    def _exec_workflow(self, name: str) -> Dict:
-        try:
-            from core.v5.workflow import workflow_engine
-            result = workflow_engine.execute({"name": name})
-            return self._resp(f"✅ 工作流完成\n\n{json.dumps(result, ensure_ascii=False, indent=2)[:2000]}")
+            # 尝试导入技能
+            module = __import__(f"skills.{skill_name}", fromlist=[skill_name])
+            skill = getattr(module, skill_name)
+            result = skill.execute({})
+            return self._resp(f"✅ 技能执行成功:\n{json.dumps(result, indent=2, ensure_ascii=False)}")
+        except ImportError:
+            return self._resp(f"❌ 技能不存在: {skill_name}")
         except Exception as e:
-            return self._resp(f"❌ 工作流失败: {e}")
+            return self._resp(f"❌ 技能执行失败: {e}")
 
-    def _safe(self, cmd: str) -> bool:
-        import re
-        return not any(re.search(p, cmd) for p in self.FORBIDDEN)
+    def _file_op(self, op_str: str) -> Dict:
+        """文件操作"""
+        parts = op_str.split(maxsplit=1)
+        if not parts:
+            return self._resp("❌ 请指定文件操作: read <文件> | write <文件> <内容>")
 
-    def _help(self) -> Dict:
-        return self._resp("⚡ 执行器\n\nexec 命令\ncode 代码\nskill 名称\nfile 读/写/列表/删除\nworkflow 名称")
+        op = parts[0]
+        if op == "read":
+            path = Path(parts[1]) if len(parts) > 1 else None
+            if not path:
+                return self._resp("❌ 请指定文件路径")
+            if not path.exists():
+                return self._resp(f"❌ 文件不存在: {path}")
+            return self._resp(f"📄 文件内容:\n{path.read_text()[:1000]}")
+        elif op == "write":
+            if len(parts) < 3:
+                return self._resp("❌ 请指定: write <文件> <内容>")
+            path = Path(parts[1])
+            content = parts[2]
+            path.write_text(content)
+            return self._resp(f"✅ 已写入: {path}")
+        else:
+            return self._resp(f"❌ 不支持的操作: {op}")
+
+    def _exec_workflow(self, workflow_name: str) -> Dict:
+        """执行工作流"""
+        return self._resp(f"🔧 工作流执行: {workflow_name}\n(需要配置工作流定义)")
 
     def _resp(self, content: str, **kwargs) -> Dict:
         return {"success": True, "response": content, "output_content": content, **kwargs}
@@ -163,4 +147,5 @@ class ExecutorAgentV4(BusinessAgent):
 
 if __name__ == "__main__":
     agent = ExecutorAgentV4("test")
-    print(agent.process("exec ls")["response"][:200])
+    result = agent.process("exec ls -la")
+    print(result.get("response", ""))

@@ -47,7 +47,7 @@ class ToolExecutor:
                 p = Path(path)
                 if not p.exists():
                     return {"success": False, "error": f"文件不存在: {path}"}
-                content = p.read_text(encoding='utf-8')[:1000]
+                content = p.read_text(encoding='utf-8')
                 return {"success": True, "content": content}
             except Exception as e:
                 return {"success": False, "error": str(e)}

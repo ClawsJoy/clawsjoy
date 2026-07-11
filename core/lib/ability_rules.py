@@ -54,7 +54,7 @@ ABILITY_REGEX = {
         "description": "生成/调试代码",
         "patterns": [
             r"写.*代码", r"写.*函数", r"写.*算法", r"写.*排序",
-            r"编程.*", r"帮我写.*", r"生成.*代码",
+            r"编程.*", r"生成.*代码", r"修复.*bug", r"修.*bug",
         ],
         "extract": "description",
     },

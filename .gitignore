@@ -136,3 +136,17 @@ fix_re_import.py
 fix_save_state.py
 add_export_function.py
 fix_writer_agent_save.py
+
+# 新增排除 - 2026-07-11
+docs/
+config/RULES.md
+config/prompts/decompose_task.md
+config/prompts/review_task.md
+config/templates/
+config/tools/
+scripts/auto_train_trigger.py
+scripts/extract_training_data.py
+scripts/finetune_lora.py
+scripts/finetune_unsloth.py
+web/chat_interface_broken.py
+web/v5.1/core/

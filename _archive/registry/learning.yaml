@@ -1,7 +1,0 @@
-# Agent 学习配置
-version: "3.0.0"
-
-min_confidence: 0.6
-max_experiences: 1000
-auto_learn: true
-decay_rate: 0.95

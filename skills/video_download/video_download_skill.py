@@ -87,6 +87,11 @@ class video_download:
             format_str = quality_map.get(quality, quality_map["720p"])
 
             # 构建命令
+            # 自动检测 cookies 文件
+            cookies_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "agents", "youtube_agent", "cookies.txt")
+            if not os.path.exists(cookies_file):
+                cookies_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies.txt")
+            
             if quality == "audio":
                 cmd = [
                     "yt-dlp",
@@ -106,6 +111,9 @@ class video_download:
                     url
                 ]
 
+            if os.path.exists(cookies_file):
+                cmd.insert(1, cookies_file)
+                cmd.insert(1, "--cookies")
             print(f"[video_download] 执行: {' '.join(cmd[:4])}...")
 
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)

@@ -58,8 +58,8 @@ class StartupManager:
     
     def _step_agent_pool(self):
         from core.agents.wisdom.wisdom_factory import wisdom_factory
-        stats = agent_pool.get_stats()
-        print(f"  Agent池: {stats['pool_size']}个实例就绪")
+        stats = wisdom_factory.get_stats()
+        print(f"  Agent池: {stats.get('registry_stats', {}).get('total', '?')}个实例就绪")
     
     def _step_federated(self):
         from core.lib.federated_bus import federated_bus

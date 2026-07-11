@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/three@0.157.0/build/three.min.js"></script>
     <title>ClawsJoy | 品牌体验</title>
     <link rel="stylesheet" href="../css/themes.css">
     <style>
+        #three-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; }
         .guest-layout {
             display: flex;
             flex-direction: column;
@@ -200,7 +202,7 @@
         <button class="btn-neon" onclick="location.href='../index_root.html'">← 返回门户</button>
     </div>
     
-    <script src="../js/3d_background.js"></script>
+    <script defer src="../js/3d_background.js"></script>
     <script src="../js/brand.js"></script>
     <script>
         // 3D人像聊天集成
@@ -208,16 +210,38 @@
             const container = document.getElementById('agent-3d-container');
             if (container) {
                 container.innerHTML = `
-                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
-                        <div style="font-size: 80px; animation: float 3s ease-in-out infinite;">🤖</div>
-                        <div style="margin-top: 20px; color: #00f3ff;">智能管家「小管」</div>
-                        <div style="margin-top: 10px; display: flex; gap: 10px;">
-                            <input type="text" placeholder="说点什么..." style="background: rgba(0,0,0,0.6); border: 1px solid #00f3ff; border-radius: 20px; padding: 8px 16px; color: white; width: 200px;">
-                            <button class="btn-neon" style="padding: 6px 16px;">发送</button>
+                    <iframe src="/v5.1/core/agent_3d.html" style="width:100%;height:70%;border:none;border-radius:32px 32px 0 0;"></iframe>
+                    <div class="chat-msgs" style="height:60px;overflow-y:auto;width:100%;padding:0 10px;"></div><div style="display:flex;flex-direction:column;align-items:center;padding:5px;">
+                        <div style="color:#00f3ff;font-size:14px;">智能管家「小管」</div>
+                        <div style="display:flex;gap:10px;margin-top:8px;">
+                            <input type="text" placeholder="说点什么..." style="background:rgba(0,0,0,0.6);border:1px solid #00f3ff;border-radius:20px;padding:6px 12px;color:white;width:180px;">
+                            <button class="btn-neon" style="padding:6px 12px;" onclick="sendChat()">发送</button>
                         </div>
                     </div>
                 `;
             }
+        function sendChat() {
+            const input = document.getElementById("chat-input");
+            const msg = input?.value?.trim();
+            if (!msg) return;
+            const chatArea = document.querySelector("#agent-3d-container");
+            const msgs = chatArea.querySelector(".chat-msgs");
+            if (!msgs) return;
+            msgs.insertAdjacentHTML("beforeend", `<div style="color:#00f3ff;font-size:12px;margin:2px 0;">你: ${msg}</div>`);
+            input.value = "";
+            fetch("/api/v5/wisdom/chat", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({message: msg})
+            })
+            .then(r => r.json())
+            .then(d => {
+                msgs.insertAdjacentHTML("beforeend", `<div style="color:#44ff44;font-size:12px;margin:2px 0;">小管: ${d.response || "收到！"}</div>`);
+            })
+            .catch(() => {
+                msgs.insertAdjacentHTML("beforeend", `<div style="color:#ff4444;font-size:12px;">小管: 网络错误</div>`);
+            });
+        }
         }, 500);
     </script>
 </body>

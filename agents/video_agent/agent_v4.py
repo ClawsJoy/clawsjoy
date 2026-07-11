@@ -30,6 +30,10 @@ class VideoAgentV4(BusinessAgent):
         return (True, 0.85)
 
     def _execute_business(self, user_input: str, context: Optional[Dict] = None) -> Dict:
+        if context and context.get("skip_intent"):
+            from core.lib.llm_client import llm_client
+            text = llm_client.generate(user_input, task_type="task_execute", timeout=120)
+            return {"success": True, "response": text} if text else {"success": False, "response": ""}
         t = user_input.lower()
 
         if any(kw in t for kw in ["生成脚本", "写脚本", "视频脚本", "脚本"]):

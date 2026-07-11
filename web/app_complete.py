@@ -6,7 +6,7 @@ import streamlit as st
 
 # 检查后端服务
 try:
-    resp = requests.get("http://localhost:5000/api/v5/health", timeout=2)
+    resp = requests.get("http://localhost:5002/api/v5/health", timeout=2)
     BACKEND_AVAILABLE = resp.status_code == 200
 except Exception as e:
     BACKEND_AVAILABLE = False
@@ -37,9 +37,14 @@ st.sidebar.info(
     "- Vision: 文生图工作流"
 )
 
+st.sidebar.markdown("---")
+st.sidebar.markdown("[🔧 Workbench V8](http://localhost:5002/workbench)")
+st.sidebar.markdown("[🎭 数字人](http://localhost:7860)")
+st.sidebar.markdown("[🐾 v5.1 门户](http://localhost:5002/v5.1)")
+st.sidebar.markdown("[📖 工具箱](http://localhost:5002/web/clawsjoy_story.html)")
 # 加载页面
 if page == "💬 Chat Agent":
-    exec(open("web/chat_interface_backend.py").read())
+    exec(open("web/chat_interface.py").read())
 elif page == "💻 Code Agent":
     exec(open("web/code_interface_backend.py").read())
 elif page == "🎨 Vision Agent":

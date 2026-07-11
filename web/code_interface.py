@@ -81,7 +81,7 @@ if st.session_state.get("review_code"):
     with st.spinner("审查中..."):
         try:
             resp = requests.post(
-                "http://localhost:5000/api/v5/code/review",
+                "http://localhost:5002/api/v5/code/review",
                 json={"code": code, "language": language},
             )
             if resp.status_code == 200:
@@ -97,7 +97,7 @@ if st.session_state.get("optimize_code"):
     with st.spinner("优化中..."):
         try:
             resp = requests.post(
-                "http://localhost:5000/api/v5/code/optimize",
+                "http://localhost:5002/api/v5/code/optimize",
                 json={"code": code, "language": language},
             )
             if resp.status_code == 200:

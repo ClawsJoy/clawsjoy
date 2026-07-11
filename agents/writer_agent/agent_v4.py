@@ -308,6 +308,10 @@ class WriterAgentV4(BusinessAgent):
     # ================================================================
 
     def _execute_business(self, user_input: str, context: Optional[Dict] = None) -> Dict:
+        # skill 模式：直接调 LLM，跳过意图理解
+        if context and context.get("skip_intent"):
+            text = self._call_llm(user_input)
+            return self._resp(text) if text else {"success": False, "response": ""}
         original = user_input
 
         # ========== 1. 感知层 ==========
