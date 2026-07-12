@@ -982,7 +982,12 @@ def _execute_sandbox_tool(tool_name, args, user_id, session_id):
         if tool_name == "read_file":
             path = args.get("path", "")
             target = _resolve_path(base, path)
-            return tool_executor.execute("file_tools", {"action": "read", "path": str(target)})
+            result = tool_executor.execute("file_tools", {"action": "read", "path": str(target)})
+            _consecutive_reads += 1
+            if _consecutive_reads >= 5:
+                if isinstance(result, dict):
+                    result["hint"] = "已经读取了多个文件，建议基于已有信息直接操作，不要继续探索"
+            return result
         elif tool_name == "write_file":
             target = _resolve_path(base, args.get("path", ""))
             line = args.get("line", 0)
@@ -1052,6 +1057,7 @@ def _execute_sandbox_tool(tool_name, args, user_id, session_id):
             return {"success": True, "query": query, "results": results[:10]}
         else:
             return {"success": False, "error": f"未知工具: {tool_name}"}
+        _consecutive_reads = 0
     except Exception as e:
         return {"success": False, "error": str(e)}
 
@@ -1076,6 +1082,7 @@ def _resolve_path(base, path):
 # ===== 异步引擎结束 =====
 _background_tasks = {}  # {task_id: {"status": "running", "result": None, "thread": Thread}}
 _code_indexer = None  # CodeIndexer 实例，异步引擎可访问
+_consecutive_reads = 0  # 连续 read_file 计数器
 
 def _get_agent_tools():
     """返回 Agent 工具定义列表。新增工具只需改此处。"""
