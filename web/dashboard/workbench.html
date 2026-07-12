@@ -470,9 +470,18 @@ function agentLog(text, color = '#c9d1d9') {
   localStorage.setItem('agent_logs_' + currentThread, JSON.stringify(logs));
 }
 
-async function executeToolCall(name, args) {
+async function executeToolCall(name, args, rawArgs) {
   const base = { method: 'POST', headers: { 'Content-Type': 'application/json' } };
   const body = { user_id: userId, session_id: sessionId, ...args };
+  // write_file 长内容走独立字段，不经过 JSON 序列化
+  if (name === 'write_file' && rawArgs) {
+    try {
+      let contentMatch = rawArgs.match(/"content":\s*"([^"]*?)"(,\s*"|}$)/);
+      if (contentMatch) {
+        body.content = contentMatch[1];  // 原始 content，不经过 JSON 转义
+      }
+    } catch(e) {}
+  }
   const endpoints = {
     read_file: '/v9/sandbox/read', write_file: '/v9/sandbox/write',
     list_dir: '/v9/sandbox/list', search_files: '/v9/sandbox/search',
@@ -592,11 +601,12 @@ async function agentSend() {
             } catch(e2) {}
           }
           if (!parsed) { agentLog('❌ 工具参数 JSON 解析失败，跳过此步骤', '#f85149'); continue; }
+          }
         }
         agentLog('🔧 ' + tool.function.name + '(' + JSON.stringify(args) + ')', '#d2991d');
         let result, retries = 3;
         while (retries > 0) {
-          result = await executeToolCall(tool.function.name, args);
+          result = await executeToolCall(tool.function.name, args, tool.function.arguments);
           if (result.success || (result.error && result.error.startsWith('未知工具'))) break;
           retries--;
           if (retries > 0) agentLog('🔄 重试中... (' + retries + '次剩余)', '#d2991d');
@@ -794,9 +804,10 @@ async function continuePausedTask(messages) {
             } catch(e2) {}
           }
           if (!parsed) { agentLog('❌ 工具参数 JSON 解析失败，跳过此步骤', '#f85149'); continue; }
+          }
         }
         agentLog('🔧 ' + tool.function.name + '(' + JSON.stringify(args) + ')', '#d2991d');
-        const result = await executeToolCall(tool.function.name, args);
+        const result = await executeToolCall(tool.function.name, args, tool.function.arguments);
         agentLog('📤 ' + JSON.stringify(result).substring(0, 300), '#8b949e');
         const maxLen = tool.function.name === 'read_file' ? 2000 : 500;
         messages.push({ role: 'tool', tool_call_id: tool.id, content: JSON.stringify(result).substring(0, maxLen) });
