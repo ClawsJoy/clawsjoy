@@ -958,6 +958,11 @@ def _execute_agent_task(user_id, session_id, messages, model, task_id):
                     print(f"[V9 async] 执行工具: {tc['function']['name']}, args={str(args)[:100]}")
                     tool_result = _execute_sandbox_tool(tc["function"]["name"], args, user_id, session_id)
                     print(f"[V9 async] 工具返回: {str(tool_result)[:100]}")
+                    # 截断 tool_result 中的 content 字段，防止 messages 膨胀
+                    if isinstance(tool_result, dict) and "content" in tool_result:
+                        c = tool_result["content"]
+                        if isinstance(c, str) and len(c) > 2000:
+                            tool_result["content"] = c[:2000] + f"\n... (内容已截断，共 {len(c)} 字符)"
                     messages.append({"role": "tool", "tool_call_id": tc["id"], "content": str(tool_result)})
                 except Exception as _tool_err:
                     print(f"[V9 async] 工具执行失败: {_tool_err}")
@@ -1321,6 +1326,8 @@ def v9_sandbox_list():
                 target = base / dirpath
     if not str(target.resolve()).startswith(str(base.resolve())):
         return jsonify({"success": False, "error": "路径越权"})
+    if not target.exists():
+        return jsonify({"success": True, "files": [], "dirs": [], "path": str(target), "hint": "目录不存在"})
     if recursive:
         files = [str(p.relative_to(base)) for p in target.rglob("*") if p.is_file()][:50]
         dirs = [p.name for p in target.rglob("*") if p.is_dir()]
