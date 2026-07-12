@@ -65,6 +65,22 @@
 ### 规则 5：满足条件立即结束
 - 修改/确认完成 + 验证通过 → 立即汇报，不继续探索
 
+## 长内容写入
+写入长内容（>500 字符）到文件时，优先使用 execute_command + python3 heredoc：
+```
+python3 << 'PYEOF'
+content = '''...'''
+with open('目标文件', 'w') as f:
+    f.write(content)
+PYEOF
+```
+不要用 write_file 传长内容，也不要用 python3 -c 内联长代码。
+
+## execute_command 验证
+- execute_command 返回 returncode 和 stderr。returncode != 0 表示命令失败，必须检查 stderr 并修复后重试
+- 写入文件后必须用 read_file 验证内容正确
+
+
 ## 禁止行为
 - 🚫 读完整文件后追加读取同一文件
 - 🚫 分多次读同一方法

@@ -560,6 +560,18 @@ async function agentSend() {
             content: contentMatch ? contentMatch[1] : '',
             line: parseInt((raw.match(/"line"\s*:\s*(\d+)/) || [0, 0])[1])
           };
+          if (!args.content || args.content.trim() === '') {
+            agentLog('⚠️ write_file content 为空，跳过', '#d2991d');
+            messages.push({ role: 'tool', tool_call_id: tool.id, content: JSON.stringify({ success: false, error: 'content 为空，写入失败' }) });
+            continue;
+          }
+        } else if (tool.function.name === 'execute_command') {
+          const raw = tool.function.arguments;
+          const cmdMatch = raw.match(/"command"\s*:\s*"([\s\S]*?)(?:"\s*}\s*$)/);
+          args = { command: cmdMatch ? cmdMatch[1] : '' };
+          if (!args.command || args.command.trim() === '') {
+            agentLog('⚠️ execute_command command 为空，跳过', '#d2991d'); continue;
+          }
         } else {
           try {
             args = JSON.parse(tool.function.arguments);
@@ -765,6 +777,18 @@ async function continuePausedTask(messages) {
             content: contentMatch ? contentMatch[1] : '',
             line: parseInt((raw.match(/"line"\s*:\s*(\d+)/) || [0, 0])[1])
           };
+          if (!args.content || args.content.trim() === '') {
+            agentLog('⚠️ write_file content 为空，跳过', '#d2991d');
+            messages.push({ role: 'tool', tool_call_id: tool.id, content: JSON.stringify({ success: false, error: 'content 为空，写入失败' }) });
+            continue;
+          }
+        } else if (tool.function.name === 'execute_command') {
+          const raw = tool.function.arguments;
+          const cmdMatch = raw.match(/"command"\s*:\s*"([\s\S]*?)(?:"\s*}\s*$)/);
+          args = { command: cmdMatch ? cmdMatch[1] : '' };
+          if (!args.command || args.command.trim() === '') {
+            agentLog('⚠️ execute_command command 为空，跳过', '#d2991d'); continue;
+          }
         } else {
           try {
             args = JSON.parse(tool.function.arguments);

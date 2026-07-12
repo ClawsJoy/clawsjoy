@@ -1559,7 +1559,7 @@ def v9_sandbox_exec():
         result = subprocess.run(command, shell=True, cwd=str(base),
                                 capture_output=True, text=True, timeout=30)
         return jsonify({
-            "success": True,
+            "success": result.returncode == 0,
             "stdout": result.stdout[:2000],
             "stderr": result.stderr[:1000],
             "returncode": result.returncode
@@ -2356,22 +2356,48 @@ def v9_agent_chat():
                     tool_prefs[name] = round(count / total, 2)
                 state["tool_preferences"] = tool_prefs
 
-                # 安全序列化：尝试 json.dumps，失败则截断 content 字段
+                # 调试：定位崩溃字段
+                print(f"[V9] state keys: {list(state.keys())}")
                 try:
-                    json.dumps(state, ensure_ascii=False)
-                except:
+                    s = json.dumps(state, ensure_ascii=False, indent=2)
+                except Exception as _je:
+                    print(f"[V9] json.dumps 崩溃: {_je}")
+                    print(f"[V9] state 前 200 字符: {str(state)[:200]}")
+                # 调试：定位崩溃字段
+                print(f"[V9] state keys: {list(state.keys())}")
+                try:
+                    s = json.dumps(state, ensure_ascii=False, indent=2)
+                except Exception as _je:
+                    print(f"[V9] json.dumps 崩溃: {_je}")
+                    print(f"[V9] state 前 200 字符: {str(state)[:200]}")
+                # 安全序列化：先正常写入，失败后截断重试
+                try:
+                    state_json = json.dumps(state, ensure_ascii=False, indent=2)
+                    state_file.write_text(state_json)
+                except Exception as _e2:
+                    print(f"[V9] write_text 崩溃: {_e2}")
                     for key in list(state.keys()):
                         if isinstance(state[key], str) and len(state[key]) > 500:
                             state[key] = state[key][:500]
                     if "task_progress" in state and "completed_steps" in state["task_progress"]:
                         for step in state["task_progress"]["completed_steps"]:
                             if "content" in step and isinstance(step["content"], str) and len(step["content"]) > 200:
-                                step["content"] = step["content"][:500]
-                state_file.write_text(json.dumps(state, ensure_ascii=False, indent=2))
+                                step["content"] = step["content"][:200]
+                    try:
+                        state_file.write_text(json.dumps(state, ensure_ascii=False, indent=2))
+                    except:
+                        pass
 
            
             except Exception as e:
                 print(f"[V9] 状态持久化失败: {e}")
+                # 调试：打印 state 中可能导致崩溃的字段
+                for k, v in state.items():
+                    if isinstance(v, str) and len(v) < 200:
+                        try:
+                            json.dumps({k: v})
+                        except:
+                            print(f"[V9] 崩溃字段: {k} = {v[:100]}")
             # 上下文管理器
             try:
                 from core.lib.context_manager import get_context
