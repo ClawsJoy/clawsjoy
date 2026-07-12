@@ -2356,6 +2356,17 @@ def v9_agent_chat():
                     tool_prefs[name] = round(count / total, 2)
                 state["tool_preferences"] = tool_prefs
 
+                # 安全序列化：尝试 json.dumps，失败则截断 content 字段
+                try:
+                    json.dumps(state, ensure_ascii=False)
+                except:
+                    for key in list(state.keys()):
+                        if isinstance(state[key], str) and len(state[key]) > 500:
+                            state[key] = state[key][:500]
+                    if "task_progress" in state and "completed_steps" in state["task_progress"]:
+                        for step in state["task_progress"]["completed_steps"]:
+                            if "content" in step and isinstance(step["content"], str) and len(step["content"]) > 200:
+                                step["content"] = step["content"][:500]
                 state_file.write_text(json.dumps(state, ensure_ascii=False, indent=2))
 
            
