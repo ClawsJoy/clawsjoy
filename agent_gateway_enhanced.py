@@ -989,6 +989,15 @@ def _execute_sandbox_tool(tool_name, args, user_id, session_id):
                     result["hint"] = "已经读取了多个文件，建议基于已有信息直接操作，不要继续探索"
             return result
         elif tool_name == "write_file":
+            # 写文件前清理 messages 中的 read_file 残留，释放上下文
+            if _consecutive_reads >= 3:
+                current_path = args.get("path", "")
+                for msg in messages:
+                    if msg["role"] == "tool" and len(msg.get("content", "")) > 500:
+                        if current_path and current_path in str(msg.get("content", "")):
+                            continue
+                        msg["content"] = msg["content"][:500] + f"\n... (已释放 {len(msg['content'])} 字符)"
+            _consecutive_reads = 0
             target = _resolve_path(base, args.get("path", ""))
             line = args.get("line", 0)
             content_str = args.get("content", "")
