@@ -1253,6 +1253,22 @@ def v9_sandbox_read():
 
     return jsonify(result)
 
+@app.route("/v9/sandbox/write_large", methods=["POST"])
+def v9_sandbox_write_large():
+    """长内容写入——content 走顶层字段，不经过 JSON 嵌套序列化"""
+    data = request.json or {}
+    user_id = data.get("user_id", "default")
+    session_id = data.get("session_id", "default")
+    filepath = data.get("path", "")
+    content = data.get("content", "")
+    if not filepath or not content:
+        return jsonify({"success": False, "error": "path 和 content 必填"})
+    base = Path(f"data/projects/{user_id}/{session_id}")
+    base.mkdir(parents=True, exist_ok=True)
+    target = _resolve_path(base, filepath)
+    target.write_text(content, encoding='utf-8')
+    return jsonify({"success": True, "path": str(target), "size": len(content)})
+
 @app.route("/v9/sandbox/write", methods=["POST"])
 def v9_sandbox_write():
     data = request.json or {}

@@ -24,7 +24,7 @@
 
 ## write_file — 修改文件
 - write_file(path, line=N, content="新行内容") — 修改单行（首选）
-- write_file(path, content="完整内容") — 完整写入（直接覆盖，不需要先清空再写入）
+- write_file(path, content="完整内容") — 完整写入（直接覆盖，不需要先清空再写入）。长内容（>2000字符）会自动走优化通道，无需特殊处理
 
 ## 任务执行规则
 
@@ -74,7 +74,6 @@ with open('目标文件', 'w') as f:
     f.write(content)
 PYEOF
 ```
-不要用 write_file 传长内容，也不要用 python3 -c 内联长代码。
 
 ## execute_command 验证
 - execute_command 返回 returncode 和 stderr。returncode != 0 表示命令失败，必须检查 stderr 并修复后重试

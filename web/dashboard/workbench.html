@@ -486,8 +486,13 @@ async function executeToolCall(name, args, rawArgs) {
     read_file: '/v9/sandbox/read', write_file: '/v9/sandbox/write',
     list_dir: '/v9/sandbox/list', search_files: '/v9/sandbox/search',
     execute_command: '/v9/sandbox/exec', edit_file: '/v9/sandbox/edit',
-    query_index: '/v9/sandbox/query_index'
+    query_index: '/v9/sandbox/query_index', write_large: '/v9/sandbox/write_large'
   };
+  // write_file 长内容自动路由到 write_large
+  if (name === 'write_file' && body.content && body.content.length > 2000) {
+    body.path = body.path; body.content = body.content;
+    return await fetch(API + '/v9/sandbox/write_large', { ...base, body: JSON.stringify({ user_id: userId, session_id: sessionId, path: body.path, content: body.content }) }).then(r => r.json());
+  }
   if (!endpoints[name]) return { success: false, error: '未知工具: ' + name };
   return await fetch(API + endpoints[name], { ...base, body: JSON.stringify(body) }).then(r => r.json());
 }
@@ -553,6 +558,7 @@ async function agentSend() {
         let args;
         if (tool.function.name === 'write_file') {
           const raw = tool.function.arguments;
+          console.log('DEBUG_write_raw_len', raw.length, 'DEBUG_write_raw_start', raw.substring(0, 300));
           const pathMatch = raw.match(/"path"\s*:\s*"([^"]*)"/);
           const contentMatch = raw.match(/"content"\s*:\s*"([\s\S]*?)(?:"\s*}\s*$|"\s*,\s*"line)/);
           args = {
@@ -560,6 +566,7 @@ async function agentSend() {
             content: contentMatch ? contentMatch[1] : '',
             line: parseInt((raw.match(/"line"\s*:\s*(\d+)/) || [0, 0])[1])
           };
+          console.log('DEBUG_write_content_len', args.content.length, 'DEBUG_write_content_quotes', (args.content.match(/"/g) || []).length, 'DEBUG_write_content_backslash', (args.content.match(/\\/g) || []).length);
           if (!args.content || args.content.trim() === '') {
             agentLog('⚠️ write_file content 为空，跳过', '#d2991d');
             messages.push({ role: 'tool', tool_call_id: tool.id, content: JSON.stringify({ success: false, error: 'content 为空，写入失败' }) });
@@ -770,6 +777,7 @@ async function continuePausedTask(messages) {
         let args;
         if (tool.function.name === 'write_file') {
           const raw = tool.function.arguments;
+          console.log('DEBUG_write_raw_len', raw.length, 'DEBUG_write_raw_start', raw.substring(0, 300));
           const pathMatch = raw.match(/"path"\s*:\s*"([^"]*)"/);
           const contentMatch = raw.match(/"content"\s*:\s*"([\s\S]*?)(?:"\s*}\s*$|"\s*,\s*"line)/);
           args = {
@@ -777,6 +785,7 @@ async function continuePausedTask(messages) {
             content: contentMatch ? contentMatch[1] : '',
             line: parseInt((raw.match(/"line"\s*:\s*(\d+)/) || [0, 0])[1])
           };
+          console.log('DEBUG_write_content_len', args.content.length, 'DEBUG_write_content_quotes', (args.content.match(/"/g) || []).length, 'DEBUG_write_content_backslash', (args.content.match(/\\/g) || []).length);
           if (!args.content || args.content.trim() === '') {
             agentLog('⚠️ write_file content 为空，跳过', '#d2991d');
             messages.push({ role: 'tool', tool_call_id: tool.id, content: JSON.stringify({ success: false, error: 'content 为空，写入失败' }) });
