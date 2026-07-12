@@ -541,6 +541,7 @@ async function agentSend() {
       if (msg.reasoning_content) messages[messages.length - 1].reasoning_content = msg.reasoning_content;
 
       for (const tool of msg.tool_calls) {
+        console.log('[DEBUG] 原始 arguments 长度:', tool.function.arguments.length, '前200字符:', tool.function.arguments.substring(0, 200));
         const args = JSON.parse(tool.function.arguments);
         agentLog('🔧 ' + tool.function.name + '(' + JSON.stringify(args) + ')', '#d2991d');
         let result, retries = 3;
@@ -550,8 +551,16 @@ async function agentSend() {
           retries--;
           if (retries > 0) agentLog('🔄 重试中... (' + retries + '次剩余)', '#d2991d');
         }
-        agentLog('📤 ' + JSON.stringify(result).substring(0, 500), '#8b949e');
-        let toolResult = JSON.stringify(result).substring(0, 500);
+        let toolResult = JSON.stringify(result);
+        // 安全截断：先解析，截断 content 字段，再序列化
+        try {
+          let tr = JSON.parse(toolResult);
+          if (tr.content && typeof tr.content === 'string' && tr.content.length > 2000) {
+            tr.content = tr.content.substring(0, 2000) + '\n... (内容已截断，共 ' + tr.content.length + ' 字符)';
+            toolResult = JSON.stringify(tr);
+          }
+        } catch(e) {}
+        agentLog('📤 ' + toolResult.substring(0, 500), '#8b949e');
         if (tool.function.name === 'edit_file' && !result.success && result.error && result.error.includes('FIM match failed')) {
           toolResult = JSON.stringify({ error: "edit_file failed. Please use write_file with the full file content.", hint: "write_file(path, full_content)" });
         }
@@ -684,6 +693,7 @@ async function continuePausedTask(messages) {
       if (!msg.tool_calls || msg.tool_calls.length === 0) { agentLog('✅ 任务完成', '#3fb950'); break; }
       messages.push({ role: 'assistant', content: msg.content || '', tool_calls: msg.tool_calls });
       for (const tool of msg.tool_calls) {
+        console.log('[DEBUG] 原始 arguments 长度:', tool.function.arguments.length, '前200字符:', tool.function.arguments.substring(0, 200));
         const args = JSON.parse(tool.function.arguments);
         agentLog('🔧 ' + tool.function.name + '(' + JSON.stringify(args) + ')', '#d2991d');
         const result = await executeToolCall(tool.function.name, args);
