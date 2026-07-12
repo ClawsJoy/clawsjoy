@@ -1013,6 +1013,8 @@ def _execute_sandbox_tool(tool_name, args, user_id, session_id):
             target = _resolve_path(base, args.get("path", ""))
             line = args.get("line", 0)
             content_str = args.get("content", "")
+            # 修复模型双重转义：\n → 换行，\" → 引号
+            content_str = content_str.replace('\\n', '\n').replace('\\"', '"').replace('\\t', '\t')
             # 长内容自动走临时文件通道，避开 JSON 转义问题
             if len(content_str) > 2000:
                 import tempfile as _tmp, os as _os
@@ -1259,6 +1261,8 @@ def v9_sandbox_write():
     filepath = data.get("path", "")
     content = data.get("content", "")
     line = data.get("line", 0)  # 按行修改：指定行号
+    # 修复模型双重转义：\n → 换行，\" → 引号
+    content = content.replace('\\n', '\n').replace('\\"', '"').replace('\\t', '\t')
     # 长内容自动走临时文件通道，避开 JSON 转义问题
     if len(content) > 2000:
         import tempfile as _tmp, os as _os
