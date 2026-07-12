@@ -955,6 +955,18 @@ def _execute_agent_task(user_id, session_id, messages, model, task_id):
             for tc in msg["tool_calls"]:
                 try:
                     args = _json.loads(tc["function"]["arguments"])
+                except json.JSONDecodeError:
+                    # 尝试修复非法 JSON：补闭合引号、转义换行符
+                    fixed = tc["function"]["arguments"]
+                    if fixed.count('"') % 2 != 0:
+                        fixed += '"'
+                    fixed = fixed.replace('\n', '\\n').replace('\r', '\\r')
+                    try:
+                        args = _json.loads(fixed)
+                    except json.JSONDecodeError:
+                        _save_state("failed", f"工具参数 JSON 解析失败: {tc['function']['name']}")
+                        return
+                try:
                     print(f"[V9 async] 执行工具: {tc['function']['name']}, args={str(args)[:100]}")
                     tool_result = _execute_sandbox_tool(tc["function"]["name"], args, user_id, session_id)
                     print(f"[V9 async] 工具返回: {str(tool_result)[:100]}")
