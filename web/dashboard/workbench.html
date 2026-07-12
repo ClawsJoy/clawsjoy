@@ -564,12 +564,19 @@ async function agentSend() {
           }
         } else if (tool.function.name === 'execute_command') {
           const raw = tool.function.arguments;
-          const cmdMatch = raw.match(/"command"\s*:\s*"([\s\S]*?)(?:"\s*}\s*$)/);
-          args = { command: cmdMatch ? cmdMatch[1] : '' };
+          if (raw.length > 3000) {
+            args = { raw_arguments: raw };
+          } else {
+            try {
+              args = JSON.parse(raw);
+            } catch(e) {
+              agentLog('⚠️ execute_command JSON 解析失败，跳过', '#d2991d'); continue;
+            }
+          }
           if (!args.command || args.command.trim() === '') {
             agentLog('⚠️ execute_command command 为空，跳过', '#d2991d'); continue;
           }
-        } else {       
+        } else {  
           try {
             args = JSON.parse(tool.function.arguments);
           } catch(e) {
@@ -643,7 +650,21 @@ async function agentSend() {
         if (tool.function.name === 'edit_file' && !result.success && result.error && result.error.includes('FIM match failed')) {
           toolResult = JSON.stringify({ error: "edit_file failed. Please use write_file with the full file content.", hint: "write_file(path, full_content)" });
         }
-      messages.push({ role: 'tool', tool_call_id: tool.id, content: toolResult });
+        messages.push({ role: 'tool', tool_call_id: tool.id, content: toolResult });
+        if (tool.function.name === 'write_file' || tool.function.name === 'write_large') {
+          try {
+            let tr = JSON.parse(toolResult);
+            if (tr.auto_fixed === false) {
+	      messages.push({ role: "system", content: `[系统] write_file 写入失败，网关自动修复也失败。你必须用 python3 heredoc 方式重新写入，不要再调 write_file 或 execute_command。
+
+python3 << PYEOF
+content = """..."""
+with open("目标文件", "w") as f:
+    f.write(content)
+PYEOF` });
+            }
+          } catch(e) {}
+        }            
       }
       refreshFileTree();
     } catch (e) { agentLog('❌ 错误: ' + e.message, '#f85149'); break; }
@@ -672,7 +693,7 @@ async function agentSend() {
     content: '【任务中断恢复】之前的任务因达到循环上限被暂停。已完成: ' + (saved.progress || '未知') + '。请从断点继续，不要重复已完成步骤。如果目标代码已处于期望状态，直接验证并汇报。'
   });
   continuePausedTask(saved.messages); 
-}
+      } 
     };
     document.getElementById('btnCancel').onclick = function() {
       localStorage.removeItem('agent_pause_' + currentThread); div.remove(); agentLog('✕ 任务已放弃', '#8b949e'); agentRunning = false; document.getElementById('agentStopBtn').style.display = 'none';
@@ -774,12 +795,19 @@ async function continuePausedTask(messages) {
           }
         } else if (tool.function.name === 'execute_command') {
           const raw = tool.function.arguments;
-          const cmdMatch = raw.match(/"command"\s*:\s*"([\s\S]*?)(?:"\s*}\s*$)/);
-          args = { command: cmdMatch ? cmdMatch[1] : '' };
+          if (raw.length > 3000) {
+            args = { raw_arguments: raw };
+          } else {
+            try {
+              args = JSON.parse(raw);
+            } catch(e) {
+              agentLog('⚠️ execute_command JSON 解析失败，跳过', '#d2991d'); continue;
+            }
+          }
           if (!args.command || args.command.trim() === '') {
             agentLog('⚠️ execute_command command 为空，跳过', '#d2991d'); continue;
           }
-        } else {	
+        } else {
           try {
             args = JSON.parse(tool.function.arguments);
           } catch(e) {

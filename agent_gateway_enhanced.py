@@ -1328,6 +1328,17 @@ def v9_sandbox_write_large():
                     content = raw[start:start + end_match.start()]
                     content = content.replace('\\n', '\n').replace('\\"', '"').replace('\\t', '\t')
                     fix_method = "regex_extract"
+            # 第四层：正则盲区兜底 —— raw.rfind('"') 直接截取
+            if not content:
+                start_marker = '"content": "'
+                start_idx = raw.find(start_marker)
+                if start_idx != -1:
+                    start_idx += len(start_marker)
+                    end_idx = raw.rfind('"')
+                    if end_idx > start_idx:
+                        content = raw[start_idx:end_idx]
+                        content = content.replace('\\n', '\n').replace('\\"', '"').replace('\\t', '\t')
+                        fix_method = "string_fallback"
     
     if not content:
         auto_fixed = False
