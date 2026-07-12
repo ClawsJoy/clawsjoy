@@ -546,9 +546,52 @@ async function agentSend() {
           args = JSON.parse(tool.function.arguments);
         } catch(e) {
           let fixed = tool.function.arguments;
-          if (fixed.split('"').length % 2 === 0) { fixed += '"'; }
-          fixed = fixed.replace(/\n/g, '\\n').replace(/\r/g, '\\r');
-          try { args = JSON.parse(fixed); } catch(e2) { agentLog('❌ 工具参数 JSON 解析失败，跳过此步骤', '#f85149'); continue; }
+          // 尝试多种修复策略
+          let strategies = [
+            // 策略1：补闭合引号 + 转义控制字符
+            () => {
+              let s = fixed;
+              if (s.split('"').length % 2 === 0) { s += '"'; }
+              s = s.replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t');
+              return s;
+            },
+            // 策略2：找到 content 字段的闭合位置，截断后面的非法字符
+            () => {
+              let s = fixed;
+              let contentIdx = s.indexOf('"content":');
+              if (contentIdx > 0) {
+                let afterContent = s.substring(contentIdx + 11);
+                let endQuote = afterContent.indexOf('",');
+                if (endQuote > 0) {
+                  let contentEnd = contentIdx + 11 + endQuote;
+                  s = s.substring(0, contentEnd + 2) + '}';
+                }
+              }
+              return s;
+            },
+            // 策略3：提取 content 字段，手动构造新的 arguments
+            () => {
+              let pathMatch = fixed.match(/"path":\s*"([^"]+)"/);
+              let contentStart = fixed.indexOf('"content":');
+              if (pathMatch && contentStart > 0) {
+                let contentValue = fixed.substring(contentStart + 12, fixed.lastIndexOf('"'));
+                let args = { path: pathMatch[1], content: contentValue };
+                let lineMatch = fixed.match(/"line":\s*(\d+)/);
+                if (lineMatch) { args.line = parseInt(lineMatch[1]); }
+                return JSON.stringify(args);
+              }
+              return fixed;
+            }
+          ];
+          let parsed = false;
+          for (let strategy of strategies) {
+            try {
+              args = JSON.parse(strategy());
+              parsed = true;
+              break;
+            } catch(e2) {}
+          }
+          if (!parsed) { agentLog('❌ 工具参数 JSON 解析失败，跳过此步骤', '#f85149'); continue; }
         }
         agentLog('🔧 ' + tool.function.name + '(' + JSON.stringify(args) + ')', '#d2991d');
         let result, retries = 3;
@@ -705,9 +748,52 @@ async function continuePausedTask(messages) {
           args = JSON.parse(tool.function.arguments);
         } catch(e) {
           let fixed = tool.function.arguments;
-          if (fixed.split('"').length % 2 === 0) { fixed += '"'; }
-          fixed = fixed.replace(/\n/g, '\\n').replace(/\r/g, '\\r');
-          try { args = JSON.parse(fixed); } catch(e2) { agentLog('❌ 工具参数 JSON 解析失败，跳过此步骤', '#f85149'); continue; }
+          // 尝试多种修复策略
+          let strategies = [
+            // 策略1：补闭合引号 + 转义控制字符
+            () => {
+              let s = fixed;
+              if (s.split('"').length % 2 === 0) { s += '"'; }
+              s = s.replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t');
+              return s;
+            },
+            // 策略2：找到 content 字段的闭合位置，截断后面的非法字符
+            () => {
+              let s = fixed;
+              let contentIdx = s.indexOf('"content":');
+              if (contentIdx > 0) {
+                let afterContent = s.substring(contentIdx + 11);
+                let endQuote = afterContent.indexOf('",');
+                if (endQuote > 0) {
+                  let contentEnd = contentIdx + 11 + endQuote;
+                  s = s.substring(0, contentEnd + 2) + '}';
+                }
+              }
+              return s;
+            },
+            // 策略3：提取 content 字段，手动构造新的 arguments
+            () => {
+              let pathMatch = fixed.match(/"path":\s*"([^"]+)"/);
+              let contentStart = fixed.indexOf('"content":');
+              if (pathMatch && contentStart > 0) {
+                let contentValue = fixed.substring(contentStart + 12, fixed.lastIndexOf('"'));
+                let args = { path: pathMatch[1], content: contentValue };
+                let lineMatch = fixed.match(/"line":\s*(\d+)/);
+                if (lineMatch) { args.line = parseInt(lineMatch[1]); }
+                return JSON.stringify(args);
+              }
+              return fixed;
+            }
+          ];
+          let parsed = false;
+          for (let strategy of strategies) {
+            try {
+              args = JSON.parse(strategy());
+              parsed = true;
+              break;
+            } catch(e2) {}
+          }
+          if (!parsed) { agentLog('❌ 工具参数 JSON 解析失败，跳过此步骤', '#f85149'); continue; }
         }
         agentLog('🔧 ' + tool.function.name + '(' + JSON.stringify(args) + ')', '#d2991d');
         const result = await executeToolCall(tool.function.name, args);
