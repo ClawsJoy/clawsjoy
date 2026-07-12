@@ -1212,9 +1212,17 @@ def v9_sandbox_read():
                 numbered = f"[系统提示] {rule['hint']}\\n\\n" + numbered
                 break
 
+    # 连续读取计数器：≥5 次时提示停止探索
+    global _consecutive_reads
+    _consecutive_reads += 1
+    hint = None
+    if _consecutive_reads >= 5:
+        hint = "已经连续读取了多个文件，建议基于已有信息直接操作，不要继续探索"
+
     return jsonify({
         "success": True, "content": numbered,
-        "path": str(target), "lines": total_lines, "mode": "full", "cached": from_cache
+        "path": str(target), "lines": total_lines, "mode": "full", "cached": from_cache,
+        **({"hint": hint} if hint else {})
     })
     
 
@@ -1534,6 +1542,10 @@ def v9_sandbox_edit():
     
     if not filepath:
         return jsonify({"success": False, "error": "path 必填"})
+    # 写文件前重置连续读取计数器
+    global _consecutive_reads
+    _consecutive_reads = 0
+
     
     base = Path(f"data/projects/{user_id}/{session_id}")
     base.mkdir(parents=True, exist_ok=True)

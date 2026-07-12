@@ -688,7 +688,8 @@ async function continuePausedTask(messages) {
         agentLog('🔧 ' + tool.function.name + '(' + JSON.stringify(args) + ')', '#d2991d');
         const result = await executeToolCall(tool.function.name, args);
         agentLog('📤 ' + JSON.stringify(result).substring(0, 300), '#8b949e');
-        messages.push({ role: 'tool', tool_call_id: tool.id, content: JSON.stringify(result).substring(0, 500) });
+        const maxLen = tool.function.name === 'read_file' ? 2000 : 500;
+        messages.push({ role: 'tool', tool_call_id: tool.id, content: JSON.stringify(result).substring(0, maxLen) });
       }
       if (maxLoops === 0) {
     agentLog('⚠️ 达到最大循环次数，当前进度：', '#d2991d');
