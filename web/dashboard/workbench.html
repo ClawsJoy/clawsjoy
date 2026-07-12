@@ -541,8 +541,15 @@ async function agentSend() {
       if (msg.reasoning_content) messages[messages.length - 1].reasoning_content = msg.reasoning_content;
 
       for (const tool of msg.tool_calls) {
-        console.log('[DEBUG] 原始 arguments 长度:', tool.function.arguments.length, '前200字符:', tool.function.arguments.substring(0, 200));
-        const args = JSON.parse(tool.function.arguments);
+        let args;
+        try {
+          args = JSON.parse(tool.function.arguments);
+        } catch(e) {
+          let fixed = tool.function.arguments;
+          if (fixed.split('"').length % 2 === 0) { fixed += '"'; }
+          fixed = fixed.replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+          try { args = JSON.parse(fixed); } catch(e2) { agentLog('❌ 工具参数 JSON 解析失败，跳过此步骤', '#f85149'); continue; }
+        }
         agentLog('🔧 ' + tool.function.name + '(' + JSON.stringify(args) + ')', '#d2991d');
         let result, retries = 3;
         while (retries > 0) {
@@ -693,8 +700,15 @@ async function continuePausedTask(messages) {
       if (!msg.tool_calls || msg.tool_calls.length === 0) { agentLog('✅ 任务完成', '#3fb950'); break; }
       messages.push({ role: 'assistant', content: msg.content || '', tool_calls: msg.tool_calls });
       for (const tool of msg.tool_calls) {
-        console.log('[DEBUG] 原始 arguments 长度:', tool.function.arguments.length, '前200字符:', tool.function.arguments.substring(0, 200));
-        const args = JSON.parse(tool.function.arguments);
+        let args;
+        try {
+          args = JSON.parse(tool.function.arguments);
+        } catch(e) {
+          let fixed = tool.function.arguments;
+          if (fixed.split('"').length % 2 === 0) { fixed += '"'; }
+          fixed = fixed.replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+          try { args = JSON.parse(fixed); } catch(e2) { agentLog('❌ 工具参数 JSON 解析失败，跳过此步骤', '#f85149'); continue; }
+        }
         agentLog('🔧 ' + tool.function.name + '(' + JSON.stringify(args) + ')', '#d2991d');
         const result = await executeToolCall(tool.function.name, args);
         agentLog('📤 ' + JSON.stringify(result).substring(0, 300), '#8b949e');
