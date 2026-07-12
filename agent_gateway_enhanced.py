@@ -1259,6 +1259,18 @@ def v9_sandbox_write():
     filepath = data.get("path", "")
     content = data.get("content", "")
     line = data.get("line", 0)  # 按行修改：指定行号
+    # 长内容自动走临时文件通道，避开 JSON 转义问题
+    if len(content) > 2000:
+        import tempfile as _tmp, os as _os
+        _tf = _tmp.NamedTemporaryFile(mode="w", suffix=".tmp", delete=False, encoding="utf-8")
+        try:
+            _tf.write(content)
+            _tf.close()
+            with open(_tf.name, "r", encoding="utf-8") as _rf:
+                content = _rf.read()
+        finally:
+            _os.unlink(_tf.name)
+
     
     if not filepath:
         return jsonify({"success": False, "error": "path 必填"})
