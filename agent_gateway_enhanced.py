@@ -1013,6 +1013,17 @@ def _execute_sandbox_tool(tool_name, args, user_id, session_id):
             target = _resolve_path(base, args.get("path", ""))
             line = args.get("line", 0)
             content_str = args.get("content", "")
+            # 长内容自动走临时文件通道，避开 JSON 转义问题
+            if len(content_str) > 2000:
+                import tempfile as _tmp, os as _os
+                _tf = _tmp.NamedTemporaryFile(mode='w', suffix='.tmp', delete=False, encoding='utf-8')
+                try:
+                    _tf.write(content_str)
+                    _tf.close()
+                    with open(_tf.name, 'r', encoding='utf-8') as _rf:
+                        content_str = _rf.read()
+                finally:
+                    _os.unlink(_tf.name)
             if line > 0:
                 # 按行修改
                 original_lines = target.read_text(encoding="utf-8").split("\n") if target.exists() else []
