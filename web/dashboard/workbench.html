@@ -551,12 +551,22 @@ async function agentSend() {
 
       for (const tool of msg.tool_calls) {
         let args;
-        try {
-          args = JSON.parse(tool.function.arguments);
-        } catch(e) {
-          let fixed = tool.function.arguments;
-          // 尝试多种修复策略
-          let strategies = [
+        if (tool.function.name === 'write_file') {
+          const raw = tool.function.arguments;
+          const pathMatch = raw.match(/"path"\s*:\s*"([^"]*)"/);
+          const contentMatch = raw.match(/"content"\s*:\s*"([\s\S]*?)(?:"\s*}\s*$|"\s*,\s*"line)/);
+          args = {
+            path: pathMatch ? pathMatch[1] : '',
+            content: contentMatch ? contentMatch[1] : '',
+            line: parseInt((raw.match(/"line"\s*:\s*(\d+)/) || [0, 0])[1])
+          };
+        } else {
+          try {
+            args = JSON.parse(tool.function.arguments);
+          } catch(e) {
+            let fixed = tool.function.arguments;
+            // 尝试多种修复策略
+            let strategies = [
             // 策略1：补闭合引号 + 转义控制字符
             () => {
               let s = fixed;
@@ -624,15 +634,7 @@ async function agentSend() {
         if (tool.function.name === 'edit_file' && !result.success && result.error && result.error.includes('FIM match failed')) {
           toolResult = JSON.stringify({ error: "edit_file failed. Please use write_file with the full file content.", hint: "write_file(path, full_content)" });
         }
-        // 截断大文件内容，防止 messages 膨胀
-        try {
-          let tr = JSON.parse(toolResult);
-          if (tr.content && typeof tr.content === 'string' && tr.content.length > 2000) {
-            tr.content = tr.content.substring(0, 2000) + '\n... (内容已截断，共 ' + tr.content.length + ' 字符)';
-            toolResult = JSON.stringify(tr);
-          }
-        } catch(e) {}
-        messages.push({ role: 'tool', tool_call_id: tool.id, content: toolResult });
+      messages.push({ role: 'tool', tool_call_id: tool.id, content: toolResult });
       }
       refreshFileTree();
     } catch (e) { agentLog('❌ 错误: ' + e.message, '#f85149'); break; }
@@ -754,11 +756,21 @@ async function continuePausedTask(messages) {
       messages.push({ role: 'assistant', content: msg.content || '', tool_calls: msg.tool_calls });
       for (const tool of msg.tool_calls) {
         let args;
-        try {
-          args = JSON.parse(tool.function.arguments);
-        } catch(e) {
-          let fixed = tool.function.arguments;
-          // 尝试多种修复策略
+        if (tool.function.name === 'write_file') {
+          const raw = tool.function.arguments;
+          const pathMatch = raw.match(/"path"\s*:\s*"([^"]*)"/);
+          const contentMatch = raw.match(/"content"\s*:\s*"([\s\S]*?)(?:"\s*}\s*$|"\s*,\s*"line)/);
+          args = {
+            path: pathMatch ? pathMatch[1] : '',
+            content: contentMatch ? contentMatch[1] : '',
+            line: parseInt((raw.match(/"line"\s*:\s*(\d+)/) || [0, 0])[1])
+          };
+        } else {
+          try {
+            args = JSON.parse(tool.function.arguments);
+          } catch(e) {
+            let fixed = tool.function.arguments;
+            // 尝试多种修复策略
           let strategies = [
             // 策略1：补闭合引号 + 转义控制字符
             () => {
