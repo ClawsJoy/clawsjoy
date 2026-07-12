@@ -24,7 +24,7 @@
 
 ## write_file — 修改文件
 - write_file(path, line=N, content="新行内容") — 修改单行（首选）
-- write_file(path, content="完整内容") — 完整写入
+- write_file(path, content="完整内容") — 完整写入（直接覆盖，不需要先清空再写入）
 
 ## 任务执行规则
 
