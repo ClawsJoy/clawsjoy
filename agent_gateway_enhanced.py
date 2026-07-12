@@ -273,7 +273,7 @@ def v9_save_task_progress():
         "paused_at": datetime.now().isoformat()
     }
     
-    state_file.write_text(json.dumps(state, ensure_ascii=False, indent=2))
+    state_file.write_text(_safe_serialize_state(state))
     return jsonify({"success": True})
 
 @app.route("/v9/task/<task_id>", methods=["GET"])
@@ -902,10 +902,10 @@ def _execute_agent_task(user_id, session_id, messages, model, task_id):
     state_file = Path(f"data/projects/{user_id}/{session_id}/.task_state.json")
     
     def _save_state(status, content=None, tokens=0):
-        state_file.write_text(_json.dumps({
+        state_file.write_text(_safe_serialize_state({
             "status": status, "content": content, "tokens": tokens,
             "updated": datetime.now().isoformat()
-        }, ensure_ascii=False))
+        }))
     
     import threading as _th
     print(f"[V9] thread={_th.current_thread().name}, key_in_environ={'DEEPSEEK_API_KEY' in os.environ}, key_len={len(os.environ.get('DEEPSEEK_API_KEY',''))}")
@@ -1118,6 +1118,44 @@ _background_tasks = {}  # {task_id: {"status": "running", "result": None, "threa
 _code_indexer = None  # CodeIndexer 实例，异步引擎可访问
 _consecutive_reads = 0  # 连续 read_file 计数器
 
+
+def _safe_serialize_state(state: dict) -> str:
+    """安全序列化 state，逐字段隔离，定位崩溃字段"""
+    import json as _json, re as _re
+    
+    for key, value in state.items():
+        try:
+            _json.dumps({key: value}, ensure_ascii=False)
+        except (TypeError, ValueError) as e:
+            print(f"[V9] 崩溃字段: {key}, 错误: {e}, 类型: {type(value).__name__}, 前80字符: {str(value)[:80]!r}")
+    
+    safe_state = {}
+    for key, value in state.items():
+        try:
+            safe_state[key] = value
+            _json.dumps(safe_state, ensure_ascii=False)
+        except Exception:
+            if isinstance(value, str):
+                s = value
+                s = s.replace('\\', '\\\\').replace('\n', '\\n').replace('\r', '\\r').replace('\t', '\\t')
+                s = s.replace('"', '\\"')
+                s = _re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', s)
+                max_len = 200 if key == 'last_task' else 2000 if '.content' in key else 500
+                safe_state[key] = s[:max_len]
+            elif isinstance(value, dict):
+                safe_state[key] = str(value)[:500]
+            elif isinstance(value, list):
+                safe_state[key] = [str(v)[:200] for v in value[:5]]
+            else:
+                safe_state[key] = str(value)[:500]
+    
+    try:
+        return _json.dumps(safe_state, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"[V9] 最终序列化失败: {e}，使用 repr 兜底")
+        fallback = {k: repr(v) if not isinstance(v, (str, int, float, bool, type(None))) else v for k, v in safe_state.items()}
+        return _json.dumps(fallback, ensure_ascii=False, indent=2)
+
 def _get_agent_tools():
     """返回 Agent 工具定义列表。新增工具只需改此处。"""
     return [
@@ -1253,31 +1291,66 @@ def v9_sandbox_read():
 
     return jsonify(result)
 
-
 @app.route("/v9/sandbox/write_large", methods=["POST"])
 def v9_sandbox_write_large():
-    """长内容写入——前端传 raw_arguments，网关提取 content"""
+    """长内容写入——三层自动修复 + 降级信号"""
     data = request.json or {}
     user_id = data.get("user_id", "default")
     session_id = data.get("session_id", "default")
     filepath = data.get("path", "")
     raw = data.get("raw_arguments", "")
     content = ""
-    if raw:
-        import re as _re
-        match = _re.search(r'"content"\s*:\s*"', raw)
-        if match:
-            start = match.end()
-            end = raw.rfind('"')
-            if end > start:
-                content = raw[start:end]
-    if not filepath or not content:
-        return jsonify({"success": False, "error": "path 和 content 必填"})
+    auto_fixed = True
+    fix_method = "json_parse"
+    
+    # 第一层：json.loads 直接解析
+    try:
+        args = json.loads(raw)
+        content = args.get("content", "")
+    except:
+        # 第二层：字符串修复 + json.loads 重试
+        try:
+            fixed = raw
+            if fixed.count('"') % 2 != 0:
+                fixed += '"'
+            fixed = fixed.replace('\n', '\\n').replace('\r', '\\r')
+            args = json.loads(fixed)
+            content = args.get("content", "")
+            fix_method = "string_fix"
+        except:
+            # 第三层：正则提取 content + 反转义
+            import re as _re
+            match = _re.search(r'"content"\s*:\s*"', raw)
+            if match:
+                start = match.end()
+                end_match = _re.search(r'"\s*}\s*$|"\s*,\s*"line"', raw[start:])
+                if end_match:
+                    content = raw[start:start + end_match.start()]
+                    content = content.replace('\\n', '\n').replace('\\"', '"').replace('\\t', '\t')
+                    fix_method = "regex_extract"
+    
+    if not content:
+        auto_fixed = False
+    
     base = Path(f"data/projects/{user_id}/{session_id}")
     base.mkdir(parents=True, exist_ok=True)
     target = _resolve_path(base, filepath)
-    target.write_text(content, encoding='utf-8')
-    return jsonify({"success": True, "path": str(target), "size": len(content)})
+    
+    if content:
+        target.write_text(content, encoding='utf-8')
+    
+    hint_msg = None
+    if not auto_fixed:
+        hint_msg = '请用 python3 heredoc 方式重新写入:\npython3 << PYEOF\ncontent = """..."""\nwith open("目标文件", "w") as f:\n    f.write(content)\nPYEOF'
+    
+    return jsonify({
+        "success": True,
+        "auto_fixed": auto_fixed,
+        "fix_method": fix_method if auto_fixed else None,
+        "hint": hint_msg,
+        "path": str(target) if content else None,
+        "size": len(content) if content else 0
+    })
 
 
 @app.route("/v9/sandbox/write", methods=["POST"])
@@ -2383,41 +2456,22 @@ def v9_agent_chat():
                     tool_prefs[name] = round(count / total, 2)
                 state["tool_preferences"] = tool_prefs
 
-                # 调试：定位崩溃字段
-                print(f"[V9] state keys: {list(state.keys())}")
                 try:
-                    s = json.dumps(state, ensure_ascii=False, indent=2)
-                except Exception as _je:
-                    print(f"[V9] json.dumps 崩溃: {_je}")
-                    print(f"[V9] state 前 200 字符: {str(state)[:200]}")
-                # 调试：定位崩溃字段
-                print(f"[V9] state keys: {list(state.keys())}")
-                try:
-                    s = json.dumps(state, ensure_ascii=False, indent=2)
-                except Exception as _je:
-                    print(f"[V9] json.dumps 崩溃: {_je}")
-                    print(f"[V9] state 前 200 字符: {str(state)[:200]}")
-                # 安全序列化：先正常写入，失败后截断重试
-                try:
-                    state_json = json.dumps(state, ensure_ascii=False, indent=2)
-                    state_file.write_text(state_json)
-                except Exception as _e2:
-                    print(f"[V9] write_text 崩溃: {_e2}")
-                    for key in list(state.keys()):
-                        if isinstance(state[key], str) and len(state[key]) > 500:
-                            state[key] = state[key][:500]
-                    if "task_progress" in state and "completed_steps" in state["task_progress"]:
-                        for step in state["task_progress"]["completed_steps"]:
-                            if "content" in step and isinstance(step["content"], str) and len(step["content"]) > 200:
-                                step["content"] = step["content"][:200]
-                    try:
-                        state_file.write_text(json.dumps(state, ensure_ascii=False, indent=2))
-                    except:
-                        pass
+                    state_file.write_text(_safe_serialize_state(state))
+                except:
+                    pass
 
            
             except Exception as e:
                 print(f"[V9] 状态持久化失败: {e}")
+                # 定位崩溃字段
+                for k, v in state.items():
+                    if isinstance(v, str):
+                        try:
+                            json.dumps({k: v}, ensure_ascii=False)
+                        except Exception as _je:
+                            print(f"[V9] 崩溃字段: {k}, 长度: {len(v)}, 前100字符: {str(v)[:100]}")
+                            break
                 # 调试：打印 state 中可能导致崩溃的字段
                 for k, v in state.items():
                     if isinstance(v, str) and len(v) < 200:
