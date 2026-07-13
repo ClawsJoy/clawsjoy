@@ -1461,6 +1461,8 @@ def v9_sandbox_write():
                 original_lines[line - 1] = content
                 target.write_text('\n'.join(original_lines), encoding='utf-8')
                 _read_cache.pop(str(target.resolve()), None)
+                global _consecutive_reads
+                _consecutive_reads = 0
                 return jsonify({"success": True, "path": str(target), "line": line, "mode": "line_replace"})
             else:
                 return jsonify({"success": False, "error": f"行号 {line} 超出文件范围 (1-{len(original_lines)})"})
