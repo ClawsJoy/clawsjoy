@@ -2492,16 +2492,18 @@ def v9_agent_chat():
         except:
             pass
         # ===== 学习能力结束 =====
-        # 写入意图检测：用户要求写入但 Agent 没有 write_file/write_large
+        # 写入意图检测 v3：检测最后一轮是否只有读取、无写入/执行操作
         msg = data_resp.get("choices", [{}])[0].get("message", {})
         tool_calls = msg.get("tool_calls", [])
-        WRITE_TOOLS = {'write_file', 'write_large'}
-        WRITE_KEYWORDS = ['创建', '修改', '完善', '写入', '新增', '添加文件', '生成', '实现', '编写', '补充', '新建', '写', '加', '改']
+        READ_ONLY_TOOLS = {'read_file', 'list_dir', 'search_files', 'query_index'}
+        WRITE_OR_EXEC_TOOLS = {'write_file', 'write_large', 'execute_command'}
+        WRITE_KEYWORDS = ['创建', '修改', '完善', '写入', '新增', '添加文件', '生成', '实现', '编写', '补充', '新建', '写', '加', '改', '补全']
         if messages and messages[-1]["role"] == "user":
             user_msg = messages[-1]["content"]
             has_write_intent = any(kw in user_msg for kw in WRITE_KEYWORDS)
-            has_write_action = any(tc.get('function', {}).get('name') in WRITE_TOOLS for tc in tool_calls) if tool_calls else False
-            if has_write_intent and not has_write_action:
+            tool_names = {tc.get('function', {}).get('name') for tc in tool_calls} if tool_calls else set()
+            is_read_only = tool_names and tool_names.issubset(READ_ONLY_TOOLS)
+            if has_write_intent and is_read_only:
                 import re as _re
                 path_match = _re.search(r'clawsjoy_dev/[\w/]+\.\w+', user_msg)
                 target_path = path_match.group(0) if path_match else "目标文件"
