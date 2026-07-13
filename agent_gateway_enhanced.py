@@ -1163,6 +1163,23 @@ def _get_agent_tools():
         {"type": "function", "function": {"name": "query_index", "strict": True, "description": "查询代码索引，返回结构化结果。用法：query_index(query='analysis_agent 有哪些方法') 或 query_index(query='谁调用了 _resp')", "parameters": {"type": "object", "additionalProperties": False, "properties": {"query": {"type": "string", "description": "自然语言查询"}}, "required": ["query"]}}},
     ]
 
+def _persist_state(state: dict, state_file: Path) -> bool:
+    """持久化 state 到文件，内部做完整异常处理和诊断日志"""
+    try:
+        state_file.write_text(_safe_serialize_state(state))
+        return True
+    except Exception as e:
+        print(f"[V9] 状态持久化失败: {e}")
+        import json as _json
+        for k, v in state.items():
+            if isinstance(v, str):
+                try:
+                    _json.dumps({k: v}, ensure_ascii=False)
+                except Exception as _je:
+                    print(f"[V9] 崩溃字段: {k}, 错误: {_je}, 前100字符: {v[:100]!r}")
+                    break
+        return False
+
 @app.route("/v9/sandbox/read", methods=["POST"])
 def v9_sandbox_read():
     data = request.json or {}
@@ -2464,24 +2481,9 @@ def v9_agent_chat():
                 tool_prefs[name] = round(count / total, 2)
             state["tool_preferences"] = tool_prefs
 
-            state_file.write_text(_safe_serialize_state(state))
+            _persist_state(state, state_file)
         except Exception as e:
             print(f"[V9] 状态持久化失败: {e}")
-            # 定位崩溃字段
-            for k, v in state.items():
-                if isinstance(v, str):
-                    try:
-                        json.dumps({k: v}, ensure_ascii=False)
-                    except Exception as _je:
-                        print(f"[V9] 崩溃字段: {k}, 长度: {len(v)}, 前100字符: {str(v)[:100]}")
-                        break
-            # 调试：打印 state 中可能导致崩溃的字段
-            for k, v in state.items():
-                if isinstance(v, str) and len(v) < 200:
-                    try:
-                        json.dumps({k: v})
-                    except:
-                        print(f"[V9] 崩溃字段: {k} = {v[:100]}")
         # 上下文管理器
         try:
             from core.lib.context_manager import get_context
