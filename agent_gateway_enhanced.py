@@ -1428,6 +1428,8 @@ def v9_sandbox_write():
                 return jsonify({"success": False, "error": f"行号 {line} 超出文件范围 (1-{len(original_lines)})"})
         
         # 完整写入模式
+        if not content.strip():
+            return jsonify({"success": False, "error": "content 为空，写入失败。请检查内容是否正确。"})
         if target.exists():
             original = target.read_text()
             _orig_lines = original.split(chr(10))

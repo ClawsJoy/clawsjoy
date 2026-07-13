@@ -559,7 +559,8 @@ async function agentSend() {
           const raw = tool.function.arguments;
           const pathMatch = raw.match(/"path"\s*:\s*"([^"]+)"/);
           const lineMatch = raw.match(/"line"\s*:\s*(\d+)/);
-          args = { path: pathMatch ? pathMatch[1] : '', raw_arguments: raw, line: lineMatch ? parseInt(lineMatch[1]) : 0 };
+          const contentMatch = raw.match(/"content"\s*:\s*"([\s\S]*?)(?:"\s*}\s*$|"\s*,\s*"line)/);
+          args = { path: pathMatch ? pathMatch[1] : '', raw_arguments: raw, line: lineMatch ? parseInt(lineMatch[1]) : 0, content: contentMatch ? contentMatch[1] : '' };
           if (!args.path) {
             agentLog('⚠️ write_file path 为空，跳过', '#d2991d'); continue;
           }
@@ -791,7 +792,8 @@ async function continuePausedTask(messages) {
           const raw = tool.function.arguments;
           const pathMatch = raw.match(/"path"\s*:\s*"([^"]+)"/);
           const lineMatch = raw.match(/"line"\s*:\s*(\d+)/);
-          args = { path: pathMatch ? pathMatch[1] : '', raw_arguments: raw, line: lineMatch ? parseInt(lineMatch[1]) : 0 };
+          const contentMatch = raw.match(/"content"\s*:\s*"([\s\S]*?)(?:"\s*}\s*$|"\s*,\s*"line)/);
+          args = { path: pathMatch ? pathMatch[1] : '', raw_arguments: raw, line: lineMatch ? parseInt(lineMatch[1]) : 0, content: contentMatch ? contentMatch[1] : '' };
           if (!args.path) {
             agentLog('⚠️ write_file path 为空，跳过', '#d2991d'); continue;
           }
