@@ -2492,23 +2492,27 @@ def v9_agent_chat():
         except:
             pass
         # ===== 学习能力结束 =====
-        # 空响应检测：Agent 无 tool_calls 但用户指令含创建/修改关键词
+        # 写入意图检测：用户要求写入但 Agent 没有 write_file/write_large
         msg = data_resp.get("choices", [{}])[0].get("message", {})
-        if not msg.get("tool_calls") and messages and messages[-1]["role"] == "user":
+        tool_calls = msg.get("tool_calls", [])
+        WRITE_TOOLS = {'write_file', 'write_large'}
+        WRITE_KEYWORDS = ['创建', '修改', '完善', '写入', '新增', '添加文件', '生成', '实现', '编写', '补充', '新建', '写', '加', '改']
+        if messages and messages[-1]["role"] == "user":
             user_msg = messages[-1]["content"]
-            create_kw = ["创建", "新建", "写入", "生成", "写", "加", "添加", "修改", "改"]
-            if any(kw in user_msg for kw in create_kw):
+            has_write_intent = any(kw in user_msg for kw in WRITE_KEYWORDS)
+            has_write_action = any(tc.get('function', {}).get('name') in WRITE_TOOLS for tc in tool_calls) if tool_calls else False
+            if has_write_intent and not has_write_action:
                 import re as _re
                 path_match = _re.search(r'clawsjoy_dev/[\w/]+\.\w+', user_msg)
-                if path_match:
-                    target_path = path_match.group(0)
-                    check_path = Path(f"data/projects/{user_id}/{session_id}") / target_path
-                    if not check_path.exists():
-                        hint_msg = f"[系统] 任务要求创建/修改 {target_path}，但文件尚未创建。请用 python3 heredoc 方式写入。"
-                        if data_resp["choices"][0]["message"].get("content"):
-                            data_resp["choices"][0]["message"]["content"] = hint_msg + "\n\n" + data_resp["choices"][0]["message"]["content"]
-                        else:
-                            data_resp["choices"][0]["message"]["content"] = hint_msg
+                target_path = path_match.group(0) if path_match else "目标文件"
+                check_path = Path(f"data/projects/{user_id}/{session_id}") / target_path if path_match else None
+                file_missing = check_path and not check_path.exists() if check_path else True
+                if file_missing:
+                    hint_msg = f"[系统] 任务要求修改 {target_path}，但你还没有调用 write_file。请确认文件是否需要写入，如需写入请立即执行。"
+                    if msg.get("content"):
+                        data_resp["choices"][0]["message"]["content"] = hint_msg + "\n\n" + msg["content"]
+                    else:
+                        data_resp["choices"][0]["message"]["content"] = hint_msg
 
         return jsonify({"success": True, "data": data_resp, "tokens": tokens})
     except Exception as e:
