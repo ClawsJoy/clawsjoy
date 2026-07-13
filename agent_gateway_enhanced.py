@@ -2498,8 +2498,13 @@ def v9_agent_chat():
         READ_ONLY_TOOLS = {'read_file', 'list_dir', 'search_files', 'query_index'}
         WRITE_OR_EXEC_TOOLS = {'write_file', 'write_large', 'execute_command'}
         WRITE_KEYWORDS = ['创建', '修改', '完善', '写入', '新增', '添加文件', '生成', '实现', '编写', '补充', '新建', '写', '加', '改', '补全']
-        if messages and messages[-1]["role"] == "user":
-            user_msg = messages[-1]["content"]
+        user_msg = ""
+        if messages:
+            for m in reversed(messages):
+                if m.get("role") == "user":
+                    user_msg = m.get("content", "")
+                    break
+        if user_msg:
             has_write_intent = any(kw in user_msg for kw in WRITE_KEYWORDS)
             tool_names = {tc.get('function', {}).get('name') for tc in tool_calls} if tool_calls else set()
             is_read_only = (not tool_names) or tool_names.issubset(READ_ONLY_TOOLS)
