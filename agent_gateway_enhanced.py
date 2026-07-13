@@ -2502,7 +2502,7 @@ def v9_agent_chat():
             user_msg = messages[-1]["content"]
             has_write_intent = any(kw in user_msg for kw in WRITE_KEYWORDS)
             tool_names = {tc.get('function', {}).get('name') for tc in tool_calls} if tool_calls else set()
-            is_read_only = tool_names and tool_names.issubset(READ_ONLY_TOOLS)
+            is_read_only = (not tool_names) or tool_names.issubset(READ_ONLY_TOOLS)
             if has_write_intent and is_read_only:
                 import re as _re
                 path_match = _re.search(r'clawsjoy_dev/[\w/]+\.\w+', user_msg)
