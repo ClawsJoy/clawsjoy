@@ -1122,28 +1122,26 @@ def _safe_serialize_state(state: dict) -> str:
     for key, value in state.items():
         try:
             _json.dumps({key: value}, ensure_ascii=False)
-        except (TypeError, ValueError) as e:
+        except Exception as e:
             print(f"[V9] 崩溃字段: {key}, 错误: {e}, 类型: {type(value).__name__}, 前80字符: {str(value)[:80]!r}")
     
     safe_state = {}
     for key, value in state.items():
-        try:
+        if isinstance(value, str):
+            s = value
+            s = s.replace('\\', '\\\\').replace('\n', '\\n').replace('\r', '\\r').replace('\t', '\\t')
+            s = s.replace('"', '\\"')
+            s = _re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', s)
+            max_len = 200 if key == 'last_task' else 2000 if '.content' in key else 500
+            safe_state[key] = s[:max_len]
+        elif isinstance(value, dict):
+            safe_state[key] = str(value)[:500]
+        elif isinstance(value, list):
+            safe_state[key] = [str(v)[:200] for v in value[:5]]
+        elif isinstance(value, (int, float, bool, type(None))):
             safe_state[key] = value
-            _json.dumps(safe_state, ensure_ascii=False)
-        except Exception:
-            if isinstance(value, str):
-                s = value
-                s = s.replace('\\', '\\\\').replace('\n', '\\n').replace('\r', '\\r').replace('\t', '\\t')
-                s = s.replace('"', '\\"')
-                s = _re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', s)
-                max_len = 200 if key == 'last_task' else 2000 if '.content' in key else 500
-                safe_state[key] = s[:max_len]
-            elif isinstance(value, dict):
-                safe_state[key] = str(value)[:500]
-            elif isinstance(value, list):
-                safe_state[key] = [str(v)[:200] for v in value[:5]]
-            else:
-                safe_state[key] = str(value)[:500]
+        else:
+            safe_state[key] = str(value)[:500]
     
     try:
         return _json.dumps(safe_state, ensure_ascii=False, indent=2)
@@ -2515,7 +2513,7 @@ def v9_agent_chat():
                 check_path = Path(f"data/projects/{user_id}/{session_id}") / target_path if path_match else None
                 file_missing = check_path and not check_path.exists() if check_path else True
                 if file_missing:
-                    hint_msg = f"[系统] 任务要求修改 {target_path}，但你还没有调用 write_file。请确认文件是否需要写入，如需写入请立即执行。"
+                    hint_msg = "[系统] 你还没有写入文件。唯一可用的写入方式是 python3 heredoc 脚本。禁止再次调用 read_file/search_files/list_dir。立即执行:\npython3 << 'PYEOF'\n...\nPYEOF"
                     if msg.get("content"):
                         data_resp["choices"][0]["message"]["content"] = hint_msg + "\n\n" + msg["content"]
                     else:
