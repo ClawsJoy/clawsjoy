@@ -564,7 +564,11 @@ async function agentSend() {
           const pathMatch = raw.match(/"path"\s*:\s*"([^"]+)"/);
           const lineMatch = raw.match(/"line"\s*:\s*(\d+)/);
           const contentMatch = raw.match(/"content"\s*:\s*"([\s\S]*?)(?:"\s*}\s*$|"\s*,\s*"line|"\s*,\s*"path)/);
-          const cmdMatch = raw.match(/"command"\s*:\s*"([\s\S]*?)(?:"\s*}\s*$)/);
+          let cmdMatch = raw.match(/"command"\s*:\s*"([\s\S]*?)(?:"\s*}\s*$)/);
+          // heredoc fallback: python3 << 'PYEOF' ... PYEOF
+          if (!cmdMatch || !cmdMatch[1]) {
+            cmdMatch = raw.match(/"command"\s*:\s*"(python3\s*<<\s*'[A-Z]+'[\s\S]*?[A-Z]+)"/);
+          }
           args = {
             path: pathMatch ? pathMatch[1] : '',
             line: lineMatch ? parseInt(lineMatch[1]) : 0,
@@ -799,7 +803,11 @@ async function continuePausedTask(messages) {
           const pathMatch = raw.match(/"path"\s*:\s*"([^"]+)"/);
           const lineMatch = raw.match(/"line"\s*:\s*(\d+)/);
           const contentMatch = raw.match(/"content"\s*:\s*"([\s\S]*?)(?:"\s*}\s*$|"\s*,\s*"line|"\s*,\s*"path)/);
-          const cmdMatch = raw.match(/"command"\s*:\s*"([\s\S]*?)(?:"\s*}\s*$)/);
+          let cmdMatch = raw.match(/"command"\s*:\s*"([\s\S]*?)(?:"\s*}\s*$)/);
+          // heredoc fallback: python3 << 'PYEOF' ... PYEOF
+          if (!cmdMatch || !cmdMatch[1]) {
+            cmdMatch = raw.match(/"command"\s*:\s*"(python3\s*<<\s*'[A-Z]+'[\s\S]*?[A-Z]+)"/);
+          }
           args = {
             path: pathMatch ? pathMatch[1] : '',
             line: lineMatch ? parseInt(lineMatch[1]) : 0,
