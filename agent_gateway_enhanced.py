@@ -1354,21 +1354,26 @@ def v9_sandbox_write_large():
                     content = raw[start:start + end_match.start()]
                     content = content.replace('\\n', '\n').replace('\\"', '"').replace('\\t', '\t')
                     fix_method = "regex_extract"
-            # 第四层：正则盲区兜底 —— 字符串索引截取 content
+            # 第四层：正则盲区兜底 —— 逐字符扫描找 content 闭合引号
             if not content:
                 start_marker = '"content": "'
                 start_idx = raw.find(start_marker)
                 if start_idx != -1:
                     start_idx += len(start_marker)
-                    end_idx = raw.rfind('"')
-                    # 如果最后一个引号后还有内容，content 不是最后字段，往前找闭合位置
-                    if end_idx > start_idx and end_idx < len(raw) - 1 and raw[end_idx+1:].strip():
-                        import re as _re2
-                        tail = raw[start_idx:]
-                        match = _re2.search(r'"\s*[,}]', tail)
-                        if match:
-                            end_idx = start_idx + match.start()
+                    # 逐字符扫描：找第一个后面紧跟 , 或 } 的未转义引号
+                    end_idx = start_idx
+                    i = start_idx
+                    while i < len(raw):
+                        if raw[i] == '"' and (i == 0 or raw[i-1] != '\\'):
+                            after = raw[i+1:i+10].lstrip()
+                            if after.startswith(',') or after.startswith('}'):
+                                end_idx = i
+                                break
+                        i += 1
                     if end_idx > start_idx:
+                        content = raw[start_idx:end_idx]
+                        content = content.replace('\\n', '\n').replace('\\"', '"').replace('\\t', '\t')
+                        fix_method = "string_fallback"
                         content = raw[start_idx:end_idx]
                         content = content.replace('\\n', '\n').replace('\\"', '"').replace('\\t', '\t')
                         fix_method = "string_fallback"
