@@ -150,3 +150,4 @@ scripts/finetune_lora.py
 scripts/finetune_unsloth.py
 web/chat_interface_broken.py
 web/v5.1/core/
+web/clawscut
