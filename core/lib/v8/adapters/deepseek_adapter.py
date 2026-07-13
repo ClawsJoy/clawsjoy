@@ -26,6 +26,7 @@ class DeepSeekAdapter(BaseAdapter):
                 json={
                     "model": self.model or "deepseek-v4-flash",
                     "messages": messages,
+                    "response_format": {"type": "json_object"},
                     "temperature": 0.7,
                     "max_tokens": 4096,
                 },
@@ -86,6 +87,7 @@ class DeepSeekAdapter(BaseAdapter):
         if thinking:
             body["thinking"] = {"type": "enabled"}
    
+
         if user_id:
             body["user_id"] = user_id
 
