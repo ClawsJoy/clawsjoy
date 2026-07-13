@@ -1137,7 +1137,15 @@ def _safe_serialize_state(state: dict) -> str:
         elif isinstance(value, dict):
             safe_state[key] = str(value)[:500]
         elif isinstance(value, list):
-            safe_state[key] = [str(v)[:200] for v in value[:5]]
+            clean_list = []
+            for v in value[:10]:
+                if isinstance(v, dict):
+                    clean_list.append({k: str(v2)[:200] if isinstance(v2, str) else v2 for k, v2 in v.items()})
+                elif isinstance(v, str):
+                    clean_list.append(v[:500])
+                else:
+                    clean_list.append(v)
+            safe_state[key] = clean_list
         elif isinstance(value, (int, float, bool, type(None))):
             safe_state[key] = value
         else:
@@ -1167,8 +1175,9 @@ def _persist_state(state: dict, state_file: Path) -> bool:
         state_file.write_text(_safe_serialize_state(state))
         return True
     except Exception as e:
-        print(f"[V9] 状态持久化失败: {e}")
-        import json as _json
+        print(f"[V9] 状态持久化失败: {e}, 异常类型: {type(e).__name__}")
+        import json as _json, traceback
+        traceback.print_exc()
         for k, v in state.items():
             if isinstance(v, str):
                 try:
@@ -1289,9 +1298,15 @@ def v9_sandbox_read():
     # 连续读取计数器：≥5 次时提示停止探索
     global _consecutive_reads
     _consecutive_reads += 1
-    hint = None
+    
+    # 工具限制：连续 5 次 read_file 后拒绝，强制 Agent 切换写入/执行工具
     if _consecutive_reads >= 5:
-        hint = "已经连续读取了多个文件，建议基于已有信息直接操作，不要继续探索"
+        return jsonify({
+            "success": False,
+            "error": "read_file 暂时不可用（连续读取次数过多）",
+            "hint": "请使用 execute_command + python3 heredoc 或 write_file 写入文件，不要再读取文件。",
+            "_consecutive_reads": _consecutive_reads
+        })
 
     return jsonify({
         "success": True, "content": numbered,
@@ -2481,7 +2496,7 @@ def v9_agent_chat():
 
             _persist_state(state, state_file)
         except Exception as e:
-            print(f"[V9] 状态持久化失败: {e}")
+            pass
         # 上下文管理器
         try:
             from core.lib.context_manager import get_context
