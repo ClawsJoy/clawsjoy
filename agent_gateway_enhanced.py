@@ -1311,7 +1311,7 @@ def v9_sandbox_read():
     return jsonify({
         "success": True, "content": numbered,
         "path": str(target), "lines": total_lines, "mode": "full", "cached": from_cache,
-        **({"hint": hint} if hint else {})
+
     })
     
 
@@ -1354,13 +1354,20 @@ def v9_sandbox_write_large():
                     content = raw[start:start + end_match.start()]
                     content = content.replace('\\n', '\n').replace('\\"', '"').replace('\\t', '\t')
                     fix_method = "regex_extract"
-            # 第四层：正则盲区兜底 —— raw.rfind('"') 直接截取
+            # 第四层：正则盲区兜底 —— 字符串索引截取 content
             if not content:
                 start_marker = '"content": "'
                 start_idx = raw.find(start_marker)
                 if start_idx != -1:
                     start_idx += len(start_marker)
                     end_idx = raw.rfind('"')
+                    # 如果最后一个引号后还有内容，content 不是最后字段，往前找闭合位置
+                    if end_idx > start_idx and end_idx < len(raw) - 1 and raw[end_idx+1:].strip():
+                        import re as _re2
+                        tail = raw[start_idx:]
+                        match = _re2.search(r'"\s*[,}]', tail)
+                        if match:
+                            end_idx = start_idx + match.start()
                     if end_idx > start_idx:
                         content = raw[start_idx:end_idx]
                         content = content.replace('\\n', '\n').replace('\\"', '"').replace('\\t', '\t')
@@ -1490,6 +1497,8 @@ def v9_sandbox_write():
             _session_artifacts[_session_key] = []
         _session_artifacts[_session_key].append(_artifact)
         _read_cache.pop(str(target.resolve()), None)
+        global _consecutive_reads
+        _consecutive_reads = 0
         return jsonify({"success": True, "path": str(target), "mode": "full_write"})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
