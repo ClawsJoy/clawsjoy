@@ -558,7 +558,8 @@ async function agentSend() {
         if (tool.function.name === 'write_file') {
           const raw = tool.function.arguments;
           const pathMatch = raw.match(/"path"\s*:\s*"([^"]+)"/);
-          args = { path: pathMatch ? pathMatch[1] : '', raw_arguments: raw };
+          const lineMatch = raw.match(/"line"\s*:\s*(\d+)/);
+          args = { path: pathMatch ? pathMatch[1] : '', raw_arguments: raw, line: lineMatch ? parseInt(lineMatch[1]) : 0 };
           if (!args.path) {
             agentLog('⚠️ write_file path 为空，跳过', '#d2991d'); continue;
           }
@@ -789,7 +790,8 @@ async function continuePausedTask(messages) {
         if (tool.function.name === 'write_file') {
           const raw = tool.function.arguments;
           const pathMatch = raw.match(/"path"\s*:\s*"([^"]+)"/);
-          args = { path: pathMatch ? pathMatch[1] : '', raw_arguments: raw };
+          const lineMatch = raw.match(/"line"\s*:\s*(\d+)/);
+          args = { path: pathMatch ? pathMatch[1] : '', raw_arguments: raw, line: lineMatch ? parseInt(lineMatch[1]) : 0 };
           if (!args.path) {
             agentLog('⚠️ write_file path 为空，跳过', '#d2991d'); continue;
           }
