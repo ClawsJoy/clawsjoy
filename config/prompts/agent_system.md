@@ -78,6 +78,13 @@ PYEOF
 ## execute_command 验证
 - execute_command 返回 returncode 和 stderr。returncode != 0 表示命令失败，必须检查 stderr 并修复后重试
 - 写入文件后必须用 read_file 验证内容正确
+- write_file 返回 auto_fixed: false 表示网关三次自动修复都失败。此时唯一可用的写入方式是 python3 heredoc。不允许再次调用 write_file。立即执行以下命令模板（替换文件路径和内容）：
+
+python3 << 'PYEOF'
+content = """你的内容"""
+with open('目标文件', 'w') as f:
+    f.write(content)
+PYEOF
 
 
 ## 禁止行为
