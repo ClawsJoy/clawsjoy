@@ -272,7 +272,7 @@ def v9_save_task_progress():
         "total_rounds": progress.get("total_rounds", 0),
         "paused_at": datetime.now().isoformat()
     }
-    state_file.write_text(json.dumps(state, ensure_ascii=False, indent=2))
+    state_file.write_text(_safe_serialize_state(state))
 def v9_task_status(task_id):
     import json as _json
     user_id = request.args.get("user_id", "default")
