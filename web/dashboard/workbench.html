@@ -1007,7 +1007,7 @@ PYEOF` });
 // ========== 文件树 ==========
 async function refreshFileTree() {
   try {
-    const resp = await fetch(API + '/v9/sandbox/list', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userId, session_id: sessionId, path: '.' }) });
+    const resp = await fetch(API + '/v9/sandbox/list', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userId, session_id: sessionId, path: '.', skip_quota: true }) });
     const d = await resp.json();
     if (d.success) {
       let html = '';
@@ -1019,7 +1019,7 @@ async function refreshFileTree() {
 }
 
 async function openDir(path) {
-  const resp = await fetch(API + '/v9/sandbox/list', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userId, session_id: sessionId, path }) });
+  const resp = await fetch(API + '/v9/sandbox/list', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userId, session_id: sessionId, path, skip_quota: true }) });
   const d = await resp.json();
   if (!d.success) return;
   const tree = document.getElementById('fileTree'), folderDiv = tree.querySelector(`[data-path="${path}"]`);
@@ -1037,7 +1037,7 @@ async function openDir(path) {
 }
 
 async function openFile(path) {
-  const resp = await fetch(API + '/v9/sandbox/read', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userId, session_id: sessionId, path }) });
+  const resp = await fetch(API + '/v9/sandbox/read', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userId, session_id: sessionId, path, skip_quota: true }) });
   const d = await resp.json();
   if (d.success) { agentLog('📄 ' + path, '#58a6ff'); agentLog(d.content, '#c9d1d9'); }
 }
@@ -1056,9 +1056,21 @@ async function refreshBalance() {
 }
 
 // ========== 线程管理 ==========
-function loadThreads() {
+async function loadThreads() {
   const sel = document.getElementById('threadSelect');
   if (!sel) return;
+  // 从后端扫描所有 session 目录
+  try {
+    const resp = await fetch(API + '/v9/sandbox/list', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userId, session_id: sessionId, path: '.', skip_quota: true }) });
+    const d = await resp.json();
+    if (d.success && d.dirs) {
+      const sessionDirs = d.dirs.filter(x => x.startsWith('session_'));
+      for (const s of sessionDirs) {
+        if (!threads.includes(s)) threads.push(s);
+      }
+      saveThreads();
+    }
+  } catch (e) {}
   sel.innerHTML = threads.map(t => `<option value="${t}" ${t === currentThread ? 'selected' : ''}>${t.substring(0, 24)}</option>`).join('');
 }
 function switchThread(id) {
@@ -1066,6 +1078,8 @@ function switchThread(id) {
   localStorage.setItem('clawsjoy_session_id', id);
   localStorage.setItem('clawsjoy_user_id', 'web_1783219071801');
   saveThreads();
+  messages = [];
+  document.getElementById('agentTerminal').innerHTML = '<div style="color:#58a6ff;">🤖 切换到线程 ' + id.substring(0, 16) + '</div>';
   const term = document.getElementById('agentTerminal');
   const logs = JSON.parse(localStorage.getItem('agent_logs_' + currentThread) || '[]');
   term.innerHTML = '';
