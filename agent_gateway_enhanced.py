@@ -2335,7 +2335,7 @@ def v9_sandbox_list():
     # P0-1-ext: list_dir 配额限制（最多 3 次）
     global _consecutive_lists
     _consecutive_lists += 1
-    if _consecutive_lists > 3:
+    if _consecutive_lists > 3 and not data.get("skip_quota"):
         return jsonify({
             "success": False,
             "error": "list_dir 配额已达 3 次。请参考上下文中已注入的项目树获取目录结构。",
@@ -2396,7 +2396,7 @@ def v9_sandbox_list():
                 pass
         target = base / _proj_root / filepath
     # 通用路径补全：如果路径不以 clawsjoy_dev/ 开头且不存在，尝试加前缀
-    if not target.exists() and not str(filepath).startswith("clawsjoy_dev/"):
+    if not target.exists() and not str(dirpath).startswith("clawsjoy_dev/"):
         _corrected = base / "clawsjoy_dev" / filepath
         if _corrected.exists():
             target = _corrected
@@ -2472,7 +2472,7 @@ def v9_sandbox_search():
                 pass
         target = base / _proj_root / filepath
     # 通用路径补全：如果路径不以 clawsjoy_dev/ 开头且不存在，尝试加前缀
-    if not target.exists() and not str(filepath).startswith("clawsjoy_dev/"):
+    if not target.exists() and not str(dirpath).startswith("clawsjoy_dev/"):
         _corrected = base / "clawsjoy_dev" / filepath
         if _corrected.exists():
             target = _corrected
@@ -2709,7 +2709,7 @@ def v9_sandbox_edit():
                 pass
         target = base / _proj_root / filepath
     # 通用路径补全：如果路径不以 clawsjoy_dev/ 开头且不存在，尝试加前缀
-    if not target.exists() and not str(filepath).startswith("clawsjoy_dev/"):
+    if not target.exists() and not str(dirpath).startswith("clawsjoy_dev/"):
         _corrected = base / "clawsjoy_dev" / filepath
         if _corrected.exists():
             target = _corrected
@@ -3125,6 +3125,24 @@ def v9_agent_chat():
     _is_write_q = any(kw in _last_usr_q for kw in _write_kw_q)
     _max_q = 5 if _is_write_q else 10
     messages[0]["content"] += f"\n读取配额：本次任务最多读取 {_max_q} 个文件。你可以从以下渠道获取信息而无需消耗配额：1) 上方项目树与磁盘实时同步，已列出所有文件路径，无需 list_dir 逐个确认 2) world_model 包含已写入文件的骨架 3) query_index 可查询代码结构。达到配额上限后 read_file 将被拒绝，届时基于已有信息直接写入交付。"
+
+    # 多文件任务检测：追加规划模板
+    import re as _re_plan
+    _last_usr_plan = ""
+    for _mp in messages:
+        if _mp["role"] == "user":
+            _last_usr_plan = _mp["content"]
+    _file_matches = _re_plan.findall(r'[\w_]+/\w+\.py|[\w_]+\.py', _last_usr_plan)
+    if len(_file_matches) >= 2:
+        messages[0]["content"] += (
+            "\n【多文件任务 — 请先列出执行计划】\n"
+            "涉及文件: " + ", ".join(_file_matches[:8]) + "\n"
+            "请按以下格式列出计划后，再执行修改:\n"
+            "1. 修改文件: [文件路径]\n"
+            "2. 修改内容: [具体改动]\n"
+            "3. 执行顺序: [步骤]\n"
+            "列出计划后等待确认，不要直接修改。"
+        )
 
     # 新任务开始，清空 read_file 缓存，重置计数器
     global _consecutive_reads
@@ -3673,6 +3691,24 @@ def v9_agent_chat():
         # ===== 学习能力结束 =====
         msg = data_resp.get("choices", [{}])[0].get("message", {})
         
+        # 多文件任务硬约束：涉及2+文件时，必须先输出规划文本
+        _last_usr_hard = ""
+        for _mh in messages:
+            if _mh["role"] == "user":
+                _last_usr_hard = _mh["content"]
+        import re as _re_hard
+        _file_matches_hard = _re_hard.findall(r'[\w_]+/\w+\.py|[\w_]+\.py', _last_usr_hard)
+        if len(_file_matches_hard) >= 2:
+            _has_plan = bool(msg.get("content", "").strip())
+            _tool_calls_raw = msg.get("tool_calls", [])
+            _has_write = any(tc.get("function", {}).get("name") in ("write_file", "write_large") for tc in _tool_calls_raw)
+            if not _has_plan:
+                _files_list = ", ".join(_file_matches_hard[:8])
+                _plan_msg = f"【系统】检测到多文件任务，请先列出执行计划再修改。\n涉及文件: {_files_list}\n\n请按以下格式列出计划:\n1. 修改文件: [路径]\n2. 修改内容: [具体改动]\n3. 执行顺序: [步骤]\n\n列出计划后，系统将自动放行后续修改操作。"
+                messages.append({"role": "system", "content": _plan_msg})
+                msg["content"] = ""
+                # 不 return，让流程继续走到 DeepSeek 调用
+
         # ★ 网关拦截 write_file：长内容直接从 Agent 响应中提取并写入
         _tool_calls = msg.get("tool_calls", [])
         for _tc in _tool_calls:

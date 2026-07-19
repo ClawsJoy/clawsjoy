@@ -142,9 +142,9 @@ if user_input:
                             "http://localhost:5002/v5/tts",
                             json={"text": response}
                         )
-                         if tts_resp.status_code == 200:
-                             audio_bytes = base64.b64decode(tts_resp.json()["audio"])
-                             st.audio(audio_bytes, format="audio/mp3")        
+                        if tts_resp.status_code == 200:
+                            audio_bytes = base64.b64decode(tts_resp.json()["audio"])
+                            st.audio(audio_bytes, format="audio/mp3")        
                     except Exception as e:
                         st.warning(f"语音播报失败: {e}")               
                 st.session_state.messages.append(
