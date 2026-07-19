@@ -12,7 +12,7 @@
   --radius: 8px;
 }
 * { margin:0; padding:0; box-sizing:border-box; }
-body { background:var(--bg); color:var(--text); font-family:Inter,-apple-system,sans-serif; height:100vh; display:flex; }
+body { background:var(--bg); color:var(--text); font-family:Inter,-apple-system,sans-serif; height:100vh; height:100dvh; display:flex; }
 .sidebar { width:260px; min-width:180px; max-width:500px; background:var(--card); border-right:1px solid var(--border); display:flex; flex-direction:column; position:relative; }
 .sidebar-resize { position:absolute; right:-4px; top:0; bottom:0; width:8px; cursor:col-resize; z-index:10; }
 .sidebar-resize:hover { background:var(--blue); opacity:0.4; }
@@ -157,7 +157,7 @@ body { background:var(--bg); color:var(--text); font-family:Inter,-apple-system,
 </div>
 
 <!-- Agent 弹窗 -->
-<div id="agentModal" style="display:none; position:fixed; top:0; left:0; right:0; height:100vh; background:rgba(0,0,0,0.85); z-index:9999; flex-direction:column;">
+<div id="agentModal" style="display:none; position:fixed; top:0; left:0; right:0; height:100vh; height:100dvh; background:rgba(0,0,0,0.85); z-index:9999; flex-direction:column;">
   <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:#161b22; border-bottom:1px solid #30363d;">
     <span style="color:#c9d1d9; font-size:16px; font-weight:600;">🤖 Agent 工作区</span>
     <div style="display:flex; gap:6px; align-items:center;">
@@ -177,7 +177,7 @@ body { background:var(--bg); color:var(--text); font-family:Inter,-apple-system,
       <div id="agentTerminal" style="flex:1; min-height:0; padding:16px; overflow-y:auto; overflow-x:hidden; word-break:break-all; font-family:'JetBrains Mono',monospace; font-size:13px; color:#c9d1d9; white-space:pre-wrap; line-height:1.6;">
         <div style="color:#58a6ff;">🤖 ClawsJoy Agent 就绪。输入任务开始。</div>
       </div>
-      <div style="display:flex; gap:6px; padding:12px 16px; background:#161b22; border-top:1px solid #30363d; align-items:center; position:sticky; bottom:0;">
+      <div style="display:flex; gap:6px; padding:12px 16px; background:#161b22; border-top:1px solid #30363d; align-items:center; position:relative;">
         <input id="agentInput" placeholder="描述任务..." style="flex:1; width:0; min-width:150px; background:#0d1117; border:1px solid #30363d; border-radius:6px; padding:10px 14px; color:#c9d1d9; font-size:14px; outline:none;" onkeydown="if(event.key==='Enter') agentSend()">
         <button onclick="agentSend()" style="background:#238636; color:#fff; border:none; border-radius:6px; padding:8px 14px; cursor:pointer; font-size:13px; font-weight:600; white-space:nowrap; flex-shrink:0;">▶ 执行</button>
         <button onclick="agentSendAsync()" style="background:#1f6feb; color:#fff; border:none; border-radius:6px; padding:8px 14px; cursor:pointer; font-size:13px; white-space:nowrap; flex-shrink:0;" title="后台执行">🔗</button>
@@ -294,7 +294,7 @@ async function loadTasks() {
       html += `${emoji[t.status] || '❓'} ${t.title || '无标题'} → @${t.assigned_to || '待分配'}<br>`;
     }
     const lastTask = localStorage.getItem('last_task_id');
-    if (lastTask) {
+    if (lastTask && lastTask.startsWith('async_')) {
       try {
         const tr = await fetch(API + '/v9/task/' + lastTask + '?user_id=' + userId + '&session_id=' + sessionId);
         const td = await tr.json();
@@ -476,7 +476,7 @@ async function executeToolCall(name, args, rawArgs) {
   // write_file 长内容走独立字段，不经过 JSON 序列化
   if (name === 'write_file' && rawArgs) {
     try {
-      let contentMatch = rawArgs.match(/"content":\s*"([^"]*?)"(,\s*"|}$)/);
+      let contentMatch = rawArgs.match(/"content":\s*"([\s\S]*?)"(,\s*"|}$)/);
       if (contentMatch) {
         body.content = contentMatch[1];  // 原始 content，不经过 JSON 转义
       }
@@ -510,14 +510,25 @@ async function agentSend() {
   document.getElementById('agentStopBtn').style.display = 'inline-block';
   agentLog('👤 ' + task, '#58a6ff');
 
+  // 恢复上次任务完成时的对话历史
+  let historyMessages = [];
+  const historyData = localStorage.getItem('agent_history_' + currentThread);
+  if (historyData) {
+    try {
+      const saved = JSON.parse(historyData);
+      historyMessages = saved.messages || [];
+      localStorage.removeItem('agent_history_' + currentThread);
+      agentLog('📋 已恢复上次对话上下文 (' + historyMessages.length + ' 条消息)', '#8b949e');
+    } catch(e) {}
+  }
+
   const messages = [
     { role: 'system', content: '你是 ClawsJoy 的 AI 助手。根据用户任务自动判断角色。每次开始工作时，第一句话声明角色，格式：🔄 以XX身份工作。你可以操作文件系统——读取、写入、搜索文件。遇到任务先分析，再动手。每次只做一件事，做完看结果再决定下一步。' },
     { role: 'user', content: task }
   ];
 
-  let maxLoops = 25;
+  let maxLoops = 200;
   while (!agentAbort && maxLoops > 0) {
-    // 读文件操作不消耗循环轮次
     const lastMsg = messages[messages.length - 1];
     const isReadOnly = lastMsg && lastMsg.tool_calls && lastMsg.tool_calls.every(t => ['read_file','list_dir','search_files'].includes(t.function.name));
     if (!isReadOnly) maxLoops--;
@@ -527,9 +538,27 @@ async function agentSend() {
         body: JSON.stringify({ user_id: userId, session_id: sessionId, model: 'deepseek-v4-flash', messages })
       });
       const d = await resp.json();
-      if (!d.success) { agentLog('❌ API 错误: ' + d.error, '#f85149'); break; }
+      if (!d.success) {
+        const errMsg = d.error || '';
+        let friendlyMsg = '😵 服务暂时不可用，请稍后重试';
+        if (errMsg.includes('未配置') || errMsg.includes('API Key') || errMsg.includes('Key丢失')) {
+          friendlyMsg = '🤖 服务暂未配置，请在设置中填入 API 密钥';
+        } else if (errMsg.includes('超时') || errMsg.includes('timeout')) {
+          friendlyMsg = '⏳ AI 服务响应超时，请稍后重试';
+        } else if (errMsg.includes('余额') || errMsg.includes('balance') || errMsg.includes('quota')) {
+          friendlyMsg = '💰 API 余额不足，请充值后继续';
+        } else if (errMsg.includes('网络') || errMsg.includes('Network') || errMsg.includes('connect')) {
+          friendlyMsg = '🌐 网络连接失败，请检查网络后重试';
+        } else if (errMsg.includes('503') || errMsg.includes('500')) {
+          friendlyMsg = '🏥 AI 服务繁忙，请稍后重试';
+        }
+        agentLog('❌ ' + friendlyMsg, '#f85149');
+        if (errMsg) agentLog('   （' + errMsg + '）', '#8b949e');
+        localStorage.setItem('agent_history_' + currentThread, JSON.stringify({ task: task, messages: messages }));
+        break;
+      }
 
-      localStorage.setItem('last_task_id', Date.now().toString(36));
+      // V8 tasks use separate polling
 
       if (d.status === 'initializing') {
         agentLog('🔧 ' + d.message, '#d2991d');
@@ -547,7 +576,9 @@ async function agentSend() {
       }
 
       if (!msg.tool_calls || msg.tool_calls.length === 0) {
-        agentLog('✅ 任务完成', '#3fb950'); break;
+        agentLog('✅ 任务完成', '#3fb950');
+        localStorage.setItem('agent_history_' + currentThread, JSON.stringify({ task: task, messages: messages }));
+        break;
       }
 
       messages.push({ role: 'assistant', content: msg.content || '', tool_calls: msg.tool_calls });
@@ -556,87 +587,83 @@ async function agentSend() {
       for (const tool of msg.tool_calls) {
         let args;
         const raw = tool.function.arguments;
-        // JSON.parse 优先，失败后正则 fallback
         try {
           args = JSON.parse(raw);
           args.raw_arguments = raw;
         } catch(e) {
-          const pathMatch = raw.match(/"path"\s*:\s*"([^"]+)"/);
-          const lineMatch = raw.match(/"line"\s*:\s*(\d+)/);
-          const contentMatch = raw.match(/"content"\s*:\s*"([\s\S]*?)(?:"\s*}\s*$|"\s*,\s*"line|"\s*,\s*"path)/);
-          let cmdMatch = raw.match(/"command"\s*:\s*"([\s\S]*?)(?:"\s*}\s*$)/);
-          // heredoc fallback: python3 << 'PYEOF' ... PYEOF
-          if (!cmdMatch || !cmdMatch[1]) {
-            cmdMatch = raw.match(/"command"\s*:\s*"(python3\s*<<\s*'[A-Z]+'[\s\S]*?[A-Z]+)"/);
+          // P1: 前端不提取，整段 raw_arguments 传给网关
+          if (raw.includes('"command"')) {
+            args = { raw_arguments: raw };
+          } else {
+            const pathMatch = raw.match(/"path"\s*:\s*"([^"]+)"/);
+            const lineMatch = raw.match(/"line"\s*:\s*(\d+)/);
+            const contentMatch = raw.match(/"content"\s*:\s*"([\s\S]*?)(?:"\s*}\s*$|"\s*,\s*"line|"\s*,\s*"path)/);
+            args = {
+              path: pathMatch ? pathMatch[1] : '',
+              line: lineMatch ? parseInt(lineMatch[1]) : 0,
+              content: contentMatch ? contentMatch[1] : '',
+              command: '',
+              raw_arguments: raw
+            };
           }
-          args = {
-            path: pathMatch ? pathMatch[1] : '',
-            line: lineMatch ? parseInt(lineMatch[1]) : 0,
-            content: contentMatch ? contentMatch[1] : '',
-            command: cmdMatch ? cmdMatch[1] : '',
-            raw_arguments: raw
-          };
         }
+
         if (tool.function.name === 'write_file') {
           if (!args.path) { agentLog('⚠️ write_file path 为空，跳过', '#d2991d'); continue; }
         } else if (tool.function.name === 'execute_command') {
-          if (!args.command || args.command.trim() === '') {
-            if (raw.length > 3000) { args = { raw_arguments: raw }; }
-            else { agentLog('⚠️ execute_command command 为空，跳过', '#d2991d'); continue; }
-          }
-        } else {  
+          // P1: args 已在上方处理，直接放行
+        } else {
           try {
             args = JSON.parse(tool.function.arguments);
-          } catch(e) {
+            args.raw_arguments = tool.function.arguments;
+          } catch(e2) {
             let fixed = tool.function.arguments;
-            // 尝试多种修复策略
             let strategies = [
-            // 策略1：补闭合引号 + 转义控制字符
-            () => {
-              let s = fixed;
-              if (s.split('"').length % 2 === 0) { s += '"'; }
-              s = s.replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t');
-              return s;
-            },
-            // 策略2：找到 content 字段的闭合位置，截断后面的非法字符
-            () => {
-              let s = fixed;
-              let contentIdx = s.indexOf('"content":');
-              if (contentIdx > 0) {
-                let afterContent = s.substring(contentIdx + 11);
-                let endQuote = afterContent.indexOf('",');
-                if (endQuote > 0) {
-                  let contentEnd = contentIdx + 11 + endQuote;
-                  s = s.substring(0, contentEnd + 2) + '}';
+              () => {
+                let s = fixed;
+                if (s.split('"').length % 2 === 0) { s += '"'; }
+                s = s.replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t');
+                return s;
+              },
+              () => {
+                let s = fixed;
+                let contentIdx = s.indexOf('"content":');
+                if (contentIdx > 0) {
+                  let afterContent = s.substring(contentIdx + 11);
+                  let endQuote = afterContent.indexOf('",');
+                  if (endQuote > 0) {
+                    let contentEnd = contentIdx + 11 + endQuote;
+                    s = s.substring(0, contentEnd + 2) + '}';
+                  }
                 }
+                return s;
+              },
+              () => {
+                let pathMatch = fixed.match(/"path":\s*"([^"]+)"/);
+                let contentStart = fixed.indexOf('"content":');
+                if (pathMatch && contentStart > 0) {
+                  let contentValue = fixed.substring(contentStart + 12, fixed.lastIndexOf('"'));
+                  let args = { path: pathMatch[1], content: contentValue };
+                  let lineMatch = fixed.match(/"line":\s*(\d+)/);
+                  if (lineMatch) { args.line = parseInt(lineMatch[1]); }
+                  return JSON.stringify(args);
+                }
+                return fixed;
               }
-              return s;
-            },
-            // 策略3：提取 content 字段，手动构造新的 arguments
-            () => {
-              let pathMatch = fixed.match(/"path":\s*"([^"]+)"/);
-              let contentStart = fixed.indexOf('"content":');
-              if (pathMatch && contentStart > 0) {
-                let contentValue = fixed.substring(contentStart + 12, fixed.lastIndexOf('"'));
-                let args = { path: pathMatch[1], content: contentValue };
-                let lineMatch = fixed.match(/"line":\s*(\d+)/);
-                if (lineMatch) { args.line = parseInt(lineMatch[1]); }
-                return JSON.stringify(args);
-              }
-              return fixed;
+            ];
+            let parsed = false;
+            for (let strategy of strategies) {
+              try {
+                args = JSON.parse(strategy());
+                args.raw_arguments = tool.function.arguments;
+                parsed = true;
+                break;
+              } catch(e3) {}
             }
-          ];
-          let parsed = false;
-          for (let strategy of strategies) {
-            try {
-              args = JSON.parse(strategy());
-              parsed = true;
-              break;
-            } catch(e2) {}
-          }
-          if (!parsed) { agentLog('❌ 工具参数 JSON 解析失败，跳过此步骤', '#f85149'); continue; }
+            if (!parsed) { agentLog('❌ 工具参数 JSON 解析失败，跳过此步骤', '#f85149'); continue; }
           }
         }
+
         agentLog('🔧 ' + tool.function.name + '(' + JSON.stringify(args) + ')', '#d2991d');
         let result, retries = 3;
         while (retries > 0) {
@@ -646,7 +673,6 @@ async function agentSend() {
           if (retries > 0) agentLog('🔄 重试中... (' + retries + '次剩余)', '#d2991d');
         }
         let toolResult = JSON.stringify(result);
-        // 安全截断：先解析，截断 content 字段，再序列化
         try {
           let tr = JSON.parse(toolResult);
           if (tr.content && typeof tr.content === 'string' && tr.content.length > 2000) {
@@ -663,7 +689,7 @@ async function agentSend() {
           try {
             let tr = JSON.parse(toolResult);
             if (tr.auto_fixed === false) {
-	      messages.push({ role: "system", content: `[系统] write_file 写入失败，网关自动修复也失败。你必须用 python3 heredoc 方式重新写入，不要再调 write_file 或 execute_command。
+              messages.push({ role: "system", content: `[系统] write_file 写入失败，网关自动修复也失败。你必须用 python3 heredoc 方式重新写入，不要再调 write_file 或 execute_command。
 
 python3 << PYEOF
 content = """..."""
@@ -672,16 +698,16 @@ with open("目标文件", "w") as f:
 PYEOF` });
             }
           } catch(e) {}
-        }            
+        }
       }
       refreshFileTree();
     } catch (e) { agentLog('❌ 错误: ' + e.message, '#f85149'); break; }
   }
   if (maxLoops === 0) {
-    agentLog('⚠️ 达到最大循环次数，当前进度：', '#d2991d');
+    agentLog('⚠ 达到最大循环次数，当前进度：', '#d2991d');
     let ps = getProgressSummary(messages);
     if (ps.filesRead.length) agentLog('  📄 已读: ' + ps.filesRead.join(', '), '#8b949e');
-    if (ps.filesModified.length) agentLog('  ✏️ 已修改: ' + ps.filesModified.join(', '), '#8b949e');
+    if (ps.filesModified.length) agentLog('  ✏ 已修改: ' + ps.filesModified.join(', '), '#8b949e');
     agentLog('  📊 已执行: ' + messages.length + '轮', '#8b949e');
     localStorage.setItem('agent_pause_' + currentThread, JSON.stringify({ task: task, messages: messages }));
     const div = document.createElement('div');
@@ -690,18 +716,17 @@ PYEOF` });
     document.getElementById('agentTerminal').appendChild(div);
     document.getElementById('btnContinue').onclick = function() {
       const saved = JSON.parse(localStorage.getItem('agent_pause_' + currentThread));
-      if (saved && saved.messages) { 
-  div.remove(); 
-  agentLog('▶ 继续执行...', '#d2991d'); 
-  agentRunning = true; 
-  document.getElementById('agentStopBtn').style.display = 'inline-block';
-  // 追加中断提示
-  saved.messages.push({
-    role: 'system', 
-    content: '【任务中断恢复】之前的任务因达到循环上限被暂停。已完成: ' + (saved.progress || '未知') + '。请从断点继续，不要重复已完成步骤。如果目标代码已处于期望状态，直接验证并汇报。'
-  });
-  continuePausedTask(saved.messages); 
-      } 
+      if (saved && saved.messages) {
+        div.remove();
+        agentLog('▶ 继续执行...', '#d2991d');
+        agentRunning = true;
+        document.getElementById('agentStopBtn').style.display = 'inline-block';
+        saved.messages.push({
+          role: 'system',
+          content: '【任务中断恢复】之前的任务因达到循环上限被暂停。已完成: ' + (saved.progress || '未知') + '。请从断点继续，不要重复已完成步骤。如果目标代码已处于期望状态，直接验证并汇报。'
+        });
+        continuePausedTask(saved.messages);
+      }
     };
     document.getElementById('btnCancel').onclick = function() {
       localStorage.removeItem('agent_pause_' + currentThread); div.remove(); agentLog('✕ 任务已放弃', '#8b949e'); agentRunning = false; document.getElementById('agentStopBtn').style.display = 'none';
@@ -747,7 +772,7 @@ async function agentSendAsync() {
       body: JSON.stringify({ async: true, task_id: taskId, user_id: userId, session_id: sessionId, model: 'deepseek-v4-flash', messages: [{ role: 'system', content: '你是 ClawsJoy 的 AI 助手。' }, { role: 'user', content: task }] })
     });
     const d = await resp.json();
-    if (d.success) { agentLog('⏳ 后台执行中，可关闭页面，稍后查看结果', '#d2991d'); pollTaskResult(taskId); }
+    if (d.success) { localStorage.setItem('last_task_id', taskId); agentLog('⏳ 后台执行中，可关闭页面，稍后查看结果', '#d2991d'); pollTaskResult(taskId); }
     else agentLog('❌ 启动失败: ' + (d.error || '未知'), '#f85149');
   } catch (e) { agentLog('❌ 网络错误', '#f85149'); }
 }
@@ -778,7 +803,7 @@ function getProgressSummary(messages) {
 function agentStop() { agentAbort = true; }
 
 async function continuePausedTask(messages) {
-  let maxLoops = 25;
+  let maxLoops = 200;
   while (!agentAbort && maxLoops > 0) {
     maxLoops--;
     try {
@@ -787,139 +812,194 @@ async function continuePausedTask(messages) {
         body: JSON.stringify({ user_id: userId, session_id: sessionId, model: 'deepseek-v4-flash', messages })
       });
       const d = await resp.json();
-      if (!d.success) { agentLog('❌ API 错误: ' + d.error, '#f85149'); break; }
+      if (!d.success) {
+        const errMsg = d.error || '';
+        let friendlyMsg = '😵 服务暂时不可用，请稍后重试';
+        if (errMsg.includes('未配置') || errMsg.includes('API Key') || errMsg.includes('Key丢失')) {
+          friendlyMsg = '🤖 服务暂未配置，请在设置中填入 API 密钥';
+        } else if (errMsg.includes('超时') || errMsg.includes('timeout')) {
+          friendlyMsg = '⏳ AI 服务响应超时，请稍后重试';
+        } else if (errMsg.includes('余额') || errMsg.includes('balance') || errMsg.includes('quota')) {
+          friendlyMsg = '💰 API 余额不足，请充值后继续';
+        } else if (errMsg.includes('网络') || errMsg.includes('Network') || errMsg.includes('connect')) {
+          friendlyMsg = '🌐 网络连接失败，请检查网络后重试';
+        } else if (errMsg.includes('503') || errMsg.includes('500')) {
+          friendlyMsg = '🏥 AI 服务繁忙，请稍后重试';
+        }
+        agentLog('❌ ' + friendlyMsg, '#f85149');
+        if (errMsg) agentLog('   （' + errMsg + '）', '#8b949e');
+        localStorage.setItem('agent_history_' + currentThread, JSON.stringify({ task: task, messages: messages }));
+        break;
+      }
+
       const msg = d.data.choices[0].message;
       if (msg.content) agentLog('🤖 ' + msg.content, '#c9d1d9');
-      if (!msg.tool_calls || msg.tool_calls.length === 0) { agentLog('✅ 任务完成', '#3fb950'); break; }
+
+      if (!msg.tool_calls || msg.tool_calls.length === 0) {
+        agentLog('✅ 任务完成', '#3fb950');
+        localStorage.setItem('agent_history_' + currentThread, JSON.stringify({ task: task, messages: messages }));
+        break;
+      }
+
       messages.push({ role: 'assistant', content: msg.content || '', tool_calls: msg.tool_calls });
+
       for (const tool of msg.tool_calls) {
         let args;
         const raw = tool.function.arguments;
-        // JSON.parse 优先，失败后正则 fallback
         try {
           args = JSON.parse(raw);
           args.raw_arguments = raw;
         } catch(e) {
-          const pathMatch = raw.match(/"path"\s*:\s*"([^"]+)"/);
-          const lineMatch = raw.match(/"line"\s*:\s*(\d+)/);
-          const contentMatch = raw.match(/"content"\s*:\s*"([\s\S]*?)(?:"\s*}\s*$|"\s*,\s*"line|"\s*,\s*"path)/);
-          let cmdMatch = raw.match(/"command"\s*:\s*"([\s\S]*?)(?:"\s*}\s*$)/);
-          // heredoc fallback: python3 << 'PYEOF' ... PYEOF
-          if (!cmdMatch || !cmdMatch[1]) {
-            cmdMatch = raw.match(/"command"\s*:\s*"(python3\s*<<\s*'[A-Z]+'[\s\S]*?[A-Z]+)"/);
+          // P1: 前端不提取，整段 raw_arguments 传给网关
+          if (raw.includes('"command"')) {
+            args = { raw_arguments: raw };
+          } else {
+            const pathMatch = raw.match(/"path"\s*:\s*"([^"]+)"/);
+            const lineMatch = raw.match(/"line"\s*:\s*(\d+)/);
+            const contentMatch = raw.match(/"content"\s*:\s*"([\s\S]*?)(?:"\s*}\s*$|"\s*,\s*"line|"\s*,\s*"path)/);
+            args = {
+              path: pathMatch ? pathMatch[1] : '',
+              line: lineMatch ? parseInt(lineMatch[1]) : 0,
+              content: contentMatch ? contentMatch[1] : '',
+              command: '',
+              raw_arguments: raw
+            };
           }
-          args = {
-            path: pathMatch ? pathMatch[1] : '',
-            line: lineMatch ? parseInt(lineMatch[1]) : 0,
-            content: contentMatch ? contentMatch[1] : '',
-            command: cmdMatch ? cmdMatch[1] : '',
-            raw_arguments: raw
-          };
         }
+
         if (tool.function.name === 'write_file') {
           if (!args.path) { agentLog('⚠️ write_file path 为空，跳过', '#d2991d'); continue; }
         } else if (tool.function.name === 'execute_command') {
-          if (!args.command || args.command.trim() === '') {
-            if (raw.length > 3000) { args = { raw_arguments: raw }; }
-            else { agentLog('⚠️ execute_command command 为空，跳过', '#d2991d'); continue; }
-          }
+          // P1: args 已在上方处理，直接放行
         } else {
           try {
             args = JSON.parse(tool.function.arguments);
-          } catch(e) {
+            args.raw_arguments = tool.function.arguments;
+          } catch(e2) {
             let fixed = tool.function.arguments;
-            // 尝试多种修复策略
-          let strategies = [
-            // 策略1：补闭合引号 + 转义控制字符
-            () => {
-              let s = fixed;
-              if (s.split('"').length % 2 === 0) { s += '"'; }
-              s = s.replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t');
-              return s;
-            },
-            // 策略2：找到 content 字段的闭合位置，截断后面的非法字符
-            () => {
-              let s = fixed;
-              let contentIdx = s.indexOf('"content":');
-              if (contentIdx > 0) {
-                let afterContent = s.substring(contentIdx + 11);
-                let endQuote = afterContent.indexOf('",');
-                if (endQuote > 0) {
-                  let contentEnd = contentIdx + 11 + endQuote;
-                  s = s.substring(0, contentEnd + 2) + '}';
+            let strategies = [
+              () => {
+                let s = fixed;
+                if (s.split('"').length % 2 === 0) { s += '"'; }
+                s = s.replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t');
+                return s;
+              },
+              () => {
+                let s = fixed;
+                let contentIdx = s.indexOf('"content":');
+                if (contentIdx > 0) {
+                  let afterContent = s.substring(contentIdx + 11);
+                  let endQuote = afterContent.indexOf('",');
+                  if (endQuote > 0) {
+                    let contentEnd = contentIdx + 11 + endQuote;
+                    s = s.substring(0, contentEnd + 2) + '}';
+                  }
                 }
+                return s;
+              },
+              () => {
+                let pathMatch = fixed.match(/"path":\s*"([^"]+)"/);
+                let contentStart = fixed.indexOf('"content":');
+                if (pathMatch && contentStart > 0) {
+                  let contentValue = fixed.substring(contentStart + 12, fixed.lastIndexOf('"'));
+                  let args = { path: pathMatch[1], content: contentValue };
+                  let lineMatch = fixed.match(/"line":\s*(\d+)/);
+                  if (lineMatch) { args.line = parseInt(lineMatch[1]); }
+                  return JSON.stringify(args);
+                }
+                return fixed;
               }
-              return s;
-            },
-            // 策略3：提取 content 字段，手动构造新的 arguments
-            () => {
-              let pathMatch = fixed.match(/"path":\s*"([^"]+)"/);
-              let contentStart = fixed.indexOf('"content":');
-              if (pathMatch && contentStart > 0) {
-                let contentValue = fixed.substring(contentStart + 12, fixed.lastIndexOf('"'));
-                let args = { path: pathMatch[1], content: contentValue };
-                let lineMatch = fixed.match(/"line":\s*(\d+)/);
-                if (lineMatch) { args.line = parseInt(lineMatch[1]); }
-                return JSON.stringify(args);
-              }
-              return fixed;
+            ];
+            let parsed = false;
+            for (let strategy of strategies) {
+              try {
+                args = JSON.parse(strategy());
+                args.raw_arguments = tool.function.arguments;
+                parsed = true;
+                break;
+              } catch(e3) {}
             }
-          ];
-          let parsed = false;
-          for (let strategy of strategies) {
-            try {
-              args = JSON.parse(strategy());
-              parsed = true;
-              break;
-            } catch(e2) {}
-          }
-          if (!parsed) { agentLog('❌ 工具参数 JSON 解析失败，跳过此步骤', '#f85149'); continue; }
+            if (!parsed) { agentLog('❌ 工具参数 JSON 解析失败，跳过此步骤', '#f85149'); continue; }
           }
         }
+
         agentLog('🔧 ' + tool.function.name + '(' + JSON.stringify(args) + ')', '#d2991d');
         const result = await executeToolCall(tool.function.name, args, tool.function.arguments);
         agentLog('📤 ' + JSON.stringify(result).substring(0, 300), '#8b949e');
         const maxLen = tool.function.name === 'read_file' ? 2000 : 500;
         messages.push({ role: 'tool', tool_call_id: tool.id, content: JSON.stringify(result).substring(0, maxLen) });
-      }
-      if (maxLoops === 0) {
-    agentLog('⚠️ 达到最大循环次数，当前进度：', '#d2991d');
-    let filesRead = [...new Set(messages.filter(m => m.tool_calls).flatMap(m => m.tool_calls.filter(tc => tc.function.name === 'read_file').map(tc => JSON.parse(tc.function.arguments).path)))];
-    if (filesRead.length) agentLog('  📄 已读: ' + filesRead.join(', '), '#8b949e');
-    agentLog('  📊 已执行: ' + messages.length + '轮', '#8b949e');
-    // 生成进度清单
-let ps = getProgressSummary(messages);
-const progressData = {
-  original_task: (messages.find(m => m.role === 'user') || {}).content || '未知任务',
-  completed_steps: [
-    ...ps.filesRead.map(f => ({action: 'read_file', file: f})),
-    ...ps.filesModified.map(f => ({action: 'write_file', file: f}))
-  ],
-  pending_steps: ['验证测试'],
-  total_rounds: messages.length
-};
-localStorage.setItem('agent_pause_' + currentThread, JSON.stringify({ messages: messages, progress: ps.text }));
+        if (messages.length > 50) {
+          const systemMsg = messages.filter(m => m.role === 'system');
+          messages = [...systemMsg, ...messages.slice(-30)];
+        }
 
-// 持久化到 .agent_state.json
-fetch(API + '/v9/task/save_progress', {
-  method: 'POST', headers: {'Content-Type': 'application/json'},
-  body: JSON.stringify({ user_id: userId, session_id: sessionId, progress: progressData })
-}).catch(() => {});
+        if (tool.function.name === 'write_file' || tool.function.name === 'write_large') {
+          try {
+            let tr = JSON.parse(JSON.stringify(result));
+            if (tr.auto_fixed === false) {
+              messages.push({ role: "system", content: `[系统] write_file 写入失败，网关自动修复也失败。你必须用 python3 heredoc 方式重新写入，不要再调 write_file 或 execute_command。
+
+python3 << PYEOF
+content = """..."""
+with open("目标文件", "w") as f:
+    f.write(content)
+PYEOF` });
+            }
+          } catch(e) {}
+        }
+      }
+      refreshFileTree();
+    } catch (e) { agentLog('❌ 错误: ' + e.message, '#f85149'); break; }
+  }
+
+  if (maxLoops === 0) {
+    agentLog('⚠ 达到最大循环次数，当前进度：', '#d2991d');
+    let ps = getProgressSummary(messages);
+    if (ps.filesRead.length) agentLog('  📄 已读: ' + ps.filesRead.join(', '), '#8b949e');
+    if (ps.filesModified.length) agentLog('  ✏ 已修改: ' + ps.filesModified.join(', '), '#8b949e');
+    agentLog('  📊 已执行: ' + messages.length + '轮', '#8b949e');
+
+    const progressData = {
+      original_task: (messages.find(m => m.role === 'user') || {}).content || '未知任务',
+      completed_steps: [
+        ...ps.filesRead.map(f => ({action: 'read_file', file: f})),
+        ...ps.filesModified.map(f => ({action: 'write_file', file: f}))
+      ],
+      pending_steps: ['验证测试'],
+      total_rounds: messages.length
+    };
+    localStorage.setItem('agent_pause_' + currentThread, JSON.stringify({ messages: messages, progress: ps.text }));
+
+    fetch(API + '/v9/task/save_progress', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ user_id: userId, session_id: sessionId, progress: progressData })
+    }).catch(() => {});
+
     const div = document.createElement('div');
     div.style.cssText = 'margin-top:10px;display:flex;gap:8px;';
     div.innerHTML = '<button id="btnContinue2" style="background:#238636;color:#fff;border:none;border-radius:6px;padding:8px 16px;cursor:pointer;">▶ 继续任务(25轮)</button><button id="btnCancel2" style="background:#30363d;color:#c9d1d9;border:none;border-radius:6px;padding:8px 16px;cursor:pointer;">✕ 放弃</button>';
     document.getElementById('agentTerminal').appendChild(div);
+
     document.getElementById('btnContinue2').onclick = function() {
       const saved = JSON.parse(localStorage.getItem('agent_pause_' + currentThread));
-      if (saved && saved.messages) { div.remove(); agentLog('▶ 继续执行...', '#d2991d'); agentRunning = true; document.getElementById('agentStopBtn').style.display = 'inline-block'; continuePausedTask(saved.messages); }
+      if (saved && saved.messages) {
+        div.remove();
+        agentLog('▶ 继续执行...', '#d2991d');
+        agentRunning = true;
+        document.getElementById('agentStopBtn').style.display = 'inline-block';
+        continuePausedTask(saved.messages);
+      }
     };
     document.getElementById('btnCancel2').onclick = function() {
-      localStorage.removeItem('agent_pause_' + currentThread); div.remove(); agentLog('✕ 任务已放弃', '#8b949e'); agentRunning = false; document.getElementById('agentStopBtn').style.display = 'none';
+      localStorage.removeItem('agent_pause_' + currentThread);
+      div.remove();
+      agentLog('✕ 任务已放弃', '#8b949e');
+      agentRunning = false;
+      document.getElementById('agentStopBtn').style.display = 'none';
     };
     return;
   }
-    } catch (e) { agentLog('❌ 错误: ' + e.message, '#f85149'); break; }
-  }
+
   agentRunning = false;
   document.getElementById('agentStopBtn').style.display = 'none';
 }

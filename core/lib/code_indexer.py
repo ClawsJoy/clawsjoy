@@ -390,6 +390,7 @@ class CodeIndexer:
             print(f"[CodeIndexer] Index updated: {indexed} files")
         else:
             print(f"[CodeIndexer] Index up to date ({len(self._keyword_index)} files)")
+            self._save()
 
     def stats(self) -> Dict:
         return {
