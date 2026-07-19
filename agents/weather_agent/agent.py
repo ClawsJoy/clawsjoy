@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""数学大师智能体 - 高级数学计算"""
+"""天气助手智能体 - 天气查询"""
 
 import math
 import re
@@ -8,12 +8,12 @@ from typing import Dict, Optional
 from core.agents.business.base_business_agent import BusinessAgent
 
 
-class CalculatorAgent(BusinessAgent):
-    """数学大师 - 高级数学计算"""
+class WeatherAgent(BusinessAgent):
+    """天气助手 - 天气查询"""
 
-    name = "calculator_agent"
-    description = "数学大师 - 高级数学计算"
-    version = "2.0.0"
+    name = "weather_agent"
+    description = "天气助手 - 天气查询"
+    version = "2.0.1"
 
     def __init__(self, user_id: str = "default"):
         super().__init__(user_id=user_id)
