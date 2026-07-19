@@ -1556,7 +1556,25 @@ def _generate_project_tree(user_id="default", session_id="default"):
                     _indent = "  " * _depth + ("└─ " if _is_last else "├─ ")
                     _tree_lines.append(f"{_indent}{_name}{_extra}")
                     _render(_child, _depth + 1)
-        _render("clawsjoy_dev", 0)
+        # 大项目（>50 文件）：用摘要替代完整树
+        _total_files = len(_paths)
+        if _total_files > 50:
+            _tree_lines = ["clawsjoy_dev/"]
+            _top_dirs = set()
+            _key_files = []
+            for _p in sorted(_paths):
+                _parts = _p.split("/")
+                if len(_parts) >= 1:
+                    _top_dirs.add(_parts[0])
+                if _p in ('app.py', 'config.py', 'requirements.txt', 'README.md', 'agent_gateway_enhanced.py', 'conftest.py') or _p.endswith('/__init__.py'):
+                    continue
+                if _p.endswith('.py') and '/' not in _p:
+                    _key_files.append(_p)
+            _tree_lines.append(f" 顶层目录: {', '.join(sorted(_top_dirs)[:15])}")
+            if _key_files:
+                _tree_lines.append(f" 入口文件: {', '.join(_key_files[:10])}")
+        else:
+            _render("clawsjoy_dev", 0)
         # 追加统计摘要
         _py_count = sum(1 for _p in _paths if _p.endswith('.py'))
         _total_files = len(_paths)
@@ -2877,6 +2895,12 @@ def _compress_messages(messages, user_id, session_id="default", keep=30):
         ctx.clear()
         ctx._last_session_id = session_id
     system_msg = messages[0] if messages[0]["role"] == "system" else None
+    # 保护任务目标：始终保留第一条 user 消息
+    _first_user = None
+    for _m in messages:
+        if _m["role"] == "user":
+            _first_user = _m
+            break
     recent = messages[-keep:]
     old_messages = messages[1:-6] if system_msg else messages[:-6]
     summary = ctx.inject() or ""
@@ -2885,6 +2909,8 @@ def _compress_messages(messages, user_id, session_id="default", keep=30):
         compressed.append(system_msg)
     if summary:
         compressed.append({"role": "system", "content": f"【历史摘要】{summary}"})
+    if _first_user and _first_user not in recent:
+        compressed.append({"role": "system", "content": f"【任务目标】{_first_user['content'][:500]}"})
     compressed.extend(recent)
     return compressed
 
