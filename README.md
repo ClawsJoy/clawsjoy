@@ -35,3 +35,48 @@ Flask Gateway (:5002)
     → DeepSeek / GLM / Ollama
 License
 MIT
+
+## 核心文件
+
+| 文件 | 说明 |
+|------|------|
+| `agent_gateway_enhanced.py` | 主网关入口，Flask :5002 |
+| `config/prompts/agent_system.md` | Agent System Prompt 模板 |
+| `web/dashboard/workbench.html` | 前端工作台 |
+| `core/lib/code_indexer.py` | 代码索引器 |
+| `core/lib/context_manager.py` | 上下文管理器 |
+
+## 开发者指南
+
+```bash
+# 1. 克隆仓库
+git clone https://github.com/ClawsJoy/clawsjoy.git
+cd clawsjoy
+
+# 2. 创建虚拟环境
+python3 -m venv .venv
+source .venv/bin/activate
+
+# 3. 安装依赖
+pip install -r requirements.txt
+
+# 4. 配置 API Key
+cp config/.env.example config/.env
+# 编辑 config/.env 填入 DEEPSEEK_API_KEY
+
+# 5. 启动
+python3 agent_gateway_enhanced.py
+
+# 6. 访问
+# 浏览器打开 http://localhost:5002/web/dashboard/workbench.html
+环境要求
+Python 3.10+
+
+DeepSeek API Key（或 GLM / Ollama）
+
+Redis（可选，用于缓存）
+
+分支说明
+main — V9.0.0 稳定版
+
+fix/remove-hardcoded-secrets — 最新开发分支
