@@ -1059,7 +1059,7 @@ async function refreshBalance() {
 function loadThreads() {
   const sel = document.getElementById('threadSelect');
   if (!sel) return;
-  sel.innerHTML = threads.map(t => `<option value="${t}" ${t === currentThread ? 'selected' : ''}>${t.substring(0, 20)}</option>`).join('');
+  sel.innerHTML = threads.map(t => `<option value="${t}" ${t === currentThread ? 'selected' : ''}>${t.substring(0, 24)}</option>`).join('');
 }
 function switchThread(id) {
   currentThread = id; sessionId = id;
