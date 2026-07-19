@@ -2604,6 +2604,15 @@ def v9_sandbox_exec():
 
     try:
         import subprocess
+        # 沙箱写入保护：拒绝修改沙箱外的文件
+        _dangerous = False
+        for _kw in (">", ">>", "tee ", "dd of=", "mkfs", "mount "):
+            if _kw in command:
+                _dangerous = True
+                break
+        if _dangerous:
+            return jsonify({"success": False, "error": "禁止在沙箱外写入文件。所有修改操作必须在项目目录内进行。"})
+
         result = subprocess.run(command, shell=True, cwd=str(base),
                                 capture_output=True, text=True, timeout=30)
         _hint = None
