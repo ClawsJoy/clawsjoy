@@ -25,7 +25,7 @@ def get_adapter(model: str, api_key: str = "", **kwargs):
             **kwargs
         )
     if "deepseek" in model_lower:
-        return DeepSeekAdapter(api_key=api_key, model="deepseek-chat", **kwargs)
+        return DeepSeekAdapter(api_key=api_key, model=model, **kwargs)
 
     elif "claude-code" in model_lower or "claude_cli" in model_lower:
         return ClaudeCodeAdapter(api_key=api_key, model="claude-code", **kwargs)

@@ -1018,9 +1018,10 @@ def _execute_agent_task(user_id, session_id, messages, model, task_id):
                             pass
 
         for _round in range(max_rounds):
+            _thinking = len(_file_matches_hard) >= 2 if '_file_matches_hard' in dir() else False
             resp = adapter.execute_with_tools(
                 messages=messages, tools=tools, user_id=user_id,
-                temperature=0.7, max_tokens=2000
+                temperature=0.7, max_tokens=8000 if _thinking else 2000, thinking=_thinking
             )
             
             if not resp.get("success"):
@@ -1810,8 +1811,11 @@ def v9_sandbox_read():
     data = request.json or {}
     user_id = data.get("user_id", "default")
     session_id = data.get("session_id", "default")
-    global _consecutive_reads
+    global _consecutive_reads, _consecutive_lists
     filepath = data.get("path", "")
+    # 新任务检测：同步重置 list 配额
+    if _consecutive_reads == 0:
+        _consecutive_lists = 0
     if not filepath:
         return jsonify({"success": False, "error": "path 必填"})
     base = Path(f"data/projects/{user_id}/{session_id}")
@@ -2333,7 +2337,10 @@ def v9_sandbox_list():
     global _consecutive_reads
     data = request.json or {}
     # P0-1-ext: list_dir 配额限制（最多 3 次）
-    global _consecutive_lists
+    global _consecutive_lists, _consecutive_reads
+    # 新任务检测：如果 _consecutive_reads 为 0，说明是新任务，重置 list 配额
+    if _consecutive_reads == 0:
+        _consecutive_lists = 0
     _consecutive_lists += 1
     if _consecutive_lists > 3 and not data.get("skip_quota"):
         return jsonify({
@@ -2502,8 +2509,18 @@ def v9_sandbox_query_index():
         _code_indexer = CodeIndexer(project_root=str(_project_dir))
         if not _code_indexer._keyword_index:
             _code_indexer._load()
+        if not _code_indexer._keyword_index:
+            # 索引文件为空，自动触发扫描
+            _py_files = list(_project_dir.rglob("*.py"))
+            _py_files = [f for f in _py_files if "test_" not in f.name and "/tests/" not in str(f) and not f.name.endswith(".bak")]
+            for _pf in _py_files[:200]:
+                try:
+                    _code_indexer.index_file(str(_pf.relative_to(_project_dir)))
+                except:
+                    pass
+            _code_indexer._save()
     if not _code_indexer._keyword_index:
-        return jsonify({"success": False, "error": "代码索引尚未初始化"})
+        return jsonify({"success": False, "error": "代码索引尚未初始化，且未找到可索引的 Python 文件。"})
     # 快速路径：查询包含文件路径关键词时，直接用 AST 解析
     import re as _re
     import warnings
@@ -3124,7 +3141,7 @@ def v9_agent_chat():
     _write_kw_q = ['创建', '修改', '添加', '新增', '写入', '实现', '编写', '补充']
     _is_write_q = any(kw in _last_usr_q for kw in _write_kw_q)
     _max_q = 5 if _is_write_q else 10
-    messages[0]["content"] += f"\n读取配额：本次任务最多读取 {_max_q} 个文件。你可以从以下渠道获取信息而无需消耗配额：1) 上方项目树与磁盘实时同步，已列出所有文件路径，无需 list_dir 逐个确认 2) world_model 包含已写入文件的骨架 3) query_index 可查询代码结构。达到配额上限后 read_file 将被拒绝，届时基于已有信息直接写入交付。"
+    messages[0]["content"] += f"\n读取配额：本次任务最多读取 {_max_q} 个文件，list_dir 最多 3 次。你可以从以下渠道获取信息而无需消耗配额：1) 上方项目树与磁盘实时同步，已列出所有文件路径，无需 list_dir 逐个确认 2) world_model 包含已写入文件的骨架 3) query_index 可查询代码结构（推荐用于查找目录内容，不消耗配额）。达到配额上限后 read_file 和 list_dir 将被拒绝，届时使用 query_index 获取信息，或基于已有信息直接写入交付。"
 
     # 多文件任务检测：追加规划模板
     import re as _re_plan
@@ -3358,7 +3375,15 @@ def v9_agent_chat():
     try:
         from core.lib.v8.adapters.deepseek_adapter import DeepSeekAdapter
         adapter = DeepSeekAdapter(api_key=api_key, model=model)
-        resp = adapter.execute_with_tools(messages=messages, tools=tools, user_id=user_id, temperature=0.7, max_tokens=2000)
+        _thinking2 = False
+        import re as _re_think
+        _last_usr_think = ""
+        for _mt in messages:
+            if _mt["role"] == "user":
+                _last_usr_think = _mt["content"]
+        _file_think = _re_think.findall(r'[\w_]+/\w+\.py|[\w_]+\.py', _last_usr_think)
+        _thinking2 = len(_file_think) >= 2
+        resp = adapter.execute_with_tools(messages=messages, tools=tools, user_id=user_id, temperature=0.7, max_tokens=8000 if _thinking2 else 2000, thinking=_thinking2)
 
         if not resp.get("success"):
             return jsonify({"success": False, "error": resp.get("error", "API错误")})

@@ -362,30 +362,25 @@ class CodeIndexer:
         indexed = 0
         
         # 索引多个目录
-        target_dirs = ["core/lib", "tests", "agents"]
-        
-        for target_dir in target_dirs:
-            dir_path = self.project_root / target_dir
-            if not dir_path.exists():
-                continue
-            
-            for root, dirs, files in os.walk(dir_path):
-                # 跳过隐藏目录和 venv
-                dirs[:] = [d for d in dirs if not d.startswith(".") and d != "__pycache__"]
-                
-                for f in files:
-                    if not f.endswith(".py") or f.startswith("_"):
-                        continue
-                    full_path = Path(root) / f
+        # 全量扫描：索引项目所有 .py 文件
+        for root, dirs, files in os.walk(self.project_root):
+            dirs[:] = [d for d in dirs if not d.startswith(".") and d not in ("__pycache__", "node_modules", ".venv", "venv", "data", "exports", "logs", "memory")]
+            for f in files:
+                if not f.endswith(".py") or f.startswith("_"):
+                    continue
+                full_path = Path(root) / f
+                try:
                     filepath = str(full_path.relative_to(self.project_root))
-                    
-                    new_hash = self._file_hash(filepath)
-                    if filepath in self._file_hashes and self._file_hashes[filepath] == new_hash:
-                        continue
-                    
-                    if self.index_file(filepath):
-                        indexed += 1
-        
+                except ValueError:
+                    continue
+
+                new_hash = self._file_hash(filepath)
+                if filepath in self._file_hashes and self._file_hashes[filepath] == new_hash:
+                    continue
+
+                if self.index_file(filepath):
+                    indexed += 1
+
         if indexed:
             print(f"[CodeIndexer] Index updated: {indexed} files")
         else:
