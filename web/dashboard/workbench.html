@@ -1062,7 +1062,10 @@ function loadThreads() {
   sel.innerHTML = threads.map(t => `<option value="${t}" ${t === currentThread ? 'selected' : ''}>${t.substring(0, 20)}</option>`).join('');
 }
 function switchThread(id) {
-  currentThread = id; sessionId = id; localStorage.setItem('clawsjoy_session_id', id); saveThreads();
+  currentThread = id; sessionId = id;
+  localStorage.setItem('clawsjoy_session_id', id);
+  localStorage.setItem('clawsjoy_user_id', 'web_1783219071801');
+  saveThreads();
   const term = document.getElementById('agentTerminal');
   const logs = JSON.parse(localStorage.getItem('agent_logs_' + currentThread) || '[]');
   term.innerHTML = '';
